@@ -13,7 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-
 #include "VTKSuperCellPartitioning.hpp"
 
 // GEOS mesh includes
@@ -112,9 +111,9 @@ SuperCellInfo tagCellsWithSuperCellIds(
   GEOS_LOG_RANK_0( GEOS_FMT( "Built fracture graph with {} 3D cells having fracture connections, {} fracture pairs",
                              fractureGraph.size(), totalFracturePairs ) );
 
-// -----------------------------------------------------------------------
-// Step 2: Find the maximum global ID from ALL cells (not just fracture cells)
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
+  // Step 2: Find the maximum global ID from ALL cells (not just fracture cells)
+  // -----------------------------------------------------------------------
   vtkIdType maxGlobalId = 0;
 
   for( vtkIdType i = 0; i < numLocalCells; ++i )
@@ -122,7 +121,6 @@ SuperCellInfo tagCellsWithSuperCellIds(
     vtkIdType gid = globalIds->GetValue( i );
     maxGlobalId = std::max( maxGlobalId, gid );
   }
-
 
   // -----------------------------------------------------------------------
   // Step 3: Find connected components using DFS
@@ -167,8 +165,6 @@ SuperCellInfo tagCellsWithSuperCellIds(
       nextSuperCellId++;
     }
   }
-
-  GEOS_LOG_RANK_0( "Found " << superCellComponents.size() << " connected components via DFS" );
 
   // -----------------------------------------------------------------------
   // Step 4: Build SuperCellInfo
@@ -229,20 +225,13 @@ SuperCellInfo tagCellsWithSuperCellIds(
   vtkIdType cellReduction = numLocalCells - totalSuperCells;
 
   GEOS_LOG_RANK_0( "SUPER-CELL TAGGING SUMMARY" );
-  GEOS_LOG_RANK_0( "  Total 3D cells:                   "
-                   << std::setw( 8 ) << numLocalCells );
-  GEOS_LOG_RANK_0( "  Cells in super-cells:             "
-                   << std::setw( 8 ) << numCellsInSuperCells );
-  GEOS_LOG_RANK_0( "  Regular cells (no fractures):     "
-                   << std::setw( 8 ) << numRegularCells );
-  GEOS_LOG_RANK_0( "  Number of super-cells created:    "
-                   << std::setw( 8 ) << numSuperCellsCreated );
-  GEOS_LOG_RANK_0( "  Total super-cells (incl regular): "
-                   << std::setw( 8 ) << totalSuperCells );
-  GEOS_LOG_RANK_0( "  Cell reduction:                   "
-                   << std::setw( 8 ) << cellReduction );
-  GEOS_LOG_RANK_0( "  Largest super-cell size:          "
-                   << std::setw( 8 ) << largestSuperCellSize << " cells" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Total 3D cells:                   {:8}", numLocalCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Cells in super-cells:             {:8}", numCellsInSuperCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Regular cells (no fractures):     {:8}", numRegularCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Number of super-cells created:    {:8}", numSuperCellsCreated ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Total super-cells (incl regular): {:8}", totalSuperCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Cell reduction:                   {:8}", cellReduction ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Largest super-cell size:          {:8} cells", largestSuperCellSize ) );
 
   return info;
 }
@@ -554,7 +543,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
 
 
 // =============================================================================================
-// SECTION 4: SUPER-CELL GRAPH BUILDING (for ParMETIS)
+// SECTION 4: SUPER-CELL GRAPH BUILDING
 // =============================================================================================
 std::pair< ArrayOfArrays< pmet_idx_t, pmet_idx_t >, array1d< pmet_idx_t > >
 buildSuperCellGraph(
@@ -567,37 +556,17 @@ buildSuperCellGraph(
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
-  std::unordered_map< pmet_idx_t, vtkIdType > globalCellIdToSuperCellId;
-  ArrayOfArrays< pmet_idx_t, pmet_idx_t > superGraph;
-  array1d< pmet_idx_t > superVertexWeights;
-
-  // -----------------------------------------------------------------------
-  // Step 1: Get super-cell ID array and validate
-  // -----------------------------------------------------------------------
-
   vtkIdTypeArray * superCellIdArray =
     vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
-
-  GEOS_ERROR_IF( superCellIdArray == nullptr,
-                 "Rank " << rank << ": SuperCellId array not found" );
+  GEOS_ERROR_IF( superCellIdArray == nullptr, "SuperCellId array not found" );
 
   vtkIdTypeArray * cellGlobalIds =
     vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetGlobalIds() );
-
-  GEOS_ERROR_IF( cellGlobalIds == nullptr,
-                 "Rank " << rank << ": Cell global IDs not found" );
+  GEOS_ERROR_IF( cellGlobalIds == nullptr, "Cell global IDs not found" );
 
   vtkIdType numLocalCells = cells3D->GetNumberOfCells();
 
-  GEOS_ERROR_IF( baseGraph.size() != numLocalCells,
-                 "Rank " << rank << ": Base graph size (" << baseGraph.size()
-                         << ") != mesh cell count (" << numLocalCells << ")" );
-
-  // -----------------------------------------------------------------------
-  // Step 2: Map local cells to super-cells
-  // -----------------------------------------------------------------------
   std::map< vtkIdType, std::vector< vtkIdType > > superCellToLocalCells;
-
   for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
     vtkIdType superCellId = superCellIdArray->GetValue( i );
@@ -606,9 +575,7 @@ buildSuperCellGraph(
 
   localIndex numLocalSuperCells = superCellToLocalCells.size();
 
-  // -----------------------------------------------------------------------
-  // Step 3: Assign GLOBAL super-cell indices
-  // -----------------------------------------------------------------------
+  // Build super-cell distribution
   array1d< pmet_idx_t > superElemDist( numRanks + 1 );
   pmet_idx_t localSuperCellCount = numLocalSuperCells;
   MpiWrapper::allgather( &localSuperCellCount, 1, superElemDist.data(), 1, comm );
@@ -623,87 +590,137 @@ buildSuperCellGraph(
   }
 
   pmet_idx_t myGlobalStart = superElemDist[rank];
+  pmet_idx_t myGlobalEnd = superElemDist[rank + 1];
 
-  // Build ordered list FIRST, then assign indices
   std::vector< vtkIdType > orderedSuperCellIds;
   orderedSuperCellIds.reserve( numLocalSuperCells );
-
   for( auto const & [superCellId, localCells] : superCellToLocalCells )
   {
     orderedSuperCellIds.push_back( superCellId );
   }
-
-  // Sort to ensure deterministic ordering
   std::sort( orderedSuperCellIds.begin(), orderedSuperCellIds.end() );
 
-  // Now assign global indices in sorted order
   std::map< vtkIdType, pmet_idx_t > superCellIdToGlobalIdx;
   for( pmet_idx_t i = 0; i < numLocalSuperCells; ++i )
   {
-    vtkIdType superCellId = orderedSuperCellIds[i];
-    pmet_idx_t globalIdx = myGlobalStart + i;
-
-    superCellIdToGlobalIdx[superCellId] = globalIdx;
+    superCellIdToGlobalIdx[orderedSuperCellIds[i]] = myGlobalStart + i;
   }
 
-  GEOS_ERROR_IF( superCellIdToGlobalIdx.size() != static_cast< size_t >( numLocalSuperCells ),
-                 "Rank " << rank << ": Mapping size mismatch: "
-                         << superCellIdToGlobalIdx.size() << " != " << numLocalSuperCells );
-
-
   // -----------------------------------------------------------------------
-  // Step 4: Build GLOBAL map (globalCellId -> SuperCellId) via MPI
+  // Step 1: Build mappings for exchange
   // -----------------------------------------------------------------------
+  // Local maps
+  std::unordered_map< pmet_idx_t, vtkIdType > myGlobalCellToSuperCell;
+  myGlobalCellToSuperCell.reserve( numLocalCells );
+
+  std::unordered_map< pmet_idx_t, vtkIdType > myParmetisToVtk;
+  myParmetisToVtk.reserve( numLocalCells );
+
+  pmet_idx_t myParmetisStart = baseElemDist[rank];
+  pmet_idx_t myParmetisEnd = baseElemDist[rank + 1];
+
+  for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
-    std::vector< pmet_idx_t > sendGlobalIds;
-    std::vector< vtkIdType > sendSuperCellIds;
+    vtkIdType vtkGlobalId = cellGlobalIds->GetValue( i );
+    vtkIdType superCellId = superCellIdArray->GetValue( i );
 
-    sendGlobalIds.reserve( numLocalCells );
-    sendSuperCellIds.reserve( numLocalCells );
+    myGlobalCellToSuperCell[vtkGlobalId] = superCellId;
+    myParmetisToVtk[myParmetisStart + i] = vtkGlobalId;
+  }
 
-    for( vtkIdType i = 0; i < numLocalCells; ++i )
+  // -----------------------------------------------------------------------
+  // Step 2: Identify unique ghost ParMETIS indices
+  // -----------------------------------------------------------------------
+  std::set< pmet_idx_t > ghostParmetisSet;
+
+  for( localIndex i = 0; i < baseGraph.size(); ++i )
+  {
+    auto neighbors = baseGraph[i];
+    for( localIndex j = 0; j < neighbors.size(); ++j )
     {
-      sendGlobalIds.push_back( cellGlobalIds->GetValue( i ) );
-      sendSuperCellIds.push_back( superCellIdArray->GetValue( i ) );
-    }
-
-    // Gather counts from all ranks
-    int localCount = sendGlobalIds.size();
-    std::vector< int > allCounts( numRanks );
-    MpiWrapper::allgather( &localCount, 1, allCounts.data(), 1, comm );
-
-
-    std::vector< int > displs( numRanks + 1, 0 );
-    for( int r = 0; r < numRanks; ++r )
-    {
-      displs[r+1] = displs[r] + allCounts[r];
-    }
-
-    int totalMappings = displs[numRanks];
-    {
-      std::vector< pmet_idx_t > allGlobalIds( totalMappings );
-      std::vector< vtkIdType > allSuperCellIds( totalMappings );
-
-      // All-gather the mappings
-      MpiWrapper::allgatherv( sendGlobalIds.data(), localCount,
-                              allGlobalIds.data(), allCounts.data(), displs.data(),
-                              comm );
-
-      MpiWrapper::allgatherv( sendSuperCellIds.data(), localCount,
-                              allSuperCellIds.data(), allCounts.data(), displs.data(),
-                              comm );
-
-      // Build GLOBAL map (includes cells from ALL ranks)
-      globalCellIdToSuperCellId.reserve( totalMappings );
-      for( int i = 0; i < totalMappings; ++i )
+      pmet_idx_t nbrIdx = neighbors[j];
+      if( nbrIdx < myParmetisStart || nbrIdx >= myParmetisEnd )
       {
-        globalCellIdToSuperCellId[allGlobalIds[i]] = allSuperCellIds[i];
+        ghostParmetisSet.insert( nbrIdx );
       }
     }
-  } // Step 4 scope ends here
+  }
 
   // -----------------------------------------------------------------------
-  // Step 5: Exchange super-cell global indices
+  // Step 3: Exchange ghost mappings
+  // -----------------------------------------------------------------------
+  // Prepare local data to send
+  std::vector< pmet_idx_t > localParmetisIndices;
+  std::vector< vtkIdType > localVtkIds;
+  std::vector< vtkIdType > localSuperCellIds;
+
+  localParmetisIndices.reserve( numLocalCells );
+  localVtkIds.reserve( numLocalCells );
+  localSuperCellIds.reserve( numLocalCells );
+
+  for( vtkIdType i = 0; i < numLocalCells; ++i )
+  {
+    localParmetisIndices.push_back( myParmetisStart + i );
+    localVtkIds.push_back( cellGlobalIds->GetValue( i ) );
+    localSuperCellIds.push_back( superCellIdArray->GetValue( i ) );
+  }
+
+  // Gather sizes
+  int localCount = static_cast< int >( localParmetisIndices.size() );
+  array1d< int > allCounts( numRanks );
+  MpiWrapper::allgather( &localCount, 1, allCounts.data(), 1, comm );
+
+  array1d< int > displs( numRanks + 1 );
+  displs[0] = 0;
+  for( int r = 0; r < numRanks; ++r )
+  {
+    displs[r + 1] = displs[r] + allCounts[r];
+  }
+
+  int totalMappings = displs[numRanks];
+
+  // Allocate and gather
+  array1d< pmet_idx_t > allParmetisIndices( totalMappings );
+  array1d< vtkIdType > allVtkIds( totalMappings );
+  array1d< vtkIdType > allSuperCellIds( totalMappings );
+
+  MpiWrapper::allgatherv( localParmetisIndices.data(), localCount,
+                          allParmetisIndices.data(), allCounts.data(), displs.data(), comm );
+  MpiWrapper::allgatherv( localVtkIds.data(), localCount,
+                          allVtkIds.data(), allCounts.data(), displs.data(), comm );
+  MpiWrapper::allgatherv( localSuperCellIds.data(), localCount,
+                          allSuperCellIds.data(), allCounts.data(), displs.data(), comm );
+
+  // Build lookup tables from gathered data (only for ghosts + local)
+  std::unordered_map< pmet_idx_t, vtkIdType > parmetisToVtk;
+  std::unordered_map< vtkIdType, vtkIdType > vtkToSuperCell;
+
+  parmetisToVtk.reserve( ghostParmetisSet.size() + numLocalCells );
+  vtkToSuperCell.reserve( ghostParmetisSet.size() + numLocalCells );
+
+  for( int i = 0; i < totalMappings; ++i )
+  {
+    pmet_idx_t parmetisIdx = allParmetisIndices[i];
+
+    // Only store if it's local or a ghost we need
+    if( (parmetisIdx >= myParmetisStart && parmetisIdx < myParmetisEnd) ||
+        ghostParmetisSet.count( parmetisIdx ) > 0 )
+    {
+      vtkIdType vtkId = allVtkIds[i];
+      vtkIdType superCellId = allSuperCellIds[i];
+
+      parmetisToVtk[parmetisIdx] = vtkId;
+      vtkToSuperCell[vtkId] = superCellId;
+    }
+  }
+
+  // Cleanup
+  allParmetisIndices.clear();
+  allVtkIds.clear();
+  allSuperCellIds.clear();
+
+  // -----------------------------------------------------------------------
+  // Step 4: Exchange super-cell global indices
   // -----------------------------------------------------------------------
   std::vector< vtkIdType > sendSCIds;
   std::vector< pmet_idx_t > sendSCGlobalIndices;
@@ -714,407 +731,173 @@ buildSuperCellGraph(
     sendSCGlobalIndices.push_back( gIdx );
   }
 
-  int localSCCount = sendSCIds.size();
-  std::vector< int > allSCCounts( numRanks );
+  int localSCCount = static_cast< int >( sendSCIds.size() );
+  array1d< int > allSCCounts( numRanks );
   MpiWrapper::allgather( &localSCCount, 1, allSCCounts.data(), 1, comm );
 
-  std::vector< int > scDispls( numRanks + 1, 0 );
+  array1d< int > scDispls( numRanks + 1 );
+  scDispls[0] = 0;
   for( int r = 0; r < numRanks; ++r )
   {
-    scDispls[r+1] = scDispls[r] + allSCCounts[r];
+    scDispls[r + 1] = scDispls[r] + allSCCounts[r];
   }
 
   int totalSCMappings = scDispls[numRanks];
-  std::vector< vtkIdType > allSCIds( totalSCMappings );
-  std::vector< pmet_idx_t > allSCGlobalIndices( totalSCMappings );
+
+  array1d< vtkIdType > allSCIds( totalSCMappings );
+  array1d< pmet_idx_t > allSCGlobalIndices( totalSCMappings );
 
   MpiWrapper::allgatherv( sendSCIds.data(), localSCCount,
-                          allSCIds.data(), allSCCounts.data(), scDispls.data(),
-                          comm );
-
+                          allSCIds.data(), allSCCounts.data(), scDispls.data(), comm );
   MpiWrapper::allgatherv( sendSCGlobalIndices.data(), localSCCount,
-                          allSCGlobalIndices.data(), allSCCounts.data(), scDispls.data(),
-                          comm );
+                          allSCGlobalIndices.data(), allSCCounts.data(), scDispls.data(), comm );
 
-  // Add ALL super-cell mappings to our local map
+  // Update local map with all super-cell mappings
   for( int i = 0; i < totalSCMappings; ++i )
   {
     superCellIdToGlobalIdx[allSCIds[i]] = allSCGlobalIndices[i];
   }
 
-  // Verify coverage
-  pmet_idx_t totalGlobalSuperCells = superElemDist[numRanks];
-  std::set< pmet_idx_t > assignedIndices;
+  // -----------------------------------------------------------------------
+  // Step 5: Build super-cell graph edges
+  // -----------------------------------------------------------------------
+  array1d< pmet_idx_t > superVertexWeights( numLocalSuperCells );
+  std::vector< std::set< pmet_idx_t > > neighborSets( numLocalSuperCells );
 
-  for( int i = 0; i < totalSCMappings; ++i )
+  for( localIndex localSuperIdx = 0; localSuperIdx < numLocalSuperCells; ++localSuperIdx )
   {
-    assignedIndices.insert( allSCGlobalIndices[i] );
+    vtkIdType superCellId = orderedSuperCellIds[localSuperIdx];
+    auto const & localCells = superCellToLocalCells.at( superCellId );
+
+    auto itWeight = info.vertexWeights.find( superCellId );
+    superVertexWeights[localSuperIdx] = (itWeight != info.vertexWeights.end())
+                                        ? itWeight->second : localCells.size();
+
+    for( vtkIdType cellLocalIdx : localCells )
+    {
+      auto neighbors = baseGraph[cellLocalIdx];
+      for( localIndex j = 0; j < neighbors.size(); ++j )
+      {
+        pmet_idx_t nbrParmetis = neighbors[j];
+
+        auto itVtk = parmetisToVtk.find( nbrParmetis );
+        if( itVtk == parmetisToVtk.end() )
+          continue;
+
+        vtkIdType nbrVtkId = itVtk->second;
+
+        auto itSC = vtkToSuperCell.find( nbrVtkId );
+        if( itSC == vtkToSuperCell.end() )
+          continue;
+
+        vtkIdType nbrSuperCellId = itSC->second;
+        if( nbrSuperCellId == superCellId )
+          continue;  // Skip self-loops
+
+        auto itGlobal = superCellIdToGlobalIdx.find( nbrSuperCellId );
+        if( itGlobal != superCellIdToGlobalIdx.end() )
+        {
+          neighborSets[localSuperIdx].insert( itGlobal->second );
+        }
+      }
+    }
   }
 
-  GEOS_LOG_RANK_0( "Global super-cell index coverage: "
-                   << assignedIndices.size() << " / " << totalGlobalSuperCells );
+  // -----------------------------------------------------------------------
+  // Step 6: Symmetrize
+  // -----------------------------------------------------------------------
+  // Collect ALL edges to send (to any rank)
+  std::vector< pmet_idx_t > myEdgesSrc;
+  std::vector< pmet_idx_t > myEdgesDst;
 
-// -----------------------------------------------------------------------
-// Step 6: Build super-cell graph edges
-// -----------------------------------------------------------------------
-
-  GEOS_LOG_RANK_0( "Building super-cell graph edges..." );
-
-// -----------------------------------------------------------------------
-// Step 6.1: Build Index Translator AND Step 6.4: Build edges
-// -----------------------------------------------------------------------
-
-  { // START BIG SCOPE
-
-    std::unordered_map< pmet_idx_t, vtkIdType > parmetisToVtkId;
-    std::unordered_map< vtkIdType, pmet_idx_t > vtkToParmetisId;
-
-    // Build translator maps
+  for( localIndex i = 0; i < numLocalSuperCells; ++i )
+  {
+    pmet_idx_t globalI = myGlobalStart + i;
+    for( pmet_idx_t nbrIdx : neighborSets[i] )
     {
-      pmet_idx_t myParmetisStart = baseElemDist[rank];
-
-      for( vtkIdType i = 0; i < numLocalCells; ++i )
+      if( nbrIdx < myGlobalStart || nbrIdx >= myGlobalEnd )
       {
-        pmet_idx_t parmetisIdx = myParmetisStart + i;
-        vtkIdType vtkGlobalId = cellGlobalIds->GetValue( i );
-
-        parmetisToVtkId[parmetisIdx] = vtkGlobalId;
-        vtkToParmetisId[vtkGlobalId] = parmetisIdx;
+        myEdgesSrc.push_back( nbrIdx );  // destination of reverse edge
+        myEdgesDst.push_back( globalI ); // source of reverse edge
       }
-
-      // Exchange mappings via AllGather
-      std::vector< pmet_idx_t > sendParmetisIndices;
-      std::vector< vtkIdType > sendVtkIds;
-
-      sendParmetisIndices.reserve( numLocalCells );
-      sendVtkIds.reserve( numLocalCells );
-
-      for( vtkIdType i = 0; i < numLocalCells; ++i )
-      {
-        sendParmetisIndices.push_back( myParmetisStart + i );
-        sendVtkIds.push_back( cellGlobalIds->GetValue( i ) );
-      }
-
-      int translatorLocalCount = numLocalCells;
-      std::vector< int > translatorCounts( numRanks );
-      MpiWrapper::allgather( &translatorLocalCount, 1,
-                             translatorCounts.data(), 1, comm );
-
-      std::vector< int > translatorDispls( numRanks + 1, 0 );
-      for( int r = 0; r < numRanks; ++r )
-      {
-        translatorDispls[r+1] = translatorDispls[r] + translatorCounts[r];
-      }
-
-      int translatorTotalMappings = translatorDispls[numRanks];
-
-      // Nested scope for temporary vectors
-      {
-        std::vector< pmet_idx_t > allParmetisIndices( translatorTotalMappings );
-        std::vector< vtkIdType > allVtkIds( translatorTotalMappings );
-
-        MpiWrapper::allgatherv( sendParmetisIndices.data(), translatorLocalCount,
-                                allParmetisIndices.data(), translatorCounts.data(),
-                                translatorDispls.data(), comm );
-
-        MpiWrapper::allgatherv( sendVtkIds.data(), translatorLocalCount,
-                                allVtkIds.data(), translatorCounts.data(),
-                                translatorDispls.data(), comm );
-
-        parmetisToVtkId.reserve( translatorTotalMappings );
-        vtkToParmetisId.reserve( translatorTotalMappings );
-
-        for( int i = 0; i < translatorTotalMappings; ++i )
-        {
-          parmetisToVtkId[allParmetisIndices[i]] = allVtkIds[i];
-          vtkToParmetisId[allVtkIds[i]] = allParmetisIndices[i];
-        }
-      }
-
-      pmet_idx_t totalCells = baseElemDist[numRanks];
-      GEOS_ERROR_IF( static_cast< pmet_idx_t >( parmetisToVtkId.size() ) != totalCells,
-                     "Rank " << rank << ": Translator size mismatch: "
-                             << parmetisToVtkId.size() << " != " << totalCells );
     }
+  }
 
-    // -----------------------------------------------------------------------
-    // Step 6.2: Verify base graph index range
-    // -----------------------------------------------------------------------
+  int myEdgeCount = static_cast< int >( myEdgesSrc.size() );
+
+  // Gather counts from all ranks
+  array1d< int > allEdgeCounts( numRanks );
+  MpiWrapper::allgather( &myEdgeCount, 1, allEdgeCounts.data(), 1, comm );
+
+  // Compute displacements for symmetrization
+  array1d< int > edgeDispls( numRanks + 1 );
+  edgeDispls[0] = 0;
+  for( int r = 0; r < numRanks; ++r )
+  {
+    edgeDispls[r + 1] = edgeDispls[r] + allEdgeCounts[r];
+  }
+
+  int totalEdges = edgeDispls[numRanks];
+
+  // Gather all edges
+  array1d< pmet_idx_t > allEdgeSrc( totalEdges > 0 ? totalEdges : 1 );
+  array1d< pmet_idx_t > allEdgeDst( totalEdges > 0 ? totalEdges : 1 );
+
+  if( myEdgeCount > 0 )
+  {
+    MpiWrapper::allgatherv( myEdgesSrc.data(), myEdgeCount,
+                            allEdgeSrc.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
+    MpiWrapper::allgatherv( myEdgesDst.data(), myEdgeCount,
+                            allEdgeDst.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
+  }
+  else
+  {
+    // Handle empty send
+    pmet_idx_t dummy = 0;
+    MpiWrapper::allgatherv( &dummy, 0,
+                            allEdgeSrc.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
+    MpiWrapper::allgatherv( &dummy, 0,
+                            allEdgeDst.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
+  }
+
+  // Add reverse edges for those I own
+  int reverseEdgesAdded = 0;
+  for( int i = 0; i < totalEdges; ++i )
+  {
+    pmet_idx_t dst = allEdgeSrc[i];
+    pmet_idx_t src = allEdgeDst[i];
+
+    if( dst >= myGlobalStart && dst < myGlobalEnd )
     {
-      pmet_idx_t totalCells = baseElemDist[numRanks];
-      pmet_idx_t localMinNeighbor = std::numeric_limits< pmet_idx_t >::max();
-      pmet_idx_t localMaxNeighbor = 0;
-
-      for( localIndex i = 0; i < baseGraph.size(); ++i )
+      localIndex localIdx = dst - myGlobalStart;
+      if( neighborSets[localIdx].insert( src ).second )
       {
-        auto neighbors = baseGraph[i];
-        for( localIndex j = 0; j < neighbors.size(); ++j )
-        {
-          pmet_idx_t neighborIdx = neighbors[j];
-          localMinNeighbor = std::min( localMinNeighbor, neighborIdx );
-          localMaxNeighbor = std::max( localMaxNeighbor, neighborIdx );
-        }
-      }
-
-      pmet_idx_t globalMinNeighbor = MpiWrapper::min( localMinNeighbor, comm );
-      pmet_idx_t globalMaxNeighbor = MpiWrapper::max( localMaxNeighbor, comm );
-
-      GEOS_ERROR_IF( globalMaxNeighbor >= totalCells || globalMinNeighbor < 0,
-                     "Base graph contains invalid ParMETIS indices! "
-                     << "Range [" << globalMinNeighbor << ", " << globalMaxNeighbor
-                     << "] exceeds valid ParMETIS range [0, " << (totalCells - 1) << "]" );
-
-    }
-
-    // -----------------------------------------------------------------------
-    // Step 6.3: Initialize super-cell data structures
-    // -----------------------------------------------------------------------
-    superVertexWeights.resize( numLocalSuperCells );
-    std::vector< std::set< pmet_idx_t > > neighborSets( numLocalSuperCells );
-
-    // Statistics
-    localIndex ghostNeighborCount = 0;
-    localIndex localNeighborCount = 0;
-    localIndex selfLoopCount = 0;
-    localIndex translationFailures = 0;
-    localIndex mapLookupFailures = 0;
-
-    pmet_idx_t myStart = superElemDist[rank];
-    pmet_idx_t myEnd = superElemDist[rank + 1];
-
-    // -----------------------------------------------------------------------
-    // Step 6.4: Build super-cell edges using correct index translation
-    // -----------------------------------------------------------------------
-    for( localIndex localSuperIdx = 0; localSuperIdx < numLocalSuperCells; ++localSuperIdx )
-    {
-      vtkIdType superCellId = orderedSuperCellIds[localSuperIdx];
-      auto const & localCells = superCellToLocalCells.at( superCellId );
-
-      // Set vertex weight
-      auto itWeight = info.vertexWeights.find( superCellId );
-      superVertexWeights[localSuperIdx] = (itWeight != info.vertexWeights.end())
-                                      ? itWeight->second
-                                      : localCells.size();
-
-      // Collect neighbors from all 3D cells in this super-cell
-      for( vtkIdType cellLocalIdx : localCells )
-      {
-        auto neighbors = baseGraph[cellLocalIdx];
-
-        for( localIndex j = 0; j < neighbors.size(); ++j )
-        {
-          pmet_idx_t neighborParmetisIdx = neighbors[j];
-
-          // Translate ParMETIS index -> VTK global ID
-          auto itTranslate = parmetisToVtkId.find( neighborParmetisIdx );
-
-          if( itTranslate == parmetisToVtkId.end() )
-          {
-            translationFailures++;
-            if( translationFailures <= 3 )
-            {
-              GEOS_ERROR( "Rank " << rank << ": ParMETIS index " << neighborParmetisIdx
-                                  << " not in translation map!" );
-            }
-            continue;
-          }
-
-          vtkIdType neighborVtkGlobalId = itTranslate->second;
-
-          // Look up neighbor's SuperCellId using VTK global ID
-          auto itSuperCell = globalCellIdToSuperCellId.find( neighborVtkGlobalId );
-
-          if( itSuperCell == globalCellIdToSuperCellId.end() )
-          {
-            mapLookupFailures++;
-            if( mapLookupFailures <= 3 )
-            {
-              GEOS_LOG( "Rank " << rank << ": VTK global ID " << neighborVtkGlobalId
-                                << " (from ParMETIS idx " << neighborParmetisIdx
-                                << ") not in globalCellIdToSuperCellId map!" );
-            }
-            continue;
-          }
-
-          vtkIdType neighborSuperCellId = itSuperCell->second;
-
-          // Skip self-loops
-          if( neighborSuperCellId == superCellId )
-          {
-            selfLoopCount++;
-            continue;
-          }
-
-          // Convert neighbor's SuperCellId -> global super-cell index
-          auto itGlobalIdx = superCellIdToGlobalIdx.find( neighborSuperCellId );
-
-          if( itGlobalIdx == superCellIdToGlobalIdx.end() )
-          {
-            mapLookupFailures++;
-            if( mapLookupFailures <= 3 )
-            {
-              GEOS_LOG( "Rank " << rank << ": Neighbor SuperCellId " << neighborSuperCellId
-                                << " not in superCellIdToGlobalIdx map!" );
-            }
-            continue;
-          }
-
-          pmet_idx_t neighborGlobalSuperIdx = itGlobalIdx->second;
-
-          // Add edge
-          neighborSets[localSuperIdx].insert( neighborGlobalSuperIdx );
-
-          // Track local vs ghost neighbors
-          if( neighborGlobalSuperIdx >= myStart && neighborGlobalSuperIdx < myEnd )
-          {
-            localNeighborCount++;
-          }
-          else
-          {
-            ghostNeighborCount++;
-          }
-        }
+        reverseEdgesAdded++;
       }
     }
-
-    // -----------------------------------------------------------------------
-    // Step 6.5: Report statistics
-    // -----------------------------------------------------------------------
-
-    localIndex totalUniqueNeighbors = 0;
-    for( auto const & nset : neighborSets )
-    {
-      totalUniqueNeighbors += nset.size();
-    }
-
-    vtkIdType globalTranslationFailures = MpiWrapper::sum(
-      static_cast< vtkIdType >( translationFailures ), comm );
-    vtkIdType globalMapFailures = MpiWrapper::sum(
-      static_cast< vtkIdType >( mapLookupFailures ), comm );
-
-    GEOS_ERROR_IF( globalTranslationFailures > 0,
-                   "Graph building failed: " << globalTranslationFailures
-                                             << " ParMETIS indices could not be translated to VTK IDs!" );
-
-    GEOS_ERROR_IF( globalMapFailures > 0,
-                   "Graph building failed: " << globalMapFailures
-                                             << " lookups failed in super-cell mapping!" );
-
-
-
-    // -----------------------------------------------------------------------
-    // Step 6.6: Symmetrize graph BEFORE building ArrayOfArrays
-    // -----------------------------------------------------------------------
-
-    { // Scope for symmetrization vectors
-      // Pass 1: Collect all LOCAL edges (i -> j where we own i)
-      std::vector< pmet_idx_t > localSrc, localDst;
-
-      for( localIndex i = 0; i < numLocalSuperCells; ++i )
-      {
-        pmet_idx_t globalI = myStart + i;
-
-        for( pmet_idx_t neighborIdx : neighborSets[i] )
-        {
-          localSrc.push_back( globalI );
-          localDst.push_back( neighborIdx );
-        }
-      }
-
-      // Gather edge counts
-      int localEdgeCount = static_cast< int >( localSrc.size() );
-      std::vector< int > edgeCountsSymm( numRanks );
-      MpiWrapper::allgather( &localEdgeCount, 1, edgeCountsSymm.data(), 1, comm );
-
-      std::vector< int > displsSymm( numRanks + 1, 0 );
-      for( int r = 0; r < numRanks; ++r )
-      {
-        displsSymm[r+1] = displsSymm[r] + edgeCountsSymm[r];
-      }
-
-      int totalEdgesSymm = displsSymm[numRanks];
-
-      // Nested scope for the large all-gathered vectors
-      {
-        std::vector< pmet_idx_t > allSrcNodes( totalEdgesSymm );
-        std::vector< pmet_idx_t > allDstNodes( totalEdgesSymm );
-
-        // Gather ALL edges from ALL ranks
-        MpiWrapper::allgatherv( localSrc.data(), localEdgeCount,
-                                allSrcNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
-                                comm );
-        MpiWrapper::allgatherv( localDst.data(), localEdgeCount,
-                                allDstNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
-                                comm );
-
-        // Pass 2: Add REVERSE edges to neighborSets
-        // For each edge (A -> B), ensure edge (B -> A) exists on rank owning B
-
-        int reverseEdgesAdded = 0;
-
-        for( int e = 0; e < totalEdgesSymm; ++e )
-        {
-          pmet_idx_t src = allSrcNodes[e]; // Source of original edge
-          pmet_idx_t dst = allDstNodes[e]; // Destination of original edge
-
-          // Check if we OWN the DESTINATION (where reverse edge should be added)
-          if( dst >= myStart && dst < myEnd )
-          {
-            localIndex localDstIdx = dst - myStart;
-
-            // Add REVERSE edge: dst -> src
-            if( neighborSets[localDstIdx].insert( src ).second )
-            {
-              reverseEdgesAdded++;
-            }
-          }
-        }
-
-        if( reverseEdgesAdded > 0 )
-        {
-          GEOS_LOG_RANK( "Added " << reverseEdgesAdded << " reverse edges for symmetry" );
-        }
-      }
-    }
-
-
-    // -----------------------------------------------------------------------
-    // Step 7: Build ArrayOfArrays from SYMMETRIZED neighborSets
-    // -----------------------------------------------------------------------
-
-    // Recompute total edges after symmetrization
-    localIndex totalSymEdgesLocal = 0;
-    for( localIndex i = 0; i < numLocalSuperCells; ++i )
-    {
-      totalSymEdgesLocal += neighborSets[i].size();
-    }
-
-    // Build offsets
-    array1d< pmet_idx_t > offsets( numLocalSuperCells + 1 );
-    offsets[0] = 0;
-    for( localIndex i = 0; i < numLocalSuperCells; ++i )
-    {
-      offsets[i + 1] = offsets[i] + neighborSets[i].size();
-    }
-
-    // Build superGraph
-    superGraph.resizeFromOffsets( numLocalSuperCells, offsets.data() );
-
-    // Populate from symmetrized neighborSets
-    for( localIndex i = 0; i < numLocalSuperCells; ++i )
-    {
-      superGraph.appendToArray( i, neighborSets[i].begin(), neighborSets[i].end() );
-    }
-
-    // Verify strict allocation
-    GEOS_ERROR_IF( superGraph.valueCapacity() != offsets[numLocalSuperCells],
-                   "Graph allocation mismatch after symmetrization: capacity="
-                   << superGraph.valueCapacity() << ", expected=" << offsets[numLocalSuperCells] );
-
-  } // END BIG SCOPE - parmetisToVtkId, vtkToParmetisId, neighborSets freed here
+  }
 
   // -----------------------------------------------------------------------
-  // Step 8: Statistics
+  // Step 7: Build final ArrayOfArrays
+  // -----------------------------------------------------------------------
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > superGraph;
+  array1d< pmet_idx_t > offsets( numLocalSuperCells + 1 );
+  offsets[0] = 0;
+
+  for( localIndex i = 0; i < numLocalSuperCells; ++i )
+  {
+    offsets[i + 1] = offsets[i] + neighborSets[i].size();
+  }
+
+  superGraph.resizeFromOffsets( numLocalSuperCells, offsets.data() );
+
+  for( localIndex i = 0; i < numLocalSuperCells; ++i )
+  {
+    superGraph.appendToArray( i, neighborSets[i].begin(), neighborSets[i].end() );
+  }
+
+  // -----------------------------------------------------------------------
+  // Step 8: Statistics and validation
   // -----------------------------------------------------------------------
 
   localIndex totalSuperEdges = 0;
@@ -1129,22 +912,23 @@ buildSuperCellGraph(
     totalBaseEdges += baseGraph.sizeOfArray( i );
   }
 
-  vtkIdType globalSuperCells = MpiWrapper::sum( static_cast< vtkIdType >(numLocalSuperCells), comm );
-  vtkIdType globalSuperEdges = MpiWrapper::sum( static_cast< vtkIdType >(totalSuperEdges), comm );
-  vtkIdType globalBaseCells = MpiWrapper::sum( static_cast< vtkIdType >(numLocalCells), comm );
-  vtkIdType globalBaseEdges = MpiWrapper::sum( static_cast< vtkIdType >(totalBaseEdges), comm );
-
+  vtkIdType globalSuperCells = MpiWrapper::sum(
+    static_cast< vtkIdType >(numLocalSuperCells), comm );
+  vtkIdType globalSuperEdges = MpiWrapper::sum(
+    static_cast< vtkIdType >(totalSuperEdges), comm );
+  vtkIdType globalBaseCells = MpiWrapper::sum(
+    static_cast< vtkIdType >(numLocalCells), comm );
+  vtkIdType globalBaseEdges = MpiWrapper::sum(
+    static_cast< vtkIdType >(totalBaseEdges), comm );
 
   GEOS_LOG_RANK_0( "SUPER-CELL GRAPH:" );
-  GEOS_LOG_RANK_0( "  Super-graph nodes:     " << std::setw( 10 ) << globalSuperCells );
-  GEOS_LOG_RANK_0( "  Super-graph edges:     " << std::setw( 10 ) << globalSuperEdges );
-  GEOS_LOG_RANK_0( "  Base graph nodes:      " << std::setw( 10 ) << globalBaseCells );
-  GEOS_LOG_RANK_0( "  Base graph edges:      " << std::setw( 10 ) << globalBaseEdges );
-  GEOS_LOG_RANK_0( "  Node reduction:        " << std::setw( 10 ) << (globalBaseCells - globalSuperCells) << " cells" );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Super-graph nodes:     {:>10L}", globalSuperCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Super-graph edges:     {:>10L}", globalSuperEdges ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph nodes:      {:>10L}", globalBaseCells ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph edges:      {:>10L}", globalBaseEdges ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Node reduction:        {:>10L} cells", globalBaseCells - globalSuperCells ) );
 
-  // -----------------------------------------------------------------------
-  // Step 9: Validation
-  // -----------------------------------------------------------------------
+  // Validation
   pmet_idx_t minNeighbor = std::numeric_limits< pmet_idx_t >::max();
   pmet_idx_t maxNeighbor = 0;
   localIndex outOfRangeCount = 0;
@@ -1167,21 +951,21 @@ buildSuperCellGraph(
         outOfRangeCount++;
         if( outOfRangeCount <= 3 )
         {
-          GEOS_LOG_RANK( " ERROR: Super-cell " << i
-                                               << " has out-of-range neighbor " << neighborIdx
-                                               << " (valid: [0, " << globalSuperCells << "))" );
+          GEOS_LOG_RANK( GEOS_FMT( "ERROR: Super-cell {} has out-of-range neighbor {} (valid range: [0, {}))",
+                                   i, neighborIdx, globalSuperCells ) );
         }
       }
     }
   }
-  vtkIdType globalOutOfRange = MpiWrapper::sum( static_cast< vtkIdType >(outOfRangeCount), comm );
+
+  vtkIdType globalOutOfRange = MpiWrapper::sum(
+    static_cast< vtkIdType >(outOfRangeCount), comm );
   GEOS_ERROR_IF( globalOutOfRange > 0,
-                 "Super-cell graph has " << globalOutOfRange << " out-of-range neighbor indices!" );
+                 GEOS_FMT( "Super-cell graph has {} out-of-range neighbor indices!",
+                           globalOutOfRange ) );
 
   return std::make_pair( std::move( superGraph ), std::move( superVertexWeights ) );
 }
-
-
 
 void validateSuperCellGraph(
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const & superGraph,
@@ -1302,7 +1086,6 @@ void validateSuperCellGraph(
   // Check 6: Graph symmetry (local edges only)
   // -----------------------------------------------------------------------
   GEOS_LOG_RANK_0( "Checking local graph symmetry..." );
-
   {
     std::unordered_set< uint64_t > localOutgoingNeighbors;
 
@@ -1349,6 +1132,7 @@ void validateSuperCellGraph(
   }
 
 }
+
 
 // =============================================================================================
 // SECTION 5: PARTITION UNPACKING (after ParMETIS)
