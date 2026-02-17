@@ -284,6 +284,35 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   return area;
 }
 
+//Compute LSQ mat per cell for lsq interpolation 
+template< typename MATRIX_TYPE, typename CELL_TYPE >
+GEOS_HOST_DEVICE
+auto PrecomputeLSQInterpolant( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, 
+                              MATRIX_TYPE&& lsq_op )
+{
+
+    MATRIX_TYPE ntn, n, lsq_op;
+    n[ 0 ][ 0 ] = normals[ 0 ][ 0 ];
+    n[ 0 ][ 1 ] = normals[ 0 ][ 1 ];
+    n[ 0 ][ 2 ] = normals[ 0 ][ 2 ];
+
+    n[ 1 ][ 0 ] = normals[ 1 ][ 0 ];
+    n[ 1 ][ 1 ] = normals[ 1 ][ 1 ];
+    n[ 1 ][ 2 ] = normals[ 1 ][ 2 ];
+
+    n[ 2 ][ 0 ] = normals[ 2 ][ 0 ];
+    n[ 2 ][ 1 ] = normals[ 2 ][ 1 ];
+    n[ 2 ][ 2 ] = normals[ 2 ][ 2 ];
+    // N is nfaces x 3 matrices of normal
+    // (N^T N)^(-1)*N^T is the interpolant
+    LvArray::tensorOps::Rij_add_AikAjk<3, CELL_TYPE::NFACE >(ntn, n);
+    LvArray::tensorOps::symInvert(lsq_op_0, ntn);
+    LvArray::tensorOps::Rij_add_AikBjk(lsq_op,lsq_op_0,n);
+
+    return lsq_op; 
+}
+
+
 /**
  * @brief Change the orientation of the input vector to be consistent in a global sense.
  * @tparam NORMAL_TYPE type of @p normal
