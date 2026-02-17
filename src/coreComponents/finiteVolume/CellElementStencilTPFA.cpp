@@ -122,11 +122,11 @@ CellElementStencilTPFAWrapper::
 
 void
 CellElementStencilTPFAWrapper::computeVelocity(
-                               localIndex iconn, localIndex ip,
-                               const real64 (&phaseFlux),
-                               arraySlice1d< real64 const > const (&cellCartDim)[2],
-                               localIndex const (&ghostRank)[2],
-                               ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
+  localIndex iconn, localIndex ip,
+  const real64 (&phaseFlux),
+  arraySlice1d< real64 const > const (&cellCartDim)[2],
+  localIndex const (&ghostRank)[2],
+  ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
 {
 
   real64 surface[2];
@@ -170,8 +170,8 @@ CellElementStencilTPFAWrapper::computeVelocity(
 }
 
 void
-CellElementStencilTPFAWrapper::initVelocity(   localIndex iconn,
-                            ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
+CellElementStencilTPFAWrapper::initVelocity( localIndex iconn,
+                                             ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity )
 {
   for( localIndex i = 0; i < 2; i++ )
   {

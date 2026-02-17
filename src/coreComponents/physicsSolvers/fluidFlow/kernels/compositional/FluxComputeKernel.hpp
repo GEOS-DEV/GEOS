@@ -391,15 +391,15 @@ public:
           {
             if constexpr (std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value) {
               m_stencilWrapper.computeVelocity( m_stencilWrapper,
-                                             iconn, ip,
-                                             phaseFlux,
-                                             //  {m_globalCellDims[seri[0]][sesri[0]][sei[0]],
-                                             // m_globalCellDims[seri[1]][sesri[1]][sei[1]]},
-                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
-                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},//TODO replace once decided on globalDims
-                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
-                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},
-                                             m_phaseVelocity );
+                                                iconn, ip,
+                                                phaseFlux,
+                                                //  {m_globalCellDims[seri[0]][sesri[0]][sei[0]],
+                                                // m_globalCellDims[seri[1]][sesri[1]][sei[1]]},
+                                                {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                                 m_ghostRank[seri[1]][sesri[1]][sei[1]]},//TODO replace once decided on globalDims
+                                                {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                                 m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                                                m_phaseVelocity );
             }
           }
 

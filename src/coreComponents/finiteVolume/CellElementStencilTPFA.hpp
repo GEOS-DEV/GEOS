@@ -34,15 +34,15 @@ class CellElementStencilTPFAWrapper : public StencilWrapperBase< TwoPointStencil
 public:
 
   void
-  computeVelocity( 
-                                 localIndex iconn, localIndex ip,
-                                 const real64 (&phaseFlux),
-                                 arraySlice1d< real64 const > const (&cellCartDim)[2],
-                                 localIndex const (&ghostRank)[2],
-                                 ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+  computeVelocity(
+    localIndex iconn, localIndex ip,
+    const real64 (&phaseFlux),
+    arraySlice1d< real64 const > const (&cellCartDim)[2],
+    localIndex const (&ghostRank)[2],
+    ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
   void
   initVelocity( localIndex iconn,
-                              ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
+                ElementRegionManager::ElementView< arrayView3d< real64 > > const & phaseVelocity );
 
   /// Coefficient view accessory type
   template< typename VIEWTYPE >

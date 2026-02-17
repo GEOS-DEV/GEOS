@@ -4,6 +4,7 @@ Builds unit test for fluid flow solver statistics
 #]]
 
 set( fluidFlow_gtest_tests
+     testVelocityReconstruction.cpp
      testFlowStatistics.cpp )
 
 set( dependencyList mainInterface testingUtilities gtest ${parallelDeps} )
