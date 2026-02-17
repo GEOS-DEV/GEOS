@@ -44,6 +44,8 @@ namespace geos
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
+class CellElementStencilTPFAWrapper;
+
 /**
  * @class FluxComputeKernel
  * @tparam NUM_COMP number of fluid components
@@ -174,6 +176,17 @@ public:
     stackArray2d< real64, maxNumElems * numEqn * maxStencilSize * numDof > localFluxJacobian;
   };
 
+/**
+ * @brief Initialize velocity container
+ * @param[in] iconn the connection index
+ */
+  GEOS_HOST_DEVICE
+  inline
+  void initVelocity( localIndex const iconn ) const
+  {
+    if constexpr ( std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value)
+      m_stencilWrapper.initVelocity( m_stencilWrapper, iconn, m_phaseVelocity );
+  }
 
   /**
    * @brief Getter for the stencil size at this connection
@@ -373,6 +386,23 @@ public:
                                        phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC, dPhaseFlux_dTrans,
                                        compFlux, dCompFlux_dP, dCompFlux_dC, dCompFlux_dTrans );
 
+
+          if( m_kernelFlags.isSet( KernelFlags::VelocityCompute ))
+          {
+            if constexpr (std::is_same< CellElementStencilTPFAWrapper, STENCILWRAPPER >::value) {
+              m_stencilWrapper.computeVelocity( m_stencilWrapper,
+                                             iconn, ip,
+                                             phaseFlux,
+                                             //  {m_globalCellDims[seri[0]][sesri[0]][sei[0]],
+                                             // m_globalCellDims[seri[1]][sesri[1]][sei[1]]},
+                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},//TODO replace once decided on globalDims
+                                             {m_ghostRank[seri[0]][sesri[0]][sei[0]],
+                                              m_ghostRank[seri[1]][sesri[1]][sei[1]]},
+                                             m_phaseVelocity );
+            }
+          }
+
           // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
           // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
           compFluxKernelOp( ip, m_kernelFlags.isSet( KernelFlags::CheckPhasePresenceInGravity ),
@@ -477,6 +507,10 @@ public:
           KERNEL_TYPE const & kernelComponent )
   {
     GEOS_MARK_FUNCTION;
+    //velocity has to be reset on all faces prior computing flux. (to be specific on all stencil extends)
+    forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn ) {
+      kernelComponent.initVelocity( iconn );
+    } );
     forAll< POLICY >( numConnections, [=] GEOS_HOST_DEVICE ( localIndex const iconn )
     {
       typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),

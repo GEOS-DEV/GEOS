@@ -39,7 +39,7 @@ using array3dLayoutPhase_dC = array3d< real64, compflow::LAYOUT_PHASE_DC >;
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
 using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
-
+using array3dLayoutPhase = array3d< real64, compflow::LAYOUT_PHASE_VELOCITY >;
 DECLARE_FIELD( globalCompDensity,
                "globalCompDensity",
                array2dLayoutComp,
@@ -88,7 +88,13 @@ DECLARE_FIELD( globalCompFraction_n,
 //               NOPLOT,
 //               NO_WRITE,
 //               "Global component fraction updates at the previous sequential iteration" );
-
+DECLARE_FIELD( phaseVelocity,
+               "cellCenterPhaseVelocity",
+               array3dLayoutPhase,
+               1,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Molar/Mass weighted phase velocities reconstructed at cell center" );
 DECLARE_FIELD( bcGlobalCompFraction,
                "bcGlobalCompFraction",
                array2dLayoutComp,

@@ -257,6 +257,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     kernelFlags.set( KernelFlags::TotalMassEquation );
   if( m_gravityDensityScheme == GravityDensityScheme::PhasePresence )
     kernelFlags.set( KernelFlags::CheckPhasePresenceInGravity );
+  if( m_hasVelocityComputed )
+    kernelFlags.set( KernelFlags::VelocityCompute );
+
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
@@ -417,6 +420,8 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
     kernelFlags.set( KernelFlags::CapPressure );
   if( m_useTotalMassEquation )
     kernelFlags.set( KernelFlags::TotalMassEquation );
+  if( m_hasVelocityComputed )
+    kernelFlags.set( KernelFlags::VelocityCompute );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,

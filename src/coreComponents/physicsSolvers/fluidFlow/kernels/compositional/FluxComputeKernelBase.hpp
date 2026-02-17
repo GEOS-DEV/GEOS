@@ -58,7 +58,9 @@ enum class KernelFlags
   /// Flag indicating whether IHU is used or not
   IHU = 1 << 6, // 64
   /// Flag indicating whether HU 2-phase simplified version is used or not
-  HU2PH = 1 << 7 // 128
+  HU2PH = 1 << 7, // 128
+  /// Flag indicting we must compute cell-centered velocity
+  VelocityCompute = 1 << 8 // 256
 };
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -80,6 +82,9 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  template< typename VIEWTYPE >
+  using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
+
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
@@ -89,6 +94,7 @@ public:
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
+                      fields::flow::phaseVelocity,
                       fields::flow::phaseMobility,
                       fields::flow::dPhaseMobility >;
   using MultiFluidAccessors =
@@ -162,9 +168,13 @@ protected:
   /// Views on derivatives of comp fractions
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
 
+  /// Views on phase velocity
+  ElementView< arrayView3d< real64, compflow::USD_PHASE_VELOCITY > > const m_phaseVelocity;
+
   /// Views on phase component fractions
   ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
   ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac;
+
 
   // Residual and jacobian
 
