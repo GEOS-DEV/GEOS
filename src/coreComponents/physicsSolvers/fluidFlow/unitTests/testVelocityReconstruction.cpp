@@ -113,8 +113,8 @@ TEST( testAligned2D, Velocity_aligned2D )
   {
 
 
-    tpfa.computeVelocity( wrapper, iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
-    tpfa.computeVelocity( wrapper, iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
+    wrapper.computeVelocity( iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
+    wrapper.computeVelocity( iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
   }
 
 
