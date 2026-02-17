@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
+#include "LvArray/src/math.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
@@ -165,7 +166,7 @@ public:
         return;
       }
 
-      StackVariables stack{};
+      StackVariables stack;
       kernelComponent.setup( ei, stack );
       kernelComponent.compute( ei, stack );
 
@@ -234,12 +235,12 @@ public:
     bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
+    if( newPres < 0.0 && !m_allowNegativePressure )
+      stack.localMinVal = 0;
+
     if( newPres <= 0.0 )
     {
-      stack.localNumNegPres = 1;
-
-      if( !m_allowNegativePressure )
-        stack.localMinVal = 0;
+      stack.localNumNegPres += 1;
 
       if( newPres < stack.localMinNegPres )
         stack.localMinNegPres = newPres;
@@ -248,38 +249,46 @@ public:
     // if component density chopping is not allowed, the time step fails if a component density is negative
     // otherwise, we just check that the total density is positive, and negative component densities
     // will be chopped (i.e., set to zero) in ApplySystemSolution)
+    real64 totalDens = 0.0;
     if( !m_allowCompDensChopping )
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
-        if( newDens <= 0.0 )
-        {
-          stack.localNumNegDens = 1;
-          stack.localMinVal = 0;
-
-          if( newDens < stack.localMinNegDens )
-            stack.localMinNegDens = newDens;
-        }
+        totalDens += newDens;
+        
+        // we invalidate timestep if new density is negative, and we report density as too low if negative or equal to zero
+        bool const isNewDensNegative = newDens < 0.0;
+        bool const isNewDensTooLow = newDens <= 0.0;
+        stack.localMinVal = isNewDensNegative ? 0 : stack.localMinVal;
+        stack.localNumNegDens += isNewDensTooLow;
+        stack.localMinNegDens = isNewDensTooLow ?
+         LvArray::math::min(stack.localMinNegDens, newDens) :
+         stack.localMinNegDens;
       }
     }
     else
     {
-      real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
-        totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
-      }
-      if( totalDens <= 0.0 )
-      {
-        stack.localNumNegTotalDens = 1;
-        stack.localMinVal = 0;
-
-        if( totalDens < stack.localMinNegTotalDens )
-          stack.localMinNegTotalDens = totalDens;
+        totalDens += LvArray::math::max( newDens, 0.0 );
+        
+        // we never invalidate timestep as negatives will be chopped later in ApplySystemSolution(), and we report density as too low if negative or equal to zero
+        bool const isNewDensTooLow = newDens <= 0.0;
+        stack.localNumNegDens += isNewDensTooLow;
+        stack.localMinNegDens = isNewDensTooLow ?
+         LvArray::math::min(stack.localMinNegDens, newDens) :
+         stack.localMinNegDens;
       }
     }
+      {
+        bool const isNewTotalDensTooLow = totalDens <= 0.0;
+        stack.localNumNegTotalDens += isNewTotalDensTooLow;
+        stack.localMinNegTotalDens = isNewTotalDensTooLow ?
+         LvArray::math::min(stack.localMinNegTotalDens, totalDens) :
+         stack.localMinNegTotalDens;
+      }
 
     kernelOp();
   }
