@@ -30,7 +30,8 @@ CohesiveZoneRegion::CohesiveZoneRegion( string const & name, Group * const paren
   CohesiveZoneRegionBase( name, parent ),
   m_maxNormalDisplacement(),
   m_maxTangentialDisplacement(),
-  m_damage()
+  m_damage(),
+  m_temperature()
 {
   registerWrapper( viewKeyStruct::maxNormalDisplacementString(), &m_maxNormalDisplacement ).
     setInputFlag( InputFlags::FALSE ).
@@ -49,6 +50,12 @@ CohesiveZoneRegion::CohesiveZoneRegion( string const & name, Group * const paren
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Cohesive grid node damages" );
+  
+  registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Cohesive grid node temperatures" );
 }
 
 CohesiveZoneRegion::~CohesiveZoneRegion()

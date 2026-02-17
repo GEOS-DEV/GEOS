@@ -124,6 +124,19 @@ public:
   arrayView1d< real64 > getDamage()
   { return m_damage; }
 
+  /**
+   * @brief Get the temperature of each cohesive zone node.
+   * @return an arrayView1d of const node temperature
+   */
+  arrayView1d< real64 const > getTemperature() const
+  { return m_temperature; }
+
+  /**
+   * @copydoc getTemperature() const
+   */
+  arrayView1d< real64 > getTemperature()
+  { return m_temperature; }
+
   ///@}
 
 
@@ -141,6 +154,9 @@ public:
 
     /// @return String key for the member level field for the cohesive zone node damages.
     static constexpr char const * damageString() { return "damage"; }
+
+    /// @return String key for the member level field for the cohesive zone node temperature.
+    static constexpr char const * temperatureString() { return "temperature"; }
   };
 
 private:
@@ -149,7 +165,7 @@ private:
   array1d< real64 > m_maxNormalDisplacement;
   array1d< real64 > m_maxTangentialDisplacement;
   array1d< real64 > m_damage;
-
+  array1d< real64 > m_temperature;
 };
 
 } /* namespace geos */

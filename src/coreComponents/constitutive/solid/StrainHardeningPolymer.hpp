@@ -553,7 +553,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   // Return to yield surface requires iterative solution
   // Implemented fixed points, however a newton solver may be more efficient and applicable
   real64 tol = 1e-10;   // CC: need to experiment with these for the best options
-  int maxEvals = 100;   // Same cas above
+  int maxEvals = 100;   // Same as above
 
   // In initialization, yieldStrength is set to defaultYieldStrength, but we will generally want it to be modified by temp
   // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
@@ -604,7 +604,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     {
 
       // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
-      real64 stressTemp[6] = {0};
+      real64 stressTemp[6] = {};
       twoInvariant::stressRecomposition( trialP,
                                          m_yieldStrength[k],
                                          deviator,
@@ -682,14 +682,14 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
                                      trialQ,
                                      stressIncrementDeviator );
 
-  real64 stressIncrementIsostatic[6] = {0};
+  real64 stressIncrementIsostatic[6] = {};
   stressIncrementIsostatic[0] = trialP;
   stressIncrementIsostatic[1] = trialP;
   stressIncrementIsostatic[2] = trialP;
 
   // For damage or softening it there may be cases where bulk or shear are approx 0,
   // so we need to be careful that we compute this
-  real64 elasticStrainIncrement[6] = {0};
+  real64 elasticStrainIncrement[6] = {};
   for( int i = 0; i < 6; ++i )
   {
     if( m_bulkModulus[k] > 1.0e-12 )
@@ -715,13 +715,13 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
                                                         const real64 & A,
                                                         const real64 & B ) const
 {
-  if( std::abs( A ) > 1.e-16 )
+  if( LvArray::math::abs( A ) > 1.e-16 )
   {
-    return 1. + A / (1. + std::exp( B * (T-T0) ) );
+    return 1.0 + A / (1.0 + LvArray::math::exp( B * (T-T0) ) );
   }
   else
   {
-    return 1.;
+    return 1.0;
   }
 }
 

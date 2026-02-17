@@ -2964,16 +2964,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  if( m_stressControl[0] > 0 || m_stressControl[1] > 0 || m_stressControl[2] > 0 )
-  {
-    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Interpolate stress table" );
-    solverProfiling( "Interpolate stress table" );
-    interpolateStressTable( dt, time_n );
-  }
-  //#######################################################################################
-
-
-  //#######################################################################################
   // Store the old domainF so we can integrate it when using stress control
   real64 oldDomainF[3] = { 1 };
   for( int i=0; i < m_numDims; i++ )
@@ -2996,8 +2986,12 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // difference between most recent box sum and the prescribed value and increment
   // the domain strain rate accordingly.  This is a simple control loop.
   // If done here it uses beginning-of-step stresses.
-  if( m_stressControl[0] > 0 || m_stressControl[1] == 1 || m_stressControl[2] == 1 )
+  if( m_stressControl[0] > 0 || m_stressControl[1] > 0 || m_stressControl[2] > 0 )
   {
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Interpolate stress table" );
+    solverProfiling( "Interpolate stress table" );
+    interpolateStressTable( dt, time_n );
+
     GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Stress control" );
     solverProfiling( "Stress control" );
 
@@ -4694,22 +4688,22 @@ void SolidMechanicsMPM::computeGridSurfacePositionFromVolume( NodeManager & node
         bool converged = false;
         for( integer iter = 0; iter < maxIter; ++iter )
         {
-          GEOS_LOG_RANK( "g: " << g << ", " <<
-                         "fieldIndex: " << fieldIndex << ", " <<
-                         "n: {" << n[0] << ", " << n[1] << ", " << n[2] << "}, "
-                                                                           "iter: " << iter << ", " <<
-                         "gVol: " << gridVolume[g][fieldIndex] << ", " <<
-                         "vol: " << vol << ", " <<
-                         "error: " << LvArray::math::abs( gridVolume[g][fieldIndex] - vol ) << ", " <<
-                         "b0: " << b0 << ", " <<
-                         "b1: " << b1 << ", " <<
-                         "m: " << m );
+          // GEOS_LOG_RANK( "g: " << g << ", " <<
+          //                "fieldIndex: " << fieldIndex << ", " <<
+          //                "n: {" << n[0] << ", " << n[1] << ", " << n[2] << "}, "
+          //                                                                  "iter: " << iter << ", " <<
+          //                "gVol: " << gridVolume[g][fieldIndex] << ", " <<
+          //                "vol: " << vol << ", " <<
+          //                "error: " << LvArray::math::abs( gridVolume[g][fieldIndex] - vol ) << ", " <<
+          //                "b0: " << b0 << ", " <<
+          //                "b1: " << b1 << ", " <<
+          //                "m: " << m );
 
           if( isZero( gridVolume[g][fieldIndex] - vol, tolerance ) )
           {
             LvArray::tensorOps::scaledCopy< 3 >( gridBasedSurfacePosition[g][fieldIndex], n, m );
             converged = true;
-            GEOS_LOG_RANK( "Converged!" );
+            //GEOS_LOG_RANK( "Converged!" );
             break;
           }
 
@@ -4730,7 +4724,7 @@ void SolidMechanicsMPM::computeGridSurfacePositionFromVolume( NodeManager & node
 
         if( !converged )
         {
-          GEOS_LOG_RANK( "Bisection algorithm for surface positions from volume did not converge!" );
+          //GEOS_LOG_RANK( "Bisection algorithm for surface positions from volume did not converge!" );
         }
       }
     }
@@ -6514,6 +6508,15 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             particleTemperatureRate[p] = m_domainTemperatureRate;
           } );
         } );
+
+        CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );  
+        cohesiveZoneManager.forCohesiveZoneRegions( [&](CohesiveZoneRegion & czRegion){
+          arrayView1d< real64 > czTemperature = czRegion.getTemperature();
+          forAll< serialPolicy >( czRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+          {
+            czTemperature[g] = m_domainTemperature;
+          } );
+        });
       }
     }
   } );
@@ -8271,7 +8274,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
           // If the node is not on this partition (e.g. occurs with ghosted nodes, just ignore it)
           if ( nodeIndex < 0 || nodeIndex > numNodes )
           {
-            GEOS_LOG_RANK( "nodeIndex " << nodeIndex << " is a ghost node for particle with rank " << particleRank[p] << "(" << rank << ")" );
+            // GEOS_LOG_RANK( "nodeIndex " << nodeIndex << " is a ghost node for particle with rank " << particleRank[p] << "(" << rank << ")" );
             continue;
           }
 
@@ -9624,11 +9627,13 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                        MPI_COMM_GEOS );
 
     // Initialize state variables
+    arrayView1d< real64 > czTemperature = czRegion.getTemperature();
     arrayView1d< real64 > czDamage = czRegion.getDamage();
     arrayView1d< real64 > czMaxNormalDisplacement = czRegion.getMaxNormalDisplacement();
     arrayView1d< real64 > czMaxTangentialDisplacement = czRegion.getMaxTangentialDisplacement();
 
     forAll< serialPolicy >( numCohesiveNodes, [=]( localIndex const & g ){
+      czTemperature[g] = m_domainTemperature;
       czDamage[g] = 0.0;
       czMaxNormalDisplacement[g] = 0.0;
       czMaxTangentialDisplacement[g] = 0.0;
@@ -11019,6 +11024,17 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
     // Get constitutive model reference
     CohesiveZoneBase & cohesiveZone = czRegion.getConstitutiveModel();
+
+    // Effectively CZ pass through
+    if( cohesiveZone.hasWrapper("temperature") )
+    {
+      arrayView1d< real64 > const constitutiveTemperature = cohesiveZone.getReference< array1d< real64 > >( "temperature" );
+      arrayView1d< real64 const > const czTemperature = czRegion.getTemperature();
+      forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+      {
+        constitutiveTemperature[g] = czTemperature[g];
+      } );
+    }
 
     // Copy other variables over to constitutive model (e.g. damage)
     // Nothing to currently update so this is empty
