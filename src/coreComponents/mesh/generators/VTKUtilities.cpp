@@ -1023,7 +1023,8 @@ static void separateCellsByDimension( vtkDataSet & mesh,
   // Classify cells by dimension
   for( vtkIdType i = 0; i < numCells; ++i )
   {
-    int const cellDim = mesh.GetCell( i )->GetCellDimension();
+    unsigned char const cellType = mesh.GetCellType( i );
+    int const cellDim = vtkCellTypes::GetDimension( cellType );
     if( cellDim == 3 )
     {
       indices3D->InsertNextId( i );
@@ -1115,15 +1116,17 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   localIndex numInternal = 0;       // 2 neighbors
   localIndex numJunction = 0;       // >2 neighbors
 
+  vtkNew< vtkIdList > neighborCells;
+  vtkNew< vtkIdList > pointIds2D;
+
   // Build neighbor list for each 2D cell
   for( localIndex i = 0; i < cells2DToOriginal.size(); ++i )
   {
     vtkIdType const origIdx2D = cells2DToOriginal[i];
-    vtkCell * cell2D = mesh.GetCell( origIdx2D );
-    vtkIdList * pointIds2D = cell2D->GetPointIds();
+    mesh.GetCellPoints( origIdx2D, pointIds2D );
 
     // Find all cells sharing ALL nodes with this 2D cell (exact face match)
-    vtkNew< vtkIdList > neighborCells;
+    neighborCells->Reset();
     mesh.GetCellNeighbors( origIdx2D, pointIds2D, neighborCells );
 
     // Filter for 3D neighbors and retrieve their global IDs
@@ -2040,7 +2043,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
  * @post Structured meshes partitioned by layers (if structuredIndexAttributeName provided and no super-cells)
  */
 AllMeshes
-redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
+redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
@@ -2282,7 +2285,6 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
   // -----------------------------------------------------------------------
   // Step 4: Merge 2D cells AND fractures back with redistributed 3D cells
   // -----------------------------------------------------------------------
-
   AllMeshes finalResult = merge2D3DCellsAndRedistribute(
     redistributed3D,
     cells2D,
@@ -2293,9 +2295,9 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
     comm );
 
   // -----------------------------------------------------------------------
-  // Step 5: Diagnostics
+  // Step 5: Final logging
   // -----------------------------------------------------------------------
-
+  if ( logLevel >=5 )
   {
     vtkIdType local2DCells = 0;
     vtkIdType local3DCells = 0;
