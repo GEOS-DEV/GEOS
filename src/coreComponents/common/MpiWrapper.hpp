@@ -332,10 +332,9 @@ public:
    */
   static int nodeCommSize();
 
-  template< template< class > class CONTAINER = stdVector >
-  void static gatherStringSet( CONTAINER< string > const & strSet,
-                               CONTAINER< string > & result,
-                               MPI_Comm MPI_PARAM( comm ));
+  template< typename FUNC >
+  static void gatherString( string const & str,
+                            FUNC && func );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allgather.
