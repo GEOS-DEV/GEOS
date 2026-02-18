@@ -284,70 +284,126 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   return area;
 }
 
-// //Compute LSQ mat per cell for lsq interpolation 
-// template< typename CELL >
-// array2d<real64, compflow::USD_PHASE_VELOCITY> computeVelocity(arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes) 
-// {
-
-//   if(normals.size(0) == 2){
-// // quad -- split cell Dim ?
-
-// // tri
-
-//   }
-//   else if (normals.size(1) == 3) {
-// // hexahedron
-
-// // tetra
-
-// // wedge
-// // pyramid 
-//   }
 
 
-
-// }
-
-template< int NFACES >
+template< int NFACES>
 GEOS_HOST_DEVICE
-array2d<real64> computeVelocities( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes) 
+array2d<real64> computeVelocities_( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes, real64 const (&rotation)[3][3]) 
+{
+    array2d<real64> velocity;//should be rotated so that the off plane is aligned with z ?
+
+    //check compatibility on sizes
+    GEOS_ERROR_IF( (normals.size(1)!=fluxes.size()), GEOS_FMT("Error in parameters: normal({}) and fluxes({}) are different in sizes.", normals.size(1), fluxes.size()) );
+    GEOS_ERROR_IF( (NFACES!=fluxes.size()), GEOS_FMT("Error in parameters: templatized size({}) and fluxes({}) are different in sizes.", NFACES, fluxes.size()) );
+
+   //TODO dispatch as a function of dims and nfaces
+   real64 velocity_c[2], fluxes_c[NFACES];
+   real64 n[ NFACES ][ 2 ], ntn[ 2 ][ 2 ], ope[2][ NFACES ];
+
+  // N is nfaces x 3 matrices of normal
+  // (N^T N)^(-1)*N^T is the interpolant
+  real64 a = 0., b = 0., c = 0.;
+  for(int i=0; i<NFACES; ++i){
+
+   n[i][0] = normals[i][0];
+   n[i][1] = normals[i][1];
+    
+    a += normals[i][0]*normals[i][0];
+    b += normals[i][1]*normals[i][1];
+    c += normals[i][0]*normals[i][1];
+    
+    fluxes_c[i][0] = fluxes[i];
+  }
+
+    real64 detA = a*b - c*c;
+    assert(LvArray::math::abs(detA) > 1e-12); // else 2D most likely
+    // analytical inverse for symmetrical matrix
+    // [a c ]
+    // [. b ]
+
+    ntn[0][0] = 1/detA * (b);
+    ntn[1][1] = 1/detA * (a);
+    ntn[0][1] = 1/detA * (-c);
+    ntn[1][0] = 1/detA * (-c);
+   
+    //from Symmatrix
+    LvArray::tensorOps::Rij_add_AikBjk<2,NFACES>(ope, ntn, n);
+    LvArray::tensorOps::Ri_add_AijBj<2,NFACES>(velocity_c, ope, fluxes_c);
+
+    velocity[0][0] = velocity_c[0];
+    velocity[0][1] = velocity_c[1];
+    velocity[0][2] = 0.0;//off plane
+    
+    return velocity;
+}
+
+
+template< int NFACES>
+GEOS_HOST_DEVICE
+array2d<real64> computeVelocities_( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes) 
 {
     array2d<real64> velocity;
 
     //check compatibility on sizes
     GEOS_ERROR_IF( (normals.size(1)!=fluxes.size()), GEOS_FMT("Error in parameters: normal({}) and fluxes({}) are different in sizes.", normals.size(1), fluxes.size()) );
+    GEOS_ERROR_IF( (NFACES!=fluxes.size()), GEOS_FMT("Error in parameters: templatized size({}) and fluxes({}) are different in sizes.", NFACES, fluxes.size()) );
 
    //TODO dispatch as a function of dims and nfaces
-   real64 velocity_c[3][1];//, fluxes_c[NFACES][1];
-   real64 n[ NFACES ][ 3 ], ntn[ 3 ][ 3 ], ope[3][NFACES];
+   real64 velocity_c[3], fluxes_c[NFACES];
+   real64 n[ NFACES ][ 3 ], ntn[ 3 ][ 3 ], ope[3][ NFACES ];
 
-   //
-   n[0][0] = normals[0][0];
-   n[0][1] = normals[0][1];
-   n[0][2] = normals[0][2];
-   
-   n[1][0] = normals[1][0];
-   n[1][1] = normals[1][1];
-   n[1][2] = normals[1][2];
+  // N is nfaces x 3 matrices of normal
+  // (N^T N)^(-1)*N^T is the interpolant
+  real64 a = 0., b = 0., c = 0., d = 0., e = 0., f = 0.;
+  for(int i=0; i<NFACES; ++i){
 
-   n[2][0] = normals[2][0];
-   n[2][1] = normals[2][1];
-   n[2][2] = normals[2][2];
-
-    // N is nfaces x 3 matrices of normal
-    // (N^T N)^(-1)*N^T is the interpolant
-    LvArray::tensorOps::Rij_add_AikAjk<3,NFACES>(ntn, n);
-    assert(LvArray::tensorOps::determinant<3>(ntn) > 1e-12); // else 2D most likely
-    //to SymMatrix
-    LvArray::tensorOps::symInvert<3>(ntn);
-    //from Symmatrix
-    LvArray::tensorOps::Rij_add_AikBjk<3,NFACES>(ope, ntn,n);
-    LvArray::tensorOps::Ri_add_AijBj<3,NFACES>(velocity, ope, fluxes);
-
-    LvArray::tensorOps::copy(velocity,velocity_c);
+   n[i][0] = normals[i][0];
+   n[i][1] = normals[i][1];
+   n[i][2] = normals[i][2];
     
+   a += normals[i][0]*normals[i][0];
+    b += normals[i][1]*normals[i][1];
+    c += normals[i][2]*normals[i][2];
+
+    d += normals[i][0]*normals[i][1];
+    f += normals[i][0]*normals[i][2];
+    e += normals[i][1]*normals[i][2];
+
+    fluxes_c[i] = fluxes[i];
+  }
+
+    real64 detA = a*b*c + 2*d*e*f - b*f*f - c*d*d - a*e*e;
+    assert(LvArray::math::abs(detA) > 1e-12); // else 2D most likely
+    // analytical inverse for symmetrical matrix
+    // [a d f]
+    // [. b e]
+    // [. . c]
+
+    ntn[0][0] = 1/detA * (b*c-e*e);
+    ntn[1][1] = 1/detA * (a*c-f*f);
+    ntn[2][2] = 1/detA * (a*b-d*d);
+
+    ntn[0][1] = 1/detA * (d*c-e*f);
+    ntn[0][2] = 1/detA * (d*e-f*b);
+    ntn[1][2] = 1/detA * (a*e-f*d);
+
+    ntn[1][0] = 1/detA * (d*c-e*f);
+    ntn[2][0] = 1/detA * (d*e-f*b);
+    ntn[2][1] = 1/detA * (a*e-f*d);
+
+    //from Symmatrix
+    LvArray::tensorOps::Rij_add_AikBjk<3,NFACES,3>(ope, ntn, n);
+    LvArray::tensorOps::Ri_add_AijBj<3,NFACES>(velocity_c, ope, fluxes_c);
+    
+    velocity[0][0] = velocity_c[0];
+    velocity[0][1] = velocity_c[1];
+    velocity[0][2] = velocity_c[2];
+
     return velocity;
 }
+
+// //Compute LSQ mat per cell for lsq interpolation 
+array2d<real64> computeVelocity(arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes, ElementType& elem /*subRegion.getElementType()*/); 
 
 
 /**
