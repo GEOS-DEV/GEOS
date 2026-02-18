@@ -1900,15 +1900,72 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( isThermal && injectionTemperature > 0.0 )
       {
         string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+        MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
         using Deriv = constitutive::multifluid::DerivativeOffset;
         arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseEnthalpy = fluid.phaseEnthalpy();
         arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const dPhaseEnthalpy = fluid.dPhaseEnthalpy();
         arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseMassDensity = fluid.phaseMassDensity();
+        arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
           subRegion.template getField< flow::phaseVolumeFraction >();
         arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
+
+        // Pre-compute exact injection enthalpies using full PVT evaluation at (P_cell, T_inj, z_inj).
+        // This avoids the linearization error h(T_cell) + dh/dT*(T_inj - T_cell) which is O((T_inj - T_cell)^2).
+        arrayView1d< real64 const > const pres = subRegion.template getField< flow::pressure >();
+        arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+          subRegion.template getField< flow::globalCompFraction >();
+
+        // Build injection composition: pure component with z[fluidComponentId] = 1.0
+        integer const numComponents = m_numComponents;
+        array2d< real64, compflow::LAYOUT_COMP > injCompArray( 1, numComponents );
+        injCompArray( 0, fluidComponentId ) = 1.0;
+        arrayView2d< real64 const, compflow::USD_COMP > const injCompView = injCompArray.toViewConst();
+
+        // Temporary arrays to store pre-computed injection enthalpy and its pressure derivative
+        array1d< real64 > injEnthalpyArray( targetSet.size() );
+        array1d< real64 > injDhDpArray( targetSet.size() );
+        arrayView1d< real64 > injEnthalpyView = injEnthalpyArray.toView();
+        arrayView1d< real64 > injDhDpView = injDhDpArray.toView();
+
+        constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+        {
+          using FluidType = TYPEOFREF( castedFluid );
+          using ExecPolicy = typename FluidType::exec_policy;
+          typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+          forAll< ExecPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+          {
+            localIndex const ei = targetSet[a];
+
+            // Step 1: Evaluate fluid at injection conditions (P_cell, T_inj, z_inj)
+            fluidWrapper.update( ei, 0, pres[ei], injectionTemperature, injCompView[0] );
+
+            // Step 2: Find the dominant phase for the injected component at injection conditions
+            integer bestPhase = 0;
+            real64 maxFrac = -1.0;
+            for( integer ip = 0; ip < numPhases; ++ip )
+            {
+              if( phaseCompFraction[ei][0][ip][fluidComponentId] > maxFrac )
+              {
+                maxFrac = phaseCompFraction[ei][0][ip][fluidComponentId];
+                bestPhase = ip;
+              }
+            }
+
+            // Step 3: Store exact injection enthalpy and pressure derivative
+            injEnthalpyView[a] = phaseEnthalpy[ei][0][bestPhase];
+            injDhDpView[a] = dPhaseEnthalpy[ei][0][bestPhase][Deriv::dP];
+
+            // Step 4: Restore fluid state to original cell conditions
+            fluidWrapper.update( ei, 0, pres[ei], temperature[ei], compFrac[ei] );
+          } );
+        } );
+
+        // Main assembly kernel using pre-computed injection enthalpies
+        arrayView1d< real64 const > const injEnthalpyViewConst = injEnthalpyArray.toViewConst();
+        arrayView1d< real64 const > const injDhDpViewConst = injDhDpArray.toViewConst();
 
         forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                              targetSet,
@@ -1919,16 +1976,16 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                              numPhases,
                                                              numDofPerCell,
                                                              useTotalMassEquation,
-                                                             injectionTemperature,
                                                              phaseEnthalpy,
                                                              dPhaseEnthalpy,
                                                              phaseMassDensity,
                                                              phaseVolFrac,
-                                                             temperature,
                                                              dofNumber,
                                                              rhsContributionArrayView,
                                                              localRhs,
                                                              localMatrix,
+                                                             injEnthalpyViewConst,
+                                                             injDhDpViewConst,
                                                              massProd] GEOS_HOST_DEVICE ( localIndex const a )
         {
           localIndex const ei = targetSet[a];
@@ -1957,40 +2014,17 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
             localRhs[compMassBalanceRow] += rhsValue;
           }
 
-          // Step 2: add to energy balance equation for injectors
+          // Step 2: add to energy balance equation
           if( rhsContributionArrayView[a] < 0.0 )
           {
-            // Compute mass-weighted mixture enthalpy at cell conditions
-            real64 mixEnthalpy = 0.0;
-            real64 dMixEnthalpy_dP = 0.0;
-            real64 dMixEnthalpy_dT = 0.0;
-            real64 totalMassDensity = 0.0;
-            for( integer ip = 0; ip < numPhases; ++ip )
-            {
-              real64 const massDensContrib = phaseVolFrac[ei][ip] * phaseMassDensity[ei][0][ip];
-              totalMassDensity += massDensContrib;
-              mixEnthalpy += massDensContrib * phaseEnthalpy[ei][0][ip];
-              dMixEnthalpy_dP += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dP];
-              dMixEnthalpy_dT += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dT];
-            }
-            if( totalMassDensity > 0.0 )
-            {
-              mixEnthalpy /= totalMassDensity;
-              dMixEnthalpy_dP /= totalMassDensity;
-              dMixEnthalpy_dT /= totalMassDensity;
-            }
-
-            // Linearize: h_inj = h(T_cell, P_cell) + dh/dT * (T_inj - T_cell)
-            real64 const enthalpyInj = mixEnthalpy + dMixEnthalpy_dT * ( injectionTemperature - temperature[ei] );
-
-            // Energy equation is the last equation: dofNumber[ei] + numDofPerCell - 1
+            // Injector: use pre-computed exact enthalpy at (P_cell, T_inj, z_inj)
             globalIndex const energyRowIndex = dofNumber[ei] + numDofPerCell - 1 - rankOffset;
-            localRhs[energyRowIndex] += enthalpyInj * rhsValue;
+            localRhs[energyRowIndex] += injEnthalpyViewConst[a] * rhsValue;
 
-            // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh/dP
+            // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh_inj/dP
             globalIndex const pressureColIndex = dofNumber[ei];
             globalIndex dofIndices[1]{pressureColIndex};
-            real64 jacobian[1]{rhsValue * dMixEnthalpy_dP};
+            real64 jacobian[1]{rhsValue * injDhDpViewConst[a]};
 
             localMatrix.template addToRow< serialAtomic >( energyRowIndex,
                                                            dofIndices,
