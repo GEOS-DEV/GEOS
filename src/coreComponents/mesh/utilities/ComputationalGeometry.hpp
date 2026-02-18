@@ -284,32 +284,69 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   return area;
 }
 
-//Compute LSQ mat per cell for lsq interpolation 
-template< typename MATRIX_TYPE, typename CELL_TYPE >
+// //Compute LSQ mat per cell for lsq interpolation 
+// template< typename CELL >
+// array2d<real64, compflow::USD_PHASE_VELOCITY> computeVelocity(arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes) 
+// {
+
+//   if(normals.size(0) == 2){
+// // quad -- split cell Dim ?
+
+// // tri
+
+//   }
+//   else if (normals.size(1) == 3) {
+// // hexahedron
+
+// // tetra
+
+// // wedge
+// // pyramid 
+//   }
+
+
+
+// }
+
+template< int NFACES >
 GEOS_HOST_DEVICE
-auto PrecomputeLSQInterpolant( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, 
-                              MATRIX_TYPE&& lsq_op )
+array2d<real64> computeVelocities( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes) 
 {
+    array2d<real64> velocity;
 
-    MATRIX_TYPE ntn, n, lsq_op;
-    n[ 0 ][ 0 ] = normals[ 0 ][ 0 ];
-    n[ 0 ][ 1 ] = normals[ 0 ][ 1 ];
-    n[ 0 ][ 2 ] = normals[ 0 ][ 2 ];
+    //check compatibility on sizes
+    GEOS_ERROR_IF( (normals.size(1)!=fluxes.size()), GEOS_FMT("Error in parameters: normal({}) and fluxes({}) are different in sizes.", normals.size(1), fluxes.size()) );
 
-    n[ 1 ][ 0 ] = normals[ 1 ][ 0 ];
-    n[ 1 ][ 1 ] = normals[ 1 ][ 1 ];
-    n[ 1 ][ 2 ] = normals[ 1 ][ 2 ];
+   //TODO dispatch as a function of dims and nfaces
+   real64 velocity_c[3][1];//, fluxes_c[NFACES][1];
+   real64 n[ NFACES ][ 3 ], ntn[ 3 ][ 3 ], ope[3][NFACES];
 
-    n[ 2 ][ 0 ] = normals[ 2 ][ 0 ];
-    n[ 2 ][ 1 ] = normals[ 2 ][ 1 ];
-    n[ 2 ][ 2 ] = normals[ 2 ][ 2 ];
+   //
+   n[0][0] = normals[0][0];
+   n[0][1] = normals[0][1];
+   n[0][2] = normals[0][2];
+   
+   n[1][0] = normals[1][0];
+   n[1][1] = normals[1][1];
+   n[1][2] = normals[1][2];
+
+   n[2][0] = normals[2][0];
+   n[2][1] = normals[2][1];
+   n[2][2] = normals[2][2];
+
     // N is nfaces x 3 matrices of normal
     // (N^T N)^(-1)*N^T is the interpolant
-    LvArray::tensorOps::Rij_add_AikAjk<3, CELL_TYPE::NFACE >(ntn, n);
-    LvArray::tensorOps::symInvert(lsq_op_0, ntn);
-    LvArray::tensorOps::Rij_add_AikBjk(lsq_op,lsq_op_0,n);
+    LvArray::tensorOps::Rij_add_AikAjk<3,NFACES>(ntn, n);
+    assert(LvArray::tensorOps::determinant<3>(ntn) > 1e-12); // else 2D most likely
+    //to SymMatrix
+    LvArray::tensorOps::symInvert<3>(ntn);
+    //from Symmatrix
+    LvArray::tensorOps::Rij_add_AikBjk<3,NFACES>(ope, ntn,n);
+    LvArray::tensorOps::Ri_add_AijBj<3,NFACES>(velocity, ope, fluxes);
 
-    return lsq_op; 
+    LvArray::tensorOps::copy(velocity,velocity_c);
+    
+    return velocity;
 }
 
 
