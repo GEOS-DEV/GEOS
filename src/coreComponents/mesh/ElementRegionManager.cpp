@@ -260,11 +260,10 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     PerforationData const * wellSubRegionPerforationData= wellSubRegion.getPerforationData();
     arrayView2d< const real64 > wsrPerfLocation = wellSubRegionPerforationData->getLocation();
     TableData localPerfoData;
-    int nbPerfoPerRank = 0;
     for( globalIndex iperfLocal = 0; iperfLocal < wellSubRegionPerforationData->getNumPerforationsGlobal(); ++iperfLocal )
     {
-      integer cellId = wellSubRegionPerforationData->getReservoirElementGlobalIndex()[iperfLocal];
-      arrayView1d< globalIndex const >const globalIperf =  wellSubRegionPerforationData->localToGlobalMap();
+      integer const cellId = wellSubRegionPerforationData->getReservoirElementGlobalIndex()[iperfLocal];
+      arrayView1d< globalIndex const > const globalIperf =  wellSubRegionPerforationData->localToGlobalMap();
 
       array1d< integer > localCoords;
       if( cellId != 0 )
@@ -278,30 +277,24 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
           meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
         ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
-        integer localWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+        integer const localWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
         localPerfoData.addRow( globalIperf[iperfLocal], localWellElemIndices, localCoords,
                                region.getName(), subRegion.getName(), cellId );
-
-        nbPerfoPerRank++;
       }
     }
 
     TableMpiLayout mpiLayout;
-    mpiLayout.m_separatorBetweenRanks = true;
-    mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} perforations", rankId, nbPerfoPerRank );
     TableTextMpiOutput const formatter = TableTextMpiOutput( layoutPerforation, mpiLayout );
-    std::ostringstream osss;
-    formatter.toStream( osss, localPerfoData );
+    std::ostringstream outputStream;
+    formatter.toStream( outputStream, localPerfoData );
     if( rankId == 0 )
     {
       TableTextFormatter const globalFormatter( layoutPerforation );
-
-      GEOS_LOG( osss.str());
+      GEOS_LOG( outputStream.str());
     }
-
 
   } );
 

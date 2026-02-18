@@ -20,6 +20,7 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
+#include <algorithm>
 #include <functional>
 #include <mpi.h>
 
@@ -124,10 +125,18 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
     outputTableData( rankOutput, tableLayout, dataCellsLayout );
   }
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
+  stdVector< string > strs;
   MpiWrapper::gatherString( rankStr, std::function< void(string_view) >( [&]( string_view str ){
     status.m_hasContent = true;
-    tableOutput << str;
+    strs.emplace_back( str );
   } ));
+
+  if( status.m_isMasterRank && status.m_hasContent )
+  {
+    std::sort( strs.begin(), strs.end());
+    for( auto const & strSorted : strs )
+      tableOutput << strSorted;
+  }
 }
 
 } /* namespace geos */
