@@ -676,7 +676,7 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
   // Isotroptic-deviatoric decomposition;
   real64 trialP;
   real64 trialQ;
-  real64 stressIncrementDeviator[6];
+  real64 stressIncrementDeviator[6] = {};
   twoInvariant::stressDecomposition( stressIncrement,
                                      trialP,
                                      trialQ,

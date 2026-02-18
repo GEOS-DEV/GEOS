@@ -175,55 +175,7 @@ public:
       }
 
       normalStress = -scale * (normalDisplacement*(K*(t+normalDisplacement)+g*(2*t+normalDisplacement)))/(t*(t+normalDisplacement));
-      shearStress = -g * tangentialDisplacement / t;
-
-        // real64 t = m_thickness;
-        // real64 tSqr = t * t;
-        // real64 normalDisplacementSqr = normalDisplacement * normalDisplacement;
-        // real64 shearDisplacementSqr = tangentialDisplacement * tangentialDisplacement;
-
-        // real64 K = m_bulkModulus * thermalSoftening( m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );
-        // real64 g = m_shearModulus * thermalSoftening( m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB );;
-        // real64 gSqr = g * g;
-
-        // real64 lambda = LvArray::math::sqrt( LvArray::math::pow( normalDisplacement + t, 2 ) + shearDisplacementSqr ) / t; // Instantaneous stretch
-
-        // //real64 dLambda = lambda - m_previousLambda[k];
-
-        // real64 maxStretch = m_maxStretch * thermalSoftening( m_temperature[k], m_maxStretchT0, m_maxStretchA, m_maxStretchB );
-        // if( lambda > maxStretch )
-        // {
-        //     m_damage[k] = LvArray::math::max( 1.0, m_damage[k] );
-        // }
-
-        // real64 Gr = m_Gr * thermalSoftening( m_temperature[k], m_GrT0, m_GrA, m_GrB );
-        // real64 sigma_H = Gr * LvArray::math::pow( lambda * lambda - 1/lambda, 2 );
-
-        // real64 tau = LvArray::math::sqrt( gSqr*(4*t*normalDisplacement*(normalDisplacementSqr + shearDisplacementSqr) +
-        //              LvArray::math::pow( normalDisplacementSqr+shearDisplacementSqr, 2 )+tSqr * (4*normalDisplacementSqr+3*shearDisplacementSqr))/(LvArray::math::pow( t*(t+normalDisplacement), 2 )));
-
-        // real64 gamma_p = LvArray::math::max( 0.0, (tau-(m_yieldStrength0+sigma_H))/(K + (4.0/3.0)*g) ); // Temporary
-
-        // real64 r0 = m_r0 * thermalSoftening( m_temperature[k], m_r0T0, m_r0A, m_r0B );
-        // real64 R_gamma = r0 * LvArray::math::exp( -LvArray::math::pow( gamma_p/m_r1, m_r2 ));
-
-        // real64 yieldStrength = m_yieldStrength0 * thermalSoftening( m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB ) + R_gamma + sigma_H;
-
-        // // Should compute plastic strain magnitude from yield surface return
-        // // real64 gamma_p = LvArray::math::max( 0.0, (tau-(yieldStrength+sigma_H))/(K + (4.0/3.0)*g) );
-
-        // real64 scale  = 1.0;
-        // if( tau > yieldStrength )
-        // {
-        //     scale = yieldStrength / tau;
-        // }
-
-        // normalStress = -scale * (normalDisplacement*(K*(t+normalDisplacement)+g*(2*t+normalDisplacement)))/(t*(t+normalDisplacement));
-        // shearStress = -g * tangentialDisplacement / t;
-
-        // // Save state
-        // m_previousLambda[k] = lambda;
-        // //m_previousPlasticStrain[k] = newPlasticStrain;
+      shearStress = -scale * g * tangentialDisplacement / t;
     }
 
   GEOS_HOST_DEVICE

@@ -2966,7 +2966,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   // Store the old domainF so we can integrate it when using stress control
   real64 oldDomainF[3] = { 1 };
-  for( int i=0; i < m_numDims; i++ )
+  for( int i=0; i < m_numDims; ++i )
   {
     oldDomainF[i] = m_domainF[i];
   }
@@ -2999,13 +2999,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     // difference between most recent box sum and the prescribed value and increment
     // the domain strain rate accordingly.  This is a simple control loop.
     // If done here it uses beginning-of-step stresses.
-    if( m_stressControl[0] > 0 || m_stressControl[1] > 0 || m_stressControl[2] > 0 )
-    {
-      stressControl( dt,
-                     particleManager,
-                     partition );
-    }
-
+    stressControl( dt,
+                   particleManager,
+                   partition );
+  
     // Integrate domainF:
     for( int i=0; i < m_numDims; ++i )
     {
@@ -13824,7 +13821,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt,
                     Fii_dot,
                     m_fTableInterpType );
 
-  for( int i = 0; i < m_numDims; i++ )
+  for( int i = 0; i < m_numDims; ++i )
   {
     if( m_stressControl[i] != 1 )
     {
