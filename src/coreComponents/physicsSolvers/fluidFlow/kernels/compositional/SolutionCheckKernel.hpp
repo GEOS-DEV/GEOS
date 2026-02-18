@@ -256,15 +256,15 @@ public:
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         totalDens += newDens;
-        
+
         // we invalidate timestep if new density is negative, and we report density as too low if negative or equal to zero
         bool const isNewDensNegative = newDens < 0.0;
         bool const isNewDensTooLow = newDens <= 0.0;
         stack.localMinVal = isNewDensNegative ? 0 : stack.localMinVal;
         stack.localNumNegDens += isNewDensTooLow;
         stack.localMinNegDens = isNewDensTooLow ?
-         LvArray::math::min(stack.localMinNegDens, newDens) :
-         stack.localMinNegDens;
+                                LvArray::math::min( stack.localMinNegDens, newDens ) :
+                                stack.localMinNegDens;
       }
     }
     else
@@ -273,22 +273,23 @@ public:
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         totalDens += LvArray::math::max( newDens, 0.0 );
-        
-        // we never invalidate timestep as negatives will be chopped later in ApplySystemSolution(), and we report density as too low if negative or equal to zero
+
+        // we never invalidate timestep as negatives will be chopped later in ApplySystemSolution(), and we report density as too low if
+        // negative or equal to zero
         bool const isNewDensTooLow = newDens <= 0.0;
         stack.localNumNegDens += isNewDensTooLow;
         stack.localMinNegDens = isNewDensTooLow ?
-         LvArray::math::min(stack.localMinNegDens, newDens) :
-         stack.localMinNegDens;
+                                LvArray::math::min( stack.localMinNegDens, newDens ) :
+                                stack.localMinNegDens;
       }
     }
-      {
-        bool const isNewTotalDensTooLow = totalDens <= 0.0;
-        stack.localNumNegTotalDens += isNewTotalDensTooLow;
-        stack.localMinNegTotalDens = isNewTotalDensTooLow ?
-         LvArray::math::min(stack.localMinNegTotalDens, totalDens) :
-         stack.localMinNegTotalDens;
-      }
+    {
+      bool const isNewTotalDensTooLow = totalDens <= 0.0;
+      stack.localNumNegTotalDens += isNewTotalDensTooLow;
+      stack.localMinNegTotalDens = isNewTotalDensTooLow ?
+                                   LvArray::math::min( stack.localMinNegTotalDens, totalDens ) :
+                                   stack.localMinNegTotalDens;
+    }
 
     kernelOp();
   }
@@ -354,7 +355,7 @@ public:
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds, 
+                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds,
                                 negTotalDensityIds );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }

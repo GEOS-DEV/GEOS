@@ -1710,7 +1710,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                        "negative component density", minDens, massUnit );
   rankTotalNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                       "negative components total density", minTotalDens, massUnit );
+                                                            "negative components total density", minTotalDens, massUnit );
 
   return MpiWrapper::min( localCheck );
 }
