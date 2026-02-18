@@ -179,8 +179,9 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
       string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
-                     GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               getDataContext(), regionName, wellControls.getName() ) );
+                     GEOS_FMT( "Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
+                               regionName, wellControls.getName() ),
+                     getDataContext() );
 
     }
   }
@@ -188,18 +189,15 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Phase rate control is not available for SinglePhaseWell",
+                 "Phase rate control is not available for SinglePhaseWell",
                  InputError, wellControls.getDataContext() );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target total rate cannot be negative",
+                 "Target total rate cannot be negative",
                  InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( !isZero( targetPhaseRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target phase rate cannot be used for SinglePhaseWell",
+                 "Target phase rate cannot be used for SinglePhaseWell",
                  InputError, wellControls.getDataContext() );
 }
 
@@ -313,11 +311,11 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
   {
     if( !wellControls.referenceReservoirRegion().empty() )
     {
-      // ElementRegionManager const & elemManager = mesh.getElemManager();
       // ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
       // GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
-      //                 GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-      //                           getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+      //                 GEOS_FMT( "WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+      //                           wellControls.getName(), wellControls.referenceReservoirRegion() ),
+      //                 getDataContext() );
 
       // SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
       // GEOS_ERROR_IF( stats.averagePressure <= 0.0,

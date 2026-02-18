@@ -296,6 +296,7 @@ struct LinearSolverParameters
     {
       invalid,                                   ///< default value, to ensure solver sets something
       singlePhaseReservoirFVM,                   ///< finite volume single-phase flow with wells
+      thermalSinglePhaseReservoirFVM,            ///< finite volume thermal single-phase flow with wells
       singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
       singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
       singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
@@ -571,6 +572,7 @@ ENUM_STRINGS( LinearSolverParameters::Direct::RowPerm,
 ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "invalid",
               "singlePhaseReservoirFVM",
+              "thermalSinglePhaseReservoirFVM",
               "singlePhaseHybridFVM",
               "singlePhaseReservoirHybridFVM",
               "singlePhasePoromechanics",
