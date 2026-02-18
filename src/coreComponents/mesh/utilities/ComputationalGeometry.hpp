@@ -402,7 +402,7 @@ array2d<real64> computeVelocities_( arrayView2d< real64 const, nodes::REFERENCE_
     return velocity;
 }
 
-// //Compute LSQ mat per cell for lsq interpolation 
+// Compute Velocity interpolations
 array2d<real64> computeVelocity(arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & normals, arrayView1d< real64 const > const & fluxes, ElementType& elem /*subRegion.getElementType()*/); 
 
 
