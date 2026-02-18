@@ -136,15 +136,15 @@ void CompositionalMultiphaseWell::postInputInitialization()
   WellControls::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction must smaller or equal to 1.0" );
+                        "The maximum absolute change in component fraction must smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction must larger or equal to 0.0" );
+                        "The maximum absolute change in component fraction must larger or equal to 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
-                        ": The maximum relative change in component density must be larger than 0.0" );
+                        "The maximum relative change in component density must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
 }
 void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
@@ -284,15 +284,15 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -301,15 +301,15 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -335,7 +335,7 @@ void CompositionalMultiphaseWell::validateFluidModel(
     } catch( SimulationError const & ex )
     {
       string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-      ErrorLogger::global().currentErrorMsg()
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw SimulationError( ex, errorMsg );
@@ -368,8 +368,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
       string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
-                     GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               getDataContext(), regionName, getName() ) );
+                     GEOS_FMT( "Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
+                               regionName, wellControls.getName() ),
+                     getDataContext() );
 
 
     }
@@ -1350,17 +1351,10 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
                                                              arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  integer numNorm = 1;     // mass balance
-  array1d< real64 > localResidualNorm;
-  array1d< real64 > localResidualNormalizer;
 
-  if( isThermal() )
-  {
-    numNorm = 2;     // mass balance and energy balance
-  }
-  localResidualNorm.resize( numNorm );
-  localResidualNormalizer.resize( numNorm );
-
+  integer const numNorm = isThermal() ? 2 : 1;     // mass balance and energy balance for thermal
+  array1d< real64 > localResidualNorm( numNorm );
+  array1d< real64 > localResidualNormalizer( numNorm );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
@@ -1375,23 +1369,24 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
     // step 1: compute the norm in the subRegion
     if( isThermal() )
     {
-      real64 subRegionResidualNorm[2]{};
 
-      thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   rankOffset,
-                                                   wellDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   fluid,
-                                                   *this,
-                                                   time_n,
-                                                   dt,
-                                                   nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm );
-      // step 2: reduction across meshBodies/regions/subRegions
 
-      for( integer i=0; i<numNorm; i++ )
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+
+      WellControls const & wellControls = getWellControls( subRegion );
+
+      // step 1: compute the norm in the subRegion
+
+      if( !wellControls.isWellOpen() )
+      {
+        for( integer i = 0; i < numNorm; ++i )
+        {
+          localResidualNorm[i] = 0.0;
+          localResidualNormalizer[i] = m_nonlinearSolverParameters.m_minNormalizer;
+        }
+      }
+      else if( isThermal() )
       {
         if( subRegionResidualNorm[i] > localResidualNorm[i] )
         {

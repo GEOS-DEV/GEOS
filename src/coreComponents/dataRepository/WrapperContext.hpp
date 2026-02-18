@@ -56,9 +56,9 @@ private:
 
   /**
    * @brief Return contextual information here it is a data path
-   * @return ErrorLogger::ErrorContext ErrorLogger instance updated with context information
+   * @return ErrorContext ErrorLogger instance updated with context information
    */
-  ErrorLogger::ErrorContext getContextInfo() const override;
+  ErrorContext getContextInfo() const override;
 };
 
 

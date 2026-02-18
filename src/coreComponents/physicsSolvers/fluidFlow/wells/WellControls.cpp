@@ -309,8 +309,7 @@ void WellControls::postInputInitialization()
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
   GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
-                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
-                 ": Input well control cannot be uninitialized",
+                 "Input well control cannot be uninitialized",
                  InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
 
   if( m_currentControl == Control::UNINITIALIZED )
@@ -321,7 +320,7 @@ void WellControls::postInputInitialization()
 
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
-                 getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
+                 "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
   // tjb add more constraint validation
@@ -344,14 +343,14 @@ void WellControls::postInputInitialization()
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
-                 "WellControls " << getDataContext() << ": You have to control an injector with "
-                                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
+                 "You have to control an injector with "
+                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
                  InputError, getDataContext() );
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
-                 "WellControls " << getDataContext() << ": You have to control an injector with "
-                                 << EnumStrings< Control >::toString( Control::MASSRATE ),
+                 "You have to control an injector with "
+                 << EnumStrings< Control >::toString( Control::MASSRATE ),
                  InputError, getDataContext() );
 
   // 12) Create the time-dependent well status table
@@ -372,8 +371,8 @@ void WellControls::postInputInitialization()
     m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
 
     GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent status table "
-                                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   "The interpolation method for the time-dependent status table "
+                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError, getDataContext() );
   }
 

@@ -107,8 +107,8 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
   auto const checkInputSize = [&]( auto const & array, auto const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext() );
 
   };
   checkInputSize( m_equationsOfState, LvArray::integerConversion< size_t >( NP ), viewKeyStruct::equationsOfStateString() );
