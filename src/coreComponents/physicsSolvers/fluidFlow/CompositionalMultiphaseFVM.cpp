@@ -538,6 +538,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
         // volume
         subRegionResidualNorm[1] = subRegionFlowResidualNorm[1];
         subRegionResidualNormalizer[1] = subRegionFlowResidualNormalizer[1];
+        // Ensure that the normalizer for the energy equation is non-zero
+        subRegionResidualNormalizer[2] = m_nonlinearSolverParameters.m_minNormalizer;
       }
 
       // step 2: first reduction across meshBodies/regions/subRegions
