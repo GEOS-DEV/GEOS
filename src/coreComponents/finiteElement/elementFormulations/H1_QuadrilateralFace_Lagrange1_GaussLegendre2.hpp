@@ -47,27 +47,45 @@ namespace finiteElement
  *                                            =====  ===  ===
  *
  */
-class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElementBase
+class H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl : public FiniteElementBase_impl< 4, 4, 4 >
 {
 public:
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< 4, 4, 4 >;
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 4;
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 4;
+  /// Mesh data structure for the element.
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
+  /// Number of nodes in the element
+  using Base::numNodes;
+
+  /// Number of quadrature points in the element
+  using Base::numQuadraturePoints;
+
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
+
+  /// @cond DO_NOT_DOCUMENT
+
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+
+  /// @endcond DO_NOT_DOCUMENT
+
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
-  {}
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -84,14 +102,16 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -276,7 +296,7 @@ private:
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOS_HOST_DEVICE
 inline
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   addGradGradStabilization( StackVariables const & stack,
                             real64 ( & matrix )
                             [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -291,7 +311,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( real64 const (&coords)[2],
          real64 (& N)[numNodes] )
 {
@@ -305,7 +325,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
@@ -319,7 +339,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 GEOS_HOST_DEVICE
 inline
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
@@ -332,7 +352,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -374,6 +394,48 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 }
 
 /// @endcond
+
+
+/// @copydoc H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl
+class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl,
+  public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type
+  using ImplType = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl;
+
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2():
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
+  {}
+
+  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override final = default;
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl()
+  {
+    return static_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const * getImpl() const
+  {
+    return static_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const * >(this);
+  }
+
+
+};
 
 }
 }
