@@ -25,6 +25,7 @@ Contains:
 set( fileIO_headers
      LogLevelsInfo.hpp
      Outputs/BlueprintOutput.hpp
+     Outputs/CommonMeshOutputUtilities.hpp
      Outputs/MemoryStatsOutput.hpp
      Outputs/OutputBase.hpp
      Outputs/OutputManager.hpp
@@ -32,6 +33,7 @@ set( fileIO_headers
      Outputs/PythonOutput.hpp
      Outputs/RestartOutput.hpp
      Outputs/TimeHistoryOutput.hpp
+     Outputs/XDMFOutput.hpp
      timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
@@ -44,6 +46,7 @@ set( fileIO_headers
 #
 set( fileIO_sources
      Outputs/BlueprintOutput.cpp
+     Outputs/CommonMeshOutputUtilities.cpp
      Outputs/MemoryStatsOutput.cpp
      Outputs/OutputBase.cpp
      Outputs/OutputManager.cpp
@@ -51,6 +54,7 @@ set( fileIO_sources
      Outputs/PythonOutput.cpp
      Outputs/RestartOutput.cpp
      Outputs/TimeHistoryOutput.cpp
+     Outputs/XDMFOutput.cpp
      timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
@@ -128,4 +132,3 @@ if( GEOS_ENABLE_TESTS )
   add_subdirectory( timeHistory/unitTests )
   add_subdirectory( Outputs/unitTests )
 endif()
-

@@ -14,50 +14,38 @@
  */
 
 /**
- * @file BlueprintOutput.hpp
+ * @file XDMFOutput.hpp
  */
 
-#ifndef GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
-#define GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#ifndef GEOS_FILEIO_OUTPUTS_XDMFOUTPUT_HPP_
+#define GEOS_FILEIO_OUTPUTS_XDMFOUTPUT_HPP_
 
 #include "fileIO/Outputs/OutputBase.hpp"
+
+namespace conduit
+{
+class Node;
+}
 
 namespace geos
 {
 
 /**
- * @class BlueprintOutput
- * @brief A class for creating Conduit blueprint-based outputs.
+ * @class XDMFOutput
+ * @brief A class for creating XDMF outputs with heavy data stored in HDF5.
  */
-class BlueprintOutput : public OutputBase
+class XDMFOutput : public OutputBase
 {
-
 public:
 
-  /**
-   * @brief Construct a new BlueprintOutput object.
-   * @param name The name of the BlueprintObject in the data repository.
-   * @param parent The parent Group.
-   */
-  BlueprintOutput( string const & name,
-                   Group * const parent );
+  XDMFOutput( string const & name,
+              Group * const parent );
 
-  /**
-   * @brief Destructor.
-   */
-  virtual ~BlueprintOutput() override
+  virtual ~XDMFOutput() override
   {}
 
-  /**
-   * @brief Get the name used to register this object in an XML file.
-   * @return The string "Blueprint".
-   */
-  static string catalogName() { return "Blueprint"; }
+  static string catalogName() { return "XDMF"; }
 
-  /**
-   * @brief Writes out a Blueprint plot file.
-   * @copydetails EventBase::execute()
-   */
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
@@ -65,10 +53,6 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  /**
-   * @brief Writes out a Blueprint plot file at the end of the simulation.
-   * @copydetails ExecutableGroup::cleanup()
-   */
   virtual void cleanup( real64 const time_n,
                         integer const cycleNumber,
                         integer const eventCounter,
@@ -78,26 +62,23 @@ public:
 
 private:
 
-  // Used to determine which fields to write out.
+  static string buildXdmfDocument( conduit::Node const & mesh,
+                                   string const & hdfFileName,
+                                   real64 time );
+
   dataRepository::PlotLevel m_plotLevel = dataRepository::PlotLevel::LEVEL_1;
 
-  // If true will write out the full quadrature data, otherwise it is averaged over.
   int m_outputFullQuadratureData = 0;
 
-  // If non-zero, write one heavy-data file per rank.
   int m_writeParallelFiles = 1;
 
-  // If zero, skip ghost-owned cell objects.
   int m_writeGhostObjects = 1;
 
-  // If zero, skip all field data.
   int m_writeFieldData = 1;
 
-  // If zero, skip fields that contain ghost metadata (e.g., ghostRank).
   int m_writeGhostFieldData = 1;
 };
 
-
 } // namespace geos
 
-#endif // GEOS_FILEIO_OUTPUTS_BLUEPRINTOUTPUT_HPP_
+#endif // GEOS_FILEIO_OUTPUTS_XDMFOUTPUT_HPP_
