@@ -14,147 +14,139 @@
 
 
 // Source includes
-#include "mainInterface/initialization.hpp"
+// #include "mainInterface/initialization.hpp"
 // #include "finiteVolume/CellElementStencilTPFA.hpp"
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/unitTests/testFlowKernelHelpers.hpp"
+// #include "physicsSolvers/fluidFlow/kernels/singlePhase/unitTests/testFlowKernelHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
 // TPL includes
+#include <cmath>
 #include <gtest/gtest.h>
 
 
 using namespace geos;
+constexpr real64 EPS = 1e-16;
 
 
-void setReferences( const real64 flux, const real64 dx, const real64 dy, real64 (& expectedVel)[3] )
+TEST(testIsoTAligned, Velocity_Tetra)
 {
 
+  constexpr int NFACES = 4;    //2-hexa problem 
+  constexpr int NTESTS = 2;
+  real64 tests[NTESTS][NFACES] = {{1.,1.,1.,1.},
+ {2.,-1.,2.,-1.}};
+ real64 expectedVel[NTESTS][3] = {
+  {0.,0.,0.},
+  {0.,3.*LvArray::math::sqrt(3)/2.,0.}
+ };
+  real64 const normals[NFACES][3] =  {
+    {1./LvArray::math::sqrt(3), 1./LvArray::math::sqrt(3), 1./LvArray::math::sqrt(3)},
+    {1./LvArray::math::sqrt(3), -1./LvArray::math::sqrt(3), -1./LvArray::math::sqrt(3)},
+    {-1./LvArray::math::sqrt(3), 1./LvArray::math::sqrt(3), -1./LvArray::math::sqrt(3)},
+    {-1./LvArray::math::sqrt(3), -1./LvArray::math::sqrt(3), 1./LvArray::math::sqrt(3)}
+  };
 
-  expectedVel[0] = flux/dx;
-  expectedVel[1] = flux/dy;
-  expectedVel[2] = 0.0;
+
+for(int itest=0; itest<NTESTS; itest++){
+  array1d< real64 > fluxes; 
+  fluxes.resize(NFACES);
+  fluxes[0] = tests[itest][0];
+  fluxes[1] = tests[itest][1];
+  fluxes[2] = tests[itest][2];
+  fluxes[3] = tests[itest][3];
+
+  auto phaseVelocity = computationalGeometry::computeVelocities_<NFACES>(normals, fluxes.toViewConst());
+  GEOS_LOG(GEOS_FMT("phaseVelocity {}", phaseVelocity));
+  EXPECT_LT(phaseVelocity[0][0]-expectedVel[itest][0], EPS);
+  EXPECT_LT(phaseVelocity[0][1]-expectedVel[itest][1], EPS);
+  EXPECT_LT(phaseVelocity[0][2]-expectedVel[itest][2], EPS);
+
+  }
 
 
 }
 
-
-TEST( testAligned2D, Velocity_Hexa )
+TEST( testRotated3D, Velocity_Hexa )
 {
-  constexpr int nfaces = 6;    //2-hexa problem
+  constexpr int NFACES = 6;    //2-hexa problem 
+  constexpr int NTESTS = 2;
+  real64 tests[NTESTS][NFACES] = {{1.,1.,1.,1.,1.,1.},
+ {2.,-1.,2.,-1.,2.,-1.}};
+ real64 expectedVel[NTESTS][3] = {
+  {0.,0.,0.},
+  {0.,1.5*LvArray::math::sqrt(2),1.5}
+ };
+  real64 const normals[NFACES][3] =  {{1./LvArray::math::sqrt(2), 1./LvArray::math::sqrt(2), 0.},
+    {-1./LvArray::math::sqrt(2), -1./LvArray::math::sqrt(2), 0.},
+    {-1./LvArray::math::sqrt(2), 1./LvArray::math::sqrt(2), 0.},
+    {1./LvArray::math::sqrt(2), -1./LvArray::math::sqrt(2), 0.},
+    {0., 0., 1.},
+    {0., 0., -1.}
+  };
 
-  real64 const normals[nfaces][3] = {{1., 0., 0.},
+for(int itest=0; itest<NTESTS; itest++){
+  array1d< real64 > fluxes; 
+  fluxes.resize(NFACES);
+  //{1., 1., 1., 1., 1., 1.};
+  fluxes[0] = tests[itest][0];
+  fluxes[1] = tests[itest][1];
+  fluxes[2] = tests[itest][2];
+  fluxes[3] = tests[itest][3];
+  fluxes[4] = tests[itest][4];
+  fluxes[5] = tests[itest][5];
+
+  // real64 const fluxes[nfaces] = 
+
+  auto phaseVelocity = computationalGeometry::computeVelocities_<NFACES>(normals, fluxes.toViewConst());
+  GEOS_LOG(GEOS_FMT("phaseVelocity {}", phaseVelocity));
+  EXPECT_LT(phaseVelocity[0][0]-expectedVel[itest][0], EPS);
+  EXPECT_LT(phaseVelocity[0][1]-expectedVel[itest][1], EPS);
+  EXPECT_LT(phaseVelocity[0][2]-expectedVel[itest][2], EPS);
+
+  }
+
+}
+
+TEST( testAligned3D, Velocity_Hexa )
+{
+  constexpr int NFACES = 6;    //2-hexa problem 
+  constexpr int NTESTS = 2;
+  real64 tests[NTESTS][NFACES] = {{1.,1.,1.,1.,1.,1.},
+ {2.,-1.,2.,-1.,2.,-1.}};
+ real64 expectedVel[NTESTS][3] = {
+  {0.,0.,0.},
+  {1.5,1.5,1.5}
+ };
+
+  real64 const normals[NFACES][3] =
+  {{1., 0., 0.},
     {-1., 0., 0.},
     {0., 1., 0.},
     {0., -1., 0.},
     {0., 0., 1.},
     {0., 0., -1.}
-  };
-
-  real64 const fluxes[nfaces] = {1., 1., 1., 1., 1., 1.};
+  };//ROT 0
 
 
-  const real64 flux = 0.001;
-  const int numElem = 1;
-  constexpr localIndex nPhases = 2;
-  constexpr localIndex nDirs = 3;
-  // const real64 phaseVelocity[numElem][nPhases][nDirs] = {
-    // {{0., 0., 0.}, {0., 0., 0.}},
-  // };
+  for(int itest=0; itest<NTESTS; itest++){
+  array1d< real64 > fluxes; 
+  fluxes.resize(NFACES);
+  //{1., 1., 1., 1., 1., 1.};
+  fluxes[0] = tests[itest][0];
+  fluxes[1] = tests[itest][1];
+  fluxes[2] = tests[itest][2];
+  fluxes[3] = tests[itest][3];
+  fluxes[4] = tests[itest][4];
+  fluxes[5] = tests[itest][5];
 
-  ElementRegionManager::ElementViewAccessor< array2d< real64 > > normalsView = AccessorHelper< true >::makeElementAccessor< 2 >( normals[0][0],
-                                                                                                                                       2,
-                                                                                                                                       seri[nfaces-1],
-                                                                                                                                       sesri[nfaces-1],
-                                                                                                                                       sei[nfaces-1],
-                                                                                                                                       nPhases,
-                                                                                                                                       nDirs );
+  // real64 const fluxes[nfaces] = 
 
-  ElementRegionManager::ElementViewAccessor< array1d< real64 > > fluxesView = AccessorHelper< true >::makeElementAccessor< 1 >( fluxes[0],
-                                                                                                                                       2,
-                                                                                                                                       seri[nfaces-1],
-                                                                                                                                       sesri[nfaces-1],
-                                                                                                                                       sei[nfaces-1],
-                                                                                                                                       nPhases,
-                                                                                                                                       nDirs );
+  auto phaseVelocity = computationalGeometry::computeVelocities_<NFACES>(normals, fluxes.toViewConst());
+  GEOS_LOG(GEOS_FMT("phaseVelocity {}", phaseVelocity));
+  EXPECT_LT(phaseVelocity[0][0]-expectedVel[itest][0], EPS);
+  EXPECT_LT(phaseVelocity[0][1]-expectedVel[itest][1], EPS);
+  EXPECT_LT(phaseVelocity[0][2]-expectedVel[itest][2], EPS);
 
-  // ElementRegionManager::ElementViewAccessor< array3d< real64 > > phaseVelocityView = AccessorHelper< true >::makeElementAccessor< 3 >( phaseVelocity[0][0],
-  //                                                                                                                                      tpfa.stencilSize( 0 ),
-  //                                                                                                                                      seri[nfaces-1],
-  //                                                                                                                                      sesri[nfaces-1],
-  //                                                                                                                                      sei[nfaces-1],
-  //                                                                                                                                      nPhases,
-  //                                                                                                                                      nDirs );         
-  auto phaseVelocity = computationalGeometry::computeVelocities_(normalsView,fluxesView);
+  }
 
-  // CellElementStencilTPFA tpfa;
-  // for( int kf = 0; kf < nfaces; ++kf )
-  // {
-  //   localIndex elementIndices[] = {ei_[kf][0], ei_[kf][1]};
-  //   tpfa.add( 2, elementRegionIndices, elementSubRegionIndices, elementIndices, weight, kf );
-  //   tpfa.addVectors( transMult[kf], geomStabSum, faceNormal[kf], cellToFaceVec[kf] );
-  // }
-
-
-  // CellElementStencilTPFA::KernelWrapper wrapper = tpfa.createKernelWrapper();
-  // array2d< real64 > globalCellDim( 2, 3 );
-  // globalCellDim[0][0] = 2.; globalCellDim[1][0] = 2.;
-  // globalCellDim[0][1] = 2.; globalCellDim[1][1] = 2.;
-  // globalCellDim[0][2] = 0.; globalCellDim[1][2] = 0.;
-  // arrayView2d< const real64 > const globalCellDimView = globalCellDim.toViewConst();
-
-
-  // CellElementStencilTPFA::IndexContainerViewConstType const & seri = tpfa.getElementRegionIndices();
-  // CellElementStencilTPFA::IndexContainerViewConstType const & sesri = tpfa.getElementSubRegionIndices();
-  // CellElementStencilTPFA::IndexContainerViewConstType const & sei = tpfa.getElementIndices();
-
-
-  // ElementRegionManager::ElementViewAccessor< array3d< real64 > > phaseVelocityView = AccessorHelper< true >::makeElementAccessor< 3 >( phaseVelocity[0][0],
-  //                                                                                                                                      tpfa.stencilSize( 0 ),
-  //                                                                                                                                      seri[nfaces-1],
-  //                                                                                                                                      sesri[nfaces-1],
-  //                                                                                                                                      sei[nfaces-1],
-  //                                                                                                                                      nPhases,
-  //                                                                                                                                      nDirs );
-
-                                                                                                                            
-
-  // for( int iconn = 0; iconn < nfaces; ++iconn )
-  // {
-
-
-  //   wrapper.computeVelocity( iconn /*iconn*/, 0 /*ip*/, flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1 }, phaseVelocityView.toNestedView());
-  //   wrapper.computeVelocity( iconn /*iconn*/, 1 /*ip*/, 100*flux, {globalCellDimView[0], globalCellDimView[1]}, {-1, -1}, phaseVelocityView.toNestedView());
-  // }
-
-
-  // for( int ip = 0; ip < 2; ++ip )
-  // {
-  //   auto fip = (99*ip+1)*flux;    //shorthand to get the 1:100 ratio between phases as imposed above
-  //   for( int ib = 0; ib < numElem; ++ib )
-  //   {
-  //     real64 expectedVel[3];
-  //     setReferences( fip, globalCellDim[0][0], globalCellDim[0][1], expectedVel );
-  //     EXPECT_EQ( phaseVelocityView[0][0][ib][ip][0], expectedVel[0] );
-  //     EXPECT_EQ( phaseVelocityView[0][0][ib][ip][1], expectedVel[1] );
-  //     EXPECT_EQ( phaseVelocityView[0][0][ib][ip][2], expectedVel[2] );
-  //   }
-  // }
-}
-
-
-int main( int argc, char * *argv )
-{
-  ::testing::InitGoogleTest( &argc, argv );
-
-
-  geos::basicSetup( argc, argv );
-
-
-  int const result = RUN_ALL_TESTS();
-
-
-  geos::basicCleanup();
-
-
-  return result;
 }
