@@ -96,28 +96,29 @@
       minElementLength="0.0001"
       minSegmentLength="0.001"
       logLevel="2"
-      polylineNodeCoords="{ {495,245,-1600},
+      polylineNodeCoords="{ {495,245,-1500},
+                            {495,245,-1600},
                             {495,245,-1610},
                             {495,245,-1620},
                             {495,245,-1630},
                             {495,245,-1640},
                             {495,245,-1650}}"
-      polylineSegmentConn="{ {0,1}, {1,2}, {2,3}, {3,4}, {4,5} }">
+      polylineSegmentConn="{ {0,1}, {1,2}, {2,3}, {3,4}, {4,5}, {5,6} }">
       <Perforation
           name="Perf_1"
-          distanceFromHead="5" />
+          distanceFromHead="105" />
       <Perforation
           name="Perf_2"
-          distanceFromHead="15" />
+          distanceFromHead="115" />
       <Perforation
           name="Perf_3"
-          distanceFromHead="25" />
+          distanceFromHead="125" />
       <Perforation
           name="Perf_4"
-          distanceFromHead="35" />
+          distanceFromHead="135" />
       <Perforation
           name="Perf_5"
-          distanceFromHead="45" />
+          distanceFromHead="145" />
     </InternalWell>
     
   </InternalMesh>
@@ -262,3 +263,4 @@
 <!-- SPHINX_FIELD_CASE_EVENTS_END -->
 
 </Problem>
+
