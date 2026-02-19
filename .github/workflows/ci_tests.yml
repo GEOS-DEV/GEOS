@@ -365,9 +365,9 @@ jobs:
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.9.1
-            RUNS_ON: streak
-            NPROC: 16
-            DOCKER_RUN_ARGS: "--cpus=16 --memory=448g --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            RUNS_ON: streak2
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
             HOST_CONFIG: /spack-generated.cmake
           
           - name: Rockylinux CUDA (8, gcc 13.3, cuda 12.9.1)
