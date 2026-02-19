@@ -31,10 +31,6 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
 
-  registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
-
-  registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
-
   registerWrapper( viewKeyStruct::toEmbSurfString(), &m_toEmbeddedSurfaces ).setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
@@ -397,13 +393,13 @@ void CellElementSubRegion::
     default:
     {
       GEOS_ERROR( GEOS_FMT( "Volume calculation not supported for element type {} in subregion {}",
-                            m_elementType, getDataContext() ) );
+                            m_elementType ), getDataContext()  );
     }
   }
 
   GEOS_ERROR_IF( m_elementVolume[k] <= 0.0,
                  GEOS_FMT( "Negative volume for element {} type {} in subregion {}",
-                           k, m_elementType, getDataContext() ) );
+                           k, m_elementType ), getDataContext()  );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,

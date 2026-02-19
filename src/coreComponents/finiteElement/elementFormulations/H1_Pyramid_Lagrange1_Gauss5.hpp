@@ -55,88 +55,30 @@ namespace finiteElement
  *
  *
  */
-class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
+class H1_Pyramid_Lagrange1_Gauss5_impl : public FiniteElementBase_impl< 5, 5, 5 >
 {
 public:
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 5;
 
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = 5;
+  /// struct to hold stack variables.
+  struct StackVariables
+  {};
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+  struct MeshData {};
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 5;
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-
-  GEOS_HOST_DEVICE
-  virtual ~H1_Pyramid_Lagrange1_Gauss5() override
-  {}
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
-  {
-    return numQuadraturePoints;
-  }
-
-  /**
-   * @brief Get the number of quadrature points.
-   * @param stack Stack variables as filled by @ref setupStack.
-   * @return The number of quadrature points.
-   */
-  GEOS_HOST_DEVICE
-  static localIndex getNumQuadraturePoints( StackVariables const & stack )
-  {
-    GEOS_UNUSED_VAR( stack );
-    return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
-  {
-    return numNodes;
-  }
-
-  /**
-   * @brief Get the number of support points.
-   * @param stack Object that holds stack variables.
-   * @return The number of support points.
-   */
-  GEOS_HOST_DEVICE
-  static localIndex getNumSupportPoints( StackVariables const & stack )
-  {
-    GEOS_UNUSED_VAR( stack );
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
-  {
-    return maxSupportPoints;
-  }
-
-  /**
-   * @brief Get the Sampling Point Coord In the Parent Space
-   *
-   * @param linearIndex linear index of the sampling point
-   * @param samplingPointCoord coordinates of the sampling point
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
-                                                  real64 (& samplingPointCoord)[3] )
-  {
-    GEOS_UNUSED_VAR( linearIndex, samplingPointCoord );
-    GEOS_ERROR( " Element type not supported." );
-  }
+  /// @cond DO_NOT_DOCUMENT
+  H1_Pyramid_Lagrange1_Gauss5_impl() = default;
+  ~H1_Pyramid_Lagrange1_Gauss5_impl() = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
   /**
    * @brief Calculate shape functions values at a single point.
@@ -204,6 +146,36 @@ public:
     GEOS_UNUSED_VAR( q, N );
     GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
   }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const &stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -450,7 +422,7 @@ private:
 GEOS_HOST_DEVICE
 inline
 void
-H1_Pyramid_Lagrange1_Gauss5::
+H1_Pyramid_Lagrange1_Gauss5_impl::
   jacobianTransformation( int const q,
                           real64 const (&X)[numNodes][3],
                           real64 ( & J )[3][3] )
@@ -497,7 +469,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Pyramid_Lagrange1_Gauss5::
+H1_Pyramid_Lagrange1_Gauss5_impl::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                           real64 const ( &invJ )[3][3],
                                                           real64 (& gradN)[numNodes][3] )
@@ -545,7 +517,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Pyramid_Lagrange1_Gauss5::
+H1_Pyramid_Lagrange1_Gauss5_impl::
   calcN( real64 const ( &pointCoord )[3],
          real64 ( & N )[numNodes] )
 {
@@ -559,7 +531,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Pyramid_Lagrange1_Gauss5::
+H1_Pyramid_Lagrange1_Gauss5_impl::
   calcN( localIndex const q,
          real64 ( & N )[numNodes] )
 {
@@ -572,7 +544,7 @@ H1_Pyramid_Lagrange1_Gauss5::
 
 GEOS_HOST_DEVICE
 inline
-void H1_Pyramid_Lagrange1_Gauss5::
+void H1_Pyramid_Lagrange1_Gauss5_impl::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
@@ -583,10 +555,40 @@ void H1_Pyramid_Lagrange1_Gauss5::
 //*************************************************************************************************
 
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Pyramid_Lagrange1_Gauss5_impl::calcJacobian( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  jacobianTransformation( q, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  return detJ * quadratureWeight( q );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Pyramid_Lagrange1_Gauss5_impl::calcJacobian( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
+
+GEOS_HOST_DEVICE
 inline
-real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
-                                               real64 const (&X)[numNodes][3],
-                                               real64 (& gradN)[numNodes][3] )
+real64 H1_Pyramid_Lagrange1_Gauss5_impl::calcGradN( localIndex const q,
+                                                    real64 const (&X)[numNodes][3],
+                                                    real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -601,7 +603,7 @@ real64 H1_Pyramid_Lagrange1_Gauss5::calcGradN( localIndex const q,
 
 GEOS_HOST_DEVICE
 inline
-real64 H1_Pyramid_Lagrange1_Gauss5::
+real64 H1_Pyramid_Lagrange1_Gauss5_impl::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -613,9 +615,9 @@ real64 H1_Pyramid_Lagrange1_Gauss5::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Pyramid_Lagrange1_Gauss5::calcGradFaceBubbleN( localIndex const q,
-                                                  real64 const (&X)[numNodes][3],
-                                                  real64 (& gradN)[numFaces][3] )
+H1_Pyramid_Lagrange1_Gauss5_impl::calcGradFaceBubbleN( localIndex const q,
+                                                       real64 const (&X)[numNodes][3],
+                                                       real64 (& gradN)[numFaces][3] )
 {
   GEOS_UNUSED_VAR( q, X, gradN );
   GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
@@ -627,7 +629,7 @@ H1_Pyramid_Lagrange1_Gauss5::calcGradFaceBubbleN( localIndex const q,
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Pyramid_Lagrange1_Gauss5::
+H1_Pyramid_Lagrange1_Gauss5_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -639,6 +641,47 @@ H1_Pyramid_Lagrange1_Gauss5::
 }
 
 /// @endcond
+
+/// @copydoc H1_Pyramid_Lagrange1_Gauss5_impl
+class H1_Pyramid_Lagrange1_Gauss5 final : public H1_Pyramid_Lagrange1_Gauss5_impl,
+  public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type
+  using ImplType = H1_Pyramid_Lagrange1_Gauss5_impl;
+
+
+  H1_Pyramid_Lagrange1_Gauss5():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+  virtual ~H1_Pyramid_Lagrange1_Gauss5() override final = default;
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Pyramid_Lagrange1_Gauss5_impl * getImpl()
+  {
+    return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Pyramid_Lagrange1_Gauss5_impl const * getImpl() const
+  {
+    return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl const * >(this);
+  }
+
+};
 
 }
 }

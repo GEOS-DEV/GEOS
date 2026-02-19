@@ -153,10 +153,11 @@ void EventBase::getTargetReferences()
     {
       string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                         getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
-      ErrorLogger::global().currentErrorMsg()
+
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo()
-                           .setPriority( 1 ) );
+                           .setPriority( 1 ));
       throw InputError( e, errorMsg );
     }
   }
