@@ -244,7 +244,6 @@ public:
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
   { toStreamImpl( outputStream, toString( tableData ) ); }
 
-
 protected:
 
   /// symbol for separator construction

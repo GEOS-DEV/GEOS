@@ -138,6 +138,64 @@ TEST( testMpiTables, testDifferentRankData )
   }
 }
 
+TEST( testMpiTables, testCompPositiveValueTable )
+{
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "123", "45" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "45", "123" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "99", "10" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "10", "99" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "42", "42" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0", "0" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1000", "1000" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "9", "1" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1", "9" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10000000", "9999999" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9999999", "10000000" ));
+
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10.5", "9.99" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9.99", "10.5" ));
+
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "9.1", "1.99" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.99", "9.1" ));
+
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10", "9.999" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9.999", "10" ));
+
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.9", "1.1" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.1", "1.9" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.59", "1.51" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.51", "1.59" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "0.9", "0.49" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0.49", "0.9" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.2", "1.9" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.9", "1.2" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.5", "1.50" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.50", "1.5" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.500", "1.5" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.5", "1.500" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.51", "1.510" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.51", "1.509" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "3.14", "3.14" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0.001", "0.001" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "100.0", "100.0" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5.0" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5.0", "5" ));
+
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "6", "5.9" ));
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5.9", "6" ));
+
+  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5.1" ));
+  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "5.1", "5" ));
+
+
+}
+
 int main( int argc, char * * argv )
 {
   int r;
