@@ -71,7 +71,7 @@ WellControls::WellControls( string const & name, Group * const parent )
 
 
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
 
@@ -134,6 +134,10 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
+  this->registerWrapper( viewKeyStruct::enableIsoThermalEstimatorString(), &m_enableIsoThermalEstimator ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable isothermal estimator prior to coupled reservoir and well solve." );
 
   registerGroup( viewKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
 
@@ -146,7 +150,6 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-             CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
 
   Group * child = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )

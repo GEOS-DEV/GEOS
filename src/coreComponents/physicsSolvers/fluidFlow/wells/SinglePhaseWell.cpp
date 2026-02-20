@@ -1310,7 +1310,5 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   } );
 }
 
-b
-
 
 }// namespace geos
