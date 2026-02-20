@@ -18,6 +18,7 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "LvArray/src/system.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -284,20 +285,17 @@ void ErrorLogger::createFile()
 
 void ErrorLogger::setDiagnosticInfoLevel( DiagnosticInfoLevel const level )
 {
-  m_msgTypeSourceInfoEnabled.fill( false );
   switch( level )
   {
     case DiagnosticInfoLevel::Basic:
-      // no diag info
+      m_msgTypeSourceInfoEnabled.fill( false );
       break;
     case DiagnosticInfoLevel::ErrorSources:
-      m_msgTypeSourceInfoEnabled[integer( MsgType::Error )] = true;
-      m_msgTypeSourceInfoEnabled[integer( MsgType::ExternalError )] = true;
-      m_msgTypeSourceInfoEnabled[integer( MsgType::Exception )] = true;
-      m_msgTypeSourceInfoEnabled[integer( MsgType::Undefined )] = true;
-      [[fallthrough]];
+      m_msgTypeSourceInfoEnabled.fill( true );
+      m_msgTypeSourceInfoEnabled[integer( MsgType::Warning )] = false;
+      break;
     case DiagnosticInfoLevel::WarningSources:
-      m_msgTypeSourceInfoEnabled[integer( MsgType::Warning )] = true;
+      m_msgTypeSourceInfoEnabled.fill( true );
       break;
   }
 }
