@@ -19,6 +19,7 @@
 
 
 #include "common/logger/GeosExceptions.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
@@ -30,7 +31,9 @@ void Exception::prepareWhat( DiagnosticMsg & msg ) noexcept
   m_formattingOSS.str( "" );
   m_formattingOSS.clear();
 
-  ErrorLogger::formatMsgForLog( msg, m_formattingOSS );
+  ErrorLogger::formatMsgForLog( msg,
+                                m_formattingOSS,
+                                ErrorLogger::global().isSourceInfoEnabled( msg.m_type ) );
   m_cachedWhat = m_formattingOSS.bad() ? "Exception formatting error!" : m_formattingOSS.str();
 }
 

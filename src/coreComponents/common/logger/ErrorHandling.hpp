@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
+#include <array>
 #include <mutex>
 
 namespace geos
@@ -111,13 +112,28 @@ struct ErrorContext
  * @enum MsgType
  * Enum listing the different types of possible diagnostics
  */
-enum class MsgType
+enum class MsgType : integer
 {
+  Undefined,
   Error,
   ExternalError,
   Warning,
   Exception,
-  Undefined
+  Count // internal use, keep at last
+};
+
+/**
+ * @enum MsgType
+ * Enum listing the different types of possible diagnostic information levels
+ */
+enum class DiagnosticInfoLevel : integer
+{
+  /// basic information (default)
+  Basic = 1,
+  /// errors source-code information
+  ErrorSources= 2,
+  /// warnings & errors source-code information
+  WarningSources = 3,
 };
 
 /**
@@ -295,6 +311,8 @@ public:
    */
   GEOS_HOST static ErrorLogger & global();
 
+  ErrorLogger();
+
   /**
    * @brief Create the YAML file or overwrite the contents if a YAML file of the same name already exists
    * And write its header when the command line option is enabled
@@ -323,6 +341,14 @@ public:
   { m_filename = filename; }
 
   /**
+   * @brief Set the diagnostic messages information level. The higher, the more verbose and
+   *        developper-oriented the messages will be.
+   * @param level the desired information level. If level is not an DiagnosticInfoLevel enum label,
+   *              the behaviour of DiagnosticInfoLevel::Basic.
+   */
+  void setDiagnosticInfoLevel( DiagnosticInfoLevel level );
+
+  /**
    * @return The file name of the output error file
    */
   std::string_view getOutputFilename()
@@ -333,7 +359,13 @@ public:
    * @param type the message type label
    * @return the string representation of the message type
    */
-  static std::string toString( MsgType type );
+  static std::string typeToString( MsgType type );
+
+  /**
+   * @param type the message type label
+   * @return true if the message type source information output is enabled
+   */
+  bool isSourceInfoEnabled( MsgType type ) const;
 
   /**
    * @return Return the const general log stream
@@ -384,8 +416,11 @@ public:
    * @brief Format all information in ErrorMsg and write it to the specified output stream
    * @param errMsg The struct containing the error/warning object
    * @param os The output stream
+   * @param enableSourceInfo if true, information on source code is included in the message
    */
-  static void formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & os );
+  static void formatMsgForLog( DiagnosticMsg const & errMsg,
+                               std::ostream & os,
+                               bool enableSourceInfo );
 
   /**
    * @brief Write the ErrorMsg into the log stream output stream
@@ -407,6 +442,8 @@ private:
   std::mutex m_errorHandlerAsciiMutex;
   /// Avoid concurrent access between threads for yaml outputs
   std::mutex m_errorHandlerYamlMutex;
+  /// Indicated if the source file information output is enabled for a given message type
+  stdArray< bool, size_t( MsgType::Count ) > m_msgTypeSourceInfoEnabled;
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML stream

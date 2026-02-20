@@ -321,7 +321,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       additionalContext.toString(),
       testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
     std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
+    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss, true );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "The error message was not containing the expected sequence.\n" <<
@@ -347,7 +347,7 @@ TEST( ErrorHandling, testStdException )
       .addCallStackInfo( LvArray::system::stackTrace( true ) );
 
     std::ostringstream oss;
-    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss );
+    ErrorLogger::formatMsgForLog( testErrorLogger.getCurrentExceptionMsg(), oss, true );
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** Rank 0\n"
