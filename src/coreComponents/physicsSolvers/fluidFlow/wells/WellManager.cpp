@@ -699,7 +699,7 @@ void WellManager::setKeepVariablesConstantDuringInitStep( bool const keepVariabl
 void WellManager::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  //tjb
+
   real64 maxPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

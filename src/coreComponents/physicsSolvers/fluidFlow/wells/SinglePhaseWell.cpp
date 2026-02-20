@@ -135,7 +135,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & GEOS_UNUSED_PARAM( dt ),
                                                WellElementSubRegion const & subRegion )
 {
-  GEOS_UNUSED_VAR( time_n ); // tjb this will be needed with validation against tables
+  GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( subRegion );
   if( useSurfaceConditions() )
   {
@@ -278,7 +278,7 @@ void SinglePhaseWell::calculateReferenceElementRates( WellElementSubRegion & sub
   {
     real64 const densInv = 1.0 / dens[iwelemRef][0];
     currentVolRate = connRate[iwelemRef] * densInv;
-    // tjb compute mass
+    // compute mass rate
   } );
 
 
@@ -474,7 +474,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           if( ConstraintTypeId( getControl()) == constraint.getControl() )
           {
             setCurrentConstraint( &constraint );
-            setControl( static_cast< WellControls::Control >(constraint.getControl()) );     // tjb old
+            setControl( static_cast< WellControls::Control >(constraint.getControl()) );
           }
         } );
       }
@@ -537,14 +537,12 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
     constraint->setBHP ( getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ));
     constraint->setTotalVolumeRate ( getReference< real64 >(
                                        SinglePhaseWell::viewKeyStruct::currentVolRateString() ));
-    //constraint->setMassRate( wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentMassRateString() ));
     // 7) Copy well / fluid dofs to "prop"_n variables
     saveState( subRegion );
   }
   else if( !hasNonZeroRate )
   {
     setWellState( false );
-    GEOS_LOG_RANK_0( "tjb shut wells "<< subRegion.getName());
   }
   else
   {
@@ -1241,7 +1239,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
                                   WellElementSubRegion const & subRegion )
 {
 
-  GEOS_UNUSED_VAR( dt );  // FIX THIS tjb
+  GEOS_UNUSED_VAR( dt );
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
   {
@@ -1357,7 +1355,6 @@ bool SinglePhaseWell::evaluateConstraints( real64 const & time_n,
 
     if( limitingConstraint->getName() != constraint->getName())
     {
-      // limitingConstraint->getName() << std::endl;
       if( constraint->checkViolation( *limitingConstraint, time_n ) )
       {
         setControl( static_cast< WellControls::Control >(constraint->getControl()) );      // tjb old

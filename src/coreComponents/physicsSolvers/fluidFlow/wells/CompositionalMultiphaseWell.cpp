@@ -332,7 +332,6 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 void CompositionalMultiphaseWell::validateFluidModel(
   constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid ) const
 {
-
   compareMultiphaseModels( fluid, referenceFluid );
   compareMulticomponentModels( fluid, referenceFluid );
   if( useSurfaceConditions() )
@@ -387,7 +386,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  // tjb
   forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
   {
     constraint.validatePhaseType( fluid );
@@ -400,10 +398,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
 void CompositionalMultiphaseWell::initializePostSubGroups()
 {
   WellControls::initializePostSubGroups();
-
-  //DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  // tjbvalidateConstitutiveModels( domain );
 
 }
 
@@ -946,7 +940,6 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
       getReference< array1d< real64 > >(
         CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) =currentPhaseVolRate;
 
-
     }
 
 
@@ -992,7 +985,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
             setCurrentConstraint( &constraint );
             setControl( static_cast< WellControls::Control >(inputControl) );  // tjb old
           }
-
         } );
       }
       else
@@ -1110,7 +1102,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   else if( !hasNonZeroRate )
   {
     setWellState( false );
-    GEOS_LOG_RANK_0( "tjb shut wells "<< subRegion.getName());
   }
   else
   {

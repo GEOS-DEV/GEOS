@@ -64,7 +64,7 @@ WellControls::WellControls( string const & name, Group * const parent )
 
 
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
 
@@ -122,15 +122,6 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
-#if 0
-  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
-                    "the solver will be applied to these regions, only that allocation will occur such that the "
-                    "solver may be applied to these regions. The decision about what regions this solver will be"
-                    "applied to rests in the EventManager." );
-#endif
   addLogLevel< logInfo::WellControl >();
 }
 
@@ -140,16 +131,6 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-  //Group * baseChild = Group::createChild( childKey, childName );
-  //if( baseChild != nullptr )
-  //{
-  //  return baseChild;
-  //}
-  //GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  ////const auto childTypes = { viewKeyStruct::perforationString() };
-  //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
-  //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
-
   Group * constraint = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
@@ -615,7 +596,6 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
     real64 const refElev1 = constraint.getReferenceElevation();
     constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
   } );
-
   // set the reference well element where the BHP control is applied
   setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
 }
