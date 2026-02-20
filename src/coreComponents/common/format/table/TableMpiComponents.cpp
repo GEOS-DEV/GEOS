@@ -68,8 +68,25 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
     status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
   }
 
-  gatherAndOutputTableDataRank0( tableOutput, m_tableLayout, dataCellsLayout, status );
-
+  if( m_sortingFunctor )
+  {
+    gatherSortAndOutput( tableOutput, dataCellsLayout, status );
+  }
+  else
+  {
+    if( status.m_isMasterRank )
+    {
+      outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
+      tableOutput.flush();
+    }
+    gatherAndOutputInRankOrder( tableOutput, dataCellsLayout, m_tableLayout, status );
+    if( status.m_isMasterRank )
+    {
+      outputTableFooter( tableOutput, m_tableLayout, errorCellsLayout,
+                         status.m_sepLine, status.m_hasContent );
+      tableOutput.flush();
+    }
+  }
 }
 
 void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
@@ -201,22 +218,6 @@ void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
     for( auto const & strSorted : strsAccrossRanks )
       tableOutput << strSorted;
   }
-}
-
-void TableTextMpiOutput::gatherAndOutputTableDataRank0( std::ostream & tableOutput,
-                                                        PreparedTableLayout const & tableLayout,
-                                                        CellLayoutRows const & dataCellsLayout,
-                                                        TableTextMpiOutput::Status & status ) const
-{
-  if( m_sortingFunctor )
-  {
-    gatherSortAndOutput( tableOutput, dataCellsLayout, status );
-  }
-  else
-  {
-    gatherAndOutputInRankOrder( tableOutput, dataCellsLayout, tableLayout, status );
-  }
-
 }
 
 } /* namespace geos */

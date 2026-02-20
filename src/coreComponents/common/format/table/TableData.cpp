@@ -181,12 +181,12 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   return tableData1D;
 }
 
-bool tabledatasorting::positiveNumberStringComp( std::string const & s1, std::string const & s2 )
+bool tabledatasorting::positiveNumberStringComp( string const & s1, string const & s2 )
 {
-    auto split = [](std::string const & s, std::string & intPart, std::string & decPart)
+    auto split = [](string const & s, string & intPart, string & decPart)
     {
         size_t dotPos = s.find('.');
-        if(dotPos == std::string::npos)
+        if(dotPos == string::npos)
         {
             intPart = s;
             decPart = "";
@@ -198,25 +198,25 @@ bool tabledatasorting::positiveNumberStringComp( std::string const & s1, std::st
         }
     };
 
-    std::string s1Int, s1Dec, s2Int, s2Dec;
+    string s1Int, s1Dec, s2Int, s2Dec;
     split(s1, s1Int, s1Dec);
     split(s2, s2Int, s2Dec);
 
     if(s1Int.length() != s2Int.length())
-        return s1Int.length() > s2Int.length();
+        return s1Int.length() < s2Int.length();
 
     if(s1Int != s2Int)
-        return s1Int > s2Int;
-
+        return s1Int < s2Int;
+      
     size_t minLen = std::min(s1Dec.length(), s2Dec.length());
     for(size_t i = 0; i < minLen; ++i)
     {
         if(s1Dec[i] != s2Dec[i])
-            return s1Dec[i] > s2Dec[i];
+            return s1Dec[i] < s2Dec[i];
     }
 
   
-    return false;
+    return true;
 }
 
 }

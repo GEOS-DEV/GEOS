@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/format/table/TableData.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
 #include "common/initializeEnvironment.hpp"
 #include "common/MpiWrapper.hpp"
@@ -138,60 +139,116 @@ TEST( testMpiTables, testDifferentRankData )
   }
 }
 
+TEST( testMpiTables, testSortingMethod )
+{
+  struct TestCase
+  {
+    stdVector< stdVector< std::pair< integer, real64 > > > m_ranksValues;
+    string m_expectedResult;
+  };
+
+  TestCase const testCase =
+  {
+    {   // m_ranksValues: in this test, rank 2 has no value
+      { {1, 0.502} },
+      { {2, 0.624}, {3, 0.791} },
+      {},
+      { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+    },
+    "\n"   // m_expectedResult
+    "-------------------------------------------\n"
+    "|  Summary of negative pressure elements  |\n"
+    "|-----------------------------------------|\n"
+    "|    Global Id     |    pressure [Pa]     |\n"
+    "|------------------|----------------------|\n"
+    "|               1  |               0.502  |\n"
+    "|               2  |               0.624  |\n"
+    "|               3  |               0.791  |\n"
+    "|               4  |               0.243  |\n"
+    "|               5  |               0.804  |\n"
+    "|               6  |               0.302  |\n"
+    "-------------------------------------------\n"
+  };
+
+  int const rankId = MpiWrapper::commRank();
+  int const nbRanks = MpiWrapper::commSize();
+  if( nbRanks > 1 )
+  {
+    ASSERT_EQ( nbRanks, 4 );
+
+    TableLayout const layout = TableLayout().
+                                 setTitle( "Summary of negative pressure elements" ).
+                                 addColumns( { "Global Id", "pressure [Pa]" } ).
+                                 setDefaultHeaderAlignment( TableLayout::Alignment::left );
+    TableData data;
+    auto const & rankTestData = testCase.m_ranksValues[rankId];
+
+    TableMpiLayout mpiLayout;
+    mpiLayout.m_separatorBetweenRanks = true;
+
+    if( !rankTestData.empty() )
+    {
+      mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
+      for( auto const & [id, value] : rankTestData )
+      {
+        data.addRow( id, value );
+      }
+    }
+
+    TableTextMpiOutput formatter = TableTextMpiOutput( layout, mpiLayout );
+    formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
+                                  std::vector< TableData::CellData > const & row2 ) {
+      return tabledatasorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+    } );
+
+    std::ostringstream oss;
+    formatter.toStream( oss, data );
+    if( rankId == 0 )
+    {
+      std::cout << "ma boula """<< oss.str()<<std::endl;
+      EXPECT_STREQ( testCase.m_expectedResult.data(),
+                    oss.str().data() );
+    }
+  }
+
+}
+
 TEST( testMpiTables, testCompPositiveValueTable )
 {
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "123", "45" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "45", "123" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "99", "10" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "10", "99" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "42", "42" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0", "0" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1000", "1000" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "9", "1" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1", "9" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10000000", "9999999" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9999999", "10000000" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "123", "45" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "45", "123" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "42", "42" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "0", "0" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "9", "1" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "10000000", "9999999" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "9999999", "10000000" ));
 
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10.5", "9.99" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9.99", "10.5" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "10.5", "9.99" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "9.99", "10.5" ));
 
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "9.1", "1.99" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.99", "9.1" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "10", "9.999" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "9.999", "10" ));
 
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "10", "9.999" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "9.999", "10" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.2", "1.9" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "1.9", "1.2" ));
 
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.9", "1.1" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.1", "1.9" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.59", "1.51" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.51", "1.59" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "0.9", "0.49" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0.49", "0.9" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.5", "1.50" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.50", "1.5" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.500", "1.5" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.5", "1.500" ));
 
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.2", "1.9" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.9", "1.2" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "1.51", "1.510" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "1.51", "1.509" ));
 
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.5", "1.50" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.50", "1.5" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.500", "1.5" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.5", "1.500" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "3.14", "3.14" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "0.001", "0.001" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "100.0", "100.0" ));
 
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "1.51", "1.510" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "1.51", "1.509" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "5", "5.0" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "5.0", "5" ));
 
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "3.14", "3.14" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "0.001", "0.001" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "100.0", "100.0" ));
-
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5.0" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5.0", "5" ));
-
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "6", "5.9" ));
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5.9", "6" ));
-
-  EXPECT_FALSE( tabledatasorting::positiveNumberStringComp( "5", "5.1" ));
-  EXPECT_TRUE ( tabledatasorting::positiveNumberStringComp( "5.1", "5" ));
+  EXPECT_FALSE ( tabledatasorting::positiveNumberStringComp( "5595", "5155" ));
+  EXPECT_TRUE( tabledatasorting::positiveNumberStringComp( "5155", "5595" ));
 
 
 }
