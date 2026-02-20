@@ -23,9 +23,6 @@
 
 #include "TableFormatter.hpp"
 #include "common/format/table/TableData.hpp"
-#include <algorithm>
-#include <functional>
-#include <memory>
 
 namespace geos
 {
@@ -97,7 +94,7 @@ private:
 
   TableMpiLayout m_mpiLayout;
 
-  /// The customized comparison function object for std::sort
+  /// The custom comparison function object for std::sort
   std::unique_ptr< SortingFunc > m_sortingFunctor;
 
   /**
@@ -113,10 +110,10 @@ private:
   /**
    * @brief Convert each row to a string and stored as a single entry;
    * @param dataCellsLayout The target CellLayoutRows to convert
-   * @param rowsConvertedInString The result vector of the convertion
+   * @param rowsAsString The result vector of the convertion
    */
   void convertDataCellRowsToString( CellLayoutRows const & dataCellsLayout,
-                                    stdVector< string > & rowsConvertedInString ) const;
+                                    stdVector< string > & rowsAsString ) const;
 
   /**
    * @brief Parse a serialized row string and append the resulting row to a TableData.

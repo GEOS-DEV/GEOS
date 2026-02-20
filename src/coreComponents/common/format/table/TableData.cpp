@@ -18,6 +18,7 @@
  */
 
 #include "TableData.hpp"
+#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 
 namespace geos
@@ -181,9 +182,9 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   return tableData1D;
 }
 
-bool tabledatasorting::positiveNumberStringComp( string const & s1, string const & s2 )
+bool tabledatasorting::positiveNumberStringComp( string_view s1, string_view s2 )
 {
-    auto split = [](string const & s, string & intPart, string & decPart)
+    auto split = [](string_view s, string & intPart, string & decPart)
     {
         size_t dotPos = s.find('.');
         if(dotPos == string::npos)
@@ -216,7 +217,7 @@ bool tabledatasorting::positiveNumberStringComp( string const & s1, string const
     }
 
   
-    return true;
+    return false;
 }
 
 }

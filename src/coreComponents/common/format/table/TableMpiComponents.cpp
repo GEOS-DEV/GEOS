@@ -20,9 +20,6 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
-#include <algorithm>
-#include <functional>
-#include <mpi.h>
 
 namespace geos
 {
@@ -129,6 +126,9 @@ void TableTextMpiOutput::convertDataCellRowsToString( CellLayoutRows const & dat
 void TableTextMpiOutput::reconstructTableData( string_view str,
                                                TableData & reconstructedTableData ) const
 {
+  if( str.size() < 1 )
+    return;
+
   string row( str.substr( 1 ));
   string cell;
   stdVector< TableData::CellData > reconstructedRow;
@@ -215,8 +215,8 @@ void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
 
   if( status.m_isMasterRank && status.m_hasContent )
   {
-    for( auto const & strSorted : strsAccrossRanks )
-      tableOutput << strSorted;
+    for( auto const & str : strsAccrossRanks )
+      tableOutput << str;
   }
 }
 

@@ -14,28 +14,13 @@
  */
 
 #include <map>
-#include <mpi.h>
-#include <set>
-#include <string>
 #include <vector>
 
 #include "ElementRegionManager.hpp"
 
-#include "codingUtilities/RTTypes.hpp"
 #include "common/DataLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
-#include "common/StdContainerWrappers.hpp"
 #include "common/TimingMacros.hpp"
-#include "common/format/table/TableData.hpp"
-#include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
-#include "common/logger/Logger.hpp"
-#include "dataRepository/BufferOps.hpp"
-#include "mesh/ElementSubRegionBase.hpp"
-#include "mesh/PerforationData.hpp"
-#include "mesh/WellElementRegion.hpp"
-#include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -253,7 +238,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
                                                     wellRegion.getWellGeneratorName()),
       {
-        "Perforation", "Well element", "Coordinates",
+        "Rank", "Perforation", "Well element", "Coordinates",
         "Cell region", "Cell sub-region", "Cell ID"
       } );
 
@@ -281,7 +266,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
-        localPerfoData.addRow( globalIperf[iperfLocal], localWellElemIndices, localCoords,
+        localPerfoData.addRow( rankId, globalIperf[iperfLocal], localWellElemIndices, localCoords,
                                region.getName(), subRegion.getName(), cellId );
       }
     }
@@ -292,7 +277,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     formatter.setSortingFunc(
       []( std::vector< TableData::CellData > const & row1,
           std::vector< TableData::CellData > const & row2 ) {
-      return tabledatasorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+      return tabledatasorting::positiveNumberStringComp( row1[1].value, row2[1].value );
     } );
 
     std::ostringstream outputStream;

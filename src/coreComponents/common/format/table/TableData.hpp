@@ -302,9 +302,16 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
+// Custom Comp function;
 namespace tabledatasorting
 {
-bool positiveNumberStringComp( string const & a, string const & b );
+/**
+ * @brief Compare two number string by  in ascending numerical order.
+ * @param a The string to compare
+ * @param b The string to compare
+ * @return True if a is greater than b
+ */
+bool positiveNumberStringComp( string_view a, string_view b );
 }
 
 }
