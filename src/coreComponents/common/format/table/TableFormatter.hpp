@@ -244,6 +244,7 @@ public:
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
   { toStreamImpl( outputStream, toString( tableData ) ); }
 
+
 protected:
 
   /// symbol for separator construction
@@ -307,6 +308,14 @@ protected:
                           CellLayoutRows & errorCellsLayout,
                           string_view separatorLine,
                           bool hasData ) const;
+
+  void outputLine( PreparedTableLayout const & tableLayout,
+                   CellLayoutRows const & rows,
+                   CellLayoutRow const & row,
+                   std::ostream & tableOutput,
+                   size_t const idxRow ) const;
+
+
 
 private:
 

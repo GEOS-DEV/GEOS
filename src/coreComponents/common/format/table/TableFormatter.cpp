@@ -804,61 +804,72 @@ void TableTextFormatter::formatCell( std::ostream & tableOutput,
   }
 }
 
+void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
+                                     CellLayoutRows const & rows,
+                                     CellLayoutRow const & row,
+                                     std::ostream & tableOutput,
+                                     size_t const idxRow ) const
+{
+  size_t const nbRows = rows.size();
+  size_t const nbColumns = !rows.empty() ? rows.front().cells.size() : 0;
+  
+  size_t const nbBorderSpaces = tableLayout.getBorderMargin();
+  size_t const nbColumnSpaces = ( tableLayout.getColumnMargin() - 1 ) / 2;
+  for( size_t idxSubLine = 0; idxSubLine < row.sublinesCount; idxSubLine++ )
+  {
+    bool isLeftBorderCell = true;
+
+    for( size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
+    {
+      auto & cell = row.cells[idxColumn];
+      bool const isRightBorderCell = idxColumn == nbColumns - 1;
+      if( cell.m_cellType != CellType::MergeNext || isRightBorderCell )
+      {
+        bool const isSeparator = cell.m_cellType == CellType::Separator;
+        char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
+
+        if( isLeftBorderCell )
+        {   // left table border
+          isLeftBorderCell=false;
+          tableOutput << tableLayout.getIndentationStr();
+          tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
+        }
+        else
+        {   // left side of a cell that have a neightboor
+          tableOutput << string( nbColumnSpaces, cellSpaceChar );
+        }
+
+        // cell content / fill
+        formatCell( tableOutput, cell, idxSubLine );
+
+        if( !isRightBorderCell )
+        {   // right side of a cell that have a neightboor
+          bool const isNextSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
+          bool const upMerged = idxRow > 0 && rows[idxRow - 1].cells[idxColumn].m_cellType == CellType::MergeNext;
+          bool const downMerged = idxRow < nbRows - 1 && rows[idxRow + 1].cells[idxColumn].m_cellType == CellType::MergeNext;
+          tableOutput << string( nbColumnSpaces, cellSpaceChar );
+          tableOutput << ( isSeparator && isNextSeparator && (upMerged || downMerged) ?
+                           m_horizontalLine : m_verticalLine );
+        }
+        else
+        {   // right table border
+          tableOutput << string( nbBorderSpaces, cellSpaceChar ) << m_verticalLine << "\n";
+        }
+      }
+    }
+  }
+
+}
+
 void TableTextFormatter::outputLines( PreparedTableLayout const & tableLayout,
                                       CellLayoutRows const & rows,
                                       std::ostream & tableOutput ) const
 {
-  size_t const nbRows = rows.size();
-  size_t const nbColumns = !rows.empty() ? rows.front().cells.size() : 0;
-  size_t const nbBorderSpaces = tableLayout.getBorderMargin();
-  size_t const nbColumnSpaces = ( tableLayout.getColumnMargin() - 1 ) / 2;
 
-  size_t idxRow = 0;
+  size_t idxRow=0;
   for( CellLayoutRow const & row : rows )
   {
-    for( size_t idxSubLine = 0; idxSubLine < row.sublinesCount; idxSubLine++ )
-    {
-      bool isLeftBorderCell = true;
-
-      for( size_t idxColumn = 0; idxColumn < nbColumns; ++idxColumn )
-      {
-        auto & cell = row.cells[idxColumn];
-        bool const isRightBorderCell = idxColumn == nbColumns - 1;
-        if( cell.m_cellType != CellType::MergeNext || isRightBorderCell )
-        {
-          bool const isSeparator = cell.m_cellType == CellType::Separator;
-          char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
-
-          if( isLeftBorderCell )
-          { // left table border
-            isLeftBorderCell=false;
-            tableOutput << tableLayout.getIndentationStr();
-            tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
-          }
-          else
-          { // left side of a cell that have a neightboor
-            tableOutput << string( nbColumnSpaces, cellSpaceChar );
-          }
-
-          // cell content / fill
-          formatCell( tableOutput, cell, idxSubLine );
-
-          if( !isRightBorderCell )
-          { // right side of a cell that have a neightboor
-            bool const isNextSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
-            bool const upMerged = idxRow > 0 && rows[idxRow - 1].cells[idxColumn].m_cellType == CellType::MergeNext;
-            bool const downMerged = idxRow < nbRows - 1 && rows[idxRow + 1].cells[idxColumn].m_cellType == CellType::MergeNext;
-            tableOutput << string( nbColumnSpaces, cellSpaceChar );
-            tableOutput << ( isSeparator && isNextSeparator && (upMerged || downMerged) ?
-                             m_horizontalLine : m_verticalLine );
-          }
-          else
-          { // right table border
-            tableOutput << string( nbBorderSpaces, cellSpaceChar ) << m_verticalLine << "\n";
-          }
-        }
-      }
-    }
+    outputLine( tableLayout, rows, row, tableOutput, idxRow );
     idxRow++;
   }
 }
