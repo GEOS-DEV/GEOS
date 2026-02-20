@@ -142,10 +142,10 @@ public:
                                       arrayView1d< real64 > const & localRhs ) override;
   /**@}*/
   /**
-   * @defgroup Solver Interface Functions
+   * @defgroup Well Interface Functions - required by WellManager and WellNewtonSolver
    *
    * These functions provide the primary interface that is required for derived classes
-   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
+   * The "Well" versions apply to individual well subRegions
    */
   /**@{*/
 
@@ -312,10 +312,8 @@ public:
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
-   * @param domain the physical domain object
+   * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void chopNegativeDensities( DomainPartition & domain );
-
   void chopNegativeDensities( WellElementSubRegion & subRegion );
 
 

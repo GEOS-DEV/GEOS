@@ -71,7 +71,7 @@ WellControls::WellControls( string const & name, Group * const parent )
 
 
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
 
@@ -146,15 +146,7 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-  //Group * baseChild = Group::createChild( childKey, childName );
-  //if( baseChild != nullptr )
-  //{
-  //  return baseChild;
-  //}
-  //GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  ////const auto childTypes = { viewKeyStruct::perforationString() };
-  //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
-  //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+             CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
 
   Group * child = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )
@@ -287,21 +279,7 @@ void WellControls::postInputInitialization()
                  "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
-  // tjb add more constraint validation
-  // 1) liquid rate - phase names consistent with fluild model
-  // 2) at least one bhp and one rate constraint defined
-  // 3) constraint type and well type compatibility
 
-  //GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
-  //               "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
-  //               InputError );
-
-
-  // 8) Make sure that the initial pressure coefficient is positive
-  GEOS_THROW_IF( m_initialPressureCoefficient < 0,
-                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
-                 ": This tuning coefficient is negative",
-                 InputError );
 
   // 6.2) Check incoherent information
 
@@ -316,6 +294,14 @@ void WellControls::postInputInitialization()
                  "You have to control an injector with "
                  << EnumStrings< Control >::toString( Control::MASSRATE ),
                  InputError, getDataContext() );
+
+  // 8) Make sure that the initial pressure coefficient is positive
+  GEOS_THROW_IF( m_initialPressureCoefficient < 0,
+                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
+                 ": This tuning coefficient is negative",
+                 InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
+
+
 
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
@@ -640,7 +626,6 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
     real64 const refElev1 = constraint.getReferenceElevation();
     constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
   } );
-
   // set the reference well element where the BHP control is applied
   setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
 }

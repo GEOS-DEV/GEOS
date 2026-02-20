@@ -84,12 +84,12 @@ char const * xmlInput =
       targetRegions="{ region }">
     </CompositionalMultiphaseFVM>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
       logLevel="1"
       useMass="1">
-    <WellControls
+    <CompositionalMultiphaseWell
       name="WC_CO2_INJ"
       logLevel="2"
       type="injector"
@@ -107,8 +107,8 @@ char const * xmlInput =
         volumeRate="0.001"
         injectionStream="{ 1.0, 0.0 }"
         injectionTemperature="300.15"/>
-    </WellControls>
-     </CompositionalMultiphaseWell>
+    </CompositionalMultiphaseWell>
+     </WellManager>
   </Solvers>
 
   <Mesh>
