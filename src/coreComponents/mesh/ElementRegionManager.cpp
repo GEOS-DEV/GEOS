@@ -287,9 +287,17 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     }
 
     TableMpiLayout mpiLayout;
-    TableTextMpiOutput const formatter = TableTextMpiOutput( layoutPerforation, mpiLayout );
+    TableTextMpiOutput formatter = TableTextMpiOutput( layoutPerforation, mpiLayout );
+
+    formatter.setSortingFunc(
+      []( std::vector< TableData::CellData > const & row1,
+          std::vector< TableData::CellData > const & row2 ) {
+      return tabledatasorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+    } );
+
     std::ostringstream outputStream;
     formatter.toStream( outputStream, localPerfoData );
+
     if( rankId == 0 )
     {
       TableTextFormatter const globalFormatter( layoutPerforation );
