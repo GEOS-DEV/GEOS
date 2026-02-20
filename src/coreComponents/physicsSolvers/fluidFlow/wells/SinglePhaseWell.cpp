@@ -266,6 +266,8 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   arrayView1d< real64 const > const pres =
     subRegion.getField< well::pressure >();
 
+  arrayView1d< real64 const > const & temp = subRegion.getField< well::temperature >();
+
   arrayView1d< real64 const > const & connRate =
     subRegion.getField< well::connectionRate >();
 
@@ -282,11 +284,12 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   string const wellControlsName = wellControls.getName();
   bool const logSurfaceCondition = isLogLevelActive< logInfo::WellControl >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 flashPressure;
+  real64 flashPressure, flashTemperature;
   if( useSurfaceConditions )
   {
     // use surface conditions
     flashPressure = wellControls.getSurfacePressure();
+    flashTemperature = wellControls.getSurfaceTemperature();
   }
   else
   {
@@ -309,10 +312,12 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
     }
     // use region conditions
     flashPressure = wellControls.getRegionAveragePressure();
+    flashTemperature = wellControls.getRegionAverageTemperature();
     if( flashPressure < 0.0 )
     {
       // use segment conditions
       flashPressure   = pres[iwelemRef];
+      flashTemperature = temp[iwelemRef];
     }
   }
   real64 & currentVolRate =
@@ -332,12 +337,14 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidWrapper,
                                   pres,
+                                  temp,
                                   connRate,
                                   dens,
                                   dDens,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
                                   &flashPressure,
+                                  &flashTemperature,
                                   &currentVolRate,
                                   dCurrentVolRate,
                                   &iwelemRef,
@@ -350,12 +357,19 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         if( useSurfaceConditions )
         {
           // we need to compute the surface density
-          fluidWrapper.update( iwelemRef, 0, flashPressure );
+          if constexpr ( IS_THERMAL )
+          {
+            fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature );
+          }
+          else
+          {
+            fluidWrapper.update( iwelemRef, 0, flashPressure );
+          }
           if( logSurfaceCondition )
           {
 
-            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                     wellControlsName, flashPressure ) );
+            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa, T_surface = {} K",
+                                     wellControlsName, flashPressure, flashTemperature ) );
           }
 
 #ifdef GEOS_USE_HIP
@@ -366,7 +380,15 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         else
         {
           real64 const refPres = pres[iwelemRef];
-          fluidWrapper.update( iwelemRef, 0, refPres );
+          real64 const refTemp = temp[iwelemRef];
+          if constexpr ( IS_THERMAL )
+          {
+            fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
+          }
+          else
+          {
+            fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
+          }
         }
 
         real64 const densInv = 1.0 / dens[iwelemRef][0];
