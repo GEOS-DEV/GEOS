@@ -302,5 +302,10 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
+namespace tabledatasorting
+{
+bool positiveNumberStringComp( string const & a, string const & b );
+}
+
 }
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP */

@@ -166,7 +166,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      // if a column value(s) is/are missing, insert empty entry(ies)
+      // if s1 column value(s) is/are missing, insert empty entry(ies)
       while( columnValue > *( columnIt++ ) && columnIt != m_columnValues.end() )
       {
         currentRowValues.push_back( {CellType::Value, ""} );
@@ -180,4 +180,43 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
 
   return tableData1D;
 }
+
+bool tabledatasorting::positiveNumberStringComp( std::string const & s1, std::string const & s2 )
+{
+    auto split = [](std::string const & s, std::string & intPart, std::string & decPart)
+    {
+        size_t dotPos = s.find('.');
+        if(dotPos == std::string::npos)
+        {
+            intPart = s;
+            decPart = "";
+        }
+        else
+        {
+            intPart = s.substr(0, dotPos);
+            decPart = s.substr(dotPos + 1);
+        }
+    };
+
+    std::string s1Int, s1Dec, s2Int, s2Dec;
+    split(s1, s1Int, s1Dec);
+    split(s2, s2Int, s2Dec);
+
+    if(s1Int.length() != s2Int.length())
+        return s1Int.length() > s2Int.length();
+
+    if(s1Int != s2Int)
+        return s1Int > s2Int;
+
+    size_t minLen = std::min(s1Dec.length(), s2Dec.length());
+    for(size_t i = 0; i < minLen; ++i)
+    {
+        if(s1Dec[i] != s2Dec[i])
+            return s1Dec[i] > s2Dec[i];
+    }
+
+  
+    return false;
+}
+
 }
