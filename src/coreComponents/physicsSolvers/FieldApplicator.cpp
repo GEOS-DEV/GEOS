@@ -83,8 +83,77 @@ FieldApplicator::
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber, eventCounter, eventProgress );
 
   FieldSpecificationManager & fsm = FieldSpecificationManager::getInstance();
-  FunctionManager & functionManager = FunctionManager::getInstance();
 
+  // Check whether any of the field specifications is an EquilibriumInitialCondition.
+  // If so, we delegate the full re-initialization to the flow solver, which correctly
+  // handles multi-phase hydrostatic pressure computation and all derived state
+  // (phaseVolumeFraction, phaseMobility, RelPerm_phaseRelPerm, fracPerm_permeability,
+  //  fracPorosity_porosity, etc.)
+  bool hasEquilibriumIC = false;
+  for( string const & fsName : m_fieldSpecificationNames )
+  {
+    if( fsm.hasGroup( fsName ) )
+    {
+      FieldSpecificationBase const & fs = fsm.getGroup< FieldSpecificationBase >( fsName );
+      if( dynamic_cast< EquilibriumInitialCondition const * >( &fs ) != nullptr )
+      {
+        hasEquilibriumIC = true;
+        break;
+      }
+    }
+  }
+
+  if( hasEquilibriumIC )
+  {
+    // Find the flow solver to delegate initialization to.
+    // Use m_solverName if provided, otherwise find the first FlowSolverBase.
+    FlowSolverBase * flowSolver = nullptr;
+    Group & solversGroup = this->getGroupByPath< Group >( "/Problem/Solvers" );
+
+    if( !m_solverName.empty() )
+    {
+      flowSolver = solversGroup.getGroupPointer< FlowSolverBase >( m_solverName );
+      GEOS_THROW_IF( flowSolver == nullptr,
+                     GEOS_FMT( "FieldApplicator '{}': solver '{}' not found or is not a FlowSolverBase.",
+                               getName(), m_solverName ),
+                     InputError, getDataContext() );
+    }
+    else
+    {
+      solversGroup.forSubGroups< FlowSolverBase >( [&]( FlowSolverBase & solver )
+      {
+        if( flowSolver == nullptr )
+        {
+          flowSolver = &solver;
+        }
+      } );
+    }
+
+    GEOS_THROW_IF( flowSolver == nullptr,
+                   GEOS_FMT( "FieldApplicator '{}': No FlowSolverBase found to delegate HydrostaticEquilibrium "
+                             "initialization. Please specify solverName in the FieldApplicator XML tag.",
+                             getName() ),
+                   InputError, getDataContext() );
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator '{}': delegating HydrostaticEquilibrium re-initialization "
+                                "to solver '{}'.", getName(), flowSolver->getName() ) );
+
+    // Re-run the solver's full state initialization, which internally calls (in order):
+    //   1. computeHydrostaticEquilibrium  → correctly assigns pressure, temperature, and
+    //                                       globalCompFraction to ALL subregions including the
+    //                                       newly created fracture elements, using the full
+    //                                       multi-phase hydrostatic pressure algorithm
+    //   2. initializePorosityAndPermeability  → fracPorosity_porosity, fracPerm_permeability
+    //   3. initializeHydraulicAperture        → hydraulicAperture for fractures
+    //   4. initializeFluidState               → globalCompDensity, phaseVolumeFraction,
+    //                                           RelPerm_phaseRelPerm, phaseMobility,
+    //                                           fluid.saveConvergedState() (_n arrays)
+    flowSolver->initializeState( domain );
+
+    return false;
+  }
+
+  // For non-equilibrium field specifications, apply them element by element as before.
   for( string const & fsName : m_fieldSpecificationNames )
   {
     GEOS_THROW_IF( !fsm.hasGroup( fsName ),
@@ -94,9 +163,6 @@ FieldApplicator::
                    InputError, getWrapperDataContext( viewKeyStruct::fieldSpecificationNamesString() ) );
 
     FieldSpecificationBase const & fs = fsm.getGroup< FieldSpecificationBase >( fsName );
-
-    // Check if this is an EquilibriumInitialCondition (HydrostaticEquilibrium)
-    EquilibriumInitialCondition const * equilIC = dynamic_cast< EquilibriumInitialCondition const * >( &fs );
 
     for( auto & meshBodyPair : domain.getMeshBodies().getSubGroups() )
     {
@@ -132,30 +198,14 @@ FieldApplicator::
                 }
               }
 
-              // For HydrostaticEquilibrium, we need special handling since:
-              // 1. Pressure requires complex hydrostatic computation with phase-dependent interpolation
-              // 2. Temperature and globalCompFraction can be applied directly from elevation tables
-              // 3. After setting these fields, we need to initialize derived quantities (component densities, etc.)
-              if( equilIC != nullptr )
-              {
-                applyEquilibriumInitialConditionFields( *equilIC, targetSet, subRegion, functionManager );
-
-                // Initialize the fluid state to compute derived quantities (component densities, phase fractions, etc.)
-                initializeSubRegionFluidState( domain, subRegion );
-              }
-              else
-              {
-                // For regular field specifications, apply the field value normally
-                string const targetFieldName = getTargetFieldName( fieldName );
-                bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, subRegion, targetFieldName );
-              }
+              string const targetFieldName = getTargetFieldName( fieldName );
+              bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, subRegion, targetFieldName );
             } );
           }
         }
       }
     }
   }
-
 
   return false;
 }
@@ -447,7 +497,29 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
   flowSolver->updateFluidState( subRegion );
 
   // ------------------------------------------------------------------------------------
-  // Step 5: Save the converged state so that all _n fields are correctly initialized.
+  // Step 5: Save the fluid constitutive model's converged state.
+  //         This saves totalDensity_n, phaseDensity_n, phaseCompFraction_n, etc.
+  //         Without this, the accumulation term residual at the first Newton iteration
+  //         will be non-zero (phaseDensity_n=0 leads to wrong compAmount_n).
+  // ------------------------------------------------------------------------------------
+  {
+    string const & fluidName2 = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    if( subRegion.hasGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ) )
+    {
+      dataRepository::Group & constModels2 =
+        subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+      if( constModels2.hasGroup( fluidName2 ) )
+      {
+        constitutive::MultiFluidBase const & fluid2 =
+          constModels2.getGroup< constitutive::MultiFluidBase >( fluidName2 );
+        fluid2.saveConvergedState();
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------
+  // Step 6: Save the solver-level converged state so that all _n fields are correctly
+  //         initialized (pressure_n, temperature_n, compDens_n, compAmount_n).
   //         This is crucial so that the first time step's accumulation term is correct.
   // ------------------------------------------------------------------------------------
   flowSolver->saveConvergedState( subRegion );
