@@ -28,6 +28,7 @@ namespace geos
 class EquilibriumInitialCondition;
 class FunctionManager;
 class FlowSolverBase;
+class CompositionalMultiphaseBase;
 class ElementSubRegionBase;
 
 
@@ -117,12 +118,21 @@ private:
                                                FunctionManager & functionManager );
 
   /**
-   * @brief Initialize the fluid state for a subregion.
+   * @brief Initialize the fluid state for a subregion after applying equilibrium fields.
    * @param[in] domain The domain partition.
    * @param[in,out] subRegion The element subregion to initialize.
    *
    * This function is called after applying the HydrostaticEquilibrium fields to properly
-   * initialize all the derived compositional variables (component densities, phase fractions, etc.).
+   * initialize all derived compositional variables. The full initialization sequence is:
+   * 1. Porosity and permeability (fracPorosity_porosity, fracPorosity_initialPorosity,
+   *    fracPorosity_referencePorosity, fracPerm_permeability) via updatePorosityAndPermeability.
+   *    For fracture elements (SurfaceElementSubRegion), this uses the hydraulic aperture
+   *    (defaultAperture from the XML) to compute initial fracture permeability and porosity.
+   * 2. Component densities (globalCompDensity) from component fractions and total fluid density.
+   * 3. Phase volume fractions (phaseVolumeFraction) via updateFluidState.
+   * 4. Relative permeability values (RelPerm_phaseRelPerm) via updateFluidState.
+   * 5. Phase mobilities (phaseMobility) via updateFluidState.
+   * 6. All '_n' fields (converged state) via saveConvergedState.
    */
   void initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion );
 

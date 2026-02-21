@@ -22,13 +22,17 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshLevel.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/SurfaceElementSubRegion.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 
 namespace geos
 {
@@ -280,72 +284,177 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
 
 void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
 {
-  GEOS_UNUSED_VAR( domain );
+  // Check if this subregion has a fluid model at all
+  if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
+  {
+    return;  // No fluid model associated - nothing to initialize
+  }
 
-  // For compositional flow, we need to compute component densities from component fractions
-  // Check if this is a compositional flow subregion by looking for the required fields
+  // Find the CompositionalMultiphaseBase solver that targets this subregion.
+  // Use m_solverName if provided, otherwise search all solvers.
+  CompositionalMultiphaseBase * flowSolver = nullptr;
+
+  Group & solversGroup = this->getGroupByPath< Group >( "/Problem/Solvers" );
+
+  if( !m_solverName.empty() )
+  {
+    flowSolver = solversGroup.getGroupPointer< CompositionalMultiphaseBase >( m_solverName );
+    GEOS_LOG_RANK_0_IF( flowSolver == nullptr,
+                        GEOS_FMT( "FieldApplicator: solver '{}' is not a CompositionalMultiphaseBase solver; "
+                                  "skipping compositional state initialization.", m_solverName ) );
+  }
+  else
+  {
+    // Search for the first CompositionalMultiphaseBase solver that has the same fluid name
+    string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    solversGroup.forSubGroups< CompositionalMultiphaseBase >( [&]( CompositionalMultiphaseBase & solver )
+    {
+      if( flowSolver == nullptr )
+      {
+        // Check that this solver's fluid name matches the subregion's fluid
+        GEOS_UNUSED_VAR( fluidName );
+        flowSolver = &solver;
+      }
+    } );
+  }
+
+  if( flowSolver == nullptr )
+  {
+    // Fall back to basic fluid update only (no phaseVolFrac, relPerm, or phaseMobility)
+    GEOS_LOG_RANK_0( "FieldApplicator: No CompositionalMultiphaseBase solver found. "
+                     "phaseVolumeFraction, phaseMobility, and RelPerm_phaseRelPerm will not be initialized." );
+    return;
+  }
+
+  // ------------------------------------------------------------------------------------
+  // Step 1: Initialize porosity and permeability for the fracture (SurfaceElementSubRegion)
+  //         or bulk (CellElementSubRegion).
+  //
+  // For SurfaceElementSubRegion (fracture elements), this computes fracPerm_permeability and
+  // fracPorosity_porosity / fracPorosity_initialPorosity / fracPorosity_referencePorosity
+  // from the hydraulic aperture (defaultAperture) and the reference constitutive values.
+  // ------------------------------------------------------------------------------------
+  if( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+  {
+    string const & solidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+
+    if( subRegion.hasGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ) )
+    {
+      dataRepository::Group & constitutiveModels =
+        subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+
+      if( constitutiveModels.hasGroup( solidName ) )
+      {
+        constitutive::CoupledSolidBase & porousSolid =
+          constitutiveModels.getGroup< constitutive::CoupledSolidBase >( solidName );
+
+        // Dispatch the correct updatePorosityAndPermeability overload based on subregion type
+        SurfaceElementSubRegion * surfSubRegion = dynamic_cast< SurfaceElementSubRegion * >( &subRegion );
+        CellElementSubRegion * cellSubRegion = dynamic_cast< CellElementSubRegion * >( &subRegion );
+
+        if( surfSubRegion != nullptr )
+        {
+          // Fracture: initialize porosity/permeability from aperture (fracPerm_permeability,
+          // fracPorosity_porosity, fracPorosity_initialPorosity, fracPorosity_referencePorosity)
+          flowSolver->updatePorosityAndPermeability( *surfSubRegion );
+        }
+        else if( cellSubRegion != nullptr )
+        {
+          flowSolver->updatePorosityAndPermeability( *cellSubRegion );
+        }
+
+        // Initialize and save state so that _n fields (porosity_n) are correct
+        porousSolid.initializeState();
+        porousSolid.saveConvergedState();
+
+        // Run update again after initializeState to ensure consistency
+        if( surfSubRegion != nullptr )
+        {
+          flowSolver->updatePorosityAndPermeability( *surfSubRegion );
+        }
+        else if( cellSubRegion != nullptr )
+        {
+          flowSolver->updatePorosityAndPermeability( *cellSubRegion );
+        }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------------------
+  // Step 2: Check we have globalCompFraction and globalCompDensity to proceed with fluid init.
+  // ------------------------------------------------------------------------------------
   if( !subRegion.hasWrapper( "globalCompFraction" ) || !subRegion.hasWrapper( "globalCompDensity" ) )
   {
     return;  // Not a compositional flow subregion
   }
 
-  // Check if the fluid model is available
-  if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
+  // ------------------------------------------------------------------------------------
+  // Step 3: Initialize component densities (globalCompDensity) from component fractions.
+  //         This is done via the fluid kernel wrapper (same as initializeFluidState does).
+  // ------------------------------------------------------------------------------------
   {
-    return;  // No fluid model associated
-  }
+    string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-  // Get the fluid model
-  string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
-
-  if( !subRegion.hasGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ) )
-  {
-    return;
-  }
-
-  dataRepository::Group & constitutiveModels =
-    subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
-
-  if( !constitutiveModels.hasGroup( fluidName ) )
-  {
-    return;
-  }
-
-  constitutive::MultiFluidBase & fluid =
-    constitutiveModels.getGroup< constitutive::MultiFluidBase >( fluidName );
-
-  // Get the pressure, temperature, and composition fields
-  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-  arrayView2d< real64 const > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
-  arrayView2d< real64 > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
-
-  integer const numComp = compFrac.size( 1 );
-
-  // Use constitutiveUpdatePassThru to properly update the fluid model
-  constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
-  {
-    using FluidType = TYPEOFREF( castedFluid );
-    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    // Update fluid properties for each element
-    // Flow elements typically use 1 quadrature point
-    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+    if( subRegion.hasGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ) )
     {
-      fluidWrapper.update( ei, 0, pres[ei], temp[ei], compFrac[ei] );
-    } );
-  } );
+      dataRepository::Group & constitutiveModels =
+        subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
-  // Now compute component densities from total density and component fractions
-  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+      if( constitutiveModels.hasGroup( fluidName ) )
+      {
+        constitutive::MultiFluidBase & fluid =
+          constitutiveModels.getGroup< constitutive::MultiFluidBase >( fluidName );
 
-  forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
-  {
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
+        arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+        arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+        arrayView2d< real64 const > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
+        arrayView2d< real64 > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
+
+        integer const numComp = compFrac.size( 1 );
+
+        // Update fluid model to get total density
+        constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+        {
+          using FluidType = TYPEOFREF( castedFluid );
+          typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+          forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+          {
+            fluidWrapper.update( ei, 0, pres[ei], temp[ei], compFrac[ei] );
+          } );
+        } );
+
+        // Back-calculate component densities from total density and component fractions
+        arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
+          }
+        } );
+      }
     }
-  } );
+  }
+
+  // ------------------------------------------------------------------------------------
+  // Step 4: Call the solver's updateFluidState to compute all derived quantities:
+  //         - phaseVolumeFraction (fixes the uninitialized phaseVolumeFraction)
+  //         - RelPerm_phaseRelPerm (via updateRelPermModel inside updateFluidState)
+  //         - phaseMobility (via updatePhaseMobility inside updateFluidState)
+  // ------------------------------------------------------------------------------------
+  flowSolver->updateFluidState( subRegion );
+
+  // ------------------------------------------------------------------------------------
+  // Step 5: Save the converged state so that all _n fields are correctly initialized.
+  //         This is crucial so that the first time step's accumulation term is correct.
+  // ------------------------------------------------------------------------------------
+  flowSolver->saveConvergedState( subRegion );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator: Fully initialized fluid state (phaseVolumeFraction, "
+                              "phaseMobility, RelPerm_phaseRelPerm, fracPerm_permeability, "
+                              "fracPorosity_porosity) for subregion '{}'.", subRegion.getName() ) );
 }
 
 

@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <VTKMesh name="mesh1" file="../meshes/fractured_mesh_hex_DFN_123.vtu" nodesetNames="{ f1_node_set, f2_node_set, f3_node_set }" />
+  </Mesh>
+
+  <Geometry>
+    <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
+    <Box name="xposFace" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="ynegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  0.01,  1.01 }"/>
+    <Box name="yposFace" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="znegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
+    <Box name="zposFace" xMin="{ -0.01, -0.01,  0.99 }" xMax="{  1.01,  1.01,  1.01 }"/>
+  </Geometry>
+
+  <Solvers gravityVector="{0.0, 0.0, -10.0}">
+    <CompositionalMultiphaseFVM
+      name="flowSolver"
+      discretization="tpfa"
+      targetRegions="{ Region, Fracture }"
+      useTotalMassEquation="1"
+      useMass="1"
+      isThermal="0"
+      initialDt="1.0"
+      temperature="355.0"
+      allowNegativePressure="0"
+      logLevel="1">
+      <NonlinearSolverParameters newtonTol="1.0e-3" newtonMaxIter="50" maxTimeStepCuts="10" maxSubSteps="100" lineSearchAction="None" maxAllowedResidualNorm="1.0e20"/>
+      <LinearSolverParameters directParallel="0" reuseFactorization="0"/>
+      <!-- <LinearSolverParameters solverType="fgmres" preconditionerType="mgr" krylovTol="1.0e-10" krylovMaxIter="100" krylovAdaptiveTol="1" krylovWeakestTol="1.0e-4" logLevel="1" /> -->
+      </CompositionalMultiphaseFVM>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="1"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="tpfa"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ rockMatrix, fluid, RelPerm }"/>
+    <SurfaceElementRegion name="Fracture" faceBlock="faceElementSubRegion" materialList="{ fractureMaterial, fluid, RelPerm }" defaultAperture="1.0e-5"/>
+  </ElementRegions>
+
+  <Constitutive>
+
+    <InvariantImmiscibleFluid name="fluid"
+      componentNames="{ CO2, H2O }"
+      phaseNames="{ gas, water }"
+      densities="{ 500.0, 1000.0 }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      viscosities="{ 1.0e-3, 1.0e-3 }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rockMatrix"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <CompressibleSolidConstantPermeability
+      name="fractureMaterial"
+      solidModelName="nullSolid"
+      porosityModelName="fracPorosity"
+      permeabilityModelName="fracPerm"/>
+
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
+    <ConstantPermeability name="fracPerm" permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
+
+    <TableRelativePermeability
+        name="RelPerm"
+        phaseNames="{ gas, water }"
+        wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
+                                                gasRelativePermeabilityTable }"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <PressurePorosity
+      name="fracPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+  </Constitutive>
+
+  <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+        name="CompositionalHydrostaticEquilibrium"
+        objectPath="ElementRegions"
+        maxNumberOfEquilibrationIterations="200"
+        datumElevation="1.0"
+        datumPressure="1.0e7"
+        componentNames="{ CO2, H2O }"
+        phaseContacts="{ 0.5 }"
+        elevationIncrementInHydrostaticPressureTable="0.05"
+        componentFractionVsElevationTableNames="{CO2CompositionalFractionVsElevation, WaterCompositionalFractionVsElevation}"
+        temperatureVsElevationTableName="InitTempTable"/>
+
+
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ f1_node_set, f2_node_set, f3_node_set }" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac" initialCondition="1" setNames="{ f1_node_set, f2_node_set, f3_node_set }" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    <FieldSpecification name="topP" fieldName="pressure" setNames="{ zposFace }" objectPath="faceManager" scale="1.0e7"/>
+    <FieldSpecification name="topCO2Comp" fieldName="globalCompFraction" component="0" setNames="{ zposFace }" objectPath="faceManager" scale="1.0"/>
+    <FieldSpecification name="topH2OComp" fieldName="globalCompFraction" component="1" setNames="{ zposFace }" objectPath="faceManager" scale="0.0"/>
+    <FieldSpecification name="topT" fieldName="temperature" setNames="{ zposFace }" objectPath="faceManager" scale="355.0"/>
+
+
+  </FieldSpecifications>
+  <Functions>
+
+      <!-- Linear relative permeability tables -->
+      <TableFunction
+        name="waterRelativePermeabilityTable"
+        coordinates="{ 0.0, 0.5, 1.0 }"
+        values="{ 0.0, 0.5, 1.0 }"/>
+      <TableFunction
+        name="gasRelativePermeabilityTable"
+        coordinates="{ 0.0, 0.5, 1.0 }"
+        values="{ 0.0, 0.5, 1.0 }"/>
+
+     <TableFunction
+        name="WaterCompositionalFractionVsElevation"
+        interpolation="linear"
+        coordinates="{ 0.0, 0.5, 0.5001, 1.0}"
+        values="{ 1.0, 1.0, 0.0, 0.0}"/>
+
+    <TableFunction
+        name="CO2CompositionalFractionVsElevation"
+        interpolation="linear"
+        coordinates="{ 0.0, 0.5, 0.5001, 1.0}"
+        values="{ 0.0, 0.0, 1.0, 1.0 }"/>
+
+     <TableFunction
+        name="InitTempTable"
+        coordinates="{-10000, 0.0}"
+        values="{355.0,  355.0}"/>
+  </Functions>
+
+  <Tasks>
+    <FieldApplicator name="apply_fracture_updates" fieldSpecificationNames="{CompositionalHydrostaticEquilibrium}"/>
+  </Tasks>
+  <Outputs>
+    <VTK name="vtkOutputM" outputRegionType="cell"/>
+    <VTK name="vtkOutputF" outputRegionType="surface" />
+  </Outputs>
+  <Events minTime="-1.0" maxTime="1.0">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="-1.0" beginTime="-1.0" />
+    <SoloEvent name="TriggerFractureUpdate" target="/Tasks/apply_fracture_updates" targetTime="-1.0" beginTime="-1.0"/>
+    <PeriodicEvent name="outputsM" timeFrequency="1.0" target="/Outputs/vtkOutputM"/>
+    <PeriodicEvent name="outputsF" timeFrequency="1.0" target="/Outputs/vtkOutputF"/>
+    <PeriodicEvent name="solverApplications" target="/Solvers/flowSolver" forceDt="1.0"/>
+  </Events>
+</Problem>
