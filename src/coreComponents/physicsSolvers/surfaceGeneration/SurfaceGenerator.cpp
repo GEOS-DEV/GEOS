@@ -794,21 +794,37 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   int const globalRval = MpiWrapper::allReduce( rval, MpiWrapper::Reduction::Max );
   if( globalRval > 0 )
   {
-    // Get the fracture subregion to count new fracture elements
+    // Get the fracture subregion to count fracture elements
     SurfaceElementRegion const & fractureRegion = elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    localIndex const localNumFractureElements = fractureSubRegion.size();
+    // Only count locally-owned (non-ghost) elements to avoid double-counting
+    // across MPI ranks when running with mpirun -np > 1.
+    localIndex const localNumFractureElements = fractureSubRegion.getNumberOfLocalIndices();
+    localIndex const localNewFractureElements  = static_cast< localIndex >( m_faceElemsRupturedThisSolve.size() );
 
     // Gather global statistics across all MPI ranks
     localIndex const globalNumFractureElements = MpiWrapper::sum( localNumFractureElements );
-    localIndex const globalNumSplits = MpiWrapper::sum( static_cast< localIndex >( rval ) );
+    localIndex const globalNewFractureElements  = MpiWrapper::sum( localNewFractureElements );
+    localIndex const globalNumSplits            = MpiWrapper::sum( static_cast< localIndex >( rval ) );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Mesh splitting completed.\n"
-                               "  Number of nodes split (this step):     {:>8}\n"
-                               "  Total number of fracture elements:     {:>8}",
+                               "  Number of nodes split (this step):          {:>8}\n"
+                               "  New fracture elements (this step):          {:>8}\n"
+                               "  Total fracture elements (cumulative):       {:>8}",
                                globalNumSplits,
+                               globalNewFractureElements,
                                globalNumFractureElements ) );
+
+    // Extended per-rank breakdown, guarded by log level
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator,
+                           GEOS_FMT( "SurfaceGenerator: Per-rank breakdown.\n"
+                                     "  Local fracture elements (this rank):        {:>8}\n"
+                                     "  Local new fracture elements (this rank):    {:>8}\n"
+                                     "  Local nodes split (this rank):              {:>8}",
+                                     localNumFractureElements,
+                                     localNewFractureElements,
+                                     rval ) );
   }
 
   return rval;
