@@ -458,6 +458,24 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
     mergePerforations( elemToPerfMap );
   }
 
+  // check that the top well element (wellhead) does not have a perforation
+  // The top element carries the well control equation (BHP or rate constraint).
+  // Having a perforation on the same element creates a strong coupling between the control constraint
+  // and the perforation flux, which degrades Newton convergence (both isothermal and thermal).
+  // The top segment should be reserved for the well boundary condition constraint only.
+  for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
+  {
+    GEOS_THROW_IF( m_nextElemId[iwelem] < 0 && elemToPerfMap[iwelem].size() > 0,
+                   "Well '" << getName() << "': a perforation is placed on the top well element (wellhead). "
+                            << "This is not allowed because the top element is reserved for the well control constraint "
+                            << "(BHP or rate) and must not have any perforation. \n\n"
+                            << "To fix this, extend the well polyline upward by adding a segment above the first perforation. "
+                            << "For example, add a node above the current well head in \"polylineNodeCoords\" and a corresponding "
+                            << "entry in \"polylineSegmentConn\". "
+                            << "This top segment will act as a constraint-only segment with no perforation.",
+                   InputError );
+  }
+
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     // check that there is always a perforation in the last well element (otherwise, the problem is not well posed)
@@ -504,7 +522,7 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
           continue;
         }
 
-        GEOS_LOG_RANK_0( "\n \nThe GEOSX wells currently have the following limitation in parallel: \n"
+        GEOS_LOG_RANK_0( "\n \nThe GEOS wells currently have the following limitation in parallel: \n"
                          << "We cannot allow an element of the well mesh to have two or more perforations associated with it. \n"
                          << "So, in the present simulation, perforation #" << elemToPerfMap[iwelem][ip]
                          << " of well " << getName()

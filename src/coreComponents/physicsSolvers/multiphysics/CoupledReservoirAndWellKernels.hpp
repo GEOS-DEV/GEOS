@@ -432,14 +432,13 @@ public:
                                     stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices,
                                     localIndex const iwelem )
     {
-      // No energy equation if top element and Injector
-      // Top element defined by global index == 0
-      // Assumption is global index == 0 is top segment with fixed temp BC
-      if( !m_isProducer )
-      {
-        if( m_globalWellElementIndex[iwelem] == 0 )
-          return;
-      }
+      // For injector top element (global index == 0), the well energy equation
+      // is replaced by a Dirichlet BC (T = T_inj), so we must not assemble
+      // the well-side energy flux. However, we still assemble the
+      // reservoir-side energy flux so the reservoir cell receives the correct
+      // enthalpy from the injected mass.
+      bool const isTopInjectorElement = !m_isProducer && m_globalWellElementIndex[iwelem] == 0;
+
       // local working variables and arrays
       stackArray1d< localIndex, 2* numComp > eqnRowIndices( 2 );
 
@@ -453,23 +452,23 @@ public:
 
       // populate local flux vector and derivatives
       localPerf[TAG::RES  ]   = m_dt * m_energyPerfFlux[iperf];
-      localPerf[TAG::WELL ]   = -m_dt * m_energyPerfFlux[iperf];
+      localPerf[TAG::WELL ]   = isTopInjectorElement ? 0.0 : -m_dt * m_energyPerfFlux[iperf];
 
       for( integer ke = 0; ke < 2; ++ke )
       {
         localIndex localDofIndexPres = ke * resNumDOF;
         localPerfJacobian[TAG::RES  ][localDofIndexPres] = m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
-        localPerfJacobian[TAG::WELL ][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL ][localDofIndexPres] = isTopInjectorElement ? 0.0 : -m_dt *  m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dP];
 
         // populate local flux vector and derivatives
         for( integer ic = 0; ic < numComp; ++ic )
         {
           localIndex const localDofIndexComp = localDofIndexPres + ic + 1;
           localPerfJacobian[TAG::RES ][localDofIndexComp] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
-          localPerfJacobian[TAG::WELL][localDofIndexComp] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
+          localPerfJacobian[TAG::WELL][localDofIndexComp] = isTopInjectorElement ? 0.0 : -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dC+ic];
         }
         localPerfJacobian[TAG::RES ][localDofIndexPres+NC+1] = m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] = -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
+        localPerfJacobian[TAG::WELL][localDofIndexPres+NC+1] = isTopInjectorElement ? 0.0 : -m_dt * m_dEnergyPerfFlux[iperf][ke][CP_Deriv::dT];
       }
 
 
