@@ -74,7 +74,7 @@ void PressurePermeability::postInputInitialization()
   for( localIndex i=0; i < 3; i++ )
   {
     GEOS_ERROR_IF( std::abs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
-                   getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model.",
+                   "The pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model.",
                    getDataContext() );
   }
 

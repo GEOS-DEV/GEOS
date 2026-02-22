@@ -171,7 +171,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
       GEOS_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " <<
                   wellRegion.getWellGeneratorName(),
-                  InputError );
+                  InputError, getDataContext() );
     }
 
     real64 d1 = 0;
@@ -223,7 +223,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       GEOS_THROW( "The equivalent radius r_eq = " << rEq <<
                   " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
                   ") in " << wellRegion.getWellGeneratorName(),
-                  InputError );
+                  InputError, getDataContext() );
     }
 
     // compute the well Peaceman index
@@ -240,7 +240,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
       GEOS_THROW( "The well index is negative or equal to zero in " <<
                   wellRegion.getWellGeneratorName(),
-                  InputError );
+                  InputError, getDataContext() );
     }
   }
 }

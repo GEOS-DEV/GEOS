@@ -312,20 +312,19 @@ public:
    * @tparam KEY The type of the lookup.
    * @param key The key used to perform the lookup.
    * @return A reference to @p T that refers to the sub-group.
-   * @throw std::domain_error If the Group does not exist is thrown.
+   * @throw geos::DomainError If the Group does not exist is thrown.
    */
   template< typename T = Group, typename KEY = void >
   T & getGroup( KEY const & key )
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
-                   std::domain_error, getDataContext() );
+                   "No child named " << key << " found." << std::endl << dumpSubGroupsNames(),
+                   geos::DomainError, getDataContext() );
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   GEOS_FMT( "'{}' was expected to be a '{}'.",
+                             getName(), LvArray::system::demangleType< T >() ),
                    BadTypeError, child->getDataContext() );
     return *castedChild;
   }
@@ -338,13 +337,12 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
-                   std::domain_error, getDataContext() );
+                   "No child named " << key << " found." << std::endl << dumpSubGroupsNames(),
+                   geos::DomainError, getDataContext() );
     T const * const castedChild = dynamicCast< T const * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   GEOS_FMT( "'{}' was expected to be a '{}'.",
+                             getName(), LvArray::system::demangleType< T >() ),
                    BadTypeError, child->getDataContext() );
     return *castedChild;
   }
@@ -356,7 +354,7 @@ public:
    *                 to lookup the Group to return. Absolute paths search
    *                 from the tree root, while relative - from current group.
    * @return A reference to @p T that refers to the sub-group.
-   * @throw std::domain_error If the Group doesn't exist.
+   * @throw geos::DomainError If the Group doesn't exist.
    */
   template< typename T = Group >
   T & getGroupByPath( string const & path )
@@ -1117,16 +1115,16 @@ public:
    * @tparam KEY The lookup type.
    * @param key The value used to lookup the wrapper.
    * @return A reference to the WrapperBase that resulted from the lookup.
-   * @throw std::domain_error if the wrapper doesn't exist.
+   * @throw geos::DomainError if the wrapper doesn't exist.
    */
   template< typename KEY >
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
-                            << dumpWrappersNames(),
-                   std::domain_error, getDataContext() );
+                   "No wrapper named " << key << " found." << std::endl
+                                       << dumpWrappersNames(),
+                   geos::DomainError, getDataContext() );
 
     return *wrapper;
   }
@@ -1139,9 +1137,9 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
-                            << dumpWrappersNames(),
-                   std::domain_error, getDataContext() );
+                   "No wrapper named " << key << " found." << std::endl
+                                       << dumpWrappersNames(),
+                   geos::DomainError, getDataContext() );
 
     return *wrapper;
   }
@@ -1210,7 +1208,7 @@ public:
    * @tparam LOOKUP_TYPE the type of key used to perform the lookup
    * @param[in] index    a lookup value used to search the collection of wrappers
    * @return A reference to the Wrapper<T> that resulted from the lookup.
-   * @throw std::domain_error if the Wrapper doesn't exist.
+   * @throw geos::DomainError if the Wrapper doesn't exist.
    */
   template< typename T, typename LOOKUP_TYPE >
   Wrapper< T > const & getWrapper( LOOKUP_TYPE const & index ) const
@@ -1268,7 +1266,7 @@ public:
    * @tparam LOOKUP_TYPE type of value used for wrapper lookup
    * @param lookup       value for wrapper lookup
    * @return reference to @p T
-   * @throw A std::domain_error if the Wrapper does not exist.
+   * @throw A geos::DomainError if the Wrapper does not exist.
    */
   template< typename T, typename LOOKUP_TYPE >
   GEOS_DECLTYPE_AUTO_RETURN
@@ -1350,7 +1348,7 @@ public:
    * this group that can be used in output messages.
    * @tparam KEY The lookup type.
    * @param key The value used to lookup the wrapper.
-   * @throw std::domain_error if the wrapper doesn't exist.
+   * @throw geos::DomainError if the wrapper doesn't exist.
    */
   template< typename KEY >
   DataContext const & getWrapperDataContext( KEY key ) const
@@ -1359,13 +1357,13 @@ public:
   /**
    * @brief Access the group's parent.
    * @return reference to parent Group
-   * @throw std::domain_error if the Group doesn't have a parent.
+   * @throw geos::DomainError if the Group doesn't have a parent.
    */
   Group & getParent()
   {
     GEOS_THROW_IF( m_parent == nullptr,
-                   "Group at " << getDataContext() << " does not have a parent.",
-                   std::domain_error, getDataContext() );
+                   "Group does not have a parent.",
+                   geos::DomainError, getDataContext() );
     return *m_parent;
   }
 
@@ -1375,8 +1373,8 @@ public:
   Group const & getParent() const
   {
     GEOS_THROW_IF( m_parent == nullptr,
-                   "Group at " << getDataContext() << " does not have a parent.",
-                   std::domain_error, getDataContext() );
+                   "Group does not have a parent.",
+                   geos::DomainError, getDataContext() );
     return *m_parent;
   }
 
