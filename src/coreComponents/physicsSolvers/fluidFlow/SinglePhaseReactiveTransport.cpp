@@ -50,6 +50,7 @@ template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureAndReactions( POROUSWRAPPER_TYPE porousWrapper,
                                                             ElementSubRegionBase & subRegion,
                                                             arrayView1d< real64 const > const & pressure,
+                                                            arrayView1d< real64 const > const & pressure_n,
                                                             arrayView2d< real64 const, compflow::USD_COMP > const & kineticReactionMolarIncrements )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
@@ -58,6 +59,7 @@ void updatePorosityAndPermeabilityFromPressureAndReactions( POROUSWRAPPER_TYPE p
     {
       porousWrapper.updateStateFromPressureAndReactions( k, q,
                                                          pressure[k],
+                                                         pressure_n[k],
                                                          kineticReactionMolarIncrements[k] );
     }
   } );
@@ -662,6 +664,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
   if( m_isUpdateReactivePorosity )
   {
     arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 const > const & pressure_n = subRegion.getField< fields::flow::pressure_n >();
     arrayView2d< real64 const, compflow::USD_COMP > const kineticReactionMolarIncrements = subRegion.getField< fields::flow::kineticReactionMolarIncrements >();
 
     string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
@@ -670,7 +673,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
     constitutive::ConstitutivePassThru< ReactiveSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
       typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-      updatePorosityAndPermeabilityFromPressureAndReactions( porousWrapper, subRegion, pressure, kineticReactionMolarIncrements );
+      updatePorosityAndPermeabilityFromPressureAndReactions( porousWrapper, subRegion, pressure, pressure_n, kineticReactionMolarIncrements );
     } );
   }
   else

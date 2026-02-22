@@ -229,6 +229,12 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     // compute the well Peaceman index
     m_wellTransmissibility[iperf] = 2 * M_PI * kh / ( std::log( rEq / wellElemRadius[wellElemIndex] ) + m_wellSkinFactor[iperf] );
 
+    {
+      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+      GEOS_LOG_RANK( "\n \nPerforation " << wellRegion.getWellGeneratorName() <<
+                     " has transmissibility of " << m_wellTransmissibility[iperf] << " \n \n" );
+    }
+
     if( m_wellTransmissibility[iperf] <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );

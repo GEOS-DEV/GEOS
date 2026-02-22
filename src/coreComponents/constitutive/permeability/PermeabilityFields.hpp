@@ -39,6 +39,14 @@ DECLARE_FIELD( permeability,
                WRITE_AND_READ,
                "Rock permeability" );
 
+DECLARE_FIELD( permeability_n,
+               "permeability_n",
+               array3d< real64 >,
+               -1,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Rock permeability at the previous converged time step" );
+
 DECLARE_FIELD( dPerm_dPressure,
                "dPerm_dPressure",
                array3d< real64 >,

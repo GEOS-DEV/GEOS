@@ -217,6 +217,7 @@ public:
   virtual void saveConvergedState() const override final
   {
     getBasePorosityModel().saveConvergedState();
+    getBasePermModel().saveConvergedState();
     if( !m_solidInternalEnergyModelName.empty() )
     {
       /// If the name is provided it has to be saved as well.

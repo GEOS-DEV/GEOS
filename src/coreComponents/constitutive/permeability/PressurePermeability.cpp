@@ -40,8 +40,12 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Pressure dependence coefficients for each permeability component." );
 
-  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+  registerWrapper( viewKeyStruct::defaultReferencePressureString(), &m_defaultReferencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default reference pressure for the pressure permeability model" );
+  
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Reference pressure for the pressure permeability model [Pa]" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
@@ -56,8 +60,13 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::pressureModelTypeString(), &m_presModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( PressureModelType::Hyperbolic ).
+    setApplyDefaultValue( PressureModelType::Exponential ).
     setDescription( "Type of the pressure dependence model. " );
+
+  registerWrapper( viewKeyStruct::explicitUpdateFlagString(), &m_explicitFlag ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "The flag for explicit update. " );
 }
 
 void PressurePermeability::postInputInitialization()
@@ -68,13 +77,16 @@ void PressurePermeability::postInputInitialization()
                    getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model.",
                    getDataContext() );
   }
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
+    setApplyDefaultValue( m_defaultReferencePressure );
 }
 
 void PressurePermeability::allocateConstitutiveData( Group & parent,
                                                      localIndex const numPts )
 {
   m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
-
+  
   PermeabilityBase::allocateConstitutiveData( parent, numPts );
 
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
@@ -96,6 +108,7 @@ void PressurePermeability::initializeState() const
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   auto permView = m_permeability.toView();
+  auto permView_n = m_permeability_n.toView();
   real64 const permComponents[3] = { m_referencePermeabilityComponents[0],
                                      m_referencePermeabilityComponents[1],
                                      m_referencePermeabilityComponents[2] };
@@ -110,6 +123,7 @@ void PressurePermeability::initializeState() const
         if( permView[ei][q][dim] < 0 )
         {
           permView[ei][q][dim] = permComponents[dim];
+          permView_n[ei][q][dim] = permComponents[dim];
         }
       }
     }

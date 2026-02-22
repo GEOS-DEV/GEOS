@@ -63,7 +63,7 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxType[0]          = MGRFRelaxationType::gsElimWInverse;
+    m_levelFRelaxType[0]         = MGRFRelaxationType::gsElimWInverse;
     m_levelFRelaxIters[0]        = 1;
     m_levelInterpType[0]         = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
