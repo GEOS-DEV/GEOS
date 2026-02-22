@@ -248,6 +248,14 @@ protected:
 
   void initializeHydraulicAperture( MeshLevel & mesh, string_array const & regionNames );
 
+  /**
+   * @brief Apply the delta volume to the element volume and reset delta volume to zero
+   * @detail This is needed for newly created fracture elements that have a non-zero deltaVolume
+   *         (set by SurfaceGenerator) but zero element volume.
+   * @param[in/out] subRegion the element subRegion
+   */
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
   void saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames );
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;

@@ -1683,6 +1683,37 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
       phaseVolFrac_n.setValues< parallelDevicePolicy<> >( phaseVolFrac );
 
     } );
+
+    // For fracture elements newly created by SurfaceGenerator, deltaVolume holds the
+    // aperture * area volume contribution that has not yet been added to elementVolume.
+    // We apply it here (as SinglePhaseBase does) so that the accumulation kernel sees
+    // a non-zero pore volume for the new fracture cells.
+    mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                           [&]( localIndex const,
+                                                                                SurfaceElementSubRegion & subRegion )
+    {
+      applyDeltaVolume( subRegion );
+
+      // Save current hydraulic aperture as the reference aperture for this step
+      arrayView1d< real64 const > const aper = subRegion.getField< flow::hydraulicAperture >();
+      arrayView1d< real64 > const aper0 = subRegion.getField< flow::aperture0 >();
+      aper0.setValues< parallelDevicePolicy<> >( aper );
+
+      // Save the porous solid state (needed so that porosity_n is correct for new fracture elements)
+      CoupledSolidBase const & porousSolid =
+        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      porousSolid.saveConvergedState();
+
+      // Re-run porosity/permeability and fluid state updates after deltaVolume is applied,
+      // then save the converged state so that compAmount_n reflects the updated volume.
+      // IMPORTANT: saveConvergedState must be called AFTER updateFluidState so that
+      // compAmount_n = porosity * newVolume * compDens, matching compAmount at Newton iter 0.
+      updatePorosityAndPermeability( subRegion );
+      updateFluidState( subRegion );
+      saveConvergedState( subRegion );
+
+    } );
+
   } );
 }
 

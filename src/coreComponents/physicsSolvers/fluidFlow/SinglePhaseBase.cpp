@@ -1370,15 +1370,4 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
   mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
-void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
-{
-  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
-  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    vol[ei] += dVol[ei];
-    dVol[ei] = 0.0;
-  } );
-}
-
 } /* namespace geos */
