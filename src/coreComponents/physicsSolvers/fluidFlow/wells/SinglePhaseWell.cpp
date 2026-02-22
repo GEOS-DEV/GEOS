@@ -43,6 +43,8 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/SinglePhasePerforationFluxKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 
 namespace geos
@@ -87,12 +89,16 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< well::connectionRate_n >( getName() );
       subRegion.registerField< well::connectionRate >( getName() );
 
+      subRegion.registerField< well::pressureScalingFactor >( getName() );
+
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerField< well::perforationRate >( getName() );
       perforationData.registerField< well::dPerforationRate >( getName() ).
         reference().resizeDimension< 1, 2 >( 2, 2 );
       if( isThermal() )
       {
+        subRegion.registerField< well::temperatureScalingFactor >( getName() );
+        
         perforationData.registerField< well::energyPerforationFlux >( getName() );
         perforationData.registerField< well::dEnergyPerforationFlux >( getName() ).
           reference().resizeDimension< 1, 2 >( 2, 2 );
@@ -1006,6 +1012,102 @@ SinglePhaseWell::calculateResidualNorm( real64 const & time_n,
   }
 
   return resNorm;
+}
+
+real64
+SinglePhaseWell::scalingForSystemSolution( DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  real64 scalingFactor = 1.0;
+  real64 maxDeltaPres = 0.0, maxDeltaTemp = 0.0;
+
+  real64 minPresScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+  if( m_isThermal )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        arrayView1d< real64 > pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
+        arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< well::temperatureScalingFactor >();
+
+        auto const subRegionData = thermalSinglePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                                                       m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
+                                                                       pressureScalingFactor, temperatureScalingFactor );
+
+        scalingFactor = std::min( scalingFactor, std::get< 0 >( subRegionData ) );
+        maxDeltaPres  = std::max( maxDeltaPres, std::get< 1 >( subRegionData ) );
+        maxDeltaTemp  = std::max( maxDeltaTemp, std::get< 2 >( subRegionData ) );
+
+        minPresScalingFactor = std::min( minPresScalingFactor, std::get< 3 >( subRegionData ) );
+        minTempScalingFactor = std::min( minTempScalingFactor, std::get< 4 >( subRegionData ) );
+      } );
+    } );
+  }
+  else
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase & subRegion )
+      {
+        globalIndex const rankOffset = dofManager.rankOffset();
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+        arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
+        auto const subRegionData = singlePhaseBaseKernels::
+                                     SolutionScalingKernel::
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, m_maxAbsolutePresChange );
+
+        scalingFactor = std::min( subRegionData.first, scalingFactor );
+        minPresScalingFactor = std::min( minPresScalingFactor, subRegionData.first );
+        maxDeltaPres = std::max( maxDeltaPres, subRegionData.second );
+      } );
+    } );
+  }
+
+  scalingFactor = MpiWrapper::min( scalingFactor );
+  minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+  maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
+                                   getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
+
+  if( m_isThermal )
+  {
+    minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
+                                     getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
+  }
+
+  return scalingFactor;
+
 }
 
 bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,

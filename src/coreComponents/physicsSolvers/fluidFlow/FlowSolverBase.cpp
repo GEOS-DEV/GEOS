@@ -130,6 +130,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( -1.0 ).       // disabled by default
     setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
+  this->registerWrapper( viewKeyStruct::maxAbsoluteTempChangeString(), &m_maxAbsoluteTempChange ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( -1.0 ).       // disabled by default
+    setDescription( "Maximum (absolute) temperature change in a Newton iteration" );
+
   this->registerWrapper( viewKeyStruct::maxSequentialPresChangeString(), &m_maxSequentialPresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).

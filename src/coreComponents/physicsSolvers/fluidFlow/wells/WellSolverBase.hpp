@@ -289,6 +289,9 @@ public:
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
+
+    static constexpr char const * maxAbsolutePresChangeString() { return "maxAbsolutePressureChange"; }
+    static constexpr char const * maxAbsoluteTempChangeString() { return "maxAbsoluteTemperatureChange"; }
   };
 
 private:
@@ -357,6 +360,12 @@ protected:
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
+
+  /// maximum (absolute) change in pressure between two Newton iterations
+  real64 m_maxAbsolutePresChange;
+
+  /// maximum (absolute) change in temperature between two Newton iterations
+  real64 m_maxAbsoluteTempChange;
 };
 
 }

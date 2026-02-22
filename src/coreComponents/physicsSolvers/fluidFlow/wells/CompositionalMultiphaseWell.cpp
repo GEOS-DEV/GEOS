@@ -69,7 +69,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
-  m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 ),
   m_targetPhaseIndex( -1 )
@@ -101,12 +100,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "Maximum (relative) change in pressure between two Newton iterations (recommended with rate control)" );
-
-  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( -1.0 ).       // disabled by default
-    setDescription( "Maximum (absolute) pressure change in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::maxRelativeTempChangeString(), &m_maxRelativeTempChange ).
     setSizedFromParent( 0 ).
