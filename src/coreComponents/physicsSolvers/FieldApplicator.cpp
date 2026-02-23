@@ -335,7 +335,7 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
 void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
 {
   GEOS_UNUSED_VAR( domain );
-
+  
   // Check if this subregion has a fluid model at all
   if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {
@@ -459,8 +459,8 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
 
         arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
         arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-        arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
-        arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
+        arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" ).toViewConst();
+        arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" ).toView();
 
         integer const numComp = compFrac.size( 1 );
 

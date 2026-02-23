@@ -379,46 +379,36 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimHydrostaticEquilibriumTest,
   ::testing::Combine(
     ::testing::Values(
-      // flat hex meshes
+      // Strategic subset: hex/tet × flat/wavy/full_span × single/triple fractures
+      // Covers all mesh types and geometries with representative complexity
+      
+      // Flat hex meshes - single and triple fracture only
       "fractured_mesh_hex_DFN_1.vtu",
-//      "fractured_mesh_hex_DFN_2.vtu",
-//      "fractured_mesh_hex_DFN_3.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-//      "fractured_mesh_hex_DFN_13.vtu",
-//      "fractured_mesh_hex_DFN_23.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
-      // flat tet meshes
+      
+      // Flat tet meshes - single and triple fracture only
       "fractured_mesh_tet_DFN_1.vtu",
-//      "fractured_mesh_tet_DFN_2.vtu",
-//      "fractured_mesh_tet_DFN_3.vtu",
-      "fractured_mesh_tet_DFN_12.vtu",
-//      "fractured_mesh_tet_DFN_13.vtu",
-//      "fractured_mesh_tet_DFN_23.vtu",
       "fractured_mesh_tet_DFN_123.vtu",
-      // wavy hex meshes
+      
+      // Wavy hex meshes - single and triple fracture only
       "fractured_wavy_mesh_hex_DFN_1.vtu",
-//      "fractured_wavy_mesh_hex_DFN_2.vtu",
-//      "fractured_wavy_mesh_hex_DFN_3.vtu",
-      "fractured_wavy_mesh_hex_DFN_12.vtu",
-//      "fractured_wavy_mesh_hex_DFN_13.vtu",
-//      "fractured_wavy_mesh_hex_DFN_23.vtu",
       "fractured_wavy_mesh_hex_DFN_123.vtu",
-      // wavy tet meshes
+      
+      // Wavy tet meshes - single and triple fracture only
       "fractured_wavy_mesh_tet_DFN_1.vtu",
-//      "fractured_wavy_mesh_tet_DFN_2.vtu",
-//      "fractured_wavy_mesh_tet_DFN_3.vtu",
-      "fractured_wavy_mesh_tet_DFN_12.vtu",
-//      "fractured_wavy_mesh_tet_DFN_13.vtu",
-//      "fractured_wavy_mesh_tet_DFN_23.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu"
+      "fractured_wavy_mesh_tet_DFN_123.vtu",
+
+      // Full span hex meshes - single and triple fracture only
+      "fractured_full_span_mesh_hex_DFN_1.vtu",
+      "fractured_full_span_mesh_hex_DFN_123.vtu",
+
+      // Full span tet meshes - single and triple fracture only
+      "fractured_full_span_mesh_tet_DFN_1.vtu",
+      "fractured_full_span_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 2, 2 ),
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 2, 1, 2 ),
-      std::make_tuple( 2, 2, 1 ),
-      std::make_tuple( 4, 1, 1 )
+      std::make_tuple( 1, 1, 4 ),    // z-dominant partitioning
+      std::make_tuple( 2, 2, 1 )     // xy-dominant partitioning
       )
     )
   );

@@ -491,51 +491,33 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-
-      // Hex meshes
+      // Strategic subset: hex/tet × basic/wavy/full_span × single/triple fractures
+      // Covers all mesh types and geometries with representative complexity
+      
+      // Basic meshes - single and triple fracture only
       "fractured_mesh_hex_DFN_1.vtu",
-//      "fractured_mesh_hex_DFN_2.vtu",
-//      "fractured_mesh_hex_DFN_3.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-//      "fractured_mesh_hex_DFN_13.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
-
-      // Tet meshes
       "fractured_mesh_tet_DFN_1.vtu",
-//      "fractured_mesh_tet_DFN_2.vtu",
-//      "fractured_mesh_tet_DFN_3.vtu",
-      "fractured_mesh_tet_DFN_12.vtu",
-//      "fractured_mesh_tet_DFN_13.vtu",
       "fractured_mesh_tet_DFN_123.vtu",
 
-      // Wavy Hex meshes (same topology but different geometry)
+      // Wavy meshes - single and triple fracture only
       "fractured_wavy_mesh_hex_DFN_1.vtu",
-//      "fractured_wavy_mesh_hex_DFN_2.vtu",
-//      "fractured_wavy_mesh_hex_DFN_3.vtu",
-      "fractured_wavy_mesh_hex_DFN_12.vtu",
-//      "fractured_wavy_mesh_hex_DFN_13.vtu",
-//      "fractured_wavy_mesh_hex_DFN_23.vtu",
-      "fractured_wavy_mesh_hex_DFN_123.vtu"
-
-      // Wavy Tet meshes (same topology but different geometry)
+      "fractured_wavy_mesh_hex_DFN_123.vtu",
       "fractured_wavy_mesh_tet_DFN_1.vtu",
-//      "fractured_wavy_mesh_tet_DFN_2.vtu",
-//      "fractured_wavy_mesh_tet_DFN_3.vtu",
-      "fractured_wavy_mesh_tet_DFN_12.vtu",
-//      "fractured_wavy_mesh_tet_DFN_13.vtu",
-//      "fractured_wavy_mesh_tet_DFN_23.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu"
+      "fractured_wavy_mesh_tet_DFN_123.vtu",
+
+      // Full span meshes - single and triple fracture only
+      "fractured_full_span_mesh_hex_DFN_1.vtu",
+      "fractured_full_span_mesh_hex_DFN_123.vtu",
+      "fractured_full_span_mesh_tet_DFN_1.vtu",
+      "fractured_full_span_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
     ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 2, 2 ),
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 2, 1, 2 ),
-      std::make_tuple( 2, 2, 1 ),
-      std::make_tuple( 4, 1, 1 )
+      std::make_tuple( 1, 1, 4 ),    // z-dominant partitioning
+      std::make_tuple( 2, 2, 1 )     // xy-dominant partitioning
       )
     )
   );

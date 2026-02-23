@@ -39,6 +39,10 @@ set( mesh_files
      fractured_wavy_mesh_tet_DFN_2.vtu
      fractured_wavy_mesh_tet_DFN_23.vtu
      fractured_wavy_mesh_tet_DFN_3.vtu
+     fractured_full_span_mesh_hex_DFN_1.vtu
+     fractured_full_span_mesh_hex_DFN_123.vtu
+     fractured_full_span_mesh_tet_DFN_1.vtu
+     fractured_full_span_mesh_tet_DFN_123.vtu
 )
 
 # Special handling for testFEMConsistency which requires 4 MPI tasks for the partitioned tests

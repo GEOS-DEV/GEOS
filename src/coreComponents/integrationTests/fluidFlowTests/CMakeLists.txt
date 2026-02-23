@@ -120,7 +120,7 @@ if( ENABLE_MPI )
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
     target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 
-    # Copy all 28 fractured mesh files for testMixedDimHydrostaticEquilibrium
+    # Copy all fractured mesh files for testMixedDimHydrostaticEquilibrium
     foreach( mesh IN ITEMS
                      "fractured_mesh_hex_DFN_1.vtu"
                      "fractured_mesh_hex_DFN_2.vtu"
@@ -149,7 +149,11 @@ if( ENABLE_MPI )
                      "fractured_wavy_mesh_tet_DFN_12.vtu"
                      "fractured_wavy_mesh_tet_DFN_13.vtu"
                      "fractured_wavy_mesh_tet_DFN_23.vtu"
-                     "fractured_wavy_mesh_tet_DFN_123.vtu" )
+                     "fractured_wavy_mesh_tet_DFN_123.vtu"
+                     "fractured_full_span_mesh_hex_DFN_1.vtu"
+                     "fractured_full_span_mesh_hex_DFN_123.vtu"
+                     "fractured_full_span_mesh_tet_DFN_1.vtu"
+                     "fractured_full_span_mesh_tet_DFN_123.vtu" )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
