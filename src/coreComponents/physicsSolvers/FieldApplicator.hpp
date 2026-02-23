@@ -102,22 +102,6 @@ private:
 
 
   /**
-   * @brief Apply pressure, temperature and component fraction fields for HydrostaticEquilibrium.
-   * @param[in] equilIC The EquilibriumInitialCondition (HydrostaticEquilibrium) to apply.
-   * @param[in] targetSet The set of indices to apply the fields to.
-   * @param[in,out] targetGroup The group containing the fields to update.
-   * @param[in] functionManager The function manager containing the table functions.
-   *
-   * For compositional multiphase flow, HydrostaticEquilibrium sets pressure, temperature,
-   * and component fractions. This function handles the temperature and component fraction
-   * fields using the elevation-based tables specified in the EquilibriumInitialCondition.
-   */
-  void applyEquilibriumInitialConditionFields( EquilibriumInitialCondition const & equilIC,
-                                               SortedArrayView< localIndex const > const & targetSet,
-                                               dataRepository::Group & targetGroup,
-                                               FunctionManager & functionManager );
-
-  /**
    * @brief Initialize the fluid state for a subregion after applying equilibrium fields.
    * @param[in] domain The domain partition.
    * @param[in,out] subRegion The element subregion to initialize.

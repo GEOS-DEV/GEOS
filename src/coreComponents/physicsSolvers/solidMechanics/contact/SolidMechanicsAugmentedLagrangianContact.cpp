@@ -2130,11 +2130,11 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               real64 const kt = iterativePenalty[kfe][1];
               real64 dJump[3] = { 0.0, 0.0, 0.0 };
 
-              if( kn > 1.0e-14 )
+              if( kn > LvArray::NumericLimits< real64 >::min )
               {
                 dJump[0] = tLocal[0] / kn;
               }
-              if( kt > 1.0e-14 )
+              if( kt > LvArray::NumericLimits< real64 >::min )
               {
                 dJump[1] = tLocal[1] / kt;
                 dJump[2] = tLocal[2] / kt;
