@@ -23,7 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
-#include <array>
+
 #include <mutex>
 
 namespace geos
