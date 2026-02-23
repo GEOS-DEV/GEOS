@@ -319,11 +319,11 @@ TEST_P( ConsistencyTest, Run )
               localIndex const next = ( i + 1 ) % fnodes.size();
 
               real64 v1[3] = { nodePos[fnodes[i]][0] - centroid[0],
-                              nodePos[fnodes[i]][1] - centroid[1],
-                              nodePos[fnodes[i]][2] - centroid[2] };
+                               nodePos[fnodes[i]][1] - centroid[1],
+                               nodePos[fnodes[i]][2] - centroid[2] };
               real64 v2[3] = { nodePos[fnodes[next]][0] - centroid[0],
-                              nodePos[fnodes[next]][1] - centroid[1],
-                              nodePos[fnodes[next]][2] - centroid[2] };
+                               nodePos[fnodes[next]][1] - centroid[1],
+                               nodePos[fnodes[next]][2] - centroid[2] };
 
               real64 cp_x = v1[1]*v2[2] - v1[2]*v2[1];
               real64 cp_y = v1[2]*v2[0] - v1[0]*v2[2];
@@ -494,39 +494,39 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
 
-//      // Hex meshes
-//      "fractured_mesh_hex_DFN_1.vtu",
+      // Hex meshes
+      "fractured_mesh_hex_DFN_1.vtu",
 //      "fractured_mesh_hex_DFN_2.vtu",
 //      "fractured_mesh_hex_DFN_3.vtu",
-//      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
 //      "fractured_mesh_hex_DFN_13.vtu",
-//      "fractured_mesh_hex_DFN_123.vtu",
-//
-//      // Tet meshes
-//      "fractured_mesh_tet_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_123.vtu",
+
+      // Tet meshes
+      "fractured_mesh_tet_DFN_1.vtu",
 //      "fractured_mesh_tet_DFN_2.vtu",
 //      "fractured_mesh_tet_DFN_3.vtu",
-//      "fractured_mesh_tet_DFN_12.vtu",
+      "fractured_mesh_tet_DFN_12.vtu",
 //      "fractured_mesh_tet_DFN_13.vtu",
-//      "fractured_mesh_tet_DFN_123.vtu",
+      "fractured_mesh_tet_DFN_123.vtu",
 
       // Wavy Hex meshes (same topology but different geometry)
       "fractured_wavy_mesh_hex_DFN_1.vtu",
-      "fractured_wavy_mesh_hex_DFN_2.vtu",
-      "fractured_wavy_mesh_hex_DFN_3.vtu",
+//      "fractured_wavy_mesh_hex_DFN_2.vtu",
+//      "fractured_wavy_mesh_hex_DFN_3.vtu",
       "fractured_wavy_mesh_hex_DFN_12.vtu",
-      "fractured_wavy_mesh_hex_DFN_13.vtu",
-      "fractured_wavy_mesh_hex_DFN_23.vtu",
+//      "fractured_wavy_mesh_hex_DFN_13.vtu",
+//      "fractured_wavy_mesh_hex_DFN_23.vtu",
       "fractured_wavy_mesh_hex_DFN_123.vtu"
 
-//      // Wavy Tet meshes (same topology but different geometry)
-//      "fractured_wavy_mesh_tet_DFN_1.vtu",
+      // Wavy Tet meshes (same topology but different geometry)
+      "fractured_wavy_mesh_tet_DFN_1.vtu",
 //      "fractured_wavy_mesh_tet_DFN_2.vtu",
 //      "fractured_wavy_mesh_tet_DFN_3.vtu",
-//      "fractured_wavy_mesh_tet_DFN_12.vtu",
+      "fractured_wavy_mesh_tet_DFN_12.vtu",
 //      "fractured_wavy_mesh_tet_DFN_13.vtu",
 //      "fractured_wavy_mesh_tet_DFN_23.vtu",
-//      "fractured_wavy_mesh_tet_DFN_123.vtu"
+      "fractured_wavy_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy

@@ -136,7 +136,7 @@ FieldApplicator::
                    InputError, getDataContext() );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator '{}': delegating HydrostaticEquilibrium re-initialization "
-                                "to solver '{}'.", getName(), flowSolver->getName() ) );
+                               "to solver '{}'.", getName(), flowSolver->getName() ) );
 
     // Re-run the solver's full state initialization, which internally calls (in order):
     //   1. computeHydrostaticEquilibrium  → correctly assigns pressure, temperature, and
@@ -231,7 +231,7 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
   // using the elevation-based tables.
 
   GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator: Applying {} to {} elements in subregion {}",
-                              equilIC.getName(), targetSet.size(), targetGroup.getName() ) );
+                             equilIC.getName(), targetSet.size(), targetGroup.getName() ) );
 
   // Get element center coordinates for elevation lookup
   if( !targetGroup.hasWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString() ) )
@@ -525,8 +525,8 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
   flowSolver->saveConvergedState( subRegion );
 
   GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator: Fully initialized fluid state (phaseVolumeFraction, "
-                              "phaseMobility, RelPerm_phaseRelPerm, fracPerm_permeability, "
-                              "fracPorosity_porosity) for subregion '{}'.", subRegion.getName() ) );
+                             "phaseMobility, RelPerm_phaseRelPerm, fracPerm_permeability, "
+                             "fracPorosity_porosity) for subregion '{}'.", subRegion.getName() ) );
 }
 
 

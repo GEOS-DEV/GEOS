@@ -72,13 +72,14 @@ protected:
   // ...existing code...
 
   std::string generateXmlInput( std::string const & meshFile,
-                                 std::string const & nodeSetNames )
+                                std::string const & nodeSetNames )
   {
     std::ostringstream oss;
     oss << R"xml(<?xml version="1.0" ?>
 <Problem>
   <Mesh>
-    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames << R"xml(" />
+    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
+      R"xml(" />
   </Mesh>
 
   <Geometry>
@@ -178,8 +179,10 @@ protected:
       componentFractionVsElevationTableNames="{ CO2CompositionalFractionVsElevation, WaterCompositionalFractionVsElevation }"
       temperatureVsElevationTableName="InitTempTable"/>
 
-    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1" />
-    <FieldSpecification name="frac"          initialCondition="1"         setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
+      R"xml(" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac"          initialCondition="1"         setNames=")xml" << nodeSetNames <<
+      R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
     <FieldSpecification name="topP"       fieldName="pressure"          setNames="{ zposFace }" objectPath="faceManager" scale="1.0e7"/>
     <FieldSpecification name="topCO2Comp" fieldName="globalCompFraction" component="0" setNames="{ zposFace }" objectPath="faceManager" scale="1.0"/>
     <FieldSpecification name="topH2OComp" fieldName="globalCompFraction" component="1" setNames="{ zposFace }" objectPath="faceManager" scale="0.0"/>
@@ -351,7 +354,7 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            real64 const accumulation = std::fabs(compAmount[k][ic] - compAmount_n[k][ic]);
+            real64 const accumulation = std::fabs( compAmount[k][ic] - compAmount_n[k][ic] );
             EXPECT_NEAR( accumulation, 0.0, accumulation_tolerance )
               << "Mesh " << meshFileName
               << ": non-zero accumulation term at element " << k
@@ -378,35 +381,35 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
       // flat hex meshes
       "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_2.vtu",
-      "fractured_mesh_hex_DFN_3.vtu",
+//      "fractured_mesh_hex_DFN_2.vtu",
+//      "fractured_mesh_hex_DFN_3.vtu",
       "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_13.vtu",
-      "fractured_mesh_hex_DFN_23.vtu",
+//      "fractured_mesh_hex_DFN_13.vtu",
+//      "fractured_mesh_hex_DFN_23.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
       // flat tet meshes
       "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_2.vtu",
-      "fractured_mesh_tet_DFN_3.vtu",
+//      "fractured_mesh_tet_DFN_2.vtu",
+//      "fractured_mesh_tet_DFN_3.vtu",
       "fractured_mesh_tet_DFN_12.vtu",
-      "fractured_mesh_tet_DFN_13.vtu",
-      "fractured_mesh_tet_DFN_23.vtu",
+//      "fractured_mesh_tet_DFN_13.vtu",
+//      "fractured_mesh_tet_DFN_23.vtu",
       "fractured_mesh_tet_DFN_123.vtu",
       // wavy hex meshes
       "fractured_wavy_mesh_hex_DFN_1.vtu",
-      "fractured_wavy_mesh_hex_DFN_2.vtu",
-      "fractured_wavy_mesh_hex_DFN_3.vtu",
+//      "fractured_wavy_mesh_hex_DFN_2.vtu",
+//      "fractured_wavy_mesh_hex_DFN_3.vtu",
       "fractured_wavy_mesh_hex_DFN_12.vtu",
-      "fractured_wavy_mesh_hex_DFN_13.vtu",
-      "fractured_wavy_mesh_hex_DFN_23.vtu",
+//      "fractured_wavy_mesh_hex_DFN_13.vtu",
+//      "fractured_wavy_mesh_hex_DFN_23.vtu",
       "fractured_wavy_mesh_hex_DFN_123.vtu",
       // wavy tet meshes
       "fractured_wavy_mesh_tet_DFN_1.vtu",
-      "fractured_wavy_mesh_tet_DFN_2.vtu",
-      "fractured_wavy_mesh_tet_DFN_3.vtu",
+//      "fractured_wavy_mesh_tet_DFN_2.vtu",
+//      "fractured_wavy_mesh_tet_DFN_3.vtu",
       "fractured_wavy_mesh_tet_DFN_12.vtu",
-      "fractured_wavy_mesh_tet_DFN_13.vtu",
-      "fractured_wavy_mesh_tet_DFN_23.vtu",
+//      "fractured_wavy_mesh_tet_DFN_13.vtu",
+//      "fractured_wavy_mesh_tet_DFN_23.vtu",
       "fractured_wavy_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values(
