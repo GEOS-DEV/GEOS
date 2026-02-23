@@ -129,11 +129,11 @@ enum class MsgType : integer
 enum class DiagnosticInfoLevel : integer
 {
   /// basic information (default)
-  Basic = 1,
+  Basic = 0,
   /// errors source-code information
-  ErrorSources= 2,
+  ErrorSources= 1,
   /// warnings & errors source-code information
-  WarningSources = 3,
+  WarningSources = 2,
 };
 
 /**

@@ -124,9 +124,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
     { VALIDATE_INPUT, 0, "v", "validate-input", Arg::None, "\t-v, --validate-input, \t Only do the loading phase, and not actual simulation. Useful to validate 'input'." },
     { DIAGNOSTIC_INFO_LEVEL, 0, "d", "diagnostic-info-level", Arg::numeric, "\t-d, --diagnostic-info-level, \t Diagnostic message information level:\n"
-                                                                            "\t                             \t   1 = basic information (default),\n"
-                                                                            "\t                             \t   2 = errors source-code information,\n"
-                                                                            "\t                             \t   3 = warnings & errors source-code information." },
+                                                                            "\t                             \t   0 = basic information (default),\n"
+                                                                            "\t                             \t   1 = errors source-code information,\n"
+                                                                            "\t                             \t   2 = warnings & errors source-code information." },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },

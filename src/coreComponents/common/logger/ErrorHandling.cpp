@@ -297,6 +297,10 @@ void ErrorLogger::setDiagnosticInfoLevel( DiagnosticInfoLevel const level )
     case DiagnosticInfoLevel::WarningSources:
       m_msgTypeSourceInfoEnabled.fill( true );
       break;
+    default:
+      // if option has a wrong value, we output every details for any messages
+      m_msgTypeSourceInfoEnabled.fill( true );
+      break;
   }
 }
 
