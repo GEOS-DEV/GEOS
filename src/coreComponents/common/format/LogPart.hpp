@@ -42,6 +42,7 @@ public:
     NumericalMethods,
     ImportFields,
     Timestep,
+    Undefined,
   };
 
 

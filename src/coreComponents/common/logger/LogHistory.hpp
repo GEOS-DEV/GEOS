@@ -52,6 +52,8 @@ class LogHistory
 {
 public:
 
+  /// Alias for the historical error unordered_map key
+  using HistoricalErrorUnorderedMapKey = std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey >;
 
   /**
    * @brief Report a diagnostic message
@@ -62,17 +64,31 @@ public:
   void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg );
 
   /**
-   * @return The const messageCounts
+   * @brief Display the error statistics to the log
    */
-  auto const & getMessageCounts() const
-  { return m_messageCounts; }
+  void errorStatsReport();
 
-  void insertBlanckReport(LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey );
+  /**
+   * @return The const historical error
+   */
+  auto const & getErrorHistory() const
+  { return m_errorHistory; }
+
+  /**
+   * @brief Insert an element to the error history container if an equivalent key doesn't exist.
+   * @param logPartName The logPart where the error occured
+   * @param msgType The error message type
+   * @param locationKey The key identifying the error source location
+   */
+  void insertBlanckReport( LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey );
 
 private:
+
+  /// @cond DO_NOT_DOCUMENT
   struct LocationKeyHash
   {
-    std::size_t operator()( std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > const & key ) const noexcept
+
+    std::size_t operator()( HistoricalErrorUnorderedMapKey const & key ) const noexcept
     {
       auto const & [logPartType, msgType, locationKey] = key;
 
@@ -86,11 +102,16 @@ private:
 
       return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
     }
+
   };
+  /// @endcond
+
+  /// @cond DO_NOT_DOCUMENT
   struct LocationKeyEqual
   {
-    bool operator()( const std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > & lhs,
-                     const std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > & rhs ) const
+
+    bool operator()( HistoricalErrorUnorderedMapKey const & lhs,
+                     HistoricalErrorUnorderedMapKey const & rhs ) const
     {
       return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
              std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
@@ -98,14 +119,14 @@ private:
              std::get< 2 >( lhs ).second == std::get< 2 >( rhs ).second;
     }
   };
+  /// @endcond
 
   /**
-   * @brief Hierarchical storage of message statistics
-   * Structure: LogPart -> MsgType -> SourceLocation -> Statistics
+   * @brief Historical error happened during the simulation
    */
-  stdUnorderedMap< std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey >,
+  stdUnorderedMap< HistoricalErrorUnorderedMapKey,
                    MsgStatistics,
-                   LocationKeyHash, LocationKeyEqual >m_messageCounts;
+                   LocationKeyHash, LocationKeyEqual >m_errorHistory;
 };
 
 /**
