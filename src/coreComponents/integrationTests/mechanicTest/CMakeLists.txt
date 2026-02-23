@@ -1,4 +1,4 @@
-se# Specify list of tests
+# Specify list of tests
 set( gtest_geosx_tests
      testFEMConsistency.cpp )
 
