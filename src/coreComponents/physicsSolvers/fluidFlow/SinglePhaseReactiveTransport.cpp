@@ -1383,7 +1383,7 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ fields::flow::pressure::key() };
 
     if( m_isThermal )
     {

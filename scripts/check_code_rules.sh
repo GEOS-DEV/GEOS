@@ -25,6 +25,7 @@ check_container_usage() {
       str+="    $line"$'\n'
     done < <(grep -nE "$FULL_REGEX" "$file")
   fi
+
 }
 
 print_violation()
@@ -137,7 +138,7 @@ done
 
 # Print section
 for key in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
-    if [[ "${FORBIDDEN_CONTAINER_MAP[$key]}" == "1" ]]; then
+    if [[ "${FORBIDDEN_CONTAINER_MAP[$key]}" -ge "1" ]]; then
       echo $'\n'
       echo "----------------------------------------"
       echo "SUMMARY: Code rule violations found"
