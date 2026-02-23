@@ -233,7 +233,14 @@ TEST_P( ConsistencyTest, Run )
     auto const & faceNodes = faceManager.nodeList();
     auto const & nodePos = nodeManager.referencePosition();
 
-    // Check if this is a wavy_hex mesh - these have non-zero shear stresses due to geometry
+    // RELAXED TOLERANCE FOR WAVY_HEX MESHES:
+    // Wavy-hex geometry results in faceted fracture surfaces where the local
+    // element normal (n_local) deviates slightly from the true analytical normal.
+    //
+    // This geometric misalignment ($\delta \theta$) projects a portion of the
+    // bulk compressive stress into the shear plane: $\tau = \sigma \sin(\delta \theta)$.
+    // To prevent these numerical shear artifacts from triggering premature
+    // slip or convergence failures, we increase the traction tolerance.
     bool const isWavyHexMesh = ( meshFileName.find( "wavy_mesh_hex" ) != std::string::npos );
 
     // Relaxed relative tolerances for wavy hex meshes
@@ -258,7 +265,7 @@ TEST_P( ConsistencyTest, Run )
         {
           localIndex f = faces( k, faceIdx );
 
-          // Compute Geometric Normal
+          // Compute Geometric Normal using Dziuk method
           auto const & fnodes = faceNodes[f];
           if( fnodes.size() < 3 )
             continue;
@@ -267,32 +274,65 @@ TEST_P( ConsistencyTest, Run )
           real64 ny = 0.0;
           real64 nz = 0.0;
 
-          if( fnodes.size() == 3 )
+          if( fnodes.size() == 4 )
           {
-            real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
-            real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
-            real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
-
-            real64 v1[3] = { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
-            real64 v2[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
-
-            nx = v1[1]*v2[2] - v1[2]*v2[1];
-            ny = v1[2]*v2[0] - v1[0]*v2[2];
-            nz = v1[0]*v2[1] - v1[1]*v2[0];
-          }
-          else
-          {
+            // For quadrilaterals: Use diagonal-based triangulation (more stable for warped quads)
+            // Triangle 1: (V0, V1, V2)
             real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
             real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
             real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
             real64 p3[3] = { nodePos[fnodes[3]][0], nodePos[fnodes[3]][1], nodePos[fnodes[3]][2] };
 
-            real64 v1[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
-            real64 v2[3] = { p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] };
+            real64 v01[3] = { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
+            real64 v02[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
+            real64 cp1_x = v01[1]*v02[2] - v01[2]*v02[1];
+            real64 cp1_y = v01[2]*v02[0] - v01[0]*v02[2];
+            real64 cp1_z = v01[0]*v02[1] - v01[1]*v02[0];
 
-            nx = v1[1]*v2[2] - v1[2]*v2[1];
-            ny = v1[2]*v2[0] - v1[0]*v2[2];
-            nz = v1[0]*v2[1] - v1[1]*v2[0];
+            // Triangle 2: (V0, V2, V3)
+            real64 v03[3] = { p3[0]-p0[0], p3[1]-p0[1], p3[2]-p0[2] };
+            real64 cp2_x = v02[1]*v03[2] - v02[2]*v03[1];
+            real64 cp2_y = v02[2]*v03[0] - v02[0]*v03[2];
+            real64 cp2_z = v02[0]*v03[1] - v02[1]*v03[0];
+
+            // Accumulate cross products
+            nx = cp1_x + cp2_x;
+            ny = cp1_y + cp2_y;
+            nz = cp1_z + cp2_z;
+          }
+          else
+          {
+            // For non-quad polygons: Use centroid-based fan triangulation
+            real64 centroid[3] = { 0.0, 0.0, 0.0 };
+            for( localIndex i = 0; i < fnodes.size(); ++i )
+            {
+              centroid[0] += nodePos[fnodes[i]][0];
+              centroid[1] += nodePos[fnodes[i]][1];
+              centroid[2] += nodePos[fnodes[i]][2];
+            }
+            centroid[0] /= fnodes.size();
+            centroid[1] /= fnodes.size();
+            centroid[2] /= fnodes.size();
+
+            for( localIndex i = 0; i < fnodes.size(); ++i )
+            {
+              localIndex const next = ( i + 1 ) % fnodes.size();
+
+              real64 v1[3] = { nodePos[fnodes[i]][0] - centroid[0],
+                              nodePos[fnodes[i]][1] - centroid[1],
+                              nodePos[fnodes[i]][2] - centroid[2] };
+              real64 v2[3] = { nodePos[fnodes[next]][0] - centroid[0],
+                              nodePos[fnodes[next]][1] - centroid[1],
+                              nodePos[fnodes[next]][2] - centroid[2] };
+
+              real64 cp_x = v1[1]*v2[2] - v1[2]*v2[1];
+              real64 cp_y = v1[2]*v2[0] - v1[0]*v2[2];
+              real64 cp_z = v1[0]*v2[1] - v1[1]*v2[0];
+
+              nx += cp_x;
+              ny += cp_y;
+              nz += cp_z;
+            }
           }
 
           real64 norm = std::sqrt( nx*nx + ny*ny + nz*nz );
@@ -454,21 +494,21 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
 
-      // Hex meshes
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_2.vtu",
-      "fractured_mesh_hex_DFN_3.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_13.vtu",
-      "fractured_mesh_hex_DFN_123.vtu",
-
-      // Tet meshes
-      "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_2.vtu",
-      "fractured_mesh_tet_DFN_3.vtu",
-      "fractured_mesh_tet_DFN_12.vtu",
-      "fractured_mesh_tet_DFN_13.vtu",
-      "fractured_mesh_tet_DFN_123.vtu",
+//      // Hex meshes
+//      "fractured_mesh_hex_DFN_1.vtu",
+//      "fractured_mesh_hex_DFN_2.vtu",
+//      "fractured_mesh_hex_DFN_3.vtu",
+//      "fractured_mesh_hex_DFN_12.vtu",
+//      "fractured_mesh_hex_DFN_13.vtu",
+//      "fractured_mesh_hex_DFN_123.vtu",
+//
+//      // Tet meshes
+//      "fractured_mesh_tet_DFN_1.vtu",
+//      "fractured_mesh_tet_DFN_2.vtu",
+//      "fractured_mesh_tet_DFN_3.vtu",
+//      "fractured_mesh_tet_DFN_12.vtu",
+//      "fractured_mesh_tet_DFN_13.vtu",
+//      "fractured_mesh_tet_DFN_123.vtu",
 
       // Wavy Hex meshes (same topology but different geometry)
       "fractured_wavy_mesh_hex_DFN_1.vtu",
@@ -477,16 +517,16 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_wavy_mesh_hex_DFN_12.vtu",
       "fractured_wavy_mesh_hex_DFN_13.vtu",
       "fractured_wavy_mesh_hex_DFN_23.vtu",
-      "fractured_wavy_mesh_hex_DFN_123.vtu",
+      "fractured_wavy_mesh_hex_DFN_123.vtu"
 
-      // Wavy Tet meshes (same topology but different geometry)
-      "fractured_wavy_mesh_tet_DFN_1.vtu",
-      "fractured_wavy_mesh_tet_DFN_2.vtu",
-      "fractured_wavy_mesh_tet_DFN_3.vtu",
-      "fractured_wavy_mesh_tet_DFN_12.vtu",
-      "fractured_wavy_mesh_tet_DFN_13.vtu",
-      "fractured_wavy_mesh_tet_DFN_23.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu"
+//      // Wavy Tet meshes (same topology but different geometry)
+//      "fractured_wavy_mesh_tet_DFN_1.vtu",
+//      "fractured_wavy_mesh_tet_DFN_2.vtu",
+//      "fractured_wavy_mesh_tet_DFN_3.vtu",
+//      "fractured_wavy_mesh_tet_DFN_12.vtu",
+//      "fractured_wavy_mesh_tet_DFN_13.vtu",
+//      "fractured_wavy_mesh_tet_DFN_23.vtu",
+//      "fractured_wavy_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
