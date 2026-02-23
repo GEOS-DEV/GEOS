@@ -123,7 +123,7 @@ enum class MsgType : integer
 };
 
 /**
- * @enum MsgType
+ * @enum DiagnosticInfoLevel
  * Enum listing the different types of possible diagnostic information levels
  */
 enum class DiagnosticInfoLevel : integer
