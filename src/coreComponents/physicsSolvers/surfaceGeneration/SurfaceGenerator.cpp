@@ -809,9 +809,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     localIndex const globalNumSplits            = MpiWrapper::sum( static_cast< localIndex >( rval ) );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Mesh splitting completed.\n"
-                               "  Number of nodes split (this step):          {:>8}\n"
-                               "  New fracture elements (this step):          {:>8}\n"
-                               "  Total fracture elements (cumulative):       {:>8}",
+                               "  Number of nodes split:                      {:>8}\n"
+                               "  New fracture elements:                      {:>8}\n"
+                               "  Total fracture elements:                    {:>8}",
                                globalNumSplits,
                                globalNewFractureElements,
                                globalNumFractureElements ) );

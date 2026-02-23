@@ -140,10 +140,12 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
       // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
         setApplyDefaultValue( 0.0 ).
-        setPlotLevel( PlotLevel::NOPLOT );
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
         setApplyDefaultValue( 0.0 ).
-        setPlotLevel( PlotLevel::NOPLOT );
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( getName());
 
       if( m_useLocalYieldAcceleration )
       {
