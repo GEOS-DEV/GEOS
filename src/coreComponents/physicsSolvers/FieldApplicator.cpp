@@ -30,6 +30,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -335,7 +336,7 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
 void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
 {
   GEOS_UNUSED_VAR( domain );
-
+  
   // Check if this subregion has a fluid model at all
   if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {
@@ -459,8 +460,8 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
 
         arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
         arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-        arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" ).toViewConst();
-        arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" ).toView();
+        arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getField< fields::flow::globalCompFraction >();
+        arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getField< fields::flow::globalCompDensity >();
 
         integer const numComp = compFrac.size( 1 );
 

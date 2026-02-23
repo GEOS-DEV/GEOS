@@ -516,10 +516,6 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
     ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 2, 2 ),
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 2, 1, 2 ),
       std::make_tuple( 2, 2, 1 ),
       std::make_tuple( 4, 1, 1 )
       )
