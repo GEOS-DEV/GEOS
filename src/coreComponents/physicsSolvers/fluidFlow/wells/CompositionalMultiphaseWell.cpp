@@ -59,7 +59,6 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
 
 
-
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
 #endif
@@ -942,6 +941,16 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
 
     }
 
+    WellConstraintBase * constraint = getCurrentConstraint();
+    if( constraint != nullptr )
+    {
+      constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+      constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+      constraint->setTotalVolumeRate ( getReference< real64 >(
+                                         CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+      constraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+    }
 
   }
   return maxPhaseVolChange;
@@ -1109,7 +1118,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     // setup if restart
     if( getCurrentConstraint() == nullptr )
     {
-      updateSubRegionState( elemManager, subRegion );
       if( isProducer() )
       {
         forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
@@ -1136,6 +1144,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           }
         } );
       }
+      updateSubRegionState( elemManager, subRegion );
     }
 
   }
@@ -2389,12 +2398,14 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
     {
       limitingConstraint =  constraint;
       // tjb. this is likely not needed. set in update state
+#if SET_IN_UPDATE_STATE
       constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
       constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
                                           CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
       constraint->setTotalVolumeRate ( getReference< real64 >(
                                          CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
       constraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+#endif
       GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                          " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
                          limitingConstraint->phaseVolumeRates() << " " <<
@@ -2414,12 +2425,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
         limitingConstraint = constraint;
         setControl( static_cast< WellControls::Control >(constraint->getControl()) );      // tjb old
         setCurrentConstraint( constraint );
-        constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                            CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-        constraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+
         GEOS_LOG_RANK_IF ( subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " Control switch " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
       }

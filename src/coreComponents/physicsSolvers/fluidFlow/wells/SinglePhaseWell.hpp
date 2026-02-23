@@ -287,9 +287,7 @@ public:
 
     // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
     static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
-    static constexpr char const * dCurrentVolRateString() { return "dCurrentVolRate"; }
   };
 
 protected:
