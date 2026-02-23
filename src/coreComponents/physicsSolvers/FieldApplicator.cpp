@@ -459,8 +459,8 @@ void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, E
 
         arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
         arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-        arrayView2d< real64 const > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
-        arrayView2d< real64 > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
+        arrayView2d< real64 const, compflow::USD_COMP > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
+        arrayView2d< real64, compflow::USD_COMP > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
 
         integer const numComp = compFrac.size( 1 );
 
