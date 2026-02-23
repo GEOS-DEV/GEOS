@@ -27,7 +27,6 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 namespace geos
 {
@@ -107,15 +106,6 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
       subRegion.registerField< contact::deltaSlip_n >( this->getName() ).
         setDimLabels( 1, labelsTangent ).reference().resizeDimension< 1 >( 2 );
-
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerField< flow::pressure >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( getName());
-      subRegion.registerField< flow::pressure_n >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( getName());
     } );
 
   } );
