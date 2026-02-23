@@ -306,17 +306,22 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
 
     ProblemManager & pm = state.getProblemManager();
 
-    // Verify that the hydrostatic equilibrium is the exact solution of the discrete system:
-    // at most two Newton iterations are needed because the residuals are essentially zero
-    // from the start.
+    // Verify that the hydrostatic equilibrium is the exact solution of the discrete system.
+    // For flat meshes the discretization is exact (or nearly so), so at most 2 Newton
+    // iterations are needed. For wavy meshes the geometry introduces a small discretization
+    // error with respect the exact hydrostatic equilibrium, so up to 4 iterations are allowed.
     {
       CompositionalMultiphaseFVM & solver =
         pm.getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "flowSolver" );
 
+      bool const isWavy = meshFileName.find( "_wavy_" ) != std::string::npos;
+      integer const maxExpectedIter = isWavy ? 4 : 2;
+
       integer const numNewtonIter = solver.getNonlinearSolverParameters().m_numNewtonIterations;
-      EXPECT_LE( numNewtonIter, 4 )
+      EXPECT_LE( numNewtonIter, maxExpectedIter )
         << "Mesh " << meshFileName
-        << ": expected at most 4 Newton iterations after hydrostatic init, got " << numNewtonIter;
+        << ": expected at most " << maxExpectedIter
+        << " Newton iterations after hydrostatic init, got " << numNewtonIter;
     }
 
     // Verify that the discrete accumulation term is zero for every element
