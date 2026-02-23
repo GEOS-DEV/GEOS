@@ -57,7 +57,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
-
+#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
 
 
 #if defined( __INTEL_COMPILER )

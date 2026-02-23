@@ -68,10 +68,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
 
-
-
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
 
@@ -660,10 +658,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     setWellState( 0 );
   }
 
-
   bool useEstimator = m_estimateSolution && (coupledIterationNumber < m_wellNewtonSolver.getNumActiveCoupledIterations() );
-
-
 
   if( getWellState())
   {
@@ -729,22 +724,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     if( constraint->getName() == getCurrentConstraint()->getName())
     {
       limitingConstraint =  constraint;
-      // tjb. this is likely not needed. set in update state
-      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-      if( isCompositional())
-      {
-        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                            viewKeyStruct::currentPhaseVolRateString() ) );
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentTotalVolRateString() ));
-        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
-      }
-      else
-      {
-        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentVolRateString() ));
-      }
       GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                          " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
                          limitingConstraint->phaseVolumeRates() << " " <<
@@ -764,21 +743,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         limitingConstraint = constraint;
         setControl( static_cast< WellControls::Control >(constraint->getControl()) );      // tjb old
         setCurrentConstraint( constraint );
-        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-        if( isCompositional())
-        {
-          constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                              viewKeyStruct::currentPhaseVolRateString() ) );
-          constraint->setTotalVolumeRate ( getReference< real64 >(
-                                             viewKeyStruct::currentTotalVolRateString() ));
-          constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
-        }
-        else
-        {
-          constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-          constraint->setTotalVolumeRate ( getReference< real64 >(
-                                             viewKeyStruct::currentVolRateString() ));
-        }
         GEOS_LOG_RANK_IF ( subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " Control switch " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
       }
@@ -900,23 +864,6 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                         elemManager,
                         subRegion,
                         dofManager );
-      // tjb. this is likely not needed. set in update state
-      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-      if( isCompositional())
-      {
-        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                            viewKeyStruct::currentPhaseVolRateString() ) );
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentTotalVolRateString() ));
-        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
-      }
-      else
-      {
-        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentVolRateString() ));
-      }
-
     }
   }
   solveConstraint ( limitingConstraint, time_n,
@@ -928,19 +875,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                     elemManager,
                     subRegion,
                     dofManager );
-  if( isCompositional())
-  {
-    limitingConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                                viewKeyStruct::currentPhaseVolRateString() ) );
-    limitingConstraint->setTotalVolumeRate ( getReference< real64 >(
-                                               viewKeyStruct::currentTotalVolRateString() ));
-    limitingConstraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
-  }
-  else
-  {
-    limitingConstraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-    limitingConstraint->setTotalVolumeRate( getReference< real64 >( viewKeyStruct::currentVolRateString() ));
-  }
+
   GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                      " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " << limitingConstraint->phaseVolumeRates() << " " <<
                      limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
@@ -1012,23 +947,6 @@ void WellControls::solveConstraint( WellConstraintBase *constraint,
                                                elemManager,
                                                subRegion );
 
-      // Store computed well quantities for this constraint
-      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-      if( isCompositional() )
-      {
-
-        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                            viewKeyStruct::currentPhaseVolRateString() ) );
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentTotalVolRateString() ));
-        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
-      }
-      else
-      {
-        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
-        constraint->setTotalVolumeRate ( getReference< real64 >(
-                                           viewKeyStruct::currentVolRateString() ));
-      }
       if( getLogLevel() > 4 )
       {
         GEOS_LOG_RANK_0( "Well " <<getName() << " aft solve Constraint rates " << constraint->getName() << " bhp " << constraint->bottomHolePressure() << " phaseVolRate " <<
