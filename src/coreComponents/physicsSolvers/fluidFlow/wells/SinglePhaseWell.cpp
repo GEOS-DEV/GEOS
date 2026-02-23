@@ -1177,7 +1177,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                well::pressure::key(),
-                               scalingFactor,
+                               well::pressureScalingFactor::key(),
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
@@ -1193,7 +1193,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
     dofManager.addVectorToField( localSolution,
                                  wellElementDofName(),
                                  fields::well::temperature::key(),
-                                 scalingFactor,
+                                 well::temperatureScalingFactor::key(),
                                  temperatureMask );
 
   }
