@@ -103,7 +103,7 @@ protected:
       temperature="355.0"
       allowNegativePressure="0"
       logLevel="0">
-      <NonlinearSolverParameters newtonTol="1.0e-3" newtonMaxIter="4" lineSearchAction="None" maxAllowedResidualNorm="1.0e20"/>
+      <NonlinearSolverParameters newtonTol="1.0e-1" newtonMaxIter="4" lineSearchAction="None" maxAllowedResidualNorm="1.0e20"/>
       <LinearSolverParameters directParallel="0" reuseFactorization="0"/>
     </CompositionalMultiphaseFVM>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="0"/>
