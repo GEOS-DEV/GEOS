@@ -28,6 +28,7 @@ set( gtest_geosx_tests
      testNegativeTwoPhaseFlash9Comp.cpp
      testNegativeTwoPhaseFlashModel.cpp
      testParticleFluidEnums.cpp
+	 testPrescribedStressPath.cpp
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
      testSoreideWhitsonEOSPhaseModel.cpp

@@ -140,10 +140,6 @@ public:
     static constexpr char const * referenceTotalStressString()  { return "referenceTotalStress"; }
   };
 
-protected:
-
-  virtual void postInputInitialization() override;
-
 private:
   real64 m_biot;
   real64 m_poisson;
@@ -182,7 +178,6 @@ real64 BartonBandisStressPathDrivenUpdates::computeHydraulicAperture( real64 con
   // minus the closure from the free-stress state to the current state
   real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
 
-  GEOS_LOG_RANK_0("*** " << pressure <<"\t"<< maximumFractureClosure << "\t" << newHydraulicAperture << "\t" << sigmaN_N);
   return newHydraulicAperture;
 }
 
@@ -191,6 +186,7 @@ GEOS_FORCE_INLINE
 real64 BartonBandisStressPathDrivenUpdates::computeFractureStress( real64 const pressure,
                                                                    array1d< real64 > const & normal ) const
 {  
+  // TODO: remove this lambda expression
   auto matmul = [](real64 const (&u)[3], array1d< real64 > const &v, array1d< real64 > &r) -> void
   {
     r[0] = u[0]*v[0];

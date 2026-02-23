@@ -135,7 +135,7 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
   
   if( m_computePrescribedStressPath )
   {
-    // Only for fractures 
+    // Do it only for fractures 
     if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
     {
       setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion, viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
@@ -1196,6 +1196,8 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 
   if(m_computePrescribedStressPath)
   {
+    // m_updateStencil is temporary
+    if(m_updateStencil) prepareStencilWeights( domain );
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1206,6 +1208,8 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
         updateHydraulicAperture( subRegion );
       } );
     } );
+    // m_updateStencil is temporary
+    if(m_updateStencil) updateStencilWeights( domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

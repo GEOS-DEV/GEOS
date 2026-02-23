@@ -599,6 +599,10 @@
 					<xsd:selector xpath="BartonBandis" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveBartonBandisStressPathDrivenUniqueName">
+					<xsd:selector xpath="BartonBandisStressPathDriven" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBiotPorosityUniqueName">
 					<xsd:selector xpath="BiotPorosity" />
 					<xsd:field xpath="@name" />
@@ -3141,6 +3145,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--useDBC => Enable Dissipation-based continuation flux-->
 		<xsd:attribute name="useDBC" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
@@ -3253,6 +3259,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -3973,6 +3981,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativePressureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
@@ -4494,6 +4504,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4561,6 +4573,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
 		<xsd:attribute name="transMultExp" type="real64" default="1" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -4664,6 +4678,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4720,6 +4736,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -5015,6 +5033,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
+		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updatesStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -6044,7 +6064,7 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
-			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -6169,6 +6189,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--referenceTotalStress => Total stress at reference state: sigmaT_0.-->
 		<xsd:attribute name="referenceTotalStress" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
 		<!--defaultGrainBulkModulus => Grain bulk modulus-->

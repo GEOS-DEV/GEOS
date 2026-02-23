@@ -1505,7 +1505,7 @@
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
-			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" minOccurs="1" maxOccurs="1" />
+			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />

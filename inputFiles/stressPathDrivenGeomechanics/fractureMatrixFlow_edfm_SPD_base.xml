@@ -1,6 +1,7 @@
 <?xml version="1.0" ?> 
   
 <Problem>
+  <!-- SPHINX_TUT_STRESS_PATH_DRIVEN -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
@@ -15,6 +16,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
+  <!-- SPHINX_TUT_STRESS_PATH_DRIVEN_END -->  
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
@@ -44,11 +46,10 @@
       cellBlocks="{ * }" 
       materialList="{ water, rock }"/>
 
-	<!-- NEW faceBlock -->
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="embeddedSurfaceSubRegion"
-      defaultAperture="1.2421e-4"
+      defaultAperture="1.0e-4"
       materialList="{ water, fractureFilling, hApertureModel }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -96,16 +97,16 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
     
+  <!-- SPHINX_TUT_STRESS_PATH_DRIVEN_LAW -->
     <BartonBandisStressPathDriven
-      name="hApertureModel"
+	  name="hApertureModel"
 	  biot="1.0"
 	  poisson="0.3"
-	  normalStiffness="12.041e9"
-	  referenceAperture="1.2421e-4"
+	  normalStiffness="10.0e9"
+	  referenceAperture="1.0e-4"
 	  referencePressure="1e5"
-      referenceNormalStress="1.0e6"
-	  referenceTotalStress="{ 85.0e6, 85.0e6, 105.0e6 }"/>
-	  
+	  referenceTotalStress="{ 40.0e6, 40.0e6, 20.0e6 }"/>
+  <!-- SPHINX_TUT_STRESS_PATH_DRIVEN_LAW_END -->
   </Constitutive>
 
   
@@ -126,14 +127,6 @@
       objectPath="ElementRegions/Fracture"
       fieldName="fracturePorosity_porosity"
       scale="1.00"/>
-
-    <FieldSpecification
-      name="initialFracturePressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="pressure"
-      scale="1e5"/>
 	  
     <FieldSpecification
       name="initialPressure"
@@ -141,23 +134,23 @@
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
-      scale="1e5"/>
+      scale="0.0"/>
+
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_PRESSURE -->
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="1.0e7"
+      setNames="{ source }"/>
 
     <FieldSpecification
-      name="pressure_xneg"
-      objectPath="faceManager"
+      name="sinkTerm"
+      objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      component="0"
-      scale="1.0e7"
-      setNames="{ xneg }"/>
-    
-    <FieldSpecification
-      name="pressure_xpos"
-      objectPath="faceManager"
-      fieldName="pressure"
-      component="0"
-      scale="1.0e5"
-      setNames="{ xpos }"/>
+      scale="1.636292e07"
+      setNames="{ sink }"/>
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_PRESSURE_END -->
 
   </FieldSpecifications>
 </Problem>

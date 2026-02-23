@@ -20,6 +20,7 @@
 uberenv_libs
 spack-*.txt
 /src/docs/sphinx/datastructure
+/src/docs/sphinx/build
 *~
 __pycache__
 

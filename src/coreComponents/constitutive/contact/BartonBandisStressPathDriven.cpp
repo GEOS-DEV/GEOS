@@ -32,8 +32,7 @@ using namespace dataRepository;
 BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name, Group * const parent ):
   HydraulicApertureBase( name, parent )
 {
-  setInputFlags( InputFlags::REQUIRED );
-
+  
   registerWrapper( viewKeyStruct::biotString(), &m_biot ).
     setApplyDefaultValue( 1.0 ). 
     setInputFlag( InputFlags::REQUIRED ).
@@ -56,13 +55,6 @@ BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name,
     
 }
 
-void BartonBandisStressPathDriven::postInputInitialization()
-{
-  //GEOS_THROW_IF( m_referenceNormalStress <= 0.0,
-  //               getFullName() << ": The provided reference stress is zero or negative. Value: " << m_referenceNormalStress,
-  //               InputError );
-
-}
 
 BartonBandisStressPathDrivenUpdates BartonBandisStressPathDriven::createKernelWrapper() const
 {

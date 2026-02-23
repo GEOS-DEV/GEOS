@@ -89,6 +89,10 @@ public:
 
     static constexpr char const * computesPrescribedStressPathString() { return "computesPrescribedStressPath"; }
     static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
+    
+    // TODO: temporary. It will be removed after analyzing the impact of computing or not the gemoetric component 
+    // of the transmissibility (aka stencil weights).
+    static constexpr char const * updatesStencilString() { return "updatesStencil"; } 
   };
 
   /**
@@ -266,6 +270,10 @@ protected:
 
   /// flag to determine whether or not this simulation computes the precribed stress path
   integer m_computePrescribedStressPath;
+  
+  // TODO: temporary. It will be removed after analyzing the impact of computing or not the gemoetric component of the transmissibility
+  /// flag to determine whether or not this simulation updates the stencil weights 
+  integer m_updateStencil; 
 
   /// the input temperature
   real64 m_inputTemperature;
