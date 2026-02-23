@@ -4875,7 +4875,7 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
 
     if( isZero( matDet, 1e-16 ) )
     {
-      GEOS_LOG_RANK( "Matrix became singular!" );
+      // GEOS_LOG_RANK( "Matrix became singular!" );
       LvArray::tensorOps::copy< 3 >( surfacePosition, s_old );
       LvArray::tensorOps::copy< 3 >( normal, n_old );
       errored = true;
@@ -5142,12 +5142,12 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
           LvArray::tensorOps::normalize< 3 >( particleReferenceSurfaceNormal[p] );
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfacePosition[p], invF, particleSurfacePosition[p] );
 
-          GEOS_LOG_RANK( "p: " << p << ", " <<
-                         "mappedMass: " << mappedMass << ", " <<
-                         "pNormal: {"<< particleSurfaceNormal[p][0] << ", " << particleSurfaceNormal[p][1] << ", " << particleSurfaceNormal[p][2] << "}, " <<
-                         "pPosition: {"<< particleSurfacePosition[p][0] << ", " << particleSurfacePosition[p][1] << ", " << particleSurfacePosition[p][2] << "}, " <<
-                         "pRefNormal: {"<< particleReferenceSurfaceNormal[p][0] << ", " << particleReferenceSurfaceNormal[p][1] << ", " << particleReferenceSurfaceNormal[p][2] << "}, " <<
-                         "pRefPosition: {"<< particleReferenceSurfacePosition[p][0] << ", " << particleReferenceSurfacePosition[p][1] << ", " << particleReferenceSurfacePosition[p][2] << "}" );
+          // GEOS_LOG_RANK( "p: " << p << ", " <<
+          //                "mappedMass: " << mappedMass << ", " <<
+          //                "pNormal: {"<< particleSurfaceNormal[p][0] << ", " << particleSurfaceNormal[p][1] << ", " << particleSurfaceNormal[p][2] << "}, " <<
+          //                "pPosition: {"<< particleSurfacePosition[p][0] << ", " << particleSurfacePosition[p][1] << ", " << particleSurfacePosition[p][2] << "}, " <<
+          //                "pRefNormal: {"<< particleReferenceSurfaceNormal[p][0] << ", " << particleReferenceSurfaceNormal[p][1] << ", " << particleReferenceSurfaceNormal[p][2] << "}, " <<
+          //                "pRefPosition: {"<< particleReferenceSurfacePosition[p][0] << ", " << particleReferenceSurfacePosition[p][1] << ", " << particleReferenceSurfacePosition[p][2] << "}" );
         }
       } );
     ++subRegionIndex;
@@ -6421,9 +6421,13 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       {
         CohesiveZoneMPMEvent & cohesiveZoneReference = dynamicCast< CohesiveZoneMPMEvent & >( event );
         
-        // For now these are globally set by the event
-        m_computeParticleSurfaceNormalsAndPositions = cohesiveZoneReference.getComputeNormalsAndPositions();
-        m_normalAndPositionMethod = cohesiveZoneReference.getNormalsAndPositionsMethod(); // TODO: Need to add enum to header of czRegion
+         // For now these are globally set by the event
+         // Should only be done once at start of event
+         if( time_n >= startTime - dt / 2 && time_n < startTime + dt / 2 )
+         {
+           m_computeParticleSurfaceNormalsAndPositions = cohesiveZoneReference.getComputeNormalsAndPositions();
+           m_normalAndPositionMethod = cohesiveZoneReference.getNormalsAndPositionsMethod(); // TODO: Need to add enum to header of czRegion
+         }
 
         string_array const & czRegionNames = cohesiveZoneReference.getRegionNames();
         string_array const & czModelNames = cohesiveZoneReference.getConstitutiveModelNames();
@@ -8168,7 +8172,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
   localIndex const numNodes = nodeManager.size();
   // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
 
-  GEOS_LOG_RANK("Num nodes: " << numNodes);
+  // GEOS_LOG_RANK("Num nodes: " << numNodes);
 
   // Initialize node neighbor count
   array1d< localIndex > nodeFieldCount( numNodes );
@@ -8281,8 +8285,6 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
     ++subRegionIndex;
   } );
 
-  GEOS_LOG_RANK("Counted number of bins...");
-
   m_nodalNeighborList.freeOnDevice(); // just being careful
   m_nodalNeighborList.resizeFromCapacities( nodeFieldCount );
 
@@ -8294,8 +8296,6 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
   {
     m_maxNodalNeighbors = LvArray::math::max( m_maxNodalNeighbors, numNeighborsAll[g] );
   }
-
-  GEOS_LOG_RANK("Max nodal neighbors computed...");
 
   ArrayOfArraysView< localIndex > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toView();
   ArrayOfArraysView< localIndex > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toView();
@@ -8318,8 +8318,6 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
     binCounts[b] = 0;
   }
   arrayView1d< localIndex > const binCountsView = binCounts;
-
-  GEOS_LOG_RANK(" Initialized bin counts...");
 
   // Populate node particle data into many particle relation (aka nodal particle neighborlist)
   subRegionIndex = 0;
@@ -13692,7 +13690,7 @@ void SolidMechanicsMPM::computeNodalAreas( NodeManager & nodeManager )
   real64 const L = LvArray::tensorOps::l2Norm< 3 >( hEl );
   real64 const dA = LvArray::math::pow( 2 * L / numSurfaceIntegrationPoints, 2 );
 
-  GEOS_LOG_RANK( "hEl: {" << hEl[0] << ", " << hEl[1] << ", " << hEl[2] <<  "}, L: " << L << ", dA: " << dA );
+  //GEOS_LOG_RANK( "hEl: {" << hEl[0] << ", " << hEl[1] << ", " << hEl[2] <<  "}, L: " << L << ", dA: " << dA );
 
   real64 total_area = 0.0;
   for( localIndex g = 0; g < nodeManager.size(); ++g )
