@@ -57,7 +57,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
-#include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
+
 
 
 #if defined( __INTEL_COMPILER )
@@ -946,6 +946,16 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
 
     }
 
+    WellConstraintBase * constraint = getCurrentConstraint();
+    if( constraint != nullptr )
+    {
+      constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+      constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+      constraint->setTotalVolumeRate ( getReference< real64 >(
+                                         CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+      constraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
+    }
 
   }
   return maxPhaseVolChange;
@@ -1113,7 +1123,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     // setup if restart
     if( getCurrentConstraint() == nullptr )
     {
-      updateSubRegionState( elemManager, subRegion );
       if( isProducer() )
       {
         forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
@@ -1140,6 +1149,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
           }
         } );
       }
+      updateSubRegionState( elemManager, subRegion );
     }
 
   }
@@ -2444,6 +2454,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
   } );
 
 }
+
 
 
 }   // namespace geos

@@ -427,6 +427,21 @@ real64 SinglePhaseWell::updateSubRegionState( ElementRegionManager const & elemM
     // update the current BHP
     updateBHPForConstraint( subRegion );
 
+    // Broad case the updated well state to other ranks
+    real64 & currentBHP =
+      getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+    real64 & currentTotalVolRate =
+      getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+    integer topRank = subRegion.getTopRank();
+    MpiWrapper::broadcast( currentBHP, topRank );
+    MpiWrapper::broadcast( currentTotalVolRate, topRank );
+    WellConstraintBase * constraint = getCurrentConstraint();
+    if( constraint != nullptr )
+    {
+      constraint->setBHP ( getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ));
+      constraint->setTotalVolumeRate ( getReference< real64 >(
+                                         SinglePhaseWell::viewKeyStruct::currentVolRateString() ));
+    }
   }
   return 0.0; // change in phasevolume fraction doesnt apply
 }
@@ -549,7 +564,6 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
     // setup for restart
     if( getCurrentConstraint() == nullptr )
     {
-      updateSubRegionState( elemManager, subRegion );
       if( isProducer() )
       {
         forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
@@ -576,6 +590,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
           }
         } );
       }
+      updateSubRegionState( elemManager, subRegion );
     }
 
   }
@@ -1309,6 +1324,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
     }
   } );
 }
+
 
 
 }// namespace geos
