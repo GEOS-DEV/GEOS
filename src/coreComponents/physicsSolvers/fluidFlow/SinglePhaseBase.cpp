@@ -1313,9 +1313,10 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
 
+        integer const tempDofOffset = 1;
         auto const subRegionData = thermalSinglePhaseBaseKernels::
                                      SolutionScalingKernel::
-                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, 1, dofNumber, ghostRank,
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, tempDofOffset, dofNumber, ghostRank,
                                                                        m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                        pressureScalingFactor, temperatureScalingFactor );
 
@@ -1361,7 +1362,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
                                                       getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
-  
+
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
 
   if( m_isThermal )
@@ -1371,7 +1372,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
                                                         getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
-    
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
   }
 

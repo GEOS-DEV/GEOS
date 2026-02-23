@@ -98,7 +98,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       if( isThermal() )
       {
         subRegion.registerField< well::temperatureScalingFactor >( getName() );
-        
+
         perforationData.registerField< well::energyPerforationFlux >( getName() );
         perforationData.registerField< well::dEnergyPerforationFlux >( getName() ).
           reference().resizeDimension< 1, 2 >( 2, 2 );
@@ -1045,9 +1045,10 @@ SinglePhaseWell::scalingForSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< well::temperatureScalingFactor >();
 
+        integer const tempDofOffset = 2;
         auto const subRegionData = thermalSinglePhaseBaseKernels::
                                      SolutionScalingKernel::
-                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, 2, dofNumber, ghostRank,
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, tempDofOffset, dofNumber, ghostRank,
                                                                        m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                        pressureScalingFactor, temperatureScalingFactor );
 
