@@ -40,6 +40,7 @@ set( common_headers
      MemoryInfos.hpp
      logger/DiagnosticMessage.hpp
      logger/GeosExceptions.hpp
+     logger/GeosExceptions.hpp
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp

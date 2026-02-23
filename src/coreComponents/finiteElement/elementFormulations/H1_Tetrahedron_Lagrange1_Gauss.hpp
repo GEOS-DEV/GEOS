@@ -47,9 +47,39 @@ namespace finiteElement
  *
  */
 template< typename NUM_Q_POINTS >
-class H1_Tetrahedron_Lagrange1_Gauss final : public FiniteElementBase
+class H1_Tetrahedron_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >
 {
 public:
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >;
+
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
+
+  /// Number of nodes in the element
+  using Base::numNodes;
+
+  /// Number of quadrature points in the element
+  using Base::numQuadraturePoints;
+
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
+
+  /// Number of support points in the element
+  constexpr static localIndex numSupportPoints = Base::numSupportPoints;
+
+  /// Number of faces in the element
+  constexpr static localIndex numFaces = Base::numFaces;
+
+  /// Number of sampling points per direction
+  constexpr static int numSamplingPointsPerDirection = 10;
+
+  /// Total number of sampling points
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   /// Check that the number of quadrature points is valid.
   static_assert( ( NUM_Q_POINTS::value == 1 ||
@@ -60,27 +90,18 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 4;
+  /// @cond DO_NOT_DOCUMENT
+  H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = 4;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = NUM_Q_POINTS::value;
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  virtual ~H1_Tetrahedron_Lagrange1_Gauss() override
-  {}
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -98,14 +119,16 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -236,6 +259,36 @@ public:
 
     calcFaceBubbleN( pointCoord, N );
   }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const &stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -516,7 +569,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 determinantJacobianTransformation( real64 const (&X)[numNodes][3] )
 {
   return ( X[1][0] - X[0][0] )*( ( X[2][1] - X[0][1] )*( X[3][2] - X[0][2] ) - ( X[3][1] - X[0][1] )*( X[2][2] - X[0][2] ) )
@@ -530,7 +583,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( real64 const (&coords)[3],
        real64 (& N)[numNodes] )
 {
@@ -550,7 +603,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        real64 (& N)[numNodes] )
 {
@@ -564,7 +617,7 @@ calcN( localIndex const q,
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
-void H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+void H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        StackVariables const & GEOS_UNUSED_PARAM( stack ),
        real64 ( & N )[numNodes] )
@@ -573,12 +626,55 @@ calcN( localIndex const q,
 }
 
 //*************************************************************************************************
+template< typename NUM_Q_POINTS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const q,
+                                                                   real64 const (&X)[numNodes][3],
+                                                                   real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  J[0][0] = X[1][0] - X[0][0];
+  J[0][1] = X[2][0] - X[0][0];
+  J[0][2] = X[3][0] - X[0][0];
+
+  J[1][0] = X[1][1] - X[0][1];
+  J[1][1] = X[2][1] - X[0][1];
+  J[1][2] = X[3][1] - X[0][1];
+
+  J[2][0] = X[1][2] - X[0][2];
+  J[2][1] = X[2][2] - X[0][2];
+  J[2][2] = X[3][2] - X[0][2];
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  return detJ * quadratureWeight( q );
+}
+
+template< typename NUM_Q_POINTS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const q,
+                                                                   real64 const (&X)[numNodes][3],
+                                                                   StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                                   real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
+
+
 
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
            real64 (& gradN)[numNodes][3] )
@@ -617,7 +713,7 @@ calcGradN( localIndex const q,
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
-real64 H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+real64 H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -630,9 +726,9 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::calcGradFaceBubbleN( localIndex const q,
-                                                                     real64 const (&X)[numNodes][3],
-                                                                     real64 (& gradN)[numFaces][3] )
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcGradFaceBubbleN( localIndex const q,
+                                                                          real64 const (&X)[numNodes][3],
+                                                                          real64 (& gradN)[numFaces][3] )
 {
 
   //real64 detJ = determinantJacobianTransformation( X );
@@ -691,7 +787,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {
@@ -703,13 +799,63 @@ transformedQuadratureWeight( localIndex const q,
 
 /// @endcond
 
-/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 1-point Gaussian quadrature rule.
+
+/// @copydoc H1_Tetrahedron_Lagrange1_Gauss_impl
+template< typename NUM_Q_POINTS >
+class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
+  public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type.
+  using ImplType = H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
+
+  /// Constructor
+  H1_Tetrahedron_Lagrange1_Gauss():
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
+  {}
+
+  /// Destructor
+  virtual ~H1_Tetrahedron_Lagrange1_Gauss() override final = default;
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
+  {
+    return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * getImpl() const
+  {
+    return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * >(this);
+  }
+
+};
+
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss14 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 14 > >;
 
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss1_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss5_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 5 > >;
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss14_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 14 > >;
 }
 }
 

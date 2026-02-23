@@ -119,7 +119,7 @@ void VTKMeshGenerator::postInputInitialization()
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 
     GEOS_THROW_IF( m_dataSource == nullptr,
-                   getDataContext() << ": VTK Data Object Source not found: " << m_dataSourceName,
+                   "VTK Data Object Source not found: " << m_dataSourceName,
                    InputError, getDataContext() );
 
     m_dataSource->open();
@@ -282,7 +282,7 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
     }
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\".", getDataContext()  );
 }
 
 
@@ -308,7 +308,7 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
     return vtk::importRegularField( vtkArray, wrapper );
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\".", getDataContext()  );
 }
 
 

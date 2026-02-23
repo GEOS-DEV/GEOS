@@ -14,6 +14,9 @@
  */
 
 // forcefully enable asserts macros for this unit test
+#include "LvArray/src/system.hpp"
+#include "common/logger/ExternalErrorHandler.hpp"
+#include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
 #include "LvArray/src/system.hpp"
 #include "common/logger/ExternalErrorHandler.hpp"
@@ -111,13 +114,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
   beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
-
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
   string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                                       context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
   GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
-
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
@@ -407,6 +408,7 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   } );
 }
 
+
 TEST( ErrorHandling, VerifySignalHandlerLogs )
 {
   ErrorLogger testErrorLogger;
@@ -444,34 +446,6 @@ TEST( ErrorHandling, VerifySignalHandlerLogs )
   EXPECT_TRUE( signalHappened );
 
   setupLogger();
-}
-
-TEST( ErrorHandling, testErrorReport )
-{
-  ErrorLogger testErrorLogger;
-  std::ostringstream xmlInput;
-
-  testErrorLogger.setCurrentLogPart( LogPart::Type::MeshGeneration );
-  GEOS_WARNING( "warning" );
-  GEOS_WARNING( "warning" );
-  testErrorLogger.setCurrentLogPart( LogPart::Type::NumericalMethods );
-  GEOS_WARNING( "warning" );
-  GEOS_WARNING( "warning" );
-  testErrorLogger.setCurrentLogPart( LogPart::Type::ImportFields );
-  GEOS_WARNING( "warning" );
-  GEOS_WARNING( "warning" );
-  GEOS_WARNING( "warning" );
-  GEOS_WARNING( "warning" );
-
-  // EXPECT_EQ( testErrorLogger.getLoggerReportData().getErrorHistory()
-  //              .at( LogPart::Type::MeshGeneration )
-  //              .at( MsgType::Warning ).size(), 2 );
-  // EXPECT_EQ( testErrorLogger.getLoggerReportData().getErrorHistory()
-  //              .at( LogPart::Type::NumericalMethods )
-  //              .at( MsgType::Warning ).size(), 2 );
-  // EXPECT_EQ( testErrorLogger.getLoggerReportData().getErrorHistory()
-  //              .at( LogPart::Type::ImportFields )
-  //              .at( MsgType::Warning ).size(), 4 );
 }
 
 int main( int ac, char * av[] )
