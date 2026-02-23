@@ -19,6 +19,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -72,11 +73,11 @@ protected:
       name="flowSolver"
       targetRegions="{ Region, Fracture }"
       discretization="tpfa"
-      logLevel="1">
+      logLevel="0">
       <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="20"/>
       <LinearSolverParameters directParallel="0"/>    
     </SinglePhaseFVM>
-    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="1"/>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="0"/>
   </Solvers>
 
   <NumericalMethods>
@@ -194,10 +195,13 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, runSolver );
 
+  // Only rank 0 writes the XML file; barrier ensures all ranks see it before proceeding.
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     std::ofstream ofs( xmlPath );
     ofs << xmlContent;
   }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
 
   // Scoped state to ensure cleanup
   {
