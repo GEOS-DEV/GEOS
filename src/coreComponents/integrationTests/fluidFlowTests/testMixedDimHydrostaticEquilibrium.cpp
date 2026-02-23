@@ -293,9 +293,9 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
 
     ProblemManager & pm = state.getProblemManager();
 
-    // Test that the fluid equilibrium is the actual solution of the discrete system
-    // in this sense at the most two iterations are needed to confirm that the residuals
-    // remain zero after the hydrostatic equilibration.
+    // Verify that the hydrostatic equilibrium is the exact solution of the discrete system:
+    // at most two Newton iterations are needed because the residuals are essentially zero
+    // from the start.
     {
       CompositionalMultiphaseFVM & solver =
         pm.getPhysicsSolverManager().getGroup< CompositionalMultiphaseFVM >( "flowSolver" );
@@ -306,11 +306,10 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
         << ": expected at most 2 Newton iterations after hydrostatic init, got " << numNewtonIter;
     }
 
-    // Check that the discrete accumulation term is zero for every element,
-    // i.e. compAmount == compAmount_n for all components.
-    // This confirms the initial state is fully consistent with the
-    // previous-time-step state computed with HydrostaticEquilibrium and implies that the discrete fluxes are zero
-    // this is fluid is indeed in equilibrium.
+    // Verify that the discrete accumulation term is zero for every element
+    // (compAmount == compAmount_n for all components), confirming that the
+    // hydrostatic initial state is consistent with the previous time-step
+    // snapshot and that the discrete fluxes are zero, i.e. the fluid is in equilibrium.
     {
       MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
 
