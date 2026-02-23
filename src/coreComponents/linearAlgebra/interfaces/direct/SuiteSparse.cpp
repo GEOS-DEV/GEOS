@@ -172,8 +172,7 @@ void setOptions( SuiteSparseData & data, LinearSolverParameters const & params )
   // Get the default control parameters
   umfpack_dl_defaults( data.control );
   data.control[UMFPACK_PRL] = params.logLevel;
-  // Use AMD to avoid METIS-related stack inconsistencies on macOS
-  data.control[UMFPACK_ORDERING] = UMFPACK_ORDERING_AMD;
+  data.control[UMFPACK_ORDERING] = UMFPACK_ORDERING_BEST;
 }
 
 } // namespace
