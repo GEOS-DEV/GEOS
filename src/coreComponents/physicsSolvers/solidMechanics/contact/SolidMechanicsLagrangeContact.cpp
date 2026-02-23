@@ -2162,6 +2162,11 @@ void SolidMechanicsLagrangeContact::applySystemSolution( DofManager const & dofM
                                contact::deltaTraction::key(),
                                scalingFactor );
 
+  dofManager.addVectorToField( localSolution,
+                               contact::traction::key(),
+                               contact::traction::key(),
+                               scalingFactor );
+
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only
 
