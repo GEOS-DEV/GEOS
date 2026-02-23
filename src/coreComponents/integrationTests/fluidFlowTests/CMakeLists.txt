@@ -100,6 +100,65 @@ if( ENABLE_MPI )
     endforeach()
 endif()
 
+# Special handling for testMixedDimHydrostaticEquilibrium which requires 4 MPI tasks
+if( ENABLE_MPI )
+    set( test "testMixedDimHydrostaticEquilibrium.cpp" )
+    # The MixedDimHydrostaticEquilibriumCases suite requires 4 ranks (e.g., 1x1x4 partitioning)
+    set( nranks 4 )
+
+    get_filename_component( test_name ${test} NAME_WE )
+
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
+
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+    # Copy all 28 fractured mesh files for testMixedDimHydrostaticEquilibrium
+    foreach( mesh IN ITEMS
+                     "fractured_mesh_hex_DFN_1.vtu"
+                     "fractured_mesh_hex_DFN_2.vtu"
+                     "fractured_mesh_hex_DFN_3.vtu"
+                     "fractured_mesh_hex_DFN_12.vtu"
+                     "fractured_mesh_hex_DFN_13.vtu"
+                     "fractured_mesh_hex_DFN_23.vtu"
+                     "fractured_mesh_hex_DFN_123.vtu"
+                     "fractured_mesh_tet_DFN_1.vtu"
+                     "fractured_mesh_tet_DFN_2.vtu"
+                     "fractured_mesh_tet_DFN_3.vtu"
+                     "fractured_mesh_tet_DFN_12.vtu"
+                     "fractured_mesh_tet_DFN_13.vtu"
+                     "fractured_mesh_tet_DFN_23.vtu"
+                     "fractured_mesh_tet_DFN_123.vtu"
+                     "fractured_wavy_mesh_hex_DFN_1.vtu"
+                     "fractured_wavy_mesh_hex_DFN_2.vtu"
+                     "fractured_wavy_mesh_hex_DFN_3.vtu"
+                     "fractured_wavy_mesh_hex_DFN_12.vtu"
+                     "fractured_wavy_mesh_hex_DFN_13.vtu"
+                     "fractured_wavy_mesh_hex_DFN_23.vtu"
+                     "fractured_wavy_mesh_hex_DFN_123.vtu"
+                     "fractured_wavy_mesh_tet_DFN_1.vtu"
+                     "fractured_wavy_mesh_tet_DFN_2.vtu"
+                     "fractured_wavy_mesh_tet_DFN_3.vtu"
+                     "fractured_wavy_mesh_tet_DFN_12.vtu"
+                     "fractured_wavy_mesh_tet_DFN_13.vtu"
+                     "fractured_wavy_mesh_tet_DFN_23.vtu"
+                     "fractured_wavy_mesh_tet_DFN_123.vtu" )
+      add_custom_command(
+          TARGET ${test_name} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/${mesh}
+                  $<TARGET_FILE_DIR:${test_name}>
+      )
+    endforeach()
+endif()
+
 # For some reason, BLT is not setting CUDA language for these source files
 if ( ENABLE_CUDA )
   set_source_files_properties( ${gtest_geosx_tests} PROPERTIES LANGUAGE CUDA )
