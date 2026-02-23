@@ -19,7 +19,6 @@
 
 
 #include "common/logger/GeosExceptions.hpp"
-#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
