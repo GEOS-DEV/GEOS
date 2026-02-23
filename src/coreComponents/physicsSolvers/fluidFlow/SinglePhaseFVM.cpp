@@ -277,13 +277,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
                                  flow::pressure::key(),
-                                 scalingFactor,
+                                 flow::pressureScalingFactor::key(),
                                  pressureMask );
 
     dofManager.addVectorToField( localSolution,
                                  BASE::viewKeyStruct::elemDofFieldString(),
                                  flow::temperature::key(),
-                                 scalingFactor,
+                                 flow::temperatureScalingFactor::key(),
                                  temperatureMask );
   }
   else

@@ -1315,7 +1315,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
         auto const subRegionData = thermalSinglePhaseBaseKernels::
                                      SolutionScalingKernel::
-                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank,
+                                     launch< parallelDevicePolicy<> >( localSolution, rankOffset, 1, dofNumber, ghostRank,
                                                                        m_maxAbsolutePresChange, m_maxAbsoluteTempChange,
                                                                        pressureScalingFactor, temperatureScalingFactor );
 

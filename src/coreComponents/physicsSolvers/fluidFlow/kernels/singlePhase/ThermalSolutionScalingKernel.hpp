@@ -36,6 +36,7 @@ struct SolutionScalingKernel
   template< typename POLICY >
   static std::tuple< real64, real64, real64, real64, real64 >  launch( arrayView1d< real64 const > const & localSolution,
                                                                        globalIndex const rankOffset,
+                                                                       globalIndex const temperatureOffset,
                                                                        arrayView1d< globalIndex const > const & dofNumber,
                                                                        arrayView1d< integer const > const & ghostRank,
                                                                        real64 const maxAbsolutePresChange,
@@ -64,7 +65,7 @@ struct SolutionScalingKernel
         maxDeltaPres.max( absPresChange );
 
         // compute the change in temperature
-        real64 const absTempChange = LvArray::math::abs( localSolution[lid + 1] );
+        real64 const absTempChange = LvArray::math::abs( localSolution[lid + temperatureOffset] );
         maxDeltaTemp.max( absTempChange );
 
         // maxAbsolutePresChange <= 0.0 means that scaling is disabled, and we are only collecting maxDeltaPres in this kernel
