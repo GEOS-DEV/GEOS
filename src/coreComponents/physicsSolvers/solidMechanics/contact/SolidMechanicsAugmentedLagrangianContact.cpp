@@ -20,6 +20,7 @@
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernels.hpp"
@@ -160,6 +161,15 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setRegisteringObjects( getName()).
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
+
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
+      subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::NOPLOT );
+      subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::NOPLOT );
     } );
   } );
 

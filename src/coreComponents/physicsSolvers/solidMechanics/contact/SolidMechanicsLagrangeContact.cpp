@@ -136,8 +136,14 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
-      // Pressure registration moved to ContactSolverBase
-
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
+      subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::NOPLOT );
+      subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::NOPLOT );
 
       if( m_useLocalYieldAcceleration )
       {
