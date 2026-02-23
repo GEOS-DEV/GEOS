@@ -2397,15 +2397,6 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
     if( constraint->getName() == getCurrentConstraint()->getName())
     {
       limitingConstraint =  constraint;
-      // tjb. this is likely not needed. set in update state
-#if SET_IN_UPDATE_STATE
-      constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-      constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
-                                          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-      constraint->setTotalVolumeRate ( getReference< real64 >(
-                                         CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-      constraint->setMassRate( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-#endif
       GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                          " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
                          limitingConstraint->phaseVolumeRates() << " " <<
