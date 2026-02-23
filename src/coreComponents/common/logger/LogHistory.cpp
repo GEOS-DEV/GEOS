@@ -18,6 +18,7 @@
  */
 
 #include "LogHistory.hpp"
+#include "common/StdContainerWrappers.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/format/table/TableData.hpp"
@@ -27,6 +28,7 @@
 #include "common/MpiWrapper.hpp"
 #include "dataRepository/BufferOps.hpp"
 #include "dataRepository/BufferOps_inline.hpp"
+#include <algorithm>
 #include <functional>
 #include <string>
 #include <utility>
@@ -172,48 +174,53 @@ void LogHistory::insertBlanckReport( LogPart::Type logPartName, MsgType msgType,
 template<>
 string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCounts ) const
 {
-  TableLayout tableLayoutPerSection;
-  tableLayoutPerSection.addColumn( "Types" );
+  TableLayout tableLayout;
+  tableLayout.addColumn( "Types" );
 
-  // fill headers
   for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
   {
-    tableLayoutPerSection.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
+    tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
+  }
+
+  stdMap< std::pair< LogPart::Type, MsgType >, int > countPerPartAndType;
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+  CellRow emptyCellRow;
+  emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
+  stdMap< LogPart::Type, CellRow > rowByPart;
+
+
+  for( const auto & [tupleKey, msgTypes] : messageCounts.getErrorHistory())
+  {
+    auto part = std::get< 0 >( tupleKey );
+    auto type = std::get< 1 >( tupleKey );
+    
+    countPerPartAndType.get_inserted( std::make_pair( part, type ))++;
+
+    if( rowByPart.find( part ) == rowByPart.end())
+      rowByPart.get_inserted( part ) = emptyCellRow;
+  }
+
+  for( auto & [keyPair, count] : countPerPartAndType )
+  {
+    auto part = std::get< 0 >( keyPair );
+    auto type = std::get< 1 >( keyPair );
+    rowByPart.get_inserted( part ).at((size_t)type ).value =  std::to_string( count );
   }
 
   TableData data;
-
-  stdMap< std::pair< LogPart::Type, MsgType >, int > counts;
-  for( const auto & [tupleKey, msgTypes] : messageCounts.getErrorHistory() )
+  for( auto const &  [key, cells] : rowByPart )
   {
-    counts.get_inserted( std::make_pair( std::get< 0 >( tupleKey ), std::get< 1 >( tupleKey )))++;
+    stdVector< TableData::CellData >row (
+      {
+        TableData::CellData{CellType::Value,
+                            EnumStrings< LogPart::Type >::toString( key )}
+      } );
+
+    row.insert( row.end(), cells.begin(), cells.end());
+    data.addRow( row );
   }
 
-  for( size_t logPartIdx = (size_t) LogPart::Type::ImportFields; logPartIdx != (size_t)LogPart::Type::Undefined; logPartIdx++ )
-  {
-    // stdVector< TableData::CellData > row;
-    // row.emplace_back( TableData::CellData{CellType::Value,
-    //                                       EnumStrings< LogPart::Type >::toString( (LogPart::Type) logPartIdx )} );
-
-    // for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
-    // {
-    //   auto r = counts.find( std::make_pair( (LogPart::Type) logPartIdx, (MsgType) msgTypeIdx ) );
-    //   if( r  != counts.end())
-    //   {
-    //     row.emplace_back( TableData::CellData{CellType::Value, std::to_string( r->second )} );
-
-    //   }
-    //   else
-    //   {
-    //     row.emplace_back( TableData::CellData{CellType::Value, 0 } );
-
-    //   }
-    // }
-    // data.addRow( static_cast< stdVector< TableData::CellData > const & >(row) );
-  }
-
-
-  TableTextFormatter textFormatter( tableLayoutPerSection );
+  TableTextFormatter textFormatter( tableLayout );
   return textFormatter.toString( data ) + "\n";;
 }
 
