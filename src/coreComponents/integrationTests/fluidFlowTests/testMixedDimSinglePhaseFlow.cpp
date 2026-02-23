@@ -148,15 +148,9 @@ protected:
   <Tasks>
     <FieldApplicator name="apply_fracture_updates" fieldSpecificationNames="{initialPf}"/>
   </Tasks> 
-  <Outputs>
-    <VTK name="vtkOutputM" fieldNames="{ pressure }" outputRegionType="cell" onlyPlotSpecifiedFieldNames="1"/>
-    <VTK name="vtkOutputF" fieldNames="{ pressure }" outputRegionType="surface" onlyPlotSpecifiedFieldNames="1"/>
-  </Outputs>
   <Events minTime="-1.0" maxTime="1.0">
     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="-1.0" beginTime="-1.0" />
     <SoloEvent name="TriggerFractureUpdate" target="/Tasks/apply_fracture_updates" targetTime="-1.0" beginTime="-1.0"/>    
-    <PeriodicEvent name="outputsM" timeFrequency="1.0" target="/Outputs/vtkOutputM"/>
-    <PeriodicEvent name="outputsF" timeFrequency="1.0" target="/Outputs/vtkOutputF"/>
 )xml";
     if( runSolver )
     {
