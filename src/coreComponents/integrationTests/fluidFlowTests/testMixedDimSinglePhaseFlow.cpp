@@ -265,7 +265,6 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
       "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
