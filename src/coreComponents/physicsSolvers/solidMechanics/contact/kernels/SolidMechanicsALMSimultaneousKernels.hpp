@@ -309,7 +309,9 @@ public:
                                                          matRRtAtb );
 
     real64 const area = m_faceArea[k];
-    real64 const fac = ( area > 1.0e-30 ) ? 1.0 / area : 0.0;
+    // Guard against division by zero for degenerate or high-aspect-ratio faces
+    // that can appear during dynamic fracturing before mesh stabilization
+    real64 const fac = ( area > LvArray::NumericLimits< real64 >::min ) ? 1.0 / area : 0.0;
     LvArray::tensorOps::scale< 3, numUdofs >( matDRtAtu, fac );
     LvArray::tensorOps::scale< 3, numBdofs >( matDRtAtb, fac );
 

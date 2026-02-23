@@ -912,8 +912,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     {
       blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
-      // Using GEOSX implementation of Jacobi preconditioner
-      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
       // Using LAI implementation of Jacobi preconditioner
       LinearSolverParameters tracParams;
@@ -943,11 +941,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
                          std::move( mechPrecond ) );
 
     return precond;
-  }
-  else
-  {
-    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
-    //return SolverBase::createPreconditioner( domain );
   }
   return {};
 }

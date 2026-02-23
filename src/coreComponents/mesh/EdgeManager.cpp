@@ -52,7 +52,6 @@ EdgeManager::EdgeManager( string const & name,
 void EdgeManager::reserve( localIndex const newSize )
 {
   GEOS_MARK_FUNCTION;
-//  localIndex const oldSize = size();
   ObjectManagerBase::reserve( newSize );
   m_toFacesRelation.reserveValues( newSize * 2 * faceMapOverallocation() );
 }
@@ -254,9 +253,10 @@ localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
+                                          bool const overwriteDownMaps )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( overwriteDownMaps );
 
   localIndex unPackedSize = 0;
 
@@ -284,7 +284,6 @@ localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      overwriteUpMaps );
 
   GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToNodes.size(), 0 );
-//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToFaces.size(), 0 );
   return unPackedSize;
 }
 
