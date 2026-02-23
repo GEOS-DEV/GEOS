@@ -336,7 +336,7 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
 void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
 {
   GEOS_UNUSED_VAR( domain );
-  
+
   // Check if this subregion has a fluid model at all
   if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {

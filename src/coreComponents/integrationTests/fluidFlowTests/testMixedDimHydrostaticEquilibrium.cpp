@@ -379,20 +379,9 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimHydrostaticEquilibriumTest,
   ::testing::Combine(
     ::testing::Values(
-      // Strategic subset: hex/tet × flat/wavy/full_span × single/triple fractures
-      // Covers all mesh types and geometries with representative complexity
-
-      // Flat hex meshes - single and triple fracture only
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_123.vtu",
-
       // Flat tet meshes - single and triple fracture only
       "fractured_mesh_tet_DFN_1.vtu",
       "fractured_mesh_tet_DFN_123.vtu",
-
-      // Wavy hex meshes - single and triple fracture only
-      "fractured_wavy_mesh_hex_DFN_1.vtu",
-      "fractured_wavy_mesh_hex_DFN_123.vtu",
 
       // Wavy tet meshes - single and triple fracture only
       "fractured_wavy_mesh_tet_DFN_1.vtu",

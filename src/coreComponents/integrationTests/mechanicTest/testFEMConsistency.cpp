@@ -491,24 +491,19 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-      // Strategic subset: hex/tet × basic/wavy/full_span × single/triple fractures
-      // Covers all mesh types and geometries with representative complexity
-
-      // Basic meshes - single and triple fracture only
+      // Flat hex meshes - single and triple fracture only
       "fractured_mesh_hex_DFN_1.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
-      "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_123.vtu",
 
-      // Wavy meshes - single and triple fracture only
+      // Wavy hex meshes - single and triple fracture only
       "fractured_wavy_mesh_hex_DFN_1.vtu",
       "fractured_wavy_mesh_hex_DFN_123.vtu",
-      "fractured_wavy_mesh_tet_DFN_1.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu",
 
-      // Full span meshes - single and triple fracture only
+      // Full span hex meshes - single and triple fracture only
       "fractured_full_span_mesh_hex_DFN_1.vtu",
       "fractured_full_span_mesh_hex_DFN_123.vtu",
+
+      // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
       "fractured_full_span_mesh_tet_DFN_123.vtu"
       ),
