@@ -18,6 +18,11 @@
  *
  * Integration test for SurfaceGenerator topology modification.
  *
+ * NOTE: This test runs in SERIAL mode WITHOUT MPI for initial validation.
+ *       It does not use MPI or parallel execution at all.
+ *       Once the implementation is validated and stable, MPI support can be
+ *       added in a separate parallel version of this test.
+ *
  * This test verifies two critical scenarios:
  *
  * Case 1: Fractures Cutting the 3D Boundary
@@ -61,7 +66,6 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -113,6 +117,13 @@ struct Facet
   Facet( std::initializer_list< localIndex > nodeList )
   {
     nodes.assign( nodeList );
+    std::sort( nodes.begin(), nodes.end());
+  }
+  
+  template< typename Iterator >
+  Facet( Iterator begin, Iterator end )
+  {
+    nodes.assign( begin, end );
     std::sort( nodes.begin(), nodes.end());
   }
   
@@ -309,7 +320,7 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
   NodeManager & nodeManager = mesh.getNodeManager();
   FaceManager & faceManager = mesh.getFaceManager();
   
-  arrayView2d< localIndex const > const faceToNodeMap = faceManager.nodeList();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions =
     nodeManager.referencePosition();
   
@@ -324,9 +335,9 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
     
     // Get nodes in this fracture
     std::set< localIndex > fractureNodesInSet;
-    if( nodeManager.hasSet( setName ))
+    if( nodeManager.sets().hasWrapper( setName ))
     {
-      SortedArrayView< localIndex const > const nodeSet = nodeManager.getSet( setName );
+      SortedArrayView< localIndex const > const nodeSet = nodeManager.getSet( setName ).toViewConst();
       for( localIndex const & nodeIdx : nodeSet )
       {
         fractureNodesInSet.insert( nodeIdx );
@@ -340,7 +351,7 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
     for( localIndex fi = 0; fi < faceManager.size(); ++fi )
     {
       bool allNodesInFracture = true;
-      localIndex const numNodesInFace = faceToNodeMap.size( 1 );
+      localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( fi );
       
       for( localIndex ni = 0; ni < numNodesInFace; ++ni )
       {
@@ -364,7 +375,7 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
   
   for( auto const & [faceIdx, fractureIds] : faceToFractureIds )
   {
-    localIndex const numNodesInFace = faceToNodeMap.size( 1 );
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIdx );
     
     // Extract edges from this face
     for( localIndex ni = 0; ni < numNodesInFace; ++ni )
@@ -395,7 +406,7 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
     integer numFacesAtNode = 0;
     for( auto const & [faceIdx, fractureIds] : faceToFractureIds )
     {
-      localIndex const numNodesInFace = faceToNodeMap.size( 1 );
+      localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIdx );
       for( localIndex ni = 0; ni < numNodesInFace; ++ni )
       {
         if( faceToNodeMap[faceIdx][ni] == nodeIdx )
@@ -439,9 +450,16 @@ PredictedDuplication preprocessFractureTopology( MeshLevel & mesh,
   // All fracture faces will be duplicated
   for( auto const & [faceIdx, fractureIds] : faceToFractureIds )
   {
-    localIndex const numNodesInFace = faceToNodeMap.size( 1 );
-    arraySlice1d< localIndex const > faceNodes = faceToNodeMap[faceIdx];
-    Facet facet( faceNodes );
+    localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceIdx );
+    
+    // Build facet from face nodes
+    std::vector< localIndex > faceNodes( numNodesInFace );
+    for( localIndex ni = 0; ni < numNodesInFace; ++ni )
+    {
+      faceNodes[ni] = faceToNodeMap[faceIdx][ni];
+    }
+    
+    Facet facet( faceNodes.begin(), faceNodes.end() );
     
     integer const numFractures = LvArray::integerConversion< integer >( fractureIds.size());
     pred.facetToNumFractures[facet] = numFractures;
@@ -584,7 +602,8 @@ protected:
 
     // Setup GEOS
     std::unique_ptr< CommandLineOptions > options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
-    options->inputFileName = xmlFileName;
+    options->inputFileNames.clear();
+    options->inputFileNames.push_back( xmlFileName );
 
     GeosxState state( std::move( options ) );
     ASSERT_TRUE( state.initializeDataRepository() );
@@ -787,6 +806,7 @@ int main( int argc, char * argv[] )
 {
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv, false );
+  
   int result = RUN_ALL_TESTS();
   geos::basicCleanup();
   return result;

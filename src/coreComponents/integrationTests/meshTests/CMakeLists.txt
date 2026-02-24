@@ -6,8 +6,7 @@ set( gtest_geosx_tests
      testSurfaceGenerator.cpp )
 
 set( gtest_geosx_mpi_tests
-     testNeighborCommunicator.cpp
-     testSurfaceGenerator.cpp )
+     testNeighborCommunicator.cpp )
 
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
@@ -36,6 +35,9 @@ foreach( test ${gtest_geosx_tests} )
                       SOURCES ${test}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+  # Add compile definition for TEST_BINARY_DIR
+  target_compile_definitions( ${test_name} PRIVATE TEST_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}" )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
