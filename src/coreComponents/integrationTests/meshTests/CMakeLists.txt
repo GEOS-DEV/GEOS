@@ -2,10 +2,12 @@
 set( gtest_geosx_tests
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
-     testElementRegions.cpp )
+     testElementRegions.cpp
+     testSurfaceGenerator.cpp )
 
 set( gtest_geosx_mpi_tests
-     testNeighborCommunicator.cpp )
+     testNeighborCommunicator.cpp
+     testSurfaceGenerator.cpp )
 
 if( ENABLE_VTK )
   list( APPEND gtest_geosx_tests
