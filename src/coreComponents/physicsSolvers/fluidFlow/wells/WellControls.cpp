@@ -308,10 +308,10 @@ void WellControls::postInputInitialization()
   if( m_useSurfaceConditions )
   {
     // 3a) check the flag for surface  condition P&T
-    GEOS_THROW_IF( m_surfacePres <= 0.0  ,
+    GEOS_THROW_IF( m_surfacePres <= 0.0,
                    "Surface conditions set to 1 but surface pressure is not set",
                    InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
-    GEOS_THROW_IF( m_surfaceTemp <= 0.0  ,
+    GEOS_THROW_IF( m_surfaceTemp <= 0.0,
                    "Surface conditions set to 1 but surface temperature is not set",
                    InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
