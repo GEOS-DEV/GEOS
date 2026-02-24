@@ -357,14 +357,9 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         if( useSurfaceConditions )
         {
           // we need to compute the surface density
-          if constexpr ( IS_THERMAL )
-          {
-            fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature );
-          }
-          else
-          {
-            fluidWrapper.update( iwelemRef, 0, flashPressure );
-          }
+
+          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature );
+
           if( logSurfaceCondition )
           {
 
@@ -381,14 +376,9 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         {
           real64 const refPres = pres[iwelemRef];
           real64 const refTemp = temp[iwelemRef];
-          if constexpr ( IS_THERMAL )
-          {
-            fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
-          }
-          else
-          {
-            fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
-          }
+
+          fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
+
         }
 
         real64 const densInv = 1.0 / dens[iwelemRef][0];
