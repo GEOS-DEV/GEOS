@@ -306,9 +306,6 @@ jobs:
       RUNS_ON: Runner_4core_16GB
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
-      NPROC: 8
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
-
 
   # mac_builds:
   #   needs:
