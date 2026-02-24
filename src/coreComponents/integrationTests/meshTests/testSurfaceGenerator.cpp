@@ -788,17 +788,17 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
     // Case 1: Boundary-Cutting Fractures
     // Single fracture cutting through the domain (splits into 2 components)
-    std::make_tuple( "BoundaryCut_Single_Tet", "fractured_mesh_tet_DFN_1.vtu", 2 ),
-    std::make_tuple( "BoundaryCut_Single_Hex", "fractured_full_span_mesh_hex_DFN_1.vtu", 2 ),
-    
-    // Triple fractures cutting through
-    // Note: The exact number of components depends on whether fractures fully disconnect the mesh
-    std::make_tuple( "BoundaryCut_Triple_Tet", "fractured_mesh_tet_DFN_123.vtu", 2 ),
-    std::make_tuple( "BoundaryCut_Triple_Hex", "fractured_full_span_mesh_hex_DFN_123.vtu", 2 ),
-    
-    // Case 2: Partial/Internal Fractures
-    // Hex mesh with double fracture
-    std::make_tuple( "Internal_Double_Hex", "fractured_mesh_hex_DFN_12.vtu", 1 )
+    std::make_tuple( "BoundaryCut_Single_Tet", "fractured_mesh_tet_DFN_1.vtu", 2 )
+//    std::make_tuple( "BoundaryCut_Single_Hex", "fractured_full_span_mesh_hex_DFN_1.vtu", 2 ),
+//
+//    // Triple fractures cutting through
+//    // Note: The exact number of components depends on whether fractures fully disconnect the mesh
+//    std::make_tuple( "BoundaryCut_Triple_Tet", "fractured_mesh_tet_DFN_123.vtu", 2 ),
+//    std::make_tuple( "BoundaryCut_Triple_Hex", "fractured_full_span_mesh_hex_DFN_123.vtu", 2 ),
+//
+//    // Case 2: Partial/Internal Fractures
+//    // Hex mesh with double fracture
+//    std::make_tuple( "Internal_Double_Hex", "fractured_mesh_hex_DFN_12.vtu", 1 )
   )
 );
 

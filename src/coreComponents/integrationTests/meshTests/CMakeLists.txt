@@ -27,6 +27,22 @@ set( dependencyList mainInterface )
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
+# Mesh files needed by testSurfaceGenerator (located in mechanicTest directory)
+set( mesh_files
+     fractured_mesh_hex_DFN_1.vtu
+     fractured_mesh_hex_DFN_12.vtu
+     fractured_mesh_hex_DFN_123.vtu
+     fractured_mesh_tet_DFN_1.vtu
+     fractured_mesh_tet_DFN_123.vtu
+     fractured_full_span_mesh_hex_DFN_1.vtu
+     fractured_full_span_mesh_hex_DFN_123.vtu
+     fractured_full_span_mesh_tet_DFN_1.vtu
+     fractured_full_span_mesh_tet_DFN_123.vtu
+)
+
+# Source directory for mesh files
+set( MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest )
+
 
 # Add gtest C++ based tests
 foreach( test ${gtest_geosx_tests} )
@@ -41,6 +57,16 @@ foreach( test ${gtest_geosx_tests} )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
+  
+  # Copy mesh files from mechanicTest directory to test binary directory
+  foreach( mesh_file ${mesh_files} )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${MESH_SOURCE_DIR}/${mesh_file}
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+  endforeach()
 endforeach()
 
 if( ENABLE_MPI )
