@@ -47,7 +47,11 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -78,6 +82,19 @@ public:
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
+
+  void assembleContact( real64 const time,
+                        real64 const dt,
+                        DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
+  void assembleForceResidualPressureContribution( DomainPartition & domain,
+                                                  real64 const & dt,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
 
   virtual real64 calculateResidualNorm( real64 const & time_n,
                                         real64 const & dt,
@@ -199,6 +216,12 @@ public:
   void createBubbleCellList( DomainPartition & domain ) const;
 
 private:
+
+  /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
 
   /**
    * @brief add the number of non-zero elements induced by the coupling between

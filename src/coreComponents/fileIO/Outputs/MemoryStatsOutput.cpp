@@ -42,15 +42,15 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
   this->registerWrapper( viewKeysStruct::writeCSV, &m_writeCSV ).
     setApplyDefaultValue( csvOutputDefault ? 1 : 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
+    setDescription( "When set to 1, write the statistics into a CSV file.\nWhen set to 0, no output" );
 }
 
 void MemoryStatsOutput::postInputInitialization()
 {
   static bool isInstanceInitialized = false;
   GEOS_ERROR_IF( isInstanceInitialized,
-                 GEOS_FMT( "{}: Multiple instances of {} are not supported, please remove this one.",
-                           getDataContext(), catalogName() ) );
+                 GEOS_FMT( "Multiple instances of {} are not supported, please remove this one.",
+                           catalogName() ), getDataContext()  );
   isInstanceInitialized = true;
 
   auto & memLogging = MemoryLogging::getInstance();

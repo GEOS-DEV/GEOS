@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -104,12 +105,16 @@ TEST( testGroupPath, testGlobalPaths )
   {
     problem.getGroupByPath( "/Mesh/mesh2" );
   }
-  catch( const std::domain_error & e )
+  catch( geos::Exception & e )
   {
-    static constexpr auto expectedMsg = "***** Controlling expression (should be false): child == nullptr\n"
-                                        "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
+    static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
+                                        "***** Rank 0\n"
+                                        "***** Message from Mesh (CodeIncludedXML0, l.10):\n"
+                                        "No child named mesh2 found.\n"
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message
+    std::ostringstream stream;
+    geos::ErrorLogger::formatMsgForLog( ErrorLogger::global().getCurrentExceptionMsg(), stream );
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << e.what() <<

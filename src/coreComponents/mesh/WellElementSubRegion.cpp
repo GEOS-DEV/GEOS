@@ -509,9 +509,8 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // this is enforced in the LineBlockABC that currently merges two perforations
   // if they belong to the same well element. This is a temporary solution.
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
-  GEOS_THROW_IF( sharedElems.size() > 0,
-                 "Well " << lineBlock.getDataContext() << " contains shared well elements",
-                 InputError );
+  GEOS_THROW_IF( sharedElems.size() > 0, "contains shared well elements",
+                 InputError, lineBlock.getDataContext() );
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
   // Once this is done, in Steps 3, 4, and 5, we update the nodeManager and wellElementSubRegion (size, maps)
@@ -660,11 +659,11 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
       GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                     "The structure of well " << lineBlock.getDataContext() << " is invalid. " <<
+                     "The structure of well is invalid. " <<
                      " The main reason for this error is that there may be no perforation" <<
                      " in the bottom well element of the well, which is required to have" <<
                      " a well-posed problem.",
-                     InputError );
+                     InputError, lineBlock.getDataContext() );
 
       if( elemStatusGlobal[prevGlobal] == WellElemParallelStatus::LOCAL )
       {

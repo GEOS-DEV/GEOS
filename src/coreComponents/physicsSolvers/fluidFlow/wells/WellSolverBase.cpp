@@ -56,7 +56,7 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
@@ -74,7 +74,8 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
   if( childKey == keys::wellControls )
   {
     return &registerGroup< WellControls >( childName );
@@ -159,7 +160,7 @@ void WellSolverBase::initializePostSubGroups()
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( 0, 0, subRegion, elemManager );
+      validateWellConstraints( 0, 0, subRegion );
 
       // validate perforation status table
       PerforationData & perforationData = *subRegion.getPerforationData();
@@ -168,9 +169,9 @@ void WellSolverBase::initializePostSubGroups()
       {
         TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
         GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                       "WellSolverBase " << getDataContext() << ": The interpolation method for the perforation status table "
-                                         << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
-                       InputError );
+                       "The interpolation method for the perforation status table "
+                       << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
+                       InputError, getDataContext() );
       }
     } );
   } );
@@ -305,9 +306,10 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-    { updateSubRegionState( subRegion ); } );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
+    { updateSubRegionState( elemManager, subRegion ); } );
   } );
 }
 

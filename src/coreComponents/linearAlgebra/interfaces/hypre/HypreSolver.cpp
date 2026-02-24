@@ -26,7 +26,7 @@
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
-#include <krylov.h>
+#include <HYPRE_krylov.h>
 
 namespace geos
 {

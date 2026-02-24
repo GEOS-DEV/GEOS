@@ -153,6 +153,11 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   }
   catch( std::exception const & e )
   {
+    ErrorLogger::global().modifyCurrentExceptionMessage()
+      .addToMsg( getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
+                 ": Target not found !\n" )
+      .addContextInfo( getWrapperDataContext( viewKeysStruct::fieldNameString() ).getContextInfo()
+                         .setPriority( 1 ) );
     throw InputError( e, getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
                       ": Target not found !\n" );
   }

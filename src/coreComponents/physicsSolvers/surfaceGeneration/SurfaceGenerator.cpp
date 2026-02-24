@@ -193,16 +193,16 @@ void SurfaceGenerator::postInputInitialization()
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
-                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 "option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
-                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 "option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
-                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 "option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) );
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -950,7 +950,8 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1, getDataContext() << ": parentNodeIndex should not be -1" );
+    GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1",
+                   getDataContext() );
 
     m_tipNodes.remove( parentNodeIndex );
   }
@@ -975,7 +976,8 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1, getDataContext() << ": parentEdgeIndex should not be -1" );
+    GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1",
+                   getDataContext() );
 
     m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap[ parentEdgeIndex ] )
@@ -1008,7 +1010,8 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1, getDataContext() << ": parentFaceIndex should not be -1" );
+    GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1",
+                   getDataContext() );
 
     m_trailingFaces.insert( parentFaceIndex );
     m_tipFaces.remove( parentFaceIndex );
@@ -1258,7 +1261,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( getDataContext() << ": invalid edge (SurfaceGenerator::findFracturePlanes)." );
+      GEOS_ERROR( "invalid edge (SurfaceGenerator::findFracturePlanes).", getDataContext() );
     }
 
 
@@ -1403,11 +1406,12 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         // NOT be included in the path!!!
         if( nextEdge!=startingEdge && !(isEdgeExternal[nextEdge]==1 && startingEdgeExternal ) )
         {
-          GEOS_ERROR( getDataContext() << ": Crap !" <<
+          GEOS_ERROR( "Crap !" <<
                       "  NodeID, ParentID = " << nodeID << ", " << parentNodeIndex << '\n' <<
                       "  Starting Edge/Face = " << startingEdge << ", " << startingFace << '\n' <<
                       "  Face Separation Path = " << facePath << '\n' <<
-                      "  Edge Separation Path = " << edgePath << '\n' );
+                      "  Edge Separation Path = " << edgePath << '\n',
+                      getDataContext() );
         }
 
         // add faces in the path to separationPathFaces
@@ -1519,7 +1523,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
             }
             if( pathFound == false )
             {
-              GEOS_ERROR( getDataContext() << ": couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes" );
+              GEOS_ERROR( "couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes", getDataContext() );
             }
           }
 
@@ -1538,7 +1542,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         }
         else
         {
-          GEOS_ERROR( getDataContext() << ": next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes" );
+          GEOS_ERROR( "next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes", getDataContext() );
         }
 
       }
@@ -1566,7 +1570,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( getDataContext() << ": invalid edge. (SurfaceGenerator::findFracturePlanes" );
+      GEOS_ERROR( "invalid edge. (SurfaceGenerator::findFracturePlanes", getDataContext() );
     }
 
 
@@ -3201,7 +3205,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
               if( tralingNodeID == std::numeric_limits< localIndex >::max())
               {
-                GEOS_ERROR( getDataContext() << ": The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
+                GEOS_ERROR( "The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node.",
+                            getDataContext() );
               }
             }
             else if( unpinchedNodeID.size() == 1 )
@@ -3489,8 +3494,9 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "{}: Edge {} has two external faces, but the parent-child relationship is wrong.",
-                          getDataContext(), edgeID ) );
+    GEOS_ERROR( GEOS_FMT( "Edge {} has two external faces, but the parent-child relationship is wrong.",
+                          edgeID ),
+                getDataContext() );
   }
 
   trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
@@ -3567,7 +3573,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
     if( numSharedNodes == 4 )
     {
-      GEOS_ERROR( getDataContext() << ": The fracture face has four shared nodes with its child. This should not happen." );
+      GEOS_ERROR( "The fracture face has four shared nodes with its child. This should not happen.", getDataContext() );
     }
     else if( numSharedNodes == 3 )
     {
@@ -3576,7 +3582,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
       //wu40: I think the following check is not necessary.
       if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
       {
-        GEOS_ERROR( getDataContext() << ": these two faces share three nodes but the number of remaining nodes is not one." );
+        GEOS_ERROR( "these two faces share three nodes but the number of remaining nodes is not one.", getDataContext() );
       }
       else
       {
@@ -3615,7 +3621,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
     }
 
     if( convexCorner == std::numeric_limits< localIndex >::max())
-      GEOS_ERROR( getDataContext() << ": This is a three-node-pinched edge but I cannot find the convex corner" );
+      GEOS_ERROR( "This is a three-node-pinched edge but I cannot find the convex corner", getDataContext() );
 
   }
 
@@ -3685,7 +3691,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
       if( trailingNodes.size() > 2 || trailingNodes.size() == 0 )
       {
-        GEOS_ERROR( getDataContext() << ": Fatal error in finding nodes behind tip edge." );
+        GEOS_ERROR( "Fatal error in finding nodes behind tip edge.", getDataContext() );
       }
       else if( trailingNodes.size() == 1 )  // Need some work to find the other node
       {
@@ -3910,12 +3916,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
                                                              arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
                                                                                                                      constitutiveManager );
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
-  dNdX = elementManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
-  detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
@@ -3933,11 +3933,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
   for( localIndex i=0; i < nodeIndices.size(); ++i )
   {
     localIndex nodeID = nodeIndices( i );
-//    localIndex_array temp11;
-//    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
-//    {
-//      temp11.emplace_back(nodeToElementMap[nodeID][ii]);
-//    }
 
     for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
     {
@@ -3957,8 +3952,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
       LvArray::tensorOps::subtract< 3 >( x0_xEle, X[edgeToNodeMap[edgeID][1]] );
       real64 const udist = LvArray::tensorOps::AiBi< 3 >( x0_x1, x0_xEle );
 
-      localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
-
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
         real64 const K  = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
@@ -3971,20 +3964,55 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
         {
           if( elementsToNodes( ei, n ) == nodeID )
           {
-            real64 temp[3]{};
+            real64 temp[3] {0};
             LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
             // repeated indices and the following may run multiple
             // times for the same element.
 
-            //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-            solidMechanicsLagrangianFEMKernels::ExplicitKernel::
-              calculateSingleNodalForce( ei,
-                                         n,
-                                         numQuadraturePoints,
-                                         dNdX[er][esr],
-                                         detJ[er][esr],
-                                         stress[er][esr][m_solidMaterialFullIndex[er]],
-                                         temp );
+            // wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
+
+            arrayView3d< real64 const, geos::solid::STRESS_USD > const & subregionStress = stress[er][esr][m_solidMaterialFullIndex[er]];
+
+            // ASSUMPTION(?): subregions only have one registered element type
+            finiteElement::FiniteElementBase const * finiteElement = nullptr;
+            elementSubRegion.forWrappers< finiteElement::FiniteElementBase >( [&]( auto const & fe )
+            {
+              finiteElement = &fe.reference();
+            } );
+
+            finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( *finiteElement, [ & ]( auto const & fe )
+            {
+
+              using FE_TYPE = TYPEOFREF( fe );
+              typename FE_TYPE::StackVariables feStack;
+              constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+              constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+              real64 xLocal[numNodesPerElement][3] = {{0}};
+              localIndex const numSupportPoints = finiteElement->getNumSupportPoints();
+              for( localIndex a = 0; a < numSupportPoints; ++a )
+              {
+                LvArray::tensorOps::copy< 3 >( xLocal[a], X[elementsToNodes( ei, a )] );
+              }
+
+              for( localIndex q = 0; q < numQuadraturePoints; ++q )
+              {
+                real64 dNdX[numNodesPerElement][3] = {{0}};
+                real64 J[3][3] = {{0}};
+
+                real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+                FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
+
+                temp[0] -= (subregionStress( ei, q, 0 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 5 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 4 ) * dNdX[n][2]) * detJxW;
+                temp[1] -= (subregionStress( ei, q, 5 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 1 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 3 ) * dNdX[n][2]) * detJxW;
+                temp[2] -= (subregionStress( ei, q, 4 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 3 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 2 ) * dNdX[n][2]) * detJxW;
+              }
+            } );
 
             LvArray::tensorOps::scale< 3 >( temp, YoungModulus );
             LvArray::tensorOps::scale< 3 >( temp, 1.0 / (1 - poissonRatio * poissonRatio) );

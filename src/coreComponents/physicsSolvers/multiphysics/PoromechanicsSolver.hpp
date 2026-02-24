@@ -114,18 +114,12 @@ public:
   {
     Base::postInputInitialization();
 
-    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
-                             this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
-                   InputError );
-
     GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
-                   GEOS_FMT( "{} {}: The attribute `{}` of solid mechanics solver `{}` must be `{}`",
-                             this->getCatalogName(), this->getName(),
+                   GEOS_FMT( "The attribute `{}` of solid mechanics solver `{}` must be `{}`",
                              SolidMechanicsLagrangianFEM::viewKeyStruct::timeIntegrationOptionString(),
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
-                   InputError );
+                   InputError, this->solidMechanicsSolver()->getDataContext() );
 
     setMGRStrategy();
   }
@@ -152,10 +146,15 @@ public:
   {
     Base::initializePreSubGroups();
 
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
+                             this->flowSolver()->getName() ),
+                   InputError, this->flowSolver()->getDataContext() );
+
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
-                   InputError );
+                   InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -475,15 +474,14 @@ protected:
       GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                                 poromechanicsTargetRegionNames[i] )
                      == solidMechanicsTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
-                               this->solidMechanicsSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region {} must be a target region of {}",
+                               poromechanicsTargetRegionNames[i], this->solidMechanicsSolver()->getName() ),
+                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext());
       GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                      == flowTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region `{}` must be a target region of `{}`",
+                               poromechanicsTargetRegionNames[i], this->flowSolver()->getCatalogName() ),
+                     InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
     }
   }
 
@@ -671,12 +669,18 @@ protected:
                                                                                     string_array const & regionNames )
       {
 
-        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                              auto & subRegion )
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                       auto & subRegion )
         {
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+        } );
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+
+        {
           // update bulk density to reflect porosity change into mechanics
           updateBulkDensity( subRegion );
         } );

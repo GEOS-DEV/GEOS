@@ -77,7 +77,8 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.' );
+                 "Wrapper " << name << " doesn't exist in Group.",
+                 getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -246,12 +247,11 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
+                     GEOS_FMT( "XML Node at '{}' contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               getDataContext(), targetNode.path(), attributeName,
-                               dumpInputOptions() ),
-                     InputError );
+                               targetNode.path(), attributeName, dumpInputOptions() ),
+                     InputError, getDataContext() );
     }
   }
 }
@@ -694,7 +694,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
     GEOS_THROW_IF( !foundTarget,
                    "Could not find the specified path start.\n"<<
                    "Specified path is " << path,
-                   std::domain_error );
+                   geos::DomainError );
   }
 
   string::size_type currentPosition;

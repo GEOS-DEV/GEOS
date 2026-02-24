@@ -78,28 +78,34 @@ void TractionBoundaryCondition::postInputInitialization()
   if( m_tractionType == TractionType::vector )
   {
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
-                   getDataContext() << ": " << viewKeyStruct::directionString() << " is required for " <<
-                   viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
-                   ", but appears to be unspecified" );
+                   viewKeyStruct::directionString() << " is required for " <<
+                   viewKeyStruct::tractionTypeString() << " = " <<
+                   EnumStrings< TractionType >::toString( TractionType::vector )  <<
+                   ", but appears to be unspecified",
+                   getDataContext() );
   }
   else
   {
     GEOS_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
-                        getDataContext() << ": " << viewKeyStruct::directionString() << " is not required unless " <<
-                        viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                        viewKeyStruct::directionString() << " is not required unless " <<
+                        viewKeyStruct::tractionTypeString() << " = " <<
+                        EnumStrings< TractionType >::toString( TractionType::vector ) <<
                         ", but appears to be specified" );
   }
 
   bool const inputStressRead = getWrapper< R2SymTensor >( viewKeyStruct::inputStressString() ).getSuccessfulReadFromInput();
 
   GEOS_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
-                      getDataContext() << ": " << viewKeyStruct::inputStressString() << " is specified, but " <<
-                      viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
+                      viewKeyStruct::inputStressString() << " is specified, but " <<
+                      viewKeyStruct::tractionTypeString() << " != " <<
+                      EnumStrings< TractionType >::toString( TractionType::stress ) <<
                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
-                 getDataContext() << ": " << viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
-                 ", but " << viewKeyStruct::inputStressString() << " is not specified." );
+                 viewKeyStruct::tractionTypeString() << " = " <<
+                 EnumStrings< TractionType >::toString( TractionType::stress ) <<
+                 ", but " << viewKeyStruct::inputStressString() << " is not specified.",
+                 getDataContext() );
 
 
 //  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();
