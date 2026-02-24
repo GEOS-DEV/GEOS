@@ -10,24 +10,28 @@
 # Process the result of grep command as a file.
 # This allows everything to be handled in the same shell environment.
 check_container_usage() {
-  local container_name="$1"
-  local str="  Found forbidden ${container_name} usage in: $file"$'\n'
+  local file="$1"
 
-  if grep -q "${container_name}\s*<" "$file"; then
+  if grep -qE "$FULL_REGEX" "$file"; then
     while IFS= read -r line; do
+      for container in "${FORBIDDEN_EXPRESSIONS[@]}"; do
+          local pattern="${container}[[:space:]]*[<\(]"
+          if [[ "$line" =~ $pattern ]]; then
+            local msg="    $file:$line"$'\n'
+            ERRORS_CONTAINER[$container]+="$msg"
+            ((FORBIDDEN_CONTAINER_MAP["$container"]++))
+          fi
+      done
       str+="    $line"$'\n'
-    done < <(grep -n "${container_name}\s*<" "$file")
-
-    ERRORS_CONTAINER[$container_name]+="$str"
-    ((FORBIDDEN_CONTAINER_MAP["$container_name"]++))
+    done < <(grep -nE "$FULL_REGEX" "$file")
   fi
 }
 
 print_violation()
 {
     local container_name="$1"
-
-    if [ "${FORBIDDEN_CONTAINER_MAP[$container_name]}" -eq 1 ];then
+    
+    if [ "${FORBIDDEN_CONTAINER_MAP[$container_name]}" -ge 1 ];then
       echo $'\n'
       echo "ERROR: Forbidden $container_name usage detected"
       echo "=========================================="
@@ -45,6 +49,28 @@ FORBIDDEN_EXPRESSIONS=(
           "std::map"     
           "std::unordered_map"
           "std::vector"
+
+          "MPI_Barrier"
+          "MPI_Cart_coords"
+          "MPI_Cart_create"
+          "MPI_Cart_rank"
+          "MPI_CHECK_ERROR"
+          "MPI_Comm_rank"
+          "MPI_Comm_size"
+          "MPI_Comm_compare"
+          "MPI_Bcast"
+          "MPI_Init"
+          "MPI_Testany"
+          "MPI_Testsome"
+          "MPI_Testall"
+          "MPI_Request_get_status"
+          "MPI_Request_get_status"
+          "MPI_Wait"
+          "MPI_Waitany"
+          "MPI_Waitsome"
+          "MPI_Waitall"
+          "MPI_Wtim"
+          "WaitAny"
 )
 
 declare -A FORBIDDEN_CONTAINER_MAP=()
@@ -80,6 +106,7 @@ FILEPATH_SUBFOLDERS=(
 FILEPATH_EXCLUDE_PATTERNS=(
           "Datatype.hpp"     
           "StdContainerWrappers.hpp"     
+          "MpiWrapper.cpp"
           "BufferOps_inline.hpp"
           "BufferOps.hpp"
           "PVTPackage"
@@ -123,10 +150,11 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDED_NAME_PA
 ## III. MAIN LOOP
 ################################
 
+REGEX_PATTERN=$(IFS='|'; echo "${FORBIDDEN_EXPRESSIONS[*]}")
+FULL_REGEX="(${REGEX_PATTERN})[[:space:]]*[<\(]"
+
 for file in "${ARRAY_FILES[@]}"; do
-  for container_name in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
-    check_container_usage "$container_name"
-  done
+    check_container_usage "$file"
 done
 
 # Print section
