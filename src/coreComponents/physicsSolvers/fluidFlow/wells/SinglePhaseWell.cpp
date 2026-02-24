@@ -47,6 +47,11 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalSolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "mainInterface/ProblemManager.hpp"
+#include "events/EventManager.hpp"
+
 namespace geos
 {
 
@@ -272,6 +277,8 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   arrayView1d< real64 const > const pres =
     subRegion.getField< well::pressure >();
 
+  arrayView1d< real64 const > const & temp = subRegion.getField< well::temperature >();
+
   arrayView1d< real64 const > const & connRate =
     subRegion.getField< well::connectionRate >();
 
@@ -288,11 +295,12 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   string const wellControlsName = wellControls.getName();
   bool const logSurfaceCondition = isLogLevelActive< logInfo::WellControl >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  real64 flashPressure;
+  real64 flashPressure,flashTemperature;
   if( useSurfaceConditions )
   {
     // use surface conditions
     flashPressure = wellControls.getSurfacePressure();
+    flashTemperature = wellControls.getSurfaceTemperature();
   }
   else
   {
@@ -315,10 +323,12 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
     }
     // use region conditions
     flashPressure = wellControls.getRegionAveragePressure();
+    flashTemperature = wellControls.getRegionAverageTemperature();
     if( flashPressure < 0.0 )
     {
       // use segment conditions
       flashPressure   = pres[iwelemRef];
+      flashTemperature = temp[iwelemRef];
     }
   }
   real64 & currentVolRate =
@@ -338,12 +348,14 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidWrapper,
                                   pres,
+                                  temp,
                                   connRate,
                                   dens,
                                   dDens,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
                                   &flashPressure,
+                                  &flashTemperature,
                                   &currentVolRate,
                                   dCurrentVolRate,
                                   &iwelemRef,
@@ -356,12 +368,12 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         if( useSurfaceConditions )
         {
           // we need to compute the surface density
-          fluidWrapper.update( iwelemRef, 0, flashPressure );
+          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature );
           if( logSurfaceCondition )
           {
 
-            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa",
-                                     wellControlsName, flashPressure ) );
+            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa, T_surface = {} K",
+                                     wellControlsName, flashPressure, flashTemperature ) );
           }
 
 #ifdef GEOS_USE_HIP
@@ -372,7 +384,8 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         else
         {
           real64 const refPres = pres[iwelemRef];
-          fluidWrapper.update( iwelemRef, 0, refPres );
+          real64 const refTemp = temp[iwelemRef];
+          fluidWrapper.update( iwelemRef, 0, refPres, refTemp );
         }
 
         real64 const densInv = 1.0 / dens[iwelemRef][0];
@@ -619,6 +632,11 @@ void SinglePhaseWell::assembleSystem( real64 const time,
 
   // then apply a special treatment to the wells that are shut
   shutDownWell( time, domain, dofManager, localMatrix, localRhs );
+
+    // sort out how this work with well estimator
+  auto iterInfo = currentIter( time, dt );
+  outputWellDebug( time, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+                   domain, dofManager, localMatrix, localRhs );
 }
 
 void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
@@ -833,6 +851,171 @@ void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_U
   // not implemented for single phase flow
 }
 
+void SinglePhaseWell::outputSingleWellDebug( real64 const time,
+                                             real64 const dt,
+                                             integer num_timesteps,
+                                             integer current_newton_iteration,
+                                             integer num_timestep_cuts,
+                                             MeshLevel & mesh,
+                                             WellElementSubRegion & subRegion,
+                                             DofManager const & dofManager,
+                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             arrayView1d< const real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dofManager );
+  GEOS_UNUSED_VAR( localMatrix );
+  GEOS_UNUSED_VAR( localRhs );
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( num_timesteps );
+  GEOS_UNUSED_VAR( current_newton_iteration );
+  GEOS_UNUSED_VAR( num_timestep_cuts );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( subRegion );
+
+}
+
+void SinglePhaseWell::outputWellDebug( real64 const time,
+                                       real64 const dt,
+                                       integer num_timesteps,
+                                       integer current_newton_iteration,
+                                       integer num_timestep_cuts,
+                                       DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dofManager );
+  GEOS_UNUSED_VAR( localMatrix );
+  GEOS_UNUSED_VAR( localRhs );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                        [&]( localIndex const,
+                                                                             WellElementSubRegion & subRegion )
+    {
+
+      if( m_writeSegDebug > 1 )
+      {
+        SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+        auto solver_names = getParent().getSubGroupsNames();
+        //integer n = solver_names.size();
+        // Bit of a hack, cases with > 3 solvers we need to find the base solver for wells
+        // Assume that solver definition order follows coupledreswell, res, and then well
+        //std::string coupled_solver_name = solver_names[n-3];
+
+        //GeosxState & gs = getGlobalState();
+
+        //CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > * solver =
+        //  &(gs.getProblemManager().getPhysicsSolverManager().getGroup< geos::CompositionalMultiphaseReservoirAndWells<
+        // geos::CompositionalMultiphaseBase > >( coupled_solver_name ));
+
+        EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
+        real64 const & ctime = event.getReference< real64 >( EventManager::viewKeyStruct::timeString() );
+        //real64 const  dt = event.getReference< real64 >( EventManager::viewKeyStruct::dtString() );
+        integer const & cycle = event.getReference< integer >( EventManager::viewKeyStruct::cycleString() );
+        integer const & subevent = event.getReference< integer >( EventManager::viewKeyStruct::currentSubEventString() );
+
+
+        // std::cout << "tjbtime1 " << ctime <<  " " << m_globalNumTimeSteps <<  " " << dt << " " << cycle << " " << subevent
+        // << " "  << m_numTimeStepCuts << " " << m_currentNewtonIteration << std::endl;
+        if( true ) // need to fix for restarts cycle >= m_writeSegDebug   )
+        {
+          //SolverStatistics & solver_stat = solver->getSolverStatistics();
+          //integer num_timesteps = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepsString());
+          //integer current_newton_iteration = solver_stat.getReference< integer >(
+          // SolverStatistics::viewKeyStruct::numCurrentNonlinearIterationsString());
+          //integer num_timestep_cuts = solver_stat.getReference< integer >( SolverStatistics::viewKeyStruct::numTimeStepCutsString());
+          //std::cout << "tjbtime2 " << ctime <<  " " << m_globalNumTimeSteps <<  " " << dt << " " << cycle << " " << subevent
+          //<< " "  << m_numTimeStepCuts << " " << m_currentNewtonIteration << std::endl;
+          string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+          fluidName = getConstitutiveName< SingleFluidBase>(subRegion );
+          WellControls & wellControls = getWellControls( subRegion );
+
+
+          SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+          PerforationData & perforationData = *subRegion.getPerforationData();
+          using CompFlowAccessors =
+            StencilAccessors< fields::flow::pressure,
+                              fields::flow::temperature>;
+          string const flowSolverName = flowSolver.getName();
+          CompFlowAccessors compFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+          using SingleFluidAccessors =
+            StencilMaterialAccessors< SingleFluidBase,
+                                      fields::singlefluid::enthalpy,
+                                      fields::singlefluid::density,
+                                      fields::singlefluid::viscosity,
+                                      fields::singlefluid::internalEnergy,
+                                      fields::singlefluid::dEnthalpy,
+                                      fields::singlefluid::dDensity,
+                                      fields::singlefluid::dViscosity,
+                                      fields::singlefluid::dInternalEnergy >;
+          SingleFluidAccessors singleFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+ 
+
+          string const srn = subRegion.getName();
+
+          std::vector< string > cp_der {"dP", "dT"};
+          for( integer i=0; i<m_numComponents; i++ )
+          {
+            cp_der.push_back( "dRho"+std::to_string( i+1 ));
+          }
+          if( !m_wellPropWriter[srn].initialized() )
+          {
+            integer my_rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+            m_wellPropWriter[srn].initialize_perf( my_rank, m_ratesOutputDir, wellControls.getName(), perforationData );
+            m_wellPropWriter[srn].initialize_seg( my_rank, m_ratesOutputDir, wellControls.getName(), {"Brine"},{ "Wat"}, subRegion );
+          }
+          m_wellPropWriter[srn].registerSeg2dProp( {"X", "Y", "Z"}, subRegion.getElementCenter());
+          m_wellPropWriter[srn].registerSegProp( "Pressure", subRegion.getField< fields::well::pressure >());
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerSegProp( "Temperature", subRegion.getField< fields::well::temperature >());
+          }
+ 
+          m_wellPropWriter[srn].registerSegProp( "TotalRate", subRegion.getField< fields::well::connectionRate >());
+          m_wellPropWriter[srn].registerSegPropf( "Density", fluid.density());
+          m_wellPropWriter[srn].registerSegPropf( "Viscosity", fluid.viscosity());
+          //m_wellPropWriter[srn].registerSegPropDer( "dDensity", cp_der, fluid.dDensity());
+          //m_wellPropWriter[srn].registerSegPropDer( "dViscosity", cp_der, fluid.dViscosity());
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerSegPropf( "InternalEnergy", fluid.internalEnergy());
+            //m_wellPropWriter[srn].registerSegPhasePropDerf( "dEnthalpy", cp_der, fluid.dEnthalpy());
+
+            m_wellPropWriter[srn].registerSegPropf( "Enthalpy", fluid.enthalpy());
+            //m_wellPropWriter[srn].registerSegPhasePropDerf( "dInternalEnergy", cp_der, fluid.dInternalEnergy());
+          }
+
+
+          // Perforation properties
+          m_wellPropWriter[srn].registerPerf2dProp( {"X", "Y", "Z"}, perforationData.getLocation());
+          m_wellPropWriter[srn].registerPerfResProp( "Pressure", compFlowAccessors.get( fields::flow::pressure {} ));
+          if( isThermal() )
+          {
+            m_wellPropWriter[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
+            //m_wellPropWriter[srn].registerPerfResPropf( "Enthalpy", singleFluidAccessors.get( fields::singlefluid::enthalpy{} ));
+            //m_wellPropWriter[srn].registerPerfResPropf( "InternalEnergy", singleFluidAccessors.get( fields::singlefluid::internalEnergy{} ));
+          }
+          m_wellPropWriter[srn].registerPerf1dProp( {"PerfRate"}, perforationData.getField< fields::well::perforationRate >());
+          // m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get(
+          // fields::flow::globalCompDensity{} ));
+          //m_wellPropWriter[srn].registerPerfResPropf( "Viscosity", singleFluidAccessors.get( fields::singlefluid::viscosity{} ));
+ 
+
+          m_wellPropWriter[srn].write( ctime, dt, cycle, subevent, num_timesteps,
+                                       current_newton_iteration,
+                                       num_timestep_cuts );
+        }
+      }
+    } );
+  } );
+
+}
 void SinglePhaseWell::computePerforationRates( real64 const & time_n,
                                                real64 const & dt, DomainPartition & domain )
 {

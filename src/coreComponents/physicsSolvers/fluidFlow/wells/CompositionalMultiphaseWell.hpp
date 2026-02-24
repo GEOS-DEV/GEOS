@@ -244,6 +244,35 @@ public:
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
+   * @brief apply a special treatment to the wells that are shut
+   * @param time_n the time at the previous converged time step
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer num_timesteps,
+                                      integer current_newton_iteration,
+                                      integer num_timestep_cuts,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< const real64 > const & localRhs ) override;
+
+  virtual void outputWellDebug( real64 const time,
+                                real64 const dt,
+                                integer num_timesteps,
+                                integer current_newton_iteration,
+                                integer num_timestep_cuts,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) override;
+  /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
@@ -353,6 +382,12 @@ protected:
   void printRates( real64 const & time_n,
                    real64 const & dt,
                    DomainPartition & domain ) override;
+  void printSegRates( real64 const & time_n,
+                      real64 const & dt,
+                      integer num_timesteps,
+                      integer num_timestep_cuts,
+                      integer current_newton_iteration,
+                      DomainPartition & domain );
 
 private:
 
@@ -393,6 +428,7 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  bool m_wellDebugInit;
 
 
 };

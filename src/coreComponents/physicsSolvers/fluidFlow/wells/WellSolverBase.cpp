@@ -43,7 +43,12 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( false )
+  m_keepVariablesConstantDuringInitStep( false ),
+  m_writeSegDebug( 0 ),
+  m_globalNumTimeSteps( -1 ),
+  m_currentDt( -1.0 ),
+  my_ctime( 0 ),
+  m_nextDt( -1 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -54,7 +59,7 @@ WellSolverBase::WellSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE );
 
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
 
@@ -63,7 +68,11 @@ WellSolverBase::WellSolverBase( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
 
-  this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
+  this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+        setDescription( "Write well seg/perf debug into CSV files" );
+this->registerWrapper( viewKeyStruct::maxAbsolutePresChangeString(), &m_maxAbsolutePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( -1.0 ).       // disabled by default
@@ -346,8 +355,80 @@ void WellSolverBase::assembleSystem( real64 const time,
   // get a reference to the degree-of-freedom numbers
   // then assemble the flux terms in the mass balance equations
   assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  // sort out how this work with well estimator
+  auto iterInfo = currentIter( time, dt );
+  outputWellDebug( time, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+                   domain, dofManager, localMatrix, localRhs );
+
+
+  my_ctime=my_ctime+1;
+
 }
 
+std::tuple< integer, integer, integer >
+WellSolverBase::currentIter( real64 const time, real64 const dt )
+{
+  if( isEqual( m_currentDt, -1.0 ) )
+  {
+    m_globalNumTimeSteps=0;
+    m_currentTime=time;
+    m_prevTime=time;
+    m_currentDt=dt;
+    m_prevDt=dt;
+    m_numTimeStepCuts=0;
+    m_currentNewtonIteration=0;
+  }
+  else
+  {
+    if( !isEqual( time, m_currentTime ) )
+    {
+      m_globalNumTimeSteps++;
+      m_prevTime=m_currentTime;
+      m_prevDt=m_currentDt;
+      m_currentTime=time;
+      m_currentDt=dt;
+      m_currentNewtonIteration=0;
+      m_numTimeStepCuts=0;
+    }
+    else
+    {
+      if( dt < m_currentDt )
+      {
+        // timestep cut
+        m_globalNumTimeSteps++;
+        m_prevTime=m_currentTime;
+        m_prevDt=m_currentDt;
+        m_currentTime=time;
+        m_currentDt=dt;
+        m_currentNewtonIteration=0;
+        m_numTimeStepCuts++;
+        m_currentNewtonIteration=0;
+      }
+      /*
+         else if ( isEqual(dt,m_currentDt ) )
+         {
+         // next timestep
+         m_globalNumTimeSteps++;
+         m_prevTime=m_currentTime;
+         m_prevDt=m_currentDt;
+         m_currentTime=time;
+         m_currentDt=dt;
+         m_currentNewtonIteration=0;
+         m_numTimeStepCuts=0;
+         m_currentNewtonIteration=0;
+         }*/
+      else
+      {
+        // continuation of current timestep
+        m_currentNewtonIteration++;
+      }
+    }
+  }
+
+  return std::tuple< integer, integer, integer >( m_globalNumTimeSteps, m_numTimeStepCuts, m_currentNewtonIteration );
+
+}
 void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 {
   PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();

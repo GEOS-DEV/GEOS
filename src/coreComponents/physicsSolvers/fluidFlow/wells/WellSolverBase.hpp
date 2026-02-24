@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 
 namespace geos
 {
@@ -241,7 +242,26 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
+  virtual void outputSingleWellDebug( real64 const GEOS_UNUSED_PARAM( time ),
+                                      real64 const GEOS_UNUSED_PARAM( dt ),
+                                      integer GEOS_UNUSED_PARAM( num_timesteps ),
+                                      integer GEOS_UNUSED_PARAM( current_newton_iteration ),
+                                      integer GEOS_UNUSED_PARAM( num_timestep_cuts ),
+                                      MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                      WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                      DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                      CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                      arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
+  virtual void outputWellDebug( real64 const time,
+                                real64 const dt,
+                                integer num_timesteps,
+                                integer current_newton_iteration,
+                                integer num_timestep_cuts,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) = 0;
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
@@ -287,6 +307,8 @@ public:
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
+
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
 
@@ -294,6 +316,8 @@ public:
     static constexpr char const * maxAbsoluteTempChangeString() { return "maxAbsoluteTemperatureChange"; }
   };
 
+
+  std::tuple< integer, integer, integer > currentIter( real64 const time, real64 const dt );
 private:
 
   /**
@@ -357,6 +381,21 @@ protected:
 
   /// flag to freeze the initial state during initialization in coupled problems
   bool m_keepVariablesConstantDuringInitStep;
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
+
+  integer m_globalNumTimeSteps;
+  real64 m_currentTime;
+  real64 m_currentDt;
+  real64 m_prevTime;
+  real64 m_prevDt;
+  integer m_numTimeStepCuts;
+  integer m_currentNewtonIteration;
+
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
+  std::map< std::string, WellPropWriter > m_wellPropWriter_eot;
+
+
 
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
@@ -366,6 +405,12 @@ protected:
 
   /// maximum (absolute) change in temperature between two Newton iterations
   real64 m_maxAbsoluteTempChange;
+    /// flag to use the estimator
+  integer m_estimateSolution;
+
+  integer my_ctime;   //tjb
+
+  real64 m_nextDt;
 };
 
 }
