@@ -62,7 +62,7 @@ void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msg
 template< typename T >
 stdVector< T >  gatherAndUnPackArg( buffer_unit_type * localBuffer, localIndex packedSize )
 {
-  integer const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
+  integer const numRanks = MpiWrapper::commSize();
   integer const numValues = packedSize;
 
   // Allows to know how much data each rank will send
@@ -77,8 +77,8 @@ stdVector< T >  gatherAndUnPackArg( buffer_unit_type * localBuffer, localIndex p
     displs.resize( numRanks );
   }
 
-  MpiWrapper::gather( &numValues, 1, recvCounts.data(), 1, 0, MPI_COMM_GEOS );
 
+  MpiWrapper::gather( &numValues, 1, recvCounts.data(), 1, 0 );
 
   if( MpiWrapper::commRank() == 0 )
   {
@@ -96,9 +96,7 @@ stdVector< T >  gatherAndUnPackArg( buffer_unit_type * localBuffer, localIndex p
                        globalAllocations.data(),
                        recvCounts.data(),
                        displs.data(),
-                       0,
-                       MPI_COMM_GEOS );
-
+                       0 );
   if( MpiWrapper::commRank() == 0 )
   {
     stdVector< T > m_receiveBufferPtr;
@@ -124,31 +122,31 @@ stdVector< T >  gatherAndUnPackArg( buffer_unit_type * localBuffer, localIndex p
 
 void LogHistory::errorStatsReport()
 {
-  buffer_unit_type * localBufferLogPart = new buffer_unit_type[ sizeof(LogPart::Type) ]();
-  buffer_unit_type * localBufferLogPartIter = localBufferLogPart;
+
+  std::shared_ptr< buffer_unit_type > localBufferLogPart = std::make_unique< buffer_unit_type >();
+  signed char *  localBufferLogPartIter = localBufferLogPart.get();
   localIndex packedSizeLogPart = 0;
 
-  buffer_unit_type * localBufferMsgType = new buffer_unit_type[ sizeof(MsgType) ]();
-  buffer_unit_type * localBufferMsgTypeIter = localBufferMsgType;
+  std::shared_ptr< buffer_unit_type > localBufferMsgType = std::make_unique< buffer_unit_type >();
+  signed char * localBufferMsgTypeIter = localBufferMsgType.get();
   localIndex packedSizeMsgType = 0;
 
-  buffer_unit_type * localBufferPair = new buffer_unit_type[ sizeof(MsgStatistics::LocationKey) ]();
-  buffer_unit_type * localBufferPairIter = localBufferPair;
+  std::shared_ptr< buffer_unit_type > localBufferPair = std::make_unique< buffer_unit_type >();
+  signed char * localBufferPairIter = localBufferPair.get();
   localIndex packedSizePair = 0;
-
-  for( auto const & [key, stats] : getErrorHistory() )
+  for( auto const & [key, stats] : getErrorHistory() )//todo renommer
   {
     auto const & [logPartType, msgType, locationKey] = key;
 
     packedSizeLogPart += bufferOps::Pack< true >( localBufferLogPartIter, logPartType );
     packedSizeMsgType += bufferOps::Pack< true >( localBufferMsgTypeIter, msgType );
     packedSizePair += bufferOps::Pack< true >( localBufferPairIter, locationKey );
+
   }
 
-  stdVector< LogPart::Type > testLogPart = gatherAndUnPackArg< LogPart::Type >( localBufferLogPart, packedSizeLogPart );
-  stdVector< MsgType > testMsgType = gatherAndUnPackArg< MsgType >( localBufferMsgType, packedSizeMsgType );
-  stdVector< MsgStatistics::LocationKey > testPair = gatherAndUnPackArg< MsgStatistics::LocationKey >( localBufferPair, packedSizePair );
-
+  stdVector< LogPart::Type > testLogPart = gatherAndUnPackArg< LogPart::Type >( localBufferLogPart.get(), packedSizeLogPart );
+  stdVector< MsgType > testMsgType = gatherAndUnPackArg< MsgType >( localBufferMsgType.get(), packedSizeMsgType );
+  stdVector< MsgStatistics::LocationKey > testPair = gatherAndUnPackArg< MsgStatistics::LocationKey >( localBufferPair.get(), packedSizePair );
   if( MpiWrapper::commRank() == 0 )
   {
     LogHistory & history = ErrorLogger::global().getLoggerReportData();
@@ -160,10 +158,6 @@ void LogHistory::errorStatsReport()
     TableTextFormatter tableReportFormatter;
     GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
   }
-
-  delete[] localBufferLogPart;
-  delete[] localBufferMsgType;
-  delete[] localBufferPair;
 }
 
 void LogHistory::insertBlanckReport( LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey )
@@ -221,7 +215,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   }
 
   TableTextFormatter textFormatter( tableLayout );
-  return textFormatter.toString( data ) + "\n";;
+  return textFormatter.toString( data ) + "\n";
 }
 
 

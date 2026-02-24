@@ -36,7 +36,7 @@ public:
    * @enum Type
    * Enum listing the different types of possibleLogPart
    */
-  enum class Type
+  enum class Type : integer
   {
     MeshGeneration,
     NumericalMethods,
