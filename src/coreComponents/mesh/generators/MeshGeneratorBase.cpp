@@ -18,6 +18,11 @@
 #include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
 #include "mesh/generators/MeshComponentBase.hpp"
+#include "mesh/NodeManager.hpp"
+#include "mesh/EdgeManager.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "common/logger/Logger.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -26,6 +31,15 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  registerWrapper( viewKeyStruct::checkEulerCharacteristicString(), &m_checkEulerCharacteristic ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C "
+                    "after the mesh is loaded and issue a warning if χ ≠ 1. "
+                    "χ = 1 is expected for a single connected solid mesh without interior voids. "
+                    "Non-unity values may indicate multiple disconnected bodies, interior voids, "
+                    "or non-manifold topology. Default: 0 (disabled)." );
 }
 
 Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
@@ -100,4 +114,26 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 
   } );
 }
+
+integer computeEulerCharacteristic( NodeManager const & nodeManager,
+                                    EdgeManager const & edgeManager,
+                                    FaceManager const & faceManager,
+                                    ElementRegionManager const & elemManager )
+{
+  // Count bulk volumetric cells only (exclude fracture / surface sub-regions)
+  localIndex numCells = 0;
+  elemManager.forElementSubRegions< CellElementSubRegion >(
+    [&]( CellElementSubRegion const & subRegion )
+  {
+    numCells += subRegion.size();
+  } );
+
+  localIndex const V = nodeManager.size();
+  localIndex const E = edgeManager.size();
+  localIndex const F = faceManager.size();
+  localIndex const C = numCells;
+
+  return static_cast< integer >( V - E + F - C );
+}
+
 }

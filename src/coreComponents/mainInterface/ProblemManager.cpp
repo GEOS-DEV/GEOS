@@ -44,6 +44,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -631,6 +632,26 @@ void ProblemManager::generateMesh()
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
       elemManager.generateWells( cellBlockManager, baseMesh );
+
+      // Optionally validate the Euler-Poincaré characteristic χ = V − E + F − C.
+      // The check is opt-in: set checkEulerCharacteristic="1" in the <Mesh> XML block.
+      MeshGeneratorBase const * const meshGen =
+        meshManager.getGroupPointer< MeshGeneratorBase >( meshBody.getName() );
+      if( meshGen != nullptr && meshGen->m_checkEulerCharacteristic )
+      {
+        integer const chi = computeEulerCharacteristic( baseMesh.getNodeManager(),
+                                                        baseMesh.getEdgeManager(),
+                                                        baseMesh.getFaceManager(),
+                                                        elemManager );
+        GEOS_WARNING_IF( chi != 1,
+                         "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
+                         "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
+                         "solid without interior voids). The mesh may contain multiple disconnected "
+                         "bodies, interior voids, or non-manifold topology. "
+                         "The simulation will proceed." );
+        GEOS_LOG_RANK_0_IF( chi == 1,
+                            "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
+      }
     }
   } );
 

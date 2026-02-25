@@ -76,6 +76,7 @@
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
 
 using namespace geos;
 
@@ -1313,16 +1314,8 @@ protected:
       fieldName="ruptureState" 
       scale="1"/>
   </FieldSpecifications>
-  
-  <Outputs>
-    <VTK name="vtkOutputM" outputRegionType="cell" plotLevel="3"/>
-    <VTK name="vtkOutputF" outputRegionType="surface" plotLevel="3"/>
-  </Outputs>
-  
-  <Events maxTime="1.0e-9">
+  <Events maxTime="1.0e-10">
     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>
-    <SoloEvent name="outputs" target="/Outputs/vtkOutputM"/>
-    <SoloEvent name="outputsF" target="/Outputs/vtkOutputF"/>
   </Events>
 </Problem>
 )xml";
@@ -1394,9 +1387,29 @@ protected:
     GEOS_LOG_RANK_0( "  Faces to split: " << expected.numFacesToDuplicate
                      << " (new faces created: " << expected.totalDuplicatedFaces << ")" );
 
-    // Compute Euler-Poincaré characteristic χ = V - E + F - C (should be 1 for connected solid)
+    // Compute Euler-Poincaré characteristic χ = V - E + F - C (should be 1 for connected solid).
+    //
+    // Two independent implementations are compared here:
+    //   1. Local (element-enumeration) version: re-derives V, E, F from the elem→node map.
+    //      This is the reference used throughout the test.
+    //   2. MeshGeneratorBase version: uses nodeManager.size(), edgeManager.size(),
+    //      faceManager.size() and CellElementSubRegion sizes directly from the managers.
+    //      This is the production implementation we want to exercise.
+    // Both must agree.
     integer const eulerCharBeforeSplit = computeEulerCharacteristic( nodeManager, faceManager, elemManager );
-    GEOS_LOG_RANK_0( "  Euler characteristic before split: " << eulerCharBeforeSplit );
+    GEOS_LOG_RANK_0( "  Euler characteristic before split (local):   " << eulerCharBeforeSplit );
+
+    integer const eulerCharBeforeSplitMgr = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "  Euler characteristic before split (managers): " << eulerCharBeforeSplitMgr );
+
+    EXPECT_EQ( eulerCharBeforeSplit, eulerCharBeforeSplitMgr )
+      << "Test " << testCaseName << ": computeEulerCharacteristic MISMATCH between implementations"
+      << "\n  Local (elem-enumeration): " << eulerCharBeforeSplit
+      << "\n  Manager-based:            " << eulerCharBeforeSplitMgr
+      << "\n  Mesh file: " << meshFileName
+      << "\n  The manager-based version (MeshGeneratorBase) returned a different result than the"
+      << "\n  reference element-enumeration version. Check that EdgeManager and FaceManager counts"
+      << "\n  include only bulk entities (no fracture / surface sub-region contributions).";
     
     // Run the simulation (executes SurfaceGenerator and splits the mesh)
     state.run();
