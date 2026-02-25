@@ -82,6 +82,9 @@ using namespace geos;
 constexpr real64 COORDINATE_TOLERANCE = 1.0e-10;
 constexpr real64 JACOBIAN_TOLERANCE = 1.0e-12;
 
+// Global flag to control debug printing (set to false to disable verbose output)
+static constexpr bool ENABLE_DEBUG_PRINTS = false;
+
 CommandLineOptions g_commandLineOptions;
 
 /**
@@ -334,12 +337,15 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   integer const eulerCharacteristic = V - E + F - C;
   
   // Print diagnostic information
-  GEOS_LOG_RANK_0( "DEBUG: Euler characteristic computation:" );
-  GEOS_LOG_RANK_0( "  V (nodes):  " << V );
-  GEOS_LOG_RANK_0( "  E (edges):  " << E );
-  GEOS_LOG_RANK_0( "  F (facets): " << F );
-  GEOS_LOG_RANK_0( "  C (cells):  " << C );
-  GEOS_LOG_RANK_0( "  χ = V - E + F - C = " << V << " - " << E << " + " << F << " - " << C << " = " << eulerCharacteristic );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Euler characteristic computation:" );
+    GEOS_LOG_RANK_0( "  V (nodes):  " << V );
+    GEOS_LOG_RANK_0( "  E (edges):  " << E );
+    GEOS_LOG_RANK_0( "  F (facets): " << F );
+    GEOS_LOG_RANK_0( "  C (cells):  " << C );
+    GEOS_LOG_RANK_0( "  χ = V - E + F - C = " << V << " - " << E << " + " << F << " - " << C << " = " << eulerCharacteristic );
+  }
   
   return eulerCharacteristic;
 }
@@ -383,6 +389,14 @@ void checkCoordinateCoincidence( NodeManager const & nodeManager,
  */
 void checkElementJacobians( ElementRegionManager const & elemManager )
 {
+  localIndex totalElements = 0;
+  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+  {
+    totalElements += subRegion.size();
+  } );
+  
+  GEOS_LOG_RANK_0( "Checking element Jacobians for " << totalElements << " elements" );
+  
   elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     // Note: Detailed Jacobian computation would require access to shape functions
@@ -441,6 +455,8 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
   // A1: Validate node duplication matches prediction
   // Note: totalDuplicatedNodes = total NEW nodes created (not counting original nodes)
   // For a node at N-fracture intersection: N new nodes are created
+  GEOS_LOG_RANK_0( "Validating A1: Node duplication prediction (Expected: " << expected.totalDuplicatedNodes
+                   << ", Actual: " << statsAfter.numDuplicatedNodes << ")" );
   EXPECT_EQ( statsAfter.numDuplicatedNodes, expected.totalDuplicatedNodes )
     << "Test " << testCaseName << ": Node duplication prediction MISMATCH"
     << "\n  Expected new nodes: " << expected.totalDuplicatedNodes
@@ -450,6 +466,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Fracture node sets: " << nodeSetNames;
 
   // A2: Verify fracture elements were created
+  GEOS_LOG_RANK_0( "Validating A2: Fracture elements created (Actual: " << statsAfter.numFractureElements << ")" );
   EXPECT_GT( statsAfter.numFractureElements, 0 )
     << "Test " << testCaseName << ": No fracture elements were created"
     << "\n  Mesh file: " << meshFileName
@@ -461,6 +478,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n    - SurfaceGenerator did not run or failed silently";
 
   // A3: Verify nodes were duplicated
+  GEOS_LOG_RANK_0( "Validating A3: Nodes were duplicated (Actual: " << statsAfter.numDuplicatedNodes << ")" );
   EXPECT_GT( statsAfter.numDuplicatedNodes, 0 )
     << "Test " << testCaseName << ": No nodes were duplicated"
     << "\n  Nodes before: " << statsBefore.numNodes
@@ -473,6 +491,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n    - SurfaceGenerator did not perform splitting";
 
   // A4: Validate all node coordinates are valid (not NaN)
+  GEOS_LOG_RANK_0( "Validating A4: Node coordinates validity (Total nodes: " << nodeManager.size() << ")" );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions =
     nodeManager.referencePosition();
   
@@ -490,6 +509,8 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
   }
 
   // A5: Validate expected Euler characteristic before split
+  GEOS_LOG_RANK_0( "Validating A5: Euler χ before split (Expected: " << expectedEulerBefore
+                   << ", Actual: " << eulerCharBeforeSplit << ")" );
   EXPECT_EQ( eulerCharBeforeSplit, expectedEulerBefore )
     << "Test " << testCaseName << ": Euler characteristic MISMATCH before split"
     << "\n  Expected χ: " << expectedEulerBefore
@@ -498,6 +519,8 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  NOTE: For a conformal mesh, expected χ = 1 (single connected solid)";
 
   // A6: Validate expected Euler characteristic after split
+  GEOS_LOG_RANK_0( "Validating A6: Euler χ after split (Expected: " << expectedEulerAfter
+                   << ", Actual: " << eulerCharAfterSplit << ")" );
   EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
     << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
     << "\n  Expected χ: " << expectedEulerAfter
@@ -507,6 +530,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Fracture elements: " << statsAfter.numFractureElements;
   
   // A7: Validate element Jacobians (no degenerate elements)
+  GEOS_LOG_RANK_0( "Validating A7: Element Jacobians (checking for degenerate elements)" );
   checkElementJacobians( elemManager );
 }
 
@@ -664,8 +688,11 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       nodeToFractureIds[nodeIdx].insert( fractureId );
     }
     
-    GEOS_LOG_RANK_0( "DEBUG: Fracture " << fractureId << " (" << setName << ") has "
-                     << nodesInThisFracture.size() << " nodes" );
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      GEOS_LOG_RANK_0( "DEBUG: Fracture " << fractureId << " (" << setName << ") has "
+                       << nodesInThisFracture.size() << " nodes" );
+    }
     
     // Identify fracture faces for this specific fracture
     for( localIndex fi = 0; fi < faceManager.size(); ++fi )
@@ -699,11 +726,14 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   }
   
   // Count intersection nodes (nodes shared by multiple fractures)
-  for( auto const & [nodeIdx, fractureIds] : nodeToFractureIds )
+  if( ENABLE_DEBUG_PRINTS )
   {
-    if( fractureIds.size() > 1 )
+    for( auto const & [nodeIdx, fractureIds] : nodeToFractureIds )
     {
-      GEOS_LOG_RANK_0( "DEBUG: Node " << nodeIdx << " is at intersection of " << fractureIds.size() << " fractures" );
+      if( fractureIds.size() > 1 )
+      {
+        GEOS_LOG_RANK_0( "DEBUG: Node " << nodeIdx << " is at intersection of " << fractureIds.size() << " fractures" );
+      }
     }
   }
   
@@ -711,14 +741,20 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   expected.numFractureFaces = fractureFaces.size();
   expected.numFractureElements = fractureFaces.size();
   
-  GEOS_LOG_RANK_0( "DEBUG: Found " << fractureFaces.size() << " fracture faces" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Found " << fractureFaces.size() << " fracture faces" );
+  }
   
   // Step 3: Extract fracture edges from faces
   // For boundary detection, we need to know which edges belong to only 1 face
   std::map< Edge, localIndex > edgeToFaceCount;
   std::set< Edge > fractureEdges;
   
-  GEOS_LOG_RANK_0( "DEBUG: Extracting edges from fracture faces" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Extracting edges from fracture faces" );
+  }
   
   // For each fracture face, extract its edges
   // Use the FaceManager to get actual face connectivity
@@ -754,7 +790,10 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   
   expected.numFractureEdges = fractureEdges.size();
   
-  GEOS_LOG_RANK_0( "DEBUG: Found " << fractureEdges.size() << " fracture edges from " << fractureFaces.size() << " faces" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Found " << fractureEdges.size() << " fracture edges from " << fractureFaces.size() << " faces" );
+  }
   
   // Step 4: Identify fracture boundary nodes
   // Fracture boundary edges are those that belong to only 1 face
@@ -764,7 +803,10 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   localIndex numBoundaryEdges = 0;
   localIndex numBoundaryEdgesOnDomain = 0;
   
-  GEOS_LOG_RANK_0( "DEBUG: Analyzing fracture boundary edges:" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Analyzing fracture boundary edges:" );
+  }
   
   for( auto const & [edge, count] : edgeToFaceCount )
   {
@@ -779,8 +821,11 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       bool const nodeBOnDomain = isNodeOnBoundary( edge.nodeB );
       bool const edgeOnDomain = nodeAOnDomain && nodeBOnDomain;
       
-      GEOS_LOG_RANK_0( "  Boundary edge (" << edge.nodeA << ", " << edge.nodeB << "): "
-                       << (edgeOnDomain ? "ON DOMAIN" : "INTERIOR") );
+      if( ENABLE_DEBUG_PRINTS )
+      {
+        GEOS_LOG_RANK_0( "  Boundary edge (" << edge.nodeA << ", " << edge.nodeB << "): "
+                         << (edgeOnDomain ? "ON DOMAIN" : "INTERIOR") );
+      }
       
       if( edgeOnDomain )
       {
@@ -789,10 +834,13 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     }
   }
   
-  GEOS_LOG_RANK_0( "DEBUG: Fracture boundary analysis:" );
-  GEOS_LOG_RANK_0( "  Total boundary edges: " << numBoundaryEdges );
-  GEOS_LOG_RANK_0( "  Boundary edges on domain: " << numBoundaryEdgesOnDomain );
-  GEOS_LOG_RANK_0( "  Fracture boundary nodes found: " << fractureBoundaryNodes.size() );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Fracture boundary analysis:" );
+    GEOS_LOG_RANK_0( "  Total boundary edges: " << numBoundaryEdges );
+    GEOS_LOG_RANK_0( "  Boundary edges on domain: " << numBoundaryEdgesOnDomain );
+    GEOS_LOG_RANK_0( "  Fracture boundary nodes found: " << fractureBoundaryNodes.size() );
+  }
   
   // Heuristic: If ALL fracture boundary edges are on the domain boundary,
   // then this is a full-span fracture configuration with no interior tips
@@ -800,17 +848,23 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   
   if( isFullSpan )
   {
-    GEOS_LOG_RANK_0( "DEBUG: Detected FULL-SPAN fractures (all boundaries on domain)" );
-    GEOS_LOG_RANK_0( "       -> ALL fracture nodes will be duplicated (no interior tips)" );
-    GEOS_LOG_RANK_0( "       -> Clearing fractureBoundaryNodes set (was " << fractureBoundaryNodes.size() << " nodes)" );
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      GEOS_LOG_RANK_0( "DEBUG: Detected FULL-SPAN fractures (all boundaries on domain)" );
+      GEOS_LOG_RANK_0( "       -> ALL fracture nodes will be duplicated (no interior tips)" );
+      GEOS_LOG_RANK_0( "       -> Clearing fractureBoundaryNodes set (was " << fractureBoundaryNodes.size() << " nodes)" );
+    }
     // For full-span, clear the fracture boundary classification
     // All nodes will be treated as internal or intersection nodes
     fractureBoundaryNodes.clear();
   }
   else
   {
-    GEOS_LOG_RANK_0( "DEBUG: Detected PARTIAL fractures (interior tips exist)" );
-    GEOS_LOG_RANK_0( "       -> " << fractureBoundaryNodes.size() << " nodes marked as fracture boundary" );
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      GEOS_LOG_RANK_0( "DEBUG: Detected PARTIAL fractures (interior tips exist)" );
+      GEOS_LOG_RANK_0( "       -> " << fractureBoundaryNodes.size() << " nodes marked as fracture boundary" );
+    }
   }
   
   // All other fracture nodes are internal
@@ -822,12 +876,18 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     }
   }
   
-  GEOS_LOG_RANK_0( "DEBUG: Found " << fractureInternalNodes.size() << " internal fracture nodes, "
-                   << fractureBoundaryNodes.size() << " fracture boundary nodes" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Found " << fractureInternalNodes.size() << " internal fracture nodes, "
+                     << fractureBoundaryNodes.size() << " fracture boundary nodes" );
+  }
   
   // Step 5: Apply duplication rules
   // For full-span fractures, most nodes should be duplicated
-  GEOS_LOG_RANK_0( "DEBUG: Applying duplication rules to " << allFractureNodes.size() << " fracture nodes" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Applying duplication rules to " << allFractureNodes.size() << " fracture nodes" );
+  }
   
   localIndex numInternalFractureNodes = 0;
   localIndex numBoundaryNodesNotTouchingDomain = 0;
@@ -898,13 +958,16 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     }
   }
   
-  GEOS_LOG_RANK_0( "DEBUG: Classification summary:" );
-  GEOS_LOG_RANK_0( "  Internal fracture nodes (duplicated): " << numInternalFractureNodes );
-  GEOS_LOG_RANK_0( "  Intersection nodes (duplicated): " << numIntersectionNodes );
-  GEOS_LOG_RANK_0( "  Boundary nodes touching domain (duplicated): " << numBoundaryNodesTouchingDomain );
-  GEOS_LOG_RANK_0( "  Boundary nodes NOT touching domain (not duplicated): " << numBoundaryNodesNotTouchingDomain );
-  GEOS_LOG_RANK_0( "  Total nodes to duplicate: " << expected.internalNodes.size() );
-  GEOS_LOG_RANK_0( "  Total nodes NOT to duplicate: " << expected.boundaryNodes.size() );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Classification summary:" );
+    GEOS_LOG_RANK_0( "  Internal fracture nodes (duplicated): " << numInternalFractureNodes );
+    GEOS_LOG_RANK_0( "  Intersection nodes (duplicated): " << numIntersectionNodes );
+    GEOS_LOG_RANK_0( "  Boundary nodes touching domain (duplicated): " << numBoundaryNodesTouchingDomain );
+    GEOS_LOG_RANK_0( "  Boundary nodes NOT touching domain (not duplicated): " << numBoundaryNodesNotTouchingDomain );
+    GEOS_LOG_RANK_0( "  Total nodes to duplicate: " << expected.internalNodes.size() );
+    GEOS_LOG_RANK_0( "  Total nodes NOT to duplicate: " << expected.boundaryNodes.size() );
+  }
   
   // Store boundary-cutting indicator
   expected.numBoundaryNodesOnDomain = numBoundaryNodesTouchingDomain;
@@ -948,8 +1011,11 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   
   expected.totalDuplicatedNodes = 0;
   
-  GEOS_LOG_RANK_0( "DEBUG: Computing duplication for each node (boundary-cutting: "
-                   << (isBoundaryCutting ? "YES" : "NO") << "):" );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Computing duplication for each node (boundary-cutting: "
+                     << (isBoundaryCutting ? "YES" : "NO") << "):" );
+  }
   
   // Track distribution for analysis
   std::map< integer, localIndex > fractureCountDistribution;
@@ -976,33 +1042,45 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     fractureCountDistribution[numFractures]++;
     newNodesDistribution[newNodesForThisNode]++;
     
-    real64 const x = nodePositions[nodeIdx][0];
-    real64 const y = nodePositions[nodeIdx][1];
-    real64 const z = nodePositions[nodeIdx][2];
-    
-    GEOS_LOG_RANK_0( "  Node " << nodeIdx << " at (" << x << ", " << y << ", " << z << "): "
-                     << numFractures << " fracture(s) -> " << newNodesForThisNode << " new nodes" );
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      real64 const x = nodePositions[nodeIdx][0];
+      real64 const y = nodePositions[nodeIdx][1];
+      real64 const z = nodePositions[nodeIdx][2];
+      
+      GEOS_LOG_RANK_0( "  Node " << nodeIdx << " at (" << x << ", " << y << ", " << z << "): "
+                       << numFractures << " fracture(s) -> " << newNodesForThisNode << " new nodes" );
+    }
   }
   
-  GEOS_LOG_RANK_0( "DEBUG: Distribution summary:" );
-  GEOS_LOG_RANK_0( "  Nodes by fracture count:" );
-  for( auto const & [numFractures, count] : fractureCountDistribution )
+  if( ENABLE_DEBUG_PRINTS )
   {
-    integer newNodesPerNode = isBoundaryCutting ? ((1 << numFractures) - 1) : 1;
-    GEOS_LOG_RANK_0( "    " << count << " node(s) in " << numFractures << " fracture(s) -> "
-                     << newNodesPerNode << " new nodes each = " << (count * newNodesPerNode) << " total" );
+    GEOS_LOG_RANK_0( "DEBUG: Distribution summary:" );
+    GEOS_LOG_RANK_0( "  Nodes by fracture count:" );
+    for( auto const & [numFractures, count] : fractureCountDistribution )
+    {
+      integer newNodesPerNode = isBoundaryCutting ? ((1 << numFractures) - 1) : 1;
+      GEOS_LOG_RANK_0( "    " << count << " node(s) in " << numFractures << " fracture(s) -> "
+                       << newNodesPerNode << " new nodes each = " << (count * newNodesPerNode) << " total" );
+    }
   }
   
-  GEOS_LOG_RANK_0( "DEBUG: Total from summation: " << expected.totalDuplicatedNodes );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Total from summation: " << expected.totalDuplicatedNodes );
+  }
   
   expected.totalDuplicatedEdges = expected.numEdgesToDuplicate;
   expected.totalDuplicatedFaces = expected.numFacesToDuplicate;
   
-  GEOS_LOG_RANK_0( "DEBUG: Final counts:" );
-  GEOS_LOG_RANK_0( "  Unique nodes to duplicate: " << expected.numNodesToDuplicate );
-  GEOS_LOG_RANK_0( "  Total new nodes created: " << expected.totalDuplicatedNodes );
-  GEOS_LOG_RANK_0( "  Edges to duplicate: " << expected.totalDuplicatedEdges );
-  GEOS_LOG_RANK_0( "  Faces to duplicate: " << expected.totalDuplicatedFaces );
+  if( ENABLE_DEBUG_PRINTS )
+  {
+    GEOS_LOG_RANK_0( "DEBUG: Final counts:" );
+    GEOS_LOG_RANK_0( "  Unique nodes to duplicate: " << expected.numNodesToDuplicate );
+    GEOS_LOG_RANK_0( "  Total new nodes created: " << expected.totalDuplicatedNodes );
+    GEOS_LOG_RANK_0( "  Edges to duplicate: " << expected.totalDuplicatedEdges );
+    GEOS_LOG_RANK_0( "  Faces to duplicate: " << expected.totalDuplicatedFaces );
+  }
   
   return expected;
 }
@@ -1291,25 +1369,25 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorCases,
   SurfaceGeneratorTest,
   ::testing::Values(
-//    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
-//
-//    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-//    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
-//    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
-//    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
-//
-//    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
-//    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN12", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN13", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
 
-    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 )
-//    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
-//    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
-//    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
+    std::make_tuple( "BoundaryCut_hex_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+    std::make_tuple( "BoundaryCut_hex_DFN12", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
+    std::make_tuple( "BoundaryCut_hex_DFN13", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
+    std::make_tuple( "BoundaryCut_hex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+
+    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
+
+    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
+    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
+    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
                     
   )
 );
