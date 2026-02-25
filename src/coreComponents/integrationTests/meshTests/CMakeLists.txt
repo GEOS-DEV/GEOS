@@ -27,21 +27,78 @@ set( dependencyList mainInterface )
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
-# Mesh files needed by testSurfaceGenerator (located in mechanicTest directory)
-set( mesh_files
+# ---------------------------------------------------------------------------
+# Mesh files needed by testSurfaceGenerator
+# ---------------------------------------------------------------------------
+# DFN-market meshes: one file per fracture combination, covering flat / wavy
+# and no-boundary-cut / full-span variants for both hex and tet grids.
+set( dfn_market_mesh_files
+     # ---- flat, no-boundary-cut, hex ----
      fractured_mesh_hex_DFN_1.vtu
+     fractured_mesh_hex_DFN_2.vtu
+     fractured_mesh_hex_DFN_3.vtu
      fractured_mesh_hex_DFN_12.vtu
+     fractured_mesh_hex_DFN_13.vtu
+     fractured_mesh_hex_DFN_23.vtu
      fractured_mesh_hex_DFN_123.vtu
+     # ---- flat, no-boundary-cut, tet ----
      fractured_mesh_tet_DFN_1.vtu
+     fractured_mesh_tet_DFN_2.vtu
+     fractured_mesh_tet_DFN_3.vtu
+     fractured_mesh_tet_DFN_12.vtu
+     fractured_mesh_tet_DFN_13.vtu
+     fractured_mesh_tet_DFN_23.vtu
      fractured_mesh_tet_DFN_123.vtu
+     # ---- flat, full-span, hex ----
      fractured_full_span_mesh_hex_DFN_1.vtu
+     fractured_full_span_mesh_hex_DFN_2.vtu
+     fractured_full_span_mesh_hex_DFN_3.vtu
+     fractured_full_span_mesh_hex_DFN_12.vtu
+     fractured_full_span_mesh_hex_DFN_13.vtu
+     fractured_full_span_mesh_hex_DFN_23.vtu
      fractured_full_span_mesh_hex_DFN_123.vtu
+     # ---- flat, full-span, tet ----
      fractured_full_span_mesh_tet_DFN_1.vtu
+     fractured_full_span_mesh_tet_DFN_2.vtu
+     fractured_full_span_mesh_tet_DFN_3.vtu
+     fractured_full_span_mesh_tet_DFN_12.vtu
+     fractured_full_span_mesh_tet_DFN_13.vtu
+     fractured_full_span_mesh_tet_DFN_23.vtu
      fractured_full_span_mesh_tet_DFN_123.vtu
+     # ---- wavy, no-boundary-cut, hex ----
+     fractured_wavy_mesh_hex_DFN_1.vtu
+     fractured_wavy_mesh_hex_DFN_2.vtu
+     fractured_wavy_mesh_hex_DFN_3.vtu
+     fractured_wavy_mesh_hex_DFN_12.vtu
+     fractured_wavy_mesh_hex_DFN_13.vtu
+     fractured_wavy_mesh_hex_DFN_23.vtu
+     fractured_wavy_mesh_hex_DFN_123.vtu
+     # ---- wavy, no-boundary-cut, tet ----
+     fractured_wavy_mesh_tet_DFN_1.vtu
+     fractured_wavy_mesh_tet_DFN_2.vtu
+     fractured_wavy_mesh_tet_DFN_3.vtu
+     fractured_wavy_mesh_tet_DFN_12.vtu
+     fractured_wavy_mesh_tet_DFN_13.vtu
+     fractured_wavy_mesh_tet_DFN_23.vtu
+     fractured_wavy_mesh_tet_DFN_123.vtu
+     # ---- wavy, full-span, hex ----
+     fractured_wavy_full_span_mesh_hex_DFN_1.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_2.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_3.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_12.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_13.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_23.vtu
+     fractured_wavy_full_span_mesh_hex_DFN_123.vtu
+     # ---- wavy, full-span, tet ----
+     fractured_wavy_full_span_mesh_tet_DFN_1.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_2.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_3.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_12.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_13.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_23.vtu
+     fractured_wavy_full_span_mesh_tet_DFN_123.vtu
 )
-
-# Source directory for mesh files
-set( MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest )
+set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
 
 
 # Add gtest C++ based tests
@@ -58,12 +115,12 @@ foreach( test ${gtest_geosx_tests} )
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
   
-  # Copy mesh files from mechanicTest directory to test binary directory
-  foreach( mesh_file ${mesh_files} )
+  # Copy DFN-market mesh files from meshTests/dfn_market/
+  foreach( mesh_file ${dfn_market_mesh_files} )
     add_custom_command(
         TARGET ${test_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${MESH_SOURCE_DIR}/${mesh_file}
+                ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
                 $<TARGET_FILE_DIR:${test_name}>
     )
   endforeach()

@@ -1403,34 +1403,6 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
 
     // =======================================================================
-    // Legacy reference meshes (mechanicTest/)
-    // =======================================================================
-
-    // --- flat, no-boundary-cut, tet (legacy _123 multi-set mesh) -----------
-    std::make_tuple( "NoBoundaryCut_tet_DFN1",   "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }",                            1,  2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN12",  "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1,  2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN13",  "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1,  2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1,  2 ),
-
-    // --- flat, no-boundary-cut, hex (legacy _123 multi-set mesh) -----------
-    std::make_tuple( "NoBoundaryCut_hex_DFN1",   "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1,  2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN12",  "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1,  2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN13",  "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1,  2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1,  2 ),
-
-    // --- flat, full-span, hex (legacy) – full fragmentation ----------------
-    std::make_tuple( "BoundaryCut_hex_DFN1",   "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1, 2 ),
-    std::make_tuple( "BoundaryCut_hex_DFN12",  "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1, 4 ),
-    std::make_tuple( "BoundaryCut_hex_DFN13",  "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1, 4 ),
-    std::make_tuple( "BoundaryCut_hex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1, 8 ),
-
-    // --- flat, full-span, tet (legacy) – full fragmentation ----------------
-    std::make_tuple( "BoundaryCut_tet_DFN1",   "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1, 2 ),
-    std::make_tuple( "BoundaryCut_tet_DFN12",  "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN13",  "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1, 8 ),
-
-    // =======================================================================
     // dfn_market meshes
     // -----------------------------------------------------------------------
     // Naming convention:
