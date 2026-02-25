@@ -522,16 +522,16 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Mesh file:  " << meshFileName
     << "\n  NOTE: For a conformal mesh, expected χ = 1 (single connected solid)";
 
-//  // A6: Validate expected Euler characteristic after split
-//  GEOS_LOG_RANK_0( "Validating A6: Euler χ after split (Expected: " << expectedEulerAfter
-//                   << ", Actual: " << eulerCharAfterSplit << ")" );
-//  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
-//    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
-//    << "\n  Expected χ: " << expectedEulerAfter
-//    << "\n  Actual χ:   " << eulerCharAfterSplit
-//    << "\n  Mesh file:  " << meshFileName
-//    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
-//    << "\n  Fracture elements: " << statsAfter.numFractureElements;
+  // A6: Validate expected Euler characteristic after split
+  GEOS_LOG_RANK_0( "Validating A6: Euler χ after split (Expected: " << expectedEulerAfter
+                   << ", Actual: " << eulerCharAfterSplit << ")" );
+  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
+    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
+    << "\n  Expected χ: " << expectedEulerAfter
+    << "\n  Actual χ:   " << eulerCharAfterSplit
+    << "\n  Mesh file:  " << meshFileName
+    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
+    << "\n  Fracture elements: " << statsAfter.numFractureElements;
   
   // A7: Validate element Jacobians (no degenerate elements)
   GEOS_LOG_RANK_0( "Validating A7: Element Jacobians (checking for degenerate elements)" );
@@ -1373,20 +1373,52 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorCases,
   SurfaceGeneratorTest,
   ::testing::Values(
-    std::make_tuple( "NoBoundaryCut_hex_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN12", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN13", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
 
+    // -----------------------------------------------------------------------
+    // Note on expected Euler characteristic for NoBoundaryCut tests
+    // -----------------------------------------------------------------------
+    // The mesh is a 4x4x4 hexahedral grid (64 cells, 125 nodes) in [0,1]^3.
+    // Each DFN fracture is a 2x2 patch of 4 quad faces fully embedded in the
+    // interior of the domain (no face touches the boundary).
+    //
+    // Before any split the solid has a single connected component:
+    //   χ = V - E + F - C = 1
+    //
+    // Each fracture contains exactly ONE interior node (the center of the 2x2
+    // patch).  Splitting that node "unzips" the internal connectivity:
+    //   ΔV = +1  (the center node is duplicated)
+    //   ΔE = +4  (the four in-plane edges radiating from the center are duplicated)
+    //   ΔF = +4  (the four quad faces sharing the center are duplicated)
+    //   ΔC =  0  (no new 3-D cells are created)
+    //
+    //   Δχ = ΔV - ΔE + ΔF - ΔC = 1 - 4 + 4 - 0 = +1
+    //   χ_after = 1 + 1 = 2
+    //
+    // The result χ = 2 holds for every NoBoundaryCut case (DFN1, DFN12,
+    // DFN13, DFN123) because all three fractures share the same single
+    // interior node at (0.5, 0.5, 0.5); activating additional fractures
+    // splits that node once more per fracture plane, but the incremental
+    // Δχ per additional split remains +1 only when a genuinely new interior
+    // node is processed — and in this mesh all subsequent fracture planes
+    // share the already-counted center node, so χ stays at 2.
+    // -----------------------------------------------------------------------
+                    
+    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+                    
+    std::make_tuple( "NoBoundaryCut_hex_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN12", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN13", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+                    
+                    
+    // full fragmentation of the domain in disjoint componentes
     std::make_tuple( "BoundaryCut_hex_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
     std::make_tuple( "BoundaryCut_hex_DFN12", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
     std::make_tuple( "BoundaryCut_hex_DFN13", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
     std::make_tuple( "BoundaryCut_hex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
-
-    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
 
     std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
     std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
