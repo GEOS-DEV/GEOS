@@ -287,6 +287,7 @@ public:
   {
     static constexpr char const * dofFieldString() { return "wellVars"; }
 
+
   };
 
   virtual bool solveWHPConstraint( real64 const & time_n,

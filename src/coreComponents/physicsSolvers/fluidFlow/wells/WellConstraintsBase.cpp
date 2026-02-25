@@ -89,6 +89,11 @@ WellConstraintBase::WellConstraintBase( string const & name, Group * const paren
                     " - If the flag is set to 1, constraint included in boundary condition selection. \n"
                     " - If the flag is set to 0, constraint excluded from boundary condition selection." );
 
+  registerWrapper( viewKeyStruct::constraintValueString(), &m_constraintValue ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Constraint value. \n" );
+
 }
 
 

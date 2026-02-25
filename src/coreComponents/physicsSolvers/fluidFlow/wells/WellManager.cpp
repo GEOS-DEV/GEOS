@@ -134,8 +134,8 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
 
       WellControls & well =  getWellControls( subRegion );
       //well.setFlowSolverName( flowSolver.getName() );
-      well.registerWellDataOnMesh( subRegion );
       well.setThermal( isThermal() );
+      well.registerWellDataOnMesh( subRegion );
       m_numFluidPhases = well.numFluidPhases();
       m_numFluidComponents = well.numFluidComponents();
 
@@ -527,7 +527,7 @@ void WellManager::setKeepVariablesConstantDuringInitStep( bool const keepVariabl
 void WellManager::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  //tjb
+
   real64 maxPhaseVolFrac = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -594,7 +594,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
       WellControls & wellControls = getWellControls( subRegion );
 
       // step 1: compute the norm in the subRegion
-      if( true )     // tjb wellControls.isWellOpen( ) )
+      if( wellControls.isWellOpen( ) )
       {
         wellResidalNorm = wellControls.calculateLocalWellResidualNorm( time_n,
                                                                        dt,
