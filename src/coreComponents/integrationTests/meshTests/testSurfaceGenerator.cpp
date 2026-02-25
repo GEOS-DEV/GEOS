@@ -1523,14 +1523,6 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorTest,
   ::testing::Values(
 
-    std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",   "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",   "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-//    std::make_tuple( "Mkt_BndCut_t_shaped_tet_hex_py_DFN_12",   "t_shaped_wavy_mesh_mixed_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-    
-    std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",   "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-//    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_hex_py_DFN_123",   "y_shaped_wavy_mesh_mixed_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-
     // =======================================================================
     // dfn_market meshes
     // -----------------------------------------------------------------------
@@ -1642,7 +1634,57 @@ INSTANTIATE_TEST_SUITE_P(
     std::make_tuple( "Mkt_WavyBndCut_tet_DFN_12",  "fractured_wavy_full_span_mesh_tet_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 4 ),
     std::make_tuple( "Mkt_WavyBndCut_tet_DFN_13",  "fractured_wavy_full_span_mesh_tet_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 4 ),
     std::make_tuple( "Mkt_WavyBndCut_tet_DFN_23",  "fractured_wavy_full_span_mesh_tet_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 4 ),
-    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_123", "fractured_wavy_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_123", "fractured_wavy_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+
+    // -----------------------------------------------------------------------
+    // T-shaped · boundary-cutting · hex & tet
+    // -----------------------------------------------------------------------
+    // Geometry: two fracture planes forming a "T" in the wavy unit cube.
+    //   F1 is the horizontal bar that fully spans the domain (boundary-cutting).
+    //   F2 is the vertical stem that terminates at F1 (T-junction).
+    //
+    // Euler characteristic analysis:
+    //   χ_before = 1  (single connected solid)
+    //
+    //   After splitting, the T-junction creates three disjoint solid sectors
+    //   separated by the two fracture planes (two halves of F1 and one side
+    //   of F2's stem):
+    //     ΔV = +new duplicated nodes  (junction-line nodes each produce 2 copies;
+    //                                  single-fracture boundary nodes produce 1 copy)
+    //     Δ(V - E + F - C) = +2  →  χ_after = 1 + 2 = 3
+    //
+    //   The increment of +2 for the T-junction (vs +1 for a single planar cut
+    //   and +3 for a full X-crossing) reflects the fact that the stem fracture
+    //   splits only one side of the bar, creating exactly two extra solid regions.
+    //
+    //                   test name                          mesh file                             node sets             χ_b  χ_a
+    std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12", "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu", "{ f1_node_set, f2_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12", "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu", "{ f1_node_set, f2_node_set }", 1, 3 ),
+
+    // -----------------------------------------------------------------------
+    // Y-shaped · boundary-cutting · hex & tet
+    // -----------------------------------------------------------------------
+    // Geometry: three fracture planes meeting along a common line in the wavy
+    //   unit cube, forming a "Y" cross-section.  All three fractures are
+    //   boundary-cutting (their perimeters lie entirely on the domain skin),
+    //   but none is fully interior to any other — every fracture terminates at
+    //   the shared junction line.
+    //
+    // Euler characteristic analysis:
+    //   χ_before = 1  (single connected solid)
+    //
+    //   The Y-junction divides the solid into three parts.
+    //   Each sector is a connected body, so:
+    //     χ_after = 3  →  Δχ = +2
+    //
+    //   This matches the T-junction result (χ_after = 3) because both
+    //   configurations split one connected body into exactly three pieces:
+    //   the T produces a "top-left", "top-right", and "bottom" region, while
+    //   the Y produces three symmetric wedge regions.
+    //
+    //                   test name                          mesh file                                  node sets                          χ_b  χ_a
+    std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123", "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123", "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 )
 
   )
 );

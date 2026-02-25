@@ -1,4 +1,4 @@
-# Specify list of tests
+ain# Specify list of tests
 set( gtest_geosx_tests
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
@@ -97,6 +97,12 @@ set( dfn_market_mesh_files
      fractured_wavy_full_span_mesh_tet_DFN_13.vtu
      fractured_wavy_full_span_mesh_tet_DFN_23.vtu
      fractured_wavy_full_span_mesh_tet_DFN_123.vtu
+     # ---- T-shaped junction, boundary-cutting, hex & tet ----
+     t_shaped_wavy_mesh_hex_DFN_t1t2.vtu
+     t_shaped_wavy_mesh_tet_DFN_t1t2.vtu
+     # ---- Y-shaped junction, boundary-cutting, hex & tet ----
+     y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu
+     y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu
 )
 set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
 
