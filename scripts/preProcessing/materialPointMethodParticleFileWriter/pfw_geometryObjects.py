@@ -3969,6 +3969,8 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     self.x1 = self.x1[0:self.dim]
     self.randomMatDir = randomMatDir
     self.seed = weibullSeed
+
+    np.random.seed(self.seed) #added by SG to introduce reproducibility
     
     if vpts is None:
       self.vpts = poisson(flawSize, x0=self.x0, dx=self.dx[0:self.dim], seed=self.seed, dim=self.dim)
@@ -4030,6 +4032,9 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
 #        matDir = self.cellMatDir[index[0]]
 #        return matDir
 
+
+
+
   def getMatDir(self,pt):
     if ( self.randomMatDir ):  
       x = np.array(pt[0:self.dim])
@@ -4049,6 +4054,120 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     dist, index = self.kdt.query(x.reshape(1,-1), k=1)
     strengthScale = self.cellStrengthScale[index[0][0]]
     return strengthScale
+
+
+############################################
+class voronoiNormalBoxWrapper(BaseWrapper):
+  """
+  Box wrapper for another object that will be used to assign voronoi-cell weibull distribution of strength scale
+  Works for 2D or 3D cases
+  Box should be bigger than the subobject
+  """
+  def __init__(self,name,subObject,x0,x1,flawSize,muStrength,sigmaStrength,normalSeed,vMin,vpts=None,dim=3,randomMatDir=False):
+    BaseWrapper.__init__(self, name, subObject)
+    self.object = subObject
+    self.dim = dim
+    self.x0 = np.array(x0)
+    self.x1 = np.array(x1)
+    self.dx = self.x1-self.x0
+    self.x0 = self.x0[0:self.dim]
+    self.x1 = self.x1[0:self.dim]
+    self.randomMatDir = randomMatDir
+    self.seed = normalSeed
+    
+    
+    if vpts is None:
+      self.vpts = poisson(flawSize, x0=self.x0, dx=self.dx[0:self.dim], seed=self.seed, dim=self.dim)
+    else:
+      self.vpts = vpts
+
+    self.vpts = self.vpts[:,0:self.dim] # Remove spacing from points
+    self.npts = self.vpts.shape[0]
+    #self.kdt = KDTree(self.vpts, leaf_size=np.ceil(len(self.vpts) / 2), metric='euclidean')
+    self.kdt = KDTree(self.vpts, leaf_size=int(np.ceil(len(self.vpts) / 2)), metric='euclidean') ##had to change leaf_size to int
+    self.voronoi = Voronoi(self.vpts)
+
+    #Average volume (area for 2D) to assign to edge cells
+    v0= np.prod(self.x1-self.x0)/self.npts
+    vor = self.voronoi
+
+    # compute volume of each voronoi cell
+    vol = np.zeros(vor.npoints)
+    for i, reg_num in enumerate(vor.point_region):
+      indices = vor.regions[reg_num]
+      if ( (-1 in indices) or ( vor.vertices[vor.regions[i]].shape[0] < 1 ) ): # some regions can be opened
+        vol[i] = v0
+      else:
+        vol[i] = ConvexHull(vor.vertices[indices]).volume
+
+        numInteriorVertices = 0
+        numVertices = vor.vertices[vor.regions[i]].shape[0]
+        
+        for v in vor.vertices[indices]:
+          if (dim==2):
+            v = np.append(v, np.array([0.0]))
+          if subObject.isInterior(v,0.0) >= 0:
+            numInteriorVertices += 1
+
+        vol[i] = vol[i]*numInteriorVertices/numVertices*(self.dx[self.dim] if self.dim==2 else 1.0)
+
+      vol[i] = max( vol[i], vMin )
+
+    # define the value of strength scale that will be assigned to each cell's particles.
+    cellStrengthScale=[]
+    # for i in range(0,self.npts):
+    #   s = ( ( weibullVolume/vol[i] )*( np.log( np.random.uniform(1e-20,1.0) )/np.log(0.5) ) )**(1.0/weibullModulus)
+    #   cellStrengthScale.append(s)
+
+    for i in range(0,self.npts):
+      # Sample strengths directly
+      Yc = np.random.normal(muStrength, sigmaStrength)
+      #s = np.random.normal(muStrength, sigmaStrength)
+      s = Yc/muStrength
+      # enforce positive strengths
+      while Yc <= 0:
+        #s = np.random.normal(muStrength, sigmaStrength)
+        Yc = np.random.normal(muStrength, sigmaStrength)
+        s = Yc/muStrength
+      cellStrengthScale.append(s)
+
+    self.cellStrengthScale = np.array(cellStrengthScale)
+
+    # cells can have random orientation or can inheret from subObject
+    cellMatDir=[]
+    if ( self.randomMatDir ): 
+      for i in range(0,self.npts):
+        d = random_direction()
+        cellMatDir.append(d)
+    self.cellMatDir = np.array(cellMatDir)
+
+#    if ( self.randomMatDir ):  
+#      def getMatDir(self,pt):
+#        x = np.array(pt[0:self.dim])
+#        dist, index = self.kdt.query(x.reshape(1,-1), k=1)
+#        matDir = self.cellMatDir[index[0]]
+#        return matDir
+
+  def getMatDir(self,pt):
+    if ( self.randomMatDir ):  
+      x = np.array(pt[0:self.dim])
+      dist, index = self.kdt.query(x.reshape(1,-1), k=1)
+      matDir = self.cellMatDir[index[0]]
+    else:
+      if hasattr( self.object, 'getMatDir' ):
+        matDir = object.getMatDir( pt )
+      elif hasattr( self.object, 'matDir' ):
+        matDir = self.object.matDir( self.object, matDir ) if callable( self.object.matDir ) else self.object.matDir
+      else:
+        matDir = np.array([[1.0, 0.0, 0.0],[0.0, 1.0, 0.0],[0.0, 0.0, 1.0]])
+    return matDir
+
+  def getStrengthScale(self,pt):
+    x = np.array(pt[0:self.dim])
+    dist, index = self.kdt.query(x.reshape(1,-1), k=1)
+    strengthScale = self.cellStrengthScale[index[0][0]]
+    return strengthScale
+
 
 
 

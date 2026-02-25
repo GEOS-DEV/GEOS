@@ -5,86 +5,90 @@ import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 
 # Unit system :  mg, microsecond, mm,  stress-> GPA, velocity mm/us=km/s
 
-impacterDiameter = 3 # aluminum sphere, mm
+impacterDiameter = 3 # SS sphere, mm
 sampleDiameter = 152.4 # target diameter
-sampleLength = 152.4 # target length (cylinder) , mm ##changed to 38.1 mm
+sampleLength = 152.4 # target length (cylinder) , mm
 impactVelocity = 1.515 # mm/us
 
 stopTime = sampleLength/impactVelocity 
 
-aluminumDensity = 7.85 #These are properties for steel
-aluminumYield = .305
-aluminumYoungsModulus = 210.
-aluminumPoissonsRatio = 0.2
+steelDensity = 7.85
+steelYield = .25 #20 percent increased for strain rate hardening
+steelYoungsModulus = 210.
+steelPoissonsRatio = 0.3
 
 density = 2.1
-bulk = 25./( 3.*( 1. - 2.*0.2) )  #poisson ratio changed from 0.3 to 0.2, E from 40 to 25
-shear = 25./( 2.*( 1. + 0.2) ) 
-#tensileStrength = 0.00625  #recipe R2
-compressiveStrength = 0.025 # 25 MPa confirmed by Zhifei, Ryan
-tensileStrength = compressiveStrength/8
+bulk = 40./( 3.*( 1. - 2.*0.3) )
+shear = 40./( 2.*( 1. + 0.3) ) 
+tensileStrength = 0.00625  #recipe R2
+compressiveStrength = 8.*tensileStrength
 maximumStrength = 5.0*compressiveStrength
 crackSpeed = 0.8 # See Curbach paper
 thirdInvariantDependence=1
 refStrainRate=1e-10
-rateSensitivity=0.15 # gives best results
-m2=0.2
+rateSensitivity=0.0
+m2=0.0
 
-#weibullVolume = 100.0 # mm^3
-#weibullVolume = np.pi*sampleLength*(sampleDiameter**2)/4
-#weibullModulus = 6.
+weibullVolume = 100.0 # mm^3
+weibullModulus = 6.
 
-weibullVolume = 27.5361
-weibullModulus = 7.3692
+meanStrength=0.05
+stdStrength=0.01
+
 
 # Domain ---------------------------------------------------------------------------------
 
-domainX = sampleLength+impacterDiameter
-domainY = sampleDiameter #changed to sampleDiameter from 1.1sampleDiameter #changed to 0.5 to get quarter symmetry
-domainZ = sampleDiameter #same as above
+domainX = sampleLength+impacterDiameter #additional 0.5 to catch the ejecta 
+domainY = 1*sampleDiameter #changed
+domainZ = 1*sampleDiameter #changed
 
-cppx=16   # cells per partition in each direction #originaally it was 30,30,30
-cppy=16
-cppz=16
+cppx=120   # cells per partition in each direction
+cppy=120
+cppz=12
 
-refine=6
+refine=2
 
 pfw["xpar"]=2*refine  # grid partitions
 pfw["ypar"]=refine
-pfw["zpar"]=refine
+pfw["zpar"]=1  #changed from refine to 1
 
 pfw["nI"]=pfw["xpar"]*cppx  # grid cells in the x-direction
 pfw["nJ"]=pfw["ypar"]*cppy  # grid cells in the y-direction
-pfw["nK"]=pfw["zpar"]*cppz  # grid cells in the z-direction
+#pfw["nK"]=pfw["zpar"]*cppz  # grid cells in the z-direction
+pfw["nK"]=3   # grid cells in the z-direction #changed to 3
 pfw["ppc"]=2   # particles per cell in each direction
 
 pfw["xmin"] = 0.0 # mm
 pfw["xmax"] = domainX # mm
-pfw["ymin"] = 0 # mm
+pfw["ymin"] = -0.5*domainY # mm
 pfw["ymax"] = 0.5*domainY # mm
-pfw["zmin"] = 0 # mm #changed from -0.5*domainZ
-pfw["zmax"] = 0.5*domainZ # mm
 
 DX = (pfw["xmax"] - pfw["xmin"])/pfw["xpar"]/cppx
+
+#DX1=(pfw["xmax"] - pfw["xmin"])/(2*1)/cppx #initial 
+
+#domainZ=(2/3)*(5*DX1)
+pfw["zmin"] =-0.5*domainZ # mm
+pfw["zmax"] = 0.5*domainZ # mm
 
 # BATCH PARAMETERS --------------------------------------------------------
 
 pfw["mBatch"]=True
 pfw["mBank"]="imcomp" #"MAHEM"
-pfw["mWallTime"]="48:00:00"
+pfw["mWallTime"]="12:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False #This prevents from automatic submission of Job
-pfw["autoRestart"]=True #Trues
+pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
 
-pfw["endTime"] = 300
-pfw["plotInterval"] = 25
-pfw["restartInterval"] = stopTime*10
+pfw["endTime"] = stopTime*4 #changed from 4.0
+pfw["plotInterval"] = stopTime / 10
+pfw["restartInterval"] = stopTime*5.0
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 pfw["timeIntegrationOption"]="ExplicitDynamic"
@@ -108,6 +112,8 @@ pfw["FSubcycles"]=10
 
 pfw["plotUnscaledParticles"]=0
 pfw["frictionCoefficient"]=0.25
+
+pfw["planeStrain"] = 1 ##added for plane strain condition
 
  
 pfw["updateMethod"]="FMPM"
@@ -157,6 +163,16 @@ def make_objects():
         weibullModulus=weibullModulus,
         weibullSeed=1,
         vMin=(DX)**3.)
+    
+    # normalTarget = geom.voronoiNormalBoxWrapper('normalWrapper',
+    #      subObject=target,
+    #      x0=[ pfw["xmin"], pfw["ymin"], pfw["zmin"] ],
+    #      x1=[ pfw["xmax"], pfw["ymax"], pfw["zmax"] ],
+    #      flawSize=5*DX,
+    #      muStrength=meanStrength,        # mean of normal distribution
+    #      sigmaStrength=stdStrength,      # standard deviation
+    #      normalSeed=1,                   # RNG seed
+    #      vMin=(DX)**3.)
 
     objects=[impactor,weibullTarget]
 
@@ -164,16 +180,16 @@ def make_objects():
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
 
-pfw["materials"] = ["aluminum","target"]
+pfw["materials"] = ["steel","target"]
 pfw["materialPropertyString"]="""
 <VonMisesJ
 
-    name="aluminum"
+    name="steel"
 
-    defaultDensity=""" + '"' + str(aluminumDensity) + '"' + """
-    defaultYoungModulus=""" + '"' + str(aluminumYoungsModulus) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(aluminumPoissonsRatio) + '"' + """
-    defaultYieldStrength=""" + '"' + str(aluminumYield) + '"' + """/>
+    defaultDensity=""" + '"' + str(steelDensity) + '"' + """
+    defaultYoungModulus=""" + '"' + str(steelYoungsModulus) + '"' + """
+    defaultPoissonRatio=""" + '"' + str(steelPoissonsRatio) + '"' + """
+    defaultYieldStrength=""" + '"' + str(steelYield) + '"' + """/>
 
  <CeramicDamage
 
@@ -186,17 +202,15 @@ pfw["materialPropertyString"]="""
     maximumStrength="""+'"'+str(maximumStrength)+'"'+"""
     crackSpeed="""+'"'+str(crackSpeed)+'"'+"""
     thirdInvariantDependence=""" + '"' + str(thirdInvariantDependence) + '"' + """
-    refStrainRate="""+'"'+str(refStrainRate)+'"'+"""
-    rateSensitivity="""+'"'+str(rateSensitivity)+'"'+"""
-    m2="""+'"'+str(m2)+'"'+"""/>
+    refStrainRate=""" + '"' + str(refStrainRate) + '"' + """
+    rateSensitivity=""" + '"' + str(rateSensitivity) + '"' + """
+    m2=""" + '"' + str(m2) + '"' + """/>
 
 """
 
 # DEFORMATION ---------------------------------------------------------------------------------
 
-pfw["boundaryConditionTypes"]=[1, 0, 1, 0, 1, 0]  
-#pfw["absorbingDampingFactor"]=[500, 500, 1000, 1000, 1000, 1000]  
+pfw["boundaryConditionTypes"]=[0, 0, 0, 0, 0, 0]  
+pfw["absorbingDampingFactor"]=[1000,0,1000,1000,0,0] 
 pfw["plottableFields"]=["particleStrengthScale","target_damage", "particleVelocity"]
-
-#make the projectile look better
-pfw["particleRefinement"]=[8,1]
+pfw["particleRefinement"]=[4,1]

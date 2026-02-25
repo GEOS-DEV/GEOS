@@ -515,6 +515,10 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   Yt = std::max(Yt_baseline,Yt); //added for cutoff strength cannot go below initial
   Yc = std::max(Yc_baseline,Yc); //added for cutoff strength cannot go below initial
 
+
+    // Yt = std::min(Yt, 0.999*Ytmax);
+    // Yc = std::min(Yc, 0.999*Ycmax);
+
   //added by SG
 
   m_instTensileStrength[k][q]=Yt;
@@ -631,7 +635,9 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
   //real64 p2 = Ymax / mu;
 
   real64 m2=m_m2; // slope m2 which should be smaller than m1
-  real64 p2=(Yc-p1*m2)/(mu-m2); //added by SG
+  //real64 p2=(Yc-p1*m2)/(mu-m2); //added by SG
+
+  real64 p2=(Ymax)/(mu-m2); 
   
   // Determine scaled strength
   if( pressure <= p1 )
@@ -650,14 +656,14 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
     real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc);
    // real64 y2 = oneOverGamma * Ymax;
     //real64 y2 = y1+ oneOverGamma * (p2-p1)*m2; //added by SG
-    real64 y2 = oneOverGamma * (Ymax + m2 * p2); //added by SG
+    real64 y2 = oneOverGamma * (Ymax + m2 * pressure); //added by SG
     return pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2;
   }
   else
   {
     oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, m2 ) : 1.0; //changed dfdp to m2
     //return oneOverGamma * Ymax;
-    return oneOverGamma * (Ymax+m2 * (pressure-p2)); //added by SG -p2 add this
+    return oneOverGamma * (Ymax+m2 * (pressure)); //added by SG -p2 add this
   }
 }
 
@@ -704,11 +710,12 @@ real64 CeramicDamageUpdates::ceramicdY20dp( const real64 p, // pressure
 
   real64 dfdp1 = ceramicdY10dp( d, mu, Yc, Yt0 );
   real64 p1 = Yc/3;
-  real64 p2 = (Yc-p1*m2)/(mu-m2); 
+  //real64 p2 = (Yc-p1*m2)/(mu-m2); 
   //real64 p2 = Ymax/mu;
+  real64 p2=(Ymax)/(mu-m2); 
   //return dfdp1*( 1.0 - smoothStep(p,p1,p2) );
 
-  (void)Ymax; //added by SG
+  //(void)Ymax; //added by SG
 
   // Blend from dfdp1 at p1 to m2 at p2
     real64 s = smoothStep(p, p1, p2); //added by SG

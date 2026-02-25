@@ -1,0 +1,36 @@
+#!/bin/bash -l
+#SBATCH --job-name=allpressure
+#SBATCH --partition=parallel
+#SBATCH -A rhurley6
+#SBATCH --time=03-00:00:00
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=48
+#SBATCH --mem=0
+#SBATCH --export=ALL
+#SBATCH --mail-type=end
+#SBATCH --mail-user=sghosh29@jhu.edu
+
+start=$(date +%s)
+
+cd /home/sghosh29/data_rhurley6/sohanjit/finalGEOS/pressure1/
+mpirun -np 192 /home/sghosh29/data_rhurley6/sohanjit/GEOS/build-rockfish-clang-release/bin/geosx -i mpm_pressure1.xml -x 16 -y 12 -z 1
+rm -r mpm_pressure1_restart_*
+cd ..
+sshpass -p "iittojhu2021!" scp -r pressure1/ sghosh29@10.161.161.71:/data1/sghosh29/Working_MPM_LLNL/finalGEOS/
+
+cd /home/sghosh29/data_rhurley6/sohanjit/finalGEOS/pressure2/
+mpirun -np 192 /home/sghosh29/data_rhurley6/sohanjit/GEOS/build-rockfish-clang-release/bin/geosx -i mpm_pressure2.xml -x 16 -y 12 -z 1
+rm -r mpm_pressure2_restart_*
+cd ..
+sshpass -p "iittojhu2021!" scp -r pressure2/ sghosh29@10.161.161.71:/data1/sghosh29/Working_MPM_LLNL/finalGEOS/
+
+cd /home/sghosh29/data_rhurley6/sohanjit/finalGEOS/pressure3/
+mpirun -np 192 /home/sghosh29/data_rhurley6/sohanjit/GEOS/build-rockfish-clang-release/bin/geosx -i mpm_pressure3.xml -x 16 -y 12 -z 1
+rm -r mpm_pressure3_restart_*
+cd ..
+sshpass -p "iittojhu2021!" scp -r pressure3/ sghosh29@10.161.161.71:/data1/sghosh29/Working_MPM_LLNL/finalGEOS/
+
+
+end=$(date +%s)
+runtime=$((end-start))
+echo "Total runtime: $runtime seconds"

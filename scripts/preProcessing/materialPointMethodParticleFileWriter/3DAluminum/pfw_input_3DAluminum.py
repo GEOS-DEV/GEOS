@@ -9,17 +9,17 @@ pfw["runDebug"] = False
 
 # Unit system :  mg, microsecond, mm,  stress-> GPA, velocity mm/us=km/s
 
-impacterDiameter = 3 # aluminum sphere, mm
-sampleDiameter = 152.4 # target diameter
+impacterDiameter = 2 # aluminum sphere, mm
+sampleDiameter = 152.4/2 # target diameter
 sampleLength = 152.4 # target length (cylinder) , mm ##changed to 38.1 mm
-impactVelocity = 1.515 # mm/us
+impactVelocity = 2.077# mm/us. ##note the velocity changes here
 
 stopTime = sampleLength/impactVelocity 
 
-aluminumDensity = 7.85 #These are properties for steel
-aluminumYield = .305
-aluminumYoungsModulus = 210.
-aluminumPoissonsRatio = 0.2
+aluminumDensity = 2.784 #These are properties for aluminum
+aluminumYield = .270
+aluminumYoungsModulus = 70.
+aluminumPoissonsRatio = 0.33
 
 density = 2.1
 bulk = 25./( 3.*( 1. - 2.*0.2) )  #poisson ratio changed from 0.3 to 0.2, E from 40 to 25
@@ -31,15 +31,16 @@ maximumStrength = 5.0*compressiveStrength
 crackSpeed = 0.8 # See Curbach paper
 thirdInvariantDependence=1
 refStrainRate=1e-10
-rateSensitivity=0.15 # gives best results
+rateSensitivity=0.2 # gives best results
 m2=0.2
 
-#weibullVolume = 100.0 # mm^3
-#weibullVolume = np.pi*sampleLength*(sampleDiameter**2)/4
-#weibullModulus = 6.
+# weibullVolume = 100.0 # mm^3
+# #weibullVolume = np.pi*sampleLength*(sampleDiameter**2)/4
+# weibullModulus = 6.
 
 weibullVolume = 27.5361
 weibullModulus = 7.3692
+
 
 # Domain ---------------------------------------------------------------------------------
 
@@ -75,15 +76,15 @@ DX = (pfw["xmax"] - pfw["xmin"])/pfw["xpar"]/cppx
 
 pfw["mBatch"]=True
 pfw["mBank"]="imcomp" #"MAHEM"
-pfw["mWallTime"]="48:00:00"
+pfw["mWallTime"]="4800000:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"]=False #This prevents from automatic submission of Job
 pfw["autoRestart"]=True #Trues
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
 
-pfw["endTime"] = 300
-pfw["plotInterval"] = 25
+pfw["endTime"] = 50
+pfw["plotInterval"] = 5
 pfw["restartInterval"] = stopTime*10
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------

@@ -353,8 +353,8 @@ if mBank == None:
 wallTimeMinutes=int(wH)*60+int(wM)
 if wallTimeMinutes > 60 and runDebug:
   print("Wall time of debug job exceeded 60 minutes and was reset")
-  wallTimeMinutes = 60
-  mWallTime="01:00:00"
+  wallTimeMinutes = 60*10000 #added by SG
+  mWallTime="10000:00:00" #changes from 01:00:))
 
 maxRestartTime = wallTimeMinutes*60 - min(wallTimeMinutes,lastRestartBufferInSeconds)
 mWallTimeMinutes=str(wallTimeMinutes)

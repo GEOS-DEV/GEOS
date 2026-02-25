@@ -309,6 +309,32 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
   // Exactly compute pressure 
   real64 J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
+
+  //added by SG
+  
+  real64 epsilon_v = log(J);
+
+  // real64 S=1.75;  //for concrete hall,chhabildas
+  // real64 C0=2.235;
+  // real64 rho0=7.85;
+
+  real64 S=1.49;  //for steel, LASL data
+  real64 C0=4.580;
+  real64 rho0=7.85;
+
+  // real64 S=1.49;  //for aluminum, LASL data
+  // real64 C0=4.580;
+  // real64 rho0=7.85;
+
+  real64 K_0= rho0*C0*C0; 
+
+  real64 num=C0*C0*rho0*exp(epsilon_v)*(S+1-S*exp(epsilon_v));
+  real64 den=pow((S*exp(epsilon_v)-S+1),3);
+
+
+  m_bulkModulus[k] = fmax(K_0,num/den); // to be changed by SG
+  
+  //
   real64 pressure = -m_bulkModulus[k] * std::log( J );
 
   // Hypoelastically compute deviatoric stress
@@ -355,8 +381,97 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                      trialQ,
                                      deviator );
 
-  real64 yieldStrength = m_yieldStrength[k];
-  if( trialQ > yieldStrength )
+  //real64 yieldStrength = m_yieldStrength[k];
+
+  // From chandrasekharan 20005 for SS
+  // real64 A = 0.305;
+  // real64 B = 1.161;
+  // real64 n=0.61;
+  // real64 C=0.010;
+  // real64 eref = 1e-6; // this should have been 1 
+
+  real64 A = 0.490;  //steel from research gate higher Y than chandrasekharan
+  real64 B = 0.600;
+  real64 n=0.21;
+  real64 C=0.015;
+  real64 eref = 1;
+
+
+   // // plastic strain for JC
+  // real64 JCPlasticStrain[6] = { 0 };
+  // LvArray::tensorOps::copy< 6 >( JCPlasticStrain, m_plasticStrain[k][q] );
+  
+  // real64 eqPlasticStrain=sqrt( 2/3*(JCPlasticStrain[0]*JCPlasticStrain[0] +
+  // JCPlasticStrain[1]*JCPlasticStrain[1] +
+  // JCPlasticStrain[2]*JCPlasticStrain[2] +
+  // 2*JCPlasticStrain[3]*JCPlasticStrain[3] +
+  // 2*JCPlasticStrain[4]*JCPlasticStrain[4] +
+  // 2*JCPlasticStrain[5]*JCPlasticStrain[5] ));
+
+  //Strain rate calculation
+  real64 SR = sqrt( (strainIncrement[0]*strainIncrement[0] +
+  strainIncrement[1]*strainIncrement[1] +
+  strainIncrement[2]*strainIncrement[2] +
+  2*strainIncrement[3]*strainIncrement[3] +
+  2*strainIncrement[4]*strainIncrement[4] +
+  2*strainIncrement[5]*strainIncrement[5] )) / timeIncrement ;
+
+  // real64 yieldStrength = (A+B* std::pow(eqPlasticStrain, n))*(1+C*std::log(SR/eref));
+  
+  // if(eqPlasticStrain!=0.0)
+  // {std::cout << "Yield Strength = " << yieldStrength << "eqPlasticStrain = " << eqPlasticStrain <<std::endl;
+  // }
+
+  // CC: model needs the unrotated deformation gradient
+  // Right stretch tensor
+  //real64 rotationTranspose[3][3];
+  //LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
+
+  real64 oldPlasticStrain[6] = { 0 };
+  LvArray::tensorOps::copy< 6 >(oldPlasticStrain, m_plasticStrain[k][q]);
+  oldPlasticStrain[3] *= 0.5;
+  oldPlasticStrain[4] *= 0.5;
+  oldPlasticStrain[5] *= 0.5;
+
+  real64 unrotatedOldPlasticStrain[6] = { 0 };
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain);
+
+  unrotatedOldPlasticStrain[3] *= 2.0;
+  unrotatedOldPlasticStrain[4] *= 2.0;
+  unrotatedOldPlasticStrain[5] *= 2.0;
+
+  // Return to yield surface requires iterative solution
+  // Implemented fixed points, however a newton solver may be more efficient and applicable
+  real64 tol = 1e-10; // CC: need to experiment with these for the best options
+  int maxEvals = 100; // Same cas above
+
+  //real64 yieldStrength = m_yieldStrength[k];
+  real64 yieldStrength=A;
+  real64 oldYieldStrength = yieldStrength;
+  real64 unrotatedTempPlasticStrain[6] = { 0 };
+  real64 plasticStrainIncrement[6] = { 0 };
+
+ for(int iter=0; iter < maxEvals; ++iter)
+    {
+      LvArray::tensorOps::copy< 6 >(unrotatedTempPlasticStrain, unrotatedOldPlasticStrain);
+      LvArray::tensorOps::add< 6 >(unrotatedTempPlasticStrain, plasticStrainIncrement);
+
+      // Compute magnitude of plastic strain tensor
+      real64 gamma_p = 0.0;
+      for( int i = 0; i < 6; i++ )
+      {
+        gamma_p += 0.5*( 1 + (i < 3) ) * unrotatedTempPlasticStrain[i] * unrotatedTempPlasticStrain[i];
+      }
+      gamma_p = sqrt( gamma_p );
+
+      yieldStrength = (A+B* std::pow(gamma_p, n))*(1+C*std::log(SR/eref)); // CC: debugging disabling change in yield strength
+     
+    // if(gamma_p!=0.0)
+    // {std::cout << "Yield Strength = " << yieldStrength << "eqPlasticStrain = " << gamma_p <<"strain rate=" << SR <<std::endl;
+    // }
+
+
+  if( trialQ > yieldStrength || iter > 0 )
   {
     real64 oldStress[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( oldStress, stress );
@@ -372,7 +487,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
 
     // Compute plastic strain increment
-    real64 plasticStrainIncrement[6] = {0};
+    //real64 plasticStrainIncrement[6] = {0};
     computePlasticStrainIncrement( k,
                                    q,
                                    timeIncrement,           
@@ -380,24 +495,12 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                    stressIncrement,
                                    plasticStrainIncrement );
 
-    // Increment plastic strain
-    real64 oldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
-    oldPlasticStrain[3] *= 0.5;
-    oldPlasticStrain[4] *= 0.5;
-    oldPlasticStrain[5] *= 0.5;
-
-    real64 unrotatedOldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
-
-    unrotatedOldPlasticStrain[3] *= 2.0;
-    unrotatedOldPlasticStrain[4] *= 2.0;
-    unrotatedOldPlasticStrain[5] *= 2.0;
-
     real64 unrotatedNewPlasticStrain[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
     LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
 
+   if(fabs(yieldStrength - oldYieldStrength) < tol)
+        {
     unrotatedNewPlasticStrain[3] *= 0.5;
     unrotatedNewPlasticStrain[4] *= 0.5;
     unrotatedNewPlasticStrain[5] *= 0.5;
@@ -408,8 +511,24 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     newPlasticStrain[5] *= 2.0;
 
     LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+    return;
+        }
+
+    else
+       {
+          oldYieldStrength = yieldStrength;
+       }
+
+  }
+  else 
+   {
+     return;
+   }
+
   }
 
+    GEOS_ERROR("Plastic strain of StrainHardeningPolymer model did not converge within max evals.");
+  
   saveStress( k, q, stress );
 }
 

@@ -1,10 +1,20 @@
-#!/bin/bash
-#SBATCH -t 00:30:00
-#SBATCH -N 1
-#SBATCH -A imcomp
-#SBATCH -p pdebug
+#!/bin/bash -l
+#SBATCH --job-name=normal4
+#SBATCH --partition=bigmem
+#SBATCH -A rhurley6_bigmem
+#SBATCH --time=02-00:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=48
+#SBATCH --mem=0
+#SBATCH --export=ALL
+#SBATCH --mail-type=end
+#SBATCH --mail-user=sghosh29@jhu.edu
 
-# Set fileName=xxx (no spaces), where the input file is pfw_input_xxx.py 
+start=$(date +%s)
+
+source /home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/llnl-env/bin/activate
+
+cd /home/sghosh29/data_rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter
 
 fileNames=(
 	#elasticBlockUni
@@ -15,17 +25,12 @@ fileNames=(
 	#mesh4
 	#normal4
 	#abc4
-	weibull5
+	normal4
 
 )
 # ==========================================================================================================================================
 # This should be the location of the input file and anything else you need to copy over:
-#fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/Ftable/'
-#fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/planestrain/'
-#fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/ceramicDamage/'
-#fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/full3D_small/'
-#fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/full3D_part2/'
-fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/weibull/'
+fileLocation='/home/sghosh29/data-rhurley6/sohanjit/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/normal/'
 
 # This is where you want to run the simulation, which should be on a large parallel file system (lustre or workspace).  
 # This directory should exist.  sub-directory with fileName will be created
@@ -90,3 +95,6 @@ do
 		echo # Print empty line for legibility
 	fi
 done
+end=$(date +%s)
+runtime=$((end-start))
+echo "Total runtime: $runtime seconds"
