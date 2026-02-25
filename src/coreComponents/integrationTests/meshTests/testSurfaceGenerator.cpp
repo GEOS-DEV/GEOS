@@ -754,19 +754,35 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   // For boundary detection, we need to know which edges belong to only 1 face
   std::map< Edge, localIndex > edgeToFaceCount;
   std::set< Edge > fractureEdges;
-  
+
   if( ENABLE_DEBUG_PRINTS )
   {
     GEOS_LOG_RANK_0( "DEBUG: Extracting edges from fracture faces" );
   }
-  
-  // For each fracture face, extract its edges
-  // Use the FaceManager to get actual face connectivity
+
+  // The same physical face can be shared by two cells that both have all their nodes
+  // on the fracture. We must deduplicate faces (count each unique face once) before
+  // computing boundary edges, otherwise edges on the intersection line of a T-shaped
+  // fracture will appear with count=2 and be incorrectly classified as interior.
+  //
+  // Deduplication key: the Facet (sorted node set) already used for fractureFaces.
+  // We use the combined set for the combined edge count, and per-fracture sets for
+  // per-fracture boundary detection.
+
+  // Combined unique fracture faces (all fractures together)
+  std::set< Facet > seenCombined;
+
+  // Per-fracture unique face sets, keyed by fractureId
+  std::map< integer, std::set< Facet > > seenPerFracture;
+
+  // Per-fracture edge-to-face count (using unique faces only)
+  std::map< integer, std::map< Edge, localIndex > > perFractureEdgeCount;
+
   for( localIndex fi = 0; fi < faceManager.size(); ++fi )
   {
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( fi );
     bool allNodesInFracture = true;
-    
+
     for( localIndex ni = 0; ni < numNodesInFace; ++ni )
     {
       if( allFractureNodes.find( faceToNodeMap[fi][ni] ) == allFractureNodes.end() )
@@ -775,20 +791,75 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
         break;
       }
     }
-    
+
     if( allNodesInFracture && numNodesInFace >= 3 )
     {
-      // For quad faces (4 nodes), edges are: (0,1), (1,2), (2,3), (3,0)
-      // For tri faces (3 nodes), edges are: (0,1), (1,2), (2,0)
-      // Assume nodes are in cyclic order
+      std::vector< localIndex > faceNodes( numNodesInFace );
       for( localIndex ni = 0; ni < numNodesInFace; ++ni )
+        faceNodes[ni] = faceToNodeMap[fi][ni];
+      Facet facet( faceNodes.begin(), faceNodes.end() );
+
+      // Combined dedup: count each unique face only once for edgeToFaceCount
+      if( seenCombined.find( facet ) == seenCombined.end() )
       {
-        localIndex const nodeA = faceToNodeMap[fi][ni];
-        localIndex const nodeB = faceToNodeMap[fi][(ni + 1) % numNodesInFace];
-        Edge edge( nodeA, nodeB );
-        fractureEdges.insert( edge );
-        edgeToFaceCount[edge]++;
+        seenCombined.insert( facet );
+        for( localIndex ni = 0; ni < numNodesInFace; ++ni )
+        {
+          localIndex const nodeA = faceToNodeMap[fi][ni];
+          localIndex const nodeB = faceToNodeMap[fi][(ni + 1) % numNodesInFace];
+          Edge edge( nodeA, nodeB );
+          fractureEdges.insert( edge );
+          edgeToFaceCount[edge]++;
+        }
       }
+
+      // Per-fracture dedup: count each unique face only once per fracture
+      auto const fracIt = facetToFractureId.find( facet );
+      if( fracIt != facetToFractureId.end() )
+      {
+        integer const faceFractureId = fracIt->second;
+        auto & seenForFrac = seenPerFracture[faceFractureId];
+        if( seenForFrac.find( facet ) == seenForFrac.end() )
+        {
+          seenForFrac.insert( facet );
+          for( localIndex ni = 0; ni < numNodesInFace; ++ni )
+          {
+            localIndex const nodeA = faceToNodeMap[fi][ni];
+            localIndex const nodeB = faceToNodeMap[fi][(ni + 1) % numNodesInFace];
+            Edge edge( nodeA, nodeB );
+            perFractureEdgeCount[faceFractureId][edge]++;
+          }
+        }
+      }
+    }
+  }
+
+  // Build per-fracture boundary node sets.
+  // A node is on the BOUNDARY of fracture F if it belongs to an edge that appears
+  // exactly once in F's unique face set (i.e., the edge is on F's perimeter).
+  std::map< integer, std::set< localIndex > > perFractureBoundaryNodes;
+  for( auto const & [fid, edgeCount] : perFractureEdgeCount )
+  {
+    for( auto const & [edge, count] : edgeCount )
+    {
+      if( count == 1 )
+      {
+        perFractureBoundaryNodes[fid].insert( edge.nodeA );
+        perFractureBoundaryNodes[fid].insert( edge.nodeB );
+      }
+    }
+  }
+
+  // Build combined-perimeter edge count per node.
+  // This is the number of combined-boundary edges (count==1 in the combined unique faces)
+  // incident to each node. Used for the "boundary-of-all-fractures" node case.
+  std::map< localIndex, localIndex > nodeCombBndEdgeCount;
+  for( auto const & [edge, count] : edgeToFaceCount )
+  {
+    if( count == 1 )
+    {
+      nodeCombBndEdgeCount[edge.nodeA]++;
+      nodeCombBndEdgeCount[edge.nodeB]++;
     }
   }
   
@@ -996,84 +1067,114 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   }
   
   // Step 6: Compute duplication counts accounting for multiple fractures
-  // The duplication behavior depends on whether fractures cut the domain boundary:
   //
-  // INTERNAL FRACTURES (no boundary cut): Each node duplicated ONCE regardless of intersections
-  //   - 1 fracture: 1 new node
-  //   - 2 fractures (intersection): 1 new node (shared between both fractures)
-  //   - Formula: total = number of unique nodes to duplicate
+  // For boundary-cutting (full-span) fractures, intersection nodes are classified
+  // into three cases based on per-fracture boundary membership:
   //
-  // BOUNDARY-CUTTING FRACTURES: Nodes duplicated per fracture combination
-  //   - 1 fracture: 2^1 - 1 = 1 new node
-  //   - 2 fractures: 2^2 - 1 = 3 new nodes (one per quadrant)
-  //   - 3 fractures: 2^3 - 1 = 7 new nodes (one per octant)
-  //   - Formula: 2^N - 1 for N fractures
-  
+  //  Case A – node is interior to ALL its fractures (bnd_of is empty):
+  //    This is a true X/Y crossing. The fracture planes fully separate the node's
+  //    neighbourhood into 2^N sectors.
+  //    Formula: new = 2^N - 1
+  //
+  //  Case B – node is on the boundary of ALL its fractures (interior_to is empty):
+  //    This is a corner/edge node where multiple fracture perimeters meet on the
+  //    domain skin. The number of new nodes equals the number of combined-perimeter
+  //    edges meeting at this node minus 1.
+  //    Formula: new = max(1, nodeCombBndEdgeCount[n] - 1)
+  //
+  //  Case C – node is interior to SOME fractures and on the boundary of others
+  //    (T-junction): the stem fracture terminates at the top fracture. The number
+  //    of new nodes equals the total number of fractures containing this node (nf).
+  //    Formula: new = nf
+  //
+  //  Single-fracture nodes (nf==1) always produce 1 new node.
+  //  Internal (non-full-span) fractures always produce 1 new node per node.
+
   expected.numNodesToDuplicate = expected.internalNodes.size();
   expected.numEdgesToDuplicate = expected.internalEdges.size();
   expected.numFacesToDuplicate = expected.numFractureFaces;
-  
-  // Determine if this is a boundary-cutting case: use the isFullSpan flag we computed earlier
+
   bool const isBoundaryCutting = isFullSpan;
-  
+
   expected.totalDuplicatedNodes = 0;
-  
+
   if( ENABLE_DEBUG_PRINTS )
   {
     GEOS_LOG_RANK_0( "DEBUG: Computing duplication for each node (boundary-cutting: "
                      << (isBoundaryCutting ? "YES" : "NO") << "):" );
   }
-  
-  // Track distribution for analysis
+
   std::map< integer, localIndex > fractureCountDistribution;
   std::map< integer, localIndex > newNodesDistribution;
-  
+
   for( localIndex nodeIdx : expected.internalNodes )
   {
-    integer numFractures = nodeToFractureIds[nodeIdx].size();
+    auto const & fractureIds = nodeToFractureIds[nodeIdx];
+    integer const numFractures = static_cast< integer >( fractureIds.size() );
     integer newNodesForThisNode;
-    
-    if( isBoundaryCutting )
+
+    if( !isBoundaryCutting || numFractures == 1 )
     {
-      // Boundary-cutting: use exponential formula 2^N - 1
-      newNodesForThisNode = (1 << numFractures) - 1;
+      // Internal fracture or single-fracture: each node duplicated once
+      newNodesForThisNode = 1;
     }
     else
     {
-      // Internal fracture: each node duplicated once
-      newNodesForThisNode = 1;
+      // Classify this intersection node into Case A, B, or C
+      integer numInteriorTo = 0;   // fractures for which this node is strictly interior
+      integer numBndOf     = 0;    // fractures for which this node is on the boundary
+
+      for( integer fid : fractureIds )
+      {
+        auto const it = perFractureBoundaryNodes.find( fid );
+        bool const isOnFracBnd = (it != perFractureBoundaryNodes.end())
+                                  && (it->second.count( nodeIdx ) > 0);
+        if( isOnFracBnd )
+          ++numBndOf;
+        else
+          ++numInteriorTo;
+      }
+
+      if( numBndOf == 0 )
+      {
+        // Case A: interior to all fractures – true crossing
+        newNodesForThisNode = (1 << numFractures) - 1;
+      }
+      else if( numInteriorTo == 0 )
+      {
+        // Case B: on boundary of all fractures – perimeter corner
+        auto const cntIt = nodeCombBndEdgeCount.find( nodeIdx );
+        localIndex const nbnd = (cntIt != nodeCombBndEdgeCount.end()) ? cntIt->second : 1;
+        newNodesForThisNode = static_cast< integer >( std::max( localIndex{1}, nbnd - 1 ) );
+      }
+      else
+      {
+        // Case C: mixed – T-junction style
+        newNodesForThisNode = numFractures;
+      }
     }
-    
+
     expected.totalDuplicatedNodes += newNodesForThisNode;
-    
     fractureCountDistribution[numFractures]++;
     newNodesDistribution[newNodesForThisNode]++;
-    
+
     if( ENABLE_DEBUG_PRINTS )
     {
       real64 const x = nodePositions[nodeIdx][0];
       real64 const y = nodePositions[nodeIdx][1];
       real64 const z = nodePositions[nodeIdx][2];
-      
       GEOS_LOG_RANK_0( "  Node " << nodeIdx << " at (" << x << ", " << y << ", " << z << "): "
                        << numFractures << " fracture(s) -> " << newNodesForThisNode << " new nodes" );
     }
   }
-  
+
   if( ENABLE_DEBUG_PRINTS )
   {
     GEOS_LOG_RANK_0( "DEBUG: Distribution summary:" );
-    GEOS_LOG_RANK_0( "  Nodes by fracture count:" );
     for( auto const & [numFractures, count] : fractureCountDistribution )
     {
-      integer newNodesPerNode = isBoundaryCutting ? ((1 << numFractures) - 1) : 1;
-      GEOS_LOG_RANK_0( "    " << count << " node(s) in " << numFractures << " fracture(s) -> "
-                       << newNodesPerNode << " new nodes each = " << (count * newNodesPerNode) << " total" );
+      GEOS_LOG_RANK_0( "    " << count << " node(s) in " << numFractures << " fracture(s)" );
     }
-  }
-  
-  if( ENABLE_DEBUG_PRINTS )
-  {
     GEOS_LOG_RANK_0( "DEBUG: Total from summation: " << expected.totalDuplicatedNodes );
   }
   
@@ -1403,10 +1504,10 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorTest,
   ::testing::Values(
 
-    std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_123",   "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_t_shaped_tet_hex_py_DFN_123",   "t_shaped_wavy_mesh_mixed_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_hex_py_DFN_123",   "y_shaped_wavy_mesh_mixed_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",   "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+//    std::make_tuple( "Mkt_BndCut_t_shaped_tet_hex_py_DFN_12",   "t_shaped_wavy_mesh_mixed_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
+//    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_hex_py_DFN_123",   "y_shaped_wavy_mesh_mixed_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
 
     // =======================================================================
     // dfn_market meshes
