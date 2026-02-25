@@ -123,14 +123,14 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  this->registerWrapper( viewKeyStruct::computesPrescribedStressPathString(), &m_computePrescribedStressPath ).
+  this->registerWrapper( viewKeyStruct::computePrescribedStressPathString(), &m_computePrescribedStressPath ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );
 
   // TODO: temporary. It will be removed after analyzing the impact of computing or not the gemoetric component 
   // of the transmissibility (aka stencil weights).
-  this->registerWrapper( viewKeyStruct::updatesStencilString(), &m_updateStencil ). 
+  this->registerWrapper( viewKeyStruct::updateStencilString(), &m_updateStencil ). 
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility)." );  

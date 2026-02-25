@@ -87,12 +87,12 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
-    static constexpr char const * computesPrescribedStressPathString() { return "computesPrescribedStressPath"; }
+    static constexpr char const * computePrescribedStressPathString() { return "computePrescribedStressPath"; }
     static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
     
     // TODO: temporary. It will be removed after analyzing the impact of computing or not the gemoetric component 
     // of the transmissibility (aka stencil weights).
-    static constexpr char const * updatesStencilString() { return "updatesStencil"; } 
+    static constexpr char const * updateStencilString() { return "updateStencil"; } 
   };
 
   /**

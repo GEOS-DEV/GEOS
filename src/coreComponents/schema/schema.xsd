@@ -3066,8 +3066,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--contMultiplierDBC => Factor by which continuation parameter is changed every newton when DBC is used-->
 		<xsd:attribute name="contMultiplierDBC" type="real64" default="0.5" />
 		<!--continuationDBC => Flag for enabling continuation parameter-->
@@ -3145,8 +3145,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useDBC => Enable Dissipation-based continuation flux-->
 		<xsd:attribute name="useDBC" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
@@ -3198,8 +3198,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--formulationType => Type of formulation used.-->
@@ -3259,8 +3259,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -3943,8 +3943,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--gravityDensityScheme => Scheme for density treatment in gravity-->
@@ -3981,8 +3981,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativePressureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
@@ -4464,8 +4464,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -4504,8 +4504,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4533,8 +4533,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
@@ -4573,8 +4573,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
 		<xsd:attribute name="transMultExp" type="real64" default="1" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -4643,8 +4643,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -4678,8 +4678,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4701,8 +4701,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -4736,8 +4736,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4998,8 +4998,8 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computesPrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computesPrescribedStressPath" type="integer" default="0" />
+		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
+		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -5033,8 +5033,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updatesStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updatesStencil" type="integer" default="0" />
+		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
+		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
