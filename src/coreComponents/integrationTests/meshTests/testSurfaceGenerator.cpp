@@ -460,7 +460,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "Test " << testCaseName << ": No nodes were duplicated"
     << "\n  Nodes before: " << statsBefore.numNodes
     << "\n  Nodes after:  " << statsAfter.numNodes
-    << "\n  Predicted to split: " << expected.numNodesToDuplicate << " nodes"
+    << "\n  Expected to split: " << expected.numNodesToDuplicate << " nodes"
     << "\n  Fracture elements created: " << statsAfter.numFractureElements
     << "\n  POSSIBLE CAUSES:"
     << "\n    - Fracture topology prediction found no internal nodes to split"
@@ -1150,7 +1150,7 @@ protected:
     
     GEOS_LOG_RANK_0( "========================================" );
     GEOS_LOG_RANK_0( "Test: " << testCaseName );
-    GEOS_LOG_RANK_0( "Predicted duplication:" );
+    GEOS_LOG_RANK_0( "Expected duplication:" );
     GEOS_LOG_RANK_0( "  Nodes to split: " << expected.numNodesToDuplicate
                      << " (new nodes created: " << expected.totalDuplicatedNodes << ")" );
     GEOS_LOG_RANK_0( "  Edges to split: " << expected.numEdgesToDuplicate
