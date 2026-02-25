@@ -365,7 +365,7 @@ protected:
 
 private:
 
-  struct FlashConditions
+  struct ReferenceConditions
   {
     real64 pressure;
     real64 temperature;
@@ -379,12 +379,12 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  void precomputeFlashConditions( real64 time_n,
+  void precomputeReferenceConditions( real64 time_n,
                                   Group & meshBodies,
                                   MeshBody & meshBody,
                                   WellElementSubRegion const & subRegion );
 
-  FlashConditions getFlashConditions( WellElementSubRegion const & subRegion );
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

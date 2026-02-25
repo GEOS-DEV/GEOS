@@ -708,7 +708,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   string const massUnit = m_useMass ? "kg" : "mol";
 
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-  FlashConditions const flashConditions = getFlashConditions( subRegion );
+  ReferenceConditions const refConditions = getReferenceConditions( subRegion );
 
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
@@ -750,7 +750,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                   dPhaseFrac,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
-                                  &flashConditions,
+                                  &refConditions,
                                   &currentTotalVolRate,
                                   dCurrentTotalVolRate,
                                   currentPhaseVolRate,
@@ -770,28 +770,18 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         //      - Surface conditions: using the surface pressure provided by the user
         //      - Segment conditions: using the pressure in the top element
         //      - Reservoir conditions: using the average region pressure
-        if( useSurfaceConditions )
+        fluidSeparatorWrapper.update( iwelemRef, 0,
+                                      refConditions.pressure, refConditions.temperature,
+                                      compFrac[iwelemRef] );
+        if( useSurfaceConditions && logSurfaceCondition )
         {
-          // we need to compute the surface density
-          fluidSeparatorWrapper.update( iwelemRef, 0,
-                                        flashConditions.pressure, flashConditions.temperature,
-                                        compFrac[iwelemRef] );
-          if( logSurfaceCondition )
-          {
-            GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
-                                     wellControlsName, flashConditions.pressure, flashConditions.temperature ) );
-          }
+          GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
+                                   wellControlsName, refConditions.pressure, refConditions.temperature ) );
+        }
 #ifdef GEOS_USE_HIP
-          GEOS_UNUSED_VAR( wellControlsName );
+        GEOS_UNUSED_VAR( wellControlsName );
 #endif
 
-        }
-        else
-        {
-          fluidSeparatorWrapper.update( iwelemRef, 0,
-                                        flashConditions.pressure, flashConditions.temperature,
-                                        compFrac[iwelemRef] );
-        }
         // Step 2: update the total volume rate
 
         real64 const currentTotalRate = connRate[iwelemRef];
@@ -879,10 +869,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   } );
 }
 
-void CompositionalMultiphaseWell::precomputeFlashConditions( real64 const time_n,
-                                                             Group & meshBodies,
-                                                             MeshBody & meshBody,
-                                                             WellElementSubRegion const & subRegion )
+void CompositionalMultiphaseWell::precomputeReferenceConditions( real64 const time_n,
+                                                                 Group & meshBodies,
+                                                                 MeshBody & meshBody,
+                                                                 WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
@@ -925,8 +915,8 @@ void CompositionalMultiphaseWell::precomputeFlashConditions( real64 const time_n
   }
 }
 
-CompositionalMultiphaseWell::FlashConditions
-CompositionalMultiphaseWell::getFlashConditions( WellElementSubRegion const & subRegion )
+CompositionalMultiphaseWell::ReferenceConditions
+CompositionalMultiphaseWell::getReferenceConditions( WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
@@ -1193,7 +1183,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                                 wellElemCompDens );
 
         // 5) Recompute the pressure-dependent properties
-        precomputeFlashConditions( time_n, meshBodies, meshBody, subRegion );
+        precomputeReferenceConditions( time_n, meshBodies, meshBody, subRegion );
         updateSubRegionState( subRegion );
 
         // 6) Estimate the well rates
