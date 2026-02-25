@@ -27,8 +27,8 @@
  *
  * Case 1: Fractures Cutting the 3D Boundary
  *   - Connectivity: Verify the mesh is physically bisected into N disjoint components
- *   - Euler Invariant: Confirm the global Euler characteristic χ = Σ(V - E + F - C) equals
- *     the number of disconnected components (e.g., χ = 2 for a single cut)
+ *   - Euler-Poincaré: Compute χ = V - E + F - C for the bulk mesh. For a single connected
+ *     solid: χ = 1. After splitting, χ changes based on topology
  *   - Boundary Tags: Ensure nodes on exterior domain faces retain their original boundary
  *     condition IDs after duplication
  *   - Intersection Nodes: At the intersection of two boundary-cutting fractures, verify
@@ -196,20 +196,21 @@ struct TopologyStats
 };
 
 /**
- * @brief Compute Euler characteristic using bulk cell elements
+ * @brief Compute Euler-Poincaré characteristic for 3D bulk mesh
  *
- * Computes the Euler characteristic χ = V - E + F - C using ONLY CellElementSubRegion data
- * (bulk cell elements), which excludes fracture surface elements (FaceElementSubRegion).
+ * Computes χ = V - E + F - C using ONLY CellElementSubRegion data (bulk cell elements),
+ * which excludes fracture surface elements (FaceElementSubRegion).
  *
- * The Euler characteristic can indicate topological changes:
- * - For a simple connected domain: χ = 1
- * - After creating internal voids/holes: χ increases
- * - After domain separation: χ changes based on connectivity
+ * For 3D solid meshes:
+ * - χ = 1 for a single connected solid body without holes
+ * - χ = number of connected components minus number of holes/voids
+ *
+ * This is the correct topological invariant for 3D domains.
  *
  * @param nodeManager Node manager (unused, kept for interface consistency)
  * @param faceManager Face manager (unused, kept for interface consistency)
  * @param elemManager Element region manager containing CellElementSubRegions
- * @return Euler characteristic χ = V - E + F - C
+ * @return Euler-Poincaré characteristic χ = V - E + F - C
  */
 integer computeEulerCharacteristic( NodeManager const & nodeManager,
                                     FaceManager const & faceManager,
@@ -254,43 +255,27 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
       }
       else if( numNodesPerElem == 8 )  // Hexahedron
       {
-        // Create all 12 edges for this hexahedron
-        Edge edges[12] = {
-          Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ),
-          Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ),
-          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ),
-          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][0] ),
-          Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ),
-          Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][6] ),
-          Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][7] ),
-          Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][4] ),
-          Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ),
-          Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][5] ),
-          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ),
-          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] )
-        };
+        // Edges (12)
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][0] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][6] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][7] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][4] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][5] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] ) );
         
-        // Insert each edge
-        for( int i = 0; i < 12; ++i )
-        {
-          uniqueEdges.insert( edges[i] );
-        }
-        
-        // Create all 6 faces for this hexahedron
-        Facet faces[6] = {
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ),
-          Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][6], elemToNodeMap[ei][7]} ),
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ),
-          Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ),
-          Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][5]} ),
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][4]} )
-        };
-        
-        // Insert each face
-        for( int i = 0; i < 6; ++i )
-        {
-          uniqueFaces.insert( faces[i] );
-        }
+        // Faces (6)
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][6], elemToNodeMap[ei][7]} ) );
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ) );
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][5]} ) );
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][4]} ) );
       }
       else if( numNodesPerElem == 6 )  // Prism
       {
@@ -339,16 +324,17 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   localIndex const F = uniqueFaces.size();
   localIndex const C = numCells;
   
-  // Compute Euler characteristic: χ = V - E + F - C
+  // Compute Euler-Poincaré characteristic: χ = V - E + F - C
+  // For a connected 3D solid: χ = 1
   integer const eulerCharacteristic = V - E + F - C;
   
   return eulerCharacteristic;
 }
 
 /**
- * @brief Compute Euler characteristic (V - E + F - C)
+ * @brief Compute Euler-Poincaré characteristic (V - E + F - C) from topology stats
  *
- * For a topologically valid mesh, χ = number of bodies (domain fragments).
+ * For a connected 3D solid body: χ = 1
  */
 integer computeEulerCharacteristic( TopologyStats const & stats )
 {
@@ -460,7 +446,7 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "Test " << testCaseName << ": No nodes were duplicated"
     << "\n  Nodes before: " << statsBefore.numNodes
     << "\n  Nodes after:  " << statsAfter.numNodes
-    << "\n  Expected to split: " << expected.numNodesToDuplicate << " nodes"
+    << "\n  Predicted to split: " << expected.numNodesToDuplicate << " nodes"
     << "\n  Fracture elements created: " << statsAfter.numFractureElements
     << "\n  POSSIBLE CAUSES:"
     << "\n    - Fracture topology prediction found no internal nodes to split"
@@ -1009,13 +995,15 @@ std::vector< std::string > parseNodeSetNames( std::string const & nodeSetNames )
 /**
  * @brief Integration test for SurfaceGenerator
  *
- * Parametrized with std::tuple<std::string, std::string, std::string>:
+ * Parametrized with std::tuple<std::string, std::string, std::string, integer, integer>:
  *  - std::string:  Test case name
  *  - std::string:  Mesh file name
  *  - std::string:  Node set names (e.g., "{ f1_node_set }" or "{ f1_node_set, f2_node_set }")
+ *  - integer:      Expected Euler characteristic before split (χ = V - E + F - C)
+ *  - integer:      Expected Euler characteristic after split (χ = V - E + F - C)
  */
 class SurfaceGeneratorTest
-  : public ::testing::TestWithParam< std::tuple< std::string, std::string, std::string > >
+  : public ::testing::TestWithParam< std::tuple< std::string, std::string, std::string, integer, integer > >
 {
 protected:
   void SetUp() override
@@ -1100,7 +1088,9 @@ protected:
    */
   void runTest( std::string const & testCaseName,
                 std::string const & meshFileName,
-                std::string const & nodeSetNames )
+                std::string const & nodeSetNames,
+                integer const expectedEulerBefore,
+                integer const expectedEulerAfter )
   {
     std::string const xmlInput = generateXmlInput(
       meshFileName,  // Mesh files are copied to same directory as executable
@@ -1158,9 +1148,16 @@ protected:
     GEOS_LOG_RANK_0( "  Faces to split: " << expected.numFacesToDuplicate
                      << " (new faces created: " << expected.totalDuplicatedFaces << ")" );
 
-    // Compute Euler characteristic on bulk elements only (excludes fracture surfaces)
+    // Compute Euler-Poincaré characteristic χ = V - E + F - C (should be 1 for connected solid)
     integer const eulerCharBeforeSplit = computeEulerCharacteristic( nodeManager, faceManager, elemManager );
     GEOS_LOG_RANK_0( "  Euler characteristic before split: " << eulerCharBeforeSplit );
+    
+    // Validate expected Euler characteristic before split
+    EXPECT_EQ( eulerCharBeforeSplit, expectedEulerBefore )
+      << "Test " << testCaseName << ": Euler characteristic MISMATCH before split"
+      << "\n  Expected χ: " << expectedEulerBefore
+      << "\n  Actual χ:   " << eulerCharBeforeSplit
+      << "\n  Mesh file:  " << meshFileName;
     
     // Run the simulation (executes SurfaceGenerator and splits the mesh)
     state.run();
@@ -1190,12 +1187,21 @@ protected:
     GEOS_LOG_RANK_0( "  New nodes created: " << statsAfter.numDuplicatedNodes );
     GEOS_LOG_RANK_0( "  Fracture elements created: " << statsAfter.numFractureElements );
     
-    // Compute Euler characteristic on bulk elements only (excludes fracture surfaces)
+    // Compute Euler-Poincaré characteristic χ = V - E + F - C after split
     integer const eulerCharAfterSplit = computeEulerCharacteristic( nodeManager, faceManager, elemManager );
     GEOS_LOG_RANK_0( "  Euler characteristic after split: " << eulerCharAfterSplit );
 
-    // Compute Euler characteristic
-    statsAfter.eulerCharacteristic = computeEulerCharacteristic( statsAfter );
+    // Validate expected Euler characteristic after split
+    EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
+      << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
+      << "\n  Expected χ: " << expectedEulerAfter
+      << "\n  Actual χ:   " << eulerCharAfterSplit
+      << "\n  Mesh file:  " << meshFileName
+      << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
+      << "\n  Fracture elements: " << statsAfter.numFractureElements;
+
+    // Store Euler characteristic
+    statsAfter.eulerCharacteristic = eulerCharAfterSplit;
     statsAfter.numBodies = eulerCharAfterSplit;
 
     // ========================================
@@ -1233,8 +1239,10 @@ TEST_P( SurfaceGeneratorTest, TopologyValidation )
   std::string const & testCaseName = std::get< 0 >( params );
   std::string const & meshFileName = std::get< 1 >( params );
   std::string const & nodeSetNames = std::get< 2 >( params );
+  integer const expectedEulerBefore = std::get< 3 >( params );
+  integer const expectedEulerAfter = std::get< 4 >( params );
 
-  runTest( testCaseName, meshFileName, nodeSetNames );
+  runTest( testCaseName, meshFileName, nodeSetNames, expectedEulerBefore, expectedEulerAfter );
 }
 
 // ---------------------------------------------------------------------------
@@ -1244,22 +1252,16 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorCases,
   SurfaceGeneratorTest,
   ::testing::Values(
-    // Single fracture tests
-    std::make_tuple( "SingleTet_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }" )
-//    std::make_tuple( "SingleTet_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }" )
-    
-    // Double fracture tests
-//    std::make_tuple( "DoubleTet_DFN12", "fractured_mesh_tet_DFN_12.vtu", "{ f1_node_set, f2_node_set }" ),
-//    std::make_tuple( "DoubleTet_DFN13", "fractured_mesh_tet_DFN_13.vtu", "{ f1_node_set, f3_node_set }" ),
-//    std::make_tuple( "DoubleTet_DFN23", "fractured_mesh_tet_DFN_23.vtu", "{ f2_node_set, f3_node_set }" ),
-    
-    // Triple fracture tests
-//    std::make_tuple( "TripleTet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }" )
-    
-    // Hex mesh tests
-//    std::make_tuple( "SingleHex_DFN1", "fractured_full_span_mesh_hex_DFN_1.vtu", "{ f1_node_set }" ),
-//    std::make_tuple( "TripleHex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }" ),
-//    std::make_tuple( "DoubleHex_DFN12", "fractured_mesh_hex_DFN_12.vtu", "{ f1_node_set, f2_node_set }" )
+    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 )
+//    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 )
+
+//    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
+                    
   )
 );
 
