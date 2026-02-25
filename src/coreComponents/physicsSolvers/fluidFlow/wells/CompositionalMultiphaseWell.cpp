@@ -446,16 +446,18 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
 {
   WellControls & wellControls = getWellControls( subRegion );
 
-  string_view refRegionName = wellControls.referenceReservoirRegion();
-  bool const useSegmentValues = refRegionName.empty();
-
-  static bool firstNoRefRegionMsg = true;
-  if( useSegmentValues && firstNoRefRegionMsg )
+  if( !wellControls.useSurfaceConditions() )
   {
-    GEOS_WARNING( "WellControls " << WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                  " not set and well constraint fluid property calculations will use top segement pressure and temp ",
-                  wellControls.getDataContext() );
-    firstNoRefRegionMsg = false;
+    bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
+
+    static bool firstNoRefRegionMsg = true;
+    if( useSegmentValues && firstNoRefRegionMsg )
+    {
+      GEOS_WARNING( "WellControls " << WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+                    " not set and well constraint fluid property calculations will use top segement pressure and temp ",
+                    wellControls.getDataContext() );
+      firstNoRefRegionMsg = false;
+    }
   }
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
