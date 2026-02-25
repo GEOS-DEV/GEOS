@@ -44,6 +44,12 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Minimum volume fraction value for each phase" );
+
   registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
   registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
 }
@@ -54,11 +60,11 @@ void CapillaryPressureBase::postInputInitialization()
 
   integer const numPhases = numFluidPhases();
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );

@@ -502,7 +502,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
         {
           string const errorMsg = GEOS_FMT( "Error while parsing region {} ({}):\n",
                                             regionName, regionNodePos.toString() );
-          ErrorLogger::global().currentErrorMsg()
+          ErrorLogger::global().modifyCurrentExceptionMessage()
             .addToMsg( errorMsg )
             .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) );
           throw InputError( e, errorMsg );
@@ -944,7 +944,6 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
-        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
         {
@@ -988,17 +987,13 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                   using SUBREGION_TYPE = TYPEOFREF( subRegion );
 
                   typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
-                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
-                                                                                           edgeManager,
-                                                                                           faceManager,
-                                                                                           subRegion,
-                                                                                           meshData );
+                  FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                                                                           edgeManager,
+                                                                           faceManager,
+                                                                           subRegion,
+                                                                           meshData );
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
-
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL )
-                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
-//#endif
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),

@@ -270,7 +270,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( reqNotAvail, reqNotAvail.end() ) );
     if( !reqNotAvail.empty() )
     {
-      GEOS_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available." );
+      GEOS_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available.", getDataContext() );
     }
     // From now on all the requested wrappers are guarantied to be available.
 

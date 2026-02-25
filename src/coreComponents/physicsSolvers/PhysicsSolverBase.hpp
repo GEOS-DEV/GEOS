@@ -1271,8 +1271,9 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
                                 reference();
 
   constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
-  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
-                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{} constitutive model not found on subregion {}",
+                                                     constitutiveType, subRegion.getName() ),
+                 getDataContext() );
 }
 
 /**

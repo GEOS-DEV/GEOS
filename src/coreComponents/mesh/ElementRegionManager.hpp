@@ -1515,9 +1515,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         else
         {
           GEOS_ERROR_IF( !allowMissingViews,
-                         subRegion.getDataContext() <<
-                         ": Material " << constitutiveRelation.getDataContext() <<
-                         " does not contain " << viewName,
+                         " : Material " << constitutiveRelation.getName() << " does not contain " << viewName,
                          subRegion.getDataContext(), constitutiveRelation.getDataContext() );
         }
       } );
@@ -1565,8 +1563,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOS_ERROR_IF( !allowMissingViews, region.getDataContext() << ": Material " << materialName
-                                                                     << " does not contain " << viewName,
+          GEOS_ERROR_IF( !allowMissingViews, "Material " << materialName
+                                                         << " does not contain " << viewName,
                          region.getDataContext(), subRegion.getDataContext() );
         }
       } );

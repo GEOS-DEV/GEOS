@@ -57,8 +57,7 @@ void MultiPhaseConstantThermalConductivity::postInputInitialization()
   GEOS_THROW_IF( m_thermalConductivityComponents[0] < 0 ||
                  m_thermalConductivityComponents[1] < 0 ||
                  m_thermalConductivityComponents[2] < 0,
-                 GEOS_FMT( "{}: the components of the thermal conductivity tensor must be non-negative",
-                           getFullName() ),
+                 "the components of the thermal conductivity tensor must be non-negative",
                  InputError, getDataContext() );
 }
 
