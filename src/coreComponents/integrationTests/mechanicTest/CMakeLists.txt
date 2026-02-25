@@ -9,7 +9,9 @@ set( dependencyList mainInterface testingUtilities )
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
-# Mesh files needed by all tests
+# Mesh files needed by all tests (sourced from the canonical dfn_market directory)
+set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market )
+
 set( mesh_files
      fractured_mesh_hex_DFN_1.vtu
      fractured_mesh_hex_DFN_12.vtu
@@ -51,7 +53,7 @@ if( ENABLE_MPI )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                  ${CMAKE_CURRENT_SOURCE_DIR}/${mesh_file}
+                  ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
                   $<TARGET_FILE_DIR:${test_name}>
       )
     endforeach()
@@ -78,7 +80,7 @@ else()
         add_custom_command(
             TARGET ${test_name} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    ${CMAKE_CURRENT_SOURCE_DIR}/${mesh_file}
+                    ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
                     $<TARGET_FILE_DIR:${test_name}>
         )
       endforeach()

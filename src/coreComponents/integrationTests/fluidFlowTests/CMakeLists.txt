@@ -94,7 +94,7 @@ if( ENABLE_MPI )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                  ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/${mesh}
+                  ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market/${mesh}
                   $<TARGET_FILE_DIR:${test_name}>
       )
     endforeach()
@@ -137,7 +137,7 @@ if( ENABLE_MPI )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                  ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/${mesh}
+                  ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market/${mesh}
                   $<TARGET_FILE_DIR:${test_name}>
       )
     endforeach()
