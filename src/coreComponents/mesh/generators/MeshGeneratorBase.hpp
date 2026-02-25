@@ -146,7 +146,10 @@ public:
   /// Key for the checkEulerCharacteristic XML attribute
   struct viewKeyStruct
   {
-    /// XML attribute name
+    /**
+     * @brief Get the XML attribute name for the Euler characteristic check flag.
+     * @return The string "checkEulerCharacteristic".
+     */
     constexpr static char const * checkEulerCharacteristicString() { return "checkEulerCharacteristic"; }
   };
 
