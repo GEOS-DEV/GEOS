@@ -948,9 +948,12 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       ++numBoundaryNodesNotTouchingDomain;
     }
     
-    GEOS_LOG_RANK_0( "  Node " << nodeIdx << " at (" << x << ", " << y << ", " << z << ") ["
-                     << numFractures << " fracture(s)]: "
-                     << reason << " -> " << (shouldDuplicate ? "DUPLICATE" : "NO DUPLICATE") );
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      GEOS_LOG_RANK_0( "  Node " << nodeIdx << " at (" << x << ", " << y << ", " << z << ") ["
+                       << numFractures << " fracture(s)]: "
+                       << reason << " -> " << (shouldDuplicate ? "DUPLICATE" : "NO DUPLICATE") );
+    }
     
     if( shouldDuplicate )
     {
