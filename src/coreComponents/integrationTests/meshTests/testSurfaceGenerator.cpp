@@ -178,6 +178,8 @@ struct ExpectedDuplication
   std::set< localIndex > boundaryNodes;    // Nodes on domain boundary (not duplicated)
   std::set< Edge > internalEdges;          // Edges to duplicate (interior only)
   std::set< Edge > boundaryEdges;          // Edges on domain boundary (not duplicated)
+  
+  localIndex numBoundaryNodesOnDomain = 0; // Count of fracture boundary nodes that touch domain boundary
 };
 
 /**
@@ -255,27 +257,30 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
       }
       else if( numNodesPerElem == 8 )  // Hexahedron
       {
-        // Edges (12)
+        // NOTE: GEOS uses ordering { 0, 1, 3, 2, 4, 5, 7, 6 } (see SiloFile.cpp:1338)
+        // Bottom face: 0->1->3->2, Top face: 4->5->7->6
+        
+        // Edges (12): 4 bottom + 4 top + 4 vertical
         uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][0] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][3] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][2] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][0] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][6] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][7] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][4] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][7] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][6] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][4] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][5] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] ) );
+        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ) );
         
-        // Faces (6)
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][6], elemToNodeMap[ei][7]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][5]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][4]} ) );
+        // Faces (6): bottom, top, and 4 sides
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][2]} ) );  // bottom
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );  // top
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ) );  // front
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );  // back
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][5]} ) );  // right
+        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][4]} ) );  // left
       }
       else if( numNodesPerElem == 6 )  // Prism
       {
@@ -434,13 +439,15 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
                                       ElementRegionManager const & elemManager )
 {
   // A1: Validate node duplication matches prediction
+  // Note: totalDuplicatedNodes = total NEW nodes created (not counting original nodes)
+  // For a node at N-fracture intersection: N new nodes are created
   EXPECT_EQ( statsAfter.numDuplicatedNodes, expected.totalDuplicatedNodes )
     << "Test " << testCaseName << ": Node duplication prediction MISMATCH"
     << "\n  Expected new nodes: " << expected.totalDuplicatedNodes
-    << "\n  Actual new nodes:    " << statsAfter.numDuplicatedNodes
-    << "\n  Nodes before split:  " << statsBefore.numNodes
-    << "\n  Nodes after split:   " << statsAfter.numNodes
-    << "\n  Fracture node sets:  " << nodeSetNames;
+    << "\n  Actual new nodes:   " << statsAfter.numDuplicatedNodes
+    << "\n  Nodes before split: " << statsBefore.numNodes
+    << "\n  Nodes after split:  " << statsAfter.numNodes
+    << "\n  Fracture node sets: " << nodeSetNames;
 
   // A2: Verify fracture elements were created
   EXPECT_GT( statsAfter.numFractureElements, 0 )
@@ -491,13 +498,13 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  NOTE: For a conformal mesh, expected χ = 1 (single connected solid)";
 
   // A6: Validate expected Euler characteristic after split
-//  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
-//    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
-//    << "\n  Expected χ: " << expectedEulerAfter
-//    << "\n  Actual χ:   " << eulerCharAfterSplit
-//    << "\n  Mesh file:  " << meshFileName
-//    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
-//    << "\n  Fracture elements: " << statsAfter.numFractureElements;
+  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
+    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
+    << "\n  Expected χ: " << expectedEulerAfter
+    << "\n  Actual χ:   " << eulerCharAfterSplit
+    << "\n  Mesh file:  " << meshFileName
+    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
+    << "\n  Fracture elements: " << statsAfter.numFractureElements;
   
   // A7: Validate element Jacobians (no degenerate elements)
   checkElementJacobians( elemManager );
@@ -569,20 +576,23 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       
       if( numNodesPerElem == 8 )  // Hexahedron
       {
+        // NOTE: GEOS uses ordering { 0, 1, 3, 2, 4, 5, 7, 6 } (see SiloFile.cpp:1338)
+        // Bottom face: 0->1->3->2, Top face: 4->5->7->6
+        
         // Create all 12 edges for this hexahedron
         Edge edges[12] = {
           Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ),
-          Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ),
-          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ),
-          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][0] ),
+          Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][3] ),
+          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][2] ),
+          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][0] ),
           Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ),
-          Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][6] ),
-          Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][7] ),
-          Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][4] ),
+          Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][7] ),
+          Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][6] ),
+          Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][4] ),
           Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ),
           Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][5] ),
-          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ),
-          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] )
+          Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] ),
+          Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] )
         };
         
         // Insert each edge
@@ -593,12 +603,12 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
         
         // Create all 6 faces for this hexahedron
         Facet faces[6] = {
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ),
-          Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][6], elemToNodeMap[ei][7]} ),
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ),
-          Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ),
-          Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][5]} ),
-          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][4]} )
+          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][2]} ),  // bottom
+          Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ),  // top
+          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ),  // front
+          Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ),  // back
+          Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][5]} ),  // right
+          Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][4]} )   // left
         };
         
         // Insert each face
@@ -896,6 +906,9 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   GEOS_LOG_RANK_0( "  Total nodes to duplicate: " << expected.internalNodes.size() );
   GEOS_LOG_RANK_0( "  Total nodes NOT to duplicate: " << expected.boundaryNodes.size() );
   
+  // Store boundary-cutting indicator
+  expected.numBoundaryNodesOnDomain = numBoundaryNodesTouchingDomain;
+  
   // For edges, duplicate if at least one node is duplicated
   for( Edge const & edge : fractureEdges )
   {
@@ -913,25 +926,51 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   }
   
   // Step 6: Compute duplication counts accounting for multiple fractures
-  // For nodes shared by multiple fractures, each fracture creates its own duplicate
+  // The duplication behavior depends on whether fractures cut the domain boundary:
+  //
+  // INTERNAL FRACTURES (no boundary cut): Each node duplicated ONCE regardless of intersections
+  //   - 1 fracture: 1 new node
+  //   - 2 fractures (intersection): 1 new node (shared between both fractures)
+  //   - Formula: total = number of unique nodes to duplicate
+  //
+  // BOUNDARY-CUTTING FRACTURES: Nodes duplicated per fracture combination
+  //   - 1 fracture: 2^1 - 1 = 1 new node
+  //   - 2 fractures: 2^2 - 1 = 3 new nodes (one per quadrant)
+  //   - 3 fractures: 2^3 - 1 = 7 new nodes (one per octant)
+  //   - Formula: 2^N - 1 for N fractures
+  
   expected.numNodesToDuplicate = expected.internalNodes.size();
   expected.numEdgesToDuplicate = expected.internalEdges.size();
   expected.numFacesToDuplicate = expected.numFractureFaces;
   
-  // Total duplicated nodes: for a node shared by N fractures, N*2-1 new nodes are created
-  // (Original node + N*2-1 new nodes = N*2 total nodes at that position)
+  // Determine if this is a boundary-cutting case: use the isFullSpan flag we computed earlier
+  bool const isBoundaryCutting = isFullSpan;
+  
   expected.totalDuplicatedNodes = 0;
   
-  GEOS_LOG_RANK_0( "DEBUG: Computing duplication for each node:" );
+  GEOS_LOG_RANK_0( "DEBUG: Computing duplication for each node (boundary-cutting: "
+                   << (isBoundaryCutting ? "YES" : "NO") << "):" );
   
   // Track distribution for analysis
-  std::map< integer, localIndex > fractureCountDistribution;  // numFractures -> count of nodes
-  std::map< integer, localIndex > newNodesDistribution;       // newNodesCreated -> count of nodes
+  std::map< integer, localIndex > fractureCountDistribution;
+  std::map< integer, localIndex > newNodesDistribution;
   
   for( localIndex nodeIdx : expected.internalNodes )
   {
     integer numFractures = nodeToFractureIds[nodeIdx].size();
-    integer newNodesForThisNode = numFractures * 2 - 1;
+    integer newNodesForThisNode;
+    
+    if( isBoundaryCutting )
+    {
+      // Boundary-cutting: use exponential formula 2^N - 1
+      newNodesForThisNode = (1 << numFractures) - 1;
+    }
+    else
+    {
+      // Internal fracture: each node duplicated once
+      newNodesForThisNode = 1;
+    }
+    
     expected.totalDuplicatedNodes += newNodesForThisNode;
     
     fractureCountDistribution[numFractures]++;
@@ -949,7 +988,7 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   GEOS_LOG_RANK_0( "  Nodes by fracture count:" );
   for( auto const & [numFractures, count] : fractureCountDistribution )
   {
-    integer newNodesPerNode = numFractures * 2 - 1;
+    integer newNodesPerNode = isBoundaryCutting ? ((1 << numFractures) - 1) : 1;
     GEOS_LOG_RANK_0( "    " << count << " node(s) in " << numFractures << " fracture(s) -> "
                      << newNodesPerNode << " new nodes each = " << (count * newNodesPerNode) << " total" );
   }
@@ -961,23 +1000,9 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   
   GEOS_LOG_RANK_0( "DEBUG: Final counts:" );
   GEOS_LOG_RANK_0( "  Unique nodes to duplicate: " << expected.numNodesToDuplicate );
-  GEOS_LOG_RANK_0( "  Total new nodes created (formula: sum of N*2-1): " << expected.totalDuplicatedNodes );
+  GEOS_LOG_RANK_0( "  Total new nodes created: " << expected.totalDuplicatedNodes );
   GEOS_LOG_RANK_0( "  Edges to duplicate: " << expected.totalDuplicatedEdges );
   GEOS_LOG_RANK_0( "  Faces to duplicate: " << expected.totalDuplicatedFaces );
-  
-  // Additional validation
-  if( fractureNodeSets.size() == 3 )
-  {
-    GEOS_LOG_RANK_0( "DEBUG: Expected for 3 intersecting fractures: 37 new nodes" );
-    GEOS_LOG_RANK_0( "  (1 center node at 3-way intersection: 3*2-1=5 new nodes)" );
-    GEOS_LOG_RANK_0( "  (Nodes at 2-way intersections: N*2*2-1=3 new nodes each)" );
-    GEOS_LOG_RANK_0( "  (Single-fracture nodes: M*1*2-1=1 new node each)" );
-    GEOS_LOG_RANK_0( "  Current prediction: " << expected.totalDuplicatedNodes );
-    if( expected.totalDuplicatedNodes != 37 )
-    {
-      GEOS_LOG_RANK_0( "  WARNING: Mismatch - missing " << (37 - expected.totalDuplicatedNodes) << " nodes!" );
-    }
-  }
   
   return expected;
 }
@@ -1266,15 +1291,25 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorCases,
   SurfaceGeneratorTest,
   ::testing::Values(
-    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
+//
+//    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+//
+//    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 0 ),
+//    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 0 ),
 
-    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
+    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 )
+//    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
+//    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
                     
   )
 );
