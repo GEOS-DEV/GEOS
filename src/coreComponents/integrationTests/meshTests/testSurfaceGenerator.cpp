@@ -1142,10 +1142,16 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       }
       else if( numInteriorTo == 0 )
       {
-        // Case B: on boundary of all fractures – perimeter corner
+        // Case B: on boundary of all fractures – perimeter corner.
+        // If the node sits on the combined fracture perimeter (nbnd > 0), the number of
+        // new nodes equals the number of perimeter edges meeting at the node minus 1.
+        // If the node is off the combined perimeter (nbnd == 0, e.g. interior Y-junction
+        // nodes where all fractures terminate), use nf - 1.
         auto const cntIt = nodeCombBndEdgeCount.find( nodeIdx );
-        localIndex const nbnd = (cntIt != nodeCombBndEdgeCount.end()) ? cntIt->second : 1;
-        newNodesForThisNode = static_cast< integer >( std::max( localIndex{1}, nbnd - 1 ) );
+        localIndex const nbnd = (cntIt != nodeCombBndEdgeCount.end()) ? cntIt->second : 0;
+        newNodesForThisNode = (nbnd > 0)
+          ? static_cast< integer >( std::max( localIndex{1}, nbnd - 1 ) )
+          : static_cast< integer >( std::max( integer{1}, numFractures - 1 ) );
       }
       else
       {
@@ -1505,8 +1511,11 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
 
     std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",   "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",   "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
 //    std::make_tuple( "Mkt_BndCut_t_shaped_tet_hex_py_DFN_12",   "t_shaped_wavy_mesh_mixed_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
+    
+    std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",   "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
 //    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_hex_py_DFN_123",   "y_shaped_wavy_mesh_mixed_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
 
     // =======================================================================
