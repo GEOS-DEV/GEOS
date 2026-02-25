@@ -1254,10 +1254,15 @@ protected:
 
     // Write XML next to the binary (testBinaryDir) so the path is always valid
     // whether the test is run directly or through CTest.
+    // Only rank 0 writes; all ranks barrier before any rank tries to open it.
     std::string const xmlFileName = testBinaryDir + "/test_surface_gen_" + testCaseName + ".xml";
-    std::ofstream xmlFile( xmlFileName );
-    xmlFile << xmlInput;
-    xmlFile.close();
+    if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+    {
+      std::ofstream xmlFile( xmlFileName );
+      xmlFile << xmlInput;
+      xmlFile.close();
+    }
+    MpiWrapper::barrier( MPI_COMM_GEOS );
 
     // Setup GEOS
     std::unique_ptr< CommandLineOptions > options = std::make_unique< CommandLineOptions >( g_commandLineOptions );

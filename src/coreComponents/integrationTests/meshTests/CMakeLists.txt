@@ -115,11 +115,15 @@ foreach( test ${gtest_geosx_tests} )
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 
-  # Add compile definition for TEST_BINARY_DIR
-  target_compile_definitions( ${test_name} PRIVATE TEST_BINARY_DIR="${CMAKE_CURRENT_BINARY_DIR}" )
+  # Add compile definition for TEST_BINARY_DIR.
+  # The escaped quotes ensure the path is always a quoted string literal
+  # regardless of the CMake generator (Makefiles, Ninja, Xcode, etc.).
+  target_compile_definitions( ${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\" )
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
+
+  set_tests_properties( ${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>" )
   
   # Copy DFN-market mesh files from meshTests/dfn_market/
   foreach( mesh_file ${dfn_market_mesh_files} )
@@ -148,4 +152,40 @@ if( ENABLE_MPI )
                    COMMAND ${test_name} -x ${nranks}
                    NUM_MPI_TASKS ${nranks} )
   endforeach()
+
+  # ---------------------------------------------------------------------------
+  # testSurfaceGenerator_mpi — SurfaceGeneratorMpiTest suite (4 MPI ranks)
+  #
+  # Built from the same source as the serial test; the MPI suite is only
+  # activated when the process count equals 4.
+  # ---------------------------------------------------------------------------
+  set( sg_mpi_nranks 4 )
+  set( sg_mpi_test_name testSurfaceGenerator_mpi )
+
+  blt_add_executable( NAME       ${sg_mpi_test_name}
+                      SOURCES    testSurfaceGenerator.cpp
+                      OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                      DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+  target_compile_definitions( ${sg_mpi_test_name}
+                              PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${sg_mpi_test_name}>\" )
+
+  geos_add_test( NAME          ${sg_mpi_test_name}
+                 COMMAND       ${sg_mpi_test_name} -x ${sg_mpi_nranks}
+                 NUM_MPI_TASKS ${sg_mpi_nranks} )
+
+  set_tests_properties( ${sg_mpi_test_name}
+                        PROPERTIES ENVIRONMENT
+                        "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sg_mpi_test_name}>" )
+
+  # Copy all DFN-market mesh files to the MPI test binary directory
+  foreach( mesh_file ${dfn_market_mesh_files} )
+    add_custom_command(
+        TARGET ${sg_mpi_test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+                $<TARGET_FILE_DIR:${sg_mpi_test_name}>
+    )
+  endforeach()
+
 endif()
