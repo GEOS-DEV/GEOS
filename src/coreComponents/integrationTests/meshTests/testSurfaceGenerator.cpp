@@ -1367,64 +1367,171 @@ TEST_P( SurfaceGeneratorTest, TopologyValidation )
 }
 
 // ---------------------------------------------------------------------------
-// Test suite instantiation
+// Note on expected Euler characteristic for NoBoundaryCut tests
+// ---------------------------------------------------------------------------
+// The mesh is a 4x4x4 hexahedral grid (64 cells, 125 nodes) in [0,1]^3.
+// Each DFN fracture is a 2x2 patch of 4 quad faces fully embedded in the
+// interior of the domain (no face touches the boundary).
+//
+// Before any split the solid has a single connected component:
+//   χ = V - E + F - C = 1
+//
+// Each fracture contains exactly ONE interior node (the center of the 2x2
+// patch).  Splitting that node "unzips" the internal connectivity:
+//   ΔV = +1  (the center node is duplicated)
+//   ΔE = +4  (the four in-plane edges radiating from the center are duplicated)
+//   ΔF = +4  (the four quad faces sharing the center are duplicated)
+//   ΔC =  0  (no new 3-D cells are created)
+//
+//   Δχ = ΔV - ΔE + ΔF - ΔC = 1 - 4 + 4 - 0 = +1
+//   χ_after = 1 + 1 = 2
+//
+// The result χ = 2 holds for every NoBoundaryCut case (DFN1, DFN12,
+// DFN13, DFN123) because all three fractures share the same single
+// interior node at (0.5, 0.5, 0.5); activating additional fractures
+// splits that node once more per fracture plane, but the incremental
+// Δχ per additional split remains +1 only when a genuinely new interior
+// node is processed — and in this mesh all subsequent fracture planes
+// share the already-counted center node, so χ stays at 2.
 // ---------------------------------------------------------------------------
 INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorCases,
   SurfaceGeneratorTest,
   ::testing::Values(
 
-    // -----------------------------------------------------------------------
-    // Note on expected Euler characteristic for NoBoundaryCut tests
-    // -----------------------------------------------------------------------
-    // The mesh is a 4x4x4 hexahedral grid (64 cells, 125 nodes) in [0,1]^3.
-    // Each DFN fracture is a 2x2 patch of 4 quad faces fully embedded in the
-    // interior of the domain (no face touches the boundary).
-    //
-    // Before any split the solid has a single connected component:
-    //   χ = V - E + F - C = 1
-    //
-    // Each fracture contains exactly ONE interior node (the center of the 2x2
-    // patch).  Splitting that node "unzips" the internal connectivity:
-    //   ΔV = +1  (the center node is duplicated)
-    //   ΔE = +4  (the four in-plane edges radiating from the center are duplicated)
-    //   ΔF = +4  (the four quad faces sharing the center are duplicated)
-    //   ΔC =  0  (no new 3-D cells are created)
-    //
-    //   Δχ = ΔV - ΔE + ΔF - ΔC = 1 - 4 + 4 - 0 = +1
-    //   χ_after = 1 + 1 = 2
-    //
-    // The result χ = 2 holds for every NoBoundaryCut case (DFN1, DFN12,
-    // DFN13, DFN123) because all three fractures share the same single
-    // interior node at (0.5, 0.5, 0.5); activating additional fractures
-    // splits that node once more per fracture plane, but the incremental
-    // Δχ per additional split remains +1 only when a genuinely new interior
-    // node is processed — and in this mesh all subsequent fracture planes
-    // share the already-counted center node, so χ stays at 2.
-    // -----------------------------------------------------------------------
-                    
-    std::make_tuple( "NoBoundaryCut_tet_DFN1", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN12", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN13", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
-                    
-    std::make_tuple( "NoBoundaryCut_hex_DFN1", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN12", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN13", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 2 ),
-    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
-                    
-                    
-    // full fragmentation of the domain in disjoint componentes
-    std::make_tuple( "BoundaryCut_hex_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-    std::make_tuple( "BoundaryCut_hex_DFN12", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_hex_DFN13", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_hex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+    // =======================================================================
+    // Legacy reference meshes (mechanicTest/)
+    // =======================================================================
 
-    std::make_tuple( "BoundaryCut_tet_DFN1", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }", 1, 2 ),
-    std::make_tuple( "BoundaryCut_tet_DFN12", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN13", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }", 1, 4 ),
-    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
-                    
+    // --- flat, no-boundary-cut, tet (legacy _123 multi-set mesh) -----------
+    std::make_tuple( "NoBoundaryCut_tet_DFN1",   "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set }",                            1,  2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN12",  "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1,  2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN13",  "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1,  2 ),
+    std::make_tuple( "NoBoundaryCut_tet_DFN123", "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1,  2 ),
+
+    // --- flat, no-boundary-cut, hex (legacy _123 multi-set mesh) -----------
+    std::make_tuple( "NoBoundaryCut_hex_DFN1",   "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1,  2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN12",  "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1,  2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN13",  "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1,  2 ),
+    std::make_tuple( "NoBoundaryCut_hex_DFN123", "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1,  2 ),
+
+    // --- flat, full-span, hex (legacy) – full fragmentation ----------------
+    std::make_tuple( "BoundaryCut_hex_DFN1",   "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1, 2 ),
+    std::make_tuple( "BoundaryCut_hex_DFN12",  "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1, 4 ),
+    std::make_tuple( "BoundaryCut_hex_DFN13",  "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1, 4 ),
+    std::make_tuple( "BoundaryCut_hex_DFN123", "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1, 8 ),
+
+    // --- flat, full-span, tet (legacy) – full fragmentation ----------------
+    std::make_tuple( "BoundaryCut_tet_DFN1",   "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set }",                            1, 2 ),
+    std::make_tuple( "BoundaryCut_tet_DFN12",  "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set }",               1, 4 ),
+    std::make_tuple( "BoundaryCut_tet_DFN13",  "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f3_node_set }",               1, 4 ),
+    std::make_tuple( "BoundaryCut_tet_DFN123", "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }",  1, 8 ),
+
+    // =======================================================================
+    // dfn_market meshes
+    // -----------------------------------------------------------------------
+    // Naming convention:
+    //   fractured[_wavy][_full_span]_mesh_{hex|tet}_DFN_{suffix}.vtu
+    //
+    // Node-set rules:
+    //   • _DFN_1   → { f1_node_set }
+    //   • _DFN_2   → { f2_node_set }
+    //   • _DFN_3   → { f3_node_set }
+    //   • _DFN_12  → { f1_node_set, f2_node_set }
+    //   • _DFN_13  → { f1_node_set, f3_node_set }
+    //   • _DFN_23  → { f2_node_set, f3_node_set }
+    //   • _DFN_123 → { f1_node_set, f2_node_set, f3_node_set }
+
+    // -----------------------------------------------------------------------
+    // flat, no-boundary-cut, hex  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_1",       "fractured_mesh_hex_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_2",       "fractured_mesh_hex_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_3",       "fractured_mesh_hex_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_12",  "fractured_mesh_hex_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_13",  "fractured_mesh_hex_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_23",  "fractured_mesh_hex_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_hex_DFN_123",     "fractured_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+
+    // -----------------------------------------------------------------------
+    // flat, no-boundary-cut, tet  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_1",       "fractured_mesh_tet_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_2",       "fractured_mesh_tet_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_3",       "fractured_mesh_tet_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_12",  "fractured_mesh_tet_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_13",  "fractured_mesh_tet_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_23",  "fractured_mesh_tet_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_tet_DFN_123",     "fractured_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+
+    // -----------------------------------------------------------------------
+    // flat, full-span, hex  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_BndCut_hex_DFN_1",         "fractured_full_span_mesh_hex_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_2",         "fractured_full_span_mesh_hex_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_3",         "fractured_full_span_mesh_hex_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_12",    "fractured_full_span_mesh_hex_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_13",    "fractured_full_span_mesh_hex_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_23",    "fractured_full_span_mesh_hex_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_hex_DFN_123",       "fractured_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+
+    // -----------------------------------------------------------------------
+    // flat, full-span, tet  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_BndCut_tet_DFN_1",         "fractured_full_span_mesh_tet_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_2",         "fractured_full_span_mesh_tet_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_3",         "fractured_full_span_mesh_tet_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_12",    "fractured_full_span_mesh_tet_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_13",    "fractured_full_span_mesh_tet_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_23",    "fractured_full_span_mesh_tet_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_BndCut_tet_DFN_123",       "fractured_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+
+    // -----------------------------------------------------------------------
+    // wavy, no-boundary-cut, hex  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_1",       "fractured_wavy_mesh_hex_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_2",       "fractured_wavy_mesh_hex_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_3",       "fractured_wavy_mesh_hex_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_12",  "fractured_wavy_mesh_hex_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_13",  "fractured_wavy_mesh_hex_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_23",  "fractured_wavy_mesh_hex_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_123",     "fractured_wavy_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+
+    // -----------------------------------------------------------------------
+    // wavy, no-boundary-cut, tet  (dfn_market)
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_1",       "fractured_wavy_mesh_tet_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_2",       "fractured_wavy_mesh_tet_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_3",       "fractured_wavy_mesh_tet_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_12",  "fractured_wavy_mesh_tet_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_13",  "fractured_wavy_mesh_tet_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_23",  "fractured_wavy_mesh_tet_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 2 ),
+    std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_123",     "fractured_wavy_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 2 ),
+
+    // -----------------------------------------------------------------------
+    // wavy, full-span, hex  (dfn_market)
+    // Each file exposes ONLY the nodeset(s) named in its suffix.
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_1",    "fractured_wavy_full_span_mesh_hex_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_2",    "fractured_wavy_full_span_mesh_hex_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_3",    "fractured_wavy_full_span_mesh_hex_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_12",   "fractured_wavy_full_span_mesh_hex_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_13",   "fractured_wavy_full_span_mesh_hex_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_23",   "fractured_wavy_full_span_mesh_hex_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_hex_DFN_123",  "fractured_wavy_full_span_mesh_hex_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 ),
+
+    // -----------------------------------------------------------------------
+    // wavy, full-span, tet  (dfn_market)
+    // Each file exposes ONLY the nodeset(s) named in its suffix.
+    // -----------------------------------------------------------------------
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_1",    "fractured_wavy_full_span_mesh_tet_DFN_1.vtu",   "{ f1_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_2",    "fractured_wavy_full_span_mesh_tet_DFN_2.vtu",   "{ f2_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_3",    "fractured_wavy_full_span_mesh_tet_DFN_3.vtu",   "{ f3_node_set }",                           1, 2 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_12",   "fractured_wavy_full_span_mesh_tet_DFN_12.vtu",  "{ f1_node_set, f2_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_13",   "fractured_wavy_full_span_mesh_tet_DFN_13.vtu",  "{ f1_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_23",   "fractured_wavy_full_span_mesh_tet_DFN_23.vtu",  "{ f2_node_set, f3_node_set }",              1, 4 ),
+    std::make_tuple( "Mkt_WavyBndCut_tet_DFN_123",  "fractured_wavy_full_span_mesh_tet_DFN_123.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 8 )
+
   )
 );
 
