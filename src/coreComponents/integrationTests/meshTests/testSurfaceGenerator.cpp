@@ -1403,6 +1403,11 @@ INSTANTIATE_TEST_SUITE_P(
   SurfaceGeneratorTest,
   ::testing::Values(
 
+    std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_123",   "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",   "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_t_shaped_tet_hex_py_DFN_123",   "t_shaped_wavy_mesh_mixed_DFN_t1t2.vtu",   "{ f1_node_set, f2_node_set }", 1, 3 ),
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_hex_py_DFN_123",   "y_shaped_wavy_mesh_mixed_DFN_y1y2y3.vtu",   "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+
     // =======================================================================
     // dfn_market meshes
     // -----------------------------------------------------------------------
