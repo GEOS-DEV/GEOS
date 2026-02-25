@@ -31,6 +31,8 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <cstring>               // std::strlen
+#include <libgen.h>              // dirname / basename (POSIX)
 
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -58,6 +60,11 @@ constexpr real64 JACOBIAN_TOLERANCE = 1.0e-12;
 static constexpr bool ENABLE_DEBUG_PRINTS = false;
 
 CommandLineOptions g_commandLineOptions;
+
+/// @brief Directory containing the test binary (and the copied mesh files).
+///        Populated in main() from argv[0] so it is always correct regardless
+///        of the build system (Makefiles, Ninja, Xcode) or how CTest sets CWD.
+std::string g_testBinaryDir;
 
 /**
  * @brief Represents a unique edge by its sorted node IDs
@@ -1152,10 +1159,19 @@ class SurfaceGeneratorTest
 protected:
   void SetUp() override
   {
-    // Prefer the env var set by ctest's set_tests_properties (always correct),
-    // fall back to the compile-time macro for direct binary invocations.
-    char const * envDir = std::getenv( "TEST_BINARY_DIR" );
-    testBinaryDir = ( envDir != nullptr && envDir[0] != '\0' ) ? envDir : TEST_BINARY_DIR;
+    // Priority: runtime argv[0]-derived dir > env var > compile-time macro.
+    // g_testBinaryDir is always the actual directory of the executable, so it
+    // is correct even when the Xcode generator bakes the wrong path into the
+    // TEST_BINARY_DIR macro or when CTest sets a different CWD.
+    if( !g_testBinaryDir.empty() )
+    {
+      testBinaryDir = g_testBinaryDir;
+    }
+    else
+    {
+      char const * envDir = std::getenv( "TEST_BINARY_DIR" );
+      testBinaryDir = ( envDir != nullptr && envDir[0] != '\0' ) ? envDir : TEST_BINARY_DIR;
+    }
   }
 
   std::string testBinaryDir;
@@ -1230,12 +1246,15 @@ protected:
                 integer const expectedEulerBefore,
                 integer const expectedEulerAfter )
   {
+    // Prefix the mesh path with testBinaryDir so GEOS can find the .vtu files
+    // regardless of the CWD set by CTest (which differs from TARGET_FILE_DIR).
     std::string const xmlInput = generateXmlInput(
-      meshFileName,  // Mesh files are copied to same directory as executable
+      testBinaryDir + "/" + meshFileName,
       nodeSetNames );
 
-    // Write XML to temporary file
-    std::string const xmlFileName = "test_surface_gen_" + testCaseName + ".xml";
+    // Write XML next to the binary (testBinaryDir) so the path is always valid
+    // whether the test is run directly or through CTest.
+    std::string const xmlFileName = testBinaryDir + "/test_surface_gen_" + testCaseName + ".xml";
     std::ofstream xmlFile( xmlFileName );
     xmlFile << xmlInput;
     xmlFile.close();
@@ -1561,8 +1580,15 @@ class SurfaceGeneratorMpiTest
 protected:
   void SetUp() override
   {
-    char const * envDir = std::getenv( "TEST_BINARY_DIR" );
-    testBinaryDir = ( envDir != nullptr && envDir[0] != '\0' ) ? envDir : TEST_BINARY_DIR;
+    if( !g_testBinaryDir.empty() )
+    {
+      testBinaryDir = g_testBinaryDir;
+    }
+    else
+    {
+      char const * envDir = std::getenv( "TEST_BINARY_DIR" );
+      testBinaryDir = ( envDir != nullptr && envDir[0] != '\0' ) ? envDir : TEST_BINARY_DIR;
+    }
   }
 
   std::string testBinaryDir;
@@ -1614,145 +1640,154 @@ protected:
   }
 };
 
-///// @brief MPI test body.
-//TEST_P( SurfaceGeneratorMpiTest, TopologyValidation )
-//{
-//  auto const & params = GetParam();
-//  // ::testing::Combine produces std::tuple< MeshTuple, PartitionTuple >
-//  SurfaceGeneratorMpiMeshTuple const & meshParams = std::get< 0 >( params );
-//  SurfaceGeneratorMpiPartitionTuple const & partitions = std::get< 1 >( params );
-//
-//  std::string const & testCaseName  = std::get< 0 >( meshParams );
-//  std::string const & meshFileName  = std::get< 1 >( meshParams );
-//  std::string const & nodeSetNames  = std::get< 2 >( meshParams );
-//  integer const expectedEulerBefore = std::get< 3 >( meshParams );
-//  integer const expectedEulerAfter  = std::get< 4 >( meshParams );
-//
-//  int const xPartitions = std::get< 0 >( partitions );
-//  int const yPartitions = std::get< 1 >( partitions );
-//  int const zPartitions = std::get< 2 >( partitions );
-//
-//  std::string const xmlInput = generateXmlInput( testBinaryDir + "/" + meshFileName, nodeSetNames );
-//
-//  // Only rank 0 writes the XML; all ranks barrier before reading.
-//  std::string const xmlPath = testBinaryDir
-//                              + "/test_surface_gen_mpi_" + testCaseName
-//                              + "_" + std::to_string( xPartitions )
-//                              + "x" + std::to_string( yPartitions )
-//                              + "x" + std::to_string( zPartitions )
-//                              + ".xml";
-//  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
-//  {
-//    std::ofstream ofs( xmlPath );
-//    ofs << xmlInput;
-//  }
-//  MpiWrapper::barrier( MPI_COMM_GEOS );
-//
-//  auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
-//  options->inputFileNames.push_back( xmlPath );
-//  options->problemName = "test_surface_gen_mpi_" + testCaseName;
-//  options->xPartitionsOverride = xPartitions;
-//  options->yPartitionsOverride = yPartitions;
-//  options->zPartitionsOverride = zPartitions;
-//  options->overridePartitionNumbers = true;
-//
-//  // Scoped state to ensure GeosxState is fully destroyed before the next
-//  // test case constructs a new one (GeosxState is a singleton).
-//  {
-//    GeosxState state( std::move( options ) );
-//    ASSERT_TRUE( state.initializeDataRepository() )
-//      << "Test " << testCaseName << ": Failed to initialize data repository for '"
-//      << meshFileName << "' with partitioning "
-//      << xPartitions << "x" << yPartitions << "x" << zPartitions;
-//    state.applyInitialConditions();
-//
-//    // Euler characteristic before split
-//    ProblemManager & pm = state.getProblemManager();
-//    MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
-//    NodeManager & nodeManager = mesh.getNodeManager();
-//    EdgeManager & edgeManager = mesh.getEdgeManager();
-//    FaceManager & faceManager = mesh.getFaceManager();
-//    ElementRegionManager & elemManager = mesh.getElemManager();
-//
-//    integer const eulerBefore = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
-//    GEOS_LOG_RANK_0( "Test " << testCaseName
-//                     << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
-//                     << "  χ_before=" << eulerBefore );
-//
-//    state.run();
-//
-//    integer const eulerAfter = computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
-//    GEOS_LOG_RANK_0( "Test " << testCaseName << "  χ_after=" << eulerAfter );
-//
-//    EXPECT_EQ( eulerBefore, expectedEulerBefore )
-//      << "Mesh " << meshFileName << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
-//      << ": Euler characteristic before split = " << eulerBefore
-//      << ", expected " << expectedEulerBefore;
-//
-//    EXPECT_EQ( eulerAfter, expectedEulerAfter )
-//      << "Mesh " << meshFileName << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
-//      << ": Euler characteristic after split = " << eulerAfter
-//      << ", expected " << expectedEulerAfter;
-//
-//  } // end scoped GeosxState
-//
-//  // Cleanup XML after state is destroyed
-//  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
-//  {
-//    std::remove( xmlPath.c_str() );
-//  }
-//}
+/// @brief MPI test body.
+TEST_P( SurfaceGeneratorMpiTest, TopologyValidation )
+{
+  auto const & params = GetParam();
+  // ::testing::Combine produces std::tuple< MeshTuple, PartitionTuple >
+  SurfaceGeneratorMpiMeshTuple const & meshParams = std::get< 0 >( params );
+  SurfaceGeneratorMpiPartitionTuple const & partitions = std::get< 1 >( params );
 
-//// ---------------------------------------------------------------------------
-//// MPI test instantiation
-////
-//// All 6 unique partitions of 4 ranks (product x*y*z == 4):
-////   (1,1,4)  (1,4,1)  (4,1,1)  (1,2,2)  (2,1,2)  (2,2,1)
-////
-//// Meshes: the 4 new junction topologies that exercise the most demanding
-//// splitting paths (T-junction and Y-junction, hex and tet).
-//// ---------------------------------------------------------------------------
-//// clang-format off
-//INSTANTIATE_TEST_SUITE_P(
-//  SurfaceGeneratorMpiCases,
-//  SurfaceGeneratorMpiTest,
-//  ::testing::Combine(
-//    ::testing::Values(
-//      // T-shaped · boundary-cutting · hex
-//      std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",
-//                       "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
-//                       "{ f1_node_set, f2_node_set }",
-//                       1, 3 ),
-//      // T-shaped · boundary-cutting · tet
-//      std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",
-//                       "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
-//                       "{ f1_node_set, f2_node_set }",
-//                       1, 3 ),
-//      // Y-shaped · boundary-cutting · hex
-//      std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",
-//                       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
-//                       "{ f1_node_set, f2_node_set, f3_node_set }",
-//                       1, 3 ),
-//      // Y-shaped · boundary-cutting · tet
-//      std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
-//                       "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
-//                       "{ f1_node_set, f2_node_set, f3_node_set }",
-//                       1, 3 )
-//    ),
-//    ::testing::Values(
-//      std::make_tuple( 1, 1, 4 ),
-//      std::make_tuple( 1, 4, 1 ),
-//      std::make_tuple( 4, 1, 1 ),
-//      std::make_tuple( 1, 2, 2 ),
-//      std::make_tuple( 2, 1, 2 ),
-//      std::make_tuple( 2, 2, 1 )
-//    )
-//  )
-//);
-// clang-format on
+  std::string const & testCaseName  = std::get< 0 >( meshParams );
+  std::string const & meshFileName  = std::get< 1 >( meshParams );
+  std::string const & nodeSetNames  = std::get< 2 >( meshParams );
+  integer const expectedEulerBefore = std::get< 3 >( meshParams );
+  integer const expectedEulerAfter  = std::get< 4 >( meshParams );
+
+  int const xPartitions = std::get< 0 >( partitions );
+  int const yPartitions = std::get< 1 >( partitions );
+  int const zPartitions = std::get< 2 >( partitions );
+
+  std::string const xmlInput = generateXmlInput( testBinaryDir + "/" + meshFileName, nodeSetNames );
+
+  // Only rank 0 writes the XML; all ranks barrier before reading.
+  std::string const xmlPath = testBinaryDir
+                              + "/test_surface_gen_mpi_" + testCaseName
+                              + "_" + std::to_string( xPartitions )
+                              + "x" + std::to_string( yPartitions )
+                              + "x" + std::to_string( zPartitions )
+                              + ".xml";
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    std::ofstream ofs( xmlPath );
+    ofs << xmlInput;
+  }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+
+  auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
+  options->inputFileNames.push_back( xmlPath );
+  options->problemName = "test_surface_gen_mpi_" + testCaseName;
+  options->xPartitionsOverride = xPartitions;
+  options->yPartitionsOverride = yPartitions;
+  options->zPartitionsOverride = zPartitions;
+  options->overridePartitionNumbers = true;
+
+  // Scoped state to ensure GeosxState is fully destroyed before the next
+  // test case constructs a new one (GeosxState is a singleton).
+  {
+    GeosxState state( std::move( options ) );
+    ASSERT_TRUE( state.initializeDataRepository() )
+      << "Test " << testCaseName << ": Failed to initialize data repository for '"
+      << meshFileName << "' with partitioning "
+      << xPartitions << "x" << yPartitions << "x" << zPartitions;
+    state.applyInitialConditions();
+
+    // Euler characteristic before split
+    ProblemManager & pm = state.getProblemManager();
+    MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+    NodeManager & nodeManager = mesh.getNodeManager();
+    EdgeManager & edgeManager = mesh.getEdgeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    integer const eulerBefore = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "Test " << testCaseName
+                     << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
+                     << "  χ_before=" << eulerBefore );
+
+    state.run();
+
+    integer const eulerAfter = computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "Test " << testCaseName << "  χ_after=" << eulerAfter );
+
+    EXPECT_EQ( eulerBefore, expectedEulerBefore )
+      << "Mesh " << meshFileName << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
+      << ": Euler characteristic before split = " << eulerBefore
+      << ", expected " << expectedEulerBefore;
+
+    EXPECT_EQ( eulerAfter, expectedEulerAfter )
+      << "Mesh " << meshFileName << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]"
+      << ": Euler characteristic after split = " << eulerAfter
+      << ", expected " << expectedEulerAfter;
+
+  } // end scoped GeosxState
+
+  // Cleanup XML after state is destroyed
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    std::remove( xmlPath.c_str() );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MPI test instantiation
+//
+// All 6 unique partitions of 4 ranks (product x*y*z == 4):
+//   (1,1,4)  (1,4,1)  (4,1,1)  (1,2,2)  (2,1,2)  (2,2,1)
+//
+// Meshes: the 4 new junction topologies that exercise the most demanding
+// splitting paths (T-junction and Y-junction, hex and tet).
+// ---------------------------------------------------------------------------
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(
+  SurfaceGeneratorMpiCases,
+  SurfaceGeneratorMpiTest,
+  ::testing::Combine(
+    ::testing::Values(
+      // T-shaped · boundary-cutting · hex
+      std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",
+                       "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
+                       "{ f1_node_set, f2_node_set }",
+                       1, 3 ),
+      // T-shaped · boundary-cutting · tet
+      std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",
+                       "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
+                       "{ f1_node_set, f2_node_set }",
+                       1, 3 ),
+      // Y-shaped · boundary-cutting · hex
+      std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",
+                       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
+                       "{ f1_node_set, f2_node_set, f3_node_set }",
+                       1, 3 ),
+      // Y-shaped · boundary-cutting · tet
+      std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
+                       "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
+                       "{ f1_node_set, f2_node_set, f3_node_set }",
+                       1, 3 )
+    ),
+    ::testing::Values(
+      std::make_tuple( 1, 1, 4 ),
+      std::make_tuple( 1, 4, 1 ),
+      std::make_tuple( 4, 1, 1 ),
+      std::make_tuple( 1, 2, 2 ),
+      std::make_tuple( 2, 1, 2 ),
+      std::make_tuple( 2, 2, 1 )
+    )
+  )
+);
 
 int main( int argc, char * argv[] )
 {
+  // Derive the directory containing this executable from argv[0].
+  // dirname() modifies its argument, so work on a copy.
+  // This is the most reliable way to find co-located mesh files regardless
+  // of what CWD CTest or the shell has set.
+  if( argc > 0 && argv[0] != nullptr )
+  {
+    std::vector< char > exePath( argv[0], argv[0] + std::strlen( argv[0] ) + 1 );
+    g_testBinaryDir = ::dirname( exePath.data() );
+  }
+
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv, false );
   int result = RUN_ALL_TESTS();
