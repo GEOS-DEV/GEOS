@@ -190,6 +190,14 @@ TEST_P( ConsistencyTest, Run )
   {
     nodeSetNames = "{ f3_node_set }";
   }
+  else if( meshFileName.find( "_DFN_t1t2.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f1_node_set, f2_node_set }";
+  }
+  else if( meshFileName.find( "_DFN_y1y2y3.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
+  }
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
 
@@ -505,7 +513,15 @@ INSTANTIATE_TEST_SUITE_P(
 
       // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
-      "fractured_full_span_mesh_tet_DFN_123.vtu"
+      "fractured_full_span_mesh_tet_DFN_123.vtu",
+
+      // T-shaped wavy meshes
+      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
+      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
+
+      // Y-shaped wavy meshes
+      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
+      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
