@@ -20,6 +20,7 @@
 #include "TractionBoundaryCondition.hpp"
 
 #include "functions/TableFunction.hpp"
+#include "LvArray/src/math.hpp"
 
 namespace geos
 {
@@ -136,6 +137,7 @@ void TractionBoundaryCondition::launch( real64 const time,
                                         arrayView1d< globalIndex const > const blockLocalDofNumber,
                                         globalIndex const dofRankOffset,
                                         FaceManager const & faceManager,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
                                         SortedArrayView< localIndex const > const & targetSet,
                                         arrayView1d< real64 > const & localRhs ) const
 {
@@ -225,19 +227,115 @@ void TractionBoundaryCondition::launch( real64 const time,
 
       }
 
-      // TODO replace with proper FEM integration
-      traction[0] *= faceArea[kf] / numNodes;
-      traction[1] *= faceArea[kf] / numNodes;
-      traction[2] *= faceArea[kf] / numNodes;
-
-      for( localIndex a=0; a<numNodes; ++a )
+      // Compute consistent nodal forces using proper FEM face integration.
+      // For triangular faces (3 nodes), equal distribution is exact.
+      // For quadrilateral faces (4 nodes), use bilinear shape functions with 2x2 Gauss quadrature
+      // to correctly account for face distortion (high aspect ratio or non-planar faces).
+      // For other face types, fall back to equal distribution.
+      if( numNodes == 3 )
       {
-        localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] - dofRankOffset;
-        if( dof < 0 || dof >= localRhs.size() )
-          continue;
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+0], traction[0] );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+1], traction[1] );
-        RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+2], traction[2] );
+        // Triangular face: equal distribution is exact for linear elements
+        real64 const w = faceArea[kf] / 3.0;
+        for( localIndex a = 0; a < 3; ++a )
+        {
+          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] - dofRankOffset;
+          if( dof < 0 || dof >= localRhs.size() )
+            continue;
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+0], traction[0] * w );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+1], traction[1] * w );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+2], traction[2] * w );
+        }
+      }
+      else if( numNodes == 4 )
+      {
+        // Quadrilateral face: use 2x2 Gauss quadrature with bilinear shape functions.
+        // Face nodes are ordered CCW: 0=(s=-1,t=-1), 1=(s=+1,t=-1), 2=(s=+1,t=+1), 3=(s=-1,t=+1)
+        // Shape functions: N_a(s,t) = (1 + s_a*s)(1 + t_a*t)/4
+        // Gauss points at (±1/√3, ±1/√3) with weights 1.
+        constexpr real64 gp = 0.577350269189625764509; // 1/sqrt(3)
+        constexpr real64 gpCoords[2] = { -gp, gp };
+        // Parent coordinates of face nodes
+        constexpr real64 nodeS[4] = { -1.0, 1.0, 1.0, -1.0 };
+        constexpr real64 nodeT[4] = { -1.0, -1.0, 1.0, 1.0 };
+
+        // Accumulate the per-node integral: nodal_weight[a] = integral N_a(s,t) |J_face(s,t)| ds dt
+        real64 nodalWeight[4] = { 0.0, 0.0, 0.0, 0.0 };
+
+        // Get node positions for this face
+        real64 xFace[4][3];
+        for( localIndex a = 0; a < 4; ++a )
+        {
+          localIndex const nodeIdx = faceToNodeMap( kf, a );
+          xFace[a][0] = nodePositions( nodeIdx, 0 );
+          xFace[a][1] = nodePositions( nodeIdx, 1 );
+          xFace[a][2] = nodePositions( nodeIdx, 2 );
+        }
+
+        for( int qi = 0; qi < 2; ++qi )
+        {
+          for( int qj = 0; qj < 2; ++qj )
+          {
+            real64 const s = gpCoords[qi];
+            real64 const t = gpCoords[qj];
+
+            // Evaluate shape functions and their derivatives at (s, t)
+            real64 N[4], dNds[4], dNdt[4];
+            for( localIndex a = 0; a < 4; ++a )
+            {
+              N[a]    = 0.25 * ( 1.0 + nodeS[a]*s ) * ( 1.0 + nodeT[a]*t );
+              dNds[a] = 0.25 * nodeS[a] * ( 1.0 + nodeT[a]*t );
+              dNdt[a] = 0.25 * nodeT[a] * ( 1.0 + nodeS[a]*s );
+            }
+
+            // Compute dX/ds and dX/dt (face tangent vectors)
+            real64 dXds[3] = { 0.0, 0.0, 0.0 };
+            real64 dXdt[3] = { 0.0, 0.0, 0.0 };
+            for( localIndex a = 0; a < 4; ++a )
+            {
+              for( int d = 0; d < 3; ++d )
+              {
+                dXds[d] += dNds[a] * xFace[a][d];
+                dXdt[d] += dNdt[a] * xFace[a][d];
+              }
+            }
+
+            // Face Jacobian determinant = |dX/ds x dX/dt|
+            real64 const crossX = dXds[1]*dXdt[2] - dXds[2]*dXdt[1];
+            real64 const crossY = dXds[2]*dXdt[0] - dXds[0]*dXdt[2];
+            real64 const crossZ = dXds[0]*dXdt[1] - dXds[1]*dXdt[0];
+            real64 const detJ = LvArray::math::sqrt( crossX*crossX + crossY*crossY + crossZ*crossZ );
+
+            // Accumulate: w_q = 1 (Gauss weight for 2x2 quadrature)
+            for( localIndex a = 0; a < 4; ++a )
+            {
+              nodalWeight[a] += N[a] * detJ; // Gauss weight = 1.0
+            }
+          }
+        }
+
+        for( localIndex a = 0; a < 4; ++a )
+        {
+          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] - dofRankOffset;
+          if( dof < 0 || dof >= localRhs.size() )
+            continue;
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+0], traction[0] * nodalWeight[a] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+1], traction[1] * nodalWeight[a] );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+2], traction[2] * nodalWeight[a] );
+        }
+      }
+      else
+      {
+        // General polygon: fall back to equal distribution
+        real64 const w = faceArea[kf] / numNodes;
+        for( localIndex a = 0; a < numNodes; ++a )
+        {
+          localIndex const dof = blockLocalDofNumber[ faceToNodeMap( kf, a ) ] - dofRankOffset;
+          if( dof < 0 || dof >= localRhs.size() )
+            continue;
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+0], traction[0] * w );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+1], traction[1] * w );
+          RAJA::atomicAdd< parallelDeviceAtomic >( &localRhs[dof+2], traction[2] * w );
+        }
       }
     } );
   }
