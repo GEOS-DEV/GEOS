@@ -240,8 +240,12 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
     calculateSingleElementGeometricQuantities( k, faceArea );
   } );
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-  calculateElementCenters( X );
+  calculateElementCentersOnly( nodeManager );
+}
+
+void FaceElementSubRegion::calculateElementCentersOnly( NodeManager const & nodeManager )
+{
+  calculateElementCenters( nodeManager.referencePosition() );
 }
 
 ElementType FaceElementSubRegion::getElementType( localIndex ei ) const
