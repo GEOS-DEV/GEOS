@@ -40,7 +40,7 @@ public:
    */
   CollocatedNodes( string const & faceBlockName,
                    vtkSmartPointer< vtkDataSet > faceMesh,
-                   bool performGlobalCheck = true ); 
+                   bool performGlobalCheck = true );
 
   /**
    * @brief For node @p i of the face block, returns all the duplicated global node indices in the main 3d mesh.

@@ -508,7 +508,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   {
     // We collect all the duplicated points that are involved for each 2d element.
     vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
-    
+
     // Use the common matching function to find candidate 3D cells
     stdVector< vtkIdType > matchingCells = vtk::findMatchingCellsForFractureElement(
       pointIds,
@@ -540,45 +540,45 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     }
 
 // Process each matching 3D cell
-for( vtkIdType const & cellGlobalId : matchingCells )
-{
-  elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( cellGlobalId ) );
-  
-  // Find which face matches
-auto faces = elemToFaces[cellGlobalId];
-for( int j = 0; j < faces.size( 0 ); ++j )
-{
-  localIndex const faceIndex = faces[j];
-  auto nodes = faceToNodes[faceIndex];
-  std::set< vtkIdType > globalNodes;
-  for( auto const & n: nodes )
-  {
-    globalNodes.insert( globalPtIds->GetValue( n ) );
-  }
-  
-  // Check if face nodes are a subset of duplicated nodes
-  // Face should have same number of nodes as the fracture element
-  if( globalNodes.size() == static_cast<std::size_t>(pointIds->GetNumberOfIds()) )
-  {
-    bool faceMatch = true;
-    for( vtkIdType gn : globalNodes )
+    for( vtkIdType const & cellGlobalId : matchingCells )
     {
-      if( duplicatedPointOfElem2d.find( gn ) == duplicatedPointOfElem2d.end() )
+      elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( cellGlobalId ) );
+
+      // Find which face matches
+      auto faces = elemToFaces[cellGlobalId];
+      for( int j = 0; j < faces.size( 0 ); ++j )
       {
-        faceMatch = false;
-        break;
+        localIndex const faceIndex = faces[j];
+        auto nodes = faceToNodes[faceIndex];
+        std::set< vtkIdType > globalNodes;
+        for( auto const & n: nodes )
+        {
+          globalNodes.insert( globalPtIds->GetValue( n ) );
+        }
+
+        // Check if face nodes are a subset of duplicated nodes
+        // Face should have same number of nodes as the fracture element
+        if( globalNodes.size() == static_cast< std::size_t >(pointIds->GetNumberOfIds()) )
+        {
+          bool faceMatch = true;
+          for( vtkIdType gn : globalNodes )
+          {
+            if( duplicatedPointOfElem2d.find( gn ) == duplicatedPointOfElem2d.end() )
+            {
+              faceMatch = false;
+              break;
+            }
+          }
+
+          if( faceMatch )
+          {
+            elem2dToFaces.emplaceBack( e2d, faceIndex );
+            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( cellGlobalId ) );
+            break;
+          }
+        }
       }
     }
-    
-    if( faceMatch )
-    {
-      elem2dToFaces.emplaceBack( e2d, faceIndex );
-      elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( cellGlobalId ) );
-      break;
-    }
-  }
-}
-}
   }
 
   auto cellRelation = ToCellRelation< ArrayOfArrays< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
@@ -604,16 +604,12 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
   // In order to avoid any cell global id collision, we gather the max cell global id over all the ranks.
   // Then we use this maximum as on offset.
   // TODO This does not take into account multiple fractures.
-#if 0
-  vtkIdType const maxLocalCellId = meshCellGlobalIds->GetMaxId();
-#else
-vtkIdType maxLocalCellId = 0;
-for( vtkIdType i = 0; i < meshCellGlobalIds->GetNumberOfTuples(); ++i )
-{
-  maxLocalCellId = std::max( maxLocalCellId, 
-                             static_cast<vtkIdType>(meshCellGlobalIds->GetValue(i)) );
-}
-#endif
+  vtkIdType maxLocalCellId = 0;
+  for( vtkIdType i = 0; i < meshCellGlobalIds->GetNumberOfTuples(); ++i )
+  {
+    maxLocalCellId = std::max( maxLocalCellId,
+                               static_cast< vtkIdType >(meshCellGlobalIds->GetValue( i )) );
+  }
   vtkIdType const maxGlobalCellId = MpiWrapper::max( maxLocalCellId );
   vtkIdType const cellGlobalOffset = maxGlobalCellId + 1;
 

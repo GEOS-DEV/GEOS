@@ -728,9 +728,9 @@ redistributeBySuperCellGraph(
     comm
     );
 
-// -----------------------------------------------------------------------
-// Step 6: Partition super-cell graph using ParMETIS/PTScotch
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
+  // Step 6: Partition super-cell graph using ParMETIS/PTScotch
+  // -----------------------------------------------------------------------
   array1d< int64_t > superCellPartitioning;
 
   if( method == PartitionMethod::parmetis )
@@ -758,9 +758,9 @@ redistributeBySuperCellGraph(
                           EnumStrings< PartitionMethod >::toString( method ) ) );
   }
 
-// -----------------------------------------------------------------------
-// Step 7: Build mapping from SuperCellId to local super-cell index (FIXED)
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
+  // Step 7: Build mapping from SuperCellId to local super-cell index (FIXED)
+  // -----------------------------------------------------------------------
 
   vtkIdTypeArray * superCellIdArray =
     vtkIdTypeArray::SafeDownCast( ugrid->GetCellData()->GetArray( "SuperCellId" ) );
@@ -779,7 +779,7 @@ redistributeBySuperCellGraph(
     orderedSuperCellIds.push_back( scId );
   }
 
-// Sort to ensure consistent ordering
+  // Sort to ensure consistent ordering
   std::sort( orderedSuperCellIds.begin(), orderedSuperCellIds.end() );
 
   localIndex const numLocalSuperCells = LvArray::integerConversion< localIndex >( orderedSuperCellIds.size() );
@@ -798,9 +798,9 @@ redistributeBySuperCellGraph(
     comm
     );
 
-// -----------------------------------------------------------------------
-// Step 9: Verify no super-cells were split across ranks
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
+  // Step 9: Verify no super-cells were split across ranks
+  // -----------------------------------------------------------------------
   stdMap< vtkIdType, int64_t > superCellToRank;
 
   vtkIdType const numCells = ugrid->GetNumberOfCells();
@@ -827,8 +827,8 @@ redistributeBySuperCellGraph(
   vtkSmartPointer< vtkDataSet > redistributed = vtk::redistribute( *splitMesh, comm );
 
   // -----------------------------------------------------------------------
-// Step 11: Report final distribution statistics
-// -----------------------------------------------------------------------
+  // Step 11: Report final distribution statistics
+  // -----------------------------------------------------------------------
   array1d< vtkIdType > cellsPerRank;
   vtkIdType const localCells = redistributed->GetNumberOfCells();
   MpiWrapper::allGather( localCells, cellsPerRank, comm );
@@ -2297,7 +2297,7 @@ redistributeMeshes( integer const logLevel,
   // -----------------------------------------------------------------------
   // Step 5: Final logging
   // -----------------------------------------------------------------------
-  if ( logLevel >=5 )
+  if( logLevel >=5 )
   {
     vtkIdType local2DCells = 0;
     vtkIdType local3DCells = 0;
