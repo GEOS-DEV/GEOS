@@ -87,7 +87,7 @@ void partition( CRSMatrixView< int64_t const, int64_t const, int64_t const > con
                                 options, // options
                                 &objval, // edgecut
                                 partition.data() ); // part
-  GEOS_THROW_IF_NE_MSG( result, METIS_OK, "METIS call failed", std::runtime_error );
+  GEOS_THROW_IF_NE_MSG( result, METIS_OK, "METIS call failed", geos::RuntimeError );
 }
 
 } // namespace metis
