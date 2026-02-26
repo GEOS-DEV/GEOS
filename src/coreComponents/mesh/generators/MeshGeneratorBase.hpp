@@ -48,7 +48,7 @@ class ElementRegionManager;
  * @param edgeManager   Populated edge manager.
  * @param faceManager   Populated face manager.
  * @param elemManager   Populated element region manager.
- * @return χ = V − E + F − C as a signed integer.
+ * @return χ = V − E + F − C as a signed integer (global value, same on all ranks).
  */
 integer computeEulerCharacteristic( NodeManager const & nodeManager,
                                     EdgeManager const & edgeManager,

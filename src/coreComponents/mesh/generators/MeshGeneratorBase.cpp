@@ -23,6 +23,7 @@
 #include "mesh/FaceManager.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/MpiWrapper.hpp"
 namespace geos
 {
 using namespace dataRepository;
@@ -120,18 +121,30 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
                                     FaceManager const & faceManager,
                                     ElementRegionManager const & elemManager )
 {
-  // Count bulk volumetric cells only (exclude fracture / surface sub-regions)
-  localIndex numCells = 0;
+  // Count only owned (non-ghost) entities on this rank so that summing across
+  // MPI ranks gives the true global topology counts without double-counting
+  // ghost copies that appear on multiple partitions.
+  //
+  // For a serial run ghostRank is -1 for every entity, so getNumberOfLocalIndices()
+  // equals size() and the result is identical to the old implementation.
+
+  localIndex localCells = 0;
   elemManager.forElementSubRegions< CellElementSubRegion >(
     [&]( CellElementSubRegion const & subRegion )
   {
-    numCells += subRegion.size();
+    localCells += subRegion.getNumberOfLocalIndices();
   } );
 
-  localIndex const V = nodeManager.size();
-  localIndex const E = edgeManager.size();
-  localIndex const F = faceManager.size();
-  localIndex const C = numCells;
+  localIndex const localV = nodeManager.getNumberOfLocalIndices();
+  localIndex const localE = edgeManager.getNumberOfLocalIndices();
+  localIndex const localF = faceManager.getNumberOfLocalIndices();
+  localIndex const localC = localCells;
+
+  // Reduce to global counts across all MPI ranks.
+  localIndex const V = MpiWrapper::sum( localV );
+  localIndex const E = MpiWrapper::sum( localE );
+  localIndex const F = MpiWrapper::sum( localF );
+  localIndex const C = MpiWrapper::sum( localC );
 
   return static_cast< integer >( V - E + F - C );
 }
