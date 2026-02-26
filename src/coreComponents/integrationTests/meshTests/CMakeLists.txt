@@ -103,6 +103,9 @@ set( dfn_market_mesh_files
      # ---- Y-shaped junction, boundary-cutting, hex & tet ----
      y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu
      y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu
+     # ---- miscellaneous, no-boundary-cut, 5 fractures, hex & tet ----
+     DFN_5_fractures_hex_binarized.vtu
+     DFN_5_fractures_tet_binarized.vtu
 )
 set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
 
