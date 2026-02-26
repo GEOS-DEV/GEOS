@@ -240,8 +240,7 @@ protected:
                                      eulerCharBeforeSplit,
                                      expectedEulerAfter,
                                      eulerCharAfterSplit,
-                                     nodeManager,
-                                     elemManager );
+                                     nodeManager );
 
     // Log statistics
     GEOS_LOG_RANK_0( "Summary:" );

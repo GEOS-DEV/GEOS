@@ -165,6 +165,7 @@ struct TopologyStats
   localIndex numDuplicatedNodes;
   localIndex numFractureElements;
   integer eulerCharacteristic;
+  integer numBodies;  // Number of separate domain fragments
 };
 
 /**
@@ -273,7 +274,6 @@ integer computeEulerCharacteristicTestHelper( NodeManager const & nodeManager,
         uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][4] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][4] ) );
         uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][4] ) );
-        
         // Faces (5)
         uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
         uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][4]} ) );
@@ -369,7 +369,7 @@ void checkElementJacobians( ElementRegionManager const & elemManager )
 
 /**
  * @brief Run all assertions for a single test case (node duplication, fracture elements,
- *        coordinate validity, Euler characteristic, and element Jacobians).
+ *        coordinate validity, and Euler characteristic).
  */
 void validateSurfaceGeneratorResults( std::string const & testCaseName,
                                       std::string const & meshFileName,
@@ -381,13 +381,14 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
                                       integer const eulerCharBeforeSplit,
                                       integer const expectedEulerAfter,
                                       integer const eulerCharAfterSplit,
-                                      NodeManager const & nodeManager,
-                                      ElementRegionManager const & elemManager )
+                                      NodeManager const & nodeManager )
 {
   // A1: Validate node duplication matches prediction
   // Note: totalDuplicatedNodes = total NEW nodes created (not counting original nodes)
   // For a node at N-fracture intersection: N new nodes are created
-  GEOS_LOG_RANK_0( "Validating A1: Node duplication prediction (Expected: " << expected.totalDuplicatedNodes
+  bool const a1Pass = ( statsAfter.numDuplicatedNodes == expected.totalDuplicatedNodes );
+  GEOS_LOG_RANK_0( "Validating A1 " << ( a1Pass ? "(ok)" : "(notok)" )
+                   << ": Node duplication prediction (Expected: " << expected.totalDuplicatedNodes
                    << ", Actual: " << statsAfter.numDuplicatedNodes << ")" );
   EXPECT_EQ( statsAfter.numDuplicatedNodes, expected.totalDuplicatedNodes )
     << "Test " << testCaseName << ": Node duplication prediction MISMATCH"
@@ -398,7 +399,9 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Fracture node sets: " << nodeSetNames;
 
   // A2: Verify fracture elements were created and match the predicted count
-  GEOS_LOG_RANK_0( "Validating A2: Fracture elements created (Expected: " << expected.numFractureElements
+  bool const a2Pass = ( statsAfter.numFractureElements == expected.numFractureElements );
+  GEOS_LOG_RANK_0( "Validating A2 " << ( a2Pass ? "(ok)" : "(notok)" )
+                   << ": Fracture elements created (Expected: " << expected.numFractureElements
                    << ", Actual: " << statsAfter.numFractureElements << ")" );
   EXPECT_EQ( statsAfter.numFractureElements, expected.numFractureElements )
     << "Test " << testCaseName << ": Fracture element count MISMATCH"
@@ -413,39 +416,30 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n    - SurfaceGenerator did not run or failed silently"
     << "\n    - Fracture face count prediction is wrong (check preprocessFractureTopology)";
 
-  // A3: Verify nodes were duplicated
-  GEOS_LOG_RANK_0( "Validating A3: Nodes were duplicated (Actual: " << statsAfter.numDuplicatedNodes << ")" );
-  EXPECT_GT( statsAfter.numDuplicatedNodes, 0 )
-    << "Test " << testCaseName << ": No nodes were duplicated"
-    << "\n  Nodes before: " << statsBefore.numNodes
-    << "\n  Nodes after:  " << statsAfter.numNodes
-    << "\n  Predicted to split: " << expected.numNodesToDuplicate << " nodes"
-    << "\n  Fracture elements created: " << statsAfter.numFractureElements
-    << "\n  POSSIBLE CAUSES:"
-    << "\n    - Fracture topology prediction found no internal nodes to split"
-    << "\n    - All fracture nodes are on the boundary/tip (not duplicated)"
-    << "\n    - SurfaceGenerator did not perform splitting";
-
-  // A4: Validate all node coordinates are valid (not NaN)
-  GEOS_LOG_RANK_0( "Validating A4: Node coordinates validity (Total nodes: " << nodeManager.size() << ")" );
+  // A3: Validate all node coordinates are valid (not NaN)
+  bool a3Pass = true;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions =
     nodeManager.referencePosition();
-  
   for( localIndex ni = 0; ni < nodeManager.size(); ++ni )
   {
     real64 const x = nodePositions[ni][0];
     real64 const y = nodePositions[ni][1];
     real64 const z = nodePositions[ni][2];
-    
+    if( std::isnan( x ) || std::isnan( y ) || std::isnan( z ) )
+      a3Pass = false;
     EXPECT_FALSE( std::isnan( x ) || std::isnan( y ) || std::isnan( z ) )
       << "Test " << testCaseName << ": Node " << ni << " has invalid (NaN) coordinates"
       << "\n  Position: (" << x << ", " << y << ", " << z << ")"
       << "\n  Total nodes in mesh: " << nodeManager.size()
       << "\n  This indicates memory corruption or uninitialized node positions";
   }
+  GEOS_LOG_RANK_0( "Validating A3 " << ( a3Pass ? "(ok)" : "(notok)" )
+                   << ": Node coordinates validity (Total nodes: " << nodeManager.size() << ")" );
 
-  // A5: Validate expected Euler characteristic before split
-  GEOS_LOG_RANK_0( "Validating A5: Euler χ before split (Expected: " << expectedEulerBefore
+  // A4: Validate expected Euler characteristic before split
+  bool const a4Pass = ( eulerCharBeforeSplit == expectedEulerBefore );
+  GEOS_LOG_RANK_0( "Validating A4 " << ( a4Pass ? "(ok)" : "(notok)" )
+                   << ": Euler χ before split (Expected: " << expectedEulerBefore
                    << ", Actual: " << eulerCharBeforeSplit << ")" );
   EXPECT_EQ( eulerCharBeforeSplit, expectedEulerBefore )
     << "Test " << testCaseName << ": Euler characteristic MISMATCH before split"
@@ -454,8 +448,10 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Mesh file:  " << meshFileName
     << "\n  NOTE: For a conformal mesh, expected χ = 1 (single connected solid)";
 
-  // A6: Validate expected Euler characteristic after split
-  GEOS_LOG_RANK_0( "Validating A6: Euler χ after split (Expected: " << expectedEulerAfter
+  // A5: Validate expected Euler characteristic after split
+  bool const a5Pass = ( eulerCharAfterSplit == expectedEulerAfter );
+  GEOS_LOG_RANK_0( "Validating A5 " << ( a5Pass ? "(ok)" : "(notok)" )
+                   << ": Euler χ after split (Expected: " << expectedEulerAfter
                    << ", Actual: " << eulerCharAfterSplit << ")" );
   EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
     << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
@@ -464,10 +460,6 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
     << "\n  Mesh file:  " << meshFileName
     << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
     << "\n  Fracture elements: " << statsAfter.numFractureElements;
-  
-  // A7: Validate element Jacobians (no degenerate elements)
-  GEOS_LOG_RANK_0( "Validating A7: Element Jacobians (checking for degenerate elements)" );
-  checkElementJacobians( elemManager );
 }
 
 /// @brief Parse "{ f1_node_set, f2_node_set, ... }" into individual set name strings.

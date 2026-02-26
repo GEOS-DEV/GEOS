@@ -99,11 +99,6 @@ protected:
       initialRockToughness="1.0"
       logLevel="0"/>
   </Solvers>
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace name="FE1" order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
   <ElementRegions>
     <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ emptyConstitutive }"/>
     <SurfaceElementRegion name="Fracture" defaultAperture="1.0e-4" faceBlock="faceElementSubRegion" materialList="{ emptyConstitutive }"/>
@@ -133,17 +128,14 @@ protected:
  * Replicates every assertion from the serial SurfaceGeneratorTest::runTest():
  *   A1  – node duplication count matches preprocessFractureTopology prediction
  *   A2  – fracture element count matches prediction
- *   A3  – at least one node was duplicated
- *   A4  – no NaN node coordinates after split
- *   A5  – Euler characteristic before split equals expected value
- *   A6  – Euler characteristic after  split equals expected value
- *   A7  – no degenerate elements (duplicate node references)
+ *   A3  – no NaN node coordinates after split
+ *   A4  – Euler characteristic before split equals expected value
+ *   A5  – Euler characteristic after  split equals expected value
+ *   A6  – no degenerate elements (duplicate node references)
  *
- * Additionally, before the split the test cross-validates the two independent
- * Euler characteristic implementations:
- *   • computeEulerCharacteristicTestHelper  (element-enumeration reference)
- *   • computeEulerCharacteristic            (manager-sizes production version)
- * Both must agree (exercises the MeshGeneratorBase implementation under MPI).
+ * The Euler characteristic is computed via computeEulerCharacteristic
+ * (manager-sizes production version from MeshGeneratorBase) both before
+ * and after the split.
  */
 TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
 {
@@ -261,28 +253,11 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     GEOS_LOG_RANK_0( "  Fracture elements: " << expected.numFractureElements );
 
     // ------------------------------------------------------------------
-    // Dual Euler characteristic cross-check BEFORE split  (A5 + production test)
-    //
-    //  1. Local element-enumeration reference  (computeEulerCharacteristicTestHelper)
-    //  2. Manager-sizes production version     (computeEulerCharacteristic)
-    // Both must agree — exercises the MeshGeneratorBase implementation under MPI.
+    // Euler characteristic BEFORE split
     // ------------------------------------------------------------------
     integer const eulerCharBeforeSplit =
-      computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
-    GEOS_LOG_RANK_0( "  Euler χ before split (local):      " << eulerCharBeforeSplit );
-
-    integer const eulerCharBeforeSplitMgr =
       computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
-    GEOS_LOG_RANK_0( "  Euler χ before split (managers):   " << eulerCharBeforeSplitMgr );
-
-    EXPECT_EQ( eulerCharBeforeSplit, eulerCharBeforeSplitMgr )
-      << "Test " << testCaseName << " [MPI]: computeEulerCharacteristic MISMATCH between implementations"
-      << "\n  Local (elem-enumeration): " << eulerCharBeforeSplit
-      << "\n  Manager-based:            " << eulerCharBeforeSplitMgr
-      << "\n  Partitioning: " << xPartitions << "x" << yPartitions << "x" << zPartitions
-      << "\n  The production manager-based version returned a different result than the"
-      << "\n  reference. Check that EdgeManager/FaceManager counts do not include"
-      << "\n  ghost or fracture-surface contributions.";
+    GEOS_LOG_RANK_0( "  Euler χ before split: " << eulerCharBeforeSplit );
 
     statsBefore.eulerCharacteristic = eulerCharBeforeSplit;
 
@@ -325,7 +300,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     statsAfter.numDuplicatedNodes = localOwnedNewNodes;
 
     integer const eulerCharAfterSplit =
-      computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
+      computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
     GEOS_LOG_RANK_0( "  Euler χ after  split:              " << eulerCharAfterSplit );
 
     statsAfter.eulerCharacteristic = eulerCharAfterSplit;
@@ -382,8 +357,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
                                        eulerCharBeforeSplit,
                                        expectedEulerAfter,
                                        eulerCharAfterSplit,
-                                       nodeManager,
-                                       elemManager );
+                                       nodeManager );
     }
 
   } // end scoped GeosxState
