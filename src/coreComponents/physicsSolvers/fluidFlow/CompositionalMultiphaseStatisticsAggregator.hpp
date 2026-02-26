@@ -21,18 +21,81 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/StdContainerWrappers.hpp"
-#include "dataRepository/DataContext.hpp"
-#include "dataRepository/Group.hpp"
-#include "mesh/CellElementRegion.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
-#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/StatisticsAggregatorBase.hpp"
+
+/**
+ * @file CompositionalMultiphaseStatisticsAggregator.hpp
+ * @details Region statistics data is stored as follow:
+
+ * Problem : ProblemManager
+ * |-> domain : DomainPartition
+ *     |-> MeshBodies : Group
+ *         |-> cartesianMesh : MeshBody
+ *             |-> meshLevels : Group
+ *                 |-> Level0 : MeshLevel
+ *                 |   |-> nodeManager : NodeManager
+ *                 |   |   |-> sets : Group
+ *                 |   |       | * all : Wrapper< index array >
+ *                 |   |       | * xneg : Wrapper< index array >
+ *                 |   |       [...] (other element sets)
+ *                 |   |
+ *                 |   |-> ElementRegions : ElementRegionManager
+ *                 |   |   |-> Channel : CellElementRegion
+ *                 |   |   |   |-> cb-0_0_0 : CellElementSubRegion
+ *                 |   |   |   |   | * pressure : Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : Wrapper< real64 array >
+ *                 |   |   |   |   [...] (other fields)
+ *                 |   |   |   |
+ *                 |   |   |   |-> cb-0_0_1 : CellElementSubRegion
+ *                 |   |   |   |   | * pressure : Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : Wrapper< real64 array >
+ *                 |   |   |   |   [...] (other fields)
+ *                 |   |   |   |
+ *                 |   |   |   [...] (other sub-regions)
+ *                 |   |   |
+ *                 |   |   |-> Barrier : CellElementRegion
+ *                 |   |       |-> cb-1_0_0 : CellElementSubRegion
+ *                 |   |       |-> cb-1_0_1 : CellElementSubRegion
+ *                 |   |       [...] (other sub-regions)
+ *                 |   |
+ *                 |   [...] (other element managers)
+ *          ____   |   |
+ *          |      |   |-> statistics : Group (storage for all stats)
+ *          |      |       |-> compFlowStats : Group (storage for this instance stats)
+ *          |      |       |   |-> cflStatistics : CFLStatistics
+ *          |      |       |   |-> regionsStatistics : RegionStatistics (aggregate)
+ *          |      |       |       |-> Channel : RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |       |   |-> cb-0_0_0 : RegionStatistics (compute read-back)
+ *  stats   |      |       |       |   |-> cb-0_0_1 : RegionStatistics (compute read-back)
+ *  data -> |      |       |       |   [...] (other sub-regions stats)
+ *          |      |       |       |
+ *          |      |       |       |-> Barrier : RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |           |-> cb-1_0_0 : RegionStatistics (compute read-back)
+ *          |      |       |           |-> cb-1_0_1 : RegionStatistics (compute read-back)
+ *          |      |       |           [...] (other sub-regions stats)
+ *          |      |       |
+ *          |___   |       [...] (other stats storages)
+ *                 |
+ *                 [...] (other discretizations)
+ */
 
 namespace geos
 {
 
 class CompositionalMultiphaseBase;
+
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
+class RegionStatistics;
+}
+
+template<>
+struct StatsAggregatorTraits< compositionalMultiphaseStatistics::StatsAggregator >
+{
+  using SolverType = CompositionalMultiphaseBase;
+  using StatsGroupType = compositionalMultiphaseStatistics::RegionStatistics;
+};
 
 namespace compositionalMultiphaseStatistics
 {
@@ -47,14 +110,12 @@ struct AggregatorParameters
 
 /**
  * @brief Output data group to contain the result of a given stat aggregator on the dataRepository.
- *        Attributes are public since the class is a POD. Can it be replaced by a wrapped-struct?
+ *        Attributes are public since the class is a POD.
+ * @todo repair 1D HDF5 outputs to enable stats HDF5 outputs
  */
-class RegionStatistics : public dataRepository::Group
+class RegionStatistics : public RegionStatisticsBase
 {
 public:
-
-  /// Time of statistics computation
-  real64 m_time;
 
   /// average region pressure (numerator value before postAggregateCompute())
   real64 m_averagePressure;
@@ -96,6 +157,7 @@ public:
   array2d< real64 > const m_componentMass;
 
   // TODO? -> split to struct PressureStats...MassStats:
+  // - optional computation of each stats
   // - VKS for struct name ("pressureStats"..."massStats")
   // - current RegionStatistics struct bits
 
@@ -112,24 +174,15 @@ public:
 
   RegionStatistics( RegionStatistics && ) = default;
 
-  /**
-   * @return the name of the data-repository object that is targeted by the statistics
-   *         (mesh level / region / sub-region).
-   */
-  string_view getTargetName() const
-  { return getName(); }
-
 };
 
 /**
  * @brief Output data group to contain the result of a given stat aggregator on the dataRepository.
  *        Attributes are public since the class is a POD. Can it be replaced by a wrapped-struct?
  */
-class CFLStatistics : public dataRepository::Group
+class CFLStatistics : public RegionStatisticsBase
 {
 public:
-  /// Time of statistics computation
-  real64 m_time;
 
   /// Maximum Courant Friedrichs Lewy number in the grid for each phase
   real64 m_maxPhaseCFL;
@@ -149,33 +202,25 @@ public:
  * @brief Reponsible of computing physical statistics over the grid, registering the result in the
  *        data repository, but not storing / outputing it by itself. It does not have mutable state
  *        except the encountered issues.
- * @todo repair 1D HDF5 outputs to enable stats HDF5 outputs
  */
-class StatsAggregator
+class StatsAggregator : public StatsAggregatorBase< StatsAggregator >
 {
 public:
+
+  using Base = StatsAggregatorBase< StatsAggregator >;
+
+  // using SolverType = CompositionalMultiphaseBase;
+
+  // using StatsGroupType = RegionStatistics;
 
   /**
    * @brief the associated view keys
    */
   struct ViewKeys
   {
-    /// String for the discretization statistics group
-    constexpr static char const * statisticsString() { return "statistics"; }
-    /// String for the region statistics group
-    constexpr static char const * regionsStatisticsString() { return "regionsStatistics"; }
     /// String for the cfl statistics group
     constexpr static char const * cflStatisticsString() { return "cflStatistics"; }
   };
-
-  /**
-   * @brief Standard function signature for any functor that applies on RegionStatistics instances
-   *        param 0: TODO document
-   *        param 1: TODO document
-   * @tparam OWNER_T
-   */
-  template< typename OWNER_T >
-  using RegionStatisticsFunctor = std::function< void ( OWNER_T &, RegionStatistics & ) >;
 
   /**
    * @brief Construct a new Stats Aggregator object
@@ -210,35 +255,10 @@ public:
    */
   void enableCFLStatistics();
 
-  void forRegionStatistics( RegionStatisticsFunctor< MeshLevel > const & functor ) const;
-
-  void forRegionStatistics( MeshLevel & mesh,
-                            RegionStatistics & meshRegionsStatistics,
-                            RegionStatisticsFunctor< CellElementRegion > const & functor ) const;
-
-  void forRegionStatistics( CellElementRegion & region,
-                            RegionStatistics & regionStatistics,
-                            RegionStatisticsFunctor< CellElementSubRegion > const & functor ) const;
-
-  /**
-   * @param[in] timeRequest The time for which we want to know if the statistics are computed.
-   * @param[in] stats the statistics data structure we want to know if it has been computed
-   * @return true if the statistics have been computed.
-   */
-  bool isComputed( real64 const timeRequest, RegionStatistics const & stats );
-
   /**
    * @brief set the statistics as dirty, ensuring isComputed() will be false until the next computation.
    */
   void setDirty();
-
-  /**
-   * @brief Compute statistics on the mesh discretizations (average field pressure, etc)
-   *        Results are reduced on rank 0, and broadcasted over all ranks.
-   * @param[in] timeRequest The time for which we want to compute the statistics.
-   * @return false if there was a problem that prevented the statistics to be computed correctly.
-   */
-  bool computeRegionsStatistics( real64 const timeRequest );
 
   /**
    * @brief Compute CFL numbers
@@ -251,99 +271,36 @@ public:
                           real64 const dt,
                           DomainPartition & domain );
 
-  CFLStatistics * getCFLStatistics( DomainPartition & domain ) const
-  {return domain.getGroupPointer< CFLStatistics >( ViewKeys::cflStatisticsString() ); }
-
-  CompositionalMultiphaseBase const * getSolver() const
-  { return m_solver; }
-
-  /**
-   * @return The encountered issues during the last computing method call.
-   */
-  stdVector< string > const & getWarnings() const
-  { return m_warnings; }
-
-  /**
-   * @return the name of the entity that needs the statistics.
-   */
-  string const & getOwnerName() const
-  { return m_ownerDataContext.getTargetName(); }
-
   integer getNumPhases() const
   { return m_numPhases; }
 
   integer getNumComponents() const
   { return m_numComponents; }
 
-  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
+  CFLStatistics * getCFLStatistics( DomainPartition & domain ) const;
 
-  RegionStatistics & getMeshRegionsStatistics( MeshLevel & mesh ) const;
+  CFLStatistics & getCflStatistics( MeshLevel & mesh ) const;
 
-  /**
-   * @brief TODO
-   * @throw InputError if no statistics data is found for the given region name.
-   * @param mesh TODO
-   * @param regionNname TODO
-   * @return TODO
-   */
-  RegionStatistics & getRegionStatistics( MeshLevel & mesh, string_view regionName ) const;
+  // template implementations
+  /// @cond DO_NOT_DOCUMENT
 
-  CFLStatistics & getCflStatisticsGroup( MeshLevel & mesh ) const;
+  void initStats( RegionStatistics & stats, real64 time ) const;
+  void computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const;
+  void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
+  void mpiAggregateStats( RegionStatistics & stats ) const;
+  void postAggregateStats( RegionStatistics & stats );
+
+  /// @endcond
 
 private:
 
-  struct StatsState {
-    bool m_isEnabled = false;
-    bool m_isDirty = false;
-  };
-
-  /// @see getOwnerName()
-  dataRepository::DataContext const & m_ownerDataContext;
-
-  CompositionalMultiphaseBase * m_solver = nullptr;
-
-  dataRepository::Group * m_meshBodies = nullptr;
-
   AggregatorParameters m_params;
-
-  stdVector< string > m_warnings;
-
-  StatsState m_regionStatsState;
 
   StatsState m_cflStatsState;
 
   integer m_numPhases;
 
   integer m_numComponents;
-
-  /**
-   * @brief Initialize all statistics values to aggregable default values,
-   *        before any computation / reduction for the current timestep.
-   * @param stats the statistics instance
-   * @param time start time of the current timestep (s)
-   */
-  void initStats( RegionStatistics & stats, real64 time ) const;
-
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const;
-
-  /**
-   * @brief Aggregate all instance statistics with those of another instance on the current rank.
-   * @param stats the statistics instance
-   * @param other the other instance to aggregate with.
-   */
-  void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
-
-  /**
-   * @brief Aggregate all instance statistics with those of other ranks.
-   * @param stats the statistics instance
-   */
-  void mpiAggregateStats( RegionStatistics & stats ) const;
-
-  /**
-   * @brief Do the final computations for the statistics. Must be called after computations & aggregations.
-   * @param stats the statistics instance
-   */
-  void postAggregateStats( RegionStatistics & stats );
 
 };
 
