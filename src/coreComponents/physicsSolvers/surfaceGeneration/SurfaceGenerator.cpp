@@ -193,18 +193,15 @@ void SurfaceGenerator::postInputInitialization()
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
-                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
-                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
-                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) );
 }
 
@@ -961,8 +958,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1,
-                   getDataContext() << ": parentNodeIndex should not be -1",
+    GEOS_ERROR_IF( parentNodeIndex == -1, "parentNodeIndex should not be -1",
                    getDataContext() );
 
     m_tipNodes.remove( parentNodeIndex );
@@ -988,8 +984,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1,
-                   getDataContext() << ": parentEdgeIndex should not be -1",
+    GEOS_ERROR_IF( parentEdgeIndex == -1, "parentEdgeIndex should not be -1",
                    getDataContext() );
 
     m_tipEdges.remove( parentEdgeIndex );
@@ -1023,8 +1018,7 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1,
-                   getDataContext() << ": parentFaceIndex should not be -1",
+    GEOS_ERROR_IF( parentFaceIndex == -1, "parentFaceIndex should not be -1",
                    getDataContext() );
 
     m_trailingFaces.insert( parentFaceIndex );
@@ -1275,7 +1269,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( getDataContext() << ": invalid edge (SurfaceGenerator::findFracturePlanes)." );
+      GEOS_ERROR( "invalid edge (SurfaceGenerator::findFracturePlanes).", getDataContext() );
     }
 
 
@@ -1420,11 +1414,12 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         // NOT be included in the path!!!
         if( nextEdge!=startingEdge && !(isEdgeExternal[nextEdge]==1 && startingEdgeExternal ) )
         {
-          GEOS_ERROR( getDataContext() << ": Crap !" <<
+          GEOS_ERROR( "Crap !" <<
                       "  NodeID, ParentID = " << nodeID << ", " << parentNodeIndex << '\n' <<
                       "  Starting Edge/Face = " << startingEdge << ", " << startingFace << '\n' <<
                       "  Face Separation Path = " << facePath << '\n' <<
-                      "  Edge Separation Path = " << edgePath << '\n' );
+                      "  Edge Separation Path = " << edgePath << '\n',
+                      getDataContext() );
         }
 
         // add faces in the path to separationPathFaces
@@ -1536,7 +1531,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
             }
             if( pathFound == false )
             {
-              GEOS_ERROR( getDataContext() << ": couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes" );
+              GEOS_ERROR( "couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes", getDataContext() );
             }
           }
 
@@ -1555,7 +1550,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         }
         else
         {
-          GEOS_ERROR( getDataContext() << ": next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes" );
+          GEOS_ERROR( "next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes", getDataContext() );
         }
 
       }
@@ -1583,7 +1578,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
     if( edge[0] == INT_MAX || edge[1] == INT_MAX )
     {
-      GEOS_ERROR( getDataContext() << ": invalid edge. (SurfaceGenerator::findFracturePlanes" );
+      GEOS_ERROR( "invalid edge. (SurfaceGenerator::findFracturePlanes", getDataContext() );
     }
 
 
@@ -3218,7 +3213,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
               if( tralingNodeID == std::numeric_limits< localIndex >::max())
               {
-                GEOS_ERROR( getDataContext() << ": The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node." );
+                GEOS_ERROR( "The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node.",
+                            getDataContext() );
               }
             }
             else if( unpinchedNodeID.size() == 1 )
@@ -3506,8 +3502,9 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "{}: Edge {} has two external faces, but the parent-child relationship is wrong.",
-                          getDataContext(), edgeID ) );
+    GEOS_ERROR( GEOS_FMT( "Edge {} has two external faces, but the parent-child relationship is wrong.",
+                          edgeID ),
+                getDataContext() );
   }
 
   trailFaceID = faceParentIndex[faceInvolved[0]]==-1 ? faceInvolved[0] : faceParentIndex[faceInvolved[0]];
@@ -3584,7 +3581,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
     if( numSharedNodes == 4 )
     {
-      GEOS_ERROR( getDataContext() << ": The fracture face has four shared nodes with its child. This should not happen." );
+      GEOS_ERROR( "The fracture face has four shared nodes with its child. This should not happen.", getDataContext() );
     }
     else if( numSharedNodes == 3 )
     {
@@ -3593,7 +3590,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
       //wu40: I think the following check is not necessary.
       if( lNodeFaceA.size() != 1 || lNodeFaceAp.size() != 1 )
       {
-        GEOS_ERROR( getDataContext() << ": these two faces share three nodes but the number of remaining nodes is not one." );
+        GEOS_ERROR( "these two faces share three nodes but the number of remaining nodes is not one.", getDataContext() );
       }
       else
       {
@@ -3632,7 +3629,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
     }
 
     if( convexCorner == std::numeric_limits< localIndex >::max())
-      GEOS_ERROR( getDataContext() << ": This is a three-node-pinched edge but I cannot find the convex corner" );
+      GEOS_ERROR( "This is a three-node-pinched edge but I cannot find the convex corner", getDataContext() );
 
   }
 
@@ -3702,7 +3699,7 @@ real64 SurfaceGenerator::calculateEdgeSif( DomainPartition const & domain,
 
       if( trailingNodes.size() > 2 || trailingNodes.size() == 0 )
       {
-        GEOS_ERROR( getDataContext() << ": Fatal error in finding nodes behind tip edge." );
+        GEOS_ERROR( "Fatal error in finding nodes behind tip edge.", getDataContext() );
       }
       else if( trailingNodes.size() == 1 )  // Need some work to find the other node
       {

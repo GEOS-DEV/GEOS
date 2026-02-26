@@ -74,8 +74,7 @@ postInputInitialization()
   Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
-                 GEOS_FMT( "{}: {} solver named {} not found",
-                           getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
+                 GEOS_FMT( "{} solver named {} not found",
                            POROMECHANICS_SOLVER::catalogName(),
                            m_poromechanicsSolverName ),
                  InputError, getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ) );
@@ -87,8 +86,7 @@ postInputInitialization()
     TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
 
     GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
-                   GEOS_FMT( "{}: {} task named {} not found",
-                             getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
+                   GEOS_FMT( "{} task named {} not found",
                              SolidMechanicsStatistics::catalogName(),
                              m_solidMechanicsStatisticsName ),
                    InputError, getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ) );
