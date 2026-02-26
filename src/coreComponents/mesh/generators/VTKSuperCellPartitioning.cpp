@@ -284,11 +284,12 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
 
 
 // =============================================================================================
-// SECTION 3: INITIAL REDISTRIBUTION (preserving super-cells)
+// SECTION 3: INITIAL REDISTRIBUTION
 // =============================================================================================
 vtkSmartPointer< vtkDataSet >
 redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
-                               MPI_Comm comm )
+                               MPI_Comm comm,
+                               InitialDistributionStrategy strategy )
 {
   GEOS_MARK_FUNCTION;
 
@@ -317,138 +318,156 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     }
     vtkIdType numSuperCells = superCellToLocalCells.size();
 
-    // -----------------------------------------------------------------------
-    // Step 1: Pre-compute ALL cell centroids
-    // -----------------------------------------------------------------------
-    std::vector< std::array< double, 3 > > allCellCentroids( numCells );
-    vtkPoints * meshPoints = cells3D->GetPoints();
-
-    for( vtkIdType cellIdx = 0; cellIdx < numCells; ++cellIdx )
-    {
-      vtkIdType npts;
-      const vtkIdType * pts;
-      cells3D->GetCellPoints( cellIdx, npts, pts );
-
-      double centroid[3] = {0.0, 0.0, 0.0};
-      for( vtkIdType i = 0; i < npts; ++i )
-      {
-        double pt[3];
-        meshPoints->GetPoint( pts[i], pt );
-        centroid[0] += pt[0];
-        centroid[1] += pt[1];
-        centroid[2] += pt[2];
-      }
-
-      allCellCentroids[cellIdx][0] = centroid[0] / npts;
-      allCellCentroids[cellIdx][1] = centroid[1] / npts;
-      allCellCentroids[cellIdx][2] = centroid[2] / npts;
-    }
+    GEOS_LOG_RANK_0( GEOS_FMT( "Initial distribution: {} super-cells across {} ranks using {} strategy",
+                               numSuperCells, numRanks,
+                               (strategy == InitialDistributionStrategy::MORTON ? "MORTON" : "BLOCK") ) );
 
     // -----------------------------------------------------------------------
-    // Step 2: Compute super-cell centroids from pre-computed values
+    // Step 1: Build super-cell list and optionally sort by spatial locality
     // -----------------------------------------------------------------------
-    struct SuperCellPartitionInfo
+    struct SuperCellDistributionInfo
     {
       vtkIdType scId;
-      std::array< double, 3 > centroid;
       std::vector< vtkIdType > cellIndices;
+      std::array< double, 3 > centroid;  // Only computed for Morton strategy
     };
 
-    std::vector< SuperCellPartitionInfo > superCells;
+    std::vector< SuperCellDistributionInfo > superCells;
     superCells.reserve( numSuperCells );
 
-    for( auto const & [scId, cellIndices] : superCellToLocalCells )
+    if( strategy == InitialDistributionStrategy::MORTON )
     {
-      std::array< double, 3 > centroid = {0.0, 0.0, 0.0};
+      // MORTON: Compute centroids for spatial sorting
+      GEOS_LOG_RANK_0( "Computing super-cell centroids for Morton ordering..." );
 
-      // Fast: just sum pre-computed cell centroids
-      for( vtkIdType cellIdx : cellIndices )
+      // Pre-compute cell centroids
+      std::vector< std::array< double, 3 > > allCellCentroids( numCells );
+      vtkPoints * meshPoints = cells3D->GetPoints();
+
+      for( vtkIdType cellIdx = 0; cellIdx < numCells; ++cellIdx )
       {
-        centroid[0] += allCellCentroids[cellIdx][0];
-        centroid[1] += allCellCentroids[cellIdx][1];
-        centroid[2] += allCellCentroids[cellIdx][2];
+        vtkIdType npts;
+        const vtkIdType * pts;
+        cells3D->GetCellPoints( cellIdx, npts, pts );
+
+        double centroid[3] = {0.0, 0.0, 0.0};
+        for( vtkIdType i = 0; i < npts; ++i )
+        {
+          double pt[3];
+          meshPoints->GetPoint( pts[i], pt );
+          centroid[0] += pt[0];
+          centroid[1] += pt[1];
+          centroid[2] += pt[2];
+        }
+
+        allCellCentroids[cellIdx][0] = centroid[0] / npts;
+        allCellCentroids[cellIdx][1] = centroid[1] / npts;
+        allCellCentroids[cellIdx][2] = centroid[2] / npts;
       }
 
-      // Average across cells in super-cell
-      centroid[0] /= cellIndices.size();
-      centroid[1] /= cellIndices.size();
-      centroid[2] /= cellIndices.size();
-
-      superCells.push_back( SuperCellPartitionInfo{ scId, centroid, cellIndices } );
-    }
-
-    // Free cell centroids (no longer needed)
-    allCellCentroids.clear();
-    allCellCentroids.shrink_to_fit();
-
-    // -----------------------------------------------------------------------
-    // Step 3: Find bounding box for Morton code normalization
-    // -----------------------------------------------------------------------
-    double minCoord[3] = {std::numeric_limits< double >::max(),
-                          std::numeric_limits< double >::max(),
-                          std::numeric_limits< double >::max()};
-    double maxCoord[3] = {std::numeric_limits< double >::lowest(),
-                          std::numeric_limits< double >::lowest(),
-                          std::numeric_limits< double >::lowest()};
-
-    for( auto const & sc : superCells )
-    {
-      for( int d = 0; d < 3; ++d )
+      // Compute super-cell centroids
+      for( auto const & [scId, cellIndices] : superCellToLocalCells )
       {
-        minCoord[d] = std::min( minCoord[d], sc.centroid[d] );
-        maxCoord[d] = std::max( maxCoord[d], sc.centroid[d] );
+        std::array< double, 3 > centroid = {0.0, 0.0, 0.0};
+
+        for( vtkIdType cellIdx : cellIndices )
+        {
+          centroid[0] += allCellCentroids[cellIdx][0];
+          centroid[1] += allCellCentroids[cellIdx][1];
+          centroid[2] += allCellCentroids[cellIdx][2];
+        }
+
+        centroid[0] /= cellIndices.size();
+        centroid[1] /= cellIndices.size();
+        centroid[2] /= cellIndices.size();
+
+        superCells.push_back( SuperCellDistributionInfo{ scId, cellIndices, centroid } );
       }
-    }
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "Bounding box: X=[{:.3f}, {:.3f}], Y=[{:.3f}, {:.3f}], Z=[{:.3f}, {:.3f}]",
-                               minCoord[0], maxCoord[0], minCoord[1], maxCoord[1], minCoord[2], maxCoord[2] ));
+      allCellCentroids.clear();
+      allCellCentroids.shrink_to_fit();
 
-    // -----------------------------------------------------------------------
-    // Step 4: Sort by Morton algorith to ensure spatial locality
-    // -----------------------------------------------------------------------
-    auto computeMorton = []( std::array< double, 3 > const & centroid,
-                             double bounds_min[3],
-                             double bounds_max[3] ) -> uint64_t
-    {
-      // Normalize coordinates to [0, 1]
-      auto normalize = [&]( double val, int dim ) -> uint32_t
+      // Find bounding box
+      double minCoord[3] = {std::numeric_limits< double >::max(),
+                            std::numeric_limits< double >::max(),
+                            std::numeric_limits< double >::max()};
+      double maxCoord[3] = {std::numeric_limits< double >::lowest(),
+                            std::numeric_limits< double >::lowest(),
+                            std::numeric_limits< double >::lowest()};
+
+      for( auto const & sc : superCells )
       {
-        double range = bounds_max[dim] - bounds_min[dim];
-        if( range < 1e-10 )
-          return 0;
-        double norm = (val - bounds_min[dim]) / range;
-        norm = std::max( 0.0, std::min( 1.0, norm ) );
-        return static_cast< uint32_t >( norm * ((1u << 21) - 1) ); // 21 bits per dimension
+        for( int d = 0; d < 3; ++d )
+        {
+          minCoord[d] = std::min( minCoord[d], sc.centroid[d] );
+          maxCoord[d] = std::max( maxCoord[d], sc.centroid[d] );
+        }
+      }
+
+      GEOS_LOG_RANK_0( GEOS_FMT( "Bounding box: X=[{:.3f}, {:.3f}], Y=[{:.3f}, {:.3f}], Z=[{:.3f}, {:.3f}]",
+                                 minCoord[0], maxCoord[0], minCoord[1], maxCoord[1], minCoord[2], maxCoord[2] ));
+
+      // Morton encoding
+      auto computeMorton = []( std::array< double, 3 > const & centroid,
+                               double bounds_min[3],
+                               double bounds_max[3] ) -> uint64_t
+      {
+        auto normalize = [&]( double val, int dim ) -> uint32_t
+        {
+          double range = bounds_max[dim] - bounds_min[dim];
+          if( range < 1e-10 )
+            return 0;
+          double norm = (val - bounds_min[dim]) / range;
+          norm = std::max( 0.0, std::min( 1.0, norm ) );
+          return static_cast< uint32_t >( norm * ((1u << 21) - 1) );
+        };
+
+        uint32_t x = normalize( centroid[0], 0 );
+        uint32_t y = normalize( centroid[1], 1 );
+        uint32_t z = normalize( centroid[2], 2 );
+
+        uint64_t code = 0;
+        for( int i = 0; i < 21; ++i )
+        {
+          code |= ((x & (1u << i)) ? (1ull << (3*i)) : 0);
+          code |= ((y & (1u << i)) ? (1ull << (3*i + 1)) : 0);
+          code |= ((z & (1u << i)) ? (1ull << (3*i + 2)) : 0);
+        }
+        return code;
       };
 
-      uint32_t x = normalize( centroid[0], 0 );
-      uint32_t y = normalize( centroid[1], 1 );
-      uint32_t z = normalize( centroid[2], 2 );
-
-      // Interleave bits (Morton encoding)
-      uint64_t code = 0;
-      for( int i = 0; i < 21; ++i )
+      // Sort by Morton code
+      std::sort( superCells.begin(), superCells.end(),
+                 [&]( SuperCellDistributionInfo const & a, SuperCellDistributionInfo const & b )
       {
-        code |= ((x & (1u << i)) ? (1ull << (3*i)) : 0);
-        code |= ((y & (1u << i)) ? (1ull << (3*i + 1)) : 0);
-        code |= ((z & (1u << i)) ? (1ull << (3*i + 2)) : 0);
-      }
-      return code;
-    };
+        return computeMorton( a.centroid, minCoord, maxCoord ) <
+        computeMorton( b.centroid, minCoord, maxCoord );
+      } );
 
-
-    // Sort by Morton
-    std::sort( superCells.begin(), superCells.end(),
-               [&]( SuperCellPartitionInfo const & a, SuperCellPartitionInfo const & b )
+      GEOS_LOG_RANK_0( "Super-cells sorted by Morton Z-order curve" );
+    }
+    else  // BLOCK strategy
     {
-      return computeMorton( a.centroid, minCoord, maxCoord ) <
-      computeMorton( b.centroid, minCoord, maxCoord );
-    } );
+      // BLOCK: Simple ordering by super-cell ID (no centroid computation needed)
+      GEOS_LOG_RANK_0( "Using block distribution (no spatial ordering)" );
 
-    GEOS_LOG_RANK_0( "Super-cells sorted by spatial locality (Z-order curve)" );
+      for( auto const & [scId, cellIndices] : superCellToLocalCells )
+      {
+        superCells.push_back( SuperCellDistributionInfo{ scId, cellIndices, {0.0, 0.0, 0.0} } );
+      }
+
+      // Sort by super-cell ID for deterministic partitioning
+      std::sort( superCells.begin(), superCells.end(),
+                 []( SuperCellDistributionInfo const & a, SuperCellDistributionInfo const & b )
+      {
+        return a.scId < b.scId;
+      } );
+
+      GEOS_LOG_RANK_0( "Super-cells ordered by ID" );
+    }
 
     // -----------------------------------------------------------------------
-    // Step 5: Assign sorted super-cells to ranks in contiguous blocks
+    // Step 2: Assign super-cells to ranks in contiguous blocks
     // -----------------------------------------------------------------------
     array1d< int64_t > cellPartitions( numCells );
     std::vector< vtkIdType > cellsPerRank( numRanks, 0 );
@@ -468,7 +487,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     }
 
     // -----------------------------------------------------------------------
-    // Step 6: Build partitions
+    // Step 3: Build partitions
     // -----------------------------------------------------------------------
     partitionedMesh->SetNumberOfPartitions( numRanks );
 
@@ -501,7 +520,6 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
 
       partitionedMesh->SetPartition( r, partition );
     }
-
   }
   else
   {
@@ -514,9 +532,8 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     }
   }
 
-
   // -----------------------------------------------------------------------
-  // Step 7: Redistribute using VTK
+  // Step 4: Redistribute using VTK
   // -----------------------------------------------------------------------
   vtkSmartPointer< vtkDataSet > result = vtk::redistribute( *partitionedMesh, comm );
 
@@ -926,8 +943,8 @@ buildSuperCellGraph(
   GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph nodes:      {:>10L}", globalBaseCells ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph edges:      {:>10L}", globalBaseEdges ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Node reduction:        {:>10L} cells ({:.1f}%)",
-                           globalBaseCells - globalSuperCells,
-                           100.0 * (globalBaseCells - globalSuperCells) / globalBaseCells ) );
+                             globalBaseCells - globalSuperCells,
+                             100.0 * (globalBaseCells - globalSuperCells) / globalBaseCells ) );
   return std::make_pair( std::move( superGraph ), std::move( superVertexWeights ) );
 }
 

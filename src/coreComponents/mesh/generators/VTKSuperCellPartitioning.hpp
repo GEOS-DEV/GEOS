@@ -44,6 +44,15 @@ namespace vtk
 {
 
 /**
+ * @brief Strategy for initial super-cell scatter across ranks (before ParMETIS refinement)
+ */
+enum class InitialDistributionStrategy
+{
+  MORTON,  /// Distribute by Morton Z-curve for spatial locality
+  BLOCK    /// Distribute by simple contiguous blocks (faster)
+};
+
+/**
  * @brief Metadata about super-cells for partitioning
  *
  * A super-cell is a group of 3D cells that must stay together during partitioning.
@@ -99,6 +108,9 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
  * @brief Initial redistribution preserving super-cell integrity
  * @param cells3D Input mesh (only non-empty on rank 0)
  * @param comm MPI communicator
+ * @param strategy Initial distribution strategy:
+ *                 - MORTON: Sort super-cells by Morton Z-curve for spatial locality
+ *                 - BLOCK: Simple contiguous block assignment
  * @return Redistributed mesh with SuperCellId array preserved
  *
  * Uses simple round-robin assignment of super-cells to ranks.
@@ -106,7 +118,9 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
  */
 vtkSmartPointer< vtkDataSet >
 redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
-                               MPI_Comm comm );
+                               MPI_Comm comm,
+                               InitialDistributionStrategy strategy = InitialDistributionStrategy::MORTON );
+
 
 /**
  * @brief Build a graph where nodes are super-cells (not individual cells)
