@@ -121,9 +121,11 @@ foreach( test ${gtest_geosx_tests} )
   target_compile_definitions( ${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\" )
 
   geos_add_test( NAME ${test_name}
-                 COMMAND ${test_name} ${CMAKE_CURRENT_LIST_DIR} )
+                 COMMAND ${test_name} )
 
-  set_tests_properties( ${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>" )
+  set_tests_properties( ${test_name} PROPERTIES
+                        ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>"
+                        LABELS "${test_name}" )
   
   # Copy DFN-market mesh files from meshTests/dfn_market/
   foreach( mesh_file ${dfn_market_mesh_files} )
@@ -170,12 +172,13 @@ if( ENABLE_MPI )
                               PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${sg_mpi_test_name}>\" )
 
   geos_add_test( NAME          ${sg_mpi_test_name}
-                 COMMAND       ${sg_mpi_test_name} -x ${sg_mpi_nranks}
+                 COMMAND       ${sg_mpi_test_name}
                  NUM_MPI_TASKS ${sg_mpi_nranks} )
 
   set_tests_properties( ${sg_mpi_test_name}
-                        PROPERTIES ENVIRONMENT
-                        "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sg_mpi_test_name}>" )
+                        PROPERTIES
+                        ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sg_mpi_test_name}>"
+                        LABELS "${sg_mpi_test_name}" )
 
   # Copy all DFN-market mesh files to the MPI test binary directory
   foreach( mesh_file ${dfn_market_mesh_files} )

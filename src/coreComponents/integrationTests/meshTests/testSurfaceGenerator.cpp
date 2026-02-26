@@ -406,8 +406,14 @@ INSTANTIATE_TEST_SUITE_P(
     // Splits the solid into 3 parts → χ_after = 3.
     //                   test name                          mesh file                                  node sets                          χ_b  χ_a
     std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123", "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123", "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 )
-
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123", "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
+                    
+    // -----------------------------------------------------------------------
+    // Miscellaneous · no-boundary-cutting · hex & tet
+    // -----------------------------------------------------------------------
+    // Five no-boundary-cutting fractures with high-aspect ratio cells.
+    std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN", "DFN_5_fractures_hex_binarized.vtu", "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }", 1, 2 ),
+    std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN", "DFN_5_fractures_tet_binarized.vtu", "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }", 1, 2 )
   )
 );
 
