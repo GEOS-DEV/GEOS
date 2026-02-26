@@ -268,7 +268,7 @@ protected:
         fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
       GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( fields::flow::pressure::key() ),
-                     this->getDataContext() << ": The fracture subregion must contain pressure field." );
+                     "The fracture subregion must contain pressure field.", this->getDataContext() );
 
       arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 

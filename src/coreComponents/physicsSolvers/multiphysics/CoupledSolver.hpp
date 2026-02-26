@@ -73,7 +73,9 @@ public:
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
   template< typename T >
-  void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
+  void throwSolversNotFound( std::ostringstream & errorMessage,
+                             string const & solverWrapperKey,
+                             string const & solverType )
   {
     string_array availableSolvers;
 
@@ -94,7 +96,8 @@ public:
                                 stringutilities::join( availableSolvers, ", " ) );
     }
 
-    GEOS_THROW( errorMessage.str(), InputError );
+    GEOS_THROW( errorMessage.str(),
+                InputError, getWrapperDataContext( solverWrapperKey ) );
   }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
@@ -112,9 +115,8 @@ public:
       {
         string const solverWrapperKey = SolverType::coupledSolverAttributePrefix() + "SolverName";
         std::ostringstream errorMessage;
-        errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
-                                  getWrapperDataContext( solverWrapperKey ), solverName );
-        throwSolversNotFound< SolverType >( errorMessage, SolverType::coupledSolverAttributePrefix() );
+        errorMessage << GEOS_FMT( "Could not find solver named '{}'.\n", solverName );
+        throwSolversNotFound< SolverType >( errorMessage, solverWrapperKey, SolverType::coupledSolverAttributePrefix() );
       }
 
 
@@ -266,7 +268,7 @@ public:
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Invalid coupling type option." );
+      GEOS_ERROR( "Invalid coupling type option.", getDataContext() );
       return 0;
     }
 
@@ -603,7 +605,7 @@ protected:
       }
       else
       {
-        GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+        GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext() );
       }
     }
 
@@ -708,7 +710,7 @@ protected:
       }
       else
       {
-        GEOS_ERROR( getDataContext() << ": Invalid sequential convergence criterion." );
+        GEOS_ERROR( "Invalid sequential convergence criterion.", getDataContext() );
       }
 
       if( isConverged )
