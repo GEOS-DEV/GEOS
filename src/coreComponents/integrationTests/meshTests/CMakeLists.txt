@@ -156,14 +156,13 @@ if( ENABLE_MPI )
   # ---------------------------------------------------------------------------
   # testSurfaceGenerator_mpi — SurfaceGeneratorMpiTest suite (4 MPI ranks)
   #
-  # Built from the same source as the serial test; the MPI suite is only
-  # activated when the process count equals 4.
+  # Now built from its own source file (testSurfaceGenerator_mpi.cpp).
   # ---------------------------------------------------------------------------
   set( sg_mpi_nranks 4 )
   set( sg_mpi_test_name testSurfaceGenerator_mpi )
 
   blt_add_executable( NAME       ${sg_mpi_test_name}
-                      SOURCES    testSurfaceGenerator.cpp
+                      SOURCES    testSurfaceGenerator_mpi.cpp
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 

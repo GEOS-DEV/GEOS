@@ -1,0 +1,391 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file testSurfaceGenerator_mpi.cpp
+ * @brief Integration tests for SurfaceGenerator topology modification (MPI parallel).
+ *
+ * Verifies node duplication, fracture element creation, and Euler characteristic (χ = V-E+F-C)
+ * for boundary-cutting and internal fracture configurations on hex and tet meshes, running
+ * with various partitioning configurations.
+ */
+
+#include "testSurfaceGeneratorCommon.hpp"
+
+// Global flag to control debug printing (set to false to disable verbose output)
+CommandLineOptions g_commandLineOptions;
+
+/// @brief Directory containing the test binary (and the copied mesh files).
+///        Populated in main() from argv[0] so it is always correct regardless
+///        of the build system (Makefiles, Ninja, Xcode) or how CTest sets CWD.
+std::string g_testBinaryDir;
+
+/**
+ * @brief MPI variant of the SurfaceGenerator integration test.
+ *
+ * Same topology verification as SurfaceGeneratorTest, but the domain is
+ * distributed across 4 MPI ranks using a user-supplied partition tuple.
+ *
+ * Parametrized with
+ *   std::tuple< std::string,           // test case name
+ *               std::string,           // mesh file name
+ *               std::string,           // node-set names
+ *               integer,               // expected Euler characteristic before split
+ *               integer,               // expected Euler characteristic after split
+ *
+ * Because ::testing::Combine is used, the actual ParamType produced by GTest is
+ *   std::tuple< MeshTuple, PartitionTuple >
+ * where
+ *   MeshTuple      = std::tuple< std::string, std::string, std::string, integer, integer >
+ *   PartitionTuple = std::tuple< int, int, int >
+ */
+using SurfaceGenerator_mpiMeshTuple = std::tuple< std::string, std::string, std::string, integer, integer >;
+using SurfaceGenerator_mpiPartitionTuple = std::tuple< int, int, int >;
+
+class SurfaceGenerator_mpiTest
+  : public ::testing::TestWithParam<
+      std::tuple< SurfaceGenerator_mpiMeshTuple, SurfaceGenerator_mpiPartitionTuple > >
+{
+protected:
+  void SetUp() override
+  {
+    if( !g_testBinaryDir.empty() )
+    {
+      testBinaryDir = g_testBinaryDir;
+    }
+    else
+    {
+      char const * envDir = std::getenv( "TEST_BINARY_DIR" );
+      testBinaryDir = ( envDir != nullptr && envDir[0] != '\0' ) ? envDir : TEST_BINARY_DIR;
+    }
+  }
+
+  std::string testBinaryDir;
+
+  /// @brief Reuse the same XML generator as the serial test.
+  std::string generateXmlInput( std::string const & meshFile,
+                                std::string const & nodeSetNames )
+  {
+    std::ostringstream oss;
+    oss << R"xml(<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
+      R"xml(" partitionMethod="parmetis"/>
+  </Mesh>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Region, Fracture }"
+      fractureRegion="Fracture"
+      initialRockToughness="1.0"
+      logLevel="0"/>
+  </Solvers>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace name="FE1" order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  <ElementRegions>
+    <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ emptyConstitutive }"/>
+    <SurfaceElementRegion name="Fracture" defaultAperture="1.0e-4" faceBlock="faceElementSubRegion" materialList="{ emptyConstitutive }"/>
+  </ElementRegions>
+  <Constitutive>
+    <NullModel name="emptyConstitutive"/>
+  </Constitutive>
+  <FieldSpecifications>
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1"
+      setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1"/>
+    <FieldSpecification name="frac" initialCondition="1"
+      setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager"
+      fieldName="ruptureState" scale="1"/>
+  </FieldSpecifications>
+  <Events maxTime="1.0e-10">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>
+  </Events>
+</Problem>
+)xml";
+    return oss.str();
+  }
+};
+
+/**
+ * @brief MPI variant of TopologyValidation.
+ *
+ * Replicates every assertion from the serial SurfaceGeneratorTest::runTest():
+ *   A1  – node duplication count matches preprocessFractureTopology prediction
+ *   A2  – fracture element count matches prediction
+ *   A3  – at least one node was duplicated
+ *   A4  – no NaN node coordinates after split
+ *   A5  – Euler characteristic before split equals expected value
+ *   A6  – Euler characteristic after  split equals expected value
+ *   A7  – no degenerate elements (duplicate node references)
+ *
+ * Additionally, before the split the test cross-validates the two independent
+ * Euler characteristic implementations:
+ *   • computeEulerCharacteristicTestHelper  (element-enumeration reference)
+ *   • computeEulerCharacteristic            (manager-sizes production version)
+ * Both must agree (exercises the MeshGeneratorBase implementation under MPI).
+ */
+TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
+{
+  auto const & params = GetParam();
+  // ::testing::Combine produces std::tuple< MeshTuple, PartitionTuple >
+  SurfaceGenerator_mpiMeshTuple const & meshParams = std::get< 0 >( params );
+  SurfaceGenerator_mpiPartitionTuple const & partitions = std::get< 1 >( params );
+
+  std::string const & testCaseName  = std::get< 0 >( meshParams );
+  std::string const & meshFileName  = std::get< 1 >( meshParams );
+  std::string const & nodeSetNames  = std::get< 2 >( meshParams );
+  integer const expectedEulerBefore = std::get< 3 >( meshParams );
+  integer const expectedEulerAfter  = std::get< 4 >( meshParams );
+
+  int const xPartitions = std::get< 0 >( partitions );
+  int const yPartitions = std::get< 1 >( partitions );
+  int const zPartitions = std::get< 2 >( partitions );
+
+  // Check if we are running with the correct number of ranks for this partitioning.
+  // This prevents the serial test runner (rank=1) from crashing when attempting
+  // to run a 4-partition test.
+  int const requiredRanks = xPartitions * yPartitions * zPartitions;
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != requiredRanks )
+  {
+    GTEST_SKIP() << "Skipping MPI test expecting " << requiredRanks
+                 << " ranks (running on " << MpiWrapper::commSize( MPI_COMM_GEOS ) << ")";
+  }
+
+  std::string const xmlInput = generateXmlInput( testBinaryDir + "/" + meshFileName, nodeSetNames );
+
+  // Only rank 0 writes the XML; all ranks barrier before reading.
+  std::string const xmlPath = testBinaryDir
+                              + "/test_surface_gen_mpi_" + testCaseName
+                              + "_" + std::to_string( xPartitions )
+                              + "x" + std::to_string( yPartitions )
+                              + "x" + std::to_string( zPartitions )
+                              + ".xml";
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    std::ofstream ofs( xmlPath );
+    ofs << xmlInput;
+  }
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+
+  auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
+  options->inputFileNames.push_back( xmlPath );
+  options->problemName = "test_surface_gen_mpi_" + testCaseName;
+  options->xPartitionsOverride = xPartitions;
+  options->yPartitionsOverride = yPartitions;
+  options->zPartitionsOverride = zPartitions;
+  options->overridePartitionNumbers = true;
+
+  // Scoped state to ensure GeosxState is fully destroyed before the next
+  // test case constructs a new one (GeosxState is a singleton).
+  {
+    GeosxState state( std::move( options ) );
+    ASSERT_TRUE( state.initializeDataRepository() )
+      << "Test " << testCaseName << ": Failed to initialize data repository for '"
+      << meshFileName << "' with partitioning "
+      << xPartitions << "x" << yPartitions << "x" << zPartitions;
+    state.applyInitialConditions();
+
+    // ------------------------------------------------------------------
+    // Obtain managers from the base mesh level
+    // ------------------------------------------------------------------
+    ProblemManager & pm = state.getProblemManager();
+    MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+    NodeManager    & nodeManager = mesh.getNodeManager();
+    EdgeManager    & edgeManager = mesh.getEdgeManager();
+    FaceManager    & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    // ------------------------------------------------------------------
+    // Pre-split topology stats
+    // ------------------------------------------------------------------
+    TopologyStats statsBefore;
+    statsBefore.numNodes = nodeManager.size();
+    statsBefore.numEdges = edgeManager.size();
+    statsBefore.numFaces = faceManager.size();
+    statsBefore.numCells = 0;
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sr )
+    {
+      statsBefore.numCells += sr.size();
+    } );
+
+    // ------------------------------------------------------------------
+    // Predict duplication before split (same as serial runTest)
+    // ------------------------------------------------------------------
+    std::vector< std::string > const fractureNodeSets = parseNodeSetNames( nodeSetNames );
+    ExpectedDuplication const expected = preprocessFractureTopology( mesh, fractureNodeSets );
+
+    GEOS_LOG_RANK_0( "========================================" );
+    GEOS_LOG_RANK_0( "Test (MPI): " << testCaseName
+                     << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]" );
+    GEOS_LOG_RANK_0( "Expected duplication:" );
+    GEOS_LOG_RANK_0( "  Nodes to split: " << expected.numNodesToDuplicate
+                     << " (new nodes: " << expected.totalDuplicatedNodes << ")" );
+    GEOS_LOG_RANK_0( "  Edges to split: " << expected.numEdgesToDuplicate );
+    GEOS_LOG_RANK_0( "  Faces to split: " << expected.numFacesToDuplicate );
+
+    // ------------------------------------------------------------------
+    // Dual Euler characteristic cross-check BEFORE split  (A5 + production test)
+    //
+    //  1. Local element-enumeration reference  (computeEulerCharacteristicTestHelper)
+    //  2. Manager-sizes production version     (computeEulerCharacteristic)
+    // Both must agree — exercises the MeshGeneratorBase implementation under MPI.
+    // ------------------------------------------------------------------
+    integer const eulerCharBeforeSplit =
+      computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "  Euler χ before split (local):      " << eulerCharBeforeSplit );
+
+    integer const eulerCharBeforeSplitMgr =
+      computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "  Euler χ before split (managers):   " << eulerCharBeforeSplitMgr );
+
+    EXPECT_EQ( eulerCharBeforeSplit, eulerCharBeforeSplitMgr )
+      << "Test " << testCaseName << " [MPI]: computeEulerCharacteristic MISMATCH between implementations"
+      << "\n  Local (elem-enumeration): " << eulerCharBeforeSplit
+      << "\n  Manager-based:            " << eulerCharBeforeSplitMgr
+      << "\n  Partitioning: " << xPartitions << "x" << yPartitions << "x" << zPartitions
+      << "\n  The production manager-based version returned a different result than the"
+      << "\n  reference. Check that EdgeManager/FaceManager counts do not include"
+      << "\n  ghost or fracture-surface contributions.";
+
+    statsBefore.eulerCharacteristic = eulerCharBeforeSplit;
+
+    // ------------------------------------------------------------------
+    // Run SurfaceGenerator (the split)
+    // ------------------------------------------------------------------
+    state.run();
+
+    // ------------------------------------------------------------------
+    // Post-split topology stats
+    // ------------------------------------------------------------------
+    TopologyStats statsAfter;
+    statsAfter.numNodes = nodeManager.size();
+    statsAfter.numEdges = edgeManager.size();
+    statsAfter.numFaces = faceManager.size();
+    statsAfter.numCells = 0;
+    statsAfter.numFractureElements = 0;
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & sr )
+    {
+      statsAfter.numCells += sr.size();
+    } );
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & sr )
+    {
+      statsAfter.numFractureElements += sr.size();
+    } );
+
+    statsAfter.numDuplicatedNodes = statsAfter.numNodes - statsBefore.numNodes;
+
+    integer const eulerCharAfterSplit =
+      computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "  Euler χ after  split:              " << eulerCharAfterSplit );
+
+    statsAfter.eulerCharacteristic = eulerCharAfterSplit;
+    statsAfter.numBodies           = eulerCharAfterSplit;
+
+    GEOS_LOG_RANK_0( "Actual duplication:" );
+    GEOS_LOG_RANK_0( "  New nodes created:     " << statsAfter.numDuplicatedNodes );
+    GEOS_LOG_RANK_0( "  Fracture elements:     " << statsAfter.numFractureElements );
+    GEOS_LOG_RANK_0( "========================================" );
+
+    // ------------------------------------------------------------------
+    // Run all assertions A1–A7 (identical helper used by the serial test)
+    // ------------------------------------------------------------------
+    validateSurfaceGeneratorResults( testCaseName,
+                                     meshFileName,
+                                     nodeSetNames,
+                                     statsBefore,
+                                     statsAfter,
+                                     expected,
+                                     expectedEulerBefore,
+                                     eulerCharBeforeSplit,
+                                     expectedEulerAfter,
+                                     eulerCharAfterSplit,
+                                     nodeManager,
+                                     elemManager );
+
+  } // end scoped GeosxState
+
+  // Cleanup XML after state is destroyed
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    std::remove( xmlPath.c_str() );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// MPI test instantiation
+//
+// All 6 unique partitions of 4 ranks (product x*y*z == 4):
+//   (1,1,4)  (1,4,1)  (4,1,1)  (1,2,2)  (2,1,2)  (2,2,1)
+//
+// Meshes: the 4 new junction topologies that exercise the most demanding
+// splitting paths (T-junction and Y-junction, hex and tet).
+// ---------------------------------------------------------------------------
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(
+  SurfaceGenerator_mpiCases,
+  SurfaceGenerator_mpiTest,
+  ::testing::Combine(
+    ::testing::Values(
+      // T-shaped · boundary-cutting · hex
+      std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",
+                       "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
+                       "{ f1_node_set, f2_node_set }",
+                       1, 3 ),
+      // T-shaped · boundary-cutting · tet
+      std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",
+                       "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
+                       "{ f1_node_set, f2_node_set }",
+                       1, 3 ),
+      // Y-shaped · boundary-cutting · hex
+      std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",
+                       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
+                       "{ f1_node_set, f2_node_set, f3_node_set }",
+                       1, 3 ),
+      // Y-shaped · boundary-cutting · tet
+      std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
+                       "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
+                       "{ f1_node_set, f2_node_set, f3_node_set }",
+                       1, 3 )
+    ),
+    ::testing::Values(
+      std::make_tuple( 1, 1, 4 ),
+      std::make_tuple( 1, 4, 1 ),
+      std::make_tuple( 4, 1, 1 )
+    )
+  )
+);
+
+int main( int argc, char * argv[] )
+{
+  // Derive the directory containing this executable from argv[0].
+  // dirname() modifies its argument, so work on a copy.
+  // This is the most reliable way to find co-located mesh files regardless
+  // of what CWD CTest or the shell has set.
+  if( argc > 0 && argv[0] != nullptr )
+  {
+    std::vector< char > exePath( argv[0], argv[0] + std::strlen( argv[0] ) + 1 );
+    g_testBinaryDir = ::dirname( exePath.data() );
+  }
+
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv, false );
+  int result = RUN_ALL_TESTS();
+  geos::basicCleanup();
+  return result;
+}
