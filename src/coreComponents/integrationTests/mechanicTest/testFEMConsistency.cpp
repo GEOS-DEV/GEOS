@@ -83,7 +83,6 @@ protected:
     <Box name="yposFace" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
     <Box name="znegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
     <Box name="zposFace" xMin="{ -0.01, -0.01,  0.99 }" xMax="{  1.01,  1.01,  1.01 }"/>
-    <Box name="fracture" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
   </Geometry>
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SolidMechanicsAugmentedLagrangianContact 
@@ -98,7 +97,7 @@ protected:
       tolJumpT="1.e-4" 
       discretization="FE1" 
       targetRegions="{ Region, Fracture }" 
-      logLevel="0">
+      logLevel="1">
       <NonlinearSolverParameters newtonTol="1.0e-7" newtonMaxIter="20" logLevel="1"/>
       <LinearSolverParameters directParallel="0"/>
     </SolidMechanicsAugmentedLagrangianContact>
@@ -197,6 +196,10 @@ TEST_P( ConsistencyTest, Run )
   else if( meshFileName.find( "_DFN_y1y2y3.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
+  }
+  else if( meshFileName.find( "_5_fractures_" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }";
   }
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
@@ -521,7 +524,11 @@ INSTANTIATE_TEST_SUITE_P(
 
       // Y-shaped wavy meshes
       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
-      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu"
+      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
+
+      // 5-fracture DFN market meshes
+      "DFN_5_fractures_hex_binarized.vtu",
+      "DFN_5_fractures_tet_binarized.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy

@@ -278,6 +278,10 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
   {
     nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
   }
+  else if( meshFileName.find( "_5_fractures_" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }";
+  }
 
   std::string const xmlContent = generateXmlInput( meshFileName, nodeSetNames );
 
@@ -409,7 +413,11 @@ INSTANTIATE_TEST_SUITE_P(
 
       // Y-shaped wavy meshes
       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
-      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu"
+      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
+
+      // 5-fracture DFN market meshes
+      "DFN_5_fractures_hex_binarized.vtu",
+      "DFN_5_fractures_tet_binarized.vtu"
       ),
     ::testing::Values(
       std::make_tuple( 1, 4, 1 ),

@@ -111,7 +111,7 @@ protected:
       setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1"/>
     <FieldSpecification name="frac" initialCondition="1"
       setNames=")xml" << nodeSetNames <<
-    R"xml(" objectPath="faceManager"
+      R"xml(" objectPath="faceManager"
       fieldName="ruptureState" scale="1"/>
   </FieldSpecifications>
   <Events maxTime="1.0e-10">

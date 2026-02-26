@@ -1231,4 +1231,90 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
 
 }
 
+void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceManager,
+                                                             NodeManager const & nodeManager )
+{
+  arrayView2d< localIndex const > const elems2dToFaces = faceList().toViewConst();
+  FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
+
+  forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
+  {
+    localIndex const kf0 = elems2dToFaces[kfe][0];
+    localIndex const kf1 = elems2dToFaces[kfe][1];
+
+    if( kf0 == -1 || kf1 == -1 )
+      return;
+
+    localIndex const numNodes0 = faceToNodes.sizeOfArray( kf0 );
+    localIndex const numNodes1 = faceToNodes.sizeOfArray( kf1 );
+
+    if( numNodes0 != numNodes1 || numNodes0 < 3 )
+      return;
+
+    // Triangle faces (3 nodes) don't need reordering because the linear shape
+    // functions on triangles yield identical nodal integrals (area/3) regardless
+    // of which vertex is at which position.  Only quadrilateral (and higher)
+    // faces have bilinear shape functions sensitive to the node-to-parent-coordinate
+    // assignment, so we restrict the fix to faces with 4+ nodes.
+    if( numNodes0 < 4 )
+      return;
+
+    // For each node in kf0, find the closest node in kf1 and build a reordering.
+    // After mesh splitting, collocated nodes are at (nearly) identical positions.
+    localIndex const numNodes = numNodes0;
+    constexpr localIndex MAX_FACE_NODES = 8;
+    localIndex reorderedKf1[MAX_FACE_NODES];
+    bool matched[MAX_FACE_NODES];
+
+    for( localIndex i = 0; i < numNodes; ++i )
+    {
+      matched[i] = false;
+    }
+
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      localIndex const n0 = faceToNodes( kf0, a );
+      real64 const x0 = X[n0][0];
+      real64 const y0 = X[n0][1];
+      real64 const z0 = X[n0][2];
+
+      real64 bestDist = LvArray::NumericLimits< real64 >::max;
+      localIndex bestB = -1;
+
+      for( localIndex b = 0; b < numNodes; ++b )
+      {
+        if( matched[b] )
+          continue;
+
+        localIndex const n1 = faceToNodes( kf1, b );
+        real64 const dx = X[n1][0] - x0;
+        real64 const dy = X[n1][1] - y0;
+        real64 const dz = X[n1][2] - z0;
+        real64 const dist = dx * dx + dy * dy + dz * dz;
+
+        if( dist < bestDist )
+        {
+          bestDist = dist;
+          bestB = b;
+        }
+      }
+
+      GEOS_ERROR_IF( bestB == -1,
+                     GEOS_FMT( "FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0: "
+                               "Could not find matching kf1 node for kf0 node {} of face element {}.",
+                               a, kfe ) );
+
+      reorderedKf1[a] = faceToNodes( kf1, bestB );
+      matched[bestB] = true;
+    }
+
+    // Apply the reordering to kf1's node list
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      faceToNodes( kf1, a ) = reorderedKf1[a];
+    }
+  } );
+}
+
 } /* namespace geos */

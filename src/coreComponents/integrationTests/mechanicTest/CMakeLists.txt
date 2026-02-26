@@ -30,6 +30,8 @@ set( mesh_files
      t_shaped_wavy_mesh_tet_DFN_t1t2.vtu
      y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu
      y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu
+     DFN_5_fractures_hex_binarized.vtu
+     DFN_5_fractures_tet_binarized.vtu
 )
 
 # Special handling for testFEMConsistency which requires 4 MPI tasks for the partitioned tests

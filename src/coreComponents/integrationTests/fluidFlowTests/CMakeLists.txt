@@ -137,7 +137,9 @@ if( ENABLE_MPI )
                      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu"
                      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu"
                      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu"
-                     "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu" )
+                     "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu"
+                     "DFN_5_fractures_hex_binarized.vtu"
+                     "DFN_5_fractures_tet_binarized.vtu" )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
           COMMAND ${CMAKE_COMMAND} -E copy_if_different

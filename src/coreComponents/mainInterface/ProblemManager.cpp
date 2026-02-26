@@ -748,6 +748,10 @@ void ProblemManager::generateMesh()
         // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
         // direction of the fracture.
         subRegion.fixNeighboringFacesNormals( faceManager, elementManager );
+
+        //    faceToNodes(kf0, a) and faceToNodes(kf1, a) are geometrically paired (collocated) nodes.
+        //    This is required by the conforming contact kernels which assume this pairing.
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
       } );
 
       faceManager.setIsExternal();

@@ -252,6 +252,24 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
 {
   // setup monolithic coupled system
 
+  // Ensure kf1 node ordering is consistent with kf0 for conforming contact kernels.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      if( subRegion.size() > 0 )
+      {
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+      }
+    } );
+  } );
+
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
 

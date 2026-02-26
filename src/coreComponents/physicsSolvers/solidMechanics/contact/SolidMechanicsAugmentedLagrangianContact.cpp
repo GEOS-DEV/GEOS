@@ -286,6 +286,14 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+      // Reorder kf1 nodes to match kf0 for conforming contact kernels.
+      // flipFaceMap and fixNeighboringFacesNormals are already called by
+      // ProblemManager::applyNumericalMethods after ghosting is complete.
+      if( subRegion.size() > 0 )
+      {
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+      }
     } );
   } );
 

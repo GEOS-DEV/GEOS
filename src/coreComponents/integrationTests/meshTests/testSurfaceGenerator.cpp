@@ -68,7 +68,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-    R"xml(" partitionRefinement="0"/>
+      R"xml(" partitionRefinement="0"/>
   </Mesh>
   
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
@@ -105,7 +105,7 @@ protected:
       name="frac" 
       initialCondition="1" 
       setNames=")xml" << nodeSetNames <<
-    R"xml(" 
+      R"xml(" 
       objectPath="faceManager" 
       fieldName="ruptureState" 
       scale="1"/>
