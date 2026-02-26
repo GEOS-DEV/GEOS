@@ -524,7 +524,13 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions =
     nodeManager.referencePosition();
-  
+
+  // Ghost-rank views: entities with ghostRank > -1 are owned by another rank.
+  // We must skip them so that MpiWrapper::sum across ranks gives correct global totals
+  // without double-counting entities that appear on multiple ranks as ghosts.
+  arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
+  arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
+
   // Domain boundary tolerance for [0,1]³
   constexpr real64 boundaryTol = 1.0e-9;
   
@@ -647,14 +653,23 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     SortedArrayView< localIndex const > const nodeSet = nodeManager.getSet( setName ).toViewConst();
     for( localIndex const & nodeIdx : nodeSet )
     {
+      // Skip ghost nodes: they are owned by another rank and would be double-counted
+      // when MpiWrapper::sum accumulates predictions across all ranks.
+      if( nodeGhostRank[nodeIdx] > -1 )
+        continue;
+
       allFractureNodes.insert( nodeIdx );
       nodesInThisFracture.insert( nodeIdx );
       nodeToFractureIds[nodeIdx].insert( fractureId );
     }
     
-    // Identify fracture faces for this specific fracture
+    // Identify fracture faces for this specific fracture.
+    // Skip ghost faces for the same MPI double-counting reason.
     for( localIndex fi = 0; fi < faceManager.size(); ++fi )
     {
+      if( faceGhostRank[fi] > -1 )
+        continue;
+
       localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( fi );
       bool allNodesInThisFracture = true;
       
@@ -697,6 +712,10 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
 
   for( localIndex fi = 0; fi < faceManager.size(); ++fi )
   {
+    // Skip ghost faces to avoid double-counting under MPI.
+    if( faceGhostRank[fi] > -1 )
+      continue;
+
     localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( fi );
     bool allNodesInFracture = true;
 

@@ -44,14 +44,20 @@ std::string g_testBinaryDir;
  *               std::string,           // node-set names
  *               integer,               // expected Euler characteristic before split
  *               integer,               // expected Euler characteristic after split
+ *               localIndex,            // expected new nodes created (global, from serial ground truth)
+ *               localIndex >           // expected fracture elements created (global, from serial ground truth)
  *
  * Because ::testing::Combine is used, the actual ParamType produced by GTest is
  *   std::tuple< MeshTuple, PartitionTuple >
  * where
- *   MeshTuple      = std::tuple< std::string, std::string, std::string, integer, integer >
+ *   MeshTuple      = std::tuple< std::string, std::string, std::string, integer, integer, localIndex, localIndex >
  *   PartitionTuple = std::tuple< int, int, int >
+ *
+ * The expected node/fracture-element counts are hard-coded from the verified serial run.
+ * Computing them from partitioned local topology (preprocessFractureTopology) is unreliable
+ * because fracture-boundary classification depends on global topology, not the local partition.
  */
-using SurfaceGenerator_mpiMeshTuple = std::tuple< std::string, std::string, std::string, integer, integer >;
+using SurfaceGenerator_mpiMeshTuple = std::tuple< std::string, std::string, std::string, integer, integer, localIndex, localIndex >;
 using SurfaceGenerator_mpiPartitionTuple = std::tuple< int, int, int >;
 
 class SurfaceGenerator_mpiTest
@@ -146,11 +152,13 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
   SurfaceGenerator_mpiMeshTuple const & meshParams = std::get< 0 >( params );
   SurfaceGenerator_mpiPartitionTuple const & partitions = std::get< 1 >( params );
 
-  std::string const & testCaseName  = std::get< 0 >( meshParams );
-  std::string const & meshFileName  = std::get< 1 >( meshParams );
-  std::string const & nodeSetNames  = std::get< 2 >( meshParams );
-  integer const expectedEulerBefore = std::get< 3 >( meshParams );
-  integer const expectedEulerAfter  = std::get< 4 >( meshParams );
+  std::string const & testCaseName        = std::get< 0 >( meshParams );
+  std::string const & meshFileName        = std::get< 1 >( meshParams );
+  std::string const & nodeSetNames        = std::get< 2 >( meshParams );
+  integer const expectedEulerBefore       = std::get< 3 >( meshParams );
+  integer const expectedEulerAfter        = std::get< 4 >( meshParams );
+  localIndex const expectedNewNodes       = std::get< 5 >( meshParams );
+  localIndex const expectedFractureElems  = std::get< 6 >( meshParams );
 
   int const xPartitions = std::get< 0 >( partitions );
   int const yPartitions = std::get< 1 >( partitions );
@@ -223,20 +231,34 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
       statsBefore.numCells += sr.size();
     } );
 
+    // Snapshot owned-node count BEFORE the split.
+    // getNumberOfLocalIndices() returns nodes with ghostRank <= -1 (owned by this rank).
+    // This is the correct baseline for computing new-owned-node delta after the split.
+    localIndex const ownedNodeCountBefore = nodeManager.getNumberOfLocalIndices();
+
     // ------------------------------------------------------------------
-    // Predict duplication before split (same as serial runTest)
+    // Build expected-duplication from hard-coded serial ground truth.
+    //
+    // preprocessFractureTopology is unreliable for partitioned meshes because
+    // fracture-boundary classification depends on the *global* fracture topology
+    // (which edges are on the fracture tip). On a local partition each rank only
+    // sees a subset of the fracture; tip edges shared with a ghost face look
+    // interior (count == 2) instead of boundary (count == 1), causing tip nodes
+    // to be mis-classified as interior nodes and over-counting new nodes.
+    //
+    // The only reliable source for the global expected counts is the verified
+    // serial run, so they are baked into the test tuple parameters.
     // ------------------------------------------------------------------
-    std::vector< std::string > const fractureNodeSets = parseNodeSetNames( nodeSetNames );
-    ExpectedDuplication const expected = preprocessFractureTopology( mesh, fractureNodeSets );
+    ExpectedDuplication expected;
+    expected.totalDuplicatedNodes = expectedNewNodes;
+    expected.numFractureElements  = expectedFractureElems;
 
     GEOS_LOG_RANK_0( "========================================" );
     GEOS_LOG_RANK_0( "Test (MPI): " << testCaseName
                      << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]" );
-    GEOS_LOG_RANK_0( "Expected duplication:" );
-    GEOS_LOG_RANK_0( "  Nodes to split: " << expected.numNodesToDuplicate
-                     << " (new nodes: " << expected.totalDuplicatedNodes << ")" );
-    GEOS_LOG_RANK_0( "  Edges to split: " << expected.numEdgesToDuplicate );
-    GEOS_LOG_RANK_0( "  Faces to split: " << expected.numFacesToDuplicate );
+    GEOS_LOG_RANK_0( "Expected duplication (from serial ground truth):" );
+    GEOS_LOG_RANK_0( "  New nodes:         " << expected.totalDuplicatedNodes );
+    GEOS_LOG_RANK_0( "  Fracture elements: " << expected.numFractureElements );
 
     // ------------------------------------------------------------------
     // Dual Euler characteristic cross-check BEFORE split  (A5 + production test)
@@ -285,10 +307,22 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     } );
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & sr )
     {
-      statsAfter.numFractureElements += sr.size();
+      // Use getNumberOfLocalIndices() instead of size() to count only owned
+      // fracture elements (ghostRank <= -1). Summing sr.size() across ranks
+      // would double-count ghost copies that appear on multiple ranks.
+      statsAfter.numFractureElements += sr.getNumberOfLocalIndices();
     } );
 
-    statsAfter.numDuplicatedNodes = statsAfter.numNodes - statsBefore.numNodes;
+    // ------------------------------------------------------------------
+    // Count only OWNED new nodes (ghostRank <= -1) to avoid double-counting
+    // ghost copies that appear on multiple ranks after the split.
+    // ownedNodeCountBefore was snapshotted before state.run() so no
+    // ghost-count assumptions are needed.
+    // ------------------------------------------------------------------
+    localIndex const ownedNodesAfter    = nodeManager.getNumberOfLocalIndices();
+    localIndex const localOwnedNewNodes = ownedNodesAfter - ownedNodeCountBefore;
+
+    statsAfter.numDuplicatedNodes = localOwnedNewNodes;
 
     integer const eulerCharAfterSplit =
       computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
@@ -297,26 +331,61 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     statsAfter.eulerCharacteristic = eulerCharAfterSplit;
     statsAfter.numBodies           = eulerCharAfterSplit;
 
-    GEOS_LOG_RANK_0( "Actual duplication:" );
-    GEOS_LOG_RANK_0( "  New nodes created:     " << statsAfter.numDuplicatedNodes );
-    GEOS_LOG_RANK_0( "  Fracture elements:     " << statsAfter.numFractureElements );
+    // ------------------------------------------------------------------
+    // Reduce actual counts to global totals.
+    //
+    // • localOwnedNewNodes  — each node is owned by exactly one rank, so
+    //   MPI_SUM gives the true global new-node count with no double-counting.
+    // • statsAfter.numFractureElements — each face element is owned by one rank; SUM is safe.
+    // • expected values are global constants from the serial ground truth; no reduction needed.
+    // ------------------------------------------------------------------
+    localIndex const globalActualNewNodes =
+      MpiWrapper::sum( localOwnedNewNodes, MPI_COMM_GEOS );
+    localIndex const globalPredictedNewNodes = expected.totalDuplicatedNodes;
+    localIndex const globalFractureElements =
+      MpiWrapper::sum( statsAfter.numFractureElements, MPI_COMM_GEOS );
+    localIndex const globalPredictedFractureElements = expected.numFractureElements;
+    localIndex const globalNodesBefore =
+      MpiWrapper::sum( ownedNodeCountBefore, MPI_COMM_GEOS );
+
+    GEOS_LOG_RANK_0( "Actual duplication (global):" );
+    GEOS_LOG_RANK_0( "  New nodes created:     " << globalActualNewNodes );
+    GEOS_LOG_RANK_0( "  Fracture elements:     " << globalFractureElements );
     GEOS_LOG_RANK_0( "========================================" );
 
     // ------------------------------------------------------------------
-    // Run all assertions A1–A7 (identical helper used by the serial test)
+    // All GTest assertions MUST fire on rank 0 only.
+    // Running EXPECT_EQ on every rank produces N identical failure messages
+    // and confuses the test runner into thinking there are N failures.
     // ------------------------------------------------------------------
-    validateSurfaceGeneratorResults( testCaseName,
-                                     meshFileName,
-                                     nodeSetNames,
-                                     statsBefore,
-                                     statsAfter,
-                                     expected,
-                                     expectedEulerBefore,
-                                     eulerCharBeforeSplit,
-                                     expectedEulerAfter,
-                                     eulerCharAfterSplit,
-                                     nodeManager,
-                                     elemManager );
+    if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+    {
+      // Build globally-reduced structs for the shared validation helper.
+      TopologyStats globalStatsBefore = statsBefore;
+      globalStatsBefore.numNodes = globalNodesBefore;
+
+      TopologyStats globalStatsAfter = statsAfter;
+      globalStatsAfter.numDuplicatedNodes  = globalActualNewNodes;
+      globalStatsAfter.numFractureElements = globalFractureElements;
+      globalStatsAfter.numNodes            = globalNodesBefore + globalActualNewNodes;
+
+      ExpectedDuplication globalExpected = expected;
+      globalExpected.totalDuplicatedNodes = globalPredictedNewNodes;
+      globalExpected.numFractureElements  = globalPredictedFractureElements;
+
+      validateSurfaceGeneratorResults( testCaseName,
+                                       meshFileName,
+                                       nodeSetNames,
+                                       globalStatsBefore,
+                                       globalStatsAfter,
+                                       globalExpected,
+                                       expectedEulerBefore,
+                                       eulerCharBeforeSplit,
+                                       expectedEulerAfter,
+                                       eulerCharAfterSplit,
+                                       nodeManager,
+                                       elemManager );
+    }
 
   } // end scoped GeosxState
 

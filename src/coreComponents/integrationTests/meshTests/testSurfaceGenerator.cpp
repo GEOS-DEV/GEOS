@@ -79,12 +79,6 @@ protected:
       logLevel="0"/>
   </Solvers>
   
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace name="FE1" order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-  
   <ElementRegions>
     <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ emptyConstitutive }"/>
     <SurfaceElementRegion 
@@ -286,12 +280,6 @@ protected:
 /// Only runs on exactly 1 MPI rank; skipped when the binary is launched under mpirun with >1 ranks.
 TEST_P( SurfaceGeneratorTest, TopologyValidation )
 {
-  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != 1 )
-  {
-    GTEST_SKIP() << "SurfaceGeneratorTest is a serial-only test; skipping on "
-                 << MpiWrapper::commSize( MPI_COMM_GEOS ) << " ranks.";
-  }
-
   auto const & params = GetParam();
   std::string const & testCaseName = std::get< 0 >( params );
   std::string const & meshFileName = std::get< 1 >( params );
@@ -441,23 +429,13 @@ INSTANTIATE_TEST_SUITE_P(
     // Splits the solid into 3 parts → χ_after = 3.
     //                   test name                          mesh file                                  node sets                          χ_b  χ_a
     std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123", "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 ),
-    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123", "y_shaped_wavy_mesh_tet_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 )
+    std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123", "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu", "{ f1_node_set, f2_node_set, f3_node_set }", 1, 3 )
 
   )
 );
 
 int main( int argc, char * argv[] )
 {
-  // Derive the directory containing this executable from argv[0].
-  // dirname() modifies its argument, so work on a copy.
-  // This is the most reliable way to find co-located mesh files regardless
-  // of what CWD CTest or the shell has set.
-  if( argc > 0 && argv[0] != nullptr )
-  {
-    std::vector< char > exePath( argv[0], argv[0] + std::strlen( argv[0] ) + 1 );
-    g_testBinaryDir = ::dirname( exePath.data() );
-  }
-
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv, false );
   int result = RUN_ALL_TESTS();
