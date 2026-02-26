@@ -810,38 +810,56 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
   {
     fractureBoundaryNodes.clear();
   }
-  
+
   // Step 5: Apply duplication rules
+  //
+  // For boundary-cutting (isFullSpan=True) meshes the combined-boundary heuristic is correct:
+  // fractureBoundaryNodes was already cleared, so every fracture node is "internal".
+  //
+  // For non-boundary-cutting (isFullSpan=False) meshes the combined-boundary approach is WRONG
+  // when several fractures overlap: a node can sit on the perimeter of the *union* of all
+  // fracture faces (landing in fractureBoundaryNodes) while still being interior to one or
+  // more individual fractures.  GEOS splits such a node independently for each fracture it is
+  // interior to, so we must use per-fracture boundary membership here.
   localIndex numBoundaryNodesTouchingDomain = 0;
-  
+
   for( localIndex nodeIdx : allFractureNodes )
   {
-    integer const numFractures = nodeToFractureIds[nodeIdx].size();
-    bool const isAtIntersection = (numFractures > 1);
     bool const isOnDomainBoundary = isNodeOnBoundary( nodeIdx );
-    bool const isOnFractureBoundary = (fractureBoundaryNodes.find( nodeIdx ) != fractureBoundaryNodes.end());
-    bool const isInternal = !isOnFractureBoundary;
-    
     bool shouldDuplicate = false;
-    
-    if( isAtIntersection )
+
+    if( isFullSpan )
     {
-      shouldDuplicate = true;
+      // Boundary-cutting path: fractureBoundaryNodes is empty so every fracture node is
+      // treated as "internal".  We still need the domain-boundary bookkeeping.
+      bool const isOnFractureBoundary = (fractureBoundaryNodes.find( nodeIdx ) != fractureBoundaryNodes.end());
+      if( !isOnFractureBoundary )
+      {
+        shouldDuplicate = true;
+      }
+      else if( isOnDomainBoundary )
+      {
+        shouldDuplicate = true;
+        ++numBoundaryNodesTouchingDomain;
+      }
     }
-    else if( isInternal )
+    else
     {
-      shouldDuplicate = true;
+      // Non-boundary-cutting path: a node is duplicated if it is interior to at least one
+      // individual fracture (i.e. NOT on the per-fracture rim of every fracture it belongs to).
+      for( integer fid : nodeToFractureIds[nodeIdx] )
+      {
+        auto const it = perFractureBoundaryNodes.find( fid );
+        bool const isOnThisFracBnd = (it != perFractureBoundaryNodes.end())
+                                     && (it->second.count( nodeIdx ) > 0);
+        if( !isOnThisFracBnd )
+        {
+          shouldDuplicate = true;
+          break;
+        }
+      }
     }
-    else if( isOnFractureBoundary && isOnDomainBoundary )
-    {
-      shouldDuplicate = true;
-      ++numBoundaryNodesTouchingDomain;
-    }
-    else if( isOnFractureBoundary && !isOnDomainBoundary )
-    {
-      shouldDuplicate = false;
-    }
-    
+
     if( shouldDuplicate )
     {
       expected.internalNodes.insert( nodeIdx );
@@ -851,14 +869,14 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       expected.boundaryNodes.insert( nodeIdx );
     }
   }
-  
+
   expected.numBoundaryNodesOnDomain = numBoundaryNodesTouchingDomain;
-  
+
   for( Edge const & edge : fractureEdges )
   {
     bool const nodeADuplicated = (expected.internalNodes.find( edge.nodeA ) != expected.internalNodes.end());
     bool const nodeBDuplicated = (expected.internalNodes.find( edge.nodeB ) != expected.internalNodes.end());
-    
+
     if( nodeADuplicated || nodeBDuplicated )
     {
       expected.internalEdges.insert( edge );
@@ -868,7 +886,7 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
       expected.boundaryEdges.insert( edge );
     }
   }
-  
+
   // Step 6: Compute per-node duplication counts.
   expected.numNodesToDuplicate = expected.internalNodes.size();
   expected.numEdgesToDuplicate = expected.internalEdges.size();
@@ -883,12 +901,30 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     integer const numFractures = static_cast< integer >( fractureIds.size() );
     integer newNodesForThisNode;
 
-    if( !isBoundaryCutting || numFractures == 1 )
+    if( !isBoundaryCutting )
     {
+      // Non-boundary-cutting: GEOS splits a node once per fracture it is *interior* to.
+      // N fractures cutting independently through a node partition the neighbourhood into
+      // 2^N sectors → 2^N - 1 new nodes are required.
+      integer numFracturesInteriorTo = 0;
+      for( integer fid : fractureIds )
+      {
+        auto const it = perFractureBoundaryNodes.find( fid );
+        bool const isOnFracBnd = (it != perFractureBoundaryNodes.end())
+                                  && (it->second.count( nodeIdx ) > 0);
+        if( !isOnFracBnd )
+          ++numFracturesInteriorTo;
+      }
+      newNodesForThisNode = std::max( integer{1}, (1 << numFracturesInteriorTo) - 1 );
+    }
+    else if( numFractures == 1 )
+    {
+      // Boundary-cutting, single fracture: 1 new node per internal node.
       newNodesForThisNode = 1;
     }
     else
     {
+      // Boundary-cutting, multiple fractures: original intersection logic.
       integer numInteriorTo = 0;
       integer numBndOf     = 0;
 
