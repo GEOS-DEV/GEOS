@@ -165,7 +165,6 @@ struct TopologyStats
   localIndex numDuplicatedNodes;
   localIndex numFractureElements;
   integer eulerCharacteristic;
-  integer numBodies;  // Number of separate domain fragments
 };
 
 /**

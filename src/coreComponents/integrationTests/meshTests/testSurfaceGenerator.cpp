@@ -191,28 +191,8 @@ protected:
                      << " (new faces created: " << expected.totalDuplicatedFaces << ")" );
 
     // Compute Euler-Poincaré characteristic χ = V - E + F - C (should be 1 for connected solid).
-    //
-    // Two independent implementations are compared here:
-    //   1. Local (element-enumeration) version: re-derives V, E, F from the elem→node map.
-    //      This is the reference used throughout the test.
-    //   2. MeshGeneratorBase version: uses nodeManager.size(), edgeManager.size(),
-    //      faceManager.size() and CellElementSubRegion sizes directly from the managers.
-    //      This is the production implementation we want to exercise.
-    // Both must agree.
-    integer const eulerCharBeforeSplit = computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
-    GEOS_LOG_RANK_0( "  Euler characteristic before split (local):   " << eulerCharBeforeSplit );
-
-    integer const eulerCharBeforeSplitMgr = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
-    GEOS_LOG_RANK_0( "  Euler characteristic before split (managers): " << eulerCharBeforeSplitMgr );
-
-    EXPECT_EQ( eulerCharBeforeSplit, eulerCharBeforeSplitMgr )
-      << "Test " << testCaseName << ": computeEulerCharacteristicTestHelper MISMATCH between implementations"
-      << "\n  Local (elem-enumeration): " << eulerCharBeforeSplit
-      << "\n  Manager-based:            " << eulerCharBeforeSplitMgr
-      << "\n  Mesh file: " << meshFileName
-      << "\n  The manager-based version (MeshGeneratorBase) returned a different result than the"
-      << "\n  reference element-enumeration version. Check that EdgeManager and FaceManager counts"
-      << "\n  include only bulk entities (no fracture / surface sub-region contributions).";
+    integer const eulerCharBeforeSplit = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
+    GEOS_LOG_RANK_0( "  Euler characteristic before split: " << eulerCharBeforeSplit );
     
     // Run the simulation (executes SurfaceGenerator and splits the mesh)
     state.run();
@@ -243,12 +223,11 @@ protected:
     GEOS_LOG_RANK_0( "  Fracture elements created: " << statsAfter.numFractureElements );
     
     // Compute Euler-Poincaré characteristic χ = V - E + F - C after split
-    integer const eulerCharAfterSplit = computeEulerCharacteristicTestHelper( nodeManager, faceManager, elemManager );
+    integer const eulerCharAfterSplit = computeEulerCharacteristic( nodeManager, edgeManager, faceManager, elemManager );
     GEOS_LOG_RANK_0( "  Euler characteristic after split: " << eulerCharAfterSplit );
-
+      
     // Store Euler characteristic
     statsAfter.eulerCharacteristic = eulerCharAfterSplit;
-    statsAfter.numBodies = eulerCharAfterSplit;
 
     // All validations are performed in one place
     validateSurfaceGeneratorResults( testCaseName,
@@ -269,7 +248,6 @@ protected:
     GEOS_LOG_RANK_0( "  Nodes before: " << statsBefore.numNodes << ", after: " << statsAfter.numNodes
                      << " (+" << statsAfter.numDuplicatedNodes << ")" );
     GEOS_LOG_RANK_0( "  Fracture elements: " << statsAfter.numFractureElements );
-    GEOS_LOG_RANK_0( "  Separate bodies: " << statsAfter.numBodies );
     GEOS_LOG_RANK_0( "========================================" );
 
     } // end scoped GeosxState

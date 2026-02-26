@@ -329,7 +329,6 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     GEOS_LOG_RANK_0( "  Euler χ after  split:              " << eulerCharAfterSplit );
 
     statsAfter.eulerCharacteristic = eulerCharAfterSplit;
-    statsAfter.numBodies           = eulerCharAfterSplit;
 
     // ------------------------------------------------------------------
     // Reduce actual counts to global totals.
