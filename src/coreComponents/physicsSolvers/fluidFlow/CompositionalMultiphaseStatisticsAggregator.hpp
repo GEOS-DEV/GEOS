@@ -209,10 +209,6 @@ public:
 
   using Base = StatsAggregatorBase< StatsAggregator >;
 
-  // using SolverType = CompositionalMultiphaseBase;
-
-  // using StatsGroupType = RegionStatistics;
-
   /**
    * @brief the associated view keys
    */
