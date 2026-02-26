@@ -62,7 +62,7 @@ using SurfaceGenerator_mpiPartitionTuple = std::tuple< int, int, int >;
 
 class SurfaceGenerator_mpiTest
   : public ::testing::TestWithParam<
-      std::tuple< SurfaceGenerator_mpiMeshTuple, SurfaceGenerator_mpiPartitionTuple > >
+    std::tuple< SurfaceGenerator_mpiMeshTuple, SurfaceGenerator_mpiPartitionTuple > >
 {
 protected:
   void SetUp() override
@@ -110,7 +110,8 @@ protected:
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1"
       setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1"/>
     <FieldSpecification name="frac" initialCondition="1"
-      setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager"
+      setNames=")xml" << nodeSetNames <<
+    R"xml(" objectPath="faceManager"
       fieldName="ruptureState" scale="1"/>
   </FieldSpecifications>
   <Events maxTime="1.0e-10">
@@ -205,9 +206,9 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     // ------------------------------------------------------------------
     ProblemManager & pm = state.getProblemManager();
     MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
-    NodeManager    & nodeManager = mesh.getNodeManager();
-    EdgeManager    & edgeManager = mesh.getEdgeManager();
-    FaceManager    & faceManager = mesh.getFaceManager();
+    NodeManager & nodeManager = mesh.getNodeManager();
+    EdgeManager & edgeManager = mesh.getEdgeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // ------------------------------------------------------------------
@@ -247,7 +248,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
 
     GEOS_LOG_RANK_0( "========================================" );
     GEOS_LOG_RANK_0( "Test (MPI): " << testCaseName
-                     << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]" );
+                                    << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]" );
     GEOS_LOG_RANK_0( "Expected duplication (from serial ground truth):" );
     GEOS_LOG_RANK_0( "  New nodes:         " << expected.totalDuplicatedNodes );
     GEOS_LOG_RANK_0( "  Fracture elements: " << expected.numFractureElements );
@@ -377,10 +378,6 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
 //
 // Meshes: the 4 new junction topologies that exercise the most demanding
 // splitting paths (T-junction and Y-junction, hex and tet).
-// ---------------------------------------------------------------------------
-// MPI test instantiation
-//
-// All 3 axis-aligned partitions of 4 ranks: (1,1,4) (1,4,1) (4,1,1)
 //
 // Meshes: every multi-fracture (_DFN_123) configuration from the serial suite
 // plus the T-junction and Y-junction topologies.
@@ -397,18 +394,18 @@ INSTANTIATE_TEST_SUITE_P(
       std::make_tuple( "Mkt_NoBndCut_hex_DFN_123",
                        "fractured_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 2, localIndex(  7 ), localIndex(  12 ) ),
+                       1, 2, localIndex( 7 ), localIndex( 12 ) ),
       // flat · no-boundary-cut · tet · DFN_123     nodes:  19  elems:  48
       std::make_tuple( "Mkt_NoBndCut_tet_DFN_123",
                        "fractured_mesh_tet_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 2, localIndex( 19 ), localIndex(  48 ) ),
+                       1, 2, localIndex( 19 ), localIndex( 48 ) ),
       // -----------------------------------------------------------------------
       // flat · full-span · hex · DFN_123           nodes:  37  elems:  12
       std::make_tuple( "Mkt_BndCut_hex_DFN_123",
                        "fractured_full_span_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 8, localIndex( 37 ), localIndex(  12 ) ),
+                       1, 8, localIndex( 37 ), localIndex( 12 ) ),
       // flat · full-span · tet · DFN_123           nodes: 127  elems: 168
       std::make_tuple( "Mkt_BndCut_tet_DFN_123",
                        "fractured_full_span_mesh_tet_DFN_123.vtu",
@@ -419,18 +416,18 @@ INSTANTIATE_TEST_SUITE_P(
       std::make_tuple( "Mkt_WavyNoBndCut_hex_DFN_123",
                        "fractured_wavy_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 2, localIndex(  7 ), localIndex(  12 ) ),
+                       1, 2, localIndex( 7 ), localIndex( 12 ) ),
       // wavy · no-boundary-cut · tet · DFN_123     nodes:  19  elems:  48
       std::make_tuple( "Mkt_WavyNoBndCut_tet_DFN_123",
                        "fractured_wavy_mesh_tet_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 2, localIndex( 19 ), localIndex(  48 ) ),
+                       1, 2, localIndex( 19 ), localIndex( 48 ) ),
       // -----------------------------------------------------------------------
       // wavy · full-span · hex · DFN_123           nodes:  37  elems:  12
       std::make_tuple( "Mkt_WavyBndCut_hex_DFN_123",
                        "fractured_wavy_full_span_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 8, localIndex( 37 ), localIndex(  12 ) ),
+                       1, 8, localIndex( 37 ), localIndex( 12 ) ),
       // wavy · full-span · tet · DFN_123           nodes: 127  elems: 168
       std::make_tuple( "Mkt_WavyBndCut_tet_DFN_123",
                        "fractured_wavy_full_span_mesh_tet_DFN_123.vtu",
@@ -441,44 +438,47 @@ INSTANTIATE_TEST_SUITE_P(
       std::make_tuple( "Mkt_BndCut_t_shaped_hex_DFN_12",
                        "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
                        "{ f1_node_set, f2_node_set }",
-                       1, 3, localIndex( 15 ), localIndex(   6 ) ),
+                       1, 3, localIndex( 15 ), localIndex( 6 ) ),
       // T-shaped · boundary-cutting · tet          nodes:  49  elems:  66
       std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",
                        "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
                        "{ f1_node_set, f2_node_set }",
-                       1, 3, localIndex( 49 ), localIndex(  66 ) ),
+                       1, 3, localIndex( 49 ), localIndex( 66 ) ),
       // -----------------------------------------------------------------------
       // Y-shaped · boundary-cutting · hex          nodes:  15  elems:   6
       std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",
                        "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 3, localIndex( 15 ), localIndex(   6 ) ),
+                       1, 3, localIndex( 15 ), localIndex( 6 ) ),
       // Y-shaped · boundary-cutting · tet          nodes:  49  elems:  66
       std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
                        "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 3, localIndex( 49 ), localIndex(  66 ) ),
-                      
+                       1, 3, localIndex( 49 ), localIndex( 66 ) ),
+
       // Y-Miscellaneous · no-boundary-cutting · hex          nodes:  180  elems:  196
       std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN",
                        "DFN_5_fractures_hex_binarized.vtu",
                        "{  f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
-                       1, 2, localIndex( 180 ), localIndex(  196 ) )
+                       1, 2, localIndex( 180 ), localIndex( 196 ) )
 // TODO: this case require a separate PR.
 //      // Miscellaneous · no-boundary-cutting · tet          nodes:  180  elems:  392
 //      std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN",
 //                       "DFN_5_fractures_tet_binarized.vtu",
 //                       "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
 //                       1, 2, localIndex( 180 ), localIndex(  392 ) )
-                      
-    ),
+
+      ),
     ::testing::Values(
       std::make_tuple( 1, 1, 4 ),
       std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 4, 1, 1 )
+      std::make_tuple( 4, 1, 1 ),
+      std::make_tuple( 1, 2, 2 ),
+      std::make_tuple( 2, 1, 2 ),
+      std::make_tuple( 2, 2, 1 )
+      )
     )
-  )
-);
+  );
 
 
 int main( int argc, char * argv[] )
