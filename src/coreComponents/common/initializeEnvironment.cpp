@@ -342,7 +342,7 @@ void setupEnvironment( int argc, char * argv[] )
 void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
-  ErrorLogger::global().getLoggerReportData().errorStatsReport();
+  ErrorLogger::global().getLoggerReportData().diagnosticStatsReport();
 
   LvArray::system::resetSignalHandling();
   finalizeLogger();

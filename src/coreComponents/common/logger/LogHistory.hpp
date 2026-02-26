@@ -36,11 +36,7 @@ namespace geos
  */
 struct MsgStatistics
 {
-  /// Key identifying the source location
-  using LocationKey = std::pair< std::array< char, 200 >, integer >;
-  /// Source code location
-  LocationKey locationKey;
-  /// Number of occurrences on the current rank
+  ///
   integer count;
 };
 
@@ -53,7 +49,7 @@ class LogHistory
 public:
 
   /// Alias for the historical error unordered_map key
-  using HistoricalErrorUnorderedMapKey = std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey >;
+  using HistoricalErrorUnorderedMapKey = std::tuple< LogPart::Type, MsgType, string, integer >;
 
   /**
    * @brief Report a diagnostic message
@@ -66,12 +62,12 @@ public:
   /**
    * @brief Display the error statistics to the log
    */
-  void errorStatsReport();
+  void diagnosticStatsReport();
 
   /**
    * @return The const historical error
    */
-  auto const & getErrorHistory() const
+  auto const & getDiagnosticHistory() const
   { return m_errorHistory; }
 
   /**
@@ -80,7 +76,7 @@ public:
    * @param msgType The error message type
    * @param locationKey The key identifying the error source location
    */
-  void insertBlanckReport( LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey );
+  void insertBlanckReport( LogPart::Type logPartName, MsgType msgType, string const & fileName, integer lineCount );
 
 private:
 
@@ -90,15 +86,15 @@ private:
 
     std::size_t operator()( HistoricalErrorUnorderedMapKey const & key ) const noexcept
     {
-      auto const & [logPartType, msgType, locationKey] = key;
+      auto const & [logPartType, msgType, filename, lineCount] = key;
 
       std::size_t h1 = std::hash< LogPart::Type >{} (logPartType);
 
       std::size_t h2 = std::hash< MsgType >{} (msgType);
-
-      std::string str( std::begin( locationKey.first ), std::end( locationKey.first ));
+      std::string str;
+      str.assign( filename );
       std::size_t h3 = std::hash< std::string >{} (str);
-      std::size_t h4 = std::hash< int >{} (locationKey.second);
+      std::size_t h4 = std::hash< int >{} (lineCount);
 
       return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
     }
@@ -115,8 +111,8 @@ private:
     {
       return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
              std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
-             std::get< 2 >( lhs ).first == std::get< 2 >( rhs ).first &&
-             std::get< 2 >( lhs ).second == std::get< 2 >( rhs ).second;
+             std::get< 2 >( lhs ) == std::get< 2 >( rhs ) &&
+             std::get< 2 >( lhs ) == std::get< 2 >( rhs );
     }
   };
   /// @endcond
@@ -126,7 +122,7 @@ private:
    */
   stdUnorderedMap< HistoricalErrorUnorderedMapKey,
                    MsgStatistics,
-                   LocationKeyHash, LocationKeyEqual >m_errorHistory;
+                   LocationKeyHash, LocationKeyEqual > m_errorHistory;
 };
 
 /**
