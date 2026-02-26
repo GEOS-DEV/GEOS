@@ -90,9 +90,8 @@ void Perforation::postInputInitialization()
   {
     // Table name provided as input, check that it exists
     GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ),
-                   GEOS_FMT( "{}: missing perforation status table `{}`",
-                             getDataContext(), m_perfStatusTableName ),
-                   InputError );
+                   GEOS_FMT( "missing perforation status table `{}`", m_perfStatusTableName ),
+                   InputError, getDataContext()  );
   }
 
   if( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ) )
@@ -116,15 +115,14 @@ void Perforation::postInputInitialization()
       // User supplied table in Perforation section
 
       GEOS_THROW_IF( m_perfStatusTable[0].size() != m_perfStatusTable[1].size(),
-                     GEOS_FMT( "{}: Perforation status table `{}` missing time or status.", m_perfStatusTableName, getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Perforation status table `{}` missing time or status.", m_perfStatusTableName ),
+                     InputError, getDataContext()  );
 
       for( std::ptrdiff_t i=0; i<m_perfStatusTable[0].size(); i++ )
       {
         timeCoord[0].emplace_back( m_perfStatusTable[0][i] );
         GEOS_THROW_IF( ( !isZero( m_perfStatusTable[1][i] ) && !isZero( 1 - m_perfStatusTable[1][i] ) ),
-                       GEOS_FMT( "{}: Perforation status value must be 0 or 1.", getDataContext() ),
-                       InputError );
+                       "Perforation status value must be 0 or 1.", InputError, getDataContext()  );
         values.emplace_back( m_perfStatusTable[1][i] );
       }
     }
