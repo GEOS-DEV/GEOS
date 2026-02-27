@@ -22,7 +22,6 @@ check_container_usage() {
             ((FORBIDDEN_CONTAINER_MAP["$container"]++))
           fi
       done
-      str+="    $line"$'\n'
     done < <(grep -nE "$FULL_REGEX" "$file")
   fi
 
@@ -130,7 +129,7 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDED_NAME_PA
 ################################
 
 REGEX_PATTERN=$(IFS='|'; echo "${FORBIDDEN_EXPRESSIONS[*]}")
-FULL_REGEX="(${REGEX_PATTERN})[[:space:]]*[<\(]"
+FULL_REGEX="(${REGEX_PATTERN})[[:space:]]*"
 
 for file in "${ARRAY_FILES[@]}"; do
     check_container_usage "$file"
