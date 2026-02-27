@@ -174,20 +174,14 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshGenerationLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::MeshGeneration ),
-                             MpiWrapper::commRank() == 0 );
+  LogPart meshGenerationLog( "MeshGeneration", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
-  if( MpiWrapper::commRank() != 1 )
-  {
-    GEOS_WARNING( "plouf" );
-    // GEOS_WARNING( "plouf" );
-    // GEOS_WARNING( "plouf" );
-  }
+
   generateMesh();
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-  LogPart numericalMethodLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::NumericalMethods ), MpiWrapper::commRank() == 0 );
+  LogPart numericalMethodLog( "NumericalMethods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
   applyNumericalMethods();
 
@@ -197,8 +191,7 @@ void ProblemManager::problemSetup()
 
   initialize();
 
-  LogPart importFieldsLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::ImportFields ),
-                           MpiWrapper::commRank() == 0 );
+  LogPart importFieldsLog( "ImportFields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
   importFields();
   importFieldsLog.end();

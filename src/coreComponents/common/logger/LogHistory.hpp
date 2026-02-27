@@ -49,15 +49,15 @@ class LogHistory
 public:
 
   /// Alias for the historical error unordered_map key
-  using HistoricalErrorUnorderedMapKey = std::tuple< LogPart::Type, MsgType, string, integer >;
+  using HistoricalErrorUnorderedMapKey = std::tuple< string, MsgType, string, integer >;
 
   /**
    * @brief Report a diagnostic message
-   * @param logPartName The logPart the message occured
+   * @param logPartName The logPart where the message occured
    * @param diagMsg The diagnostic message to record
    * @param threadCount
    */
-  void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg );
+  void notifyMsg( string_view logPartName, DiagnosticMsg const & diagMsg );
 
   /**
    * @brief Display the error statistics to the log
@@ -76,7 +76,7 @@ public:
    * @param msgType The error message type
    * @param locationKey The key identifying the error source location
    */
-  void insertBlanckReport( LogPart::Type logPartName, MsgType msgType, string const & fileName, integer lineCount );
+  void insertBlanckReport( string_view logPartName, MsgType msgType, string const & fileName, integer lineCount );
 
 private:
 
@@ -88,8 +88,7 @@ private:
     {
       auto const & [logPartType, msgType, filename, lineCount] = key;
 
-      std::size_t h1 = std::hash< LogPart::Type >{} (logPartType);
-
+      std::size_t h1 = std::hash< std::string >{} (logPartType);
       std::size_t h2 = std::hash< MsgType >{} (msgType);
       std::string str;
       str.assign( filename );

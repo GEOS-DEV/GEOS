@@ -33,25 +33,11 @@ class LogPart
 public:
 
   /**
-   * @enum Type
-   * Enum listing the different types of possibleLogPart
-   */
-  enum class Type : integer
-  {
-    MeshGeneration,
-    NumericalMethods,
-    ImportFields,
-    Timestep,
-    Undefined,
-  };
-
-
-  /**
    * @brief Initialize a LogPart given a title
    * @param logPartTitle The title who will be used for top and bottom LogPart
    * @param enableOutput Boolean to activate or not csv output
    */
-  LogPart( string_view logPartTitle, bool enableOutput );
+  LogPart( string const & logPartTitle, bool enableOutput );
 
   /**
    * @brief Add a description to the top LogPart
@@ -244,14 +230,6 @@ void LogPart::addEndDescription( string_view name, Args const &... args )
 {
   addDescriptionBySection( m_endDescription, m_formattedEndDescription, name, args ... );
 }
-
-/// Declare strings associated with LogPart values.
-ENUM_STRINGS( LogPart::Type,
-              "MeshGeneration",
-              "NumericalMethods",
-              "ImportFields",
-              "Timestep",
-              );
 
 }
 

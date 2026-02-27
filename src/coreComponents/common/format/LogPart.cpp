@@ -25,14 +25,14 @@ using namespace geos::stringutilities;
 namespace geos
 {
 
-LogPart::LogPart( string_view logPartTitle, bool enableOutput )
+LogPart::LogPart( string const & logpartName, bool enableOutput )
 {
-  m_formattedStartDescription.m_title = logPartTitle;
-  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
+  m_formattedStartDescription.m_title = logpartName;
+  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logpartName);
 
   m_enableOutput = enableOutput;
 
-  ErrorLogger::global().setCurrentLogPart( EnumStrings< LogPart::Type >::fromString( string( logPartTitle ) ));
+  ErrorLogger::global().setCurrentLogPart( logpartName );
 
 }
 

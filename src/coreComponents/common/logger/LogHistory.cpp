@@ -49,12 +49,13 @@ std::string extractAfterLastOccurrence( string const & str, char delimiter )
   return str.substr( pos + 1 );
 }
 
-void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msgType )
+void LogHistory::notifyMsg( string_view logPartName, DiagnosticMsg const & msgType )
 {
   string fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
 
-  auto & stats = m_errorHistory.get_inserted( std::make_tuple( logPartName, msgType.m_type, fileName, lineCount ));
+  auto & stats = m_errorHistory.get_inserted( std::make_tuple( string( logPartName ), msgType.m_type,
+                                                               fileName, lineCount ));
   stats.count++;
 }
 
@@ -148,7 +149,7 @@ void LogHistory::diagnosticStatsReport()
         buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
         while( rankStart < rankEnd )
         {
-          LogPart::Type logPartUnpacked;
+          string logPartUnpacked;
           MsgType MsgTypeUnpacked;
           string fileNameUnpacked;
           integer lineCountUnpacked;
@@ -170,9 +171,9 @@ void LogHistory::diagnosticStatsReport()
   }
 }
 
-void LogHistory::insertBlanckReport( LogPart::Type logPartName, MsgType msgType, string const & fileName, integer lineCount )
+void LogHistory::insertBlanckReport( string_view logPartName, MsgType msgType, string const & fileName, integer lineCount )
 {
-  m_errorHistory.get_inserted( std::make_tuple( logPartName, msgType, fileName, lineCount ));
+  m_errorHistory.get_inserted( std::make_tuple( string( logPartName ), msgType, fileName, lineCount ));
 }
 
 template<>
@@ -186,11 +187,11 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
-  stdMap< std::pair< LogPart::Type, MsgType >, int > countPerPartAndType;
+  stdMap< std::pair< string, MsgType >, int > countPerPartAndType;
   using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
   CellRow emptyCellRow;
   emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
-  stdMap< LogPart::Type, CellRow > rowByPart;
+  stdMap< string, CellRow > rowByPart;
 
 
   for( const auto & [tupleKey, msgTypes] : messageCounts.getDiagnosticHistory())
@@ -212,12 +213,12 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   }
 
   TableData data;
-  for( auto const &  [key, cells] : rowByPart )
+  for( auto const &  [logPart, cells] : rowByPart )
   {
     stdVector< TableData::CellData >row (
       {
         TableData::CellData{CellType::Value,
-                            EnumStrings< LogPart::Type >::toString( key )}
+                            logPart }
       } );
 
     row.insert( row.end(), cells.begin(), cells.end());

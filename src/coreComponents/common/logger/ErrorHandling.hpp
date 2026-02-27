@@ -161,15 +161,15 @@ public:
    * @brief Gets the current log part.
    * @return The current log part as a string.
    */
-  LogPart::Type getCurrentLogPart() const
+  string_view getCurrentLogPart() const
   {return m_currentLogPart;}
 
 /**
  * @brief Sets the current log part.
  * @param logPart The new log part to set.
  */
-  void setCurrentLogPart( LogPart::Type logPart )
-  { m_currentLogPart = logPart; }
+  void setCurrentLogPart( string const & currentLogPart )
+  { m_currentLogPart = currentLogPart; }
 
 private:
 
@@ -184,7 +184,8 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
-  LogPart::Type m_currentLogPart;
+
+  string m_currentLogPart;
   /// Avoid concurrent access between threads for log outputs
   std::mutex m_errorHandlerAsciiMutex;
   /// Avoid concurrent access between threads for yaml outputs
