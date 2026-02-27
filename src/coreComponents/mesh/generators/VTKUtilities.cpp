@@ -1823,8 +1823,11 @@ redistributeByKdTree( vtkDataSet & mesh )
 
   if( globalOutputCells != globalInputCells )
   {
-    GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
-                                                    << " elements! Falling back to block redistribution." );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
+                                                      << " elements! Falling back to block redistribution." );
+    }
     return scatterByBlock( mesh );
   }
 
