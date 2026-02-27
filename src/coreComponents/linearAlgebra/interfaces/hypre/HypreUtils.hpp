@@ -29,13 +29,7 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-#else
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-#endif
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
