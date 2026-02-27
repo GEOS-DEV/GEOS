@@ -55,6 +55,12 @@ std::string & Path:: pathPrefix()
 
 std::string getAbsolutePath( std::string const & path )
 {
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  // Resolving filesystem paths is a host-only operation.
+  GEOS_UNUSED_VAR( path );
+  GEOS_THROW( "getAbsolutePath() is not supported in device compilation.", InputError );
+  return {};
+#else
   char buf[ PATH_MAX ];
   if( realpath( path.data(), buf ) )
   {
@@ -81,6 +87,7 @@ std::string getAbsolutePath( std::string const & path )
                         "Current working directory is: {}.\n",
                         path, reason, cwd ),
               InputError );
+#endif
 }
 
 std::istream & operator>>( std::istream & is, Path & p )

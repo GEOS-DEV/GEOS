@@ -214,6 +214,11 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 string const & optionName,
                 string const & contextName )
 {
+  // In device compilation, GEOS_THROW_IF does not evaluate MSG, so these appear unused.
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( optionName, contextName );
+#endif
+
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
