@@ -135,6 +135,20 @@ decks = [
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="ALM_singlephasePoromechanics_curvedFrac_smoke",
+        description='PoroElastic ALM conformingFracture with two curved fractures and singlePhase',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=1,
+        check_step=2,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="ALM_multiphasePoromechanics_curvedFrac_smoke",
+        description='PoroElastic ALM conformingFracture with two curved fractures and multiPhase',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=1,
+        check_step=2,
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04))
 ]
 

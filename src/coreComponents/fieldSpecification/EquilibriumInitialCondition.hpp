@@ -116,6 +116,12 @@ public:
   string getTemperatureVsElevationTableName() const { return m_temperatureVsElevationTableName; }
 
   /**
+   * @brief Getter for the phase contacts' elevations
+   * @return the phase contacts' elevations
+   */
+  real64_array const & getPhaseContacts() const { return m_phaseContacts; }
+
+  /**
    * @brief View keys
    */
   struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
@@ -158,6 +164,11 @@ public:
     /// @return String key for the temperature vs elevation table name
     constexpr static char const * temperatureVsElevationTableNameString() { return "temperatureVsElevationTableName"; }
 
+    // array storing phase contact elevations
+
+    /// @return String key for the phase contacts' elevations
+    constexpr static char const * phaseContactsString() { return "phaseContacts"; }
+
   };
 
 
@@ -195,6 +206,9 @@ private:
 
   /// Table name for temperature vs elevation
   string m_temperatureVsElevationTableName;
+
+  /// Array of phase contacts' elevations
+  real64_array m_phaseContacts;
 
 };
 

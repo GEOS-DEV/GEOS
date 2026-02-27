@@ -149,6 +149,18 @@ public:
   arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
 
   /*
+   * @brief Getter for the minimum phase volume fractions for each phase
+   * @return an array of the minimum phase volume fractions for each phase
+   */
+  arrayView1d< real64 const > phaseMinVolumeFraction() const { return m_phaseMinVolumeFraction; }
+
+  /*
+   * @brief Getter for the phase order of each phase
+   * @return an array of the order of each phase
+   */
+  arrayView1d< integer const > phaseOrder() const { return m_phaseOrder; }
+
+  /*
    * @brief Getter for the cell-wise derivatives of phase capillary pressures wrt phase volume fractions
    * @return an array of cell-wise derivatives of phase capillary pressures wrt phase volume fractions
    */
@@ -159,6 +171,7 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
+    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
   };
 
 private:
@@ -179,10 +192,12 @@ protected:
   array1d< integer > m_phaseTypes;
   array1d< integer > m_phaseOrder;
 
+  // Minimum phase volume fractions
+  array1d< real64 > m_phaseMinVolumeFraction;
+
   // output quantities
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
   array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
-
 };
 
 } // namespace constitutive

@@ -6,6 +6,34 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3970 (2026-02-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3970-15479-074f42a.tar.gz>
+=====================
+Bypass well residual calculation for closed wells
+
+PR #3940 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
+=====================
+Fix fracture state update for ALM solver
+
+PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
+=====================
+Fix the transimissibility calculated between a cell and a surface element
+
+PR #3926 (2026-01-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3926-15289-1f676c0.tar.gz>
+=====================
+MultiPhase Poromechanics ALM solver and a test with curved fractures
+
+PR #3634 (2025-12-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3634-15105-6ab70ef.tar.gz>
+=====================
+Add singlephase reactive transport solver integrated with HPCReact 
+
+PR #3795 (2025-12-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3795-15047-606f4ac.tar.gz>
+=====================
+Addition of multiphase initialisation
+
+PR #3925 (2025-12-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3925-15032-d307303.tar.gz>
+=====================
+Add traction update for ALM solver and a test with curved fractures
+
 PR #3829 (2025-11-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3829-14878-fdcd94e.tar.gz>
 =====================
 Fix validation of average region stat needed by option

@@ -45,6 +45,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureInversionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
@@ -198,53 +199,53 @@ void CompositionalMultiphaseBase::postInputInitialization()
   FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0" );
+                        "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
+                        "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
-                        ": The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in pressure in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
-                        ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in temperature in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
-                        ": The maximum relative change in component density in a Newton iteration must be larger than 0.0" );
+                        "The maximum relative change in component density in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
-                        ": The target relative change in pressure in a time step must be larger than 0.0" );
+                        "The target relative change in pressure in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) <<
-                        ": The target relative change in temperature in a time step must be larger than 0.0" );
+                        "The target relative change in temperature in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
-                        ": The target change in phase volume fraction in a time step must be larger than 0.0" );
+                        "The target change in phase volume fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) <<
-                        ": The target change in component density in a time step must be larger than 0.0" );
+                        "The target change in component density in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) <<
-                        ": The target change in component fraction in a time step must be larger than 0.0" );
+                        "The target change in component fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be larger or equal to 0.0" );
+                        "The solution change scaling factor must be larger or equal to 0.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be smaller or equal to 1.0" );
+                        "The solution change scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be larger than 0.0" );
+                        "The minumum scaling factor must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be smaller or equal to 1.0" );
+                        "The minumum scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
 
   if( m_isThermal && m_useSimpleAccumulation ) // useSimpleAccumulation is not yet compatible with thermal
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: '{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
-                               getDataContext(), viewKeyStruct::useSimpleAccumulationString() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "'{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
+                               viewKeyStruct::useSimpleAccumulationString(), getDataContext()  ) );
     m_useSimpleAccumulation = 0;
   }
 
@@ -254,18 +255,18 @@ void CompositionalMultiphaseBase::postInputInitialization()
 
     if( m_isThermal ) // z_c formulation is not yet compatible with thermal
     {
-      GEOS_ERROR( GEOS_FMT( "{}: '{}' is currently not available for thermal simulations",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " '{}' is currently not available for thermal simulations",
+                            formulationName ), getDataContext());
     }
     if( m_hasDiffusion || m_hasDispersion ) // z_c formulation is not yet compatible with diffusion or dispersion
     {
-      GEOS_ERROR( GEOS_FMT( "{}: {} is currently not available for diffusion or dispersion",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " {} is currently not available for diffusion or dispersion",
+                            formulationName ), getDataContext() );
     }
     if( m_isJumpStabilized ) // z_c formulation is not yet compatible with pressure stabilization
     {
-      GEOS_ERROR( GEOS_FMT( "{}: pressure stabilization is not yet supported by {}",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " pressure stabilization is not yet supported by {}",
+                            formulationName ), getDataContext() );
     }
   }
 }
@@ -316,25 +317,22 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       if( m_hasCapPressure )
       {
         GEOS_THROW_IF( getConstitutiveName< CapillaryPressureBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                       GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       if( m_hasDiffusion )
       {
         GEOS_THROW_IF( getConstitutiveName< DiffusionBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Diffusion model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       if( m_hasDispersion )
       {
         GEOS_THROW_IF( getConstitutiveName< DispersionBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Dispersion model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                       GEOS_FMT( " Dispersion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
     } );
   } );
@@ -365,7 +363,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "{}: unknown formulation type", getDataContext() ) );
+    GEOS_ERROR( "unknown formulation type", getDataContext() );
   }
 
   // 2. Register and resize all fields as necessary
@@ -495,15 +493,15 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -512,15 +510,15 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -546,14 +544,16 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
     string_array const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
     GEOS_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
-                          getDataContext() << ": Mismatch in number of components between constitutive model "
-                                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+                          "Mismatch in number of components between constitutive model "
+                          << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName(),
+                          getDataContext()  );
 
     for( integer ic = 0; ic < fluid0.numFluidComponents(); ++ic )
     {
       GEOS_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
-                            getDataContext() << ": Mismatch in component names between constitutive model "
-                                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+                            "Mismatch in component names between constitutive model "
+                            << fluid0.getName() << " and the water phase components in aquifer " << bc.getName(),
+                            getDataContext()  );
     }
   } );
 }
@@ -612,12 +612,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
       bool const isFluidModelThermal = fluid.isThermal();
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
+                     GEOS_FMT( "The thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
+                     GEOS_FMT( "The thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
@@ -707,7 +707,6 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
   arrayView1d< real64 const > const temp = dataGroup.getField< flow::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
     dataGroup.getField< flow::globalCompFraction >();
-
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
 
@@ -902,7 +901,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     {
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localNegativeValues( 0 );
-      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localWrongSum( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooHighFracCount( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooLowFracCount( 0 );
+      RAJA::ReduceMin< parallelDeviceReduce, localIndex > localMinFrac( LvArray::NumericLimits< localIndex >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, localIndex > localMaxFrac( LvArray::NumericLimits< localIndex >::min );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         real64 sumCompFrac = 0.0;
@@ -912,19 +914,33 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
           if( compFrac[ei][ic] < 0.0 )
             localNegativeValues += 1;
         }
-        if( LvArray::math::abs( sumCompFrac - 1.0 ) > 1e-6 )
-          localWrongSum += 1;
+        localMinFrac.min( sumCompFrac );
+        localMaxFrac.max( sumCompFrac );
+        if( sumCompFrac > 1 + 1e-6 )
+          localTooHighFracCount += 1;
+        if( sumCompFrac < 1 - 1e-6 )
+          localTooLowFracCount += 1;
       } );
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
-                     GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), negativeValues ) );
+                     GEOS_FMT( "negative global component fraction values found in subregion '{}' for {} elements",
+                               subRegion.getName(), negativeValues ),
+                     getDataContext(), subRegion.getDataContext()  );
 
-      localIndex const wrongSum = MpiWrapper::sum( localWrongSum.get() );
-      GEOS_ERROR_IF( wrongSum > 0,
-                     GEOS_FMT( "{}: component fractions do not sum to 1.0 in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), wrongSum ) );
+      localIndex const totalSupFrac = MpiWrapper::sum( localTooHighFracCount.get() );
+      localIndex const totalInfFrac = MpiWrapper::sum( localTooLowFracCount.get() );
+      localIndex const totalWrongCompFrac = totalSupFrac + totalInfFrac;
+      localIndex const minFrac  = MpiWrapper::min( localMinFrac.get() );
+      localIndex const maxFrac  = MpiWrapper::sum( localMaxFrac.get() );
+      GEOS_ERROR_IF( totalWrongCompFrac > 0,
+                     GEOS_FMT( "{} component fractions do not sum to 1.0 in subregion '{}'!\n"
+                               "{} are too low ; {} are too high ; component fractions sum range is from {} to {}.\n"
+                               "Consider adding field specification to initialize the '{}' field.",
+                               totalWrongCompFrac, subRegion.getName(),
+                               localTooLowFracCount.get(), localTooHighFracCount.get(), minFrac, maxFrac,
+                               fields::flow::globalCompFraction::key() ),
+                     getDataContext());
     }
 
     // Assume global component fractions have been prescribed.
@@ -1097,33 +1113,29 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-
-    // collect all the equilibrium names to idx
+    // Collect all the equilibrium names to idx
     equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() << " " << getDataContext() <<
-                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   "The gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                   "used in this simulation. To proceed, you can either: \n" <<
+                   "This is incompatible with the " << bc.getCatalogName() <<
+                   " used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                    InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
-                   getCatalogName() << " " << bc.getDataContext()
-                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
-                                    << " must be provided for a multiphase simulation",
-                   InputError );
+                   EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                   << " must be provided for a multiphase simulation",
+                   InputError, bc.getDataContext() );
     GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
-                   getCatalogName() << " " << bc.getDataContext()
-                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
-                                    << " must be provided for a multiphase simulation",
-                   InputError );
+                   EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                   << " must be provided for a multiphase simulation",
+                   InputError, bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -1163,35 +1175,99 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                           ElementSubRegionBase & subRegion,
                                                           string const & )
     {
+      // Check if the region is targetted by the solver. Otherwise we cannot guarantee a fluid exists
+      Group const & region = subRegion.getParent().getParent();
+      if( regionFilter.find( region.getName() ) == regionFilter.end() )
+      {
+        return;   // the region is not in target, there is nothing to do
+      }
+
       // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
       integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
       real64 const equilTolerance = fs.getEquilibrationTolerance();
       real64 const datumElevation = fs.getDatumElevation();
       real64 const datumPressure = fs.getDatumPressure();
-      string const initPhaseName = fs.getInitPhaseName();   // will go away when GOC/WOC are implemented
+      string const initPhaseName = fs.getInitPhaseName();
+      arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
 
       localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-      localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
-
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           getCatalogName() << " " << getDataContext() <<
-                          ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
+                          "By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                           " was specified in the input file to equilibrate the model.\n " <<
                           "The simulation is going to proceed with this out-of-bound datum elevation," <<
                           " but the initial condition may be inaccurate." );
 
+      // Check if we are targetting single or multiple phase initialisation
+      bool singlePhaseInitialisation = !initPhaseName.empty();
+      if( !singlePhaseInitialisation )
+      {
+        // Check that we have number of contacts equal to one less that number of phases
+        GEOS_THROW_IF( phaseContacts.size() != numPhases - 1,
+                       GEOS_FMT( "{}: For a region ({}) with {} phases, the number of phase contacts must be {} not {}.",
+                                 fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                 subRegion.getName(), numPhases, numPhases-1, phaseContacts.size() ),
+                       InputError );
+
+        real64 const minAllowedElevation = 2.0*minElevation - maxElevation;
+        real64 const maxAllowedElevation = 2.0*maxElevation - minElevation;
+        // Check that the contacts are not too far away from the region extents
+        for( real64 const & contact : phaseContacts )
+        {
+          GEOS_THROW_IF( contact < minAllowedElevation,
+                         GEOS_FMT( "{}: The phase contact {} is below the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, minAllowedElevation, subRegion.getName() ),
+                         InputError );
+          GEOS_THROW_IF( maxAllowedElevation < contact,
+                         GEOS_FMT( "{}: The phase contact {} is above the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, maxAllowedElevation, subRegion.getName() ),
+                         InputError );
+        }
+      }
+
+      // Populate elevation values. Done here in serial
+      auto const getUniqueFloat = []( const real64 & a, const real64 & b ) {
+        return a < b - LvArray::NumericLimits< real64 >::epsilon;
+      };
+      std::set< real64, decltype(getUniqueFloat) > uniqueElevations( getUniqueFloat );
+      // If we are doing multiphase initialisation, add the contacts and the datum
+      if( !singlePhaseInitialisation )
+      {
+        uniqueElevations.insert( datumElevation );
+        for( real64 const & contact : phaseContacts )
+        {
+          uniqueElevations.insert( contact );
+        }
+      }
+      uniqueElevations.insert( maxElevation );
+      uniqueElevations.insert( minElevation );
+      if( LvArray::NumericLimits< real64 >::epsilon < elevationIncrement )
+      {
+        for( real64 elevation = minElevation; elevation < maxElevation; elevation += elevationIncrement )
+        {
+          uniqueElevations.insert( elevation );
+        }
+      }
       array1d< array1d< real64 > > elevationValues;
-      array1d< real64 > pressureValues;
       elevationValues.resize( 1 );
-      elevationValues[0].resize( numPointsInTable );
-      pressureValues.resize( numPointsInTable );
+      for( real64 const & elevation : uniqueElevations )
+      {
+        elevationValues[0].emplace_back( elevation );
+      }
+      localIndex const numPointsInTable = static_cast< localIndex >(elevationValues[0].size());
+
+      array3d< real64, constitutive::multifluid::LAYOUT_PHASE > pressureValues( numPointsInTable, 1, numPhases );
+      array3d< real64, constitutive::multifluid::LAYOUT_PHASE > phaseDens( numPointsInTable, 1, numPhases );
+      array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( numPointsInTable, 1, numPhases, numComps );
 
       // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
 
@@ -1207,97 +1283,146 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
       TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
 
-      // Step 3.3: retrieve the fluid model to compute densities
-      // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
-
-      Group const & region = subRegion.getParent().getParent();
-      auto itRegionFilter = regionFilter.find( region.getName() );
-      if( itRegionFilter == regionFilter.end() )
-      {
-        return;   // the region is not in target, there is nothing to do
-      }
-
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
-                     << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                     << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                      InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                        "Mismatch in component names between constitutive model "
-                       << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                       << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                        InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
-      // Note: for now, we assume that the reservoir is in a single-phase state at initialization
+      integer ipInit = -1;
       string_array const & phaseNames = fluid.phaseNames();
-      auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-      GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     getCatalogName() << " " << getDataContext() << ": phase name " <<
-                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-                     InputError, getDataContext(), fluid.getDataContext() );
-      integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+      if( singlePhaseInitialisation )
+      {
+        auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+        GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
+                       getCatalogName() << " " << getDataContext() << ": phase name " <<
+                       initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                       InputError, getDataContext() );
+        ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+      }
 
       // Step 3.4: compute the hydrostatic pressure values
+      arrayView1d< integer const > phaseOrder;
+      arrayView1d< real64 const > phaseMinVolumeFraction;
+      array1d< integer > temporaryPhaseOrder( constitutive::CapillaryPressureBase::MAX_NUM_PHASES );
+      array1d< real64 > temporaryMinVolumeFraction( numPhases );
+      if( m_hasCapPressure )
+      {
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+        phaseOrder = capPressure.phaseOrder();
+        phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
+      }
+      else
+      {
+        auto const toPhaseType = [&]( string const & lookup ) -> integer
+        {
+          static unordered_map< string, integer > const phaseDict =
+          {
+            { "gas", CapillaryPressureBase::PhaseType::GAS },
+            { "oil", CapillaryPressureBase::PhaseType::OIL },
+            { "water", CapillaryPressureBase::PhaseType::WATER }
+          };
+          auto const it = phaseDict.find( lookup );
+          if( it == phaseDict.end())
+          {
+            return -1;
+          }
+          return it->second;
+        };
+        for( integer phaseType = 0; phaseType < constitutive::CapillaryPressureBase::MAX_NUM_PHASES; phaseType++ )
+        {
+          temporaryPhaseOrder[phaseType] = -1;
+        }
+        for( integer ip = 0; ip < numPhases; ip++ )
+        {
+          auto const phaseType = toPhaseType( phaseNames[ip] );
+          temporaryMinVolumeFraction[ip] = 0.0;
+          temporaryPhaseOrder[phaseType] = ip;
+        }
+        phaseMinVolumeFraction = temporaryMinVolumeFraction.toViewConst();
+        phaseOrder = temporaryPhaseOrder.toViewConst();
+      }
+
+      integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+      integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+      integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         using FluidType = TYPEOFREF( castedFluid );
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel;
 
-        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-        isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView() );
+        // note: This is a serial Kernel (due to the nature of the problem being solved). So values do not need to go onto the GPU
+        Kernel::ReturnType const returnValue = Kernel::launch( numPointsInTable,
+                                                               numComps,
+                                                               numPhases,
+                                                               ipGas,
+                                                               ipOil,
+                                                               ipWater,
+                                                               ipInit,
+                                                               maxNumEquilIterations,
+                                                               phaseContacts,
+                                                               phaseMinVolumeFraction,
+                                                               equilTolerance,
+                                                               gravVector,
+                                                               datumElevation,
+                                                               datumPressure,
+                                                               fluidWrapper,
+                                                               compFracTableWrappers.toViewConst(),
+                                                               tempTableWrapper,
+                                                               elevationValues.toNestedView(),
+                                                               pressureValues.toView(),
+                                                               phaseDens.toView(),
+                                                               phaseCompFrac.toView() );
 
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
+        GEOS_THROW_IF( returnValue == Kernel::ReturnType::FAILED_TO_CONVERGE,
+                       "hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error, getDataContext() );
+                       geos::RuntimeError, getDataContext() );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            getCatalogName() << " " << getDataContext() <<
-                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
-                            "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
-                            "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
-                            "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
-
+        if( singlePhaseInitialisation )
+        {
+          GEOS_LOG_RANK_0_IF( returnValue == Kernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                              getCatalogName() << " " << getDataContext() <<
+                              ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                              "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
+                              "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
+                              "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+        }
       } );
 
-      // Step 3.5: create hydrostatic pressure table
+      // Step: create table wrappers for the phase pressures and mass density
+      // Create a wrapper for the elevations
+      string const elevationIndexTableName = GEOS_FMT( "{}_{}_Elevation_index_table", fs.getName(), subRegion.getName() );
+      if( !functionManager.hasGroup< TableFunction >( elevationIndexTableName ))
+      {
+        array1d< real64 > indexValues( numPointsInTable );
+        for( localIndex i = 0; i < numPointsInTable; ++i )
+        {
+          indexValues[i] = i;
+        }
+        TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), elevationIndexTableName ) );
+        table->setTableCoordinates( elevationValues, { units::Distance } );
+        table->setTableValues( indexValues, units::Dimensionless );
+        table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      }
+      TableFunction const & elevationIndexTable = functionManager.getGroup< TableFunction >( elevationIndexTableName );
+      TableFunction::KernelWrapper elevationIndexTableWrapper = elevationIndexTable.createKernelWrapper();
 
-      string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
-      TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-      presTable->setTableCoordinates( elevationValues, { units::Distance } );
-      presTable->setTableValues( pressureValues, units::Pressure );
-      presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-      TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
-
-      // Step 4: assign pressure, temperature, and component fraction as a function of elevation
-      // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-      // TODO: this last step should be modified to account for GOC and WOC
       arrayView2d< real64 const > const elemCenter =
         subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
@@ -1310,33 +1435,166 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
+      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
+
+      array1d< real64 > elevationBoundaries( numPhases );
+      array1d< integer > phaseIndexOrdering( numPhases );
+      if( singlePhaseInitialisation )
+      {
+        for( integer ip = 0; ip < numPhases; ip++ )
+        {
+          elevationBoundaries[ip] = LvArray::NumericLimits< real64 >::max;
+          phaseIndexOrdering[ip] = ipInit;
+        }
+      }
+      else if( numPhases == 2 )
+      {
+        elevationBoundaries[0] = phaseContacts[0];
+        elevationBoundaries[1] = LvArray::NumericLimits< real64 >::max;
+        if( ipGas < 0 )
+        {
+          phaseIndexOrdering[0] = ipWater;
+          phaseIndexOrdering[1] = ipOil;
+        }
+        if( ipOil < 0 )
+        {
+          phaseIndexOrdering[0] = ipWater;
+          phaseIndexOrdering[1] = ipGas;
+        }
+        if( ipWater < 0 )
+        {
+          phaseIndexOrdering[0] = ipOil;
+          phaseIndexOrdering[1] = ipGas;
+        }
+      }
+      else
+      {
+        elevationBoundaries[0] = phaseContacts[0];
+        elevationBoundaries[1] = phaseContacts[1];
+        elevationBoundaries[2] = LvArray::NumericLimits< real64 >::max;
+        phaseIndexOrdering[0] = ipWater;
+        phaseIndexOrdering[1] = ipOil;
+        phaseIndexOrdering[2] = ipGas;
+      }
+
+      arrayView1d< real64 const > elevationsView = elevationBoundaries.toViewConst();
+      arrayView1d< integer const > phaseIndexView = phaseIndexOrdering.toViewConst();
+
+      // Assign pressure and temperature to cells
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
-                                                           presTableWrapper,
-                                                           tempTableWrapper,
-                                                           compFracTableWrappersViewConst,
+                                                           numPhases,
                                                            numComps,
-                                                           minPressure,
                                                            pres,
                                                            temp,
-                                                           compFrac] GEOS_HOST_DEVICE ( localIndex const i )
+                                                           compFrac,
+                                                           minPressure,
+                                                           numPointsInTable,
+                                                           elevationIndexTableWrapper,
+                                                           pressureValuesView,
+                                                           tempTableWrapper,
+                                                           compFracTableWrappersViewConst,
+                                                           elevationsView,
+                                                           phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const k = targetSet[i];
         real64 const elevation = elemCenter[k][2];
 
-        pres[k] = presTableWrapper.compute( &elevation );
-        minPressure.min( pres[k] );
+        real64 ea = elevationIndexTableWrapper.compute( &elevation );
+        integer const en = LvArray::math::min( static_cast< integer >(ea), numPointsInTable - 2 );
+        ea -= en;
+
+        integer const phaseIndex = [&]() -> integer {
+          for( integer ip = 0; ip < numPhases; ip++ )
+          {
+            if( elevation < elevationsView[ip] )
+            {
+              return phaseIndexView[ip];
+            }
+          }
+          return phaseIndexView[numPhases-1];
+        }();
+
+        real64 const p0 = pressureValuesView[en][0][phaseIndex];
+        real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
+        pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
           compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
         }
+        minPressure.min( pres[k] );
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
-                     GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ),
-                     getDataContext() );
+                     GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                               minPressure.get(), region.getName(), subRegion.getName() ), getDataContext() );
+
+      // For multiphase initialisation, after the computation of the pressure and composition, we invert
+      // the capillary pressure curves to calculate new saturations.
+      if( !singlePhaseInitialisation )
+      {
+        if( m_hasCapPressure )
+        {
+          // Initialise porosity and permeability for capillary pressure computaion
+          // This needs to happen before calling updateCapPressureModel
+          CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
+          if( cellElemSubRegion != nullptr )
+          {
+            updatePorosityAndPermeability( *cellElemSubRegion );
+          }
+
+          // initialized porosity
+          string const solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+          CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+          // initialized permeability
+          string const permeabilityName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
+          PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permeabilityName );
+
+          string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+          CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+          arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+          arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+          capPressure.initializeRockState( porosity, permeability );
+          updateCapPressureModel( subRegion );
+
+          constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
+          {
+            using CapPressureType = TYPEOFREF( castCapPressure );
+            using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< CapPressureType >;
+
+            isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                               numPhases,
+                                                                                               targetSet,
+                                                                                               castCapPressure,
+                                                                                               phaseOrder,
+                                                                                               elemCenter,
+                                                                                               elevationIndexTable.createKernelWrapper(),
+                                                                                               pressureValues,
+                                                                                               phaseDens,
+                                                                                               phaseCompFrac,
+                                                                                               compFrac );
+          } );
+        }
+        else
+        {
+          using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< constitutive::NoOpCapillaryPressure >;
+          constitutive::NoOpCapillaryPressure noOpCapillaryPressure( numPhases, phaseOrder );
+          isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                             numPhases,
+                                                                                             targetSet,
+                                                                                             noOpCapillaryPressure,
+                                                                                             phaseOrder,
+                                                                                             elemCenter,
+                                                                                             elevationIndexTable.createKernelWrapper(),
+                                                                                             pressureValues,
+                                                                                             phaseDens,
+                                                                                             phaseCompFrac,
+                                                                                             compFrac );
+        }
+      }
     } );
   } );
 }
@@ -1785,7 +2043,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        flow::globalCompFraction::key() ) );
+                                                        flow::globalCompFraction::key() ), fs.getDataContext()  );
         return;   // can't check next part with invalid component id
       }
 
@@ -1849,8 +2107,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent,
-                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+    GEOS_ERROR_IF( !bcConsistent, "CompositionalMultiphaseBase: inconsistent boundary conditions",
                    getDataContext() );
   }
 

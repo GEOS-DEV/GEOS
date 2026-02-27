@@ -546,7 +546,8 @@ enum class MGRRestrictionType : HYPRE_Int
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
   cprLike = 13,            //!< CPR-like restriction
-  blockColLumped = 14      //!< Block column-lumped approximation
+  blockColLumped = 14,     //!< Block column-lumped approximation
+  partialColLumped = 15    //!< Partial column-lumped approximation
 };
 
 /**

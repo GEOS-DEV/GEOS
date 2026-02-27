@@ -20,12 +20,9 @@
 #ifndef GEOS_COMMON_LOGGER_HPP
 #define GEOS_COMMON_LOGGER_HPP
 
-// Source incldes
-#include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
-#include "common/format/Format.hpp"
+// Source includes
 #include "LvArray/src/Macros.hpp"
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/GeosExceptions.hpp"
 
 // System includes
 #include <stdexcept>
@@ -137,8 +134,8 @@
  * @note - Currently not available on GPU.
  *       - Possible to pre-define it in any source file (e.g. for unit tests)
  */
-#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_ERROR_LOGGER_INSTANCE)
-#define GEOS_ERROR_LOGGER_INSTANCE ErrorLogger::global()
+#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_GLOBAL_LOGGER)
+#define GEOS_GLOBAL_LOGGER ErrorLogger::global()
 #endif
 
 /**
@@ -158,34 +155,19 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string __message =  __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** ERROR\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         __message, \
-                                         ::geos::logger::internal::g_rank, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setCause( __cause ); \
-        msgStruct.addCallStackInfo( stackHistory ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Error, __msgoss.str(), \
+                                                      ::geos::logger::internal::g_rank ) \
+        .setCodeLocation( __FILE__, __LINE__ ) \
+        .setCause( __causemsgsoss.str() ) \
+        .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
+      GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
-  } while( false )
-#elif __CUDA_ARCH__
+  }while( false )
+  #elif __CUDA_ARCH__
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -251,7 +233,7 @@
  *            - Mandatory first parameter, the type of the exception to throw
  *            - Optional following parameters, context information on the current error (DataContext)
  */
-#if !defined(GEOS_DEVICE_COMPILE)
+ #if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -259,36 +241,21 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      std::string __message =  __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** EXCEPTION\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        if( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
-        { /* first throw site, we initialize the error message completly */ \
-          GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
-            .setType( ErrorLogger::MsgType::Exception ) \
-            .setCodeLocation( __FILE__, __LINE__ ) \
-            .setCause( __cause ) \
-            .addRank( ::geos::logger::internal::g_rank ) \
-            .addCallStackInfo( stackHistory ); \
-        } \
-        GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
-          .addToMsg( __message ) \
-          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      } \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      DiagnosticMsg exceptionMsg =  GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Exception, __msgoss.str(), \
+                                                                                    ::geos::logger::internal::g_rank ) \
+                                     .setCodeLocation( __FILE__, __LINE__ ) \
+                                     .setCause( __causemsgsoss.str() ) \
+                                     .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                     .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                     .getDiagnosticMsg(); \
+      auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
+      ex.prepareWhat( exceptionMsg ); \
+      throw ex; \
     } \
-  } while( false )
-#elif __CUDA_ARCH__
+  }while( false )
+  #elif __CUDA_ARCH__
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -363,29 +330,19 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string __message = __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** WARNING\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::cout << __oss.str() << std::endl; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         __message, \
-                                         ::geos::logger::internal::g_rank, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setCause( __cause ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      DiagnosticMsg __warningMsg; \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( DiagnosticMsgBuilder::init( __warningMsg, \
+                                                                    MsgType::Warning, __msgoss.str(), \
+                                                                    ::geos::logger::internal::g_rank ) \
+                                          .setCodeLocation( __FILE__, __LINE__ ) \
+                                          .setCause( __causemsgsoss.str() ) \
+                                          .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                          .getDiagnosticMsg() ); \
     } \
-  } while( false )
+  }while( false )
 #elif __CUDA_ARCH__
 #define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
@@ -1012,88 +969,6 @@
 namespace geos
 {
 
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct InputError : public std::runtime_error
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  InputError( std::string const & what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  InputError( char const * const what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Constructs an InputError from an underlying exception.
-   * @param subException The exception on which the created one is based.
-   * @param msgToInsert The error message that will be inserted in the subException error message.
-   */
-  InputError( std::exception const & subException, std::string const & msgToInsert );
-};
-
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct SimulationError : public std::runtime_error
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( std::string const & what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( char const * const what ):
-    std::runtime_error( what )
-  {}
-
-  /**
-   * @brief Construct a SimulationError from an underlying exception.
-   * @param subException An exception to base this new one on.
-   * @param msgToInsert The error message.
-   * It will be inserted before the error message inside of subException.
-   */
-  SimulationError( std::exception const & subException, std::string const & msgToInsert );
-};
-
-/**
- * @brief Exception class used to report errors from type conversion
- * @todo (ErrorManager EPIC #2940) Consider adding a way to precise custom exception parameters, to add
- * expected & encountered typeid for this one (in order to manage the exception output more precisely).
- * We could also manage this by having:    BadTypeErrorABC <|--- BadTypeError< T >      /!\ compilation time
- */
-struct BadTypeError : public std::runtime_error
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  BadTypeError( std::string const & what ):
-    std::runtime_error( what )
-  {}
-};
-
-/**
- * @brief Exception class used for special control flow.
- */
-class NotAnError : public std::exception
-{};
-
 namespace logger
 {
 
@@ -1106,7 +981,7 @@ extern std::string g_rankString;
 
 extern std::ostream * g_rankStream;
 
-} // namespace internal
+}       // namespace internal
 
 #if defined(GEOS_USE_MPI)
 /**
@@ -1128,8 +1003,8 @@ void InitializeLogger( const std::string & rank_output_dir="" );
  */
 void FinalizeLogger();
 
-}   // namespace logger
+}     // namespace logger
 
-} // namespace geos
+}   // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */

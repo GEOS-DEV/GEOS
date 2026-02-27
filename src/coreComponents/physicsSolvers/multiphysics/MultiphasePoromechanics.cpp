@@ -29,6 +29,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/ImplicitSmallStrainQuasiStatic.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsLagrangeContact.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/PoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermoPoromechanicsKernelsDispatchTypeList.hpp"
@@ -184,8 +185,9 @@ void MultiphasePoromechanics<>::setMGRStrategy()
 
   if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for {}/{}",
+                          this->getCatalogName(), this->flowSolver()->getCatalogName())
+                , getDataContext() );
   }
   else
   {
@@ -218,8 +220,9 @@ void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidM
 
   if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName() ) );
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for {}/{}",
+                          this->getCatalogName(), this->flowSolver()->getCatalogName() ),
+                getDataContext()  );
   }
   else
   {
@@ -252,8 +255,10 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
 
 template class MultiphasePoromechanics<>;
 template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
+template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsAugmentedLagrangianContact >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangeContact >;
+template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsAugmentedLagrangianContact >;
 
 namespace
 {
