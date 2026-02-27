@@ -508,7 +508,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     {
       m_dofManager.clear();
       setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
-      setSystemSetupTimestamp( std::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
     }
 
     implicitStepSetup( time_n, dt, domain );
@@ -522,7 +522,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( std::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
@@ -748,7 +748,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   // if the log level is 0, we don't need the reduction below (hence this early check)
   if( getLogLevel() >= 1 )
   {
-    integer isDisplacementBCAppliedGlobal[3];
+    integer isDisplacementBCAppliedGlobal[3]{};
     MpiWrapper::reduce( isDisplacementBCApplied,
                         isDisplacementBCAppliedGlobal,
                         3,
