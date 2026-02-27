@@ -508,7 +508,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     {
       m_dofManager.clear();
       setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
-      setSystemSetupTimestamp( std::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
     }
 
     implicitStepSetup( time_n, dt, domain );
