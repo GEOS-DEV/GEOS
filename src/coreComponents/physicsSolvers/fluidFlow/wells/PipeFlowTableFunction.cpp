@@ -51,22 +51,22 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setDescription( "Array of rates" );
 
   registerWrapper( viewKeyStruct::waterFractionType(), &m_waterFractionType ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Type of water fraction  entered in the wfr array. Valid entires are ..." );
 
   registerWrapper( viewKeyStruct::waterFractionArray(), &m_wfr ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Array of water fractions " );
 
   registerWrapper( viewKeyStruct::gasFractionType(), &m_gasFractionType ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Type of gas fraction  entered in the wfr array. Valid entires are ..." );
 
   registerWrapper( viewKeyStruct::gasFractionArray(), &m_gfr ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Array of gas fractions " );
 
@@ -76,7 +76,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
     setDescription( "Array of well head pressures " );
 
   registerWrapper( viewKeyStruct::gasLiftArray(), &m_gasLift ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Array of well gas lift rates " );
 

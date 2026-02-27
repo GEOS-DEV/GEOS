@@ -805,6 +805,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     // Solve maximum bhp constraint first;
     constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
   }
+ 
   // Get current constraint
   WellConstraintBase *  limitingConstraint = nullptr;
   for( auto & constraint : constraintList )
@@ -819,6 +820,8 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     }
   }
    // Check current against other constraints
+   std::cout << "Current constraint for well " << subRegion.getName() << " is " << limitingConstraint->getName() << std::endl;
+  constraintList.erase(std::remove(  constraintList.begin(), constraintList.end(), limitingConstraint  ), constraintList.end());
   std::vector< int > constraintChecked( constraintList.size(), 0 );
   for( int i = 0; i < static_cast< int >(constraintList.size()); ++i )
   {
@@ -924,6 +927,9 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                     elemManager,
                     subRegion,
                     dofManager );
+
+  constraintList.erase(std::remove(  constraintList.begin(), constraintList.end(), limitingConstraint  ), constraintList.end());
+  
 
   std::vector< int > constraintChecked( constraintList.size(), 0 );
   for( int i = 0; i < static_cast< int >(constraintList.size()); ++i )
