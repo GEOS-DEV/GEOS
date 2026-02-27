@@ -591,6 +591,10 @@ private:
 
   SortedArray< localIndex > m_faceElemsRupturedThisSolve;
 
+  /// Number of locally-owned fracture elements at the start of the current solve step.
+  /// Used to compute "new fracture elements" = total_after - total_before.
+  localIndex m_numFractureElementsBefore = 0;
+
 };
 
 } /* namespace geos */

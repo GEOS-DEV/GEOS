@@ -607,6 +607,14 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elementManager = mesh.getElemManager();
 
+  // Save the number of locally-owned fracture elements before splitting
+  // so we can compute "new fracture elements" at the end.
+  {
+    SurfaceElementRegion const & fractureRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+    m_numFractureElementsBefore = fractureSubRegion.getNumberOfLocalIndices();
+  }
+
   stdVector< std::set< localIndex > > nodesToRupturedFaces;
   stdVector< std::set< localIndex > > edgesToRupturedFaces;
 
@@ -710,11 +718,9 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       //
       // A face is a corner face if it is separable, ruptured, unsplit,
       // and at least 2 of its edges lie on the fracture boundary:
-      //   (a) edge already split (childEdgeIndex != -1),
-      //   (b) edge made external by fracturing (isEdgeExternal >= 2),
-      //   (c) edge shared with an already-split face, or
+      //   (c) edge shared with a split fracture face (ruptured + separable), or
       //   (d) edge on the fracture perimeter (no other ruptured face
-      //       shares it).
+      //       shares it, and not on a partition boundary).
       //
       // The sweep iterates until no more corner faces are found,
       // because splitting one face may expose adjacent corner faces.
@@ -779,10 +785,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
             // Count how many edges of this face lie on the fracture boundary.
             // An edge is on the fracture boundary if:
-            //   (a) it has been split (childEdgeIndex != -1), or
-            //   (b) it was made external by prior fracturing (isEdgeExternal >= 2), or
-            //   (c) it is shared with an adjacent face that has already been
-            //       split (that face has childFaceIndex != -1), or
+            //   (c) it is shared with an adjacent FRACTURE face (ruptured AND
+            //       separable) that has already been split, or
             //   (d) no other ruptured/separable face shares this edge — it is
             //       on the fracture perimeter.  This condition is ONLY applied
             //       when the edge is NOT on a partition boundary (where we may
@@ -792,44 +796,37 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
             for( localIndex a = 0; a < numEdges; ++a )
             {
               localIndex const ei = faceToEdgeMap( kf, a );
-              if( childEdgeIndices[ei] != -1 || edgeIsExternal[ei] >= 2 )
-              {
-                ++edgesOnFracBoundary;
-                continue;
-              }
               // Check adjacent faces sharing this edge.
-              bool edgeOnSplitFace = false;
+              bool edgeOnSplitFractureFace = false;
               bool hasOtherRupturedFace = false;
               bool edgeOnPartitionBoundary = false;
               for( localIndex const adjFace : edgeManager.faceList()[ ei ] )
               {
                 if( adjFace == kf )
                   continue;
-                // A face is split if it has a child OR it is a child itself.
                 localIndex const adjParent = ( parentFaceIndex[adjFace] == -1 ) ? adjFace : parentFaceIndex[adjFace];
-                if( childFaceIndex[adjParent] != -1 )
-                {
-                  edgeOnSplitFace = true;
-                  break;
-                }
-                // Check if this adjacent face is also ruptured/separable
-                if( ruptureState[adjParent] >= 1 && isFaceSeparable[adjParent] == 1 )
-                {
-                  hasOtherRupturedFace = true;
-                }
-                // Detect partition boundary: a ghost-boundary face is one
-                // whose second element slot is empty (-1) in the original
-                // face-to-element map, indicating incomplete topology.
+                // Detect partition boundary via ghost face adjacency.
                 if( faceGhostRank[adjFace] >= 0 )
                 {
                   edgeOnPartitionBoundary = true;
                 }
+                // Check if this adjacent face is ruptured/separable (a fracture face).
+                bool const adjIsFractureFace = ( ruptureState[adjParent] >= 1 && isFaceSeparable[adjParent] == 1 );
+                if( adjIsFractureFace )
+                {
+                  hasOtherRupturedFace = true;
+                  // Condition (c): adjacent FRACTURE face that has been split.
+                  if( childFaceIndex[adjParent] != -1 )
+                  {
+                    edgeOnSplitFractureFace = true;
+                  }
+                }
               }
-              // Condition (c): edge shared with an already-split face.
+              // Condition (c): edge shared with a split fracture face.
               // Condition (d): no other ruptured face shares this edge
               //   (fracture perimeter), but ONLY if the edge is NOT on
               //   a partition boundary where adjacency info is incomplete.
-              if( edgeOnSplitFace ||
+              if( edgeOnSplitFractureFace ||
                   ( !hasOtherRupturedFace && !edgeOnPartitionBoundary ) )
               {
                 ++edgesOnFracBoundary;
@@ -1035,29 +1032,45 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   int const globalRval = MpiWrapper::allReduce( rval, MpiWrapper::Reduction::Max );
   if( globalRval > 0 )
   {
-    // Get the fracture subregion to count fracture elements
+    // Count fracture elements from the FaceElementSubRegion.
     SurfaceElementRegion const & fractureRegion = elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
-    // Only count locally-owned (non-ghost) elements to avoid double-counting
-    // across MPI ranks when running with mpirun -np > 1.
+    // Count locally-owned fracture elements only (exclude ghosts).
     localIndex const localNumFractureElements = fractureSubRegion.getNumberOfLocalIndices();
-
-    // Count only locally-owned new fracture elements (ghost rank < 0).
-    arrayView1d< integer const > const fractureGhostRank = fractureSubRegion.ghostRank();
-    localIndex localNewFractureElements = 0;
-    for( localIndex const idx : m_faceElemsRupturedThisSolve )
-    {
-      if( idx < fractureSubRegion.size() && fractureGhostRank[idx] < 0 )
-      {
-        ++localNewFractureElements;
-      }
-    }
+    localIndex const localNewFractureElements = localNumFractureElements - m_numFractureElementsBefore;
 
     // Gather global statistics across all MPI ranks
     localIndex const globalNumFractureElements = MpiWrapper::sum( localNumFractureElements );
     localIndex const globalNewFractureElements  = MpiWrapper::sum( localNewFractureElements );
     localIndex const globalNumSplits            = MpiWrapper::sum( static_cast< localIndex >( rval ) );
+
+    // Debug: also count by scanning separable split faces for cross-check
+    {
+//      arrayView1d< integer const > const & ruptureStateDbg = faceManager.getField< surfaceGeneration::ruptureState >();
+      arrayView1d< integer const > const & isFaceSeparableDbg = faceManager.getField< surfaceGeneration::isFaceSeparable >();
+      arrayView1d< localIndex const > const & faceParentIdx = faceManager.getField< fields::parentIndex >();
+      arrayView1d< localIndex const > const & faceChildIdx  = faceManager.getField< fields::childIndex >();
+      arrayView1d< integer const > const & faceGhostRk = faceManager.ghostRank();
+      localIndex localSplitSeparable = 0;
+      localIndex localSplitAll = 0;
+      for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+      {
+        if( faceParentIdx[kf] == -1 && faceChildIdx[kf] != -1 && faceGhostRk[kf] < 0 )
+        {
+          ++localSplitAll;
+          if( isFaceSeparableDbg[kf] == 1 )
+          {
+            ++localSplitSeparable;
+          }
+        }
+      }
+      localIndex const globalSplitAll = MpiWrapper::sum( localSplitAll );
+      localIndex const globalSplitSep = MpiWrapper::sum( localSplitSeparable );
+      GEOS_LOG_RANK_0( GEOS_FMT( "  [debug] split faces (all/separable): {}/{}  subregion local: {}  subregion total: {}",
+                                  globalSplitAll, globalSplitSep,
+                                  globalNumFractureElements, fractureSubRegion.size() ) );
+    }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Mesh splitting completed.\n"
                                "  Number of nodes split:                      {:>8}\n"
