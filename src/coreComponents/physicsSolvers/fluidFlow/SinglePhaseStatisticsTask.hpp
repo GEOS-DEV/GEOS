@@ -21,18 +21,22 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 
 namespace geos
 {
 
 class SinglePhaseBase;
 
+namespace singlePhaseStatistics
+{
+
 /**
- * @class SinglePhaseStatistics
+ * @class singlePhaseStatistics::Task
  *
- * Task class allowing for the computation of aggregate statistics in single-phase simulations
+ * Task class allowing for the computation of aggregate statistics in single phase simulations
  */
-class SinglePhaseStatistics : public FieldStatisticsBase< SinglePhaseBase >
+class StatsTask : public FieldStatisticsBase< SinglePhaseBase >
 {
 public:
 
@@ -41,14 +45,11 @@ public:
    * @param[in] name the name of the task coming from the xml
    * @param[in] parent the parent group of the task
    */
-  SinglePhaseStatistics( const string & name,
-                         Group * const parent );
+  StatsTask( const string & name, dataRepository::Group * const parent );
 
   /// Accessor for the catalog name
   static string catalogName() { return "SinglePhaseStatistics"; }
 
-  /// Accessor for the region statistics catalog name
-  static string regionStatisticsName() { return "regionStatistics"; }
   /**
    * @defgroup Tasks Interface Functions
    *
@@ -65,64 +66,40 @@ public:
 
   /**@}*/
 
-
-  /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-   */
-  struct viewKeyStruct
-  {
-    /// String for the region statistics
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
-  };
-
-  struct RegionStatistics
-  {
-    /// average region pressure
-    real64 averagePressure;
-    /// minimum region pressure
-    real64 minPressure;
-    /// maximum region pressure
-    real64 maxPressure;
-
-    /// minimum region delta pressure
-    real64 minDeltaPressure;
-    /// maximum region delta pressure
-    real64 maxDeltaPressure;
-
-    // fluid mass
-    real64 totalMass;
-
-    /// average region temperature
-    real64 averageTemperature;
-    /// minimum region temperature
-    real64 minTemperature;
-    /// maximum region temperature
-    real64 maxTemperature;
-
-    /// total region pore volume
-    real64 totalPoreVolume;
-    /// total region uncompacted pore volume
-    real64 totalUncompactedPoreVolume;
-  };
-
 private:
 
   using Base = FieldStatisticsBase< SinglePhaseBase >;
 
-  /**
-   * @brief Compute some statistics on the reservoir (average field pressure, etc)
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region names
-   */
-  void computeRegionStatistics( real64 const time,
-                                MeshLevel & mesh,
-                                string_array const & regionNames ) const;
-
+  void postInputInitialization() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
 
+  void prepareLogTableLayouts( string_view tableName );
+
+  void prepareCsvTableLayouts( string_view tableName );
+
+  string getCsvFileName( string_view meshName ) const;
+
+  void outputLogStats( real64 statsTime,
+                       MeshLevel & mesh,
+                       RegionStatistics & meshRegionsStatistics );
+
+  void outputCsvStats( real64 statsTime,
+                       MeshLevel & mesh,
+                       RegionStatistics & meshRegionsStatistics );
+
+  /// For each discretization (MeshLevel name), table formatter for log output.
+  stdMap< string, std::unique_ptr< TableTextFormatter > > m_logFormatters;
+
+  /// For each discretization (MeshLevel name), table formatter for csv output.
+  stdMap< string, std::unique_ptr< TableCSVFormatter > > m_csvFormatters;
+
+  // mesh statistics aggregator
+  std::unique_ptr< StatsAggregator > m_aggregator;
+
 };
 
+} /* namespace singlePhaseStatistics */
 
 } /* namespace geos */
 

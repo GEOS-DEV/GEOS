@@ -36,6 +36,12 @@ namespace constitutive
 {
 class SingleFluidBase;
 }
+
+namespace singlePhaseStatistics
+{
+class StatsAggregator;
+}
+
 class WellElementSubRegion;
 
 /**
@@ -279,6 +285,15 @@ protected:
 
 private:
 
+  struct ReferenceConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< singlePhaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   /**
@@ -286,6 +301,13 @@ private:
    * @param domain the domain containing the well manager to access individual wells
    */
   void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
+
+  void precomputeReferenceConditions( real64 time_n,
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
+
+  ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Make sure that the well constraints are compatible

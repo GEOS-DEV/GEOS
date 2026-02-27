@@ -17,8 +17,10 @@
 #include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "physicsSolvers/StatisticsAggregatorBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
 
 #include <gtest/gtest.h>
 
@@ -217,10 +219,10 @@ real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
   {
     mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
     {
-      SinglePhaseStatistics::RegionStatistics & regionStats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
-        SinglePhaseStatistics::viewKeyStruct::regionStatisticsString() );
-
-      totalMass += regionStats.totalMass;
+      using singlePhaseStatistics::RegionStatistics;
+      using ViewKeys = singlePhaseStatistics::StatsAggregator::ViewKeys;
+      RegionStatistics & regionStats = region.getReference< RegionStatistics >( ViewKeys::regionsStatisticsString() );
+      totalMass += regionStats.m_totalMass;
     } );
   } );
   return totalMass;
@@ -594,7 +596,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   EXPECT_NEAR( lastMass - firstMass,
                -testSet.totalMassProd[0],
                massDiffTol * std::abs( testSet.totalMassProd[0] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
-                                                                                 SinglePhaseStatistics::catalogName() );
+                                                                                 singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 
