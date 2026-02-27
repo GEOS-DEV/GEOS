@@ -18,9 +18,6 @@
 #include "common/logger/ExternalErrorHandler.hpp"
 #include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
-#include "LvArray/src/system.hpp"
-#include "common/logger/ExternalErrorHandler.hpp"
-#include "gtest/gtest.h"
 #include "common/logger/ErrorHandling.hpp"
 
 #include "common/logger/Logger.hpp"

@@ -14,24 +14,14 @@
  */
 
 #include "initializeEnvironment.hpp"
-#include "common/DataTypes.hpp"
-#include "common/StdContainerWrappers.hpp"
-#include "common/logger/MsgType.hpp"
-#include "dataRepository/BufferOps.hpp"
-#include "dataRepository/BufferOps_inline.hpp"
-
 
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
-#include "common/MpiWrapper.hpp"
-#include "common/logger/Logger.hpp"
-#include "common/logger/LogHistory.hpp"
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
-#include <iostream>
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>

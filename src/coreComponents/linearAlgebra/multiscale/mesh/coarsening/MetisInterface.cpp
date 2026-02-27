@@ -19,7 +19,6 @@
 #include "MetisInterface.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "common/logger/Logger.hpp"
 
 #include <metis.h>
 

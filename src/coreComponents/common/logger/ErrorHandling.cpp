@@ -19,15 +19,12 @@
 
 #include "ErrorHandling.hpp"
 #include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
 #include "common/logger/Logger.hpp"
 
 // signal management
 #include <csignal>
 #include <cfenv>
 #include <cstring>
-#include <string>
-#include <unordered_set>
 
 namespace geos
 {
