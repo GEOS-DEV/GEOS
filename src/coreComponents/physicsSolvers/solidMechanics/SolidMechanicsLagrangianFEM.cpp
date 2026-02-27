@@ -522,7 +522,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( std::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
