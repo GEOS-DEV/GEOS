@@ -2225,6 +2225,10 @@ redistributeMeshes( integer const logLevel,
   // Free the original 3D mesh.
   cells3D = nullptr;
 
+  // Check all ranks have cells after initial redistribution
+  GEOS_ERROR_IF( redistributed3D->GetNumberOfCells() == 0, "Rank has no cells after initial redistribution." );
+
+
   // Refine partitioning based on mesh characteristics
   if( partitionRefinement > 0 )
   {
@@ -2280,6 +2284,10 @@ redistributeMeshes( integer const logLevel,
         partitionRefinement - 1
         );
     }
+
+    // Check all ranks have cells after refined redistribution
+    GEOS_ERROR_IF( redistributed3D->GetNumberOfCells() == 0, "Rank has no cells after refined redistribution." );
+
   }
 
   // -----------------------------------------------------------------------
