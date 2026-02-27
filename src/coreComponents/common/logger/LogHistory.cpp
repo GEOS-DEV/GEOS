@@ -58,8 +58,8 @@ void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msg
   stats.count++;
 }
 
-template< typename T >
-std::pair< stdVector< T >, stdVector< integer > >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
+std::pair< stdVector< buffer_unit_type >, stdVector< integer > >
+gatherTuplesRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
 {
   integer const numRanks = MpiWrapper::commSize();
   integer const numValues = packedSize;
@@ -105,68 +105,63 @@ std::pair< stdVector< T >, stdVector< integer > >  gatherAndUnpackRank0( buffer_
 void LogHistory::diagnosticStatsReport()
 {
   LogHistory & history = ErrorLogger::global().getLoggerReportData();
-  auto maxIteration = MpiWrapper::max( getDiagnosticHistory().size());
-  auto it = getDiagnosticHistory().begin();
-  for( size_t i = 0; i< maxIteration; i++ )
+  stdVector< buffer_unit_type > gTuple( 0 );
+  integer totalSize = 0;
+  //1 - dry run for vector size
+  for( auto const & [key, value] : getDiagnosticHistory() )
   {
-    localIndex packedSizeLogPart =  0;
-    localIndex packedSizeMsgType =  0;
-    localIndex packedSizeFilename = 0;
-    localIndex packedSizeLineCount =0;
-    localIndex totalSize = 0;
+    auto const & [logPartType, msgType, filename, lineCount] = key;
 
-    // pack all tuple in same buffer
-    stdVector< buffer_unit_type > gTuple( 0 );
+    buffer_unit_type * dummy = nullptr;
+    localIndex entrySize = bufferOps::Pack< false >( dummy, logPartType ) +
+                           bufferOps::Pack< false >( dummy, msgType ) +
+                           bufferOps::Pack< false >( dummy, filename ) +
+                           bufferOps::Pack< false >( dummy, lineCount );
 
-    if( it != getDiagnosticHistory().end())
+    totalSize +=  entrySize;
+  }
+  gTuple.resize( totalSize );
+
+  //2 - Packing
+  buffer_unit_type * tupleBuffer = gTuple.data();
+  for( auto const & [key, value] : getDiagnosticHistory() )
+  {
+    auto const & [logPartType, msgType, filename, lineCount] = key;
+
+    bufferOps::Pack< true >( tupleBuffer, logPartType );
+    bufferOps::Pack< true >( tupleBuffer, msgType );
+    bufferOps::Pack< true >( tupleBuffer, filename );
+    bufferOps::Pack< true >( tupleBuffer, lineCount );
+  }
+
+  auto [tuplesPerIt, recvCounts] = gatherTuplesRank0( gTuple.data(), gTuple.size() );
+
+  //3 - Unpacking
+  if( MpiWrapper::commRank() == 0 )
+  {
+    buffer_unit_type const * rankStart = tuplesPerIt.data();
+    for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
     {
-      auto key = it->first;
-      auto const & [logPartType, msgType, filename, lineCount] = key;
-
-      buffer_unit_type * ptr = nullptr;
-      packedSizeLogPart =   bufferOps::Pack< false >( ptr, logPartType );
-      packedSizeMsgType =   bufferOps::Pack< false >( ptr, msgType );
-      packedSizeFilename =  bufferOps::Pack< false >( ptr, filename );
-      packedSizeLineCount = bufferOps::Pack< false >( ptr, lineCount );
-
-      totalSize= packedSizeLogPart + packedSizeMsgType + packedSizeFilename + packedSizeLineCount;
-      gTuple.resize( totalSize );
-
-      buffer_unit_type * itTuple = gTuple.data();
-      bufferOps::Pack< true >( itTuple, logPartType );
-      bufferOps::Pack< true >( itTuple, msgType );
-      bufferOps::Pack< true >( itTuple, filename );
-      bufferOps::Pack< true >( itTuple, lineCount );
-
-      it++;
-    }
-
-    // size = tuples * nbRank that have data
-    auto [tuplesPerIt, recvCounts] = gatherAndUnpackRank0< buffer_unit_type >( gTuple.data(), totalSize );
-
-    if( MpiWrapper::commRank() == 0 )
-    {
-      buffer_unit_type const * p = tuplesPerIt.data();
-
-      for( size_t ii = 0; ii <  (size_t)MpiWrapper::commSize(); ++ii )
+      integer byteFromThisRank = recvCounts[idxRank];
+      if( byteFromThisRank != 0 )
       {
-        if( recvCounts[ii] != 0 )
+        buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
+        while( rankStart < rankEnd )
         {
-          LogPart::Type t1;
-          MsgType t2;
-          string t3;
-          integer t4;
-          bufferOps::Unpack( p, t1 );
-          bufferOps::Unpack( p, t2 );
-          bufferOps::Unpack( p, t3 );
-          bufferOps::Unpack( p, t4 );
-          std::cout << "t1 "<< t1 << " t3 "<< t3 <<std::endl;
-          history.insertBlanckReport( t1, t2, t3, t4 );
+          LogPart::Type logPartUnpacked;
+          MsgType MsgTypeUnpacked;
+          string fileNameUnpacked;
+          integer lineCountUnpacked;
+          bufferOps::Unpack( rankStart, logPartUnpacked );
+          bufferOps::Unpack( rankStart, MsgTypeUnpacked );
+          bufferOps::Unpack( rankStart, fileNameUnpacked );
+          bufferOps::Unpack( rankStart, lineCountUnpacked );
+          history.insertBlanckReport( logPartUnpacked, MsgTypeUnpacked, fileNameUnpacked, lineCountUnpacked );
         }
       }
     }
-
   }
+
 
   if( MpiWrapper::commRank() == 0 )
   {
