@@ -189,6 +189,7 @@
   { \
     if( COND ) \
     { \
+      GEOS_UNUSED_VAR( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ); \
       constexpr char const * formatString = "***** ERROR\n" \
                                             "***** LOCATION" LOCATION "\n" \
                                             "***** BLOCK:  [%u, %u, %u]\n" \

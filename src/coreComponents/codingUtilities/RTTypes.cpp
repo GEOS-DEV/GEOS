@@ -135,7 +135,8 @@ Regex constructArrayRegex( string_view subPattern, string_view description, inte
 
     // finish by the original description
     GEOS_ERROR_IF( !stringutilities::startsWith( description, "Input value must " ),
-                   "Description \"" << description << "\" must start by \"Input value must \" to call constructArrayRegex() on it." );
+                   GEOS_FMT( "Description '{}' must start with 'Input value must ' to call constructArrayRegex() on it.",
+                            description ) );
     arrayDesc << description.substr( description.find( " must " ) );
   }
 
