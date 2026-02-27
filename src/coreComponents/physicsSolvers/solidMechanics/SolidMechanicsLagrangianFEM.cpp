@@ -748,7 +748,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
   // if the log level is 0, we don't need the reduction below (hence this early check)
   if( getLogLevel() >= 1 )
   {
-    integer isDisplacementBCAppliedGlobal[3]{};
+    integer isDisplacementBCAppliedGlobal[3];
     MpiWrapper::reduce( isDisplacementBCApplied,
                         isDisplacementBCAppliedGlobal,
                         3,
