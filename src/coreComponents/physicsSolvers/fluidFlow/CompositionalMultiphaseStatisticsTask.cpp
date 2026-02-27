@@ -19,37 +19,15 @@
 
 #include "CompositionalMultiphaseStatisticsTask.hpp"
 
-#include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
-#include "common/StdContainerWrappers.hpp"
-#include "common/format/Format.hpp"
-#include "common/logger/Logger.hpp"
-#include "dataRepository/Group.hpp"
-#include "mesh/CellElementRegion.hpp"
-#include "mesh/DomainPartition.hpp"
-#include "mesh/MeshLevel.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "common/format/table/TableData.hpp"
-#include "common/format/table/TableFormatter.hpp"
-#include "common/format/table/TableLayout.hpp"
-#include <memory>
-#include <string>
 
 
 namespace geos
 {
 
-using namespace constitutive;
-using namespace fields;
 using namespace dataRepository;
 
 namespace compositionalMultiphaseStatistics
@@ -142,6 +120,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
 
 void StatsTask::prepareFluidMetaData()
 {
+  using namespace constitutive;
+
   ConstitutiveManager const & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
   MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
 
