@@ -64,7 +64,7 @@ void StatsTask::postInputInitialization()
 
   GEOS_THROW_IF_EQ_MSG( m_solver, nullptr,
                         "To identify simulated regions, a solver must be provided.",
-                        InputError /*, getWrapperDataContext( getSolverWrapperName() )*/ );
+                        InputError, getWrapperDataContext( getSolverWrapperKey() ) );
 
   if( !dynamicCast< CompositionalMultiphaseBase * >( m_solver ) )
   {
@@ -114,8 +114,6 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
   } );
-  // if( MpiWrapper::commRank() == 0 )
-  //   getGroupByPath( "/" ).printDataHierarchy();
 }
 
 void StatsTask::prepareFluidMetaData()
