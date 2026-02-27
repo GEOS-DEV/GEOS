@@ -58,7 +58,7 @@ void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msg
 }
 
 template< typename T >
-stdVector< T >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
+stdVector< T >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localIndex packedSize, size_t maxIteration )
 {
   integer const numRanks = MpiWrapper::commSize();
   integer const numValues = packedSize;
@@ -97,15 +97,15 @@ stdVector< T >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localInde
                        0 );
   if( MpiWrapper::commRank() == 0 )
   {
-    stdVector< T > targettedBuf( MpiWrapper::commSize());
+    stdVector< T > targettedBuf( maxIteration);
     buffer_unit_type const * globalAllocBuffer = globalAllocations.data();
 
-    for( int i = 0; i <  MpiWrapper::commSize(); ++i )
+    for( size_t i = 0; i <  maxIteration; ++i )
     {
       if( recvCounts[i] > 0 )
       {
-        globalAllocBuffer = &globalAllocations[displs[i]];
-        bufferOps::Unpack( globalAllocBuffer, targettedBuf[i] );
+        globalAllocBuffer =  globalAllocations.data();
+        bufferOps::Unpack(globalAllocBuffer, targettedBuf[i] );
       }
     }
     return targettedBuf;
@@ -163,10 +163,10 @@ void LogHistory::diagnosticStatsReport()
 
     }
 
-    stdVector< LogPart::Type > logsParts = gatherAndUnpackRank0< LogPart::Type >( gLogPart.data(), packedSizeLogPart );
-    stdVector< MsgType > msgsTypes = gatherAndUnpackRank0< MsgType >( gMsgType.data(), packedSizeMsgType );
-    stdVector< string > filenames = gatherAndUnpackRank0< string >( gFileName.data(), packedSizeFilename );
-    stdVector< integer > linesNumber = gatherAndUnpackRank0< integer >( gLineCount.data(), packedSizeLineCount );
+    stdVector< LogPart::Type > logsParts = gatherAndUnpackRank0< LogPart::Type >( gLogPart.data(), packedSizeLogPart,maxIteration );
+    stdVector< MsgType > msgsTypes = gatherAndUnpackRank0< MsgType >( gMsgType.data(), packedSizeMsgType,maxIteration );
+    stdVector< string > filenames = gatherAndUnpackRank0< string >( gFileName.data(), packedSizeFilename,maxIteration );
+    stdVector< integer > linesNumber = gatherAndUnpackRank0< integer >( gLineCount.data(), packedSizeLineCount,maxIteration );
 
     if( MpiWrapper::commRank() == 0 )
     {
