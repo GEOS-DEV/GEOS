@@ -499,6 +499,18 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
+
+    // Check if mesh was modified by an external event (e.g., SurfaceGen) before this solver step
+    // This ensures setupSystem is called before implicitStepSetup when topology changes occur
+    Timestamp const initialMeshModificationTimestamp = getMeshModificationTimestamp( domain );
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName );
+    if( initialMeshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() )
+    {
+      m_dofManager.clear();
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+    }
+
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
@@ -507,10 +519,10 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
       // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( meshModificationTimestamp );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
@@ -798,6 +810,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
                  blockLocalDofNumber,
                  dofRankOffset,
                  faceManager,
+                 nodeManager.referencePosition(),
                  targetSet,
                  localRhs );
     } );
