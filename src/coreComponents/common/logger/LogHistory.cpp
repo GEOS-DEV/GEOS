@@ -18,6 +18,7 @@
  */
 
 #include "LogHistory.hpp"
+#include "common/DataTypes.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "common/format/LogPart.hpp"
@@ -58,7 +59,7 @@ void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msg
 }
 
 template< typename T >
-stdVector< T >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localIndex packedSize, size_t maxIteration )
+std::pair< stdVector< T >, stdVector< integer > >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
 {
   integer const numRanks = MpiWrapper::commSize();
   integer const numValues = packedSize;
@@ -95,25 +96,9 @@ stdVector< T >  gatherAndUnpackRank0( buffer_unit_type * bufferToSend, localInde
                        recvCounts.data(),
                        displs.data(),
                        0 );
-  if( MpiWrapper::commRank() == 0 )
-  {
-    stdVector< T > targettedBuf( maxIteration);
-    buffer_unit_type const * globalAllocBuffer = globalAllocations.data();
 
-    for( size_t i = 0; i <  maxIteration; ++i )
-    {
-      if( recvCounts[i] > 0 )
-      {
-        globalAllocBuffer =  globalAllocations.data();
-        bufferOps::Unpack(globalAllocBuffer, targettedBuf[i] );
-      }
-    }
-    return targettedBuf;
-  }
-  else
-  {
-    return {};
-  }
+  return {globalAllocations, recvCounts};
+
 
 }
 
@@ -128,11 +113,10 @@ void LogHistory::diagnosticStatsReport()
     localIndex packedSizeMsgType =  0;
     localIndex packedSizeFilename = 0;
     localIndex packedSizeLineCount =0;
+    localIndex totalSize = 0;
 
-    stdVector< buffer_unit_type > gLogPart( 0 );
-    stdVector< buffer_unit_type > gMsgType( 0 );
-    stdVector< buffer_unit_type > gFileName( 0 );
-    stdVector< buffer_unit_type > gLineCount( 0 );
+    // pack all tuple in same buffer
+    stdVector< buffer_unit_type > gTuple( 0 );
 
     if( it != getDiagnosticHistory().end())
     {
@@ -145,38 +129,43 @@ void LogHistory::diagnosticStatsReport()
       packedSizeFilename =  bufferOps::Pack< false >( ptr, filename );
       packedSizeLineCount = bufferOps::Pack< false >( ptr, lineCount );
 
-      gLogPart.resize( packedSizeLogPart );
-      gMsgType.resize( packedSizeMsgType );
-      gFileName.resize( packedSizeFilename );
-      gLineCount.resize( packedSizeLineCount );
+      totalSize= packedSizeLogPart + packedSizeMsgType + packedSizeFilename + packedSizeLineCount;
+      gTuple.resize( totalSize );
 
-      buffer_unit_type * itLogPart = gLogPart.data();
-      buffer_unit_type * itMsgType = gMsgType.data();
-      buffer_unit_type * itFilename = gFileName.data();
-      buffer_unit_type * itLineCount = gLineCount.data();
+      buffer_unit_type * itTuple = gTuple.data();
+      bufferOps::Pack< true >( itTuple, logPartType );
+      bufferOps::Pack< true >( itTuple, msgType );
+      bufferOps::Pack< true >( itTuple, filename );
+      bufferOps::Pack< true >( itTuple, lineCount );
 
-      bufferOps::Pack< true >( itLogPart, logPartType );
-      bufferOps::Pack< true >( itMsgType, msgType );
-      bufferOps::Pack< true >( itFilename, filename );
-      bufferOps::Pack< true >( itLineCount, lineCount );
       it++;
-
     }
 
-    stdVector< LogPart::Type > logsParts = gatherAndUnpackRank0< LogPart::Type >( gLogPart.data(), packedSizeLogPart,maxIteration );
-    stdVector< MsgType > msgsTypes = gatherAndUnpackRank0< MsgType >( gMsgType.data(), packedSizeMsgType,maxIteration );
-    stdVector< string > filenames = gatherAndUnpackRank0< string >( gFileName.data(), packedSizeFilename,maxIteration );
-    stdVector< integer > linesNumber = gatherAndUnpackRank0< integer >( gLineCount.data(), packedSizeLineCount,maxIteration );
+    // size = tuples * nbRank that have data
+    auto [tuplesPerIt, recvCounts] = gatherAndUnpackRank0< buffer_unit_type >( gTuple.data(), totalSize );
 
     if( MpiWrapper::commRank() == 0 )
     {
-      for( size_t indexIteration = 0; indexIteration<maxIteration; indexIteration++ )
+      buffer_unit_type const * p = tuplesPerIt.data();
+
+      for( size_t ii = 0; ii <  (size_t)MpiWrapper::commSize(); ++ii )
       {
-        if( linesNumber[indexIteration] != 0 )
-          history.insertBlanckReport( logsParts[indexIteration], msgsTypes[indexIteration],
-                                      filenames[indexIteration], linesNumber[indexIteration] );
+        if( recvCounts[ii] != 0 )
+        {
+          LogPart::Type t1;
+          MsgType t2;
+          string t3;
+          integer t4;
+          bufferOps::Unpack( p, t1 );
+          bufferOps::Unpack( p, t2 );
+          bufferOps::Unpack( p, t3 );
+          bufferOps::Unpack( p, t4 );
+          std::cout << "t1 "<< t1 << " t3 "<< t3 <<std::endl;
+          history.insertBlanckReport( t1, t2, t3, t4 );
+        }
       }
     }
+
   }
 
   if( MpiWrapper::commRank() == 0 )
