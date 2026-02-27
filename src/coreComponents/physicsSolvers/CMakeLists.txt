@@ -29,6 +29,8 @@ set( physicsSolversBase_headers
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
      SolverStatistics.hpp
+     StatisticsAggregatorBase.hpp
+     StatisticsAggregatorBaseHelpers.hpp
      FieldStatisticsBase.hpp )
 #
 # Specify solver sources
