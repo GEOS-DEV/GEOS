@@ -453,8 +453,8 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     static bool firstNoRefRegionMsg = true;
     if( useSegmentValues && firstNoRefRegionMsg )
     {
-      GEOS_WARNING( "WellControls " << WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                    " not set and well constraint fluid property calculations will use top segement pressure and temp ",
+      GEOS_WARNING( WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+                    " not set: well constraint fluid property calculations will use top segement pressure and temp ",
                     wellControls.getDataContext() );
       firstNoRefRegionMsg = false;
     }
