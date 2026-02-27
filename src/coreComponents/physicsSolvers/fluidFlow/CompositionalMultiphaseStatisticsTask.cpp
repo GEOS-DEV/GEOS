@@ -357,11 +357,12 @@ void StatsTask::outputCsvStats( real64 statsTime,
   TableCSVFormatter const & formatter = *formatterIter->second;
   TableData tableData;
 
+  stdVector< string > row;
+  row.reserve( formatter.getLayout().getTotalLowermostColumnCount() );
+
   // lamda to apply for each region statistics
   auto const outputRegionStats = [&] ( string_view targetName, RegionStatistics & stats )
   {
-    stdVector< string > row;
-    row.reserve( formatter.getLayout().getTotalLowermostColumnCount() );
 
     auto addPhaseValues = []( auto & list, auto const & values )
     {
@@ -369,6 +370,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
         list.emplace_back( std::to_string( value ) );
     };
 
+    row.clear();
     row.insert( row.begin(),
                 { std::to_string( statsTime ),
                   string( targetName ),
