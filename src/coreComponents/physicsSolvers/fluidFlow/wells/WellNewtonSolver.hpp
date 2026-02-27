@@ -733,6 +733,11 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                         m_localMatrix.toViewConstSizes() );
 
       m_rhs.close();
+      // sort out how this work with well estimator
+
+      well.outputSingleWellDebug( time_n, stepDt, newtonIter, mesh, subRegion,
+                                  m_dofManager, m_localMatrix.toViewConstSizes(), localRhs );
+
 
       if( m_assemblyCallback )
       {

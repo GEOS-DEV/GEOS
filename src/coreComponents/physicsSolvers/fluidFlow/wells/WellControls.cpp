@@ -61,7 +61,11 @@ WellControls::WellControls( string const & name, Group * const parent )
   /// Nonlinear solver parameters
   m_wellNewtonSolver( viewKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
-  m_dofManagerInitialized( false )
+  m_dofManagerInitialized( false ),
+  m_writeSegDebug( 0 ),
+
+  m_numTimesteps( 0 ),
+  m_wellDebugInit( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   m_minWHPConstraint=nullptr;
@@ -73,6 +77,11 @@ WellControls::WellControls( string const & name, Group * const parent )
     setApplyDefaultValue( 1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "When set to 1, write the rates into a CSV file." );
+
+  this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "When set to 1, write the segment debug information into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
@@ -706,6 +715,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     if( useEstimator )
     {
       // Estimate well solution prior to coupled solve
+      std::cout << "Estimating well solution for well " << subRegion.getName() << " at time " << time_n << std::endl;
       evaluateConstraints( time_n,
                            dt,
                            cycleNumber,
@@ -719,6 +729,7 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     else
     {
       // Evaluate well constraints based on current solution
+      std::cout << "Evaluating well constraints for well " << subRegion.getName() << " at time " << time_n << std::endl;
       evaluateConstraints( time_n,
                            subRegion );
     }
@@ -780,6 +791,12 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
             }
           }
         }
+      }
+      else  
+      {
+        std::cout << "we  not active " << subRegion.getName() << " Constraint " << getMinBHPConstraint()->getName() << " active " << getMinBHPConstraint()->isConstraintActive() <<
+          " value " << getMinBHPConstraint()->getConstraintValue( time_n ) << std::endl;
+        constraintList.insert( constraintList.begin(),  getMinBHPConstraint() );
       }
   }
   else

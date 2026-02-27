@@ -37,7 +37,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellPropWriter.hpp"
 namespace geos
 {
 namespace dataRepository
@@ -863,6 +863,7 @@ public:
     static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
 
     // control data (not registered on the mesh)
+    static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
 
     static constexpr char const * massDensityString() { return "massDensity";}
 
@@ -962,6 +963,14 @@ public:
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
                                    WellElementSubRegion & subRegion ) = 0;
+ virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer current_newton_iteration,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                      arrayView1d< const real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
 protected:
 
@@ -1085,6 +1094,21 @@ protected:
   /// @note This DofManager is used in the assembly of the estimators linear system
   DofManager m_estimatorDoFManager;
   bool m_dofManagerInitialized;
+
+  /// flag to write detailed segment properties
+  integer m_writeSegDebug;
+
+
+  integer m_numTimeStepCuts;
+  integer m_currentNewtonIteration;
+
+  std::map< std::string, WellPropWriter > m_wellPropWriter;
+  std::map< std::string, WellPropWriter > m_wellPropWriter_eot;
+
+  integer m_numTimesteps;
+  bool m_wellDebugInit;
+
+
 };
 
 
