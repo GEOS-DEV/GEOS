@@ -138,7 +138,7 @@ public:
 
   /// total region pore volume
   real64 m_totalPoreVolume;
-  /// total region uncompacted pore volume
+  /// total region uncompacted pore volume (not necessarily output, useful for weighting cell pressure data)
   real64 m_totalUncompactedPoreVolume;
   /// phase region dynamic pore volume
   array1d< real64 > const m_phaseDynamicPoreVolume;
