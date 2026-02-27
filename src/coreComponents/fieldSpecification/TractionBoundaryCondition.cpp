@@ -166,7 +166,7 @@ void integrateFaceTraction( real64 const ( &traction )[3],
   constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
   // Accumulate per-node integration weight: w_a = sum_q N_a(q) * |J(q)| * wq
-  real64 nodalWeight[numNodes] = { 0.0 };
+  real64 nodalWeight[numNodes] {};
 
   for( localIndex q = 0; q < numQuadraturePoints; ++q )
   {
