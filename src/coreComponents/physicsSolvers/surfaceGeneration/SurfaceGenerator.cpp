@@ -726,14 +726,12 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       // because splitting one face may expose adjacent corner faces.
       // -----------------------------------------------------------------
       {
-        arrayView1d< integer > const & ruptureState =
+        array1d< integer > const & ruptureState =
           faceManager.getField< surfaceGeneration::ruptureState >();
-        arrayView1d< localIndex const > const & childFaceIndex =
+        array1d< localIndex > const & childFaceIndex =
           faceManager.getField< fields::childIndex >();
-        arrayView1d< localIndex const > const & parentFaceIndex =
+        array1d< localIndex > const & parentFaceIndex =
           faceManager.getField< fields::parentIndex >();
-        ArrayOfArraysView< localIndex const > const & faceToNodeMap =
-          faceManager.nodeList().toViewConst();
         ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
         array2d< real64 > & faceNormals = faceManager.faceNormal();
         array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
@@ -759,7 +757,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
         int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
 
-        arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
+        array1d< integer > const & faceGhostRank = faceManager.ghostRank();
 
         // Iterate until no more corner faces are found.  Each pass may
         // split new faces, making their edges part of the fracture
@@ -890,7 +888,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
               }
 
               // Mark tip nodes
-              for( localIndex const nodeIndex : faceToNodeMap[ kf ] )
+              for( localIndex const nodeIndex : faceManager.nodeList()[ kf ] )
               {
                 if( parentNodeIndices[nodeIndex] == -1 && childNodeIndices[nodeIndex] == -1 )
                 {
@@ -1045,32 +1043,31 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     localIndex const globalNewFractureElements  = MpiWrapper::sum( localNewFractureElements );
     localIndex const globalNumSplits            = MpiWrapper::sum( static_cast< localIndex >( rval ) );
 
-    // Debug: also count by scanning separable split faces for cross-check
-    {
-//      arrayView1d< integer const > const & ruptureStateDbg = faceManager.getField< surfaceGeneration::ruptureState >();
-      arrayView1d< integer const > const & isFaceSeparableDbg = faceManager.getField< surfaceGeneration::isFaceSeparable >();
-      arrayView1d< localIndex const > const & faceParentIdx = faceManager.getField< fields::parentIndex >();
-      arrayView1d< localIndex const > const & faceChildIdx  = faceManager.getField< fields::childIndex >();
-      arrayView1d< integer const > const & faceGhostRk = faceManager.ghostRank();
-      localIndex localSplitSeparable = 0;
-      localIndex localSplitAll = 0;
-      for( localIndex kf = 0; kf < faceManager.size(); ++kf )
-      {
-        if( faceParentIdx[kf] == -1 && faceChildIdx[kf] != -1 && faceGhostRk[kf] < 0 )
-        {
-          ++localSplitAll;
-          if( isFaceSeparableDbg[kf] == 1 )
-          {
-            ++localSplitSeparable;
-          }
-        }
-      }
-      localIndex const globalSplitAll = MpiWrapper::sum( localSplitAll );
-      localIndex const globalSplitSep = MpiWrapper::sum( localSplitSeparable );
-      GEOS_LOG_RANK_0( GEOS_FMT( "  [debug] split faces (all/separable): {}/{}  subregion local: {}  subregion total: {}",
-                                  globalSplitAll, globalSplitSep,
-                                  globalNumFractureElements, fractureSubRegion.size() ) );
-    }
+//     Debug for separable split faces for cross-check
+//    {
+//      arrayView1d< integer const > const & isFaceSeparableDbg = faceManager.getField< surfaceGeneration::isFaceSeparable >();
+//      arrayView1d< localIndex const > const & faceParentIdx = faceManager.getField< fields::parentIndex >();
+//      arrayView1d< localIndex const > const & faceChildIdx  = faceManager.getField< fields::childIndex >();
+//      arrayView1d< integer const > const & faceGhostRk = faceManager.ghostRank();
+//      localIndex localSplitSeparable = 0;
+//      localIndex localSplitAll = 0;
+//      for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+//      {
+//        if( faceParentIdx[kf] == -1 && faceChildIdx[kf] != -1 && faceGhostRk[kf] < 0 )
+//        {
+//          ++localSplitAll;
+//          if( isFaceSeparableDbg[kf] == 1 )
+//          {
+//            ++localSplitSeparable;
+//          }
+//        }
+//      }
+//      localIndex const globalSplitAll = MpiWrapper::sum( localSplitAll );
+//      localIndex const globalSplitSep = MpiWrapper::sum( localSplitSeparable );
+//      GEOS_LOG_RANK_0( GEOS_FMT( "  [debug] split faces (all/separable): {}/{}  subregion local: {}  subregion total: {}",
+//                                  globalSplitAll, globalSplitSep,
+//                                  globalNumFractureElements, fractureSubRegion.size() ) );
+//    }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Mesh splitting completed.\n"
                                "  Number of nodes split:                      {:>8}\n"
