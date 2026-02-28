@@ -95,9 +95,10 @@ void ElasticIsotropic::postInputInitialization()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 "A specific pair of elastic constants is required. " <<
-                 "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
-                 "You have specified " << errorCheck,
+                 GEOS_FMT( "A specific pair of elastic constants is required. "
+                           "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "
+                           "You have specified {}",
+                           errorCheck ),
                  getDataContext() );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )

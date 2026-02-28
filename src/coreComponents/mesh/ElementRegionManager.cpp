@@ -222,8 +222,9 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
 
     GEOS_ERROR_IF( numWellElemsGlobal != lineBlock.numElements(),
-                   "Invalid partitioning in well " << lineBlock.getName() <<
-                   ", subregion " << subRegion.getName(),
+                   GEOS_FMT( "Invalid partitioning in well {}, subregion {}",
+                             lineBlock.getName(),
+                             subRegion.getName() ),
                    getDataContext(), lineBlock.getDataContext(), subRegion.getDataContext() );
 
   } );
@@ -658,7 +659,9 @@ ElementRegionManager::unpackFaceElementToFace( buffer_unit_type const * & buffer
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
       GEOS_ERROR_IF( subRegionName != subRegion.getName(),
-                     "Unpacked subregion name (" << subRegionName << ") does not equal object name (" << subRegion.getName() << ")" );
+                     GEOS_FMT( "Unpacked subregion name ({}) does not equal object name ({})",
+                               subRegionName,
+                               subRegion.getName() ) );
 
       localIndex_array & elemList = packList[kReg][kSubReg];
       unpackedSize += subRegion.unpackToFaceRelation( buffer, elemList, false, overwriteMap );

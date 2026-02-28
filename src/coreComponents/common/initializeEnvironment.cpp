@@ -207,7 +207,7 @@ void setupCUDA()
   {
     cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
     GEOS_ERROR_IF( status != cudaSuccess,
-                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+                   GEOS_FMT( "Failed to set CUDA stack size. Error {}: {}", status, cudaGetErrorString( status ) ) );
   }
 #endif
 }

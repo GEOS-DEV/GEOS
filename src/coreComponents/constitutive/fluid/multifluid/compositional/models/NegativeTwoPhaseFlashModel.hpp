@@ -29,6 +29,7 @@
 #include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -166,8 +167,10 @@ public:
                                                                phaseCompFraction.value[m_vapourIndex] );
 
       GEOS_ERROR_IF( !flashStatus,
-                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition ",
-                               pressure, temperature ) << compFraction );
+                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition {}.",
+                               pressure,
+                               temperature,
+                               stringutilities::concat( "", compFraction ) ) );
 
       // Calculate derivatives
       NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,

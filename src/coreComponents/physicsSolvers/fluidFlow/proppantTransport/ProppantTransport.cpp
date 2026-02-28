@@ -701,7 +701,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
         string const & subRegionName = subRegion.getName();
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
-                       "Conflicting proppant boundary conditions on set " << setName,
+                       GEOS_FMT( "Conflicting proppant boundary conditions on set {}", setName ),
                        getDataContext() );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
@@ -722,10 +722,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         localIndex const comp = fs.getComponent();
 
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
-                       "Proppant boundary condition not prescribed on set '" << setName << "'",
+                       GEOS_FMT( "Proppant boundary condition not prescribed on set '{}'", setName ),
                        getDataContext() );
         GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
-                       "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
+                       GEOS_FMT( "Conflicting composition[{}] boundary conditions on set '{}'", comp, setName ),
                        getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 

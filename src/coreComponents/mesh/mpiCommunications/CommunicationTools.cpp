@@ -279,8 +279,9 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
   for( localIndex const newLocalIndex : indexList )
   {
     GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                   "Local object " << newLocalIndex << " should be new but already has a global index "
-                                   << localToGlobal[newLocalIndex] );
+                   GEOS_FMT( "Local object {} should be new but already has a global index {}",
+                             newLocalIndex,
+                             localToGlobal[newLocalIndex] ) );
 
     localToGlobal[newLocalIndex] = manager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
     manager.updateGlobalToLocalMap( newLocalIndex );
@@ -316,8 +317,9 @@ CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManage
     for( localIndex const newLocalIndex : indexList )
     {
       GEOS_ERROR_IF( localToGlobal[newLocalIndex] != -1,
-                     "Local object " << newLocalIndex << " should be new but already has a global index "
-                                     << localToGlobal[newLocalIndex] );
+                     GEOS_FMT( "Local object {} should be new but already has a global index {}",
+                               newLocalIndex,
+                               localToGlobal[newLocalIndex] ) );
 
       localToGlobal[newLocalIndex] = elementManager.maxGlobalIndex() + glocalIndexOffset + nIndicesAssigned + 1;
       subRegion.updateGlobalToLocalMap( newLocalIndex );
@@ -587,7 +589,9 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       }
     }
     GEOS_ERROR_IF( !nodesNotFound.empty(),
-                   "Global nodes {" << stringutilities::join( nodesNotFound, ", " ) << "} requested by rank " << allNeighbors[i].neighborRank() << " were not found on this rank." );
+                   GEOS_FMT( "Global nodes {{{}}} requested by rank {} were not found on this rank.",
+                             stringutilities::join( nodesNotFound, ", " ),
+                             allNeighbors[i].neighborRank() ) );
   }
 }
 

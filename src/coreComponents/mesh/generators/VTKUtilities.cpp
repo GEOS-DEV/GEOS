@@ -778,8 +778,11 @@ scatterByBlock( vtkDataSet & mesh )
 
       // Validate cell range
       GEOS_ERROR_IF( rankStart< 0 || rankEnd > totalCells,
-                     "Invalid cell range for rank " << r << ": [" << rankStart
-                                                    << ", " << rankEnd << ") with total cells " << totalCells );
+                     GEOS_FMT( "Invalid cell range for rank {}: [{}, {}) with total cells {}",
+                               r,
+                               rankStart,
+                               rankEnd,
+                               totalCells ) );
 
       if( rankEnd > rankStart )
       {
@@ -819,8 +822,9 @@ scatterByBlock( vtkDataSet & mesh )
   vtkIdType finalTotalCells = MpiWrapper::allReduce( finalLocalCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
 
   GEOS_ERROR_IF( finalTotalCells != totalCells,
-                 "Block redistribution lost cells: started with " << totalCells
-                                                                  << ", ended with " << finalTotalCells );
+                 GEOS_FMT( "Block redistribution lost cells: started with {}, ended with {}",
+                           totalCells,
+                           finalTotalCells ) );
 
   return result;
 }
@@ -2044,7 +2048,8 @@ stdVector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
     case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
     default:
     {
-      GEOS_ERROR( GEOS_FMT( "Cannot get vtk to geos node ordering based on vtk cell type {}", vtkType ) );
+      GEOS_ERROR( GEOS_FMT( "Cannot get vtk to geos node ordering based on vtk cell type {}",
+                            static_cast< int >( vtkType ) ) );
       break;
     }
   }

@@ -352,8 +352,9 @@ private:
                                      viewKeyStruct::zBiasString() );
             GEOS_UNUSED_VAR( wrapperContext );
             GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
-                           wrapperContext <<
-                           ", block index = " << block << " : Mesh bias must between -1 and 1!",
+                           GEOS_FMT( "{}, block index = {} : Mesh bias must between -1 and 1!",
+                                     wrapperContext,
+                                     block ),
                            wrapperContext );
 
             real64 len = max -  min;

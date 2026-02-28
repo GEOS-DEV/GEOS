@@ -1096,7 +1096,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   }
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
-                 "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
+                 GEOS_FMT( "Fracture {} has elements {{{}}} with less than two neighbors.",
+                           this->getName(),
+                           stringutilities::join( isolatedFractureElements, ", " ) ) );
 
   fillMissing2dElemToEdges( m_toNodesRelation.toViewConst(),
                             nodeManager.edgeList().toViewConst(),
