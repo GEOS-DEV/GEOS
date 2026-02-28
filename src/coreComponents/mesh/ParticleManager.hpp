@@ -1302,7 +1302,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ParticleRegionBase const & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr,
@@ -1351,7 +1351,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ParticleRegionBase & region = getRegion( er );
 
       region.forParticleSubRegionsIndex( [&]( localIndex const esr, ParticleSubRegionBase & subRegion )

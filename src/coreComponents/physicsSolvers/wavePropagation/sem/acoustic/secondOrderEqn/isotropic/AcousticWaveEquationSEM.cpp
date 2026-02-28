@@ -1071,12 +1071,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       "Could not open file "<< fileName << " for writing",
+                       GEOS_FMT( "Could not open file {} for writing", fileName ),
                        InputError, getDataContext() );
         wf.write( (char *)&p_n[0], p_n.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       "An error occured while writing "<< fileName,
+                       GEOS_FMT( "An error occured while writing {}", fileName ),
                        InputError, getDataContext() );
       }
 

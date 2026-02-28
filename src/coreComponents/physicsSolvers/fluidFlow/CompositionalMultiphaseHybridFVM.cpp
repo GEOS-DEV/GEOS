@@ -227,8 +227,10 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_WARNING( "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n" <<
-                    "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored",
+      GEOS_WARNING( GEOS_FMT( "An aquifer boundary condition named {} was requested in the XML file.\n"
+                              "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM "
+                              "and will be ignored",
+                              bc.getName() ),
                     getDataContext() );
     } );
   } );

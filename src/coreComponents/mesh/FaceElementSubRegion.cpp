@@ -138,7 +138,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           return ElementType::Prism11;
         case 0:
           // In the case the fracture is empty (on this rank), then we default to hexahedron. Otherwise, there's something wrong
-          GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
+          GEOS_ERROR_IF_NE_MSG( num2dElements, 0,
+                                GEOS_FMT( "Could not determine the element type of the fracture \"{}\".", getName() ) );
           return ElementType::Hexahedron;
         default:
           GEOS_ERROR( "Unsupported type of elements during the face element sub region creation.", getDataContext() );

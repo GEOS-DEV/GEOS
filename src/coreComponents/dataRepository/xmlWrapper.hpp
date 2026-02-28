@@ -355,8 +355,9 @@ stringToInputVariable( T & target, string const & value, Regex const & regex )
   std::istringstream ss( (string( stringTrimed )) );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string \"" << value <<
-                 "\" to type " << LvArray::system::demangleType< T >(),
+                 GEOS_FMT( "Error detected while parsing string \"{}\" to type {}",
+                           value,
+                           LvArray::system::demangleType< T >() ),
                  InputError );
 }
 

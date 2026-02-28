@@ -1494,7 +1494,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase const & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
@@ -1546,7 +1546,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
     localIndex const er = regionMap.getIndex( regionNames[k] );
     if( er >=0 )
     {
-      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      GEOS_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, GEOS_FMT( "Region not found: {}", regionNames[k] ) );
       ElementRegionBase & region = getRegion( er );
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )

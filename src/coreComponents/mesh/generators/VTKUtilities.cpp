@@ -758,8 +758,9 @@ scatterByBlock( vtkDataSet & mesh )
   // Verify rank 0 has the complete mesh for redistribution
   if( rank == 0 && localCells != totalCells )
   {
-    GEOS_ERROR( "Rank 0 must have the complete mesh. "
-                << "Rank 0 has " << localCells << " cells but total is " << totalCells );
+    GEOS_ERROR( GEOS_FMT( "Rank 0 must have the complete mesh. Rank 0 has {} cells but total is {}",
+                          localCells,
+                          totalCells ) );
   }
 
   // Scatter cells by contiguous blocks
@@ -1011,8 +1012,8 @@ redistributeByKdTree( vtkDataSet & mesh )
   {
     if( MpiWrapper::commRank() == 0 )
     {
-      GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
-                                                      << " elements! Falling back to block redistribution." );
+      GEOS_WARNING( GEOS_FMT( "VTK KdTree redistribution lost {} elements! Falling back to block redistribution.",
+                              globalInputCells - globalOutputCells ) );
     }
     return scatterByBlock( mesh );
   }
@@ -2159,7 +2160,7 @@ void importMaterialField( stdVector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp() / view.size( 1 );
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                          "Mismatch in number of components for field " << vtkArray->GetName() );
+                          GEOS_FMT( "Mismatch in number of components for field {}", vtkArray->GetName() ) );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -2195,7 +2196,7 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                          "Mismatch in number of components for field " << vtkArray->GetName() );
+                          GEOS_FMT( "Mismatch in number of components for field {}", vtkArray->GetName() ) );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {

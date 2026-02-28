@@ -119,7 +119,7 @@ void VTKMeshGenerator::postInputInitialization()
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 
     GEOS_THROW_IF( m_dataSource == nullptr,
-                   "VTK Data Object Source not found: " << m_dataSourceName,
+                   GEOS_FMT( "VTK Data Object Source not found: {}", m_dataSourceName ),
                    InputError, getDataContext() );
 
     m_dataSource->open();

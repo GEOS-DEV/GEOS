@@ -66,9 +66,9 @@ void ExternalMeshGeneratorBase::postInputInitialization()
                                string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
-                          getWrapperDataContext( fromKey ) <<
-                          " and " << getWrapperDataContext( toKey ) <<
-                          " must contain the same number of values.",
+                          GEOS_FMT( "{} and {} must contain the same number of values.",
+                                    getWrapperDataContext( fromKey ),
+                                    getWrapperDataContext( toKey ) ),
                           InputError );
   };
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSString() );
@@ -80,8 +80,9 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
     GEOS_THROW_IF( hasDuplicates,
-                   getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
-                   "' already present in list of fields to import.",
+                   GEOS_FMT( "{}: '{}' already present in list of fields to import.",
+                             getWrapperDataContext( key ),
+                             stringutilities::join( v, ", " ) ),
                    InputError, getWrapperDataContext( key ) );
   };
   checkDuplicates( m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsInGEOSString() );
