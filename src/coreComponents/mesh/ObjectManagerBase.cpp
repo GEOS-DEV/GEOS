@@ -100,7 +100,8 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+  GEOS_ERROR_IF( map.size( 0 ) != numObjects,
+                 GEOS_FMT( "Size mismatch. {} != {}", map.size( 0 ), numObjects ) );
 
   if( setName == "all" )
   {
@@ -132,7 +133,8 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOS_ERROR_IF( map.size() != numObjects,
+                 GEOS_FMT( "Size mismatch. {} != {}", map.size(), numObjects ) );
 
   if( setName == "all" )
   {
@@ -269,7 +271,10 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( reqNotAvail, reqNotAvail.end() ) );
     if( !reqNotAvail.empty() )
     {
-      GEOS_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available.", getDataContext() );
+      GEOS_ERROR( GEOS_FMT( "Wrapper(s) \"{}\" was (were) requested from \"{}\" but is (are) not available.",
+                            stringutilities::join( reqNotAvail, ", " ),
+                            getName() ),
+                  getDataContext() );
     }
     // From now on all the requested wrappers are guarantied to be available.
 

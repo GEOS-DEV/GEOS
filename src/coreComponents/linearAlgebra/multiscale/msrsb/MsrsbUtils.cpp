@@ -244,7 +244,8 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
   }
   else
   {
-    GEOS_ERROR_IF( !front.empty(), "[MsRSB]: nodes not assigned to initial partition: " << front );
+    GEOS_ERROR_IF( !front.empty(),
+                   GEOS_FMT( "[MsRSB]: nodes not assigned to initial partition: {}", front ) );
   }
 
   return part;

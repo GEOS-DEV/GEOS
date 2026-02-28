@@ -368,7 +368,8 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
   string name;
   unpackedSize += bufferOps::Unpack( buffer, name );
 
-  GEOS_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+  GEOS_ERROR_IF( name != this->getName(),
+                 GEOS_FMT( "Unpacked name ({}) does not equal object name ({})", name, this->getName() ) );
 
   localIndex numRegionsRead;
   unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );

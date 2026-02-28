@@ -38,7 +38,7 @@ PartitionerBase::create( LinearSolverParameters::Multiscale::Coarsening params )
     case PartitionType::semistructured: return std::make_unique< SemistructuredPartitioner >( std::move( params ) );
     default:
     {
-      GEOS_THROW( "Multiscale partitioning not supported yet: " << params.partitionType, geos::RuntimeError );
+      GEOS_THROW( GEOS_FMT( "Multiscale partitioning not supported yet: {}", params.partitionType ), geos::RuntimeError );
     }
   }
 }

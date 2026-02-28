@@ -641,7 +641,7 @@ void verifyGhostingConsistency( ObjectManagerBase const & objectManager,
     }
   }
 
-  GEOS_ERROR_IF( error, "Encountered a ghosting inconsistency in " << objectManager.getName() );
+  GEOS_ERROR_IF( error, GEOS_FMT( "Encountered a ghosting inconsistency in {}", objectManager.getName() ) );
 }
 
 /**

@@ -334,7 +334,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       }
       default:
       {
-        GEOS_ERROR( "Preconditioner type not supported in PETSc interface: " << m_params.preconditionerType );
+        GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in PETSc interface: {}", m_params.preconditionerType ) );
       }
     }
   }

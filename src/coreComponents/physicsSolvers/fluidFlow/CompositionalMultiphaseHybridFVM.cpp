@@ -906,7 +906,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
               else if( numFacesPerElement == 13 )
                 launchKernel( IP_TAG, std::integral_constant< integer, 13 >{} );
               else
-                GEOS_ERROR( "Unsupported number of faces per element: " << numFacesPerElement, getDataContext() );
+                GEOS_ERROR( GEOS_FMT( "Unsupported number of faces per element: {}", numFacesPerElement ), getDataContext() );
             };
 
             // Inner-product selection
@@ -924,7 +924,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
             }
             else
             {
-              GEOS_ERROR( "Unsupported inner product type: " << innerProductType, getDataContext() );
+              GEOS_ERROR( GEOS_FMT( "Unsupported inner product type: {}", innerProductType ), getDataContext() );
             }
           };
 
@@ -933,7 +933,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           else if( m_numPhases == 3 )
             launchWithPhases( std::integral_constant< integer, 3 >{} );
           else
-            GEOS_ERROR( "Unsupported number of phases: " << m_numPhases, getDataContext() );
+            GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", m_numPhases ), getDataContext() );
         } );
       }
     } );

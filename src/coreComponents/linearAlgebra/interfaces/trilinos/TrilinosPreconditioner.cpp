@@ -326,7 +326,7 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
     }
     default:
     {
-      GEOS_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_params.preconditionerType );
+      GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in Trilinos interface: {}", m_params.preconditionerType ) );
     }
   }
 }

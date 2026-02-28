@@ -132,8 +132,8 @@ void ElasticIsotropic::postInputInitialization()
   }
   else
   {
-    GEOS_ERROR( "Invalid specification for default elastic constants. " <<
-                errorCheck << " has been specified.",
+    GEOS_ERROR( GEOS_FMT( "Invalid specification for default elastic constants. {} has been specified.",
+                          errorCheck ),
                 getDataContext() );
   }
 
