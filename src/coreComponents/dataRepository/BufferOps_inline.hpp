@@ -67,8 +67,8 @@ Unpack( buffer_unit_type const * & buffer, T * const GEOS_RESTRICT var, INDEX_TY
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
 
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOS_ASSERT_MSG( length == expectedLength,
+                   GEOS_FMT( "expectedLength != length: {} != {}", expectedLength, length ) );
   GEOS_DEBUG_VAR( expectedLength );
 
   memcpy( var, buffer, length * sizeof(T) );
@@ -527,8 +527,8 @@ UnpackPointer( buffer_unit_type const * & buffer,
 {
   INDEX_TYPE length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
-  GEOS_ASSERT_MSG( length == expectedLength, "expectedLength != length: " <<
-                   expectedLength << " != " << length );
+  GEOS_ASSERT_MSG( length == expectedLength,
+                   GEOS_FMT( "expectedLength != length: {} != {}", expectedLength, length ) );
   GEOS_DEBUG_VAR( expectedLength );
   memcpy( var, buffer, length * sizeof(T) );
   sizeOfUnpackedChars += length * sizeof(T);

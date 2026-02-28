@@ -103,7 +103,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
       }
     }
 
-    GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
+    GEOS_ASSERT_MSG( !isZero( scale ), GEOS_FMT( "Zero row sum in row {}", rowIndices[i] ) );
     scale = 1.0 / scale;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
     {
