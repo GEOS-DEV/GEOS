@@ -125,9 +125,9 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 
-  registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
-  registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
-  registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
+  registerGroup( &m_linearSolverParameters );
+  registerGroup( &m_nonlinearSolverParameters );
+  registerGroup( &m_solverStatistics );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
@@ -224,7 +224,9 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
 
 
-Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
+Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                        string const & GEOS_UNUSED_PARAM( childName ),
+                                        bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;

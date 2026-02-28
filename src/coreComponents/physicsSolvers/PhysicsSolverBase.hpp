@@ -701,9 +701,13 @@ public:
    * @brief creates a child group of of this PhysicsSolverBase instantiation
    * @param childKey the key of the child type
    * @param childName the name of the child
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return a pointer to the child group
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief Type alias for catalog interface used by this class. See CatalogInterface.
@@ -1260,12 +1264,12 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
 template< typename CONSTITUTIVE >
 void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
 {
-  subRegion.registerWrapper< string >( wrapperName ).
-    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
+  string & constitutiveName = subRegion.registerWrapper< string >( wrapperName, true ).
+                                setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+                                setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+                                setSizedFromParent( 0 ).
+                                reference();
 
-  string & constitutiveName = subRegion.getReference< string >( wrapperName );
   constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{} constitutive model not found on subregion {}",
                                                      constitutiveType, subRegion.getName() ),

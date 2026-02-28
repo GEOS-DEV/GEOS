@@ -634,7 +634,7 @@ struct ArrayHelper
           REGIONS_CONTAINER const & GEOS_UNUSED_PARAM( regions ) )
   {
     ObjectManagerBase & baseManager = getObjectManager< LOC >( mesh );
-    baseManager.registerWrapper< ArrayType >( key ).
+    baseManager.registerWrapper< ArrayType >( key, true ).
       setApplyDefaultValue( -1 ).
       setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
       setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
@@ -687,7 +687,7 @@ struct ArrayHelper< T, FieldLocation::Elem >
     mesh.getElemManager().template forElementSubRegions< SUBREGIONTYPES... >( regions,
                                                                               [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      subRegion.registerWrapper< ArrayType >( key ).
+      subRegion.registerWrapper< ArrayType >( key, true ).
         setApplyDefaultValue( -1 ).
         setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
         setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).

@@ -91,10 +91,8 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
     {
       using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
-      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >() ).reference();
-      // This is a hack since Array's copy ctor does not accept ArrayView source
-      dst.resize( ArrayType::NDIM, src.dims() );
-      std::copy( src.data(), src.data() + src.size(), dst.data() );
+      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >(), true ).reference();
+      dst = src;
     }, wrapper );
   } );
 }

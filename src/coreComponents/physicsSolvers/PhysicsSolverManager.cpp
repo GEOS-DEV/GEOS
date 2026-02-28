@@ -44,12 +44,14 @@ PhysicsSolverManager::~PhysicsSolverManager()
 
 
 //START_SPHINX_INCLUDE_00
-Group * PhysicsSolverManager::createChild( string const & childKey, string const & childName )
+Group * PhysicsSolverManager::createChild( string const & childKey,
+                                           string const & childName,
+                                           bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< PhysicsSolverBase > solver =
     PhysicsSolverBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &registerGroup< PhysicsSolverBase >( childName, std::move( solver ) );
+  return &registerGroup< PhysicsSolverBase >( std::move( solver ), allowExistence );
 }
 
 

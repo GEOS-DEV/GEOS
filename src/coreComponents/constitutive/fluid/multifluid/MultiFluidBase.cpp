@@ -37,7 +37,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of component names" );
+    setDescription( "List of fluid components (e.g. CH4, H2O, C5H12)" );
 
   registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -46,7 +46,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "List of fluid phases" );
+    setDescription( "List of fluid phases (e.g. gas, water, oil)" );
 
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE ).

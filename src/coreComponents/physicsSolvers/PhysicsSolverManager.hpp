@@ -29,7 +29,9 @@ public:
 
   virtual ~PhysicsSolverManager() override;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

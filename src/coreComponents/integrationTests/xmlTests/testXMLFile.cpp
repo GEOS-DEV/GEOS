@@ -31,9 +31,13 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace xmlWrapper;
 
+std::unique_ptr< CommandLineOptions > globalCommandLine = nullptr;
+
 // Tests if the xml file parsing works with one file, one file with nested includes, and multiple files
 TEST( testXML, testXMLFile )
 {
+  GeosxState state( std::make_unique< CommandLineOptions >( *globalCommandLine ) );
+
   geos::ProblemManager & problemManager = geos::getGlobalState().getProblemManager();
   problemManager.parseCommandLineInput();
   problemManager.parseInputFile();
@@ -188,6 +192,8 @@ std::set< string > getDifference( std::set< string > const & setA,
 // - if the resulting Group & Wrapper hierarchy matches with the input xml documents and includes hierarchy.
 TEST( testXML, testXMLFileLines )
 {
+  GeosxState state( std::make_unique< CommandLineOptions >( *globalCommandLine ) );
+
   xmlDocument xmlDoc;
   ProblemManager & problemManager = getGlobalState().getProblemManager();
 
@@ -231,7 +237,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  GeosxState state( basicSetup( argc, argv, true ) );
+  globalCommandLine = basicSetup( argc, argv, true );
 
   int const result = RUN_ALL_TESTS();
 

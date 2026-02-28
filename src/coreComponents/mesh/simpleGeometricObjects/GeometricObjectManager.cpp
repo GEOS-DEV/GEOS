@@ -51,12 +51,14 @@ GeometricObjectManager & GeometricObjectManager::getInstance()
   return *m_instance;
 }
 
-Group * GeometricObjectManager::createChild( string const & childKey, string const & childName )
+Group * GeometricObjectManager::createChild( string const & childKey,
+                                             string const & childName,
+                                             bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< SimpleGeometricObjectBase > geometriObject =
+  std::unique_ptr< SimpleGeometricObjectBase > geometricObject =
     SimpleGeometricObjectBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< SimpleGeometricObjectBase >( childName, std::move( geometriObject ) );
+  return &this->registerGroup< SimpleGeometricObjectBase >( std::move( geometricObject ), allowExistence );
 }
 
 void GeometricObjectManager::expandObjectCatalogs()

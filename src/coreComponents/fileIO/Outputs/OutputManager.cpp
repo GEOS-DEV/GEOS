@@ -37,12 +37,14 @@ OutputManager::~OutputManager()
 
 
 
-Group * OutputManager::createChild( string const & childKey, string const & childName )
+Group * OutputManager::createChild( string const & childKey,
+                                    string const & childName,
+                                    bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< OutputBase > output =
     OutputBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< OutputBase >( childName, std::move( output ) );
+  return &this->registerGroup< OutputBase >( std::move( output ), allowExistence );
 }
 
 

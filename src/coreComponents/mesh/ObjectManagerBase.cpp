@@ -39,8 +39,8 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  registerGroup( groupKeyStruct::setsString(), &m_sets );
-  registerGroup( groupKeyStruct::neighborDataString(), &m_neighborGroup );
+  registerGroup( &m_sets );
+  registerGroup( &m_neighborGroup );
 
   registerWrapper( viewKeyStruct::localToGlobalMapString(), &m_localToGlobalMap ).
     setApplyDefaultValue( -1 ).
@@ -89,7 +89,8 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
 
 SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetName )
 {
-  return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
+  auto & set = m_sets.registerWrapper< SortedArray< localIndex > >( newSetName, true ).reference();
+  return set;
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,

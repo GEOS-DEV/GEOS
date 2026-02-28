@@ -25,12 +25,14 @@ ExternalDataSourceBase::ExternalDataSourceBase( string const & name, Group * con
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
-Group * ExternalDataSourceBase::createChild( string const & childKey, string const & childName )
+Group * ExternalDataSourceBase::createChild( string const & childKey,
+                                             string const & childName,
+                                             bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< ExternalDataSourceBase > event =
     ExternalDataSourceBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup( childName, std::move( event ) );
+  return &this->registerGroup( std::move( event ), allowExistence );
 }
 
 void ExternalDataSourceBase::expandObjectCatalogs()

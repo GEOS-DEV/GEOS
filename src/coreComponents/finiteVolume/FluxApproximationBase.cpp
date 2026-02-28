@@ -102,7 +102,7 @@ void FluxApproximationBase::initializePreSubGroups()
         {
           Group & parentMesh = mesh.getShallowParent();
           Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+          mesh.registerGroup( &parentStencilParentGroup );
         }
       }
     } );
@@ -180,7 +180,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
         {
           Group & parentMesh = mesh.getShallowParent();
           Group & parentStencilParentGroup = parentMesh.getGroup( groupKeyStruct::stencilMeshGroupString() );
-          mesh.registerGroup( groupKeyStruct::stencilMeshGroupString(), &parentStencilParentGroup );
+          mesh.registerGroup( &parentStencilParentGroup );
         }
       }
     } );

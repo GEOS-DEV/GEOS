@@ -36,12 +36,14 @@ TasksManager::TasksManager( string const & name,
 TasksManager::~TasksManager()
 { }
 
-Group * TasksManager::createChild( string const & childKey, string const & childName )
+Group * TasksManager::createChild( string const & childKey,
+                                   string const & childName,
+                                   bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< TaskBase > task =
     TaskBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< TaskBase >( childName, std::move( task ) );
+  return &this->registerGroup< TaskBase >( std::move( task ), allowExistence );
 }
 
 void TasksManager::expandObjectCatalogs()

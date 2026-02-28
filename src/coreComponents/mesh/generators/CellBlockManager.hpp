@@ -46,7 +46,9 @@ public:
    */
   CellBlockManager( string const & name, Group * const parent );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief Maximum number of nodes allowed (in memory) per each face.

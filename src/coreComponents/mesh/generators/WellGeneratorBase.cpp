@@ -75,7 +75,9 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   addLogLevel< logInfo::GenerateWell >();
 }
 
-Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )
+Group * WellGeneratorBase::createChild( string const & childKey,
+                                        string const & childName,
+                                        bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   const auto childTypes = { viewKeyStruct::perforationString() };
@@ -86,7 +88,7 @@ Group * WellGeneratorBase::createChild( string const & childKey, string const & 
   ++m_numPerforations;
   m_perforationList.emplace_back( childName );
 
-  return &registerGroup< Perforation >( childName );
+  return &registerGroup< Perforation >( childName, allowExistence );
 }
 
 void WellGeneratorBase::expandObjectCatalogs()

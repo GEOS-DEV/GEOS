@@ -25,13 +25,4 @@
       xMin="{ -0.01, -0.01, 100.99 }"
       xMax="{ 101.01, 101.01, 101.01 }"/>
   </Geometry>
-
-    <!-- The free surface condition the domain -->
-  <FieldSpecifications>
-    <FieldSpecification
-      name="zposFreeSurface"
-      objectPath="mesh/FE1/faceManager"
-      fieldName="FreeSurface"
-      setNames="{ zpos }"/>
-  </FieldSpecifications>
 </Problem>

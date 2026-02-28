@@ -48,7 +48,9 @@ public:
   ConstitutiveManager( string const & name,
                        Group * const parent );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override final;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override final;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

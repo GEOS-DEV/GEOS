@@ -39,19 +39,21 @@ FiniteVolumeManager::FiniteVolumeManager( string const & name, Group * const par
 FiniteVolumeManager::~FiniteVolumeManager()
 {}
 
-Group * FiniteVolumeManager::createChild( string const & childKey, string const & childName )
+Group * FiniteVolumeManager::createChild( string const & childKey,
+                                          string const & childName,
+                                          bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   if( childKey == HybridMimeticDiscretization::catalogName() )
   {
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    return &this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    return &this->registerGroup< HybridMimeticDiscretization >( std::move( hm ), allowExistence );
   }
   else
   {
     std::unique_ptr< FluxApproximationBase > approx = FluxApproximationBase::CatalogInterface::factory( childKey, getDataContext(),
                                                                                                         childName, this );
-    return &this->registerGroup< FluxApproximationBase >( childName, std::move( approx ));
+    return &this->registerGroup< FluxApproximationBase >( std::move( approx ), allowExistence );
   }
 }
 
@@ -68,7 +70,7 @@ void FiniteVolumeManager::expandObjectCatalogs()
   {
     string const childName = catalogIter.first;
     std::unique_ptr< HybridMimeticDiscretization > hm = std::make_unique< HybridMimeticDiscretization >( childName, this );
-    this->registerGroup< HybridMimeticDiscretization >( childName, std::move( hm ) );
+    this->registerGroup< HybridMimeticDiscretization >( std::move( hm ) );
   }
 }
 

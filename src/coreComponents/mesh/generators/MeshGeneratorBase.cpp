@@ -28,12 +28,14 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
-Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
+Group * MeshGeneratorBase::createChild( string const & childKey,
+                                        string const & childName,
+                                        bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< MeshComponentBase > meshComp =
     MeshComponentBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< MeshComponentBase >( childName, std::move( meshComp ) );
+  return &this->registerGroup< MeshComponentBase >( std::move( meshComp ), allowExistence );
 }
 
 void MeshGeneratorBase::expandObjectCatalogs()

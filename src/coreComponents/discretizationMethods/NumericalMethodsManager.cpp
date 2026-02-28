@@ -31,15 +31,16 @@ NumericalMethodsManager::NumericalMethodsManager( string const & name, Group * c
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  this->registerGroup( groupKeysStruct::finiteElementDiscretizationsString(), &m_finiteElementDiscretizationManager );
-  this->registerGroup( groupKeysStruct::finiteVolumeManagerString(), &m_finiteVolumeManager );
+  this->registerGroup( &m_finiteElementDiscretizationManager );
+  this->registerGroup( &m_finiteVolumeManager );
 }
 
 NumericalMethodsManager::~NumericalMethodsManager()
 {}
 
 Group * NumericalMethodsManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
-                                              string const & GEOS_UNUSED_PARAM( childName ) )
+                                              string const & GEOS_UNUSED_PARAM( childName ),
+                                              bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;

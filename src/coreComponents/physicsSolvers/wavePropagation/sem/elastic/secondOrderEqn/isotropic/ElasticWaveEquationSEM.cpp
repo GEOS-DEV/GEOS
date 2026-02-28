@@ -47,17 +47,17 @@ ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
   WaveSolverBase( name,
                   parent )
 {
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsx ).
+  registerWrapper( viewKeyStruct::sourceConstantsXString(), &m_sourceConstantsx ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsy ).
+  registerWrapper( viewKeyStruct::sourceConstantsYString(), &m_sourceConstantsy ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds in y-direction" );
 
-  registerWrapper( viewKeyStruct::sourceConstantsString(), &m_sourceConstantsz ).
+  registerWrapper( viewKeyStruct::sourceConstantsZString(), &m_sourceConstantsz ).
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction" );

@@ -983,8 +983,14 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
 		<!--receiverRegion => Region containing the receivers-->
 		<xsd:attribute name="receiverRegion" type="integer_array" />
-		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction-->
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
 		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceConstantsX => Constant part of the source for the nodes listed in m_sourceNodeIds in x-direction-->
+		<xsd:attribute name="sourceConstantsX" type="real64_array2d" />
+		<!--sourceConstantsY => Constant part of the source for the nodes listed in m_sourceNodeIds in y-direction-->
+		<xsd:attribute name="sourceConstantsY" type="real64_array2d" />
+		<!--sourceConstantsZ => Constant part of the source for the nodes listed in m_sourceNodeIds in z-direction-->
+		<xsd:attribute name="sourceConstantsZ" type="real64_array2d" />
 		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
 		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->

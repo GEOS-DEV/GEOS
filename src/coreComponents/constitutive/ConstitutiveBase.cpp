@@ -53,7 +53,7 @@ void ConstitutiveBase::allocateConstitutiveData( Group & parent, localIndex cons
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = makeFieldName( this->getName(), wrapper.first );
-        parent.registerWrapper( wrapper.second->clone( wrapperName, parent ) ).
+        parent.registerWrapper( wrapper.second->clone( wrapperName, parent ), true ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -64,7 +64,7 @@ void ConstitutiveBase::allocateConstitutiveData( Group & parent, localIndex cons
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = makeFieldName( this->getName(), wrapper.first );
-      parent.registerWrapper( wrapper.second->clone( wrapperName, parent ) ).
+      parent.registerWrapper( wrapper.second->clone( wrapperName, parent ), true ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }

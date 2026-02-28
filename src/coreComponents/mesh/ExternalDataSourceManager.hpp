@@ -49,9 +49,13 @@ public:
    * @brief Create a new sub data repository.
    * @param[in] childKey the key of the new object in the ObjectCatalog
    * @param[in] childName the name of the new object in the collection of sub-meshes
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return A pointer to the Group node in the dataRepository of the new object created
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

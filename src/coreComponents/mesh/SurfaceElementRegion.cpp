@@ -220,7 +220,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
   for( auto const & setIter : faceManager->sets().wrappers() )
   {
     SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
-    SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
+    SortedArray< localIndex > & faceElementSet = subRegion.sets().getReference< SortedArray< localIndex > >( setIter.first );
     for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
     {
       if( faceSet.count( faceMap[a][0] ) )

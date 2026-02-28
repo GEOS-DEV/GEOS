@@ -43,12 +43,14 @@ MeshManager::MeshManager( string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::createChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( string const & childKey,
+                                  string const & childName,
+                                  bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< MeshGeneratorBase > mesh =
     MeshGeneratorBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< MeshGeneratorBase >( childName, std::move( mesh ) );
+  return &this->registerGroup< MeshGeneratorBase >( std::move( mesh ), allowExistence );
 }
 
 
@@ -66,7 +68,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
-    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
+    MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName(), true );
     meshBody.createMeshLevel( 0 );
     SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
@@ -87,7 +89,7 @@ void MeshManager::generateMeshLevels( DomainPartition & domain )
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
     string const & meshName = meshGen.getName();
-    domain.getMeshBodies().registerGroup< MeshBody >( meshName ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
+    domain.getMeshBodies().registerGroup< MeshBody >( meshName, true ).createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString() );
   } );
 }
 

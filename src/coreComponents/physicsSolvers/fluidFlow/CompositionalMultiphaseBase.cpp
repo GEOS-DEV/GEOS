@@ -1415,7 +1415,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         {
           indexValues[i] = i;
         }
-        TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), elevationIndexTableName ) );
+        TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), elevationIndexTableName, true ) );
         table->setTableCoordinates( elevationValues, { units::Distance } );
         table->setTableValues( indexValues, units::Dimensionless );
         table->setInterpolationMethod( TableFunction::InterpolationType::Linear );

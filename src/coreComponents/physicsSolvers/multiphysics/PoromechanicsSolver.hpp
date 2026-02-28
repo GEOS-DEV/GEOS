@@ -206,17 +206,6 @@ public:
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
-        subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
-          setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
-          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 );
-
-        // This is needed by the way the surface generator currently does things.
-        subRegion.registerWrapper< string >( constitutive::CoupledSolidBase::viewKeyStruct::porosityModelNameString() ).
-          setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
-          setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 );
-
         // register the bulk density for use in the solid mechanics solver
         // ideally we would resize it here as well, but the solid model name is not available yet (see below)
         subRegion.registerField< fields::poromechanics::bulkDensity >( this->getName() );

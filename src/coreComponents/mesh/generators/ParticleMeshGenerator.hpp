@@ -57,9 +57,13 @@ public:
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
    * @param childName the name of the new geometric object in the repository
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
 

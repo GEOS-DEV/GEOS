@@ -59,9 +59,13 @@ public:
    * @brief Create a new FunctionManager object as a child of this group.
    * @param functionCatalogKey the catalog key of the new FunctionManager derived type to create
    * @param functionName the name of the new FunctionManager object in the repository
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return the group child
    */
-  virtual Group * createChild( string const & functionCatalogKey, string const & functionName ) override;
+  virtual Group * createChild( string const & functionCatalogKey,
+                               string const & functionName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief This function is used to expand any catalogs in the data structure

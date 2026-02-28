@@ -475,6 +475,10 @@
 					<xsd:selector xpath="SinglePhasePoromechanicsConformingFracturesALM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversSinglePhasePoromechanicsConformingFracturesALMUniqueName">
+					<xsd:selector xpath="SinglePhasePoromechanicsConformingFracturesALM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversSinglePhasePoromechanicsConformingFracturesReservoirUniqueName">
 					<xsd:selector xpath="SinglePhasePoromechanicsConformingFracturesReservoir" />
 					<xsd:field xpath="@name" />
@@ -505,6 +509,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseReservoirPoromechanicsConformingFracturesUniqueName">
 					<xsd:selector xpath="SinglePhaseReservoirPoromechanicsConformingFractures" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseReservoirPoromechanicsConformingFracturesALMUniqueName">
+					<xsd:selector xpath="SinglePhaseReservoirPoromechanicsConformingFracturesALM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversSinglePhaseReservoirPoromechanicsConformingFracturesALMUniqueName">
@@ -591,6 +599,10 @@
 				</xsd:unique>
 				<xsd:unique name="TasksRelpermDriverUniqueName">
 					<xsd:selector xpath="RelpermDriver" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSinglePhasePoromechanicsConformingFracturesALMInitializationUniqueName">
+					<xsd:selector xpath="SinglePhasePoromechanicsConformingFracturesALMInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhasePoromechanicsConformingFracturesALMInitializationUniqueName">
@@ -6449,6 +6461,21 @@ Information output from lower logLevels is added with the desired log level
 1
  - Information on solver initialization-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" default="none" />
+		<!--relperm => Relperm model to test-->
+		<xsd:attribute name="relperm" type="groupNameRef" use="required" />
+		<!--steps => Number of saturation steps to take-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
@@ -6483,6 +6510,19 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesALMInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
@@ -6763,7 +6803,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
@@ -6773,7 +6813,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />
@@ -6863,7 +6903,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
@@ -6873,7 +6913,7 @@ Information output from lower logLevels is added with the desired log level
  - Output PVT table to log
 Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will still be generated.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
@@ -6892,7 +6932,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
@@ -6902,7 +6942,7 @@ Information output from lower logLevels is added with the desired log level
  - Output PVT table to log
 Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will still be generated.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
@@ -6921,7 +6961,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
@@ -6931,7 +6971,7 @@ Information output from lower logLevels is added with the desired log level
  - Output PVT table to log
 Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will still be generated.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
@@ -6950,7 +6990,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--flashModelParaFile => Name of the file defining the parameters of the flash model-->
 		<xsd:attribute name="flashModelParaFile" type="path" default="" />
@@ -6960,7 +7000,7 @@ Information output from lower logLevels is added with the desired log level
  - Output PVT table to log
 Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will still be generated.-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
@@ -7019,7 +7059,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7027,7 +7067,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="constantPhaseViscosity" type="real64_array" default="{0}" />
 		<!--equationsOfState => List of equation of state types for each phase-->
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7047,7 +7087,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7060,7 +7100,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
 		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
@@ -7107,7 +7147,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7122,7 +7162,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
 		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
@@ -7148,7 +7188,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7161,7 +7201,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
 		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--stabilityMaxIterations => The maximum number of successive substitution iterations used during the stability test. A zero or negative value skips the stability test-->
 		<xsd:attribute name="stabilityMaxIterations" type="integer" default="300" />
@@ -7192,7 +7232,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7205,7 +7245,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="flashMaxIterations" type="integer" default="300" />
 		<!--flashTolerance => The tolerance to use to determine convergece of the flash-->
 		<xsd:attribute name="flashTolerance" type="real64" default="1e-08" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
@@ -7246,7 +7286,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7257,7 +7297,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--kValueTables => List of k-value tables for each phase.-->
 		<xsd:attribute name="kValueTables" type="string_array" use="required" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
@@ -7286,7 +7326,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
 		<!--componentVolumeShift => Component volume shifts-->
 		<xsd:attribute name="componentVolumeShift" type="real64_array" default="{0}" />
@@ -7297,7 +7337,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="equationsOfState" type="string_array" use="required" />
 		<!--kValueTables => List of k-value tables for each phase.-->
 		<xsd:attribute name="kValueTables" type="string_array" use="required" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--pressureCoordinates => List of pressure values for interpolation of function values.-->
 		<xsd:attribute name="pressureCoordinates" type="real64_array" default="{0}" />
@@ -7571,7 +7611,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
-		<!--componentNames => List of component names-->
+		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--hydrocarbonFormationVolFactorTableNames => List of formation volume factor TableFunction names from the Functions block. 
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
@@ -7581,7 +7621,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 The user must provide one TableFunction per hydrocarbon phase, in the order provided in "phaseNames". 
 For instance, if "oil" is before "gas" in "phaseNames", the table order should be: oilTableName, gasTableName-->
 		<xsd:attribute name="hydrocarbonViscosityTableNames" type="groupNameRef_array" default="{}" />
-		<!--phaseNames => List of fluid phases-->
+		<!--phaseNames => List of fluid phases (e.g. gas, water, oil)-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--surfaceDensities => List of surface mass densities for each phase-->
 		<xsd:attribute name="surfaceDensities" type="real64_array" use="required" />

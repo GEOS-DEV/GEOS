@@ -39,7 +39,7 @@ using namespace dataRepository;
 template< typename CHILD, typename T >
 void registerInputBlock( Group * parent, char const * const key, T & data )
 {
-  parent->registerGroup( key, std::make_unique< CHILD >( key, parent, data ) ).setInputFlags( InputFlags::OPTIONAL );
+  parent->registerGroup( std::make_unique< CHILD >( key, parent, data ) ).setInputFlags( InputFlags::OPTIONAL );
 }
 
 class BlockParametersInput final : public dataRepository::Group
@@ -51,9 +51,11 @@ public:
                         Group * const parent,
                         LinearSolverParameters::Block & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -105,9 +107,11 @@ public:
                            Group * const parent,
                            LinearSolverParameters::Multiscale::Smoother & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -158,9 +162,11 @@ public:
                           Group * const parent,
                           LinearSolverParameters::Multiscale::Coupled & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -197,9 +203,11 @@ public:
                              Group * const parent,
                              LinearSolverParameters::Multiscale::Coarsening::Structured & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -236,9 +244,11 @@ public:
                         Group * const parent,
                         LinearSolverParameters::Multiscale::Coarsening::Graph::Metis & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -288,9 +298,11 @@ public:
                         Group * const parent,
                         LinearSolverParameters::Multiscale::Coarsening::Graph & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -355,9 +367,11 @@ public:
                              Group * const parent,
                              LinearSolverParameters::Multiscale::Coarsening & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -420,9 +434,11 @@ public:
                         Group * const parent,
                         LinearSolverParameters::Multiscale::MsRSB & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -495,9 +511,11 @@ public:
                              Group * const parent,
                              LinearSolverParameters::Multiscale & params );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override
   {
-    GEOS_UNUSED_VAR( childKey, childName );
+    GEOS_UNUSED_VAR( childKey, childName, allowExistence );
     return nullptr;
   }
 
@@ -872,9 +890,10 @@ void LinearSolverParametersInput::postInputInitialization()
 }
 
 Group * LinearSolverParametersInput::createChild( string const & childKey,
-                                                  string const & childName )
+                                                  string const & childName,
+                                                  bool const allowExistence )
 {
-  GEOS_UNUSED_VAR( childKey, childName );
+  GEOS_UNUSED_VAR( childKey, childName, allowExistence );
   return nullptr;
 }
 

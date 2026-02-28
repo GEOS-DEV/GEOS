@@ -69,10 +69,10 @@ class Group
 public:
   //START_SPHINX_INCLUDE_01
   /// The template specialization of MappedVector to use for the collection of sub-Group objects.
-  using subGroupMap = MappedVector< Group, Group *, keyType, indexType >;
+  using subGroupMap = MappedVector< Group, keyType, indexType >;
 
   /// The template specialization of MappedVector to use for the collection wrappers objects.
-  using wrapperMap = MappedVector< WrapperBase, WrapperBase *, keyType, indexType >;
+  using wrapperMap = MappedVector< WrapperBase, keyType, indexType >;
   //END_SPHINX_INCLUDE_01
 
   /**
@@ -190,61 +190,70 @@ public:
    * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @param[in] name      The name of the group to use as a string key.
-   * @param[in] newObject A unique_ptr to the object that is being registered.
-   * @return              A pointer to the newly registered Group.
+   * @param[in] newObject A unique_ptr to the object that is being registered under `newObject->getName()`.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
+   * @return A pointer to the newly registered Group.
    *
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
   template< typename T = Group >
-  T & registerGroup( string const & name, std::unique_ptr< T > newObject )
+  T & registerGroup( std::unique_ptr< T > newObject, bool const allowExistence=false )
   {
-    newObject->m_parent = this;
-    return dynamicCast< T & >( *m_subGroups.insert( name, newObject.release(), true ) );
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
+    string const name = newObject->getName();
+    insertGroup( newObject.release(), true, allowExistence );
+    return getGroup< T >( name );
   }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
-   * @param[in] name          The name of the group to use as a string key.
-   * @param[in] newObject     A unique_ptr to the object that is being registered.
-   * @return                  A pointer to the newly registered Group.
+   * @param[in] newObject     A pointer to the object that is being registered under `newObject->getName()`.
+   * @return                  A reference to the newly registered Group.
    *
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
   template< typename T = Group >
-  T & registerGroup( string const & name, T * newObject )
-  { return dynamicCast< T & >( *m_subGroups.insert( name, newObject, false ) ); }
-
+  std::enable_if_t< std::is_base_of_v< Group, T >, T & >
+  registerGroup( T * newObject )
+  {
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
+    string const name = newObject->getName();
+    insertGroup( newObject, false );
+    return getGroup< T >( name );
+  }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
-   * @return         A pointer to the newly registered Group.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
+   * @return A reference to the newly registered Group.
    *
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
-  T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
+  T & registerGroup( string const & name, bool const allowExistence=false )
+  { return registerGroup< T >( std::make_unique< T >( name, this ), allowExistence ); }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param keyIndex A KeyIndexT object that will be used to specify the name of
    *   the new group. The index of the KeyIndex will also be set.
-   * @return A pointer to the newly registered Group, or @c nullptr if no group was registered.
+   * @return A reference to the newly registered Group, or @c nullptr if no group was registered.
    *
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    T & rval = registerGroup< T >( std::make_unique< T >( keyIndex.key(), this ) );
     keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
@@ -257,13 +266,15 @@ public:
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
-   * @param[in] childKey The name of the new object type's key in the
-   *                     ObjectCatalog.
-   * @param[in] childName The name of the new object in the collection of
-   *                      sub-Groups.
+   * @param[in] childKey The name of the new object type's key in the ObjectCatalog.
+   * @param[in] childName The name of the new object in the collection of sub-Groups.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * createChild( string const & childKey, string const & childName );
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false );
 
   ///@}
 
@@ -804,38 +815,64 @@ public:
   ///@{
 
   /**
+   * @brief Register a new Wrapper.
+   * @param[in] newObject The wrapper to register
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
+   * @return A reference to the newly registered Wrapper
+   */
+  WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > newObject,
+                                 bool const allowExistence=false )
+  {
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
+    string const name = newObject->getName();
+    insertWrapper( std::move( newObject ), allowExistence );
+    return getWrapperBase( name );
+  }
+
+  /**
    * @brief Create and register a Wrapper around a new object.
    * @tparam T The type of the object allocated.
    * @tparam TBASE The type of the object that the Wrapper holds.
    * @param[in] name the name of the wrapper to use as a string key
    * @param[out] rkey a pointer to a index type that will be filled with the new
    *   Wrapper index in this Group
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
   Wrapper< TBASE > & registerWrapper( string const & name,
-                                      wrapperMap::KeyIndex::index_type * const rkey = nullptr );
+                                      wrapperMap::KeyIndex::index_type * const rkey = nullptr,
+                                      bool const allowExistence=false );
 
   /**
-   * @copybrief registerWrapper(string const &,wrapperMap::KeyIndex::index_type * const)
+   * @brief Register a new Wrapper.
    * @tparam T the type of the wrapped object
    * @tparam TBASE the base type to cast the returned wrapper to
    * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
-  Wrapper< TBASE > & registerWrapper( Group::wrapperMap::KeyIndex const & viewKey );
+  Wrapper< TBASE > & registerWrapper( Group::wrapperMap::KeyIndex const & viewKey,
+                                      bool const allowExistence=false );
 
   /**
    * @brief Register a Wrapper around a given object and take ownership.
    * @tparam T the type of the wrapped object
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
-  Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
+  Wrapper< T > & registerWrapper( string const & name,
+                                  std::unique_ptr< T > newObject,
+                                  bool const allowExistence=false );
 
   /**
    * @brief Register a Wrapper around an existing object, does not take ownership of the object.
@@ -846,15 +883,7 @@ public:
    * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
-  Wrapper< T > & registerWrapper( string const & name,
-                                  T * newObject );
-
-  /**
-   * @brief Register and take ownership of an existing Wrapper.
-   * @param wrapper A pointer to the an existing wrapper.
-   * @return An un-typed pointer to the newly registered/created wrapper
-   */
-  WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > wrapper );
+  Wrapper< T > & registerWrapper( string const & name, T * newObject );
 
   /**
    * @brief Removes a Wrapper from this group.
@@ -1607,6 +1636,21 @@ private:
                        bool onDevice,
                        parallelDeviceEvents & events ) const;
 
+  /**
+   * @brief Insert into m_wrappers.
+   * @param[in] wrapper The wrapper to insert with the key wrapper->getName().
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name.
+   */
+  void insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const allowExistence=false );
+
+  /**
+   * @brief Insert into m_subGroups.
+   * @param[in] newObject The group to insert with the key newObject->getName().
+   * @param[in] takeOwnership Whether to take ownership of newObject or not.
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name.
+   */
+  void insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence=false );
+
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
@@ -1669,12 +1713,12 @@ using ViewKey = Group::wrapperMap::KeyIndex;
 /// @cond DO_NOT_DOCUMENT
 template< typename T, typename TBASE >
 Wrapper< TBASE > & Group::registerWrapper( string const & name,
-                                           ViewKey::index_type * const rkey )
+                                           ViewKey::index_type * const rkey,
+                                           bool const allowExistence )
 {
   std::unique_ptr< TBASE > newObj = std::make_unique< T >();
-  m_wrappers.insert( name,
-                     new Wrapper< TBASE >( name, *this, std::move( newObj ) ),
-                     true );
+
+  insertWrapper( std::make_unique< Wrapper< TBASE > >( name, *this, std::move( newObj ) ), allowExistence );
 
   if( rkey != nullptr )
   {
@@ -1684,17 +1728,17 @@ Wrapper< TBASE > & Group::registerWrapper( string const & name,
   Wrapper< TBASE > & rval = getWrapper< TBASE >( name );
   if( rval.sizedFromParent() == 1 )
   {
-    rval.resize( size());
+    rval.resize( size() );
   }
   return rval;
 }
 /// @endcond
 
 template< typename T, typename TBASE >
-Wrapper< TBASE > & Group::registerWrapper( ViewKey const & viewKey )
+Wrapper< TBASE > & Group::registerWrapper( ViewKey const & viewKey, bool const allowExistence )
 {
   ViewKey::index_type index;
-  Wrapper< TBASE > & rval = registerWrapper< T, TBASE >( viewKey.key(), &index );
+  Wrapper< TBASE > & rval = registerWrapper< T, TBASE >( viewKey.key(), &index, allowExistence );
   viewKey.setIndex( index );
 
   return rval;
@@ -1703,12 +1747,11 @@ Wrapper< TBASE > & Group::registerWrapper( ViewKey const & viewKey )
 
 template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
-                                       std::unique_ptr< T > newObject )
+                                       std::unique_ptr< T > newObject,
+                                       bool const allowExistence )
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
-  m_wrappers.insert( name,
-                     new Wrapper< T >( name, *this, std::move( newObject ) ),
-                     true );
+  insertWrapper( std::make_unique< Wrapper< T > >( name, *this, std::move( newObject ) ), allowExistence );
 
   Wrapper< T > & rval = getWrapper< T >( name );
   if( rval.sizedFromParent() == 1 )
@@ -1723,14 +1766,12 @@ Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
-  m_wrappers.insert( name,
-                     new Wrapper< T >( name, *this, newObject ),
-                     true );
+  insertWrapper( std::make_unique< Wrapper< T > >( name, *this, newObject ) );
 
   Wrapper< T > & rval = getWrapper< T >( name );
   if( rval.sizedFromParent() == 1 )
   {
-    rval.resize( size());
+    rval.resize( size() );
   }
   return rval;
 }

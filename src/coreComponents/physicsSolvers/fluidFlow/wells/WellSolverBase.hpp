@@ -68,7 +68,9 @@ public:
   /// deleted move operator
   WellSolverBase & operator=( WellSolverBase && ) = delete;
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /// Expand catalog for schema generation
   virtual void expandObjectCatalogs() override;

@@ -60,7 +60,9 @@ public:
    */
   static GeometricObjectManager & getInstance();
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief This function is used to launch a unction over the target geometric objects with region type =

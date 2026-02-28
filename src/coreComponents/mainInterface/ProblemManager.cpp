@@ -159,7 +159,9 @@ ProblemManager::~ProblemManager()
 }
 
 
-Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
+Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                     string const & GEOS_UNUSED_PARAM( childName ),
+                                     bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;
@@ -351,69 +353,69 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 
   // Add entries that are only used in the pre-processor
-  Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag );
+  Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag, true );
   IncludedList.setInputFlags( InputFlags::OPTIONAL );
 
-  Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
+  Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag, true );
   includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   // the name of includedFile is actually a Path.
-  includedFile.registerWrapper< string >( "name" ).
+  includedFile.registerWrapper< string >( "name", nullptr, true ).
     setInputFlag( InputFlags::REQUIRED ).
     setRTTypeName( rtTypes::getTypeName( typeid( Path ) ) ).
     setDescription( "The relative file path." );
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
 
-  Group & parameterList = this->registerGroup< Group >( "Parameters" );
+  Group & parameterList = this->registerGroup< Group >( "Parameters", true );
   parameterList.setInputFlags( InputFlags::OPTIONAL );
 
-  Group & parameter = parameterList.registerGroup< Group >( "Parameter" );
+  Group & parameter = parameterList.registerGroup< Group >( "Parameter", true );
   parameter.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  parameter.registerWrapper< string >( "value" ).
+  parameter.registerWrapper< string >( "value", nullptr, true ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Input parameter definition for the preprocessor" );
 
   schemaUtilities::SchemaConstruction( parameterList, schemaRoot, targetChoiceNode, documentationType );
 
-  Group & benchmarks = this->registerGroup< Group >( "Benchmarks" );
+  Group & benchmarks = this->registerGroup< Group >( "Benchmarks", true );
   benchmarks.setInputFlags( InputFlags::OPTIONAL );
 
   for( string const machineName : {"quartz", "lassen", "crusher" } )
   {
-    Group & machine = benchmarks.registerGroup< Group >( machineName );
+    Group & machine = benchmarks.registerGroup< Group >( machineName, true );
     machine.setInputFlags( InputFlags::OPTIONAL );
 
-    Group & run = machine.registerGroup< Group >( "Run" );
+    Group & run = machine.registerGroup< Group >( "Run", true );
     run.setInputFlags( InputFlags::OPTIONAL );
 
-    run.registerWrapper< string >( "name" ).setInputFlag( InputFlags::REQUIRED ).
+    run.registerWrapper< string >( "name", nullptr, true ).setInputFlag( InputFlags::REQUIRED ).
       setDescription( "The name of this benchmark." );
 
-    run.registerWrapper< int >( "timeLimit" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< int >( "timeLimit", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The time limit of the benchmark." );
 
-    run.registerWrapper< string >( "args" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< string >( "args", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "Any extra command line arguments to pass to GEOSX." );
 
-    run.registerWrapper< string >( "autoPartition" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< string >( "autoPartition", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "May be 'Off' or 'On', if 'On' partitioning arguments are created automatically. Default is Off." );
 
-    run.registerWrapper< string >( "scaling" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< string >( "scaling", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "Whether to run a scaling, and which type of scaling to run." );
 
-    run.registerWrapper< int >( "nodes" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< int >( "nodes", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The number of nodes needed to run the base benchmark, default is 1." );
 
-    run.registerWrapper< int >( "tasksPerNode" ).setInputFlag( InputFlags::REQUIRED ).
+    run.registerWrapper< int >( "tasksPerNode", nullptr, true ).setInputFlag( InputFlags::REQUIRED ).
       setDescription( "The number of tasks per node to run the benchmark with." );
 
-    run.registerWrapper< int >( "threadsPerTask" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< int >( "threadsPerTask", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The number of threads per task to run the benchmark with." );
 
-    run.registerWrapper< array1d< int > >( "meshSizes" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< array1d< int > >( "meshSizes", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The target number of elements in the internal mesh (per-process for weak scaling, globally for strong scaling) default doesn't modify the internalMesh." );
 
-    run.registerWrapper< array1d< int > >( "scaleList" ).setInputFlag( InputFlags::OPTIONAL ).
+    run.registerWrapper< array1d< int > >( "scaleList", nullptr, true ).setInputFlag( InputFlags::OPTIONAL ).
       setDescription( "The scales at which to run the problem ( scale * nodes * tasksPerNode )." );
   }
 
@@ -985,7 +987,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
                 finiteElement::FiniteElementBase &
-                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
+                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ), true ).
                        setRestartFlags( RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 

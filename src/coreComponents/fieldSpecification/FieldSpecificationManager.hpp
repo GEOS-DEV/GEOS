@@ -67,9 +67,13 @@ public:
    * @brief Create a new FieldSpecificationBase object as a child of this group.
    * @param childKey the catalog key of the new FieldSpecificationBase derived type to create
    * @param childName the name of the new FieldSpecificationBase object in the repository
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return the group child
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /// This function is used to expand any catalogs in the data structure
   virtual void expandObjectCatalogs() override;

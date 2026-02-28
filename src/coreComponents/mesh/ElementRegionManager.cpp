@@ -77,23 +77,24 @@ auto const & getUserAvailableKeys()
   return keys;
 }
 
-Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::createChild( string const & childKey,
+                                           string const & childName,
+                                           bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ),
                  getDataContext() );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-  return &elementRegions.registerGroup( childName,
-                                        CatalogInterface::factory( childKey, getDataContext(),
-                                                                   childName, &elementRegions ) );
+  return &elementRegions.registerGroup( CatalogInterface::factory( childKey, getDataContext(),
+                                                                   childName, &elementRegions ), allowExistence );
 }
 
 void ElementRegionManager::expandObjectCatalogs()
 {
   for( string const & key : getUserAvailableKeys() )
   {
-    this->createChild( key, key );
+    this->createChild( key, key, true );
   }
 }
 
@@ -270,7 +271,7 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
     {
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName, true ).reference();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

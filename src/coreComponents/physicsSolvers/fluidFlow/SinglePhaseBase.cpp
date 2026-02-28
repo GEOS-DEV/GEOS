@@ -580,7 +580,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // Step 3.4: create hydrostatic pressure table
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
-    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName, true ) );
     presTable->setTableCoordinates( elevationValues, { units::Distance } );
     presTable->setTableValues( pressureValues, units::Pressure );
     presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );

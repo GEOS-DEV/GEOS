@@ -22,6 +22,7 @@
 
 // Source includes
 #include "KeyIndexT.hpp"
+ #include "common/StdContainerWrappers.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/logger/Logger.hpp"
 #include "LvArray/src/limits.hpp"
@@ -36,33 +37,29 @@ namespace geos
  *
  * This class defines a stl-like container that stores values in an stl vector,
  * and has a map lookup table to access the values by a key. It combines the
- * random access performance of a vector when the index is known, the flexibility
- * of a mapped key lookup O(n) if only the key is known.
+ * random access performance of a vector when the index is known with the flexibility
+ * of a mapped key hash lookupif only the key is known.
  *
  * In addition, a keyIndex can be used for lookup, which will give similar
  * performance to an index lookup after the first use of a keyIndex.
  */
 template< typename T,
-          typename T_PTR=T *,
           typename KEY_TYPE=string,
           typename INDEX_TYPE = int >
 class MappedVector
 {
 public:
-  static_assert( std::is_same< T_PTR, T * >::value || std::is_same< T_PTR, std::unique_ptr< T > >::value,
-                 "invalid second template argument for MappedVector<T,T_PTR,KEY_TYPE,INDEX_TYPE>. Allowable types are T * and std::unique_ptr<T>." );
-
   /// The type used for the key of the map
   using key_type      = KEY_TYPE;
 
   /// pointer to the value type
-  using mapped_type   = T_PTR;
+  using mapped_type   = T *;
 
   /// the type of the lookup map
   using LookupMapType          = stdUnorderedMap< KEY_TYPE, INDEX_TYPE >;
 
   /// the type of the values held in the vector
-  using value_type             = typename std::pair< KEY_TYPE, T_PTR >;
+  using value_type             = typename std::pair< KEY_TYPE, T * >;
 
   /// the type of the values with const keys held in the vector
   using const_key_value_type   = typename std::pair< KEY_TYPE const, T * >;
@@ -109,8 +106,7 @@ public:
   /// alias for the KeyIndex itself
   using KeyIndex = KeyIndexT< KEY_TYPE const, INDEX_TYPE >;
 
-
-  /// deleted default constructor
+  /// default constructor
   MappedVector() = default;
 
   /// default destructor
@@ -118,8 +114,6 @@ public:
   {
     clear();
   }
-
-
 
   /**
    * @brief Default copy constructor.
@@ -143,13 +137,10 @@ public:
    */
   MappedVector & operator=( MappedVector && ) = default;
 
-
-
   /**
    * @name element access functions
    */
   ///@{
-
 
   /**
    * @param index
@@ -158,7 +149,7 @@ public:
   inline T const * operator[]( INDEX_TYPE index ) const
   {
     return ( index>KeyIndex::invalid_index &&
-             index<static_cast< INDEX_TYPE >( m_values.size() ) ) ? const_cast< T const * >(&(*(m_values[index].second))) : nullptr;
+             index<static_cast< INDEX_TYPE >( m_values.size() ) ) ? m_values[index].second : nullptr;
   }
 
   /**
@@ -167,7 +158,7 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( INDEX_TYPE index )
-  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( index ) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( index ) ); }
 
   /**
    *
@@ -186,7 +177,9 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KEY_TYPE const & keyName )
-  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyName ) ); }
+  {
+    return const_cast< T * >( const_cast< MappedVector< T, KEY_TYPE, INDEX_TYPE > const * >( this )->operator[]( keyName ) );
+  }
 
   /**
    *
@@ -202,13 +195,11 @@ public:
       index = getIndex( keyIndex.key() );
       keyIndex.setIndex( index );
     }
-#ifdef MAPPED_VECTOR_RANGE_CHECKING
-    else if( m_values[index].first!=keyIndex.Key() )
+    else if( m_values[index].first!=keyIndex.key() )
     {
-      index = getIndex( keyIndex.Key() );
+      index = getIndex( keyIndex.key() );
       keyIndex.setIndex( index );
     }
-#endif
 
     return this->operator[]( index );
   }
@@ -219,10 +210,9 @@ public:
    * @return pointer to T
    */
   inline T * operator[]( KeyIndex const & keyIndex )
-  { return const_cast< T * >( const_cast< MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
+  { return const_cast< T * >( const_cast< MappedVector< T, KEY_TYPE, INDEX_TYPE > const * >(this)->operator[]( keyIndex ) ); }
 
   ///@}
-
 
   /**
    * @name iterator functions
@@ -295,15 +285,36 @@ public:
    * @param keyName key name to assocaite with the new object
    * @param source pointer to object
    * @param takeOwnership whether or not to take ownership of the object
-   * @param overwrite if the key already exists, overwrite indicates whether or not overwrite the existing entry
-   * @return pointer to the object that is held in the MappedVector
+   * @return pointer to the object that is held in the MappedVector, or a nullptr
+   *   if @p keyName already existed.
    */
   T * insert( KEY_TYPE const & keyName,
-              T_PTR source,
-              bool takeOwnership,
-              bool overwrite = false );
+              T * const source,
+              bool const takeOwnership )
+  {
+    GEOS_ASSERT_MSG( source, "Trying to insert a nullptr with name: " << keyName );
 
+    typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
+    if( iterKeyLookup != m_keyLookup.end() )
+    {
+      T const * const existingPointer = m_values[ iterKeyLookup->second ].second;
+      if( takeOwnership && existingPointer != source ) delete source;
+      return nullptr;
+    }
+
+    INDEX_TYPE const index = LvArray::integerConversion< INDEX_TYPE >( m_values.size() );
+
+    m_values.emplace_back( keyName, source );
+    m_constKeyValues.emplace_back( keyName, source );
+    m_constValues.emplace_back( keyName, source );
+
+    m_ownsValues.push_back( takeOwnership );
+
+    m_keyLookup.insert( std::make_pair( keyName, index ) );
+
+    return source;
+  }
 
   /**
    * @brief  Remove element at given index
@@ -329,8 +340,8 @@ public:
     m_constValues.resize( index );
     for( typename valueContainer::size_type i = index; i < m_values.size(); ++i )
     {
-      m_constKeyValues.emplace_back( m_values[i].first, rawPtr( i ) );
-      m_constValues.emplace_back( m_values[i].first, rawPtr( i ) );
+      m_constKeyValues.emplace_back( m_values[i] );
+      m_constValues.emplace_back( m_values[i] );
     }
 
     // adjust lookup map indices
@@ -382,13 +393,12 @@ public:
     {
       deleteValue( LvArray::integerConversion< INDEX_TYPE >( a ) );
     }
+    m_values.clear();
     m_constKeyValues.clear();
     m_constValues.clear();
-    m_values.clear();
     m_ownsValues.clear();
     m_keyLookup.clear();
   }
-
 
   ///@}
 
@@ -409,41 +419,21 @@ public:
   { return this->m_values; }
 
   /**
-   * @brief access for value container
-   * @return reference to const valueContainer
-   */
-  inline constValueContainer const & values() const
-  { return this->m_constValues; }
-
-  /**
    * @brief access for key lookup
    * @return reference lookup map
    */
   inline LookupMapType const & keys() const
   { return m_keyLookup; }
 
-
 private:
 
-  T * rawPtr( INDEX_TYPE index )
-  {
-    return &(*(m_values[index].second));
-  }
-
-  template< typename U = T_PTR >
-  typename std::enable_if< std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE index )
+  void deleteValue( INDEX_TYPE index )
   {
     if( m_ownsValues[index] )
     {
       delete m_values[index].second;
     }
   }
-
-  template< typename U = T_PTR >
-  typename std::enable_if< !std::is_same< U, T * >::value, void >::type
-  deleteValue( INDEX_TYPE GEOS_UNUSED_PARAM( index ) )
-  {}
 
   /// random access container that holds the values
   valueContainer m_values;
@@ -461,75 +451,6 @@ private:
   stdVector< int > m_ownsValues;
 };
 
-template< typename T, typename T_PTR, typename KEY_TYPE, typename INDEX_TYPE >
-T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & keyName,
-                                                            T_PTR source,
-                                                            bool takeOwnership,
-                                                            bool overwrite )
-{
-  INDEX_TYPE index = KeyIndex::invalid_index;
-  typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
-
-
-  // if the key was not found, make DataObject<T> and insert
-  if( iterKeyLookup == m_keyLookup.end() )
-  {
-    value_type newEntry = std::make_pair( keyName, std::move( source ) );
-    m_values.push_back( std::move( newEntry ) );
-    //TODO this needs to be a safe conversion
-    index = static_cast< INDEX_TYPE >(m_values.size()) - 1;
-    m_ownsValues.resize( index + 1 );
-    if( takeOwnership )
-    {
-      m_ownsValues[index] = true;
-    }
-
-    m_keyLookup.insert( std::make_pair( keyName, index ) );
-    m_constKeyValues.emplace_back( keyName, rawPtr( index ) );
-    m_constValues.emplace_back( keyName, rawPtr( index ) );
-
-  }
-  // if key was found
-  else
-  {
-    index = iterKeyLookup->second;
-
-    if( takeOwnership )
-    {
-      m_ownsValues[index] = true;
-    }
-
-    // if value is empty, then move source into value slot
-    if( m_values[index].second==nullptr )
-    {
-      m_values[index].second = std::move( source );
-      m_constKeyValues[index].second = rawPtr( index );
-      m_constValues[index].second = rawPtr( index );
-    }
-    else
-    {
-      if( overwrite )
-      {
-        deleteValue( index );
-        m_values[index].second = std::move( source );
-        m_constKeyValues[index].second = rawPtr( index );
-        m_constValues[index].second = rawPtr( index );
-      }
-      else if( typeid( source ) != typeid( m_values[index].second ) )
-      {
-        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
-                    ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
-      }
-      else
-      {
-        delete source;
-      }
-    }
-  }
-
-  return &(*(m_values[index].second));
-}
-}
+} // namespace geos
 
 #endif /* GEOS_DATAREPOSITORY_MAPPEDVECTOR_HPP_ */

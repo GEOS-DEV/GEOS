@@ -41,12 +41,14 @@ ConstitutiveManager::~ConstitutiveManager()
 {}
 
 
-Group * ConstitutiveManager::createChild( string const & childKey, string const & childName )
+Group * ConstitutiveManager::createChild( string const & childKey,
+                                          string const & childName,
+                                          bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< ConstitutiveBase > material =
     ConstitutiveBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &registerGroup< ConstitutiveBase >( childName, std::move( material ) );
+  return &registerGroup< ConstitutiveBase >( std::move( material ), allowExistence );
 }
 
 
@@ -93,7 +95,7 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
                              numConstitutivePointsPerParentIndex ) );
 
   ConstitutiveBase &
-  materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( constitutiveRelationInstanceName, std::move( material ) );
+  materialGroup = constitutiveGroup->registerGroup< ConstitutiveBase >( std::move( material ) );
   materialGroup.setSizedFromParent( 1 );
   materialGroup.resize( constitutiveGroup->size() );
 

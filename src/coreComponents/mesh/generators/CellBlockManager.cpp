@@ -44,7 +44,9 @@ void CellBlockManager::resize( integer_array const & numElements,
   }
 }
 
-Group * CellBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
+Group * CellBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                       string const & GEOS_UNUSED_PARAM( childName ),
+                                       bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;
@@ -767,7 +769,7 @@ localIndex CellBlockManager::numEdges() const
 
 CellBlock & CellBlockManager::registerCellBlock( string const & name )
 {
-  return this->getCellBlocks().registerGroup< CellBlock >( name );
+  return this->getCellBlocks().registerGroup< CellBlock >( name, true );
 }
 
 CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,

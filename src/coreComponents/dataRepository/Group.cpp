@@ -67,13 +67,6 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
   return catalog;
 }
 
-WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
-{
-  // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
-  string const wrapperName = wrapper->getName();
-  return *m_wrappers.insert( wrapperName, wrapper.release(), true );
-}
-
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
@@ -275,12 +268,10 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
   }
 }
 
-Group * Group::createChild( string const & childKey, string const & childName )
+Group * Group::createChild( string const & childKey, string const & childName, bool const allowExistence )
 {
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return &registerGroup( childName,
-                         CatalogInterface::factory( childKey, getDataContext(),
-                                                    childName, this ) );
+  return &registerGroup( CatalogInterface::factory( childKey, getDataContext(), childName, this ), allowExistence );
 }
 
 void Group::printDataHierarchy( integer const indent ) const
@@ -747,6 +738,68 @@ stdVector< string > Group::getWrappersNames() const
   wrappersNames.reserve( numWrappers() );
   forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
   return wrappersNames;
+}
+
+void Group::insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const allowExistence )
+{
+  GEOS_ERROR_IF( !wrapper, "Trying to register a nullptr WrapperBase with " << getPath() );
+
+  // Extract data from wrapper in case it's free'd in insert.
+  string const name = wrapper->getName();
+  std::type_info const & typeId = wrapper->getTypeId();
+  string const typeName = wrapper->getRTTypeName();
+
+  WrapperBase * const ret = m_wrappers.insert( name, wrapper.release(), true );
+
+  if( ret == nullptr )
+  {
+    WrapperBase const & existingWrapper = getWrapperBase( name );
+    bool const typesMatch = existingWrapper.getTypeId() == typeId;
+
+    if( !allowExistence || !typesMatch )
+    {
+      string registrationString = "";
+      if( !existingWrapper.getRegisteringObjects().empty() )
+      {
+        std::ostringstream oss;
+        oss << ". The existing wrapper was registered by the following:";
+        for( string const & object : existingWrapper.getRegisteringObjects() )
+        {
+          oss << "\n\t" << object;
+        }
+
+        registrationString = oss.str();
+      }
+
+      GEOS_ERROR( "Tried registering a wrapper \"" << name << "\" of type " <<  typeName <<
+                  " with \"" << getPath() << "\"\n" <<
+                  "A wrapper of this name already exists with type " << existingWrapper.getRTTypeName() << registrationString );
+    }
+  }
+}
+
+void Group::insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence )
+{
+  GEOS_ERROR_IF( !newObject, "Attempting to register a nullptr as a subgroup of " << getPath() );
+
+  newObject->m_parent = this;
+
+  // Extract data from newObject in case it's free'd in insert.
+  string const name = newObject->getName();
+  std::type_info const & typeId = typeid( *newObject );
+
+  Group * const ret = m_subGroups.insert( name, newObject, takeOwnership );
+
+  if( ret == nullptr )
+  {
+    Group const & existingGroup = getGroup( name );
+    std::type_info const & existingTypeId = typeid( existingGroup );
+
+    GEOS_ERROR_IF( !allowExistence || (existingTypeId != typeId),
+                   "Tried registering a Group \"" << name << "\" of type " << rtTypes::getTypeName( typeId ) <<
+                   " with \"" << getPath() << "\"\n" <<
+                   "A Group of this name already exists with type " << rtTypes::getTypeName( existingTypeId ) );
+  }
 }
 
 } /* end namespace dataRepository */

@@ -574,7 +574,7 @@ public:
 
     m_registeredField.insert( FIELD_TRAIT::key());
 
-    return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).
+    return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key(), nullptr, true ).
              setApplyDefaultValue( defaultValue ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
@@ -887,7 +887,7 @@ public:
   {
     string const & rankString = std::to_string( rank );
     m_neighborData.emplace( std::piecewise_construct, std::make_tuple( rank ), std::make_tuple( rankString, &m_neighborGroup ) );
-    m_neighborGroup.registerGroup( rankString, &getNeighborData( rank ) );
+    m_neighborGroup.registerGroup( &getNeighborData( rank ) );
   }
 
   /**

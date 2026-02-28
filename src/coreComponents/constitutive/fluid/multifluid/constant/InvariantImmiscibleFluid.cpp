@@ -11,18 +11,14 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
   : MultiFluidBase( name, parent )
 {
   // Override input flags for mandatory options
+  getWrapperBase( viewKeyStruct::componentNamesString() )
+    .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames )
-    .setInputFlag( dataRepository::InputFlags::REQUIRED )
-    .setDescription( "List of fluid components (e.g. CH4, H2O, C5H12)" );
+  getWrapperBase( viewKeyStruct::phaseNamesString() )
+    .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames )
-    .setInputFlag( dataRepository::InputFlags::REQUIRED )
-    .setDescription( "List of fluid phases (e.g. gas, water, oil)" );
-
-  registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight )
-    .setInputFlag( dataRepository::InputFlags::REQUIRED )
-    .setDescription( "Component molar weights [kg/mol]" );
+  getWrapperBase( viewKeyStruct::componentMolarWeightString() )
+    .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
   // Densities: constant phase densities
   registerWrapper( "densities", &m_densities )

@@ -59,9 +59,13 @@ public:
    * @brief Create a child EventManager
    * @param[in] childKey the key of the Event to be added
    * @param[in] childName the name of the child to be added
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return the Event
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief This method is used to expand any catalogs in the data structure
