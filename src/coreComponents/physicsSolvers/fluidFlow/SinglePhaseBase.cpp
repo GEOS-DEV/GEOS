@@ -1027,6 +1027,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                     ElementSubRegionBase & subRegion,
                                                                     string const & )
     {
+      GEOS_UNUSED_VAR( setName );
       if( targetSet.size() == 0 )
       {
         return;

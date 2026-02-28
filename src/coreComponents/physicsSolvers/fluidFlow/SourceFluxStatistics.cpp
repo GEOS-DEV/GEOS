@@ -200,6 +200,7 @@ void SourceFluxStatsAggregator::outputStatsToLog( bool logLevelActive,
                                                   string_view fluxesStr,
                                                   TableData const & statsData )
 {
+  GEOS_UNUSED_VAR( statsData );
   if( logLevelActive && MpiWrapper::commRank() == 0 )
   {
     string const title = GEOS_FMT( "{}, flux statistics for: {}",

@@ -274,7 +274,11 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
     {
       GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
     }
+#if defined(GEOS_DEVICE_COMPILE)
+    GEOS_ERROR( "Negative area found" );
+#else
     GEOS_ERROR( GEOS_FMT( "Negative area found : {}", area ) );
+#endif
   }
   else
   {

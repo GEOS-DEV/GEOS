@@ -2068,6 +2068,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
+          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            flow::globalCompFraction::key() ) );
