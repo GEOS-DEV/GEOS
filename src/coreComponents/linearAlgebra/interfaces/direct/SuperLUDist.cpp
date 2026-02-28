@@ -67,7 +67,8 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
     { LinearSolverParameters::Direct::ColPerm::parmetis, PARMETIS },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist columns permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -84,7 +85,8 @@ rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const 
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist rows permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
