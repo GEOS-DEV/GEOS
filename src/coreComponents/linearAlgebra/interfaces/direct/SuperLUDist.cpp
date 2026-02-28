@@ -289,8 +289,9 @@ void SuperLUDist< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 )
         {
-          GEOS_WARNING( "SuperLUDist: failed to reduce residual below tolerance.\n"
-                        "Condition number estimate: " << condEst );
+          GEOS_WARNING( GEOS_FMT( "SuperLUDist: failed to reduce residual below tolerance.\n"
+                                  "Condition number estimate: {}",
+                                  condEst ) );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }

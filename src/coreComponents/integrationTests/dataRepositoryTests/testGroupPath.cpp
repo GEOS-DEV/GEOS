@@ -116,9 +116,11 @@ TEST( testGroupPath, testGlobalPaths )
     std::ostringstream stream;
     geos::ErrorLogger::formatMsgForLog( ErrorLogger::global().getCurrentExceptionMsg(), stream );
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg );
+                          GEOS_FMT( "The error message was not containing the expected sequence.\n"
+                                    "  Error message :\n{}"
+                                    "  expected sequence :\n{}",
+                                    e.what(),
+                                    expectedMsg ) );
     trowHappened = true;
   }
   // checks if the exception has been thrown as expected

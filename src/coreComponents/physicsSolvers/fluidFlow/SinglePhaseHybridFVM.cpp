@@ -144,7 +144,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n" <<
+      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n"
                     "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored",
                     getDataContext(), bc.getDataContext() );
     } );
