@@ -178,18 +178,18 @@ void addMatrixEntries( hypre_ParCSRMatrix const * const src,
   GEOS_LAI_ASSERT( src != nullptr );
   GEOS_LAI_ASSERT( dst != nullptr );
   KERNEL::launch( hypre_ParCSRMatrixDiag( src ),
-                  [] GEOS_HOST_DEVICE ( auto x ){ return x; },
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
                   hypre_ParCSRMatrixDiag( dst ),
-                  [] GEOS_HOST_DEVICE ( auto x ){ return x; },
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
                   scale );
   if( hypre_CSRMatrixNumCols( hypre_ParCSRMatrixOffd( dst ) ) > 0 )
   {
     HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src );
     HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( dst );
     KERNEL::launch( hypre_ParCSRMatrixOffd( src ),
-                    [src_colmap] GEOS_HOST_DEVICE ( auto i ){ return src_colmap[i]; },
+                    [src_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return src_colmap[i]; },
                     hypre_ParCSRMatrixOffd( dst ),
-                    [dst_colmap] GEOS_HOST_DEVICE ( auto i ){ return dst_colmap[i]; },
+                    [dst_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return dst_colmap[i]; },
                     scale );
   }
 }
