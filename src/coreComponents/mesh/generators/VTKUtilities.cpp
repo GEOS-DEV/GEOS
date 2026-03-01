@@ -909,7 +909,8 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   localIndex const numCells = LvArray::integerConversion< localIndex >( input.getMainMesh()->GetNumberOfCells() );
   int const numProcs = MpiWrapper::commSize( comm );
   int const numPartA = numProcs / numPartZ;
-  GEOS_ERROR_IF_NE_MSG( numProcs % numPartZ, 0, "Number of ranks must evenly divide the number of z-partitions" );
+  int const numProcsRemainder = numProcs % numPartZ;
+  GEOS_ERROR_IF_NE_MSG( numProcsRemainder, 0, "Number of ranks must evenly divide the number of z-partitions" );
 
   // Compute conversion from cell z-index to partition z-index
   std::array< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );

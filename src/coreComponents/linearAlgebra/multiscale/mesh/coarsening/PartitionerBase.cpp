@@ -41,6 +41,8 @@ PartitionerBase::create( LinearSolverParameters::Multiscale::Coarsening params )
       GEOS_THROW( GEOS_FMT( "Multiscale partitioning not supported yet: {}", params.partitionType ), geos::RuntimeError );
     }
   }
+
+  return nullptr;
 }
 
 } // namespace multiscale
