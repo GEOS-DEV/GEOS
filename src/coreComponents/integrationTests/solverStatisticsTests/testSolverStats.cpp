@@ -243,7 +243,7 @@ TEST( testSolverStats, testOutputFiles )
     if( !std::filesystem::exists( filename ))
     {
       GEOS_ERROR( GEOS_FMT( "Error: File '{}' does not exist!", filename ) );
-      GEOS_ERROR( GEOS_FMT( "Current directory: {}", std::filesystem::current_path() ) );
+      GEOS_ERROR( GEOS_FMT( "Current directory: {}", std::filesystem::current_path().string() ) );
       return false;
     }
 
