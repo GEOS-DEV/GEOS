@@ -199,9 +199,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           else
           {
             GEOS_THROW( GEOS_FMT( "{} not found in path {}\n{}",
-                        targetTokens[pathLevel],
-                        objectPath,
-                        targetGroup->dumpSubGroupsNames() ),
+                                  targetTokens[pathLevel],
+                                  objectPath,
+                                  targetGroup->dumpSubGroupsNames() ),
                         geos::DomainError );
           }
         }

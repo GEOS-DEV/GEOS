@@ -157,11 +157,11 @@ namespace geos::format
 template< class T >
 inline std::string toStringForFmt( T const & v )
 {
-  if constexpr( std::is_convertible_v< T, std::string > )
+  if constexpr ( std::is_convertible_v< T, std::string > )
   {
     return std::string( v );
   }
-  else if constexpr( std::is_convertible_v< T, std::string_view > )
+  else if constexpr ( std::is_convertible_v< T, std::string_view > )
   {
     return std::string( std::string_view( v ) );
   }

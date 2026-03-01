@@ -99,7 +99,7 @@ void toStream( std::ostream & outputStream, string_view content, string_view str
     GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
   }
   // TODO: remove after implementing GEOS_ERROR for HIP
-  GEOS_UNUSED_VAR(streamName);
+  GEOS_UNUSED_VAR( streamName );
 }
 
 void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const

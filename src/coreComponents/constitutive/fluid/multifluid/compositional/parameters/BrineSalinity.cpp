@@ -61,7 +61,7 @@ void BrineSalinity::registerParametersImpl( MultiFluidBase * fluid )
     setDescription( "The molar weight for the salt component" );
 }
 
-void BrineSalinity::postInputInitializationImpl( MultiFluidBase const * fluid ,
+void BrineSalinity::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                  ComponentProperties const & componentProperties )
 {
   GEOS_UNUSED_VAR( fluid );

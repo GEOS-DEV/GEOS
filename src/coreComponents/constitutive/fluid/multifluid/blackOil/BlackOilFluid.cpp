@@ -482,7 +482,7 @@ void BlackOilFluid::checkTableConsistency() const
   }
 
   // Needed to remove compilation warnings in the HIP build
-  GEOS_UNUSED_VAR(PT::OIL);
+  GEOS_UNUSED_VAR( PT::OIL );
 }
 
 BlackOilFluid::KernelWrapper::
