@@ -40,15 +40,15 @@ ErrorLogger g_errorLogger{};
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
 
-std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
+std::string DiagnosticContext::attributeToString( DiagnosticContext::Attribute attribute )
 {
   switch( attribute )
   {
-    case ErrorContext::Attribute::InputFile:    return "inputFile";
-    case ErrorContext::Attribute::InputLine:    return "inputLine";
-    case ErrorContext::Attribute::DataPath:     return "dataPath";
-    case ErrorContext::Attribute::DetectionLoc: return "detectionLocation";
-    case ErrorContext::Attribute::Signal:       return "signal";
+    case DiagnosticContext::Attribute::InputFile:    return "inputFile";
+    case DiagnosticContext::Attribute::InputLine:    return "inputLine";
+    case DiagnosticContext::Attribute::DataPath:     return "dataPath";
+    case DiagnosticContext::Attribute::DetectionLoc: return "detectionLocation";
+    case DiagnosticContext::Attribute::Signal:       return "signal";
     default:                                    return "unknown";
   }
 }
@@ -82,11 +82,11 @@ DiagnosticMsgBuilder DiagnosticMsgBuilder::modify( DiagnosticMsg & errorMsg )
   return DiagnosticMsgBuilder( errorMsg );
 }
 
-DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext && ctxInfo )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( DiagnosticContext && ctxInfo )
 {
   auto lowerBoundPos = std::lower_bound( m_errorMsg.m_contextsInfo.begin(), m_errorMsg.m_contextsInfo.end(),
                                          ctxInfo.m_priority,
-                                         []( ErrorContext const & ctx, integer priority )
+                                         []( DiagnosticContext const & ctx, integer priority )
   { return ctx.m_priority >= priority; } );
   m_errorMsg.m_contextsInfo.insert( lowerBoundPos, std::move( ctxInfo ) );
   return *this;
@@ -94,8 +94,8 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext &&
 
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addDetectionLocation( string_view detectionLocation )
 {
-  addContextInfo( ErrorContext{  string( detectionLocation ),
-                                 { { ErrorContext::Attribute::DetectionLoc,
+  addContextInfo( DiagnosticContext{  string( detectionLocation ),
+                                 { { DiagnosticContext::Attribute::DetectionLoc,
                                    string( detectionLocation ) } } } );
   return *this;
 }
@@ -161,10 +161,10 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignal( integer const sig, bool 
   // standard messages
   addToMsg( errorMsg, toEnd );
 
-  this->addContextInfo( ErrorContext{  "Signal (detected from Signal Handler)",
-                                       { { ErrorContext::Attribute::Signal,
+  this->addContextInfo( DiagnosticContext{  "Signal (detected from Signal Handler)",
+                                       { { DiagnosticContext::Attribute::Signal,
                                          std::to_string( sig )  },
-                                         { ErrorContext::Attribute::DetectionLoc,
+                                         { DiagnosticContext::Attribute::DetectionLoc,
                                            string( "Signal handler" )  }
                                        } } );
   return *this;
@@ -304,7 +304,7 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
   }
   os << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
   // --- ERROR CONTEXT & MESSAGE ---
-  std::vector< ErrorContext > const & contexts = errMsg.m_contextsInfo;
+  std::vector< DiagnosticContext > const & contexts = errMsg.m_contextsInfo;
   if( contexts.empty() || contexts.front().m_formattedContext.empty())
   {
     os << PREFIX << "Message :\n";
@@ -369,15 +369,15 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
     // context information
     if( !errMsg.m_contextsInfo.empty() )
     {
-      std::vector< ErrorContext > contextInfo = errMsg.m_contextsInfo;
+      std::vector< DiagnosticContext > contextInfo = errMsg.m_contextsInfo;
       // Sort contextual information by decreasing priority
       std::sort( contextInfo.begin(), contextInfo.end(),
-                 []( const ErrorContext & a, const ErrorContext & b ) {
+                 []( const DiagnosticContext & a, const DiagnosticContext & b ) {
         return a.m_priority > b.m_priority;
       } );
       // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
-      for( ErrorContext const & ctxInfo : contextInfo )
+      for( DiagnosticContext const & ctxInfo : contextInfo )
       {
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         if( !ctxInfo.m_formattedContext.empty())
@@ -386,7 +386,7 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
         }
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
-          yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
+          yamlFile << g_level3Next << DiagnosticContext::attributeToString( key ) << ": " << value << "\n";
         }
       }
     }

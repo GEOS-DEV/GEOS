@@ -23,11 +23,11 @@ namespace geos
 {
 
 /**
- * @struct ErrorContext
+ * @struct DiagnosticContext
  * Store contextual information about the error that occurred and assign it a priority
  * default is 0
  */
-struct ErrorContext
+struct DiagnosticContext
 {
 
   /**
@@ -64,21 +64,21 @@ struct ErrorContext
   integer m_priority = 0;
 
   /**
-   * @brief Construct to initialize ErrorContext
+   * @brief Construct to initialize DiagnosticContext
    * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    */
-  ErrorContext( string formattedContext, map< Attribute, std::string > attributes ):
+  DiagnosticContext( string formattedContext, map< Attribute, std::string > attributes ):
     m_formattedContext( formattedContext ),
     m_attributes( attributes ) {};
 
   /**
-   * @brief Construct to initialize ErrorContext given a string containing the context and his priority
+   * @brief Construct to initialize DiagnosticContext given a string containing the context and his priority
    * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    * @param priority Priority level assigned to an error context.
    */
-  ErrorContext( string formattedContext, map< Attribute, std::string > attributes, integer priority ):
+  DiagnosticContext( string formattedContext, map< Attribute, std::string > attributes, integer priority ):
     m_formattedContext( formattedContext ),
     m_attributes( attributes ),
     m_priority( priority ) {};
@@ -88,7 +88,7 @@ struct ErrorContext
    * @param priority the new value to asign
    * @return the reference to the corresponding error
    */
-  ErrorContext & setPriority( integer priority )
+  DiagnosticContext & setPriority( integer priority )
   { m_priority = priority; return *this; }
 
   /**
@@ -118,7 +118,7 @@ struct DiagnosticMsg
   /// the source location line (default is 0)
   integer m_line = 0;
   /// Additional information about the diagnostic in the input file
-  std::vector< ErrorContext > m_contextsInfo;
+  std::vector< DiagnosticContext > m_contextsInfo;
   /// the stack trace
   std::vector< std::string > m_sourceCallStack;
   /// Indicates whether the stored call stack trace is valid and usable.
@@ -169,14 +169,14 @@ public:
   DiagnosticMsgBuilder & addToMsg( std::string_view msg, bool toEnd = false );
   /**
    * @brief Adds one or more context elements to the error
-   * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
+   * @tparam Args Variadic pack of compatible types (DiagnosticContext / DataContext)
    * @param args List of context data structures.
    * @return Reference to the current instance for method chaining.
    */
   template< typename ... Args >
   DiagnosticMsgBuilder & addContextInfo( Args && ... args )
   {
-    ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
+    ( this->addContextInfoImpl( DiagnosticContext( args ) ), ... );
     return *this;
   }
 
@@ -244,9 +244,9 @@ private:
 
   /**
    * @brief Add contextual information about the error/warning
-   * @param ctxInfo rvalue of the ErrorContext class
+   * @param ctxInfo rvalue of the DiagnosticContext class
    */
-  DiagnosticMsgBuilder & addContextInfoImpl( ErrorContext && ctxInfo );
+  DiagnosticMsgBuilder & addContextInfoImpl( DiagnosticContext && ctxInfo );
 
   /// The diagnosticMsg being constructed
   DiagnosticMsg & m_errorMsg;
