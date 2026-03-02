@@ -100,11 +100,7 @@ public:
     StackVariables()
       : Base::StackVariables(), xLocal(), primaryField_local{ 0.0 } {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    int xLocal;
-#else
     real64 xLocal[maxNumTestSupportPointsPerElem][3];
-#endif
 
     real64 primaryField_local[maxNumTestSupportPointsPerElem];
   };
@@ -121,7 +117,7 @@ public:
   inline void setup( localIndex const k, StackVariables & stack ) const
   {
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-    stack.numRows = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    stack.numRows = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
     stack.numCols = stack.numRows;
     for( localIndex a = 0; a < stack.numRows; ++a )
     {
@@ -150,7 +146,7 @@ public:
   {
     real64 const conductivity = m_constitutiveUpdate.getConductivity( k );
     real64 dNdX[maxNumTestSupportPointsPerElem][3];
-    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+    real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
 
     for( localIndex a = 0; a < stack.numRows; ++a )
     {
