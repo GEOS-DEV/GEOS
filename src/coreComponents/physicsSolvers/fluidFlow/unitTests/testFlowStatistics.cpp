@@ -17,6 +17,10 @@
 #include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsTask.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
@@ -208,17 +212,41 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
   }
 }
 
-real64 getTotalSinglePhaseFluidMass( ProblemManager & problem,
-                                     MeshLevel & mesh,
-                                     string_view statsTaskPath )
+template< typename SolverType >
+real64 getTotalFluidMass( ProblemManager & problem, SolverType & solver, string_view statsTaskPath );
+
+template<>
+real64 getTotalFluidMass< SinglePhaseBase >( ProblemManager & problem,
+                                             SinglePhaseBase & solver,
+                                             string_view statsTaskPath )
 {
   using namespace singlePhaseStatistics;
+  MeshLevel & mesh = problem.getDomainPartition()
+                       .getMeshBody( 0 )
+                       .getMeshLevel( solver.getDiscretizationName() );
   StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
   StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
   RegionStatistics const & stats = statsAggregator.getMeshRegionsStatistics( mesh );
   return stats.m_totalMass;
 }
 
+template<>
+real64 getTotalFluidMass< CompositionalMultiphaseBase >( ProblemManager & problem,
+                                                         CompositionalMultiphaseBase & solver,
+                                                         string_view statsTaskPath )
+{
+  using namespace compositionalMultiphaseStatistics;
+  MeshLevel & mesh = problem.getDomainPartition()
+                       .getMeshBody( 0 )
+                       .getMeshLevel( solver.getDiscretizationName() );
+  StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
+  StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
+  RegionStatistics const & stats = statsAggregator.getMeshRegionsStatistics( mesh );
+  double totalMass = 0.0;
+  for( integer i = 0; i < statsAggregator.getNumPhases(); ++i )
+    totalMass += stats.m_phaseMass[i];
+  return totalMass;
+}
 
 /**
  * @brief Verification that the source flux statistics are correct for the current timestep
@@ -559,10 +587,8 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
-  PhysicsSolverBase & flowSolver = problem.getGroupByPath< PhysicsSolverBase >( testSet.inputs.flowSolverPath );
-  MeshLevel & mesh = problem.getDomainPartition()
-                       .getMeshBody( 0 )
-                       .getMeshLevel( flowSolver.getDiscretizationName() );
+  SinglePhaseBase & flowSolver =
+    problem.getGroupByPath< SinglePhaseBase >( testSet.inputs.flowSolverPath );
 
   real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
@@ -576,7 +602,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalSinglePhaseFluidMass( problem, mesh, testSet.inputs.statsTaskPath );
+      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
     }
   } );
 
@@ -587,7 +613,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check singlephasestatistics results
-  real64 const lastMass = getTotalSinglePhaseFluidMass( problem, mesh, testSet.inputs.statsTaskPath );
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
   real64 const massDiffTol = 1e-7;
   EXPECT_NEAR( lastMass - firstMass,
                -testSet.totalMassProd[0],
@@ -853,12 +879,23 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
+  CompositionalMultiphaseBase & flowSolver =
+    problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+
+    static bool passedFirstTimeStep = false;
+    if( !passedFirstTimeStep )
+    {
+      passedFirstTimeStep = true;
+      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+    }
   } );
 
   // run simulation
@@ -866,6 +903,14 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 
   checkWholeSimFluxStats( problem, testSet );
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
+
+  // check compositionalmultiphasestatistics results
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+  real64 const massDiffTol = 1e-5;
+  EXPECT_NEAR( lastMass - firstMass,
+               -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),
+               massDiffTol * std::abs( testSet.totalMassProd[0] + testSet.totalMassProd[1] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
+                                                                                                            singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 
@@ -1077,6 +1122,7 @@ TestSet getTestSet()
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;
@@ -1129,12 +1175,23 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
+  CompositionalMultiphaseBase & flowSolver =
+    problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
     integer const timestepId = timeStepChecker.getTestedTimeStepCount();
     checkTimeStepStats( testSet, time_n, timestepId );
     checkTimeStepFluxStats( problem, testSet, time_n, timestepId );
+
+    static bool passedFirstTimeStep = false;
+    if( !passedFirstTimeStep )
+    {
+      passedFirstTimeStep = true;
+      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+    }
   } );
 
   // run simulation
@@ -1142,6 +1199,14 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 
   checkWholeSimFluxStats( problem, testSet );
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
+
+  // check compositionalmultiphasestatistics results
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+  real64 const massDiffTol = 1e-5;
+  EXPECT_NEAR( lastMass - firstMass,
+               -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),
+               massDiffTol * std::abs( testSet.totalMassProd[0] + testSet.totalMassProd[1] ) ) << GEOS_FMT( "{} total mass difference from start to end is not consistent with fluxes production.",
+                                                                                                            singlePhaseStatistics::StatsTask::catalogName() );
 }
 
 
