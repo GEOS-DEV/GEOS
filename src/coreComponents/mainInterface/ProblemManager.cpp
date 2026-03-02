@@ -640,33 +640,6 @@ void ProblemManager::generateMesh()
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupBaseLevelMeshGlobalInfo();
 
-  // Optionally validate the Euler-Poincaré characteristic χ = V − E + F − C.
-  // This must run AFTER setupBaseLevelMeshGlobalInfo() so that ghost ranks are
-  // properly assigned and getNumberOfLocalIndices() returns owned-only counts.
-  // Otherwise, on N MPI ranks every rank counts all its entities (including
-  // ghost copies) as "local", and the MPI sum yields N × χ instead of χ.
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    MeshGeneratorBase const * const meshGen =
-      meshManager.getGroupPointer< MeshGeneratorBase >( meshBody.getName() );
-    if( meshGen != nullptr && meshGen->m_checkEulerCharacteristic )
-    {
-      MeshLevel & baseMesh = meshBody.getBaseDiscretization();
-      integer const chi = computeEulerCharacteristic( baseMesh.getNodeManager(),
-                                                      baseMesh.getEdgeManager(),
-                                                      baseMesh.getFaceManager(),
-                                                      baseMesh.getElemManager() );
-      GEOS_WARNING_IF( chi != 1,
-                       "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
-                                                          "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
-                                                                                           "solid without interior voids). The mesh may contain multiple disconnected "
-                                                                                           "bodies, interior voids, or non-manifold topology. "
-                                                                                           "The simulation will proceed." );
-      GEOS_LOG_RANK_0_IF( chi == 1,
-                          "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
-    }
-  } );
-
   // setup the MeshLevel associated with the discretizations
   for( auto const & discretizationPair: discretizations )
   {
@@ -723,6 +696,33 @@ void ProblemManager::generateMesh()
 
   domain.setupCommunications( useNonblockingMPI );
   domain.outputPartitionInformation();
+
+  // Optionally validate the Euler-Poincaré characteristic χ = V − E + F − C.
+  // This must run AFTER setupCommunications() so that ghost cells and proper
+  // node ghost ranks are available.  The computation reconstructs V, E, F from
+  // cell-to-node maps (iterating owned + ghost cells) and uses a min-global-
+  // node ownership rule for MPI de-duplication.
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  {
+    MeshGeneratorBase const * const meshGen =
+      meshManager.getGroupPointer< MeshGeneratorBase >( meshBody.getName() );
+    if( meshGen != nullptr && meshGen->m_checkEulerCharacteristic )
+    {
+      MeshLevel & baseMesh = meshBody.getBaseDiscretization();
+      integer const chi = computeEulerCharacteristic( baseMesh.getNodeManager(),
+                                                      baseMesh.getEdgeManager(),
+                                                      baseMesh.getFaceManager(),
+                                                      baseMesh.getElemManager() );
+      GEOS_WARNING_IF( chi != 1,
+                       "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
+                                                          "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
+                                                                                           "solid without interior voids). The mesh may contain multiple disconnected "
+                                                                                           "bodies, interior voids, or non-manifold topology. "
+                                                                                           "The simulation will proceed." );
+      GEOS_LOG_RANK_0_IF( chi == 1,
+                          "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
+    }
+  } );
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
