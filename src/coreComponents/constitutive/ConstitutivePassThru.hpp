@@ -267,8 +267,8 @@ struct ConstitutivePassThru< NullModel >
     else
     {
       GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+                  << LvArray::system::demangleType( constitutiveRelation ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
@@ -290,8 +290,8 @@ struct ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability
     else
     {
       GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability > >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+                  << LvArray::system::demangleType( constitutiveRelation ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
@@ -446,8 +446,8 @@ struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeabili
     else
     {
       GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+                  << LvArray::system::demangleType( constitutiveRelation ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
