@@ -3910,10 +3910,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--timeIntegrationOption => Time integration method. Options are:
-* QuasiStatic
-*ImplicitTransient-->
-		<xsd:attribute name="timeIntegrationOption" type="geos_Electrostatics_TimeIntegrationOption" default="QuasiStatic" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -3925,11 +3921,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_Electrostatics_TimeIntegrationOption">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|QuasiStatic|ImplicitTransient" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
