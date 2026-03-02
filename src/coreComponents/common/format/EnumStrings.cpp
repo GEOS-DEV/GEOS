@@ -39,4 +39,4 @@ void internal::EnumErrorMessageFromString( string const & s,
               InputError );
 }
 
-};
+}

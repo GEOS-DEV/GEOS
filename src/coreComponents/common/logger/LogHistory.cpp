@@ -221,4 +221,4 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
 }
 
 
-};
+}
