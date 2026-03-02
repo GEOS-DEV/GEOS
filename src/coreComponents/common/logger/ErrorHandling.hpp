@@ -166,7 +166,7 @@ public:
 
 /**
  * @brief Sets the current log part.
- * @param logPart The new log part to set.
+ * @param currentLogPart The new log part to set.
  */
   void setCurrentLogPart( string const & currentLogPart )
   { m_currentLogPart = currentLogPart; }

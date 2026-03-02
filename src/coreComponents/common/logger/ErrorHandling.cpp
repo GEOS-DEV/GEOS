@@ -95,8 +95,8 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( DiagnosticConte
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addDetectionLocation( string_view detectionLocation )
 {
   addContextInfo( DiagnosticContext{  string( detectionLocation ),
-                                 { { DiagnosticContext::Attribute::DetectionLoc,
-                                   string( detectionLocation ) } } } );
+                                      { { DiagnosticContext::Attribute::DetectionLoc,
+                                        string( detectionLocation ) } } } );
   return *this;
 }
 
@@ -162,11 +162,11 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignal( integer const sig, bool 
   addToMsg( errorMsg, toEnd );
 
   this->addContextInfo( DiagnosticContext{  "Signal (detected from Signal Handler)",
-                                       { { DiagnosticContext::Attribute::Signal,
-                                         std::to_string( sig )  },
-                                         { DiagnosticContext::Attribute::DetectionLoc,
-                                           string( "Signal handler" )  }
-                                       } } );
+                                            { { DiagnosticContext::Attribute::Signal,
+                                              std::to_string( sig )  },
+                                              { DiagnosticContext::Attribute::DetectionLoc,
+                                                string( "Signal handler" )  }
+                                            } } );
   return *this;
 }
 

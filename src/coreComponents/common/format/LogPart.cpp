@@ -28,7 +28,7 @@ namespace geos
 LogPart::LogPart( string const & logpartName, bool enableOutput )
 {
   m_formattedStartDescription.m_title = logpartName;
-  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logpartName);
+  m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logpartName );
 
   m_enableOutput = enableOutput;
 

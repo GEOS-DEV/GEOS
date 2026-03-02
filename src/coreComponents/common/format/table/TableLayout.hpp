@@ -696,12 +696,14 @@ private:
   /**
    * @brief Create and add a column to the columns vector given a string
    * @param columnName The column name
+   * @return The current tableLayout
    */
   TableLayout::Column & addColumn( string_view columnName );
 
   /**
    * @brief Create and add a column to the columns vector given a Column
    * @param column Vector containing addition information on the column
+   * @return The current tableLayout
    */
   TableLayout::Column & addColumn( TableLayout::Column const & column );
 

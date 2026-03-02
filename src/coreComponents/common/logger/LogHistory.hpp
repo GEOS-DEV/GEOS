@@ -73,7 +73,8 @@ public:
    * @brief Insert an element to the diagnostic history container if an equivalent key doesn't exist.
    * @param logPartName The logPart where the diagnostic occured
    * @param msgType The diagnostic message type
-   * @param locationKey The key identifying the diagnostic source location
+   * @param fileName The filement where the diagnostic occured
+   * @param lineCount The line where the diagnostic occured
    */
   void insertDiagnosticReport( string_view logPartName, MsgType msgType,
                                string const & fileName, integer lineCount )
