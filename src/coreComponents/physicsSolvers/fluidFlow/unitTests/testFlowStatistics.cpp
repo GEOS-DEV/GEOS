@@ -17,7 +17,6 @@
 #include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "physicsSolvers/StatisticsAggregatorBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatisticsTask.hpp"
@@ -48,6 +47,7 @@ struct TestInputs
   string timeStepFluxStatsPath;
   string wholeSimFluxStatsPath;
   string flowSolverPath;
+  string statsTaskPath;
 
   // rates for each timesteps, for each phases
   array2d< real64 > sourceRates;
@@ -208,24 +208,15 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
   }
 }
 
-real64 getTotalFluidMass( ProblemManager & problem, string_view flowSolverPath )
+real64 getTotalSinglePhaseFluidMass( ProblemManager & problem,
+                                     MeshLevel & mesh,
+                                     string_view statsTaskPath )
 {
-  real64 totalMass = 0.0;
-  PhysicsSolverBase const & solver = problem.getGroupByPath< PhysicsSolverBase >( string( flowSolverPath ) );
-  solver.forDiscretizationOnMeshTargets( problem.getDomainPartition().getMeshBodies(),
-                                         [&] ( string const &,
-                                               MeshLevel & mesh,
-                                               string_array const & )
-  {
-    mesh.getElemManager().forElementRegions( [&]( ElementRegionBase & region )
-    {
-      using singlePhaseStatistics::RegionStatistics;
-      using ViewKeys = singlePhaseStatistics::StatsAggregator::ViewKeys;
-      RegionStatistics & regionStats = region.getReference< RegionStatistics >( ViewKeys::regionsStatisticsString() );
-      totalMass += regionStats.m_totalMass;
-    } );
-  } );
-  return totalMass;
+  using namespace singlePhaseStatistics;
+  StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
+  StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
+  RegionStatistics const & stats = statsAggregator.getMeshRegionsStatistics( mesh );
+  return stats.m_totalMass;
 }
 
 
@@ -531,6 +522,7 @@ TestSet getTestSet()
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
@@ -567,8 +559,12 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
 
   setupProblemFromXML( problem, testSet.inputs.xmlInput.data() );
 
-  real64 firstMass;
+  PhysicsSolverBase & flowSolver = problem.getGroupByPath< PhysicsSolverBase >( testSet.inputs.flowSolverPath );
+  MeshLevel & mesh = problem.getDomainPartition()
+                       .getMeshBody( 0 )
+                       .getMeshLevel( flowSolver.getDiscretizationName() );
 
+  real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
   timeStepChecker.setTimeStepCheckingFunction( [&]( real64 const time_n )
   {
@@ -580,7 +576,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+      firstMass = getTotalSinglePhaseFluidMass( problem, mesh, testSet.inputs.statsTaskPath );
     }
   } );
 
@@ -591,7 +587,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check singlephasestatistics results
-  real64 const lastMass = getTotalFluidMass( problem, testSet.inputs.flowSolverPath );
+  real64 const lastMass = getTotalSinglePhaseFluidMass( problem, mesh, testSet.inputs.statsTaskPath );
   real64 const massDiffTol = 1e-7;
   EXPECT_NEAR( lastMass - firstMass,
                -testSet.totalMassProd[0],
@@ -808,6 +804,7 @@ TestSet getTestSet()
   testInputs.timeStepFluxStatsPath = "/Tasks/timeStepFluxStats";
   testInputs.wholeSimFluxStatsPath = "/Tasks/wholeSimFluxStats";
   testInputs.flowSolverPath = "/Solvers/testSolver";
+  testInputs.statsTaskPath = "/Tasks/timeStepReservoirStats";
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 1;

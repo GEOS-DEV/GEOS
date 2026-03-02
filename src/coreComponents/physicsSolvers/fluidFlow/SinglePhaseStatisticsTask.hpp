@@ -66,6 +66,12 @@ public:
 
   /**@}*/
 
+  StatsAggregator & getStatisticsAggregator()
+  { return *m_aggregator; }
+
+  StatsAggregator const & getStatisticsAggregator() const
+  { return *m_aggregator; }
+
 private:
 
   using Base = FieldStatisticsBase< SinglePhaseBase >;
