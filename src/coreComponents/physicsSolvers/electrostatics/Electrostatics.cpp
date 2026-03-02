@@ -268,7 +268,7 @@ void Electrostatics::applyCurrentBC( real64 const time, DofManager const & dofMa
                                                                         [&]( TractionBoundaryCondition const & bc, string const &, SortedArrayView< localIndex const > const & targetSet,
                                                                              Group &, string const & )
     {
-      bc.launch( time, blockLocalDofNumber, dofRankOffset, faceManager, targetSet, localRhs );
+      bc.launch( time, blockLocalDofNumber, dofRankOffset, faceManager, nodeManager.referencePosition(), targetSet, localRhs );
     } );
   } );
 }

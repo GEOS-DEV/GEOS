@@ -18,11 +18,11 @@
 using ImplicitFiniteStrainQuasiStaticPolicy = @ImplicitFiniteStrainQuasiStaticPolicy@;
 
 #define INSTANTIATION( NAME )\
-template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >; \
-template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >::kernelLaunch< NAME##Policy, \
-                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > > \
+template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@_impl >; \
+template real64 NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@_impl >::kernelLaunch< NAME##Policy, \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@_impl > > \
                                                                                       ( localIndex const, \
-                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ > const & ); \
+                                                                                        NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@_impl> const & ); \
 
 
 namespace geos

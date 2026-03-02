@@ -21,6 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_IMPL_HPP_
 
 #include "ImplicitFiniteStrainQuasiStatic.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
+
 namespace geos
 {
 
@@ -52,7 +54,7 @@ void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE
 {
   m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
 
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  localIndex const numSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
   stack.numRows = 3 * numSupportPoints;
   stack.numCols = stack.numRows;
@@ -84,7 +86,7 @@ void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE
   localIndex const k, localIndex const q, StackVariables & stack, STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[numNodesPerElem][3];
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
 
   real64 stress[3][3] = { {0} };
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
@@ -93,8 +95,8 @@ void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE
   real64 dUdX[3][3] = { {0} };
   real64 F[3][3] = { {0} };
 
-  FE_TYPE::gradient( dNdX, stack.u_local, dUdX );
-  FE_TYPE::gradient( dNdX, stack.uhat_local, dUhatdX );
+  finiteElement::feOps::gradient( dNdX, stack.u_local, dUdX );
+  finiteElement::feOps::gradient( dNdX, stack.uhat_local, dUhatdX );
 
   // calculate deformation gradient
   LvArray::tensorOps::copy< 3, 3 >( F, dUdX );
@@ -119,11 +121,11 @@ void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE
 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
-  FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                   stress,
-                                   N,
-                                   gravityForce,
-                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+  finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
+                                                stress,
+                                                N,
+                                                gravityForce,
+                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
   stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 }
@@ -137,7 +139,7 @@ real64 ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TY
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
 
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+  localIndex const numSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
 
   // #pragma unroll
   for( int localNode = 0; localNode < numSupportPoints; ++localNode )
