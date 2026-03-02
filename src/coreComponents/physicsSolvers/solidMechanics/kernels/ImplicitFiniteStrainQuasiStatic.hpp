@@ -108,8 +108,8 @@ public:
                                        xLocal(), u_local(), uhat_local(), constitutiveStiffness()
     {}
 
-      /// C-array stack storage for element local the nodal positions.
-      real64 xLocal[ numNodesPerElem ][ 3 ];
+    /// C-array stack storage for element local the nodal positions.
+    real64 xLocal[ numNodesPerElem ][ 3 ];
 
     /// Stack storage for the element local nodal displacement
     real64 u_local[numNodesPerElem][numDofPerTrialSupportPoint];
