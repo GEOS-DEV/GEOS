@@ -37,7 +37,7 @@
 namespace geos
 {
 
-std::string extractAfterLastOccurrence( string const & str, char delimiter )
+string_view extractAfterLastOccurrence( string_view str, char delimiter )
 {
   size_t pos = str.find_last_of( delimiter );
 
@@ -51,11 +51,11 @@ std::string extractAfterLastOccurrence( string const & str, char delimiter )
 
 void LogHistory::notifyMsg( string_view logPartName, DiagnosticMsg const & msgType )
 {
-  string fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
+  string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
 
-  auto & stats = m_errorHistory.get_inserted( std::make_tuple( string( logPartName ), msgType.m_type,
-                                                               fileName, lineCount ));
+  auto & stats = m_diagnosticHistory.get_inserted( std::make_tuple( string( logPartName ), msgType.m_type,
+                                                                    string( fileName ), lineCount ));
   stats.count++;
 }
 
@@ -99,8 +99,6 @@ gatherTuplesRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
                        0 );
 
   return {globalAllocations, recvCounts};
-
-
 }
 
 void LogHistory::diagnosticStatsReport()
@@ -157,23 +155,18 @@ void LogHistory::diagnosticStatsReport()
           bufferOps::Unpack( rankStart, MsgTypeUnpacked );
           bufferOps::Unpack( rankStart, fileNameUnpacked );
           bufferOps::Unpack( rankStart, lineCountUnpacked );
-          history.insertBlanckReport( logPartUnpacked, MsgTypeUnpacked, fileNameUnpacked, lineCountUnpacked );
+          history.insertDiagnosticReport( logPartUnpacked, MsgTypeUnpacked, fileNameUnpacked, lineCountUnpacked );
         }
       }
     }
   }
 
-
+  //4 - Display
   if( MpiWrapper::commRank() == 0 )
   {
     TableTextFormatter tableReportFormatter;
     GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
   }
-}
-
-void LogHistory::insertBlanckReport( string_view logPartName, MsgType msgType, string const & fileName, integer lineCount )
-{
-  m_errorHistory.get_inserted( std::make_tuple( string( logPartName ), msgType, fileName, lineCount ));
 }
 
 template<>
@@ -187,7 +180,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
-  stdMap< std::pair< string, MsgType >, int > countPerPartAndType;
+  stdMap< std::pair< string, MsgType >, integer > countPerPartAndType;
   using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
   CellRow emptyCellRow;
   emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
@@ -196,29 +189,27 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
 
   for( const auto & [tupleKey, msgTypes] : messageCounts.getDiagnosticHistory())
   {
-    auto part = std::get< 0 >( tupleKey );
-    auto type = std::get< 1 >( tupleKey );
+    auto logPart = std::get< 0 >( tupleKey );
+    auto msgType = std::get< 1 >( tupleKey );
 
-    countPerPartAndType.get_inserted( std::make_pair( part, type ))++;
+    countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 
-    if( rowByPart.find( part ) == rowByPart.end())
-      rowByPart.get_inserted( part ) = emptyCellRow;
+    if( rowByPart.find( logPart ) == rowByPart.end())
+      rowByPart.get_inserted( logPart ) = emptyCellRow;
   }
 
   for( auto & [keyPair, count] : countPerPartAndType )
   {
-    auto part = std::get< 0 >( keyPair );
-    auto type = std::get< 1 >( keyPair );
-    rowByPart.get_inserted( part ).at((size_t)type ).value =  std::to_string( count );
+    auto logPart = std::get< 0 >( keyPair );
+    auto msgType = std::get< 1 >( keyPair );
+    rowByPart.get_inserted( logPart ).at((size_t)msgType ).value =  std::to_string( count );
   }
 
   TableData data;
   for( auto const &  [logPart, cells] : rowByPart )
   {
-    stdVector< TableData::CellData >row (
-      {
-        TableData::CellData{CellType::Value,
-                            logPart }
+    stdVector< TableData::CellData >row ( {
+        TableData::CellData{ CellType::Value, logPart }
       } );
 
     row.insert( row.end(), cells.begin(), cells.end());

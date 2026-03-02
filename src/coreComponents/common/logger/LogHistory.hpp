@@ -36,7 +36,7 @@ namespace geos
  */
 struct MsgStatistics
 {
-  ///
+  /// Number of times a message occured during the simulation
   integer count;
 };
 
@@ -48,35 +48,38 @@ class LogHistory
 {
 public:
 
-  /// Alias for the historical error unordered_map key
-  using HistoricalErrorUnorderedMapKey = std::tuple< string, MsgType, string, integer >;
+  /// Alias for the historical diagnostic unordered_map key
+  using HistoricalDiagnosticUnorderedMapKey = std::tuple< string, MsgType, string, integer >;
 
   /**
    * @brief Report a diagnostic message
    * @param logPartName The logPart where the message occured
    * @param diagMsg The diagnostic message to record
-   * @param threadCount
    */
   void notifyMsg( string_view logPartName, DiagnosticMsg const & diagMsg );
 
   /**
-   * @brief Display the error statistics to the log
+   * @brief Display the diagnostic statistics to the log
    */
   void diagnosticStatsReport();
 
   /**
-   * @return The const historical error
+   * @return The const historical diagnostic
    */
   auto const & getDiagnosticHistory() const
-  { return m_errorHistory; }
+  { return m_diagnosticHistory; }
 
   /**
-   * @brief Insert an element to the error history container if an equivalent key doesn't exist.
-   * @param logPartName The logPart where the error occured
-   * @param msgType The error message type
-   * @param locationKey The key identifying the error source location
+   * @brief Insert an element to the diagnostic history container if an equivalent key doesn't exist.
+   * @param logPartName The logPart where the diagnostic occured
+   * @param msgType The diagnostic message type
+   * @param locationKey The key identifying the diagnostic source location
    */
-  void insertBlanckReport( string_view logPartName, MsgType msgType, string const & fileName, integer lineCount );
+  void insertDiagnosticReport( string_view logPartName, MsgType msgType,
+                               string const & fileName, integer lineCount )
+  {
+    m_diagnosticHistory.get_inserted( std::make_tuple( string( logPartName ), msgType, fileName, lineCount ));
+  }
 
 private:
 
@@ -84,7 +87,7 @@ private:
   struct LocationKeyHash
   {
 
-    std::size_t operator()( HistoricalErrorUnorderedMapKey const & key ) const noexcept
+    std::size_t operator()( HistoricalDiagnosticUnorderedMapKey const & key ) const noexcept
     {
       auto const & [logPartType, msgType, filename, lineCount] = key;
 
@@ -105,8 +108,8 @@ private:
   struct LocationKeyEqual
   {
 
-    bool operator()( HistoricalErrorUnorderedMapKey const & lhs,
-                     HistoricalErrorUnorderedMapKey const & rhs ) const
+    bool operator()( HistoricalDiagnosticUnorderedMapKey const & lhs,
+                     HistoricalDiagnosticUnorderedMapKey const & rhs ) const
     {
       return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
              std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
@@ -117,11 +120,11 @@ private:
   /// @endcond
 
   /**
-   * @brief Historical error happened during the simulation
+   * @brief Diagnostic history happened during the simulation
    */
-  stdUnorderedMap< HistoricalErrorUnorderedMapKey,
+  stdUnorderedMap< HistoricalDiagnosticUnorderedMapKey,
                    MsgStatistics,
-                   LocationKeyHash, LocationKeyEqual > m_errorHistory;
+                   LocationKeyHash, LocationKeyEqual > m_diagnosticHistory;
 };
 
 /**

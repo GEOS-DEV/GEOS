@@ -332,7 +332,8 @@ void setupEnvironment( int argc, char * argv[] )
 void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
-  ErrorLogger::global().getLoggerReportData().diagnosticStatsReport();
+  if( ErrorLogger::global().getLoggerReportData().getDiagnosticHistory().size()>0 )
+    ErrorLogger::global().getLoggerReportData().diagnosticStatsReport();
 
   LvArray::system::resetSignalHandling();
   finalizeLogger();

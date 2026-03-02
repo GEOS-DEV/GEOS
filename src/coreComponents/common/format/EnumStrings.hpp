@@ -40,8 +40,20 @@ namespace geos
 namespace internal
 {
 
+/**
+ * @brief Raise a throw error in case of bad use of enum::toString
+ * @param index The index of the enum causing the error
+ * @param typeName The enum name
+ * @param size The size of the enum
+ */
 void EnumErrorMessageToString( size_t index, string const & typeName, std::size_t size );
 
+/**
+ * @brief Raise a throw error in case of bad use of enum::FromString
+ * @param s The string that not belonging to the enum
+ * @param typeName The enum name
+ * @param size The string concatenation of the enum
+ */
 void EnumErrorMessageFromString( string const & s,
                                  string const & typeName,
                                  string const & concat );

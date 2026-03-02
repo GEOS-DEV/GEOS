@@ -175,7 +175,7 @@ private:
 
   /// The error constructed via exceptions
   DiagnosticMsg m_getCurrentExceptionMsg;
-
+  /// The log history associated
   LogHistory loggerMsgReportData = {};
 
   /// Indicate whether the write to YAML command line option is enabled
@@ -184,7 +184,7 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
-
+  /// The current log part being executed
   string m_currentLogPart;
   /// Avoid concurrent access between threads for log outputs
   std::mutex m_errorHandlerAsciiMutex;
