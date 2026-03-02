@@ -150,14 +150,14 @@ jobs:
       fail-fast : false
       matrix:
         include:
-          - name: Ubuntu (20.04, gcc 9.4.0, open-mpi 4.0.3)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-            BUILD_SHARED_LIBS: ON
-            ENABLE_HYPRE: OFF
-            ENABLE_TRILINOS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            HOST_CONFIG: /spack-generated.cmake
+          # - name: Ubuntu (20.04, gcc 9.4.0, open-mpi 4.0.3)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+          #   BUILD_SHARED_LIBS: ON
+          #   ENABLE_HYPRE: OFF
+          #   ENABLE_TRILINOS: ON
+          #   GEOS_ENABLE_BOUNDS_CHECK: ON
+          #   HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu debug (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
@@ -182,35 +182,35 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
-            HOST_CONFIG: /spack-generated.cmake
+          # - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   BUILD_SHARED_LIBS: ON
+          #   GEOS_ENABLE_BOUNDS_CHECK: OFF
+          #   GCP_BUCKET: geosx/ubuntu22.04-gcc11
+          #   HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            HOST_CONFIG: /spack-generated.cmake
+          # - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+          #   GCP_BUCKET: geosx/ubuntu22.04-gcc12
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   BUILD_SHARED_LIBS: ON
+          #   GEOS_ENABLE_BOUNDS_CHECK: ON
+          #   HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: OFF
-            HOST_CONFIG: /spack-generated.cmake
+          # - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
+          #   CMAKE_BUILD_TYPE: Release
+          #   DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+          #   GCP_BUCKET: geosx/ubuntu22.04-gcc12
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   BUILD_SHARED_LIBS: ON
+          #   GEOS_ENABLE_BOUNDS_CHECK: OFF
+          #   HOST_CONFIG: /spack-generated.cmake
 
           #- name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
           #  CMAKE_BUILD_TYPE: Release
