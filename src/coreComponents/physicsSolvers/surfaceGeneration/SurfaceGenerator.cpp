@@ -669,328 +669,409 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                            nodesToRupturedFaces,
                            edgesToRupturedFaces );
 
+  // ---------------------------------------------------------------
+  // Group ruptured faces into disjoint fracture sets.
+  //
+  // When two non-intersecting fractures are close enough to share a
+  // layer of elements (e.g. parallel fractures in a tet mesh), their
+  // ruptured faces appear in the same nodesToRupturedFaces entries.
+  // Processing them simultaneously confuses the fracture-plane
+  // algorithm because it cannot tell which faces belong to which
+  // fracture.
+  //
+  // The fix is to identify connected components of ruptured faces
+  // (two faces are connected if they share a node) and process each
+  // component (fracture set) sequentially.  After each fracture set
+  // is fully processed and the topology is updated, we rebuild
+  // nodesToRupturedFaces/edgesToRupturedFaces for the next set.
+  // ---------------------------------------------------------------
+  stdVector< std::set< localIndex > > fractureSets =
+    groupRupturedFacesIntoSets( nodesToRupturedFaces, nodeManager );
+
+  // All ranks must iterate the same number of times in the outer
+  // fracture-set loop because MPI collectives (assignNewGlobalIndices,
+  // synchronizeTopologyChange, barrier) are called inside.  Ranks
+  // with fewer local sets will enter the loop but skip the work.
+  size_t const localNumSets = fractureSets.size();
+  size_t const globalNumSets = static_cast< size_t >(
+    MpiWrapper::allReduce( static_cast< int >( localNumSets ), MpiWrapper::Reduction::Max ) );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: {} disjoint fracture set(s) to process (global max across ranks).",
+                              globalNumSets ) );
+
   int rval = 0;
   //  array1d<MaterialBaseStateDataT*>&  temp = elementManager.m_ElementRegions["PM1"].m_materialStates;
 
   array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
-  for( int color=0; color<numTileColors; ++color )
+  // ---------------------------------------------------------------
+  // Process each fracture set sequentially.  For each set, all MPI
+  // ranks coordinate through the color loop, then synchronize the
+  // topology before moving to the next set.  This guarantees that
+  // when "f<n>_node_set completed" is printed the set is truly
+  // finished across all ranks.
+  // ---------------------------------------------------------------
+  for( size_t iSet = 0; iSet < globalNumSets; ++iSet )
   {
-    ModifiedObjectLists modifiedObjects;
-    if( color==tileColor )
+    bool const hasLocalWork = ( iSet < fractureSets.size() );
+
+    if( hasLocalWork )
     {
-      std::cout<<"Processing color "<<color<<" out of "<<numTileColors<<std::endl;
-      for( localIndex a=0; a<nodeManager.size(); ++a )
+      GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Processing f{}_node_set ({} ruptured faces)...",
+                                  iSet + 1, fractureSets[iSet].size() ) );
+    }
+
+    for( int color=0; color<numTileColors; ++color )
+    {
+      ModifiedObjectLists modifiedObjects;
+      if( color==tileColor && hasLocalWork )
       {
-        int didSplit = 0;
-        if( isNodeGhost[a]<0 &&
-            nodeToElementMap.sizeOfArray( a )>1 )
+        // Build filtered maps for this fracture set only.
+        stdVector< std::set< localIndex > > setNodesToRupturedFaces;
+        stdVector< std::set< localIndex > > setEdgesToRupturedFaces;
+        buildFilteredRuptureMaps( fractureSets[iSet],
+                                  nodeManager,
+                                  edgeManager,
+                                  faceManager,
+                                  setNodesToRupturedFaces,
+                                  setEdgesToRupturedFaces );
+
+        for( localIndex a = 0; a < nodeManager.size(); ++a )
         {
-          didSplit += processNode( a,
-                                   time_np1,
-                                   nodeManager,
-                                   edgeManager,
-                                   faceManager,
-                                   elementManager,
-                                   nodesToRupturedFaces,
-                                   edgesToRupturedFaces,
-                                   elementManager,
-                                   modifiedObjects, prefrac );
-          if( didSplit > 0 )
+          int didSplit = 0;
+          if( isNodeGhost[a] < 0 &&
+              nodeToElementMap.sizeOfArray( a ) > 1 )
           {
-            rval += didSplit;
-            --a;
+            didSplit += processNode( a,
+                                     time_np1,
+                                     nodeManager,
+                                     edgeManager,
+                                     faceManager,
+                                     elementManager,
+                                     setNodesToRupturedFaces,
+                                     setEdgesToRupturedFaces,
+                                     elementManager,
+                                     modifiedObjects, prefrac );
+            if( didSplit > 0 )
+            {
+              rval += didSplit;
+              --a;
+            }
           }
         }
-      }
 
-      SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
-      fractureElementRegion.updateSets( faceManager );
+        SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+        fractureElementRegion.updateSets( faceManager );
 
-      // -----------------------------------------------------------------
-      // Post-processing sweep: create fracture elements for "orphan"
-      // ruptured faces at fracture corners.
-      //
-      // In a tet mesh, corner faces of a fracture surface have all
-      // their nodes on the fracture boundary.  The dead-end pruning
-      // in findFracturePlanes removes them because neither edge forms
-      // a valid separation path, so processNode() never splits them.
-      //
-      // A face is a corner face if it is separable, ruptured, unsplit,
-      // and at least 2 of its edges lie on the fracture boundary:
-      //   (c) edge shared with a split fracture face (ruptured + separable), or
-      //   (d) edge on the fracture perimeter (no other ruptured face
-      //       shares it, and not on a partition boundary).
-      //
-      // The sweep iterates until no more corner faces are found,
-      // because splitting one face may expose adjacent corner faces.
-      // -----------------------------------------------------------------
-      {
-        array1d< integer > const & ruptureState =
-          faceManager.getField< surfaceGeneration::ruptureState >();
-        array1d< localIndex > const & childFaceIndex =
-          faceManager.getField< fields::childIndex >();
-        array1d< localIndex > const & parentFaceIndex =
-          faceManager.getField< fields::parentIndex >();
-        ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
-        array2d< real64 > & faceNormals = faceManager.faceNormal();
-        array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
-        array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
-        array1d< localIndex > const & parentEdgeIndices =
-          edgeManager.getField< fields::parentIndex >();
-        array1d< localIndex > const & childEdgeIndices =
-          edgeManager.getField< fields::childIndex >();
-        array1d< localIndex > const & parentNodeIndices =
-          nodeManager.getField< fields::parentIndex >();
-        array1d< localIndex > const & childNodeIndices =
-          nodeManager.getField< fields::childIndex >();
-        array1d< integer > const & nodeDegreeFromCrackTip =
-          nodeManager.getField< surfaceGeneration::degreeFromCrackTip >();
-        array1d< integer > const & faceDegreeFromCrackTip =
-          faceManager.getField< surfaceGeneration::degreeFromCrackTip >();
-        array1d< real64 > const & faceRuptureTime =
-          faceManager.getField< fields::ruptureTime >();
-        array1d< integer > const & isFaceSeparable =
-          faceManager.getField< surfaceGeneration::isFaceSeparable >();
-
-        SortedArray< localIndex > & externalFaces = faceManager.sets().getReference< SortedArray< localIndex > >( "all" );
-
-        int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
-
-        array1d< integer > const & faceGhostRank = faceManager.ghostRank();
-
-        // Iterate until no more corner faces are found.  Each pass may
-        // split new faces, making their edges part of the fracture
-        // boundary and enabling adjacent corner faces to be detected
-        // on subsequent passes.
-        bool keepGoing = true;
-        while( keepGoing )
+        // -----------------------------------------------------------------
+        // Post-processing sweep: create fracture elements for "orphan"
+        // ruptured faces at fracture corners.
+        //
+        // In a tet mesh, corner faces of a fracture surface have all
+        // their nodes on the fracture boundary.  The dead-end pruning
+        // in findFracturePlanes removes them because neither edge forms
+        // a valid separation path, so processNode() never splits them.
+        //
+        // A face is a corner face if it is separable, ruptured, unsplit,
+        // and at least 2 of its edges lie on the fracture boundary:
+        //   (a) edge already split (childEdgeIndex != -1),
+        //   (b) edge made external by fracturing (isEdgeExternal >= 2),
+        //   (c) edge shared with a split fracture face (ruptured + separable), or
+        //   (d) edge on the fracture perimeter (no other ruptured face
+        //       shares it, and not on a partition boundary).
+        //
+        // The sweep iterates until no more corner faces are found,
+        // because splitting one face may expose adjacent corner faces.
+        // -----------------------------------------------------------------
         {
-          keepGoing = false;
+          array1d< integer > const & ruptureState =
+            faceManager.getField< surfaceGeneration::ruptureState >();
+          array1d< localIndex > const & childFaceIndex =
+            faceManager.getField< fields::childIndex >();
+          array1d< localIndex > const & parentFaceIndex =
+            faceManager.getField< fields::parentIndex >();
+          ArrayOfArrays< localIndex > & faceToEdgeMap = faceManager.edgeList();
+          array2d< real64 > & faceNormals = faceManager.faceNormal();
+          array1d< integer > const & edgeIsExternal = edgeManager.isExternal();
+          array1d< integer > const & nodeIsExternal = nodeManager.isExternal();
+          array1d< localIndex > const & parentEdgeIndices =
+            edgeManager.getField< fields::parentIndex >();
+          array1d< localIndex > const & childEdgeIndices =
+            edgeManager.getField< fields::childIndex >();
+          array1d< localIndex > const & parentNodeIndices =
+            nodeManager.getField< fields::parentIndex >();
+          array1d< localIndex > const & childNodeIndices =
+            nodeManager.getField< fields::childIndex >();
+          array1d< integer > const & nodeDegreeFromCrackTip =
+            nodeManager.getField< surfaceGeneration::degreeFromCrackTip >();
+          array1d< integer > const & faceDegreeFromCrackTip =
+            faceManager.getField< surfaceGeneration::degreeFromCrackTip >();
+          array1d< real64 > const & faceRuptureTime =
+            faceManager.getField< fields::ruptureTime >();
+          array1d< integer > const & isFaceSeparable =
+            faceManager.getField< surfaceGeneration::isFaceSeparable >();
 
-          for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+          SortedArray< localIndex > & externalFaces = faceManager.sets().getReference< SortedArray< localIndex > >( "all" );
+
+          int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
+
+          array1d< integer > const & faceGhostRank = faceManager.ghostRank();
+
+          // Iterate until no more corner faces are found.  Each pass may
+          // split new faces, making their edges part of the fracture
+          // boundary and enabling adjacent corner faces to be detected
+          // on subsequent passes.
+          bool keepGoing = true;
+          while( keepGoing )
           {
-            // Only locally-owned, original, unsplit, ruptured faces.
-            // Ghost faces are handled by the owning rank.
-            if( faceGhostRank[kf] >= 0 )
-              continue;
-            if( ruptureState[kf] != 1 )
-              continue;
-            if( parentFaceIndex[kf] != -1 || childFaceIndex[kf] != -1 )
-              continue;
-            if( isFaceSeparable[kf] != 1 )
-              continue;
+            keepGoing = false;
 
-            // Count how many edges of this face lie on the fracture boundary.
-            // An edge is on the fracture boundary if:
-            //   (c) it is shared with an adjacent FRACTURE face (ruptured AND
-            //       separable) that has already been split, or
-            //   (d) no other ruptured/separable face shares this edge — it is
-            //       on the fracture perimeter.  This condition is ONLY applied
-            //       when the edge is NOT on a partition boundary (where we may
-            //       have incomplete adjacency information).
-            localIndex const numEdges = faceToEdgeMap.sizeOfArray( kf );
-            localIndex edgesOnFracBoundary = 0;
-            for( localIndex a = 0; a < numEdges; ++a )
+            for( localIndex kf = 0; kf < faceManager.size(); ++kf )
             {
-              localIndex const ei = faceToEdgeMap( kf, a );
-              // Check adjacent faces sharing this edge.
-              bool edgeOnSplitFractureFace = false;
-              bool hasOtherRupturedFace = false;
-              bool edgeOnPartitionBoundary = false;
-              for( localIndex const adjFace : edgeManager.faceList()[ ei ] )
+              // Only locally-owned, original, unsplit, ruptured faces.
+              // Ghost faces are handled by the owning rank.
+              if( faceGhostRank[kf] >= 0 )
+                continue;
+              if( ruptureState[kf] != 1 )
+                continue;
+              if( parentFaceIndex[kf] != -1 || childFaceIndex[kf] != -1 )
+                continue;
+              if( isFaceSeparable[kf] != 1 )
+                continue;
+
+              // Only process faces that belong to the current fracture set.
+              if( fractureSets[iSet].count( kf ) == 0 )
+                continue;
+
+              // Count how many edges of this face lie on the fracture boundary.
+              // An edge is on the fracture boundary if:
+              //   (a) it has been split (childEdgeIndex != -1), or
+              //   (b) it was made external by prior fracturing (isEdgeExternal >= 2), or
+              //   (c) it is shared with an adjacent FRACTURE face (ruptured AND
+              //       separable) that has already been split, or
+              //   (d) no other ruptured/separable face shares this edge — it is
+              //       on the fracture perimeter.  This condition is ONLY applied
+              //       when the edge is NOT on a partition boundary (where we may
+              //       have incomplete adjacency information).
+              localIndex const numEdges = faceToEdgeMap.sizeOfArray( kf );
+              localIndex edgesOnFracBoundary = 0;
+              for( localIndex a = 0; a < numEdges; ++a )
               {
-                if( adjFace == kf )
+                localIndex const ei = faceToEdgeMap( kf, a );
+                // Condition (a)/(b): edge already split or made external
+                // by prior fracturing.  These are reliable, local-only
+                // indicators that the edge lies on the fracture boundary.
+                if( childEdgeIndices[ei] != -1 || edgeIsExternal[ei] >= 2 )
+                {
+                  ++edgesOnFracBoundary;
                   continue;
-                localIndex const adjParent = ( parentFaceIndex[adjFace] == -1 ) ? adjFace : parentFaceIndex[adjFace];
-                // Detect partition boundary via ghost face adjacency.
-                if( faceGhostRank[adjFace] >= 0 )
-                {
-                  edgeOnPartitionBoundary = true;
                 }
-                // Check if this adjacent face is ruptured/separable (a fracture face).
-                bool const adjIsFractureFace = ( ruptureState[adjParent] >= 1 && isFaceSeparable[adjParent] == 1 );
-                if( adjIsFractureFace )
+                // Check adjacent faces sharing this edge.
+                bool edgeOnSplitFractureFace = false;
+                bool hasOtherRupturedFace = false;
+                bool edgeOnPartitionBoundary = false;
+                for( localIndex const adjFace : edgeManager.faceList()[ ei ] )
                 {
-                  hasOtherRupturedFace = true;
-                  // Condition (c): adjacent FRACTURE face that has been split.
-                  if( childFaceIndex[adjParent] != -1 )
+                  if( adjFace == kf )
+                    continue;
+                  localIndex const adjParent = ( parentFaceIndex[adjFace] == -1 ) ? adjFace : parentFaceIndex[adjFace];
+                  // Detect partition boundary via ghost face adjacency.
+                  if( faceGhostRank[adjFace] >= 0 )
                   {
-                    edgeOnSplitFractureFace = true;
+                    edgeOnPartitionBoundary = true;
+                  }
+                  // Check if this adjacent face is ruptured/separable (a fracture face).
+                  bool const adjIsFractureFace = ( ruptureState[adjParent] >= 1 && isFaceSeparable[adjParent] == 1 );
+                  if( adjIsFractureFace )
+                  {
+                    hasOtherRupturedFace = true;
+                    // Condition (c): adjacent FRACTURE face that has been split.
+                    if( childFaceIndex[adjParent] != -1 )
+                    {
+                      edgeOnSplitFractureFace = true;
+                    }
                   }
                 }
+                // Condition (c): edge shared with a split fracture face.
+                // Condition (d): no other ruptured face shares this edge
+                //   (fracture perimeter), but ONLY if the edge is NOT on
+                //   a partition boundary where adjacency info is incomplete.
+                if( edgeOnSplitFractureFace ||
+                    ( !hasOtherRupturedFace && !edgeOnPartitionBoundary ) )
+                {
+                  ++edgesOnFracBoundary;
+                }
               }
-              // Condition (c): edge shared with a split fracture face.
-              // Condition (d): no other ruptured face shares this edge
-              //   (fracture perimeter), but ONLY if the edge is NOT on
-              //   a partition boundary where adjacency info is incomplete.
-              if( edgeOnSplitFractureFace ||
-                  ( !hasOtherRupturedFace && !edgeOnPartitionBoundary ) )
+
+              // A corner face has at least 2 edges on the fracture boundary.
+              if( edgesOnFracBoundary < 2 )
+                continue;
+
+              // This is an orphan corner face — split it and create a fracture element.
+              localIndex newFaceIndex;
+              if( faceManager.splitObject( kf, rank, newFaceIndex ) )
               {
-                ++edgesOnFracBoundary;
+                modifiedObjects.newFaces.insert( newFaceIndex );
+                modifiedObjects.modifiedFaces.insert( kf );
+
+                ruptureState[kf] = 2;
+                ruptureState[newFaceIndex] = 2;
+                faceRuptureTime( kf ) = time_np1;
+                faceRuptureTime( newFaceIndex ) = time_np1;
+
+                m_trailingFaces.insert( kf );
+                m_tipFaces.remove( kf );
+                faceDegreeFromCrackTip( kf ) = 0;
+                faceDegreeFromCrackTip( newFaceIndex ) = 0;
+
+                // Copy edge map
+                localIndex const numFaceEdges = faceToEdgeMap.sizeOfArray( kf );
+                faceToEdgeMap.resizeArray( newFaceIndex, numFaceEdges );
+                for( localIndex a = 0; a < numFaceEdges; ++a )
+                {
+                  faceToEdgeMap( newFaceIndex, a ) = faceToEdgeMap( kf, a );
+                }
+
+                // Copy node map with reversed winding
+                ArrayOfArrays< localIndex > & faceToNodeMapMut = faceManager.nodeList();
+                localIndex const numFaceNodes = faceToNodeMapMut.sizeOfArray( kf );
+                faceToNodeMapMut.resizeArray( newFaceIndex, numFaceNodes );
+                for( localIndex a = 0; a < numFaceNodes; ++a )
+                {
+                  localIndex const aa = a == 0 ? a : numFaceNodes - a;
+                  faceToNodeMapMut( newFaceIndex, aa ) = faceToNodeMapMut( kf, a );
+                }
+                LvArray::tensorOps::scale< 3 >( faceNormals[ newFaceIndex ], -1 );
+
+                externalFaces.insert( newFaceIndex );
+                externalFaces.insert( kf );
+
+                // Mark tip edges and faces
+                for( localIndex const edgeIndex : faceManager.edgeList()[ kf ] )
+                {
+                  if( parentEdgeIndices[edgeIndex] == -1 && childEdgeIndices[edgeIndex] == -1 )
+                  {
+                    m_tipEdges.insert( edgeIndex );
+                  }
+                  if( edgeIsExternal[edgeIndex] == 0 )
+                  {
+                    edgeIsExternal[edgeIndex] = 2;
+                  }
+                }
+
+                // Mark tip nodes
+                for( localIndex const nodeIndex : faceManager.nodeList()[ kf ] )
+                {
+                  if( parentNodeIndices[nodeIndex] == -1 && childNodeIndices[nodeIndex] == -1 )
+                  {
+                    m_tipNodes.insert( nodeIndex );
+                    nodeDegreeFromCrackTip( nodeIndex ) = 0;
+                  }
+                  if( nodeIsExternal[nodeIndex] )
+                  {
+                    nodeIsExternal[nodeIndex] = 2;
+                  }
+                }
+
+                // Create fracture element
+                localIndex faceIndices[2] = { kf, newFaceIndex };
+                localIndex const newFaceElement =
+                  fractureElementRegion.addToFractureMesh( time_np1,
+                                                           &faceManager,
+                                                           this->m_originalFaceToEdges.toViewConst(),
+                                                           faceIndices );
+                m_faceElemsRupturedThisSolve.insert( newFaceElement );
+                modifiedObjects.newElements[ { fractureElementRegion.getIndexInParent(), 0 } ].insert( newFaceElement );
+
+                keepGoing = true;  // A face was split — edges changed, so re-scan.
               }
             }
+          }  // while( keepGoing )
 
-            // A corner face has at least 2 edges on the fracture boundary.
-            if( edgesOnFracBoundary < 2 )
-              continue;
+          fractureElementRegion.updateSets( faceManager );
+        }
 
-            // This is an orphan corner face — split it and create a fracture element.
-            localIndex newFaceIndex;
-            if( faceManager.splitObject( kf, rank, newFaceIndex ) )
-            {
-              modifiedObjects.newFaces.insert( newFaceIndex );
-              modifiedObjects.modifiedFaces.insert( kf );
-
-              ruptureState[kf] = 2;
-              ruptureState[newFaceIndex] = 2;
-              faceRuptureTime( kf ) = time_np1;
-              faceRuptureTime( newFaceIndex ) = time_np1;
-
-              m_trailingFaces.insert( kf );
-              m_tipFaces.remove( kf );
-              faceDegreeFromCrackTip( kf ) = 0;
-              faceDegreeFromCrackTip( newFaceIndex ) = 0;
-
-              // Copy edge map
-              localIndex const numFaceEdges = faceToEdgeMap.sizeOfArray( kf );
-              faceToEdgeMap.resizeArray( newFaceIndex, numFaceEdges );
-              for( localIndex a = 0; a < numFaceEdges; ++a )
-              {
-                faceToEdgeMap( newFaceIndex, a ) = faceToEdgeMap( kf, a );
-              }
-
-              // Copy node map with reversed winding
-              ArrayOfArrays< localIndex > & faceToNodeMapMut = faceManager.nodeList();
-              localIndex const numFaceNodes = faceToNodeMapMut.sizeOfArray( kf );
-              faceToNodeMapMut.resizeArray( newFaceIndex, numFaceNodes );
-              for( localIndex a = 0; a < numFaceNodes; ++a )
-              {
-                localIndex const aa = a == 0 ? a : numFaceNodes - a;
-                faceToNodeMapMut( newFaceIndex, aa ) = faceToNodeMapMut( kf, a );
-              }
-              LvArray::tensorOps::scale< 3 >( faceNormals[ newFaceIndex ], -1 );
-
-              externalFaces.insert( newFaceIndex );
-              externalFaces.insert( kf );
-
-              // Mark tip edges and faces
-              for( localIndex const edgeIndex : faceManager.edgeList()[ kf ] )
-              {
-                if( parentEdgeIndices[edgeIndex] == -1 && childEdgeIndices[edgeIndex] == -1 )
-                {
-                  m_tipEdges.insert( edgeIndex );
-                }
-                if( edgeIsExternal[edgeIndex] == 0 )
-                {
-                  edgeIsExternal[edgeIndex] = 2;
-                }
-              }
-
-              // Mark tip nodes
-              for( localIndex const nodeIndex : faceManager.nodeList()[ kf ] )
-              {
-                if( parentNodeIndices[nodeIndex] == -1 && childNodeIndices[nodeIndex] == -1 )
-                {
-                  m_tipNodes.insert( nodeIndex );
-                  nodeDegreeFromCrackTip( nodeIndex ) = 0;
-                }
-                if( nodeIsExternal[nodeIndex] )
-                {
-                  nodeIsExternal[nodeIndex] = 2;
-                }
-              }
-
-              // Create fracture element
-              localIndex faceIndices[2] = { kf, newFaceIndex };
-              localIndex const newFaceElement =
-                fractureElementRegion.addToFractureMesh( time_np1,
-                                                         &faceManager,
-                                                         this->m_originalFaceToEdges.toViewConst(),
-                                                         faceIndices );
-              m_faceElemsRupturedThisSolve.insert( newFaceElement );
-              modifiedObjects.newElements[ { fractureElementRegion.getIndexInParent(), 0 } ].insert( newFaceElement );
-
-              keepGoing = true;  // A face was split — edges changed, so re-scan.
-            }
-          }
-        }  // while( keepGoing )
-
-        fractureElementRegion.updateSets( faceManager );
       }
-
-    }
 
 #ifdef GEOS_USE_MPI
 
-    modifiedObjects.clearNewFromModified();
+      modifiedObjects.clearNewFromModified();
 
-    // 1) Assign new global indices to the new objects
-    CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
-    CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
-    CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
+      // 1) Assign new global indices to the new objects
+      CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
+      CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
+      CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
 //    CommunicationTools::getInstance().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
-    ModifiedObjectLists receivedObjects;
+      ModifiedObjectLists receivedObjects;
 
 
-    parallelTopologyChange::synchronizeTopologyChange( &mesh,
-                                                       neighbors,
-                                                       modifiedObjects,
-                                                       receivedObjects,
-                                                       m_mpiCommOrder );
+      parallelTopologyChange::synchronizeTopologyChange( &mesh,
+                                                         neighbors,
+                                                         modifiedObjects,
+                                                         receivedObjects,
+                                                         m_mpiCommOrder );
 
-    synchronizeTipSets( faceManager,
-                        edgeManager,
-                        nodeManager,
-                        receivedObjects );
+      synchronizeTipSets( faceManager,
+                          edgeManager,
+                          nodeManager,
+                          receivedObjects );
 
 
 #else
 
-    GEOS_UNUSED_VAR( neighbors );
-    assignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
-    assignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
-    assignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
+      GEOS_UNUSED_VAR( neighbors );
+      assignNewGlobalIndicesSerial( nodeManager, modifiedObjects.newNodes );
+      assignNewGlobalIndicesSerial( edgeManager, modifiedObjects.newEdges );
+      assignNewGlobalIndicesSerial( faceManager, modifiedObjects.newFaces );
 
 #endif
 
-    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+      ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-    elementManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
-                                                                              localIndex const esr,
-                                                                              ElementRegionBase &,
-                                                                              FaceElementSubRegion & subRegion )
-    {
-      std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
-      for( localIndex const newFaceElemIndex : newFaceElems )
+      elementManager.forElementSubRegionsComplete< FaceElementSubRegion >( [&]( localIndex const er,
+                                                                                localIndex const esr,
+                                                                                ElementRegionBase &,
+                                                                                FaceElementSubRegion & subRegion )
       {
-        subRegion.m_newFaceElements.insert( newFaceElemIndex );
-      }
-    } );
+        std::set< localIndex > & newFaceElems = modifiedObjects.newElements[{er, esr}];
+        for( localIndex const newFaceElemIndex : newFaceElems )
+        {
+          subRegion.m_newFaceElements.insert( newFaceElemIndex );
+        }
+      } );
 
 
-    elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
-      arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
-
-      for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
+      elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        FaceElementSubRegion::NodeMapType & nodeMap = subRegion.nodeList();
+        arrayView2d< localIndex const > const faceMap = subRegion.faceList().toViewConst();
 
-        localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
-        nodeMap.resizeArray( kfe, 2*numNodesInFace );
-        for( localIndex a = 0; a < numNodesInFace; ++a )
+        for( localIndex kfe=0; kfe<subRegion.size(); ++kfe )
         {
 
-          nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], a );
-          nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], a );
-        }
+          localIndex const numNodesInFace = faceToNodeMap.sizeOfArray( faceMap[ kfe ][ 0 ] );
+          nodeMap.resizeArray( kfe, 2*numNodesInFace );
+          for( localIndex a = 0; a < numNodesInFace; ++a )
+          {
 
-      }
-    } );
-    MpiWrapper::barrier();
-  }
+            nodeMap[ kfe ][ a ]   = faceToNodeMap( faceMap[ kfe ][ 0 ], a );
+            nodeMap[ kfe ][ a + numNodesInFace ] = faceToNodeMap( faceMap[ kfe ][ 1 ], a );
+          }
+
+        }
+      } );
+      MpiWrapper::barrier();
+    }
+
+    // All ranks have now finished processing this fracture set
+    // and the topology is synchronized.
+    if( hasLocalWork )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: f{}_node_set completed.", iSet + 1 ) );
+    }
+
+  } // end loop over fracture sets
 
 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
@@ -1716,6 +1797,10 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
             }
             if( pathFound == false )
             {
+              if( edgeOnPartitionBoundary.count( nextEdge ) > 0 )
+              {
+                return false;
+              }
               GEOS_ERROR( "couldn't find the next face in the rupture path (SurfaceGenerator::findFracturePlanes", getDataContext() );
             }
           }
@@ -1735,6 +1820,15 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         }
         else
         {
+          // The next edge has fewer than 2 ruptured faces locally.
+          // On a partition boundary this is expected: the remaining
+          // ruptured face(s) live on a neighboring rank.  We cannot
+          // complete the path here — return false and let the owning
+          // rank handle this node.
+          if( edgeOnPartitionBoundary.count( nextEdge ) > 0 )
+          {
+            return false;
+          }
           GEOS_ERROR( "next edge in separation path is apparently  connected to less than 2 ruptured face (SurfaceGenerator::findFracturePlanes", getDataContext() );
         }
 
@@ -4877,7 +4971,146 @@ void SurfaceGenerator::postUpdateRuptureStates( NodeManager const & nodeManager,
         {
           const localIndex edgeIndex = faceToEdgeMap( kf, a );
           edgesToRupturedFaces[edgeIndex].insert( faceIndex );
-        }
+         }
+      }
+    }
+  }
+}
+
+stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets(
+  stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
+  NodeManager const & nodeManager ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  // Collect all unique ruptured face indices.
+  std::set< localIndex > allFaces;
+  for( localIndex ni = 0; ni < static_cast< localIndex >( nodesToRupturedFaces.size() ); ++ni )
+  {
+    for( localIndex const fi : nodesToRupturedFaces[ni] )
+    {
+      allFaces.insert( fi );
+    }
+  }
+
+  if( allFaces.empty() )
+  {
+    return {};
+  }
+
+  // Union-Find data structure (map-based so we don't need a dense array).
+  std::unordered_map< localIndex, localIndex > parent;
+  std::unordered_map< localIndex, localIndex > rank;
+
+  for( localIndex const fi : allFaces )
+  {
+    parent[fi] = fi;
+    rank[fi] = 0;
+  }
+
+  // Find with path compression.
+  std::function< localIndex( localIndex ) > findRoot = [&]( localIndex x ) -> localIndex
+  {
+    if( parent[x] != x )
+    {
+      parent[x] = findRoot( parent[x] );
+    }
+    return parent[x];
+  };
+
+  // Union by rank.
+  auto unionSets = [&]( localIndex a, localIndex b )
+  {
+    localIndex ra = findRoot( a );
+    localIndex rb = findRoot( b );
+    if( ra == rb ) return;
+    if( rank[ra] < rank[rb] ) std::swap( ra, rb );
+    parent[rb] = ra;
+    if( rank[ra] == rank[rb] ) ++rank[ra];
+  };
+
+  // Two ruptured faces sharing a node belong to the same fracture set.
+  // Iterate through nodesToRupturedFaces: for each node that touches
+  // more than one ruptured face, union all those faces together.
+  GEOS_UNUSED_VAR( nodeManager );
+  for( localIndex ni = 0; ni < static_cast< localIndex >( nodesToRupturedFaces.size() ); ++ni )
+  {
+    std::set< localIndex > const & faces = nodesToRupturedFaces[ni];
+    if( faces.size() <= 1 ) continue;
+    auto it = faces.begin();
+    localIndex const first = *it;
+    ++it;
+    for( ; it != faces.end(); ++it )
+    {
+      unionSets( first, *it );
+    }
+  }
+
+  // Gather connected components.
+  std::unordered_map< localIndex, std::set< localIndex > > components;
+  for( localIndex const fi : allFaces )
+  {
+    components[findRoot( fi )].insert( fi );
+  }
+
+  // Convert to a vector.
+  stdVector< std::set< localIndex > > result;
+  result.reserve( components.size() );
+  for( auto & kv : components )
+  {
+    result.push_back( std::move( kv.second ) );
+  }
+
+  return result;
+}
+
+void SurfaceGenerator::buildFilteredRuptureMaps(
+  std::set< localIndex > const & fractureSetFaces,
+  NodeManager const & nodeManager,
+  EdgeManager const & edgeManager,
+  FaceManager const & faceManager,
+  stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+  stdVector< std::set< localIndex > > & edgesToRupturedFaces ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+  ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
+
+  nodesToRupturedFaces.clear();
+  edgesToRupturedFaces.clear();
+  nodesToRupturedFaces.resize( nodeManager.size() );
+  edgesToRupturedFaces.resize( edgeManager.size() );
+
+  arrayView1d< integer const > const & faceRuptureState = faceManager.getField< surfaceGeneration::ruptureState >();
+  arrayView1d< localIndex const > const & faceParentIndex = faceManager.getField< fields::parentIndex >();
+
+  // Iterate over all faces.  Only include a face if:
+  //   1) its rupture state > 0  (same criterion as postUpdateRuptureStates), AND
+  //   2) its parent face index belongs to the current fracture set.
+  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
+  {
+    if( faceRuptureState[kf] <= 0 )
+      continue;
+
+    localIndex const parentFace = ( faceParentIndex[kf] == -1 ) ? kf : faceParentIndex[kf];
+
+    // Skip faces that don't belong to this fracture set.
+    if( fractureSetFaces.count( parentFace ) == 0 )
+      continue;
+
+    int const n = ( faceParentIndex[kf] == -1 ) ? 1 : 2;
+    for( int i = 0; i < n; ++i )
+    {
+      for( localIndex a = 0; a < faceToNodeMap.sizeOfArray( kf ); ++a )
+      {
+        localIndex const nodeIndex = faceToNodeMap( kf, a );
+        nodesToRupturedFaces[nodeIndex].insert( parentFace );
+      }
+      for( localIndex a = 0; a < faceToEdgeMap.sizeOfArray( kf ); ++a )
+      {
+        localIndex const edgeIndex = faceToEdgeMap( kf, a );
+        edgesToRupturedFaces[edgeIndex].insert( parentFace );
       }
     }
   }

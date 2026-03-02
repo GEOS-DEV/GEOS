@@ -254,6 +254,40 @@ private:
                                 stdVector< std::set< localIndex > > & edgesToRupturedFaces );
 
   /**
+   * @brief Group ruptured faces into disjoint fracture sets using connected-component analysis.
+   *
+   * Two ruptured faces belong to the same fracture set if they share at least one node.
+   * This uses a union-find (disjoint-set) algorithm on the face connectivity graph.
+   *
+   * @param[in] nodesToRupturedFaces  Per-node sets of ruptured parent-face indices.
+   * @param[in] nodeManager           Node manager for size information.
+   * @return A vector of fracture sets, where each set contains the parent-face indices
+   *         belonging to one connected fracture component.
+   */
+  stdVector< std::set< localIndex > > groupRupturedFacesIntoSets(
+    stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
+    NodeManager const & nodeManager ) const;
+
+  /**
+   * @brief Build filtered nodesToRupturedFaces and edgesToRupturedFaces maps
+   *        containing only faces that belong to the given fracture set.
+   *
+   * @param[in]  fractureSetFaces     The set of ruptured parent-face indices for one fracture.
+   * @param[in]  nodeManager          Node manager.
+   * @param[in]  edgeManager          Edge manager.
+   * @param[in]  faceManager          Face manager.
+   * @param[out] nodesToRupturedFaces Filtered per-node sets of ruptured faces.
+   * @param[out] edgesToRupturedFaces Filtered per-edge sets of ruptured faces.
+   */
+  void buildFilteredRuptureMaps(
+    std::set< localIndex > const & fractureSetFaces,
+    NodeManager const & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+    stdVector< std::set< localIndex > > & edgesToRupturedFaces ) const;
+
+  /**
    *
    * @param elementManager
    * @param faceManager
