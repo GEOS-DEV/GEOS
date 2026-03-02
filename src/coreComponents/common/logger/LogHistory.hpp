@@ -36,7 +36,7 @@ namespace geos
  */
 struct MsgStatistics
 {
-  /// Number of times a message occured during the simulation
+  /// Number of times the same message occured during the simulation
   integer count;
 };
 
@@ -49,12 +49,12 @@ class LogHistory
 public:
 
   /// Alias for the historical diagnostic unordered_map key
-  using HistoricalDiagnosticUnorderedMapKey = std::tuple< string, MsgType, string, integer >;
+  using DiagnosticKey = std::tuple< string, MsgType, string, integer >;
 
   /**
    * @brief Report a diagnostic message
    * @param logPartName The logPart where the message occured
-   * @param diagMsg The diagnostic message to record
+   * @param diagMsg The DiagnosticMsg to record
    */
   void notifyMsg( string_view logPartName, DiagnosticMsg const & diagMsg );
 
@@ -88,15 +88,13 @@ private:
   struct LocationKeyHash
   {
 
-    std::size_t operator()( HistoricalDiagnosticUnorderedMapKey const & key ) const noexcept
+    std::size_t operator()( DiagnosticKey const & key ) const noexcept
     {
       auto const & [logPartType, msgType, filename, lineCount] = key;
 
       std::size_t h1 = std::hash< std::string >{} (logPartType);
       std::size_t h2 = std::hash< MsgType >{} (msgType);
-      std::string str;
-      str.assign( filename );
-      std::size_t h3 = std::hash< std::string >{} (str);
+      std::size_t h3 = std::hash< std::string >{} (filename);
       std::size_t h4 = std::hash< int >{} (lineCount);
 
       return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
@@ -109,13 +107,13 @@ private:
   struct LocationKeyEqual
   {
 
-    bool operator()( HistoricalDiagnosticUnorderedMapKey const & lhs,
-                     HistoricalDiagnosticUnorderedMapKey const & rhs ) const
+    bool operator()( DiagnosticKey const & lhs,
+                     DiagnosticKey const & rhs ) const
     {
       return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
              std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
              std::get< 2 >( lhs ) == std::get< 2 >( rhs ) &&
-             std::get< 2 >( lhs ) == std::get< 2 >( rhs );
+             std::get< 3 >( lhs ) == std::get< 3 >( rhs );
     }
   };
   /// @endcond
@@ -123,7 +121,7 @@ private:
   /**
    * @brief Diagnostic history happened during the simulation
    */
-  stdUnorderedMap< HistoricalDiagnosticUnorderedMapKey,
+  stdUnorderedMap< DiagnosticKey,
                    MsgStatistics,
                    LocationKeyHash, LocationKeyEqual > m_diagnosticHistory;
 };

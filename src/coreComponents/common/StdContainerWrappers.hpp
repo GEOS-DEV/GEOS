@@ -159,7 +159,7 @@ public:
  * @tparam Allocator Allocator type for the vector.
  */
 template< typename T, typename Allocator = internal::DefaultAllocator<T> >
-using stdVector = internal::StdVectorWrapper< T, Allocator, false >;
+using stdVector = internal::StdVectorWrapper< T, Allocator, USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 
 
