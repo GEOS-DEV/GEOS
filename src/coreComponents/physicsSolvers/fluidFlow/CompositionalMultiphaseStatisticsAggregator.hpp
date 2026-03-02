@@ -15,16 +15,6 @@
 
 /**
  * @file CompositionalMultiphaseStatisticsAggregator.hpp
- */
-
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
-
-#include "common/DataTypes.hpp"
-#include "physicsSolvers/StatisticsAggregatorBase.hpp"
-
-/**
- * @file CompositionalMultiphaseStatisticsAggregator.hpp
  * @details Region statistics data is stored as follow:
 
  * Problem : ProblemManager
@@ -78,6 +68,12 @@
  *                 |
  *                 [...] (other discretizations)
  */
+
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
+
+#include "common/DataTypes.hpp"
+#include "physicsSolvers/StatisticsAggregatorBase.hpp"
 
 namespace geos
 {
