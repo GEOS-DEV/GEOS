@@ -13,8 +13,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "common/MpiWrapper.hpp"
-#include "common/format/EnumStrings.hpp"
 #define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 // Source includes
@@ -174,24 +172,23 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshGenerationLog( "MeshGeneration", MpiWrapper::commRank() == 0 );
+  LogPart meshGenerationLog( "Mesh Generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
 
   generateMesh();
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-  LogPart numericalMethodLog( "NumericalMethods", MpiWrapper::commRank() == 0 );
+  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
   applyNumericalMethods();
-
   numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 
-  LogPart importFieldsLog( "ImportFields", MpiWrapper::commRank() == 0 );
+  LogPart importFieldsLog( "Import Fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
   importFields();
   importFieldsLog.end();
