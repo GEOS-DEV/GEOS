@@ -422,14 +422,7 @@ INSTANTIATE_TEST_SUITE_P(
     // -----------------------------------------------------------------------
     // Five no-boundary-cutting fractures with high-aspect ratio cells.
     std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN", "DFN_5_fractures_hex_binarized.vtu", "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }", 1, 2 ),
-                    
-    // Note on χ_a = 12. χ_a should be 2 for a full topological construction of finite element spaces of order 2 or higher.
-    // The simplest way to think about this is to split a single fracture discretized with two triangles when no high-order elements are used.
-    // The Euler characteristic will then be incorrectly defined, since the internal edge will not be duplicated, interesting!.
-    // This issue is ubiquitous in any workflow used for mesh splitting; whether internal or external to GEOS.
-    // More importantly, this is a good example where the topological features of the mesh differ from the topological features of the function
-    // spaces defined on the given mesh.
-    std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN", "DFN_5_fractures_tet_binarized.vtu", "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set}", 1, 12 )
+    std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN", "DFN_5_fractures_tet_binarized.vtu", "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set}", 1, 2 )
     )
   );
 

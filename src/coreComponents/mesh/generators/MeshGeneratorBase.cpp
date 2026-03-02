@@ -24,6 +24,13 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/MpiWrapper.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+
+#include <algorithm>
+#include <set>
+#include <utility>
+#include <vector>
+
 namespace geos
 {
 using namespace dataRepository;
@@ -117,51 +124,185 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
 }
 
 integer computeEulerCharacteristic( NodeManager const & nodeManager,
-                                    EdgeManager const & edgeManager,
-                                    FaceManager const & faceManager,
+                                    EdgeManager const & GEOS_UNUSED_PARAM( edgeManager ),
+                                    FaceManager const & GEOS_UNUSED_PARAM( faceManager ),
                                     ElementRegionManager const & elemManager )
 {
-  // Obtain global unique entity counts for the Euler characteristic
-  // χ = V − E + F − C.
+  // Compute the Euler-Poincaré characteristic χ = V − E + F − C for the
+  // **bulk** mesh only (CellElementSubRegion entities).
   //
-  // This function may be called before ghost exchange (setupCommunications),
-  // so ghost ranks are not necessarily set for every entity type.
+  // We reconstruct V, E, F directly from the cell-to-node maps so that
+  // fracture-induced duplicates in EdgeManager / FaceManager are excluded.
   //
-  // Strategy per entity type:
-  //
-  //  Nodes – ghost ranks are NOT set at this point (assignGlobalIndices is
-  //          not called for nodes in setupBaseLevelMeshGlobalInfo).  However,
-  //          node global IDs originate from the VTK mesh and are a contiguous
-  //          0-based sequence [0 .. N-1].  Therefore maxGlobalIndex()+1 is the
-  //          true global node count.
-  //
-  //  Edges / Faces – assignGlobalIndices has been called, which properly sets
-  //          ghost ranks for duplicate copies.  getNumberOfLocalIndices()
-  //          counts only owned entities (ghostRank <= -1), so the MPI sum
-  //          gives the correct global unique count.
-  //
-  //  Cells – each cell is assigned to exactly one MPI rank by the partitioner
-  //          (no duplication before ghost exchange).  size() on each rank is
-  //          the owned count and the MPI sum is correct.
+  // MPI correctness: each rank iterates over its *owned* cells only
+  // (ghostRank < 0).  Shared faces / edges / nodes on partition boundaries
+  // are seen by multiple ranks.  To avoid double-counting we assign
+  // ownership of every entity to the rank that owns the node with the
+  // smallest global ID in that entity.  The MPI sum of owned counts then
+  // gives the true global unique count.
 
-  // --- Nodes: use maxGlobalIndex (contiguous 0-based VTK global IDs) ---
-  globalIndex const V = nodeManager.maxGlobalIndex() + 1;
+  using EdgeKey = std::pair< globalIndex, globalIndex >;
+  using FaceKey = std::vector< globalIndex >;
 
-  // --- Edges & Faces: ghost ranks correctly set by assignGlobalIndices ---
-  localIndex const localE = edgeManager.getNumberOfLocalIndices();
-  localIndex const localF = faceManager.getNumberOfLocalIndices();
-  globalIndex const E = MpiWrapper::sum< globalIndex >( localE );
-  globalIndex const F = MpiWrapper::sum< globalIndex >( localF );
+  arrayView1d< globalIndex const > const localToGlobal = nodeManager.localToGlobalMap();
+  arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
 
-  // --- Cells: uniquely partitioned before ghost exchange; use
-  //     getNumberOfLocalIndices() so this also works after ghost exchange. ---
-  localIndex localC = 0;
+  std::set< globalIndex > allNodes;
+  std::set< EdgeKey >     allEdges;
+  std::set< FaceKey >     allFaces;
+  localIndex              numOwnedCells = 0;
+
+  // --- helpers -----------------------------------------------------------
+  auto makeEdge = []( globalIndex a, globalIndex b ) -> EdgeKey
+  {
+    return a < b ? std::make_pair( a, b ) : std::make_pair( b, a );
+  };
+
+  auto makeFace = []( std::initializer_list< globalIndex > nodes ) -> FaceKey
+  {
+    FaceKey f( nodes );
+    std::sort( f.begin(), f.end() );
+    return f;
+  };
+
+  // --- iterate owned cells, collecting global-ID-based entities ----------
   elemManager.forElementSubRegions< CellElementSubRegion >(
     [&]( CellElementSubRegion const & subRegion )
   {
-    localC += subRegion.getNumberOfLocalIndices();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap =
+      subRegion.nodeList();
+    arrayView1d< integer const > const cellGhostRank = subRegion.ghostRank();
+
+    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    {
+      if( cellGhostRank[ei] >= 0 )
+        continue;                       // skip ghost cells
+
+      ++numOwnedCells;
+
+      localIndex const npe = elemToNodeMap.size( 1 );
+      std::vector< globalIndex > gn( npe );
+      for( localIndex ni = 0; ni < npe; ++ni )
+      {
+        gn[ni] = localToGlobal[ elemToNodeMap[ei][ni] ];
+        allNodes.insert( gn[ni] );
+      }
+
+      if( npe == 4 )  // ---- Tetrahedron --------------------------------
+      {
+        allEdges.insert( makeEdge( gn[0], gn[1] ) );
+        allEdges.insert( makeEdge( gn[0], gn[2] ) );
+        allEdges.insert( makeEdge( gn[0], gn[3] ) );
+        allEdges.insert( makeEdge( gn[1], gn[2] ) );
+        allEdges.insert( makeEdge( gn[1], gn[3] ) );
+        allEdges.insert( makeEdge( gn[2], gn[3] ) );
+
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[2]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[3]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[2], gn[3]} ) );
+        allFaces.insert( makeFace( {gn[1], gn[2], gn[3]} ) );
+      }
+      else if( npe == 8 )  // ---- Hexahedron (GEOS ordering 0,1,3,2,4,5,7,6) ---
+      {
+        allEdges.insert( makeEdge( gn[0], gn[1] ) );
+        allEdges.insert( makeEdge( gn[1], gn[3] ) );
+        allEdges.insert( makeEdge( gn[3], gn[2] ) );
+        allEdges.insert( makeEdge( gn[2], gn[0] ) );
+        allEdges.insert( makeEdge( gn[4], gn[5] ) );
+        allEdges.insert( makeEdge( gn[5], gn[7] ) );
+        allEdges.insert( makeEdge( gn[7], gn[6] ) );
+        allEdges.insert( makeEdge( gn[6], gn[4] ) );
+        allEdges.insert( makeEdge( gn[0], gn[4] ) );
+        allEdges.insert( makeEdge( gn[1], gn[5] ) );
+        allEdges.insert( makeEdge( gn[3], gn[7] ) );
+        allEdges.insert( makeEdge( gn[2], gn[6] ) );
+
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[3], gn[2]} ) );
+        allFaces.insert( makeFace( {gn[4], gn[5], gn[7], gn[6]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[5], gn[4]} ) );
+        allFaces.insert( makeFace( {gn[2], gn[3], gn[7], gn[6]} ) );
+        allFaces.insert( makeFace( {gn[1], gn[3], gn[7], gn[5]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[2], gn[6], gn[4]} ) );
+      }
+      else if( npe == 6 )  // ---- Wedge / Prism ---------------------------
+      {
+        allEdges.insert( makeEdge( gn[0], gn[1] ) );
+        allEdges.insert( makeEdge( gn[1], gn[2] ) );
+        allEdges.insert( makeEdge( gn[2], gn[0] ) );
+        allEdges.insert( makeEdge( gn[3], gn[4] ) );
+        allEdges.insert( makeEdge( gn[4], gn[5] ) );
+        allEdges.insert( makeEdge( gn[5], gn[3] ) );
+        allEdges.insert( makeEdge( gn[0], gn[3] ) );
+        allEdges.insert( makeEdge( gn[1], gn[4] ) );
+        allEdges.insert( makeEdge( gn[2], gn[5] ) );
+
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[2]} ) );
+        allFaces.insert( makeFace( {gn[3], gn[4], gn[5]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[4], gn[3]} ) );
+        allFaces.insert( makeFace( {gn[1], gn[2], gn[5], gn[4]} ) );
+        allFaces.insert( makeFace( {gn[2], gn[0], gn[3], gn[5]} ) );
+      }
+      else if( npe == 5 )  // ---- Pyramid ---------------------------------
+      {
+        allEdges.insert( makeEdge( gn[0], gn[1] ) );
+        allEdges.insert( makeEdge( gn[1], gn[2] ) );
+        allEdges.insert( makeEdge( gn[2], gn[3] ) );
+        allEdges.insert( makeEdge( gn[3], gn[0] ) );
+        allEdges.insert( makeEdge( gn[0], gn[4] ) );
+        allEdges.insert( makeEdge( gn[1], gn[4] ) );
+        allEdges.insert( makeEdge( gn[2], gn[4] ) );
+        allEdges.insert( makeEdge( gn[3], gn[4] ) );
+
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[2], gn[3]} ) );
+        allFaces.insert( makeFace( {gn[0], gn[1], gn[4]} ) );
+        allFaces.insert( makeFace( {gn[1], gn[2], gn[4]} ) );
+        allFaces.insert( makeFace( {gn[2], gn[3], gn[4]} ) );
+        allFaces.insert( makeFace( {gn[3], gn[0], gn[4]} ) );
+      }
+    }
   } );
-  globalIndex const C = MpiWrapper::sum< globalIndex >( localC );
+
+  // --- ownership: entity owned by this rank if the node with the smallest
+  //     global ID in the entity is owned (ghostRank < 0) on this rank. ----
+
+  auto nodeIsOwned = [&]( globalIndex gid ) -> bool
+  {
+    auto it = nodeManager.globalToLocalMap().find( gid );
+    if( it == nodeManager.globalToLocalMap().end() )
+      return false;
+    return nodeGhostRank[ it->second ] < 0;
+  };
+
+  localIndex ownedV = 0;
+  for( globalIndex const & gid : allNodes )
+  {
+    if( nodeIsOwned( gid ) )
+      ++ownedV;
+  }
+
+  localIndex ownedE = 0;
+  for( EdgeKey const & e : allEdges )
+  {
+    if( nodeIsOwned( e.first ) )   // e.first is the min global ID (sorted)
+      ++ownedE;
+  }
+
+  localIndex ownedF = 0;
+  for( FaceKey const & f : allFaces )
+  {
+    if( nodeIsOwned( f[0] ) )      // f[0] is the min global ID (sorted)
+      ++ownedF;
+  }
+
+  // --- MPI reduce --------------------------------------------------------
+  globalIndex const V = MpiWrapper::sum< globalIndex >( ownedV );
+  globalIndex const E = MpiWrapper::sum< globalIndex >( ownedE );
+  globalIndex const F = MpiWrapper::sum< globalIndex >( ownedF );
+  globalIndex const C = MpiWrapper::sum< globalIndex >( numOwnedCells );
+
+  GEOS_LOG_RANK_0( "computeEulerCharacteristic (bulk):"
+                   << " V=" << V << " E=" << E << " F=" << F << " C=" << C
+                   << " chi=" << (V - E + F - C) );
 
   return static_cast< integer >( V - E + F - C );
 }

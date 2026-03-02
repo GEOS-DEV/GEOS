@@ -168,145 +168,6 @@ struct TopologyStats
   integer numBodies;  // Number of separate domain fragments
 };
 
-/**
- * @brief Compute Euler-Poincaré characteristic χ = V - E + F - C from CellElementSubRegions only.
- *
- * χ = 1 for a single connected solid. Excludes FaceElementSubRegion (fracture surfaces).
- */
-integer computeEulerCharacteristicTestHelper( NodeManager const & nodeManager,
-                                              FaceManager const & faceManager,
-                                              ElementRegionManager const & elemManager )
-{
-  (void) nodeManager;
-  (void) faceManager;
-  std::set< localIndex > uniqueNodes;
-  std::set< Edge > uniqueEdges;
-  std::set< Facet > uniqueFaces;
-  localIndex numCells = 0;
-
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
-  {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-
-    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
-    {
-      ++numCells;
-      localIndex const numNodesPerElem = elemToNodeMap.size( 1 );
-
-      // Collect all nodes
-      for( localIndex ni = 0; ni < numNodesPerElem; ++ni )
-      {
-        uniqueNodes.insert( elemToNodeMap[ei][ni] );
-      }
-
-      // Extract edges and faces based on element type
-      if( numNodesPerElem == 4 )  // Tetrahedron
-      {
-        // Edges (6)
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ) );
-
-        // Faces (4)
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][3]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
-      }
-      else if( numNodesPerElem == 8 )  // Hexahedron
-      {
-        // NOTE: GEOS uses ordering { 0, 1, 3, 2, 4, 5, 7, 6 } (see SiloFile.cpp:1338)
-        // Bottom face: 0->1->3->2, Top face: 4->5->7->6
-
-        // Edges (12): 4 bottom + 4 top + 4 vertical
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][0] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][7] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][7], elemToNodeMap[ei][6] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][6], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][5] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][7] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][6] ) );
-
-        // Faces (6): bottom, top, and 4 sides
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][2]} ) );  // bottom
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][4], elemToNodeMap[ei][5], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );  // top
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ) );  // front
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][6]} ) );  // back
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][3], elemToNodeMap[ei][7], elemToNodeMap[ei][5]} ) );  // right
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][2], elemToNodeMap[ei][6], elemToNodeMap[ei][4]} ) );  // left
-      }
-      else if( numNodesPerElem == 6 )  // Prism
-      {
-        // Edges (9)
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][0] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][4], elemToNodeMap[ei][5] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][5], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][5] ) );
-
-        // Faces (5)
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][3], elemToNodeMap[ei][4], elemToNodeMap[ei][5]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][4], elemToNodeMap[ei][3]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][5], elemToNodeMap[ei][4]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][0], elemToNodeMap[ei][3], elemToNodeMap[ei][5]} ) );
-      }
-      else if( numNodesPerElem == 5 )  // Pyramid
-      {
-        // Edges (8)
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][1] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][2] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][3] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][0] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][0], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][1], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][2], elemToNodeMap[ei][4] ) );
-        uniqueEdges.insert( Edge( elemToNodeMap[ei][3], elemToNodeMap[ei][4] ) );
-        // Faces (5)
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][3]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][0], elemToNodeMap[ei][1], elemToNodeMap[ei][4]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][1], elemToNodeMap[ei][2], elemToNodeMap[ei][4]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][2], elemToNodeMap[ei][3], elemToNodeMap[ei][4]} ) );
-        uniqueFaces.insert( Facet( {elemToNodeMap[ei][3], elemToNodeMap[ei][0], elemToNodeMap[ei][4]} ) );
-      }
-    }
-  } );
-
-  localIndex const V = uniqueNodes.size();
-  localIndex const E = uniqueEdges.size();
-  localIndex const F = uniqueFaces.size();
-  localIndex const C = numCells;
-
-  // Compute Euler-Poincaré characteristic: χ = V - E + F - C
-  // For a connected 3D solid: χ = 1
-  integer const eulerCharacteristic = V - E + F - C;
-
-  // Print diagnostic information
-  if( ENABLE_DEBUG_PRINTS )
-  {
-    GEOS_LOG_RANK_0( "DEBUG: Euler characteristic computation:" );
-    GEOS_LOG_RANK_0( "  V (nodes):  " << V );
-    GEOS_LOG_RANK_0( "  E (edges):  " << E );
-    GEOS_LOG_RANK_0( "  F (facets): " << F );
-    GEOS_LOG_RANK_0( "  C (cells):  " << C );
-    GEOS_LOG_RANK_0( "  χ = V - E + F - C = " << V << " - " << E << " + " << F << " - " << C << " = " << eulerCharacteristic );
-  }
-
-  return eulerCharacteristic;
-}
-
 /// @brief Assert all duplicated nodes have zero spatial distance from their parent.
 void checkCoordinateCoincidence( NodeManager const & nodeManager,
                                  std::map< localIndex, localIndex > const & parentToChild )
@@ -453,13 +314,13 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
   GEOS_LOG_RANK_0( "Validating A5 " << ( a5Pass ? "(ok)" : "(notok)" )
                                    << ": Euler χ after split (Expected: " << expectedEulerAfter
                                    << ", Actual: " << eulerCharAfterSplit << ")" );
-//  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
-//    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
-//    << "\n  Expected χ: " << expectedEulerAfter
-//    << "\n  Actual χ:   " << eulerCharAfterSplit
-//    << "\n  Mesh file:  " << meshFileName
-//    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
-//    << "\n  Fracture elements: " << statsAfter.numFractureElements;
+  EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
+    << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
+    << "\n  Expected χ: " << expectedEulerAfter
+    << "\n  Actual χ:   " << eulerCharAfterSplit
+    << "\n  Mesh file:  " << meshFileName
+    << "\n  Nodes duplicated: " << statsAfter.numDuplicatedNodes
+    << "\n  Fracture elements: " << statsAfter.numFractureElements;
 }
 
 /// @brief Parse "{ f1_node_set, f2_node_set, ... }" into individual set name strings.
