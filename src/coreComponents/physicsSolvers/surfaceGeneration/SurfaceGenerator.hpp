@@ -261,12 +261,17 @@ private:
    *
    * @param[in] nodesToRupturedFaces  Per-node sets of ruptured parent-face indices.
    * @param[in] nodeManager           Node manager for size information.
+   * @param[in] faceManager           Face manager (provides localToGlobalMap for
+   *            deterministic cross-rank ordering of the returned sets).
    * @return A vector of fracture sets, where each set contains the parent-face indices
-   *         belonging to one connected fracture component.
+   *         belonging to one connected fracture component.  The vector is sorted by the
+   *         minimum global face index in each set so that every MPI rank processes the
+   *         same fracture at the same loop iteration.
    */
   stdVector< std::set< localIndex > > groupRupturedFacesIntoSets(
     stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
-    NodeManager const & nodeManager ) const;
+    NodeManager const & nodeManager,
+    FaceManager const & faceManager ) const;
 
   /**
    * @brief Build filtered nodesToRupturedFaces and edgesToRupturedFaces maps
