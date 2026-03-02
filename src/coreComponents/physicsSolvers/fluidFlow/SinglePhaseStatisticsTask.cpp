@@ -184,7 +184,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
     tableData.addRow( merge, merge, merge, "" );
 
     tableData.addSeparator();
-    tableData.addRow( merge, merge, merge, GEOS_FMT( "Region '{}'", targetName ) );
+    tableData.addRow( merge, merge, merge, targetName );
     tableData.addSeparator();
     tableData.addRow( "statistics", "min", "average", "max" );
     tableData.addSeparator();
@@ -205,13 +205,14 @@ void StatsTask::outputLogStats( real64 const statsTime,
                       "all", CellType::MergeNext, stats.m_totalMass );
   };
 
-  // apply the lambda for each region and, finally, the mesh summary
+  // apply the output lambda for the mesh then each regions
+  outputRegionStats( GEOS_FMT( "Discretization '{}'", mesh.getName() ), meshRegionsStatistics );
+
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
                                      [&] ( CellElementRegion & region, RegionStatistics & stats )
   {
-    outputRegionStats( region.getName(), stats );
+    outputRegionStats( GEOS_FMT( "Region '{}'", region.getName() ), stats );
   } );
-  outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
   // output to log
   GEOS_LOG_RANK_0( formatter.toString( tableData ) );
@@ -256,13 +257,14 @@ void StatsTask::outputCsvStats( real64 statsTime,
     tableData.addRow( row );
   };
 
-  // apply the lambda for each region and, finally, the mesh summary
+  // apply the output lambda for the mesh then each regions
+  outputRegionStats( mesh.getName(), meshRegionsStatistics );
+
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
                                      [&] ( CellElementRegion & region, RegionStatistics & stats )
   {
     outputRegionStats( region.getName(), stats );
   } );
-  outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
   // append to csv file
   std::ofstream outputFile( getCsvFileName( mesh.getName() ), std::ios_base::app );
