@@ -25,7 +25,7 @@ using namespace geos;
 TEST( testDataTypes, testBoundChecking )
 {
   internal::StdVectorWrapper< std::string,
-                              std::allocator< std::string >,
+                              internal::DefaultAllocator< std::string >,
                               true > vectorBoundsChecking = {"test"};
   EXPECT_THROW( {
     try
