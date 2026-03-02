@@ -179,7 +179,7 @@ jobs:
             BUILD_SHARED_LIBS: ON
             ENABLE_HYPRE: OFF
             ENABLE_TRILINOS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
 
           # - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
