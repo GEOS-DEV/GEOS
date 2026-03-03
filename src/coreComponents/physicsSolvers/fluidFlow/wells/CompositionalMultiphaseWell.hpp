@@ -380,9 +380,9 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   void precomputeReferenceConditions( real64 time_n,
-                                  Group & meshBodies,
-                                  MeshBody & meshBody,
-                                  WellElementSubRegion const & subRegion );
+                                      Group & meshBodies,
+                                      MeshBody & meshBody,
+                                      WellElementSubRegion const & subRegion );
 
   ReferenceConditions getReferenceConditions( WellElementSubRegion const & subRegion );
 
