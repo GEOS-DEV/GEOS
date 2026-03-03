@@ -52,8 +52,8 @@ namespace internal
  * If false, uses operator[] for unchecked access.
  */
 template< typename T,
-          typename Allocator  = std::allocator< T >,
-          bool USE_BOUNDS_CHECKING = USE_STD_CONTAINER_BOUNDS_CHECKING >
+          bool USE_BOUNDS_CHECKING,
+          typename Allocator  = std::allocator< T > >
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
@@ -148,7 +148,7 @@ public:
  * @tparam Allocator Allocator type for the vector.
  */
 template< typename T, typename Allocator = std::allocator< T > >
-using stdVector = internal::StdVectorWrapper< T, Allocator, USE_STD_CONTAINER_BOUNDS_CHECKING >;
+using stdVector = internal::StdVectorWrapper< T, USE_STD_CONTAINER_BOUNDS_CHECKING, Allocator>;
 
 
 
