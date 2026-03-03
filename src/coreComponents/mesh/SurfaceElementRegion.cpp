@@ -76,8 +76,8 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 void SurfaceElementRegion::initializePreSubGroups()
 {
   GEOS_ERROR_IF_LE_MSG( m_defaultAperture, 0.0,
-                        getWrapperDataContext( viewKeyStruct::defaultApertureString() ) <<
-                        ": default aperture must be larger than 0.0" );
+                        GEOS_FMT( "{}: default aperture must be larger than 0.0",
+                                  getWrapperDataContext( viewKeyStruct::defaultApertureString() ) ) );
 
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {

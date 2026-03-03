@@ -171,7 +171,8 @@ void MemoryLogging::memoryStatsReport() const
     MpiWrapper::allReduce( allocatorNameFixedSize, allocatorNameMinChars, MpiWrapper::Reduction::Min, MPI_COMM_GEOS );
     if( allocatorNameFixedSize != allocatorNameMinChars )
     {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
+      GEOS_WARNING( GEOS_FMT( "Not all ranks have an allocator named {}, cannot compute high water mark.",
+                              allocatorNameFixedSize ) );
       continue;
     }
 

@@ -29,13 +29,11 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-#else
-/// Device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-#endif
+/**
+ * @def GEOS_HYPRE_DEVICE
+ * @brief Host/device annotation used by hypre wrappers.
+ */
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
@@ -163,8 +161,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 }
 
 /**
- * @brief Check for previous device errors and report with line information.
- * @param msg custom message to add
+ * @def GEOS_HYPRE_CHECK_DEVICE_ERRORS
+ * @brief Check for previous device errors and report with file/line information.
+ * @param msg Custom message to add.
  */
 #define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 

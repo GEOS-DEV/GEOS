@@ -1367,11 +1367,16 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         // NOT be included in the path!!!
         if( nextEdge!=startingEdge && !(isEdgeExternal[nextEdge]==1 && startingEdgeExternal ) )
         {
-          GEOS_ERROR( "Crap !" <<
-                      "  NodeID, ParentID = " << nodeID << ", " << parentNodeIndex << '\n' <<
-                      "  Starting Edge/Face = " << startingEdge << ", " << startingFace << '\n' <<
-                      "  Face Separation Path = " << facePath << '\n' <<
-                      "  Edge Separation Path = " << edgePath << '\n',
+          GEOS_ERROR( GEOS_FMT( "Crap !  NodeID, ParentID = {}, {}\n"
+                                "  Starting Edge/Face = {}, {}\n"
+                                "  Face Separation Path = {}\n"
+                                "  Edge Separation Path = {}\n",
+                                nodeID,
+                                parentNodeIndex,
+                                startingEdge,
+                                startingFace,
+                                format::toStringForFmt( facePath ),
+                                format::toStringForFmt( edgePath ) ),
                       getDataContext() );
         }
 

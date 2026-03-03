@@ -1042,7 +1042,8 @@ void rescaleRow( Epetra_CrsMatrix & mat,
   double * vals;
   mat.ExtractMyRowView( localRow, numEntries, vals );
   double const scale = std::accumulate( vals, vals + numEntries, 0.0, reducer );
-  GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << mat.GRID64( localRow ) );
+  GEOS_ASSERT_MSG( !isZero( scale ),
+                   GEOS_FMT( "Zero row sum in row {}", mat.GRID64( localRow ) ) );
   std::transform( vals, vals + numEntries, vals, [scale]( double const v ){ return v / scale; } );
 }
 

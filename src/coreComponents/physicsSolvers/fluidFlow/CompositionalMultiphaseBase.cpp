@@ -544,15 +544,19 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
     string_array const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
     GEOS_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
-                          "Mismatch in number of components between constitutive model "
-                          << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName(),
+                          GEOS_FMT( "Mismatch in number of components between constitutive model {} and the water "
+                                    "phase composition in aquifer {}",
+                                    fluid0.getName(),
+                                    bc.getName() ),
                           getDataContext()  );
 
     for( integer ic = 0; ic < fluid0.numFluidComponents(); ++ic )
     {
       GEOS_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
-                            "Mismatch in component names between constitutive model "
-                            << fluid0.getName() << " and the water phase components in aquifer " << bc.getName(),
+                            GEOS_FMT( "Mismatch in component names between constitutive model {} and the water "
+                                      "phase components in aquifer {}",
+                                      fluid0.getName(),
+                                      bc.getName() ),
                             getDataContext()  );
     }
   } );
@@ -1135,22 +1139,24 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   "The gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                   ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() <<
-                   " used in this simulation. To proceed, you can either: \n" <<
-                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                   GEOS_FMT( "The gravity vector specified in this simulation ({} {} {}) is not aligned with the z-axis. \n"
+                             "This is incompatible with the {} used in this simulation. To proceed, you can either: \n"
+                             "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n"
+                             "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                             gravVector[0],
+                             gravVector[1],
+                             gravVector[2],
+                             bc.getCatalogName() ),
                    InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
-                   EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
-                   << " must be provided for a multiphase simulation",
+                   GEOS_FMT( "{} must be provided for a multiphase simulation",
+                             EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString() ),
                    InputError, bc.getDataContext() );
     GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
-                   EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
-                   << " must be provided for a multiphase simulation",
+                   GEOS_FMT( "{} must be provided for a multiphase simulation",
+                             EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString() ),
                    InputError, bc.getDataContext() );
   } );
 
@@ -1304,14 +1310,18 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
-                     "Mismatch in number of components between constitutive model "
-                     << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
+                     GEOS_FMT( "Mismatch in number of components between constitutive model {} and the Equilibrium "
+                               "initial condition {}",
+                               fluid.getName(),
+                               fs.getName() ),
                      InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
-                       "Mismatch in component names between constitutive model "
-                       << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
+                       GEOS_FMT( "Mismatch in component names between constitutive model {} and the Equilibrium "
+                                 "initial condition {}",
+                                 fluid.getName(),
+                                 fs.getName() ),
                        InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
@@ -1321,8 +1331,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       {
         auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
         GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                       getCatalogName() << " " << getDataContext() << ": phase name " <<
-                       initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                       GEOS_FMT( "{} {}: phase name {} not found in the phases of {}",
+                                 getCatalogName(),
+                                 getDataContext(),
+                                 initPhaseName,
+                                 fluid.getDataContext() ),
                        InputError, getDataContext() );
         ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
       }
@@ -1405,9 +1418,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                phaseCompFrac.toView() );
 
         GEOS_THROW_IF( returnValue == Kernel::ReturnType::FAILED_TO_CONVERGE,
-                       "hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
-                       "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
-                       "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                       GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
+                                 "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
+                                 "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                                 region.getName() ),
                        geos::RuntimeError, getDataContext() );
 
         if( singlePhaseInitialisation )
@@ -2101,6 +2115,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
+          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
                                                            flow::globalCompFraction::key() ) );

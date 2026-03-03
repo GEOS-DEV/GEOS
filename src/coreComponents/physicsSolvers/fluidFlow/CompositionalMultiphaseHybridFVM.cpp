@@ -227,8 +227,11 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_WARNING( "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n" <<
-                    "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored",
+      GEOS_UNUSED_VAR( bc );
+      GEOS_WARNING( GEOS_FMT( "An aquifer boundary condition named {} was requested in the XML file.\n"
+                              "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM "
+                              "and will be ignored",
+                              bc.getName() ),
                     getDataContext() );
     } );
   } );
@@ -906,7 +909,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
               else if( numFacesPerElement == 13 )
                 launchKernel( IP_TAG, std::integral_constant< integer, 13 >{} );
               else
-                GEOS_ERROR( "Unsupported number of faces per element: " << numFacesPerElement, getDataContext() );
+                GEOS_ERROR( GEOS_FMT( "Unsupported number of faces per element: {}", numFacesPerElement ), getDataContext() );
             };
 
             // Inner-product selection
@@ -924,7 +927,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
             }
             else
             {
-              GEOS_ERROR( "Unsupported inner product type: " << innerProductType, getDataContext() );
+              GEOS_ERROR( GEOS_FMT( "Unsupported inner product type: {}", innerProductType ), getDataContext() );
             }
           };
 
@@ -933,7 +936,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           else if( m_numPhases == 3 )
             launchWithPhases( std::integral_constant< integer, 3 >{} );
           else
-            GEOS_ERROR( "Unsupported number of phases: " << m_numPhases, getDataContext() );
+            GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", m_numPhases ), getDataContext() );
         } );
       }
     } );

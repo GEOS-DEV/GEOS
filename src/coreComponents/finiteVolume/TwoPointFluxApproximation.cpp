@@ -304,7 +304,8 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsDFM( MeshLevel & m
 
     localIndex const connectorIndex = fractureStencil.size();
 
-    GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << fci );
+    GEOS_ERROR_IF( numElems > maxElems,
+                   GEOS_FMT( "Max stencil size exceeded by fracture-fracture connector {}", fci ) );
 
     stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
     stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
@@ -474,7 +475,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
     {
       localIndex const numElems = 2;
 
-      GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
+      GEOS_ERROR_IF( numElems > maxElems,
+                     GEOS_FMT( "Max stencil size exceeded by fracture-cell connector {}", kfe ) );
 
       real64 cellToFaceVec[ 3 ], faceNormalVector[ 3 ];
 
@@ -583,7 +585,8 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
     {
       localIndex const numElems = 2;   // there is a 1 to 1 relation
 
-      GEOS_ERROR_IF( numElems > MAX_NUM_ELEMS, "Max stencil size exceeded by fracture-cell connector " << kes );
+      GEOS_ERROR_IF( numElems > MAX_NUM_ELEMS,
+                     GEOS_FMT( "Max stencil size exceeded by fracture-cell connector {}", kes ) );
 
       stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsRegionIndex( numElems );
       stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsSubRegionIndex( numElems );
@@ -656,7 +659,8 @@ void TwoPointFluxApproximation::addFractureFractureConnectionsEDFM( MeshLevel & 
     if( edgeToEmbSurfacesMap.sizeOfSet( ke ) > 1 ) // to be a connector it need to be attached to at least 2 elements.
     {
 
-      GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-fracture connector " << ke );
+      GEOS_ERROR_IF( numElems > maxElems,
+                     GEOS_FMT( "Max stencil size exceeded by fracture-fracture connector {}", ke ) );
 
       stackArray1d< localIndex, maxElems > stencilCellsRegionIndex( numElems );
       stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
