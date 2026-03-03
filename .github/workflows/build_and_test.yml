@@ -333,6 +333,11 @@ jobs:
 
         exit ${EXIT_STATUS}
 
+    - name: Import Codecov GPG key
+      if: inputs.CODE_COVERAGE
+      run: |
+        curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
       uses: codecov/codecov-action@v5.4.2
