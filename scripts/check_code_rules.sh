@@ -100,7 +100,7 @@ done
 
 EXCLUDED_NAME_PATTERNS=()
 for pattern in "${FILEPATH_EXCLUDE_PATTERNS[@]}"; do
-    if [[ ! "$pattern" == *".hpp"*  || "$pattern" == *".cpp"*]]; then
+    if [[ ! "$pattern" == *".hpp"*  || "$pattern" == *".cpp"* ]]; then
       EXCLUDED_NAME_PATTERNS+=( -path "*/$pattern" -prune -o )
     else
       EXCLUDED_NAME_PATTERNS+=( -name "*${pattern}" -prune -o )
