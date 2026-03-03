@@ -100,7 +100,7 @@ done
 
 EXCLUDED_NAME_PATTERNS=()
 for pattern in "${FILEPATH_EXCLUDE_PATTERNS[@]}"; do
-    if [[ ! "$pattern" == *".hpp"* ]]; then
+    if [[ ! "$pattern" == *".hpp"*  || "$pattern" == *".cpp"*]]; then
       EXCLUDED_NAME_PATTERNS+=( -path "*/$pattern" -prune -o )
     else
       EXCLUDED_NAME_PATTERNS+=( -name "*${pattern}" -prune -o )
@@ -129,7 +129,7 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDED_NAME_PA
 ################################
 
 REGEX_PATTERN=$(IFS='|'; echo "${FORBIDDEN_EXPRESSIONS[*]}")
-FULL_REGEX="(${REGEX_PATTERN})[[:space:]]*"
+FULL_REGEX="(${REGEX_PATTERN})"
 
 for file in "${ARRAY_FILES[@]}"; do
     check_container_usage "$file"
