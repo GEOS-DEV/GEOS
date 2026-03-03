@@ -364,7 +364,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_enableBoreholePressure( 0 ),
   m_boreholeStress(),
   m_boreholeRadius( 0.0 ),
-  m_confiningPressure( 0.0 ),
+  m_enableConfiningPressure( 0 ),
+  m_confiningStress( ),
   m_confiningPressureBoxMin( ),
   m_confiningPressureBoxMax( ),
   m_temperatureTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
@@ -688,6 +689,26 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Radius of borehole" );
+
+  registerWrapper( "enableConfiningPressure", &m_enableConfiningPressure ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable confining pressure" );
+
+  registerWrapper( "confiningStress", &m_confiningStress ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Array that stores confining stress state" );
+  
+  registerWrapper( "confiningPressureBoxMin", &m_confiningPressureBoxMin ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "xyz coordinate of confining pressure box min corner" );
+  
+  registerWrapper( "confiningPressureBoxMax", &m_confiningPressureBoxMax ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "xyz coordinate of confining pressure box max corner" );
 
   registerWrapper( "bcTable", &m_bcTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1923,10 +1944,10 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of each XPIC and FMPM order iteration for multifield contact" );
 
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() ).
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the borehole stress state for grid nodes." );
+        setDescription( "An array that holds the background stress state for grid nodes." );
 
       // Development fields -------------------------------------------------------------------------------------------------
 
@@ -2392,7 +2413,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveAreaString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() ).resize( numNodes );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() ).resize( numNodes, 6 );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() ).resize( numNodes, 6 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfacePositionString() ).resize( numNodes, m_numVelocityFields, 3 );
 
@@ -2821,11 +2842,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  if( m_enableBoreholePressure == 1 )
+  if( m_enableBoreholePressure == 1 or m_enableConfiningPressure == 1 )
   {
-    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Update borehole stress state on grid nodes" );
-    solverProfiling( "Update borehole stress state on grid nodes" );
-    updateGridBoreholeStress( nodeManager );
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Update background stress state on grid nodes" );
+    solverProfiling( "Update background stress state on grid nodes" );
+    updateGridBackgroundStress( nodeManager );
   }
   //#######################################################################################
 
@@ -5725,7 +5746,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 
   arrayView1d< globalIndex > const gridMaxMappedParticleID = nodeManager.getReference< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() );
 
-  arrayView2d< real64 > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   // Development
   arrayView3d< real64 > const gridBasedSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfaceNormalString() );
@@ -5745,7 +5766,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridPrincipalExplicitSurfaceNormal[g][i] = 0.0;
     }
 
-    LvArray::tensorOps::fill< 6 >( gridBoreholeStress[g], 0.0 );
+    LvArray::tensorOps::fill< 6 >( gridBackgroundStress[g], 0.0 );
 
     for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
@@ -5856,8 +5877,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getCatalogName() == "ConfiningPressure" )
       {
+        m_enableConfiningPressure = 1;
         ConfiningPressureMPMEvent & confiningPressure = dynamicCast< ConfiningPressureMPMEvent & >( event );
-
 
         m_confiningPressureBoxMin = confiningPressure.getConfiningPressureBoxMin();
         m_confiningPressureBoxMax = confiningPressure.getConfiningPressureBoxMax();
@@ -5868,15 +5889,23 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         // Set m_confiningPressure to interpolated value.  The default is 0, but at the end of the event
         // it won't be reset.
-
+        real64 confiningPressureValue = 0.0;
         interpolateValueInRange( time_n,
                                  startTime,
                                  startTime + timeInterval,
                                  startPressure,
                                  endPressure,
-                                 m_confiningPressure, // output, overwritten from interpolaiton.
+                                 confiningPressureValue, // output, overwritten from interpolaiton.
                                  interpolationType );
-        GEOS_LOG_RANK_0( "Setting confining pressure"<<m_confiningPressure );
+
+        m_confiningStress[0] = -confiningPressureValue;
+        m_confiningStress[1] = -confiningPressureValue;
+        m_confiningStress[2] = -confiningPressureValue;
+        m_confiningStress[3] = 0.0;
+        m_confiningStress[4] = 0.0;
+        m_confiningStress[5] = 0.0;
+
+        GEOS_LOG_RANK_0( "Setting confining pressure to "<<confiningPressureValue );
 
         //sevent.setIsComplete( 1 );
       }
@@ -11380,23 +11409,62 @@ void SolidMechanicsMPM::computeGeneralizedVortexMMSBodyForce( real64 const time_
 }
 
 
-void SolidMechanicsMPM::updateGridBoreholeStress( NodeManager & nodeManager )
+void SolidMechanicsMPM::updateGridBackgroundStress( NodeManager & nodeManager )
 {
-  real64 boreholeRadiusSqr = m_boreholeRadius * m_boreholeRadius;
-  real64 boreholeStress[6] = { };
-  LvArray::tensorOps::copy< 6 >( boreholeStress, m_boreholeStress );
-
+  // We can define a background stress that will act like a fluid pressure (or other general stress state)
+  // in regions not occupied by particles, and which is used to modify the internal force calculation.
+  // In this way a pressure or traction boudary condition can be applied to a region without needing
+  // to explicitly trac surfaces.
+  //
+  // Current Options:
+  //
+  // BOREHOLE: Applies a pressure to all void space within an infinite cylindrical region, 
+  // where the cylinder axis is [0,0,1] centered at the origin so the geometry is specified entirely by
+  // a borehole radius.  This is used in borehole stability calculations.
+  //
+  // CONFINING PRESSURE: Here a box can be specified and any void region outside the box will have a 
+  // virtual pressure applied.   This is useful for creating stress boundary conditions consistent
+  // with stress initialization for triaxial compression testing, or generally for creating a pressure
+  // boundary on a region with an abitrary surface.  The box is specified to allow this option to be used
+  // along with the BOREHOLE boundary condition.
+  //
+  // The order of these is arbitrary, and the 2nd can over-write the first.  They are intended to be used
+  // such that the borehole is within the box geometry.
+  
   // Grid fields
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  arrayView2d< real64 > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
-  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
-  {
-    if( LvArray::math::square( gridPosition[g][0] ) + LvArray::math::square( gridPosition[g][1] ) < boreholeRadiusSqr )
+  if( m_enableBoreholePressure == 1 )
+  { // std::cout << "m_boreholePressure:  " << m_boreholePressure <<  std::endl;
+    // std::cout << "m_boreholeRadius:  " << m_boreholeRadius <<  std::endl;
+    real64 boreholeRadiusSqr = m_boreholeRadius * m_boreholeRadius;
+    real64 boreholeStress[6] = { };
+    LvArray::tensorOps::copy< 6 >( boreholeStress, m_boreholeStress );
+
+    forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
     {
-      LvArray::tensorOps::copy< 6 >( gridBoreholeStress[g], boreholeStress );
-    }
-  } );
+      if( LvArray::math::square( gridPosition[g][0] ) + LvArray::math::square( gridPosition[g][1] ) < boreholeRadiusSqr )
+      {
+        LvArray::tensorOps::copy< 6 >( gridBackgroundStress[g], boreholeStress );
+      }
+    } );   
+  }
+
+  if( m_enableConfiningPressure == 1 )
+  {
+    real64 confiningStress[6] = { };
+    // Here we support only a confining pressure:  TODO: add support for a general background confining stress.
+    LvArray::tensorOps::copy< 6 >( confiningStress, m_confiningStress );
+    forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+    {
+      if ( ( gridPosition[g][0] < m_confiningPressureBoxMin[0] ) || ( gridPosition[g][1] < m_confiningPressureBoxMin[1] ) || ( gridPosition[g][2] < m_confiningPressureBoxMin[2] ) || 
+      ( gridPosition[g][0] > m_confiningPressureBoxMax[0] ) || ( gridPosition[g][1] > m_confiningPressureBoxMax[1] ) || ( gridPosition[g][2] > m_confiningPressureBoxMax[2] ) )
+      {
+        LvArray::tensorOps::copy< 6 >( gridBackgroundStress[g], confiningStress );
+      }
+    } );   
+  }
 }
 
 
@@ -11444,7 +11512,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
   arrayView2d< int > const & gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
 
-  arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
   arrayView2d< real64 > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
@@ -11629,14 +11697,11 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
           particleContributionToGrid = particleMass[p] * ( particlePosition[p][i] - gridPosition[mappedNode][i] ) * shapeFunctionValue;
           RAJA::atomicAdd( parallelDeviceAtomic{}, &gridCenterOfMass[mappedNode][fieldIndex][i], particleContributionToGrid );
-
-          // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
-          // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
-          // pressure BC, should be bigger than the borehole but not near outer domain boundary.
+         
           for( localIndex k = 0; k < numDims; ++k )
           {
             localIndex voigt = voigtMap[k][i];
-            particleContributionToGrid = particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt];
+            particleContributionToGrid = particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt];
             if( useArtificialViscosity == 1 )
             {
               particleContributionToGrid -= particleArtificialViscosity[p] * (k == i);
@@ -11693,7 +11758,7 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
   arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
   arrayView2d< int > const & gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
 
-  arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -11785,14 +11850,12 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
 
           gridCenterOfMass[mappedNode][fieldIndex][i] += particleMass[p] * ( particlePosition[p][i] - gridPosition[mappedNode][i] ) * shapeFunctionValue;
 
-          // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
-          // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
-          // pressure BC, should be bigger than the borehole but not near outer domain boundary.
+          // Map internal forces, modify if needed by artificial viscosity and or virtual fluid backround stress or borehole stress
           for( localIndex k=0; k < numDims; ++k )
           {
             localIndex voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] +=
-              -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
+              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
                  (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
           }
         }
@@ -11844,7 +11907,7 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
   arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
   arrayView2d< int > const & gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
 
-  arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -11961,14 +12024,12 @@ void SolidMechanicsMPM::particleToGrid_randomMix( real64 const time_n,
           particleContributionToGrid = particleMass[p] * ( particlePosition[p][i] - gridPosition[mappedNode][i] ) * shapeFunctionValue;
           RAJA::atomicAdd( parallelDeviceAtomic{}, &gridCenterOfMass[mappedNode][fieldIndex][i], particleContributionToGrid );
 
-          // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
-          // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
-          // pressure BC, should be bigger than the borehole but not near outer domain boundary.
+          // Map internal forces, modify if needed by artificial viscosity and or virtual fluid backround stress or borehole stress
           for( localIndex k=0; k < numDims; ++k )
           {
             localIndex voigt = voigtMap[k][i];
             particleContributionToGrid =
-              -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
+              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
                  (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
             RAJA::atomicAdd( parallelDeviceAtomic{}, &gridInternalForce[mappedNode][fieldIndex][i], particleContributionToGrid );
           }
@@ -12021,7 +12082,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
   arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
   arrayView2d< int > const & gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
 
-  arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -12177,14 +12238,12 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
           gridCenterOfVolumeContribution[i] += particleVolume[p] * ( particlePosition[p][i] - gridPosition[mappedNode][i] ) * shapeFunctionValue;
           gridCenterOfMassContribution[i] += particleMass[p] * ( particlePosition[p][i] - gridPosition[mappedNode][i] ) * shapeFunctionValue;
 
-          // MH: This will modify the stress if there is a non-zero borehole pressure set by the boreholePressure
-          // event.  This change is applied if the radius in the x-y plane, centered at origin, defining the extent of the borehole
-          // pressure BC, should be bigger than the borehole but not near outer domain boundary.
+          // Map internal forces, modify if needed by artificial viscosity and or virtual fluid backround stress or borehole stress
           for( localIndex k = 0; k < numDims; ++k )
           {
             localIndex voigt = voigtMap[k][i];
             gridInternalForceContribution[voigt] +=
-              -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
+              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
                  (k == i) ) * shapeFunctionGradientValue[k] * particleVolume[p];
           }
         }
@@ -12278,8 +12337,8 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   // arrayView2d< real64 const > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >(
   // viewKeyStruct::gridDamageGradientString() );
   // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  // arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >(
-  // viewKeyStruct::gridBoreholeStressString() );
+  // arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >(
+  // viewKeyStruct::gridBackgroundStressString() );
 
   // // Grid fields to map particles to
   // arrayView2d< real64 > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
@@ -12436,7 +12495,7 @@ void SolidMechanicsMPM::particleToGrid_reduction( real64 const time_n,
   //         {
   //           int voigt = voigtMap[k][i];
   //           vectorIndex = ( numNodes * 6 ) * fieldIndex + numNodes * voigt + mappedNode;
-  //           gridInternalForceReduction[vectorIndex] += -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) -
+  //           gridInternalForceReduction[vectorIndex] += -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) -
   // particleArtificialViscosity[p] * useArtificialViscosity * (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
   //         }
   //       }
@@ -12569,7 +12628,7 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
   arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
   arrayView2d< int > const & gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
 
-  arrayView2d< real64 const > const gridBoreholeStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBoreholeStressString() );
+  arrayView2d< real64 const > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -12668,7 +12727,7 @@ void SolidMechanicsMPM::particleToGrid_colors( real64 const time_n,
           {
             localIndex voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] +=
-              -( ( particleStress[p][voigt] - gridBoreholeStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
+              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
                  (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
           }
         }

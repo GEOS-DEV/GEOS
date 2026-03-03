@@ -323,7 +323,7 @@ public:
     static constexpr char const * gridReferenceSurfacePositionString() { return "gridReferenceSurfacePosition"; }
     static constexpr char const * gridReferenceMaterialVolumeString() { return "gridReferenceMaterialVolume"; }
 
-    static constexpr char const * gridBoreholeStressString() { return "gridBoreholeStress"; }
+    static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
 
     static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
     static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
@@ -702,7 +702,7 @@ public:
   real64 computeDistanceToParticleSurface( real64 ( &normal )[3],
                                            arraySlice2d< real64 const > const rVectors );
 
-  void updateGridBoreholeStress( NodeManager & nodeManager );
+  void updateGridBackgroundStress( NodeManager & nodeManager );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
@@ -1114,7 +1114,8 @@ protected:
   array1d< real64 > m_boreholeStress;
   real64 m_boreholeRadius;
 
-  real64 m_confiningPressure;
+  int m_enableConfiningPressure;
+  array1d< real64 > m_confiningStress;
   array1d< real64 > m_confiningPressureBoxMin;
   array1d< real64 > m_confiningPressureBoxMax;
 
