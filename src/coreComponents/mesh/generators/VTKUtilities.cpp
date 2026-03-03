@@ -1000,8 +1000,11 @@ redistributeByKdTree( vtkDataSet & mesh )
 
   if( globalOutputCells != globalInputCells )
   {
-    GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
-                                                    << " elements! Falling back to block redistribution." );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
+                                                      << " elements! Falling back to block redistribution." );
+    }
     return scatterByBlock( mesh );
   }
 
@@ -1170,7 +1173,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
       localIndex const lastRecipientPosition = firstRecipientPosition + numElems - 1;
       GEOS_THROW_IF( isLastDonor && ( lastRecipientPosition < recipientRanks.size() ),
                      "The current implementation is unable to guarantee that all ranks have at least one element",
-                     std::runtime_error );
+                     geos::RuntimeError );
 
       for( localIndex iElem = 1; iElem < numElems; ++iElem ) // I only keep my first element
       {
