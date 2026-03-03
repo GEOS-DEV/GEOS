@@ -66,6 +66,7 @@ bool TableData::operator<( TableData const & other ) const
 
 void TableData::addRow( stdVector< TableData::CellData > const & row )
 {
+  static_assert(USE_STD_CONTAINER_BOUNDS_CHECKING == false, "ERREUR: La bibliothèque est compilée avec BOUNDS CHECKING = TRUE");
   m_rows.push_back( row );
 }
 

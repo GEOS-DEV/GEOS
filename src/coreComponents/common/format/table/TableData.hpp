@@ -92,8 +92,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( internal::StdVectorWrapper<TableData::CellData, std::allocator<TableData::CellData >, true > const & row );
-  void addRow( internal::StdVectorWrapper<TableData::CellData, std::allocator<TableData::CellData >, false > const & row );
+  void addRow( stdVector< CellData > const & row );
 
   /**
    * @brief Add a line separator to the table
