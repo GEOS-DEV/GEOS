@@ -20,7 +20,6 @@
 #ifndef GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 #define GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 
-#include "common/StdContainerWrappers.hpp"
 #include "common/Units.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
@@ -93,12 +92,7 @@ public:
    * @brief Add a row to the table
    * @param row A vector of string representing a row
    */
-  void addRow( stdVector< TableData::CellData, std::allocator< TableData::CellData >, false > const & row );
-  /**
-   * @brief Add a row to the table
-   * @param row A vector of string representing a row
-   */
-  void addRow( stdVector< TableData::CellData, std::allocator< TableData::CellData >, true > const & row );
+  void addRow( stdVector< TableData::CellData > const & row );
 
   /**
    * @brief Add a line separator to the table
