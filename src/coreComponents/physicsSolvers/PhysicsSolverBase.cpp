@@ -167,8 +167,8 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                     "No MeshBody information is specified in" <<
-                     " PhysicsSolverBase::meshTargets, but there are multiple MeshBody objects",
+                     "No MeshBody information is specified in PhysicsSolverBase::meshTargets, "
+                     "but there are multiple MeshBody objects",
                      getDataContext() );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
       string const meshBodyName = meshBody.getName();
@@ -183,7 +183,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     "MeshBody (" << meshBodyName << ") is specified in targetRegions, but does not exist.",
+                     GEOS_FMT( "MeshBody ({}) is specified in targetRegions, but does not exist.", meshBodyName ),
                      getWrapperDataContext( viewKeyStruct::targetRegionsString() ) );
 
       string const meshLevelName = m_discretizationName;

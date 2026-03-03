@@ -3714,7 +3714,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
         }
       default:
         {
-          GEOS_ERROR( "Particle type \"" << particleType << "\" is not yet supported.", getDataContext() );
+          GEOS_ERROR( GEOS_FMT( "Particle type \"{}\" is not yet supported.", particleType ), getDataContext() );
           break;
         }
     }
@@ -4048,7 +4048,8 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
 
       default:
         {
-          GEOS_ERROR( "Particle type \"" << subRegion.getParticleType() << "\" is not yet supported.", getDataContext() );
+          GEOS_ERROR( GEOS_FMT( "Particle type \"{}\" is not yet supported.", subRegion.getParticleType() ),
+                      getDataContext() );
           break;
         }
     }

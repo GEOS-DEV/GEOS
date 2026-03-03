@@ -62,7 +62,7 @@ static std::string getGpuCompilerIdString()
   oss << "  - CUDA compiler version: " << CUDA_VERSION/10/100 << "." << CUDA_VERSION/10%100;
 #endif
 #if defined( GEOS_USE_HIP )
-  oss << "  - ROCm compiler version: " << ROCM_VERSION/100/100 << "." << ROCM_VERSION/100%100;
+  oss << "  - HIP compiler version: " << HIP_VERSION/100/100 << "." << HIP_VERSION/100%100;
 #endif
   return oss.str();
 }

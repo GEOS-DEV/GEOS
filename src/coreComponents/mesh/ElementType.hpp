@@ -135,7 +135,7 @@ inline string getElementTypeName( ElementType const type )
     case ElementType::Polyhedron:  return "polyhedra";
     default:
     {
-      GEOS_ERROR( "Element type '" << type << "' is not supported" );
+      GEOS_ERROR( GEOS_FMT( "Element type '{}' is not supported", type ) );
       return {};
     }
   }

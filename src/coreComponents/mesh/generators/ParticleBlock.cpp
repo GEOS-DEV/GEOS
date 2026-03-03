@@ -64,7 +64,7 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
     }
     default:
     {
-      GEOS_ERROR( "Invalid particle type: " << m_particleType, getDataContext()  );
+      GEOS_ERROR( GEOS_FMT( "Invalid particle type: {}", m_particleType ), getDataContext()  );
     }
   }
 }
