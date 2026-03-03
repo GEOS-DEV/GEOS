@@ -36,6 +36,8 @@ Usage: $0
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
   --code-coverage
       run a code build and test.
+  --ctest-parallel N
+      Run N tests in parallel (default: 1).
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
@@ -79,7 +81,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,ctest-parallel:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -96,6 +98,7 @@ TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
+CTEST_PARALLEL=1
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 
@@ -136,6 +139,7 @@ do
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
+    --ctest-parallel)        CTEST_PARALLEL=$2;          shift 2;;
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
@@ -317,9 +321,9 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure --parallel ${CTEST_PARALLEL} -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure --parallel ${CTEST_PARALLEL} -E "testUncrustifyCheck|testDoxygenCheck"
   fi
 fi
 
