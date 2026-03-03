@@ -609,7 +609,7 @@ localIndex countMeshObjects( FieldLocation const location,
     FieldLocation constexpr LOC = decltype(loc)::value;
     count = countMeshObjects< LOC, VISIT_GHOSTS, SUBREGIONTYPES... >( mesh, regions );
   } );
-  GEOS_ERROR_IF( !success, "Invalid location type: " << static_cast< int >( location ) );
+  GEOS_ERROR_IF( !success, GEOS_FMT( "Invalid location type: {}", static_cast< int >( location ) ) );
   return count;
 }
 

@@ -885,9 +885,11 @@ writeElementField( Group const & subRegions,
     {
       // Sanity check
       GEOS_ERROR_IF_NE_MSG( wrapper.numArrayDims(), numDims,
-                            "VTK writer: sanity check failed for " << field << " (inconsistent array dimensions)" );
+                            GEOS_FMT( "VTK writer: sanity check failed for {} (inconsistent array dimensions)",
+                                      field ) );
       GEOS_ERROR_IF_NE_MSG( wrapper.numArrayComp(), data->GetNumberOfComponents(),
-                            "VTK writer: sanity check failed for " << field << " (inconsistent array sizes)" );
+                            GEOS_FMT( "VTK writer: sanity check failed for {} (inconsistent array sizes)",
+                                      field ) );
     }
   } );
 
