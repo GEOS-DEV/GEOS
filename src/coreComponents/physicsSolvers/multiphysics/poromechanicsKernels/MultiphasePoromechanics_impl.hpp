@@ -36,8 +36,9 @@ namespace poromechanicsKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
+MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 MultiphasePoromechanics( NodeManager const & nodeManager,
                          EdgeManager const & edgeManager,
                          FaceManager const & faceManager,
@@ -47,7 +48,7 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
                          CONSTITUTIVE_TYPE & inputConstitutiveType,
                          arrayView1d< globalIndex const > const inputDispDofNumber,
                          globalIndex const rankOffset,
-                         CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                         MATRIX_VIEW const inputMatrix,
                          arrayView1d< real64 > const inputRhs,
                          real64 const inputDt,
                          real64 const (&gravityVector)[3],
@@ -121,10 +122,11 @@ MultiphasePoromechanics( NodeManager const & nodeManager,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 setup( localIndex const k,
        StackVariables & stack ) const
 {
@@ -142,10 +144,11 @@ setup( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
                    StackVariables & stack ) const
@@ -203,11 +206,12 @@ smallStrainUpdate( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 computeBodyForce( localIndex const k,
                   localIndex const q,
                   real64 const & porosity,
@@ -254,11 +258,12 @@ computeBodyForce( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 computeFluidIncrement( localIndex const k,
                        localIndex const q,
                        real64 const & porosity,
@@ -379,10 +384,11 @@ computeFluidIncrement( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 computePoreVolumeConstraint( localIndex const k,
                              real64 const & porosity_n,
                              StackVariables & stack ) const
@@ -411,10 +417,11 @@ computePoreVolumeConstraint( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
                               real64 const & detJxW,
@@ -505,10 +512,11 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
                                real64 const & detJxW,
                                StackVariables & stack ) const
@@ -605,10 +613,11 @@ assembleElementBasedFlowTerms( real64 const ( &dNdX )[numNodesPerElem][3],
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
@@ -644,10 +653,11 @@ quadraturePointKernel( localIndex const k,
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
@@ -741,10 +751,11 @@ complete( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename POLICY,
           typename KERNEL_TYPE >
-real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 MultiphasePoromechanics< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {

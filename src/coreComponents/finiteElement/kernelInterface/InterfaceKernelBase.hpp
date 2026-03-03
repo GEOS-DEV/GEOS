@@ -54,12 +54,14 @@ namespace finiteElement
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
-          int NUM_DOF_PER_TRIAL_SP >
+          int NUM_DOF_PER_TRIAL_SP,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class InterfaceKernelBase : public ImplicitKernelBase< FaceElementSubRegion,
                                                        CONSTITUTIVE_TYPE,
                                                        FE_TYPE,
                                                        NUM_DOF_PER_TEST_SP,
-                                                       NUM_DOF_PER_TRIAL_SP >
+                                                       NUM_DOF_PER_TRIAL_SP,
+                                                       MATRIX_VIEW >
 {
 public:
 
@@ -68,7 +70,8 @@ public:
                                    CONSTITUTIVE_TYPE,
                                    FE_TYPE,
                                    NUM_DOF_PER_TEST_SP,
-                                   NUM_DOF_PER_TRIAL_SP >;
+                                   NUM_DOF_PER_TRIAL_SP,
+                                   MATRIX_VIEW >;
 
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
@@ -87,7 +90,7 @@ public:
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        arrayView1d< globalIndex const > const inputDofNumber,
                        globalIndex const rankOffset,
-                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                       MATRIX_VIEW const inputMatrix,
                        arrayView1d< real64 > const inputRhs,
                        real64 const inputDt ):
     Base( nodeManager,

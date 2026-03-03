@@ -41,17 +41,20 @@ namespace geos
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class PhaseFieldPressurizedDamageKernel :
   public PhaseFieldDamageKernel< SUBREGION_TYPE,
                                  CONSTITUTIVE_TYPE,
-                                 FE_TYPE >
+                                 FE_TYPE,
+                                 MATRIX_VIEW >
 {
 public:
   /// An alias for the base class.
   using Base = PhaseFieldDamageKernel< SUBREGION_TYPE,
                                        CONSTITUTIVE_TYPE,
-                                       FE_TYPE >;
+                                       FE_TYPE,
+                                       MATRIX_VIEW >;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -90,7 +93,7 @@ public:
                                      CONSTITUTIVE_TYPE & inputConstitutiveType,
                                      arrayView1d< globalIndex const > const inputDofNumber,
                                      globalIndex const rankOffset,
-                                     CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                     MATRIX_VIEW const inputMatrix,
                                      arrayView1d< real64 > const inputRhs,
                                      real64 const inputDt,
                                      string const fieldName,

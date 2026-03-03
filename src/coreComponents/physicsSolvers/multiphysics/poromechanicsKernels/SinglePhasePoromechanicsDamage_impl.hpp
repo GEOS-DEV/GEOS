@@ -30,8 +30,9 @@ namespace poromechanicsDamageKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
+SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 SinglePhasePoromechanicsDamage( NodeManager const & nodeManager,
                                 EdgeManager const & edgeManager,
                                 FaceManager const & faceManager,
@@ -41,7 +42,7 @@ SinglePhasePoromechanicsDamage( NodeManager const & nodeManager,
                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
                                 arrayView1d< globalIndex const > const inputDispDofNumber,
                                 globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                MATRIX_VIEW const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
                                 real64 const (&gravityVector)[3],
@@ -69,10 +70,11 @@ SinglePhasePoromechanicsDamage( NodeManager const & nodeManager,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 smallStrainUpdate( localIndex const k,
                    localIndex const q,
                    StackVariables & stack ) const
@@ -138,10 +140,11 @@ smallStrainUpdate( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
                               real64 const ( &dNdX )[numNodesPerElem][3],
                               real64 const & detJxW,
@@ -247,10 +250,11 @@ assembleMomentumBalanceTerms( real64 const ( &N )[numNodesPerElem],
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
@@ -283,10 +287,11 @@ quadraturePointKernel( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
@@ -297,10 +302,11 @@ complete( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename POLICY,
           typename KERNEL_TYPE >
-real64 SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 SinglePhasePoromechanicsDamage< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 kernelLaunch( localIndex const numElems,
               KERNEL_TYPE const & kernelComponent )
 {

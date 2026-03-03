@@ -45,12 +45,14 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
-          int NUM_DOF_PER_TRIAL_SP >
+          int NUM_DOF_PER_TRIAL_SP,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
                                                       FE_TYPE,
                                                       NUM_DOF_PER_TEST_SP,
-                                                      NUM_DOF_PER_TRIAL_SP >
+                                                      NUM_DOF_PER_TRIAL_SP,
+                                                      MATRIX_VIEW >
 {
 public:
   /// Alias for the base class. (i.e. #geos::finiteElement::ImplicitKernelBase)
@@ -58,7 +60,8 @@ public:
                                    CONSTITUTIVE_TYPE,
                                    FE_TYPE,
                                    NUM_DOF_PER_TEST_SP,
-                                   NUM_DOF_PER_TRIAL_SP >;
+                                   NUM_DOF_PER_TRIAL_SP,
+                                   MATRIX_VIEW >;
 
 
   using typename Base::StackVariables;
@@ -99,7 +102,7 @@ public:
           inputConstitutiveType,
           inputDofNumber,
           rankOffset,
-          CRSMatrixView< real64, globalIndex const >(),
+          MATRIX_VIEW(),
           arrayView1d< real64 >(),
           inputDt ),
     m_sparsity( inputSparsity )

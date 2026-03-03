@@ -30,17 +30,20 @@ namespace thermoPoromechanicsEFEMKernels
 {
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class ThermalSinglePhasePoromechanicsEFEM :
   public poromechanicsEFEMKernels::SinglePhasePoromechanicsEFEM< SUBREGION_TYPE,
                                                                  CONSTITUTIVE_TYPE,
-                                                                 FE_TYPE >
+                                                                 FE_TYPE,
+                                                                 MATRIX_VIEW >
 {
 public:
   /// Alias for the base class;
   using Base = poromechanicsEFEMKernels::SinglePhasePoromechanicsEFEM< SUBREGION_TYPE,
                                                                        CONSTITUTIVE_TYPE,
-                                                                       FE_TYPE >;
+                                                                       FE_TYPE,
+                                                                       MATRIX_VIEW >;
 
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
@@ -76,7 +79,7 @@ public:
                                        arrayView1d< globalIndex const > const jumpDofNumber,
                                        string const inputFlowDofKey,
                                        globalIndex const rankOffset,
-                                       CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                       MATRIX_VIEW const inputMatrix,
                                        arrayView1d< real64 > const inputRhs,
                                        real64 const inputDt,
                                        real64 const (&inputGravityVector)[3],

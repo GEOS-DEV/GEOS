@@ -36,17 +36,20 @@ namespace solidMechanicsConformingContactKernels
  *
  */
 template< typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class ConformingContactKernelsBase :
   public finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
                                              FE_TYPE,
-                                             3, 3 >
+                                             3, 3,
+                                             MATRIX_VIEW >
 {
 public:
   /// Alias for the base class;
   using Base = finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
                                                    FE_TYPE,
-                                                   3, 3 >;
+                                                   3, 3,
+                                                   MATRIX_VIEW >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -84,7 +87,7 @@ public:
                                 arrayView1d< globalIndex const > const uDofNumber,
                                 arrayView1d< globalIndex const > const bDofNumber,
                                 globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                MATRIX_VIEW const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
                                 arrayView1d< localIndex const > const & faceElementList ):

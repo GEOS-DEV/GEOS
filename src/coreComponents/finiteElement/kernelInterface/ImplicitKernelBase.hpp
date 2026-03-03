@@ -47,7 +47,8 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
-          int NUM_DOF_PER_TRIAL_SP >
+          int NUM_DOF_PER_TRIAL_SP,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
                                               FE_TYPE,
@@ -92,7 +93,7 @@ public:
                       CONSTITUTIVE_TYPE & inputConstitutiveType,
                       arrayView1d< globalIndex const > const & inputDofNumber,
                       globalIndex const rankOffset,
-                      CRSMatrixView< real64, globalIndex const > const & inputMatrix,
+                      MATRIX_VIEW const & inputMatrix,
                       arrayView1d< real64 > const & inputRhs,
                       real64 const inputDt ):
     Base( elementSubRegion,
@@ -217,7 +218,7 @@ protected:
   globalIndex const m_dofRankOffset;
 
   /// The global Jacobian matrix.
-  CRSMatrixView< real64, globalIndex const > const m_matrix;
+  MATRIX_VIEW const m_matrix;
 
   /// The global residaul vector.
   arrayView1d< real64 > const m_rhs;

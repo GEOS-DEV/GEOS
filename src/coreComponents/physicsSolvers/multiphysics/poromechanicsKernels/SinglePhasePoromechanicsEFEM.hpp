@@ -32,13 +32,15 @@ namespace poromechanicsEFEMKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class SinglePhasePoromechanicsEFEM :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
                                             3,
-                                            3 >
+                                            3,
+                                            MATRIX_VIEW >
 {
 public:
   /// Alias for the base class;
@@ -46,7 +48,8 @@ public:
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE,
                                                   3,
-                                                  3 >;
+                                                  3,
+                                                  MATRIX_VIEW >;
 
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
@@ -78,7 +81,7 @@ public:
                                 arrayView1d< globalIndex const > const jumpDofNumber,
                                 string const inputFlowDofKey,
                                 globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                MATRIX_VIEW const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
                                 real64 const (&inputGravityVector)[3],

@@ -44,13 +44,15 @@ namespace solidMechanicsLagrangianFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class FixedStressThermoPoromechanics :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
                                             FE_TYPE,
                                             3,
-                                            3 >
+                                            3,
+                                            MATRIX_VIEW >
 {
 public:
   /// Alias for the base class;
@@ -58,7 +60,8 @@ public:
                                                   CONSTITUTIVE_TYPE,
                                                   FE_TYPE,
                                                   3,
-                                                  3 >;
+                                                  3,
+                                                  MATRIX_VIEW >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -90,7 +93,7 @@ public:
                                   CONSTITUTIVE_TYPE & inputConstitutiveType,
                                   arrayView1d< globalIndex const > const inputDofNumber,
                                   globalIndex const rankOffset,
-                                  CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                  MATRIX_VIEW const inputMatrix,
                                   arrayView1d< real64 > const inputRhs,
                                   real64 const inputDt,
                                   real64 const (&inputGravityVector)[3] );

@@ -31,8 +31,9 @@ namespace solidMechanicsLagrangianFEMKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
+ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -42,7 +43,7 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
                             CONSTITUTIVE_TYPE & inputConstitutiveType,
                             arrayView1d< globalIndex const > const & inputDofNumber,
                             globalIndex const rankOffset,
-                            CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                            MATRIX_VIEW const inputMatrix,
                             arrayView1d< real64 > const inputRhs,
                             real64 const inputDt,
                             real64 const (&inputGravityVector)[3],
@@ -76,10 +77,11 @@ ImplicitSmallStrainNewmark( NodeManager const & nodeManager,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
-void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 setup( localIndex const k,
        StackVariables & stack ) const
 {
@@ -97,10 +99,11 @@ setup( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
-void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 quadraturePointKernel( localIndex const k,
                        localIndex const q,
                        StackVariables & stack ) const
@@ -137,10 +140,11 @@ quadraturePointKernel( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
-real64 ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+real64 ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 complete( localIndex const k,
           StackVariables & stack ) const
 {
@@ -181,12 +185,13 @@ complete( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename POLICY,
           typename KERNEL_TYPE >
 real64
-ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
-                                                                                        KERNEL_TYPE const & kernelComponent )
+ImplicitSmallStrainNewmark< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::kernelLaunch( localIndex const numElems,
+                                                                                                     KERNEL_TYPE const & kernelComponent )
 {
   return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }

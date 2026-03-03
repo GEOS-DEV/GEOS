@@ -31,8 +31,9 @@ namespace solidMechanicsLagrangianFEMKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
+ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
                                 EdgeManager const & edgeManager,
                                 FaceManager const & faceManager,
@@ -42,7 +43,7 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
                                 CONSTITUTIVE_TYPE & inputConstitutiveType,
                                 arrayView1d< globalIndex const > const inputDofNumber,
                                 globalIndex const rankOffset,
-                                CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                MATRIX_VIEW const inputMatrix,
                                 arrayView1d< real64 > const inputRhs,
                                 real64 const inputDt,
                                 real64 const (&inputGravityVector)[3] ):
@@ -68,10 +69,11 @@ ImplicitSmallStrainQuasiStatic( NodeManager const & nodeManager,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::
+void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::
 setup( localIndex const k,
        StackVariables & stack ) const
 {
@@ -108,14 +110,15 @@ setup( localIndex const k,
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename STRESS_MODIFIER >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel( localIndex const k,
-                                                                                                          localIndex const q,
-                                                                                                          StackVariables & stack,
-                                                                                                          STRESS_MODIFIER && stressModifier ) const
+void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::quadraturePointKernel( localIndex const k,
+                                                                                                                       localIndex const q,
+                                                                                                                       StackVariables & stack,
+                                                                                                                       STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal, stack.feStack, dNdX );
@@ -162,11 +165,12 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete( localIndex const k,
-                                                                                               StackVariables & stack ) const
+real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::complete( localIndex const k,
+                                                                                                            StackVariables & stack ) const
 {
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
@@ -202,13 +206,14 @@ real64 ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW >
 template< typename POLICY,
           typename KERNEL_TYPE >
 GEOS_FORCE_INLINE
 real64
-ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
-                                                                                            KERNEL_TYPE const & kernelComponent )
+ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW >::kernelLaunch( localIndex const numElems,
+                                                                                                         KERNEL_TYPE const & kernelComponent )
 {
   return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }

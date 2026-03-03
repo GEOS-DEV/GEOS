@@ -42,17 +42,20 @@ namespace solidMechanicsEFEMKernels
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
+          typename FE_TYPE,
+          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
 class EFEMKernelsBase :
   public solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
                                                                              CONSTITUTIVE_TYPE,
-                                                                             FE_TYPE >
+                                                                             FE_TYPE,
+                                                                             MATRIX_VIEW >
 {
 public:
   /// Alias for the base class;
   using Base = solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
                                                                                    CONSTITUTIVE_TYPE,
-                                                                                   FE_TYPE >;
+                                                                                   FE_TYPE,
+                                                                                   MATRIX_VIEW >;
 
   /// Number of nodes per element...which is equal to the
   /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
@@ -89,7 +92,7 @@ public:
                    EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
                    arrayView1d< globalIndex const > const uDofNumber,
                    globalIndex const rankOffset,
-                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                   MATRIX_VIEW const inputMatrix,
                    arrayView1d< real64 > const inputRhs,
                    real64 const inputDt,
                    real64 const (&inputGravityVector)[3] ):
