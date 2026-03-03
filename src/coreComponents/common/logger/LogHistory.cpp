@@ -213,7 +213,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
       } );
 
     row.insert( row.end(), cells.begin(), cells.end());
-    data.addRow( row );
+    // data.addRow( row );
   }
 
   TableTextFormatter textFormatter( tableLayout );
