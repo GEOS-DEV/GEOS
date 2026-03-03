@@ -234,7 +234,7 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
   // Attempt to fix unassigned front nodes, if any
   if( supports.size() > 0 )
   {
-    GEOS_WARNING_IF( !front.empty(), "[MsRSB]: nodes not assigned to initial partition: " << front );
+    GEOS_WARNING_IF( !front.empty(), GEOS_FMT( "[MsRSB]: nodes not assigned to initial partition: {}", front ) );
     forAll< parallelHostPolicy >( front.size(), [=, front = front.toViewConst(),
                                                  part = part.toView()]( localIndex const i )
     {
@@ -244,7 +244,8 @@ makeSeededPartition( ArrayOfSetsView< localIndex const > const & connectivity,
   }
   else
   {
-    GEOS_ERROR_IF( !front.empty(), "[MsRSB]: nodes not assigned to initial partition: " << front );
+    GEOS_ERROR_IF( !front.empty(),
+                   GEOS_FMT( "[MsRSB]: nodes not assigned to initial partition: {}", front ) );
   }
 
   return part;

@@ -659,10 +659,9 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
       globalIndex const prevGlobal  = prevElemIdsGlobal[iwelemGlobal][numBranches-1];
 
       GEOS_THROW_IF( prevGlobal <= iwelemGlobal || prevGlobal < 0,
-                     "The structure of well is invalid. " <<
-                     " The main reason for this error is that there may be no perforation" <<
-                     " in the bottom well element of the well, which is required to have" <<
-                     " a well-posed problem.",
+                     "The structure of well is invalid. The main reason for this error is that there may be no "
+                     "perforation in the bottom well element of the well, which is required to have a well-posed "
+                     "problem.",
                      InputError, lineBlock.getDataContext() );
 
       if( elemStatusGlobal[prevGlobal] == WellElemParallelStatus::LOCAL )
