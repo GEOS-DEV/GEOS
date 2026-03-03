@@ -54,6 +54,30 @@ constexpr real64 JACOBIAN_TOLERANCE = 1.0e-12;
 // Global flag to control debug printing (set to false to disable verbose output)
 static constexpr bool ENABLE_DEBUG_PRINTS = false;
 
+/**
+ * @brief Controls whether the SurfaceGenerator creates fracture elements for corner faces.
+ *
+ * Corner faces are triangular facets whose nodes all lie on the fracture boundary (i.e. at the
+ * geometric tip corners of the fracture surface).  When this flag is @c false, the
+ * SurfaceGenerator does @e not create fracture elements for these faces and their nodes are
+ * never split, so the test predictions must subtract them from the expected fracture element
+ * count.
+ *
+ * Corner fractures are disabled by default because they are problematic for the contact
+ * solvers:
+ *   1. Both sides of a corner fracture share the same (unsplit) nodes, causing duplicate
+ *      column indices in the CRS sparsity pattern and violating the sorted-unique invariant
+ *      of LvArray.
+ *   2. The displacement jump [[u]] is identically zero (only bubble DOFs contribute), so
+ *      the standard ALM interface kernel would assemble a singular or duplicate stiffness
+ *      block.
+ *
+ * @note Quad faces (hex meshes) are never corner faces because the SurfaceGenerator always
+ *       finds a valid separation path for them.
+ */
+static constexpr bool ENABLE_CORNER_FRACTURES = false;
+
+
 extern CommandLineOptions g_commandLineOptions;
 extern std::string g_testBinaryDir;
 

@@ -713,12 +713,12 @@ void ProblemManager::generateMesh()
                                                       baseMesh.getEdgeManager(),
                                                       baseMesh.getFaceManager(),
                                                       baseMesh.getElemManager() );
-      GEOS_WARNING_IF( chi != 1,
-                       "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
-                                                          "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
-                                                                                           "solid without interior voids). The mesh may contain multiple disconnected "
-                                                                                           "bodies, interior voids, or non-manifold topology. "
-                                                                                           "The simulation will proceed." );
+      GEOS_LOG_RANK_0_IF( chi != 1,
+                          "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
+                                                             "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
+                                                                                              "solid without interior voids). The mesh may contain multiple disconnected "
+                                                                                              "bodies, interior voids, or non-manifold topology. "
+                                                                                              "The simulation will proceed." );
       GEOS_LOG_RANK_0_IF( chi == 1,
                           "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
     }
