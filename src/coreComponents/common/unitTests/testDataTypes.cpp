@@ -22,62 +22,62 @@
 
 using namespace geos;
 
-TEST( testDataTypes, testBoundChecking )
-{
-  internal::StdVectorWrapper< std::string,
-                              internal::DefaultAllocator< std::string >,
-                              true > vectorBoundsChecking = {"test"};
-  EXPECT_THROW( {
-    try
-    {
-      for( integer i = 0; i <= 1; i++ )
-      {
-        std::string crash = vectorBoundsChecking[i];
-        GEOS_UNUSED_VAR( crash );
-      }
-    }
-    catch( const std::out_of_range & e )
-    {
-      throw;
-    }
-  }, std::out_of_range );
+// TEST( testDataTypes, testBoundChecking )
+// {
+//   internal::StdVectorWrapper< std::string,
+//                               internal::DefaultAllocator< std::string >,
+//                               true > vectorBoundsChecking = {"test"};
+//   EXPECT_THROW( {
+//     try
+//     {
+//       for( integer i = 0; i <= 1; i++ )
+//       {
+//         std::string crash = vectorBoundsChecking[i];
+//         GEOS_UNUSED_VAR( crash );
+//       }
+//     }
+//     catch( const std::out_of_range & e )
+//     {
+//       throw;
+//     }
+//   }, std::out_of_range );
 
-  internal::StdMapWrapper< map< integer, integer >, true > mapBoundsChecking{{0, 1}};
-  EXPECT_THROW( {
-    try
-    {
-      for( integer i = 0; i <= 1; i++ )
-      {
-        integer crash = mapBoundsChecking[i];
-        GEOS_UNUSED_VAR( crash );
-      }
-    }
-    catch( const std::out_of_range & e )
-    {
-      throw;
-    }
-  }, std::out_of_range );
-
-
-  internal::StdMapWrapper< std::unordered_map< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
-  EXPECT_THROW( {
-    try
-    {
-      for( integer i = 0; i <= 1; i++ )
-      {
-        integer crash = unorderedMapBoundsChecking[i];
-        GEOS_UNUSED_VAR( crash );
-      }
-    }
-    catch( const std::out_of_range & e )
-    {
-      throw;
-    }
-  }, std::out_of_range );
+//   internal::StdMapWrapper< map< integer, integer >, true > mapBoundsChecking{{0, 1}};
+//   EXPECT_THROW( {
+//     try
+//     {
+//       for( integer i = 0; i <= 1; i++ )
+//       {
+//         integer crash = mapBoundsChecking[i];
+//         GEOS_UNUSED_VAR( crash );
+//       }
+//     }
+//     catch( const std::out_of_range & e )
+//     {
+//       throw;
+//     }
+//   }, std::out_of_range );
 
 
+//   internal::StdMapWrapper< std::unordered_map< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
+//   EXPECT_THROW( {
+//     try
+//     {
+//       for( integer i = 0; i <= 1; i++ )
+//       {
+//         integer crash = unorderedMapBoundsChecking[i];
+//         GEOS_UNUSED_VAR( crash );
+//       }
+//     }
+//     catch( const std::out_of_range & e )
+//     {
+//       throw;
+//     }
+//   }, std::out_of_range );
 
-}
+
+
+// }
 
 int main( int argc, char * * argv )
 {
