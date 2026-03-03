@@ -1,4 +1,5 @@
 /build*/
+/localTests*/
 /install*/
 .cproject
 .project
@@ -20,6 +21,7 @@
 uberenv_libs
 spack-*.txt
 /src/docs/sphinx/datastructure
+/scripts/myScript/
 *~
 __pycache__
 
