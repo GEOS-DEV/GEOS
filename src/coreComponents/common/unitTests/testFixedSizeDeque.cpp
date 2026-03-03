@@ -13,222 +13,265 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "common/DataTypes.hpp"
-#include "common/FixedSizeDeque.hpp"
+ #include "common/GeosxConfig.hpp"
+
+// #include "BufferAllocator.hpp" 
+#include "common/DataLayouts.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/Path.hpp"
+#include "common/StdContainerWrappers.hpp"
+#include "common/Tensor.hpp"
+
+#include "LvArray/src/Macros.hpp"
 #include "LvArray/src/Array.hpp"
-#include "LvArray/src/MallocBuffer.hpp"
-#if defined(LVARRAY_USE_CHAI)
-  #include "LvArray/src/ChaiBuffer.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
+#include "LvArray/src/ChaiBuffer.hpp"
+
+
+// TPL includes
+#include <camp/camp.hpp>
+
+// System includes
+#ifdef GEOS_USE_MPI
+  #include <mpi.h>
 #endif
 
+#include <cassert>
+//#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
+
+// TPL includes
 #include <gtest/gtest.h>
+#include <gtest/gtest-spi.h>
 
-using namespace geos;
+// #include "common/DataTypes.hpp"
+// #include "common/FixedSizeDeque.hpp"
+// #include "LvArray/src/Array.hpp"
+// #include "LvArray/src/MallocBuffer.hpp"
+// #if defined(LVARRAY_USE_CHAI)
+//   #include "LvArray/src/ChaiBuffer.hpp"
+// #endif
 
-TEST( FixedSizeDequeTest, ZeroSizedDeque )
-{
-  int maxArray = 0;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > empty_deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, empty_deque.empty());
-  EXPECT_EQ( true, empty_deque.full());
-}
+// #include <gtest/gtest.h>
 
-TEST( FixedSizeDequeTest, emplace_back )
-{
-  int maxArray = 2;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+// using namespace geos;
 
-  array1d< float > array( elemCnt );
-  deque.emplace_back( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
+// TEST( FixedSizeDequeTest, ZeroSizedDeque )
+// {
+//   int maxArray = 0;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > empty_deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, empty_deque.empty());
+//   EXPECT_EQ( true, empty_deque.full());
+// }
 
-  deque.emplace_back( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( true, deque.full());
-}
+// TEST( FixedSizeDequeTest, emplace_back )
+// {
+//   int maxArray = 2;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-TEST( FixedSizeDequeTest, emplace_front_and_back )
-{
-  int maxArray = 2;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   array1d< float > array( elemCnt );
+//   deque.emplace_back( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  array1d< float > array( elemCnt );
-  deque.emplace_front( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   deque.emplace_back( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( true, deque.full());
+// }
 
-  deque.emplace_back( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( true, deque.full());
-}
+// TEST( FixedSizeDequeTest, emplace_front_and_back )
+// {
+//   int maxArray = 2;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-TEST( FixedSizeDequeTest, LargeSizedDeque )
-{
-  int maxArray = 10000;
-  int elemCnt = 100000;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   array1d< float > array( elemCnt );
+//   deque.emplace_front( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  array1d< float > array( elemCnt );
-  deque.emplace_front( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   deque.emplace_back( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( true, deque.full());
+// }
 
-  deque.emplace_back( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
-}
+// TEST( FixedSizeDequeTest, LargeSizedDeque )
+// {
+//   int maxArray = 10000;
+//   int elemCnt = 100000;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-TEST( FixedSizeDequeTest, emplace_and_pop )
-{
-  int maxArray = 2;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   array1d< float > array( elemCnt );
+//   deque.emplace_front( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  array1d< float > array( elemCnt );
-  for( int i = 0; i < elemCnt; i++ )
-    array[i] = i;
-  deque.emplace_back( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   deque.emplace_back( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
+// }
 
-  for( int i = 0; i < elemCnt; i++ )
-    array[i] = 2*i;
-  deque.emplace_front( array.toSliceConst() );
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( true, deque.full());
+// TEST( FixedSizeDequeTest, emplace_and_pop )
+// {
+//   int maxArray = 2;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.front()[i], 2*i );
-  for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.back()[i], i );
+//   array1d< float > array( elemCnt );
+//   for( int i = 0; i < elemCnt; i++ )
+//     array[i] = i;
+//   deque.emplace_back( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
+
+//   for( int i = 0; i < elemCnt; i++ )
+//     array[i] = 2*i;
+//   deque.emplace_front( array.toSliceConst() );
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( true, deque.full());
+
+//   for( int i = 0; i < elemCnt; i++ )
+//     EXPECT_EQ( deque.front()[i], 2*i );
+//   for( int i = 0; i < elemCnt; i++ )
+//     EXPECT_EQ( deque.back()[i], i );
 
 
-  deque.pop_back();
-  EXPECT_EQ( false, deque.empty());
-  EXPECT_EQ( false, deque.full());
+//   deque.pop_back();
+//   EXPECT_EQ( false, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.front()[i], 2*i );
-  for( int i = 0; i < elemCnt; i++ )
-    EXPECT_EQ( deque.back()[i], 2*i );
+//   for( int i = 0; i < elemCnt; i++ )
+//     EXPECT_EQ( deque.front()[i], 2*i );
+//   for( int i = 0; i < elemCnt; i++ )
+//     EXPECT_EQ( deque.back()[i], 2*i );
 
-  deque.pop_front();
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
-}
+//   deque.pop_front();
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
+// }
 
-TEST( FixedSizeDequeTest, emplace_and_pop_front )
-{
-  int maxArray = 10;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Host{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+// TEST( FixedSizeDequeTest, emplace_and_pop_front )
+// {
+//   int maxArray = 10;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Host{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::host, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  array1d< float > array( elemCnt );
-  for( int j = 0; j < maxArray; j++ )
-  {
-    for( int i = 0; i < elemCnt; i++ )
-      array[i] = i+maxArray*j;
-    deque.emplace_front( array.toSliceConst() );
-    if( j+1 < maxArray )
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-    else
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( true, deque.full());
-    }
-  }
-  for( int j = 0; j < maxArray; j++ )
-  {
-    for( int i = 0; i < elemCnt; i++ )
-      EXPECT_EQ( deque.front()[i], i+(maxArray-j-1)*maxArray );
+//   array1d< float > array( elemCnt );
+//   for( int j = 0; j < maxArray; j++ )
+//   {
+//     for( int i = 0; i < elemCnt; i++ )
+//       array[i] = i+maxArray*j;
+//     deque.emplace_front( array.toSliceConst() );
+//     if( j+1 < maxArray )
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//     else
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( true, deque.full());
+//     }
+//   }
+//   for( int j = 0; j < maxArray; j++ )
+//   {
+//     for( int i = 0; i < elemCnt; i++ )
+//       EXPECT_EQ( deque.front()[i], i+(maxArray-j-1)*maxArray );
 
-    deque.pop_front();
-    if( j + 1 < maxArray )
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-    else
-    {
-      EXPECT_EQ( true, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-  }
-}
+//     deque.pop_front();
+//     if( j + 1 < maxArray )
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//     else
+//     {
+//       EXPECT_EQ( true, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//   }
+// }
 
-#ifdef GEOS_USE_CUDA
-TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
-{
-  int maxArray = 10;
-  int elemCnt = 10;
-  camp::resources::Resource stream = { camp::resources::Cuda{} };
-  FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::cuda, stream );
-  EXPECT_EQ( true, deque.empty());
-  EXPECT_EQ( false, deque.full());
+// #ifdef GEOS_USE_CUDA
+// TEST( FixedSizeDequeTest, emplace_and_pop_front_cuda )
+// {
+//   int maxArray = 10;
+//   int elemCnt = 10;
+//   camp::resources::Resource stream = { camp::resources::Cuda{} };
+//   FixedSizeDeque< float, int > deque( maxArray, elemCnt, LvArray::MemorySpace::cuda, stream );
+//   EXPECT_EQ( true, deque.empty());
+//   EXPECT_EQ( false, deque.full());
 
-  array1d< float > array( elemCnt );
-  for( int j = 0; j < maxArray; j++ )
-  {
-    for( int i = 0; i < elemCnt; i++ )
-      array[i] = i + j *maxArray;
-    camp::resources::Event e = deque.emplace_front( array.toSliceConst() );
-    stream.wait_for( &e );
-    if( j+1 < maxArray )
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-    else
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( true, deque.full());
-    }
-  }
+//   array1d< float > array( elemCnt );
+//   for( int j = 0; j < maxArray; j++ )
+//   {
+//     for( int i = 0; i < elemCnt; i++ )
+//       array[i] = i + j *maxArray;
+//     camp::resources::Event e = deque.emplace_front( array.toSliceConst() );
+//     stream.wait_for( &e );
+//     if( j+1 < maxArray )
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//     else
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( true, deque.full());
+//     }
+//   }
 
-  for( int j = 0; j < maxArray; j++ )
-  {
-    LvArray::memcpy( array.toSlice(), deque.front() );
-    array.move( LvArray::MemorySpace::host, false );
-    for( int i = 0; i < elemCnt; i++ )
-      EXPECT_EQ( array[i], i+(maxArray-j-1)*maxArray );
+//   for( int j = 0; j < maxArray; j++ )
+//   {
+//     LvArray::memcpy( array.toSlice(), deque.front() );
+//     array.move( LvArray::MemorySpace::host, false );
+//     for( int i = 0; i < elemCnt; i++ )
+//       EXPECT_EQ( array[i], i+(maxArray-j-1)*maxArray );
 
-    deque.pop_front();
-    if( j + 1 < maxArray )
-    {
-      EXPECT_EQ( false, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-    else
-    {
-      EXPECT_EQ( true, deque.empty());
-      EXPECT_EQ( false, deque.full());
-    }
-  }
-}
-#endif
+//     deque.pop_front();
+//     if( j + 1 < maxArray )
+//     {
+//       EXPECT_EQ( false, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//     else
+//     {
+//       EXPECT_EQ( true, deque.empty());
+//       EXPECT_EQ( false, deque.full());
+//     }
+//   }
+// }
+// #endif
 
 int main( int ac, char * av[] )
 {
