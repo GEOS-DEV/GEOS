@@ -480,6 +480,9 @@ void BlackOilFluid::checkTableConsistency() const
                      InputError, getDataContext() );
     }
   }
+
+  // Needed to remove compilation warnings in the HIP build
+  GEOS_UNUSED_VAR( PT::OIL );
 }
 
 BlackOilFluid::KernelWrapper::

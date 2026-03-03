@@ -329,7 +329,9 @@ void PVTDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 

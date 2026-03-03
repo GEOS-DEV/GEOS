@@ -421,7 +421,8 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
                    "Injection stream not specified for well ",
                    InputError, wellControls.getDataContext() );
     GEOS_THROW_IF( ( streamSize != m_numComponents ),
-                   "Injection stream for well should have " << m_numComponents << " components.",
+                   GEOS_FMT( "Injection stream for well should have {} components.",
+                             m_numComponents ),
                    InputError, wellControls.getDataContext() );
 
     real64 compFracSum = 0;
@@ -508,7 +509,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     }
   }
   GEOS_THROW_IF( wellControls.isProducer() && m_targetPhaseIndex == -1,
-                 "Phase " << wellControls.getTargetPhaseName() << " not found",
+                 GEOS_FMT( "Phase {} not found", wellControls.getTargetPhaseName() ),
                  InputError, wellControls.getDataContext() );
 }
 

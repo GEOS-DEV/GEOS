@@ -366,7 +366,7 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
     }
   }
   GEOS_ERROR_IF( pvtFunction == nullptr,
-                 "Could not find " << key << " in " << filename );
+                 GEOS_FMT( "Could not find {} in {}", key, filename ) );
 
   return pvtFunction;
 }
@@ -411,7 +411,7 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
     }
   }
   GEOS_ERROR_IF( flashModel == nullptr,
-                 "Could not find " << key << " in " << filename );
+                 GEOS_FMT( "Could not find {} in {}", key, filename ) );
 
   return flashModel;
 }

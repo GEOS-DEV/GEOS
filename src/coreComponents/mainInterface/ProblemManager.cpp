@@ -260,7 +260,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     stdVector< string > dir_contents = readDirectory( dirname );
 
     GEOS_THROW_IF( dir_contents.empty(),
-                   "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
+                   GEOS_FMT( "Directory gotten from {} {} is empty.", restartFileName, dirname ),
                    InputError );
 
     std::regex basename_regex( basename );
@@ -278,7 +278,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     }
 
     GEOS_THROW_IF( !match_found,
-                   "No matches found for pattern " << basename << " in directory " << dirname << ".",
+                   GEOS_FMT( "No matches found for pattern {} in directory {}.", basename, dirname ),
                    InputError );
 
     restartFileName = getAbsolutePath( dirname + "/" + max_match );
