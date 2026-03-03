@@ -1,5 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testFixedSizeDeque.cpp
+     testDataTypes.cpp
      testMacros.cpp
      testMpiWrapper.cpp
      testTypeDispatch.cpp
