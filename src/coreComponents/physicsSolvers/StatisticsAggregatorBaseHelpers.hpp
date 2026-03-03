@@ -13,6 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "mesh/MeshBody.hpp"
 #include "physicsSolvers/StatisticsAggregatorBase.hpp"
 
 #include "LvArray/src/math.hpp"
@@ -46,12 +47,11 @@ void
 StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & meshBodies,
                                                         SolverType & solver )
 {
-  m_solver = &solver;
   m_meshBodies = &meshBodies;
 
-  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & )
+  solver.forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
+                                                           MeshLevel & mesh,
+                                                           string_array const & regionNames )
   {
     // getting the container of all requesters statistics groups (can be already initialized)
     dataRepository::Group * meshStatsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
@@ -65,6 +65,15 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
                                     ownerName ),
                           m_ownerDataContext );
     meshStatsGroup->registerGroup( ownerName );
+
+    // remembering the path of this discretization
+    MeshBody const & body = m_meshBodies->getGroup< MeshBody >( meshBodyName );
+    DiscretizationGroupPath const path {
+      body.getIndexInParent(),
+      mesh.getIndexInParent(),
+      regionNames,
+    };
+    m_discretizationsPaths.push_back( path );
   } );
 }
 
@@ -72,24 +81,23 @@ template< typename Impl >
 void
 StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc )
 {
-  if( m_solver == nullptr || m_meshBodies == nullptr )
+  if( m_meshBodies == nullptr )
     return;
 
   integer regionCount = 0;
   integer subRegionCount = 0;
 
-  m_solver->forDiscretizationOnMeshTargets( *m_meshBodies, [&] ( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+  for( auto const & path : m_discretizationsPaths )
   {
+    MeshLevel & mesh = getMeshLevel( path );
     ElementRegionManager & elemManager = mesh.getElemManager();
     dataRepository::Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
     StatsGroupType & meshRegionsStats = registerStatsFunc( statisticsGroup,
                                                            ViewKeys::regionsStatisticsString() );
 
-    for( size_t i = 0; i < regionNames.size(); ++i )
+    for( size_t i = 0; i < path.regionNames.size(); ++i )
     {
-      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( regionNames[i] );
+      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.regionNames[i] );
       StatsGroupType & regionStats = registerStatsFunc( meshRegionsStats,
                                                         region.getName() );
 
@@ -101,7 +109,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
       } );
       ++regionCount;
     }
-  } );
+  }
 
   GEOS_ERROR_IF( regionCount == 0 || subRegionCount == 0,
                  GEOS_FMT( "Missing region for computing statistics:\n- {} regions,\n- {} sub-regions.",
@@ -116,14 +124,13 @@ template< typename Impl >
 void
 StatsAggregatorBase< Impl >::forRegionStatistics( RegionStatsFunc< MeshLevel > const & func ) const
 {
-  m_solver->forDiscretizationOnMeshTargets( *m_meshBodies, [&] ( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & )
+  for( auto const & path : m_discretizationsPaths )
   {
-    StatsGroupType & meshRegionsStats = getMeshRegionsStatistics( mesh );
+    MeshLevel & mesh = getMeshLevel( path );
+    StatsGroupType & meshRegionsStats = getRegionsStatistics( mesh );
 
     func( mesh, meshRegionsStats );
-  } );
+  }
 }
 
 template< typename Impl >
@@ -238,6 +245,15 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
 }
 
 template< typename Impl >
+MeshLevel &
+StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationGroupPath const & path ) const
+{
+  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.meshBody );
+  MeshLevel & mesh = body.getMeshLevel( path.meshLevel );
+  return mesh;
+}
+
+template< typename Impl >
 dataRepository::Group &
 StatsAggregatorBase< Impl >::getInstanceStatisticsGroup( MeshLevel & mesh ) const
 {
@@ -250,7 +266,7 @@ StatsAggregatorBase< Impl >::getInstanceStatisticsGroup( MeshLevel & mesh ) cons
 template< typename Impl >
 typename StatsAggregatorBase< Impl >::StatsGroupType &
 StatsAggregatorBase< Impl >::
-getMeshRegionsStatistics( MeshLevel & mesh ) const
+getRegionsStatistics( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
   dataRepository::Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
@@ -262,7 +278,7 @@ typename StatsAggregatorBase< Impl >::StatsGroupType &
 StatsAggregatorBase< Impl >::getRegionStatistics( MeshLevel & mesh,
                                                   string_view regionName ) const
 {
-  StatsGroupType & meshRegionsStats = getMeshRegionsStatistics( mesh );
+  StatsGroupType & meshRegionsStats = getRegionsStatistics( mesh );
   StatsGroupType * const stats = meshRegionsStats.template getGroupPointer< StatsGroupType >( string( regionName ) );
   GEOS_THROW_IF( stats == nullptr,
                  GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?\n"

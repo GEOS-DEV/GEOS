@@ -286,6 +286,8 @@ public:
 
 private:
 
+  SolverType * m_solver = nullptr;
+
   AggregatorParameters m_params;
 
   StatsState m_cflStatsState;

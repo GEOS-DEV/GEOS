@@ -168,7 +168,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
   TableData tableData;
   static constexpr auto merge = CellType::MergeNext;
 
-  string_view massUnit = units::getSymbol( m_aggregator->getSolver()->getMassUnit() );
+  string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
   string_view pressureUnit = units::getSymbol( units::Pressure );
   string_view tempUnit = units::getSymbol( units::Temperature );
   string_view resVolUnit = units::getSymbol( units::ReservoirVolume );

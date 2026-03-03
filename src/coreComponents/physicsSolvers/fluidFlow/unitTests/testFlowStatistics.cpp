@@ -226,7 +226,7 @@ real64 getTotalFluidMass< SinglePhaseBase >( ProblemManager & problem,
                        .getMeshLevel( solver.getDiscretizationName() );
   StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
   StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
-  RegionStatistics const & stats = statsAggregator.getMeshRegionsStatistics( mesh );
+  RegionStatistics const & stats = statsAggregator.getRegionsStatistics( mesh );
   return stats.m_totalMass;
 }
 
@@ -241,7 +241,7 @@ real64 getTotalFluidMass< CompositionalMultiphaseBase >( ProblemManager & proble
                        .getMeshLevel( solver.getDiscretizationName() );
   StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
   StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
-  RegionStatistics const & stats = statsAggregator.getMeshRegionsStatistics( mesh );
+  RegionStatistics const & stats = statsAggregator.getRegionsStatistics( mesh );
   double totalMass = 0.0;
   for( integer i = 0; i < statsAggregator.getNumPhases(); ++i )
     totalMass += stats.m_phaseMass[i];

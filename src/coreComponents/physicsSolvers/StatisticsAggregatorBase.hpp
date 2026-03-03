@@ -169,12 +169,6 @@ public:
   { return m_ownerDataContext.getTargetName(); }
 
   /**
-   * @return the instance of the solver, providing the discretisation method for collecting the values for the statistics
-   */
-  SolverType const * getSolver() const
-  { return m_solver; }
-
-  /**
    * @return The encountered issues during the last computing method call.
    */
   stdVector< string > const & getWarnings() const
@@ -182,7 +176,7 @@ public:
 
   dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
 
-  StatsGroupType & getMeshRegionsStatistics( MeshLevel & mesh ) const;
+  StatsGroupType & getRegionsStatistics( MeshLevel & mesh ) const;
 
   /**
    * @brief TODO
@@ -201,19 +195,27 @@ protected:
     bool m_isDirty = false;
   };
 
+  struct DiscretizationGroupPath
+  {
+    localIndex meshBody;
+    localIndex meshLevel;
+    string_array regionNames;
+  };
+
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
 
-  /// The
-  SolverType * m_solver = nullptr;
-
   dataRepository::Group * m_meshBodies = nullptr;
+
+  std::vector< DiscretizationGroupPath > m_discretizationsPaths;
 
   /// @see getWarnings()
   stdVector< string > m_warnings;
 
   /// The current state of the region statistics
   StatsState m_regionStatsState;
+
+  MeshLevel & getMeshLevel( DiscretizationGroupPath const & path ) const;
 
   /**
    * @brief Initialize all statistics values to aggregable default values,
