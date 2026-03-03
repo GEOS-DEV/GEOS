@@ -15,7 +15,45 @@
 
 // Source includes
 
-#include "common/DataTypes.hpp"
+#include "common/GeosxConfig.hpp"
+
+// #include "BufferAllocator.hpp" 
+#include "common/DataLayouts.hpp"
+#include "common/GeosxMacros.hpp"
+#include "common/Path.hpp"
+#include "common/StdContainerWrappers.hpp"
+#include "common/Tensor.hpp"
+
+#include "LvArray/src/Macros.hpp"
+#include "LvArray/src/Array.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
+#include "LvArray/src/ArrayOfSets.hpp"
+#include "LvArray/src/SparsityPattern.hpp"
+#include "LvArray/src/CRSMatrix.hpp"
+#include "LvArray/src/SortedArray.hpp"
+#include "LvArray/src/StackBuffer.hpp"
+#include "LvArray/src/ChaiBuffer.hpp"
+
+
+// TPL includes
+#include <camp/camp.hpp>
+
+// System includes
+#ifdef GEOS_USE_MPI
+  #include <mpi.h>
+#endif
+
+#include <cassert>
+//#include <cmath>
+#include <cstdint>
+#include <iostream>
+#include <optional>
+#include <set>
+#include <string>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
+
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
