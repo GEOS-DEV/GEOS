@@ -208,7 +208,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   TableData data;
   for( auto const &  [logPart, cells] : rowByPart )
   {
-    stdVector< TableData::CellData >row ( {
+    internal::StdVectorWrapper< TableData::CellData >row ( {
         TableData::CellData{ CellType::Value, logPart }
       } );
 
