@@ -462,11 +462,11 @@ INSTANTIATE_TEST_SUITE_P(
                        "{  f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
                        1, 2, localIndex( 180 ), localIndex( 196 ) ),
 
-      // Miscellaneous · no-boundary-cutting · tet          nodes:  180  elems:  392
+      // Miscellaneous · no-boundary-cutting · tet          nodes:  180  elems:  392 (minus 10 corner triangles)
       std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN",
                        "DFN_5_fractures_tet_binarized.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
-                       1, 2, localIndex( 180 ), localIndex( 392 ) )
+                       1, 2, localIndex( 180 ), localIndex( 382 ) )
 
       ),
     ::testing::Values(

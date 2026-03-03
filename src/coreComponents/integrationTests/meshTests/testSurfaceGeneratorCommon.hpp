@@ -696,6 +696,56 @@ ExpectedDuplication preprocessFractureTopology( MeshLevel & mesh,
     fractureBoundaryNodes.clear();
   }
 
+  // Step 4b: Count corner triangle faces in simplex (tet) meshes.
+  //
+  // A "corner face" is a triangular facet whose nodes ALL lie on the fracture boundary.
+  if( !ENABLE_CORNER_FRACTURES )
+  {
+    localIndex numCornerFaces = 0;
+    for( Facet const & facet : fractureFaces )
+    {
+      // Only triangular faces can be corner faces (simplex meshes).
+      if( facet.nodes.size() != 3 )
+        continue;
+
+      // Determine which fracture this face belongs to.
+      auto const fracIt = facetToFractureId.find( facet );
+      if( fracIt == facetToFractureId.end() )
+        continue;
+
+      integer const fid = fracIt->second;
+      auto const bndIt = perFractureBoundaryNodes.find( fid );
+      if( bndIt == perFractureBoundaryNodes.end() )
+        continue;
+
+      std::set< localIndex > const & bndNodes = bndIt->second;
+
+      // A corner face has ALL its nodes on the per-fracture boundary.
+      bool allOnBoundary = true;
+      for( localIndex const & nd : facet.nodes )
+      {
+        if( bndNodes.count( nd ) == 0 )
+        {
+          allOnBoundary = false;
+          break;
+        }
+      }
+
+      if( allOnBoundary )
+      {
+        ++numCornerFaces;
+      }
+    }
+
+    expected.numFractureElements -= numCornerFaces;
+
+    if( ENABLE_DEBUG_PRINTS )
+    {
+      GEOS_LOG_RANK_0( "  Corner faces (triangle, all nodes on fracture boundary): " << numCornerFaces );
+      GEOS_LOG_RANK_0( "  Adjusted numFractureElements (after subtracting corners): " << expected.numFractureElements );
+    }
+  }
+
   // Step 5: Apply duplication rules
   //
   // For boundary-cutting (isFullSpan=True) meshes the combined-boundary heuristic is correct:
