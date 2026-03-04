@@ -1222,13 +1222,30 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
   // Such edges must never be treated as dead ends.  We identify them by
   // checking whether any face in the node-local topology that touches the
   // edge is a ghost-boundary face (second element slot == -1).
+  //
+  // CRITICAL DISTINCTION: a physical exterior face of the domain also has
+  // m_originalFacesToElemIndex(kf,1) == -1 (only one element on one side),
+  // so isGhostBoundaryFace() returns true for it too.  However, an exterior
+  // domain face is NOT an MPI partition boundary — the separation path
+  // algorithm handles external edges via isEdgeExternal, and returning early
+  // here for those faces causes fracture-intersection nodes that sit on the
+  // domain boundary to be silently skipped (producing 3 missing nodes on
+  // full-span tet DFN_123 meshes when running with 4 MPI ranks).
+  //
+  // Fix: only classify a face as an MPI partition boundary when it is a
+  // ghost-boundary face AND is NOT a physical exterior face (isExternal == 0).
+
+  arrayView1d< integer const > const & faceIsExternal = faceManager.isExternal();
 
   std::set< localIndex > edgeOnPartitionBoundary;
   for( localIndex const kf : m_originalNodetoFaces[ parentNodeIndex ] )
   {
-    if( isGhostBoundaryFace( kf ) )
+    // isGhostBoundaryFace: second-element slot is -1 (face has only one attached element locally).
+    // A physical exterior face satisfies the same condition, but must NOT be treated as an MPI
+    // partition boundary — its edges are already handled via isEdgeExternal.
+    if( isGhostBoundaryFace( kf ) && !faceIsExternal[ kf ] )
     {
-      // Both edges of this face are on the partition boundary.
+      // Both edges of this face touch the MPI partition boundary.
       auto const & ep = nodeLocalFacesToEdges[kf];
       edgeOnPartitionBoundary.insert( ep.first );
       edgeOnPartitionBoundary.insert( ep.second );
