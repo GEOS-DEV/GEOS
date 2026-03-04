@@ -941,9 +941,14 @@ CompositionalMultiphaseWell::getReferenceConditions( WellElementSubRegion const 
     }
     else
     { // region average stats not initialized or initialized, fallback to top segment values
-      GEOS_WARNING( "CompositionalMultiphaseWell: region average statsistics of reference region not initialized,"
-                    " fallback to top segment values.",
-                    wellControls.getDataContext() );
+      static bool firstNoRefRegionMsg = true;
+      if( firstNoRefRegionMsg )
+      {
+        GEOS_WARNING( "CompositionalMultiphaseWell: region average statsistics of reference region not initialized,"
+                      " fallback to top segment values.",
+                      wellControls.getDataContext() );
+        firstNoRefRegionMsg=false;
+      }
 
       arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
       arrayView1d< real64 const > const & temp = subRegion.getField< well::temperature >();
