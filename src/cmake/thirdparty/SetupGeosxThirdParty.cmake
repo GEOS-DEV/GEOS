@@ -642,7 +642,9 @@ if(DEFINED SUITESPARSE_DIR)
                       INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
                       LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
                       HEADER umfpack.h
-                      LIBRARIES umfpack
+                      # Some SuiteSparse builds (notably on macOS) do not encode UMFPACK's
+                      # dependencies in the dylib load commands, so link them explicitly.
+                      LIBRARIES umfpack amd suitesparseconfig
                       DEPENDS blas lapack)
 
     extract_version_from_header( NAME suitesparse

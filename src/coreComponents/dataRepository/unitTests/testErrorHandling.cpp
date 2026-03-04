@@ -25,6 +25,7 @@
 #include "common/initializeEnvironment.hpp"
 
 #include <gtest/gtest.h>
+#include <csignal>
 #include <filesystem>
 
 using namespace geos;
@@ -444,7 +445,7 @@ TEST( ErrorHandling, VerifySignalHandlerLogs )
 
   ErrorLogger::global().enableFileOutput( true );
 
-  raise( SIGINT );
+  std::raise( SIGINT );
 
   EXPECT_TRUE( signalHappened );
 
