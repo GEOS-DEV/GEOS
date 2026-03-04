@@ -166,54 +166,54 @@ void LogHistory::diagnosticStatsReport()
 }
 
 template<>
-string TableTextFormatter::toString< LogHistory >( LogHistory const &  ) const
+string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCounts ) const
 {
-  // TableLayout tableLayout;
-  // tableLayout.addColumn( "Types" );
+  TableLayout tableLayout;
+  tableLayout.addColumn( "Types" );
 
-  // for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
-  // {
-  //   tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
-  // }
+  for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+  {
+    tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
+  }
 
-  // stdMap< std::pair< string, MsgType >, integer > countPerPartAndType;
-  // using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
-  // CellRow emptyCellRow;
-  // emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
-  // stdMap< string, CellRow > rowByPart;
+  stdMap< std::pair< string, MsgType >, integer > countPerPartAndType;
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+  CellRow emptyCellRow;
+  emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
+  stdMap< string, CellRow > rowByPart;
 
 
-  // for( const auto & [tupleKey, msgTypes] : messageCounts.getDiagnosticHistory())
-  // {
-  //   auto logPart = std::get< 0 >( tupleKey );
-  //   auto msgType = std::get< 1 >( tupleKey );
+  for( const auto & [tupleKey, msgTypes] : messageCounts.getDiagnosticHistory())
+  {
+    auto logPart = std::get< 0 >( tupleKey );
+    auto msgType = std::get< 1 >( tupleKey );
 
-  //   countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
+    countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 
-  //   if( rowByPart.find( logPart ) == rowByPart.end())
-  //     rowByPart.get_inserted( logPart ) = emptyCellRow;
-  // }
+    if( rowByPart.find( logPart ) == rowByPart.end())
+      rowByPart.get_inserted( logPart ) = emptyCellRow;
+  }
 
-  // for( auto & [keyPair, count] : countPerPartAndType )
-  // {
-  //   auto logPart = std::get< 0 >( keyPair );
-  //   auto msgType = std::get< 1 >( keyPair );
-  //   rowByPart.get_inserted( logPart ).at((size_t)msgType ).value =  std::to_string( count );
-  // }
+  for( auto & [keyPair, count] : countPerPartAndType )
+  {
+    auto logPart = std::get< 0 >( keyPair );
+    auto msgType = std::get< 1 >( keyPair );
+    rowByPart.get_inserted( logPart ).at((size_t)msgType ).value =  std::to_string( count );
+  }
 
-  // TableData data;
-  // for( auto const &  [logPart, cells] : rowByPart )
-  // {
-  //   stdVector< TableData::CellData >row ( {
-  //       TableData::CellData{ CellType::Value, logPart }
-  //     } );
+  TableData data;
+  for( auto const &  [logPart, cells] : rowByPart )
+  {
+    stdVector< TableData::CellData >row ( {
+        TableData::CellData{ CellType::Value, logPart }
+      } );
 
-  //   row.insert( row.end(), cells.begin(), cells.end());
-  //   data.addRow( row );
-  // }
+    row.insert( row.end(), cells.begin(), cells.end());
+    data.addRow<TableData::CellData>( row );
+  }
 
-  // TableTextFormatter textFormatter( tableLayout );
-  return/* textFormatter.toString( data ) +*/ "\n";
+  TableTextFormatter textFormatter( tableLayout );
+  return textFormatter.toString( data ) + "\n";
 }
 
 
