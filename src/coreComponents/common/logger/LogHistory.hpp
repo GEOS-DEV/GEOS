@@ -31,13 +31,57 @@
 namespace geos
 {
 
+struct Archive
+{
+  std::vector< buffer_unit_type > buffer;
+  size_t offset = 0;
+  buffer_unit_type *  bufferIt = buffer.data();
+
+  enum Mode { PACK, UNPACK };
+  Mode mode;
+
+  template< typename T >
+  void process( T & value )
+  {
+    if constexpr (std::is_fundamental_v< T > || std::is_enum_v< T >) {
+      if( mode == PACK )
+      {
+        memcpy( bufferIt, &value, sizeof(T) );
+        bufferIt += sizeof(T);
+      }
+      else
+      {
+        std::memcpy( &value, &buffer[offset], sizeof(T));
+        offset += sizeof(T);
+      }
+    }
+  }
+
+  void process( string & s )
+  {
+    if( mode == PACK )
+    {
+      size_t size = s.size();
+      process( size );
+      buffer.insert( buffer.end(), s.begin(), s.end());
+    }
+    else
+    {
+      size_t size;
+      process( size );
+      s = std::string( bufferIt, bufferIt + size );
+      offset += size;
+    }
+  }
+};
+
 /**
- * @brief Statistics for a diagnostic message at a specific location
+ * @brief Data for a diagnostic message
  */
-struct MsgStatistics
+struct DiagnosticData
 {
   /// Number of times the same message occured during the simulation
-  integer count;
+  integer m_count;
 };
 
 
@@ -48,8 +92,23 @@ class LogHistory
 {
 public:
 
-  /// Alias for the historical diagnostic unordered_map key
-  using DiagnosticKey = std::tuple< string, MsgType, string, integer >;
+  /// POD characterizing an unique diagnostic message
+  struct DiagnosticKey
+  {
+    string logPart;
+    MsgType msgType;
+    string fileName;
+    integer lineId;
+
+    template< typename Archive >
+    void serialize( Archive & ar )
+    {
+      ar.process( logPart );
+      ar.process( msgType );
+      ar.process( fileName );
+      ar.process( lineId );
+    }
+  };
 
   /**
    * @brief Report a diagnostic message
@@ -69,33 +128,20 @@ public:
   auto const & getDiagnosticHistory() const
   { return m_diagnosticHistory; }
 
-  /**
-   * @brief Insert an element to the diagnostic history container if an equivalent key doesn't exist.
-   * @param logPartName The logPart where the diagnostic occured
-   * @param msgType The diagnostic message type
-   * @param fileName The filement where the diagnostic occured
-   * @param lineCount The line where the diagnostic occured
-   */
-  void insertDiagnosticReport( string_view logPartName, MsgType msgType,
-                               string const & fileName, integer lineCount )
-  {
-    m_diagnosticHistory.get_inserted( std::make_tuple( string( logPartName ), msgType, fileName, lineCount ));
-  }
-
 private:
 
   /// @cond DO_NOT_DOCUMENT
   struct LocationKeyHash
   {
 
-    std::size_t operator()( DiagnosticKey const & key ) const noexcept
+    size_t operator()( DiagnosticKey const & key ) const noexcept
     {
-      auto const & [logPartType, msgType, filename, lineCount] = key;
+      auto const & [logPartType, msgType, filename, lineId] = key;
 
-      std::size_t h1 = std::hash< std::string >{} (logPartType);
-      std::size_t h2 = std::hash< MsgType >{} (msgType);
-      std::size_t h3 = std::hash< std::string >{} (filename);
-      std::size_t h4 = std::hash< int >{} (lineCount);
+      size_t h1 = std::hash< string >{} (logPartType);
+      size_t h2 = std::hash< MsgType >{} (msgType);
+      size_t h3 = std::hash< string >{} (filename);
+      size_t h4 = std::hash< integer >{} (lineId);
 
       return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
     }
@@ -110,10 +156,10 @@ private:
     bool operator()( DiagnosticKey const & lhs,
                      DiagnosticKey const & rhs ) const
     {
-      return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
-             std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
-             std::get< 2 >( lhs ) == std::get< 2 >( rhs ) &&
-             std::get< 3 >( lhs ) == std::get< 3 >( rhs );
+      return lhs.logPart == rhs.logPart &&
+             lhs.msgType == rhs.msgType &&
+             lhs.fileName == rhs.fileName &&
+             lhs.lineId == rhs.lineId;
     }
   };
   /// @endcond
@@ -122,8 +168,27 @@ private:
    * @brief Diagnostic history happened during the simulation
    */
   stdUnorderedMap< DiagnosticKey,
-                   MsgStatistics,
+                   DiagnosticData,
                    LocationKeyHash, LocationKeyEqual > m_diagnosticHistory;
+
+  /**
+   * @brief Insert an element to the diagnostic history container if an equivalent key doesn't exist.
+   * @param logPartName The logPart where the diagnostic occured
+   * @param msgType The diagnostic message type
+   * @param fileName The filement where the diagnostic occured
+   * @param lineId The line where the diagnostic occured
+   */
+  void insertDiagnosticReport( DiagnosticKey const & diagnosticKey )
+  {
+    m_diagnosticHistory.get_inserted( {diagnosticKey.logPart, diagnosticKey.msgType,
+                                       diagnosticKey.fileName, diagnosticKey.lineId} ).m_count++;
+  }
+
+  void serialize( stdVector< buffer_unit_type > & gStruct );
+
+  void deserialize( stdVector< buffer_unit_type > const & globalAllocations,
+                    stdVector< integer > const & recvCounts );
+
 };
 
 /**
