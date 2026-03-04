@@ -295,7 +295,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --ctest-parallel 4"
+      BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --ctest-parallel 8"
       CMAKE_BUILD_TYPE: Debug
       CODE_COVERAGE: true
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
