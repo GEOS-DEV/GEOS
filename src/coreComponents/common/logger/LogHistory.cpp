@@ -27,8 +27,6 @@
 #include "common/format/table/TableTypes.hpp"
 #include "common/logger/MsgType.hpp"
 #include "common/MpiWrapper.hpp"
-#include "dataRepository/BufferOps.hpp"
-#include "dataRepository/BufferOps_inline.hpp"
 #include <algorithm>
 #include <functional>
 #include <string>
@@ -103,70 +101,70 @@ gatherTuplesRank0( buffer_unit_type * bufferToSend, localIndex packedSize )
 
 void LogHistory::diagnosticStatsReport()
 {
-  LogHistory & history = ErrorLogger::global().getLoggerReportData();
-  stdVector< buffer_unit_type > gTuple( 0 );
-  integer totalSize = 0;
-  //1 - dry run for vector size
-  for( auto const & [key, value] : getDiagnosticHistory() )
-  {
-    auto const & [logPartType, msgType, filename, lineCount] = key;
+  // LogHistory & history = ErrorLogger::global().getLoggerReportData();
+  // stdVector< buffer_unit_type > gTuple( 0 );
+  // integer totalSize = 0;
+  // //1 - dry run for vector size
+  // for( auto const & [key, value] : getDiagnosticHistory() )
+  // {
+  //   auto const & [logPartType, msgType, filename, lineCount] = key;
 
-    buffer_unit_type * dummy = nullptr;
-    localIndex entrySize = bufferOps::Pack< false >( dummy, logPartType ) +
-                           bufferOps::Pack< false >( dummy, msgType ) +
-                           bufferOps::Pack< false >( dummy, filename ) +
-                           bufferOps::Pack< false >( dummy, lineCount );
+  //   // buffer_unit_type * dummy = nullptr;
+  //   // localIndex entrySize = bufferOps::Pack< false >( dummy, logPartType ) +
+  //   //                        bufferOps::Pack< false >( dummy, msgType ) +
+  //   //                        bufferOps::Pack< false >( dummy, filename ) +
+  //   //                        bufferOps::Pack< false >( dummy, lineCount );
 
-    totalSize +=  entrySize;
-  }
-  gTuple.resize( totalSize );
+  //   totalSize +=  0;
+  // }
+  // gTuple.resize( totalSize );
 
-  //2 - Packing
-  buffer_unit_type * tupleBuffer = gTuple.data();
-  for( auto const & [key, value] : getDiagnosticHistory() )
-  {
-    auto const & [logPartType, msgType, filename, lineCount] = key;
+  // //2 - Packing
+  // // buffer_unit_type * tupleBuffer = gTuple.data();
+  // for( auto const & [key, value] : getDiagnosticHistory() )
+  // {
+  //   auto const & [logPartType, msgType, filename, lineCount] = key;
 
-    bufferOps::Pack< true >( tupleBuffer, logPartType );
-    bufferOps::Pack< true >( tupleBuffer, msgType );
-    bufferOps::Pack< true >( tupleBuffer, filename );
-    bufferOps::Pack< true >( tupleBuffer, lineCount );
-  }
+  //   // bufferOps::Pack< true >( tupleBuffer, logPartType );
+  //   // bufferOps::Pack< true >( tupleBuffer, msgType );
+  //   // bufferOps::Pack< true >( tupleBuffer, filename );
+  //   // bufferOps::Pack< true >( tupleBuffer, lineCount );
+  // }
 
-  auto [tuplesPerIt, recvCounts] = gatherTuplesRank0( gTuple.data(), gTuple.size() );
+  // auto [tuplesPerIt, recvCounts] = gatherTuplesRank0( gTuple.data(), gTuple.size() );
 
-  //3 - Unpacking
-  if( MpiWrapper::commRank() == 0 )
-  {
-    buffer_unit_type const * rankStart = tuplesPerIt.data();
-    for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
-    {
-      integer byteFromThisRank = recvCounts[idxRank];
-      if( byteFromThisRank != 0 )
-      {
-        buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
-        while( rankStart < rankEnd )
-        {
-          string logPartUnpacked;
-          MsgType MsgTypeUnpacked;
-          string fileNameUnpacked;
-          integer lineCountUnpacked;
-          bufferOps::Unpack( rankStart, logPartUnpacked );
-          bufferOps::Unpack( rankStart, MsgTypeUnpacked );
-          bufferOps::Unpack( rankStart, fileNameUnpacked );
-          bufferOps::Unpack( rankStart, lineCountUnpacked );
-          history.insertDiagnosticReport( logPartUnpacked, MsgTypeUnpacked, fileNameUnpacked, lineCountUnpacked );
-        }
-      }
-    }
-  }
+  // //3 - Unpacking
+  // if( MpiWrapper::commRank() == 0 )
+  // {
+  //   buffer_unit_type const * rankStart = tuplesPerIt.data();
+  //   for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
+  //   {
+  //     integer byteFromThisRank = recvCounts[idxRank];
+  //     if( byteFromThisRank != 0 )
+  //     {
+  //       buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
+  //       while( rankStart < rankEnd )
+  //       {
+  //         string logPartUnpacked;
+  //         MsgType MsgTypeUnpacked;
+  //         string fileNameUnpacked;
+  //         integer lineCountUnpacked;
+  //         // bufferOps::Unpack( rankStart, logPartUnpacked );
+  //         // bufferOps::Unpack( rankStart, MsgTypeUnpacked );
+  //         // bufferOps::Unpack( rankStart, fileNameUnpacked );
+  //         // bufferOps::Unpack( rankStart, lineCountUnpacked );
+  //         // history.insertDiagnosticReport( logPartUnpacked, MsgTypeUnpacked, fileNameUnpacked, lineCountUnpacked );
+  //       }
+  //     }
+  //   }
+  // }
 
-  //4 - Display
-  if( MpiWrapper::commRank() == 0 )
-  {
-    TableTextFormatter tableReportFormatter;
-    GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
-  }
+  // //4 - Display
+  // if( MpiWrapper::commRank() == 0 )
+  // {
+  //   TableTextFormatter tableReportFormatter;
+  //   GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+  // }
 }
 
 template<>
