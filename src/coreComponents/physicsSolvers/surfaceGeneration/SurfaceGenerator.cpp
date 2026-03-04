@@ -1148,14 +1148,14 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
                []( auto const & a, auto const & b )
     {
       return a.first->localToGlobalMap()[a.second]
-             < b.first->localToGlobalMap()[b.second];
+      < b.first->localToGlobalMap()[b.second];
     } );
 
     return result;
   };
 
   stdVector< std::pair< CellElementSubRegion const *, localIndex > > const
-    nodeToElementMaps( buildNodeToElementMaps() );
+  nodeToElementMaps( buildNodeToElementMaps() );
 
   arrayView1d< integer const > const & isEdgeExternal = edgeManager.isExternal();
 
@@ -4697,7 +4697,7 @@ void SurfaceGenerator::postUpdateRuptureStates( NodeManager const & nodeManager,
         {
           const localIndex edgeIndex = faceToEdgeMap( kf, a );
           edgesToRupturedFaces[edgeIndex].insert( faceIndex );
-         }
+        }
       }
     }
   }
@@ -4750,10 +4750,13 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   {
     localIndex ra = findRoot( a );
     localIndex rb = findRoot( b );
-    if( ra == rb ) return;
-    if( rank[ra] < rank[rb] ) std::swap( ra, rb );
+    if( ra == rb )
+      return;
+    if( rank[ra] < rank[rb] )
+      std::swap( ra, rb );
     parent[rb] = ra;
-    if( rank[ra] == rank[rb] ) ++rank[ra];
+    if( rank[ra] == rank[rb] )
+      ++rank[ra];
   };
 
   // Two ruptured faces sharing a node belong to the same fracture set.
@@ -4763,11 +4766,12 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   for( localIndex ni = 0; ni < static_cast< localIndex >( nodesToRupturedFaces.size() ); ++ni )
   {
     std::set< localIndex > const & faces = nodesToRupturedFaces[ni];
-    if( faces.size() <= 1 ) continue;
+    if( faces.size() <= 1 )
+      continue;
     auto it = faces.begin();
     localIndex const first = *it;
     ++it;
-    for( ; it != faces.end(); ++it )
+    for(; it != faces.end(); ++it )
     {
       unionSets( first, *it );
     }

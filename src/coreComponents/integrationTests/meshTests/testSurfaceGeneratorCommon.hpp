@@ -336,8 +336,8 @@ void validateSurfaceGeneratorResults( std::string const & testCaseName,
   // A5: Validate expected Euler characteristic after split
   bool const a5Pass = ( eulerCharAfterSplit == expectedEulerAfter );
   GEOS_LOG_RANK_0( "Validating A5 " << ( a5Pass ? "(ok)" : "(notok)" )
-                                   << ": Euler χ after split (Expected: " << expectedEulerAfter
-                                   << ", Actual: " << eulerCharAfterSplit << ")" );
+                                    << ": Euler χ after split (Expected: " << expectedEulerAfter
+                                    << ", Actual: " << eulerCharAfterSplit << ")" );
   EXPECT_EQ( eulerCharAfterSplit, expectedEulerAfter )
     << "Test " << testCaseName << ": Euler characteristic MISMATCH after split"
     << "\n  Expected χ: " << expectedEulerAfter

@@ -155,7 +155,7 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   std::set< globalIndex > allNodes;
   std::set< EdgeKey >     allEdges;
   std::set< FaceKey >     allFaces;
-  localIndex              numOwnedCells = 0;
+  localIndex numOwnedCells = 0;
 
   // --- helpers -----------------------------------------------------------
   auto makeEdge = []( globalIndex a, globalIndex b ) -> EdgeKey
