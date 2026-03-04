@@ -24,6 +24,8 @@
 #endif
 
 #include <cmath>
+#include <set>
+#include <vector>
 
 namespace geos
 {
@@ -117,10 +119,66 @@ int SpatialPartition::getColor()
   }
   else
   {
-    // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
-    std::vector< camp::idx_t > adjncy;
-    adjncy.reserve( m_metisNeighborList.size());
-    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
+    // External partitioner such as ParMetis or PTScotch (for VTK external mesh).
+    //
+    // findNeighborRanks() runs independently on each rank using bounding-box intersection,
+    // which can produce ASYMMETRIC neighbor lists in Release builds: rank A may include rank B
+    // in its list while rank B does not include rank A (or vice versa), due to floating-point
+    // differences in the intersection test under -O2/-O3.  An asymmetric graph fed to the RLF
+    // coloring algorithm on rank 0 means the coloring is only valid for one direction of each
+    // missing edge; the subsequent isColoringValid() check (which uses the rank's own local
+    // adjncy) then detects the conflict and raises GEOS_ERROR.
+    //
+    // Fix: symmetrize the global neighbor graph before coloring.
+    // Each rank allgathers its own neighbor list; any rank i that appears in rank j's list
+    // automatically gets rank j added to its own list.  After symmetrization the graph is
+    // guaranteed to be undirected and the coloring is valid for all ranks.
+
+    int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+    int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+    // Step 1: allgather the sizes of every rank's neighbor list.
+    int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
+    std::vector< int > allNeighborCounts( commSize );
+    MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
+
+    // Step 2: allgatherv the neighbor lists themselves.
+    std::vector< int > displacements( commSize, 0 );
+    for( int i = 1; i < commSize; ++i )
+    {
+      displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
+    }
+    int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
+
+    std::vector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    std::vector< int > allNeighbors( totalNeighbors );
+    MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
+                            allNeighbors.data(), allNeighborCounts.data(),
+                            displacements.data(), MPI_COMM_GEOS );
+
+    // Step 3: build the symmetrized local adjacency list.
+    // Start from the current (possibly incomplete) local list, then add any rank j
+    // that lists commRank as its neighbor but is not yet in our list.
+    std::set< int > symmetricNeighbors( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    for( int rankJ = 0; rankJ < commSize; ++rankJ )
+    {
+      if( rankJ == commRank )
+        continue;
+      int const start = displacements[rankJ];
+      int const end   = start + allNeighborCounts[rankJ];
+      for( int k = start; k < end; ++k )
+      {
+        if( allNeighbors[k] == commRank )
+        {
+          // rank j lists us as a neighbor → we must list rank j too
+          symmetricNeighbors.insert( rankJ );
+          break;
+        }
+      }
+    }
+
+    std::vector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
@@ -130,6 +188,14 @@ int SpatialPartition::getColor()
 
     if( !coloring.isColoringValid( adjncy, color ))
     {
+      // Print per-rank diagnostics to help identify the root cause.
+      std::string neighborStr;
+      for( auto const nb : adjncy )
+        neighborStr += std::to_string( nb ) + " ";
+      GEOS_LOG_RANK( "getColor() coloring FAILED on rank " << commRank
+                                                           << "  assigned color=" << color
+                                                           << "  neighbors=[" << neighborStr << "]" );
+      MpiWrapper::barrier( MPI_COMM_GEOS );
       GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
     }
     m_numColors = coloring.getNumberOfColors( color );

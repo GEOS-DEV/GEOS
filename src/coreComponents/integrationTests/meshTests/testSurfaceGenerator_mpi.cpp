@@ -89,7 +89,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-      R"xml(" partitionMethod="parmetis"/>
+      R"xml(" partitionRefinement="0"/>
   </Mesh>
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SurfaceGenerator
@@ -266,6 +266,12 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     // Run SurfaceGenerator (the split)
     // ------------------------------------------------------------------
     state.run();
+
+    // Synchronize all ranks before reading post-split topology.
+    // In Release builds, MPI message delivery is faster and without this
+    // barrier rank 0 may observe stale ghost-rank state on managers that
+    // are still being updated on other ranks.
+    MpiWrapper::barrier( MPI_COMM_GEOS );
 
     // ------------------------------------------------------------------
     // Post-split topology stats

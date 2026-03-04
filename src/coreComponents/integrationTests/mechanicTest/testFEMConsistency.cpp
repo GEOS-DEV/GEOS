@@ -74,7 +74,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-      R"xml(" partitionMethod="parmetis"/>
+      R"xml(" partitionRefinement="0"/>
   </Mesh>
   <Geometry>
     <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
