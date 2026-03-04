@@ -219,7 +219,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
+      GEOS_ERROR( GEOS_FMT( "Unsupported MGR strategy: {}", params.mgr.strategy ) );
     }
   }
 
