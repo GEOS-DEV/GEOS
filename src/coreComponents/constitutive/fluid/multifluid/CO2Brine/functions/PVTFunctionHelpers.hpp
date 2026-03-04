@@ -207,9 +207,15 @@ initializePropertyTable( string_array const & inputParameters,
 
     real64 const minT = 10;
     real64 const maxT = 200;
-    GEOS_THROW_IF( TStart < minT, "Temperature " << units::convertCToK( TStart ) << " must be in Kelvin and must be larger than " << units::convertCToK( minT ) << " K",
+    GEOS_THROW_IF( TStart < minT,
+                   GEOS_FMT( "Temperature {} must be in Kelvin and must be larger than {} K",
+                             units::convertCToK( TStart ),
+                             units::convertCToK( minT ) ),
                    InputError );
-    GEOS_THROW_IF( TEnd > maxT, "Temperature " << units::convertCToK( TEnd ) << " must be in Kelvin and must be smaller than " << units::convertCToK( maxT ) << " K",
+    GEOS_THROW_IF( TEnd > maxT,
+                   GEOS_FMT( "Temperature {} must be in Kelvin and must be smaller than {} K",
+                             units::convertCToK( TEnd ),
+                             units::convertCToK( maxT ) ),
                    InputError );
     GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
                    InputError );

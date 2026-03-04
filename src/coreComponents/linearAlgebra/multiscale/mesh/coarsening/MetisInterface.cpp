@@ -63,16 +63,21 @@ void partition( CRSMatrixView< int64_t const, int64_t const, int64_t const > con
   idx_t * const columns = const_cast< idx_t * >( graph.getColumns() );
   idx_t * const weights = const_cast< idx_t * >( graph.getEntries() );
 
-  auto const metisCall = [&]()
+  auto const metisCall = [&]() -> decltype( & METIS_PartGraphKway )
   {
     using Method = LinearSolverParameters::Multiscale::Coarsening::Graph::Metis::Method;
     switch( params.method )
     {
       case Method::kway:      return METIS_PartGraphKway;
       case Method::recursive: return METIS_PartGraphRecursive;
-      default: GEOS_THROW( "Unrecognized METIS method", InputError );
+      default:
+      {
+        GEOS_THROW( "Unrecognized METIS method", InputError );
+        return nullptr;
+      }
     }
-  }();
+  } ();
+  GEOS_ERROR_IF( metisCall == nullptr, "No METIS partitioning routine selected" );
 
   int const result = metisCall( &nnodes, // nvtxs
                                 &nconst, // ncon
