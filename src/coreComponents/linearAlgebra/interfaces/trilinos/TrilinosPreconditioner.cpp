@@ -88,7 +88,8 @@ string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
     { LinearSolverParameters::AMG::CycleType::W, "MGW" },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML cycle option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML cycle option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -109,7 +110,8 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
     { LinearSolverParameters::AMG::SmootherType::ilut, "ILUT" },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML smoother option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -128,7 +130,8 @@ string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
     { LinearSolverParameters::AMG::CoarseType::direct, "Amesos-KLU"},
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML coarse solver option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -141,7 +144,8 @@ string getMLPreOrPostSmoothingType( LinearSolverParameters::AMG::PreOrPost const
     { LinearSolverParameters::AMG::PreOrPost::both, "both" }
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoothing direction option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML smoothing direction option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -200,7 +204,8 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
     { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/Ifpack preconditioner option: {}", type ) );
   return typeMap.at( type );
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
@@ -215,7 +220,8 @@ string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const
     { LinearSolverParameters::PreconditionerType::l1sgs, "symmetric Gauss-Seidel" },
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/Ifpack preconditioner option: {}", type ) );
   return typeMap.at( type );
 }
 
@@ -326,7 +332,7 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
     }
     default:
     {
-      GEOS_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_params.preconditionerType );
+      GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in Trilinos interface: {}", m_params.preconditionerType ) );
     }
   }
 }
