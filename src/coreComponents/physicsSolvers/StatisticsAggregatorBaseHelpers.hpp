@@ -32,14 +32,23 @@ namespace geos
 {
 
 inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
-                                                   dataRepository::Group * const parent ):
+                                                   dataRepository::Group * const parent,
+                                                   bool const statsOutputEnabled ):
   dataRepository::Group( targetName, parent ),
   m_time( std::numeric_limits< double >::lowest() )
-{}
+{
+  Group::setRestartFlags( statsOutputEnabled ?
+                          dataRepository::RestartFlags::WRITE_AND_READ :
+                          dataRepository::RestartFlags::NO_WRITE );
+
+  // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
+}
 
 template< typename Impl >
-StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext ):
-  m_ownerDataContext( ownerDataContext )
+StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
+                                                  bool const statsOutputEnabled ):
+  m_ownerDataContext( ownerDataContext ),
+  m_statsOutputEnabled( statsOutputEnabled )
 {}
 
 template< typename Impl >

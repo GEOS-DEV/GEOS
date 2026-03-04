@@ -86,9 +86,12 @@ using namespace dataRepository;
 namespace compositionalMultiphaseStatistics
 {
 
-RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent,
-                                    integer const numPhases, integer const numComponents ):
-  RegionStatisticsBase( name, parent ),
+RegionStatistics::RegionStatistics( string const & name,
+                                    dataRepository::Group * const parent,
+                                    bool statsOutputEnabled,
+                                    integer const numPhases,
+                                    integer const numComponents ):
+  RegionStatisticsBase( name, parent, statsOutputEnabled ),
   m_phaseDynamicPoreVolume( numPhases ),
   m_phaseMass( numPhases ),
   m_trappedPhaseMass( numPhases ),
@@ -100,14 +103,17 @@ RegionStatistics::RegionStatistics( string const & name, dataRepository::Group *
   // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
 }
 
-CFLStatistics::CFLStatistics( string const & name, dataRepository::Group * const parent ):
-  RegionStatisticsBase( name, parent )
+CFLStatistics::CFLStatistics( string const & name,
+                              dataRepository::Group * const parent,
+                              bool const statsOutputEnabled ):
+  RegionStatisticsBase( name, parent, statsOutputEnabled )
 {
   // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
 }
 
-StatsAggregator::StatsAggregator( DataContext const & ownerDataContext ):
-  Base( ownerDataContext ),
+StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
+                                  bool const statsOutputEnabled ):
+  Base( ownerDataContext, statsOutputEnabled ),
   m_params()
 {}
 
@@ -127,7 +133,9 @@ void StatsAggregator::enableRegionStatisticsAggregation()
                                    string const & targetName ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
-                                 std::make_unique< RegionStatistics >( targetName, &parent,
+                                 std::make_unique< RegionStatistics >( targetName,
+                                                                       &parent,
+                                                                       m_statsOutputEnabled,
                                                                        m_numPhases,
                                                                        m_numComponents ) );
   };
@@ -145,7 +153,11 @@ void StatsAggregator::enableCFLStatistics()
   {
     MeshLevel & mesh = getMeshLevel( path );
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
-    statisticsGroup.registerGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
+    auto const cflStatsName = ViewKeys::cflStatisticsString();
+    statisticsGroup.registerGroup< CFLStatistics >( cflStatsName,
+                                                    std::make_unique< CFLStatistics >( cflStatsName,
+                                                                                       &statisticsGroup,
+                                                                                       m_statsOutputEnabled ) );
   }
 
   m_cflStatsState.m_isEnabled = true;

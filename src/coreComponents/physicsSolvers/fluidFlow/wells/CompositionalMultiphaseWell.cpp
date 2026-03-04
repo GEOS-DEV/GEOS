@@ -893,7 +893,8 @@ void CompositionalMultiphaseWell::precomputeReferenceConditions( real64 const ti
 
       if( !m_reservoirStatsAggregator )
       { // lazily initialize the region statistics aggregator
-        m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( wellControls.getDataContext() );
+        m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( wellControls.getDataContext(),
+                                                                          false );
         m_reservoirStatsAggregator->initStatisticsAggregation( meshBodies, flowSolver );
         m_reservoirStatsAggregator->enableRegionStatisticsAggregation();
       }

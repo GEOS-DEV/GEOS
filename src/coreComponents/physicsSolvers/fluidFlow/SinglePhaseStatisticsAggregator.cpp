@@ -39,12 +39,15 @@ namespace singlePhaseStatistics
 using namespace constitutive;
 using namespace dataRepository;
 
-RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent ):
-  RegionStatisticsBase( name, parent )
+RegionStatistics::RegionStatistics( string const & name,
+                                    dataRepository::Group * const parent,
+                                    bool const statsOutputEnabled ):
+  RegionStatisticsBase( name, parent, statsOutputEnabled )
 {}
 
-StatsAggregator::StatsAggregator( DataContext const & ownerDataContext ):
-  Base( ownerDataContext )
+StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
+                                  bool const statsOutputEnabled ):
+  Base( ownerDataContext, statsOutputEnabled )
 {}
 
 void StatsAggregator::enableRegionStatisticsAggregation()
@@ -53,7 +56,9 @@ void StatsAggregator::enableRegionStatisticsAggregation()
                                    string const & targetName ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
-                                 std::make_unique< RegionStatistics >( targetName, &parent ) );
+                                 std::make_unique< RegionStatistics >( targetName,
+                                                                       &parent,
+                                                                       m_statsOutputEnabled ) );
   };
 
   Base::enableRegionStatisticsAggregation( registerStats );

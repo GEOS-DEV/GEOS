@@ -144,7 +144,9 @@ public:
    *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
    */
-  RegionStatistics( string const & targetName, dataRepository::Group * const parent );
+  RegionStatistics( string const & targetName,
+                    dataRepository::Group * const parent,
+                    bool statsOutputEnabled );
 
   RegionStatistics( RegionStatistics && ) = default;
 
@@ -167,7 +169,8 @@ public:
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
    */
-  StatsAggregator( dataRepository::DataContext const & ownerDataContext );
+  StatsAggregator( dataRepository::DataContext const & ownerDataContext,
+                   bool statsOutputEnabled );
 
   /**
    * @brief Enable the computation of region statistics, initialize data structure to collect them.

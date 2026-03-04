@@ -50,7 +50,7 @@ void StatsTask::postInputInitialization()
                 InputError, getDataContext() );
   }
 
-  m_aggregator = std::make_unique< StatsAggregator >( getDataContext() );
+  m_aggregator = std::make_unique< StatsAggregator >( getDataContext(), true );
 }
 
 void StatsTask::registerDataOnMesh( Group & meshBodies )

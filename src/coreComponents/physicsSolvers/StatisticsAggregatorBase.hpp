@@ -14,7 +14,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseStatisticsAggregator.hpp
+ * @file CompositionalMultiphaseStatisticsAg/gregator.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_STATISTICSAGGREGATOR_HPP_
@@ -48,7 +48,9 @@ public:
    *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
    */
-  RegionStatisticsBase( string const & targetName, dataRepository::Group * const parent );
+  RegionStatisticsBase( string const & targetName,
+                        dataRepository::Group * const parent,
+                        bool statsOutputEnabled );
 
   /**
    * @return the name of the data-repository object that is targeted by the statistics
@@ -111,7 +113,8 @@ public:
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
    */
-  StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext );
+  StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
+                       bool statsOutputEnabled );
 
   /**
    * @brief Enable the computation of any statistics, initialize data structure to collect them.
@@ -204,6 +207,8 @@ protected:
 
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
+
+  bool const m_statsOutputEnabled;
 
   dataRepository::Group * m_meshBodies = nullptr;
 

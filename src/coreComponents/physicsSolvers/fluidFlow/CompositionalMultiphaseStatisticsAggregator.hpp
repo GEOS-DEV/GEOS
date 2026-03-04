@@ -165,8 +165,11 @@ public:
    * @param numPhases Fluid phase count
    * @param numComponents Fluid component count
    */
-  RegionStatistics( string const & targetName, dataRepository::Group * const parent,
-                    integer numPhases, integer numComponents );
+  RegionStatistics( string const & targetName,
+                    dataRepository::Group * const parent,
+                    bool statsOutputEnabled,
+                    integer numPhases,
+                    integer numComponents );
 
   RegionStatistics( RegionStatistics && ) = default;
 
@@ -191,7 +194,9 @@ public:
    * @param name instance name in data-repository
    * @param parent the instance parent in data-repository
    */
-  CFLStatistics( const string & name, dataRepository::Group * const parent );
+  CFLStatistics( const string & name,
+                 dataRepository::Group * const parent,
+                 bool statsOutputEnabled );
 };
 
 /**
@@ -219,7 +224,8 @@ public:
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
    */
-  StatsAggregator( dataRepository::DataContext const & ownerDataContext );
+  StatsAggregator( dataRepository::DataContext const & ownerDataContext,
+                   bool m_statsOutputEnabled );
 
   /**
    * @brief Enable the computation of any statistics, initialize data structure to collect them.
