@@ -199,7 +199,7 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   addPhaseCompColumns( tableLayout, "Component mass", massUnit, numPhases, numComps );
 
   auto & csvFormatter = m_csvFormatters.get_inserted( string( meshName ) );
-  csvFormatter = std::move( std::make_unique< TableCSVFormatter >( tableLayout ) );
+  csvFormatter = std::make_unique< TableCSVFormatter >( tableLayout );
 
   // output CSV header
   std::ofstream outputFile( getCsvFileName( meshName ) );
