@@ -99,41 +99,39 @@ TEST( testMpiTables, testDifferentRankData )
       "-------------------------------------------\n"
     },
   };
+
+  int const rankId = MpiWrapper::commRank();
+  int const nbRanks = MpiWrapper::commSize();
+  ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
+
   for( TestCase const & testCase: testCases )
   {
-    int const rankId = MpiWrapper::commRank();
-    int const nbRanks = MpiWrapper::commSize();
-    if( nbRanks > 1 )
+    TableLayout const layout = TableLayout().
+                                 setTitle( "Summary of negative pressure elements" ).
+                                 addColumns( { "Global Id", "pressure [Pa]" } ).
+                                 setDefaultHeaderAlignment( TableLayout::Alignment::left );
+    TableData data;
+    auto const & rankTestData = testCase.m_ranksValues[rankId];
+
+    TableMpiLayout mpiLayout;
+    mpiLayout.m_separatorBetweenRanks = true;
+
+    if( !rankTestData.empty() )
     {
-      ASSERT_EQ( nbRanks, 4 );
-
-      TableLayout const layout = TableLayout().
-                                   setTitle( "Summary of negative pressure elements" ).
-                                   addColumns( { "Global Id", "pressure [Pa]" } ).
-                                   setDefaultHeaderAlignment( TableLayout::Alignment::left );
-      TableData data;
-      auto const & rankTestData = testCase.m_ranksValues[rankId];
-
-      TableMpiLayout mpiLayout;
-      mpiLayout.m_separatorBetweenRanks = true;
-
-      if( !rankTestData.empty() )
+      mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
+      for( auto const & [id, value] : rankTestData )
       {
-        mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
-        for( auto const & [id, value] : rankTestData )
-        {
-          data.addRow( id, value );
-        }
+        data.addRow( id, value );
       }
+    }
 
-      TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
-      std::ostringstream oss;
-      formatter.toStream( oss, data );
-      if( rankId == 0 )
-      {
-        EXPECT_STREQ( testCase.m_expectedResult.data(),
-                      oss.str().data() );
-      }
+    TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+    std::ostringstream oss;
+    formatter.toStream( oss, data );
+    if( rankId == 0 )
+    {
+      EXPECT_STREQ( testCase.m_expectedResult.data(),
+                    oss.str().data() );
     }
   }
 }
