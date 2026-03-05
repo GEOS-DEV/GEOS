@@ -1557,6 +1557,18 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF( m_boreholeStress.size() != 6, "Borehole stress must have size 6." );
   }
 
+    // Check stress control
+  if( m_confiningStress.size() == 0 )
+  {
+    m_confiningStress.resize( 6 );
+    LvArray::tensorOps::fill< 6 >( m_confiningStress, 0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_confiningStress.size() != 6, "Confining stress must have size 6." );
+  }
+
+
   if( m_domainStress.size() == 0 )
   {
     m_domainStress.resize( 3 );
@@ -2842,7 +2854,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  if( m_enableBoreholePressure == 1 or m_enableConfiningPressure == 1 )
+  if( m_enableBoreholePressure == 1 || m_enableConfiningPressure == 1 )
   {
     GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Update background stress state on grid nodes" );
     solverProfiling( "Update background stress state on grid nodes" );
