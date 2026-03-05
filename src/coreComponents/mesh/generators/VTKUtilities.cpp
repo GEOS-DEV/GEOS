@@ -664,7 +664,7 @@ redistributeBySuperCellGraph(
   vtkSmartPointer< vtkUnstructuredGrid > ugrid =
     vtkUnstructuredGrid::SafeDownCast( mesh );
 
-  GEOS_ERROR_IF( !ugrid, "Rank " << rank << ": Mesh is not vtkUnstructuredGrid" );
+  GEOS_ERROR_IF( !ugrid, "Mesh is not vtkUnstructuredGrid" );
 
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > baseCellGraph;
   array1d< pmet_idx_t > baseElemDist( numRanks + 1 );
@@ -1369,18 +1369,21 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
 
         auto fracNeighborIt = fractureNeighbors.find( fractureName );
         GEOS_ERROR_IF( fracNeighborIt == fractureNeighbors.end(),
-                       "Fracture '" << fractureName << "' not found in fractureNeighbors map" );
+                       GEOS_FMT( "Fracture '{}' not found in fractureNeighbors map", fractureName ) );
 
         ArrayOfArrays< vtkIdType, int64_t > const & neighbors = fracNeighborIt->second;
 
         GEOS_ERROR_IF( neighbors.size() != numFractureCells,
-                       "Fracture '" << fractureName << "' has " << numFractureCells
-                                    << " cells but " << neighbors.size() << " neighbor entries" );
+                       GEOS_FMT( "Fracture '{}' has {} cells but {} neighbor entries",
+                                 fractureName,
+                                 numFractureCells,
+                                 neighbors.size() ) );
 
         // Ensure GlobalIds exist on fracture mesh
         vtkDataArray * fracGlobalIds = unpartitionedFracture->GetCellData()->GetGlobalIds();
         GEOS_ERROR_IF( !fracGlobalIds,
-                       "Fracture '" << fractureName << "' missing GlobalIds - should have been set by manageGlobalIds()" );
+                       GEOS_FMT( "Fracture '{}' missing GlobalIds - should have been set by manageGlobalIds()",
+                                 fractureName ) );
 
         // Assign fractures to ranks using DETERMINISTIC min-neighbor strategy
         array1d< int64_t > partitionsFracture( numFractureCells );
@@ -1402,14 +1405,18 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
             // Assign fracture to rank owning that neighbor
             auto it = complete3DPartitionMap.find( minNeighborId );
             GEOS_ERROR_IF( it == complete3DPartitionMap.end(),
-                           "Fracture '" << fractureName << "' element " << i
-                                        << " neighbor " << minNeighborId << " not in partition map" );
+                           GEOS_FMT( "Fracture '{}' element {} neighbor {} not in partition map",
+                                     fractureName,
+                                     i,
+                                     minNeighborId ) );
 
             partitionsFracture[i] = it->second;
           }
           else
           {
-            GEOS_ERROR( "Fracture '" << fractureName << "' element " << i << " has no 3D neighbors" );
+            GEOS_ERROR( GEOS_FMT( "Fracture '{}' element {} has no 3D neighbors",
+                                  fractureName,
+                                  i ) );
           }
         }
 
@@ -1436,8 +1443,10 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
     vtkIdType const totalFractureCells = MpiWrapper::sum( localFracture->GetNumberOfCells(), comm );
     MpiWrapper::broadcast( expectedFractureCells, 0, comm );
     GEOS_ERROR_IF( totalFractureCells != expectedFractureCells,
-                   "Fracture '" << fractureName << "' redistribution lost cells: expected "
-                                << expectedFractureCells << ", got " << totalFractureCells );
+                   GEOS_FMT( "Fracture '{}' redistribution lost cells: expected {}, got {}",
+                             fractureName,
+                             expectedFractureCells,
+                             totalFractureCells ) );
 
     redistributedFractures.insert( { fractureName, localFracture } );
   }
@@ -3539,7 +3548,7 @@ void writeCells( integer const logLevel,
       stdVector< vtkIdType > const & cellIds = regionCells.second;
 
       string const cellBlockName = vtk::buildCellBlockName( elemType, regionId );
-      GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing cell block " << cellBlockName );
+      GEOS_LOG_RANK_0_IF( logLevel >= 1, GEOS_FMT( "Importing cell block {}", cellBlockName ) );
 
       // Create and resize the cell block.
       CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName, regionId );
@@ -3572,7 +3581,7 @@ void writeSurfaces( integer const logLevel,
     int const surfaceId = surfaceCells.first;
     stdVector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
-    GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
+    GEOS_LOG_RANK_0_IF( logLevel >= 1, GEOS_FMT( "Importing surface {}", surfaceName ) );
 
     // Get or create all surfaces (even those which are empty in this rank)
     SortedArray< localIndex > & curNodeSet = nodeSets.get_inserted( surfaceName );

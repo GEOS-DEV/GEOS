@@ -155,6 +155,7 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] comm the MPI communicator
  * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
+ * @param[in] partitionFractureWeight weight factor for fracture elements in partitioning
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
  * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
