@@ -59,6 +59,7 @@ void PressureTemperatureCoordinates::registerParametersImpl( MultiFluidBase * fl
 void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                                   ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( fluid );
   GEOS_UNUSED_VAR( componentProperties );
 
   if( !m_pressureCoordinates.empty())

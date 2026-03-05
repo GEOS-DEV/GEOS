@@ -78,6 +78,7 @@ void VanGenuchtenCapillaryPressure::postInputInitialization()
     {
       return GEOS_FMT( "invalid value at {}[{}]", attribute, ip );
     };
+    GEOS_UNUSED_VAR( errorMsg );
 
     GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),

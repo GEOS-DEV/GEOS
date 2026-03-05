@@ -126,13 +126,14 @@ void AquiferBoundaryCondition::postInputInitialization()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                   "The pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                   GEOS_FMT( "The pressure influence table {} could not be found",
+                             m_pressureInfluenceFunctionName ),
                    InputError, getDataContext() );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
     GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   "The interpolation method for the pressure influence function table " <<
-                   " should be TableFunction::InterpolationType::Linear",
+                   "The interpolation method for the pressure influence function table should be "
+                   "TableFunction::InterpolationType::Linear",
                    InputError, pressureInfluenceFunction.getDataContext(), getDataContext() );
   }
 
@@ -148,8 +149,9 @@ void AquiferBoundaryCondition::postInputInitialization()
                         InputError, getDataContext() );
 
   GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), LvArray::integerConversion< int >( m_phaseComponentNames.size() ),
-                        "The sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
-                        " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
+                        GEOS_FMT( "The sizes of {} and {} are inconsistent",
+                                  viewKeyStruct::aquiferWaterPhaseComponentFractionString(),
+                                  viewKeyStruct::aquiferWaterPhaseComponentNamesString() ),
                         InputError, getDataContext() );
 
 }

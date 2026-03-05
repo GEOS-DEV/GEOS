@@ -138,7 +138,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           return ElementType::Prism11;
         case 0:
           // In the case the fracture is empty (on this rank), then we default to hexahedron. Otherwise, there's something wrong
-          GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
+          GEOS_ERROR_IF_NE_MSG( num2dElements, 0,
+                                GEOS_FMT( "Could not determine the element type of the fracture \"{}\".", getName() ) );
           return ElementType::Hexahedron;
         default:
           GEOS_ERROR( "Unsupported type of elements during the face element sub region creation.", getDataContext() );
@@ -456,10 +457,11 @@ localIndex FaceElementSubRegion::unpackToFaceRelation( buffer_unit_type const * 
  * @param[in] elem2dToElems3d A mapping.
  * @param[in,out] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
  */
-void fixNeighborMappingsInconsistency( string const & fractureName,
+void fixNeighborMappingsInconsistency( GEOS_MAYBE_UNUSED string const & fractureName,
                                        FixedToManyElementRelation const & elem2dToElems3d,
                                        FaceElementSubRegion::FaceMapType & elem2dToFaces )
 {
+  GEOS_MAYBE_UNUSED static constexpr std::string_view mappingInconsistency= "Mapping neighbor inconsistency detected for fracture {}.";
   {
     localIndex const num2dElems = elem2dToFaces.size( 0 );
     for( int e2d = 0; e2d < num2dElems; ++e2d )
@@ -493,9 +495,9 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
         {
           std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
         }
-        else if( !matchStraight )
+        else
         {
-          GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
+          GEOS_ERROR_IF( !matchStraight, GEOS_FMT( mappingInconsistency, fractureName ) );
         }
       }
     }
@@ -615,8 +617,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
   stdMap< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
   for( auto const & p: edgesIds )
   {
-    static constexpr auto nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
-    GEOS_UNUSED_VAR( nodeNotFound ); // Not used in GPU builds.
+    GEOS_MAYBE_UNUSED static constexpr auto nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
 
     std::pair< globalIndex, globalIndex > const & nodes = p.first;
     localIndex const & edge = p.second;
@@ -1096,7 +1097,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   }
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
-                 "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
+                 GEOS_FMT( "Fracture {} has elements {{{}}} with less than two neighbors.",
+                           this->getName(),
+                           stringutilities::join( isolatedFractureElements, ", " ) ) );
 
   fillMissing2dElemToEdges( m_toNodesRelation.toViewConst(),
                             nodeManager.edgeList().toViewConst(),

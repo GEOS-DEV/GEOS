@@ -42,28 +42,32 @@ CollocatedNodes::CollocatedNodes( string const & faceBlockName,
     std::uintptr_t const address = MpiWrapper::max( reinterpret_cast< std::uintptr_t >(collocatedNodes) );
     if( address == 0 )
     {
-      GEOS_LOG_RANK_0( "Available point data fields in '" << faceBlockName << "':" );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Available point data fields in '{}':", faceBlockName ) );
       for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
       {
-        GEOS_LOG_RANK_0( " - " << faceMesh->GetPointData()->GetArrayName( i )
-                               << " of type '" << faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() << "'" );
+        GEOS_LOG_RANK_0( GEOS_FMT( " - {} of type '{}'",
+                                   faceMesh->GetPointData()->GetArrayName( i ),
+                                   faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() ) );
       }
-      GEOS_ERROR( "Could not find valid field \"" << COLLOCATED_NODES
-                                                  << "\" for fracture \"" << faceBlockName << "\"." );
+      GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\".",
+                            COLLOCATED_NODES,
+                            faceBlockName ) );
     }
   }
   else
   {
     if( !collocatedNodes )
     {
-      GEOS_LOG_RANK_0( "Available point data fields in '" << faceBlockName << "':" );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Available point data fields in '{}':", faceBlockName ) );
       for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
       {
-        GEOS_LOG_RANK_0( " - " << faceMesh->GetPointData()->GetArrayName( i )
-                               << " of type '" << faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() << "'" );
+        GEOS_LOG_RANK_0( GEOS_FMT( " - {} of type '{}'",
+                                   faceMesh->GetPointData()->GetArrayName( i ),
+                                   faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() ) );
       }
-      GEOS_ERROR( "Could not find valid field \"" << COLLOCATED_NODES
-                                                  << "\" for fracture \"" << faceBlockName << "\" on this rank." );
+      GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\" on this rank.",
+                            COLLOCATED_NODES,
+                            faceBlockName ) );
     }
   }
 

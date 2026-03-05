@@ -80,10 +80,10 @@ void TractionBoundaryCondition::postInputInitialization()
   if( m_tractionType == TractionType::vector )
   {
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
-                   viewKeyStruct::directionString() << " is required for " <<
-                   viewKeyStruct::tractionTypeString() << " = " <<
-                   EnumStrings< TractionType >::toString( TractionType::vector )  <<
-                   ", but appears to be unspecified",
+                   GEOS_FMT( "{} is required for {} = {}, but appears to be unspecified",
+                             viewKeyStruct::directionString(),
+                             viewKeyStruct::tractionTypeString(),
+                             EnumStrings< TractionType >::toString( TractionType::vector ) ),
                    getDataContext() );
   }
   else
@@ -104,9 +104,10 @@ void TractionBoundaryCondition::postInputInitialization()
                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
-                 viewKeyStruct::tractionTypeString() << " = " <<
-                 EnumStrings< TractionType >::toString( TractionType::stress ) <<
-                 ", but " << viewKeyStruct::inputStressString() << " is not specified.",
+                 GEOS_FMT( "{} = {}, but {} is not specified.",
+                           viewKeyStruct::tractionTypeString(),
+                           EnumStrings< TractionType >::toString( TractionType::stress ),
+                           viewKeyStruct::inputStressString() ),
                  getDataContext() );
 
 
