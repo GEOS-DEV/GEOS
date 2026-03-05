@@ -230,7 +230,7 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
 
       forRegionStatistics( region,
                            regionStats,
-                           [&, timeRequest] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
+                           [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
       {
         aggregateStats( regionStats, subRegionStats );
 
