@@ -292,6 +292,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
       // ProblemManager::applyNumericalMethods after ghosting is complete.
       if( subRegion.size() > 0 )
       {
+        subRegion.fixNeighboringFacesNormals( faceManager, elemManager );
         subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
       }
     } );

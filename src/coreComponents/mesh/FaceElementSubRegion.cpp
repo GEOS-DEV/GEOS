@@ -1212,40 +1212,42 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
       localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
       localIndex const ek1  = faceToElementIndex[f1][0];
 
-      real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
-      LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
-
-      // Step 1: correct f0 so its normal points outward from its neighboring 3D element
-      // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
-      // anti-parallel to the outward normal, so if the dot product is positive the
-      // normal is already pointing inward and must be flipped.
-      if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+      // Use element centers to orient each face normal outward (toward the fracture)
+      // only when valid element mappings are available.
+      // Ghost elements in MPI surface-generator workflows may have -1 indices.
+      if( er0 >= 0 && esr0 >= 0 && ek0 >= 0 &&
+          er1 >= 0 && esr1 >= 0 && ek1 >= 0 )
       {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0 ), getDataContext() );
-        LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
-        std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+        real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
+        LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
+
+        // Step 1: correct f0 so its normal points outward from its neighboring 3D element
+        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
+        // anti-parallel to the outward normal, so if the dot product is positive the
+        // normal is already pointing inward and must be flipped.
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
+          std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+        }
+
+        real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
+        LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
+
+        // Step 2: correct f1 so its normal points outward from its neighboring 3D element
+        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
+        // anti-parallel to the outward normal, so if the dot product is positive the
+        // normal is already pointing inward and must be flipped.
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
+          std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
+        }
       }
 
-      real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
-      LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
-
-      // Step 2: correct f1 so its normal points outward from its neighboring 3D element
-      // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
-      // anti-parallel to the outward normal, so if the dot product is positive the
-      // normal is already pointing inward and must be flipped.
-      if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
-      {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1 ), getDataContext() );
-        LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
-        std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
-      }
-
-      // For pre-split (externally fractured) meshes both coincident faces can be
-      // sorted using the same reference cell by sortAllFaceNodes, leaving their
-      // normals parallel after the independent per-face corrections above.
-      // A parallel pair gives Nbar = faceNormal[f0] - faceNormal[f1] = 0 and
-      // crashes normalize() in ComputeRotationMatricesKernel.
-      // Enforce the required anti-parallel invariant as a final safety check.
+      // Enforce the anti-parallel invariant: faceNormal[f0] and faceNormal[f1]
+      // must point in opposite directions so that
+      // Nbar = faceNormal[f0] - faceNormal[f1] is non-zero.
       if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], faceNormal[f1] ) > 0.0 )
       {
         LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
