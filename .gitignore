@@ -24,4 +24,6 @@ __pycache__
 
 # ignore all folders except the template one
 /src/externalComponents/*
-!/src/externalComponents/newComponentTemplate/
+!/src/externalComponents/newComponentTemplate/**/*.hdf5
+**/*.vtu
+**/*.so
