@@ -20,70 +20,18 @@
 #ifndef GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 #define GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 
+#include "common/DataTypes.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "DiagnosticMessage.hpp"
 #include "common/logger/MsgType.hpp"
 #include <string>
+#include <unordered_set>
 
 
 namespace geos
 {
-
-struct Archive
-{
-  std::vector< buffer_unit_type > buffer;
-  size_t offset = 0;
-  buffer_unit_type *  bufferIt = buffer.data();
-
-  enum Mode { PACK, UNPACK };
-  Mode mode;
-
-  template< typename T >
-  void process( T & value )
-  {
-    if constexpr (std::is_fundamental_v< T > || std::is_enum_v< T >) {
-      if( mode == PACK )
-      {
-        memcpy( bufferIt, &value, sizeof(T) );
-        bufferIt += sizeof(T);
-      }
-      else
-      {
-        std::memcpy( &value, &buffer[offset], sizeof(T));
-        offset += sizeof(T);
-      }
-    }
-  }
-
-  void process( string & s )
-  {
-    if( mode == PACK )
-    {
-      size_t size = s.size();
-      process( size );
-      buffer.insert( buffer.end(), s.begin(), s.end());
-    }
-    else
-    {
-      size_t size;
-      process( size );
-      s = std::string( bufferIt, bufferIt + size );
-      offset += size;
-    }
-  }
-};
-
-/**
- * @brief Data for a diagnostic message
- */
-struct DiagnosticData
-{
-  /// Number of times the same message occured during the simulation
-  integer m_count;
-};
-
 
 /**
  * @brief Keep track of all diagnostic message occured during the simulation
@@ -92,22 +40,56 @@ class LogHistory
 {
 public:
 
-  /// POD characterizing an unique diagnostic message
-  struct DiagnosticKey
+  struct LogRecord
   {
-    string logPart;
-    MsgType msgType;
-    string fileName;
-    integer lineId;
-
-    template< typename Archive >
-    void serialize( Archive & ar )
+    /// POD characterizing an unique diagnostic message
+    struct Key
     {
-      ar.process( logPart );
-      ar.process( msgType );
-      ar.process( fileName );
-      ar.process( lineId );
+      string filename;
+      integer lineId;
+    } m_key;
+
+    struct Values
+    {
+      string logPart;
+      MsgType msgType;
+      integer m_count;
+    } m_value;
+
+    size_t getSerializedSize() const;
+    LogRecord();
+    LogRecord( Key const &, Values const & );
+    LogRecord( stdVector< buffer_unit_type > & buffer );
+
+    stdVector< buffer_unit_type > serialize() const;
+    void deserialize( buffer_unit_type const * & );
+
+    template< typename T >
+    unsigned long sizeOfField( T ) const
+    { return sizeof(T); }
+
+    unsigned long sizeOfField( string_view str ) const
+    { return sizeof(string::size_type) + str.size(); }
+
+    template< typename T >
+    typename std::enable_if_t< std::is_trivially_copyable_v< T > >
+    writeInField( T & data, buffer_unit_type const * & ptr )
+    {
+      static_assert( std::is_trivially_copyable_v< T > );
+      memcpy( &data, ptr, sizeof(T) );
+      ptr += sizeof(T);
     }
+
+    void writeInField( string & str, buffer_unit_type const * & ptr )
+    {
+      string::size_type strSize = 0;
+      memcpy( &strSize, ptr, sizeof(string::size_type));
+      ptr += sizeof(string::size_type);
+
+      str.assign( ptr, ptr + strSize );
+      ptr += str.size();
+    }
+
   };
 
   /**
@@ -134,16 +116,12 @@ private:
   struct LocationKeyHash
   {
 
-    size_t operator()( DiagnosticKey const & key ) const noexcept
+    size_t operator()( LogRecord::Key const & key ) const noexcept
     {
-      auto const & [logPartType, msgType, filename, lineId] = key;
+      size_t h1 = std::hash< string >{} (key.filename);
+      size_t h2 = std::hash< integer >{} (key.lineId);
 
-      size_t h1 = std::hash< string >{} (logPartType);
-      size_t h2 = std::hash< MsgType >{} (msgType);
-      size_t h3 = std::hash< string >{} (filename);
-      size_t h4 = std::hash< integer >{} (lineId);
-
-      return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+      return h1 ^ (h2 << 1);
     }
 
   };
@@ -153,42 +131,22 @@ private:
   struct LocationKeyEqual
   {
 
-    bool operator()( DiagnosticKey const & lhs,
-                     DiagnosticKey const & rhs ) const
+    bool operator()( LogRecord::Key const & lhs,
+                     LogRecord::Key const & rhs ) const
     {
-      return lhs.logPart == rhs.logPart &&
-             lhs.msgType == rhs.msgType &&
-             lhs.fileName == rhs.fileName &&
+      return lhs.filename == rhs.filename  &&
              lhs.lineId == rhs.lineId;
     }
   };
   /// @endcond
 
+  void insertDiagnosticReport( LogRecord log );
+
   /**
    * @brief Diagnostic history happened during the simulation
    */
-  stdUnorderedMap< DiagnosticKey,
-                   DiagnosticData,
+  stdUnorderedMap< LogRecord::Key, LogRecord::Values,
                    LocationKeyHash, LocationKeyEqual > m_diagnosticHistory;
-
-  /**
-   * @brief Insert an element to the diagnostic history container if an equivalent key doesn't exist.
-   * @param logPartName The logPart where the diagnostic occured
-   * @param msgType The diagnostic message type
-   * @param fileName The filement where the diagnostic occured
-   * @param lineId The line where the diagnostic occured
-   */
-  void insertDiagnosticReport( DiagnosticKey const & diagnosticKey )
-  {
-    m_diagnosticHistory.get_inserted( {diagnosticKey.logPart, diagnosticKey.msgType,
-                                       diagnosticKey.fileName, diagnosticKey.lineId} ).m_count++;
-  }
-
-  void serialize( stdVector< buffer_unit_type > & gStruct );
-
-  void deserialize( stdVector< buffer_unit_type > const & globalAllocations,
-                    stdVector< integer > const & recvCounts );
-
 };
 
 /**

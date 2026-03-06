@@ -26,6 +26,7 @@
 #include "common/format/table/TableTypes.hpp"
 #include "common/logger/MsgType.hpp"
 #include "common/MpiWrapper.hpp"
+#include <cstring>
 #include <string>
 #include <utility>
 
@@ -44,20 +45,71 @@ string_view extractAfterLastOccurrence( string_view str, char delimiter )
   return str.substr( pos + 1 );
 }
 
+LogHistory::LogRecord::LogRecord():
+  m_key( {} ),
+  m_value( {} )
+{}
+LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
+  m_key( key ),
+  m_value( values )
+{}
+
+void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes )
+{
+  // todo inverser ptr et T ET renommer
+  writeInField( m_key.filename, logRecordBytes );
+  std::cout << "m_key.filename" << m_key.filename << std::endl;
+  writeInField( m_key.lineId, logRecordBytes );
+  writeInField( m_value.logPart, logRecordBytes );
+  writeInField( m_value.msgType, logRecordBytes );
+
+  m_value.m_count = 0;
+}
+
+stdVector< buffer_unit_type > LogHistory::LogRecord::serialize() const
+{
+  stdVector< buffer_unit_type >  gTuple;
+  gTuple.reserve( getSerializedSize());
+  auto filenameSize = m_key.filename.size();
+  auto logPartSize = m_value.logPart.size();
+
+  auto const appendData = [&]( void const * data, size_t size )
+  {
+    buffer_unit_type const * d = (buffer_unit_type const *) data;
+    gTuple.insert( gTuple.end(), d, d + size );
+  };
+  appendData( &filenameSize, sizeof(string::size_type));
+  appendData( m_key.filename.data(), m_key.filename.size());
+  appendData( &m_key.lineId, sizeof(integer));
+  appendData( &logPartSize, sizeof(string::size_type));
+  appendData( m_value.logPart.data(), m_value.logPart.size());
+  appendData( &m_value.msgType, sizeof(MsgType) );
+
+  return gTuple;
+}
+
+void LogHistory::insertDiagnosticReport( LogRecord logRecord )
+{
+  auto & entry =  m_diagnosticHistory.get_inserted( {logRecord.m_key} );
+  entry.logPart = logRecord.m_value.logPart;
+  entry.msgType = logRecord.m_value.msgType;
+  entry.m_count +=  1;
+}
+
 void LogHistory::notifyMsg( string_view logPartName, DiagnosticMsg const & msgType )
 {
   string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
-  insertDiagnosticReport( {string( logPartName ), msgType.m_type,
-                           string( fileName ), lineCount} );
+  insertDiagnosticReport( { {string( fileName ), lineCount},
+                            {string( logPartName ), msgType.m_type, 1} } );
 }
 
-template< typename T, std::enable_if_t<std::is_fundamental_v<T>, bool> = true>
+template< typename T >
 std::pair< stdVector< T >, stdVector< integer > >
-gatherBufferRank0( stdVector< T > const & bufferToSend, localIndex packedSize )
+gatherBufferRank0( stdVector< T > const & bufferToSend )
 {
   integer const numRanks = MpiWrapper::commSize();
-  integer const numValues = packedSize;
+  integer const numValues = bufferToSend.size();
 
   // Allows to know how much data each rank will send
   stdVector< integer > recvCounts;
@@ -81,6 +133,7 @@ gatherBufferRank0( stdVector< T > const & bufferToSend, localIndex packedSize )
     {
       displs[i] = totalSize;
       totalSize += recvCounts[i];
+      std::cout << "i  "<< i << " recvCounts" <<recvCounts[i]<<std::endl;
     }
     globalAllocations.resize( totalSize );
   }
@@ -95,99 +148,60 @@ gatherBufferRank0( stdVector< T > const & bufferToSend, localIndex packedSize )
   return {globalAllocations, recvCounts};
 }
 
-void LogHistory::serialize( stdVector< buffer_unit_type > & gStruct )
+size_t LogHistory::LogRecord::getSerializedSize() const
 {
-  integer totalSize = 0;
-  //1 - dry run for vector size
-  for( auto const & [key, value] : getDiagnosticHistory() )
-  {
-    auto const & [logPartType, msgType, filename, lineCount] = key;
-
-    localIndex entrySize = sizeof(size_t) + logPartType.size() +
-                           sizeof( msgType ) +
-                           sizeof(size_t) + filename.size()  +
-                           sizeof(lineCount );
-
-    totalSize +=  entrySize;
-  }
-  gStruct.resize( totalSize );
-
-  //2 - Packing
-  buffer_unit_type * structBuffer = gStruct.data();
-  for( auto const & [key, value] : getDiagnosticHistory() )
-  {
-    auto const & [logPart, msgType, filename, lineCount] = key;
-    auto pack = [&]( const void * data, size_t size ) {
-      memcpy( structBuffer, data, size );
-      structBuffer += size;
-    };
-    size_t s1 =logPart.size();
-    pack( &s1, sizeof(size_t));
-    pack( logPart.data(), logPart.size());
-
-    pack( &msgType, sizeof(msgType));
-
-    size_t s2 =filename.size();
-    pack( &s2, sizeof(size_t));
-    pack( filename.data(), filename.size());
-
-    pack( &lineCount, sizeof(lineCount));
-  }
-}
-
-void LogHistory::deserialize( stdVector< buffer_unit_type > const & globalAllocations,
-                              stdVector< integer > const & recvCounts )
-{
-
-  buffer_unit_type const * rankStart = globalAllocations.data();
-  for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
-  {
-    integer byteFromThisRank = recvCounts[idxRank];
-    if( byteFromThisRank != 0 )
-    {
-      buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
-      while( rankStart < rankEnd )
-      {
-        LogHistory::DiagnosticKey diagnosticKey;
-
-        auto unpack = [&]( void * dest, size_t size ) {
-          memcpy( dest, rankStart, size );
-          rankStart += size;
-        };
-
-        size_t s1;
-        unpack( &s1, sizeof(size_t));
-        diagnosticKey.logPart = std::string( rankStart, rankStart + s1 );
-        rankStart += s1;
-
-        unpack( &diagnosticKey.msgType, sizeof(diagnosticKey.msgType));
-
-        size_t s2;
-        unpack( &s2, sizeof(size_t));
-        diagnosticKey.fileName = std::string( rankStart, rankStart + s2 );
-        rankStart += s2;
-
-        unpack( &diagnosticKey.lineId, sizeof(diagnosticKey.lineId));
-        insertDiagnosticReport( diagnosticKey );
-      }
-    }
-  }
-
+  return
+    sizeOfField( m_key.filename ) +
+    sizeOfField( m_key.lineId ) +
+    sizeOfField( m_value.logPart ) +
+    sizeOfField( m_value.msgType );
 }
 
 void LogHistory::diagnosticStatsReport()
 {
   LogHistory & history = ErrorLogger::global().getLoggerReportData();
-  stdVector< buffer_unit_type > structSerialized( 0 );
+  stdVector< buffer_unit_type > gTuple( 0 );
+  integer totalSize = 0;
 
-  history.serialize( structSerialized );
-
-  auto [allStructsSerialized, recvCounts] = gatherBufferRank0( structSerialized, structSerialized.size() );
-  if( MpiWrapper::commRank() == 0 )
+  //0 - dry run
+  for( auto const & [key, value] : getDiagnosticHistory() )
   {
-    deserialize( allStructsSerialized, recvCounts );
+    LogRecord localRecord( key, value );
+    totalSize +=  localRecord.getSerializedSize();
+  }
+  gTuple.reserve( totalSize );
+
+  //1 - Packing
+  if( getDiagnosticHistory().size() > 0 )
+  {
+    for( auto const & [key, value] :  getDiagnosticHistory() )
+    {
+      LogRecord localRecord( key, value );
+      stdVector< buffer_unit_type > localBuffer = localRecord.serialize();
+      std::copy( localBuffer.begin(), localBuffer.end(), std::back_inserter( gTuple ));
+    }
   }
 
+  auto [tuplesPerIt, recvCounts] = gatherBufferRank0( gTuple );
+
+  //2 - Unpacking
+  if( MpiWrapper::commRank() == 0 )
+  {
+    buffer_unit_type const * rankStart = tuplesPerIt.data();
+    for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
+    {
+      integer byteFromThisRank = recvCounts[idxRank];
+      buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
+      while( rankStart < rankEnd )
+      {
+        LogRecord unpackRecord;
+        unpackRecord.deserialize( rankStart );
+        history.insertDiagnosticReport( unpackRecord );
+      }
+    }
+  }
+
+  //3 - Display
   if( MpiWrapper::commRank() == 0 )
   {
     TableTextFormatter tableReportFormatter;
@@ -214,11 +228,11 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
 
   stdMap< string, CellRow > rowByPart;
 
-  //
-  for( const auto & [diagnosticKey, _] : messageCounts.getDiagnosticHistory())
+  // TODO
+  for( const auto & [key, values] : messageCounts.getDiagnosticHistory())
   {
-    auto logPart = diagnosticKey.logPart;
-    auto msgType = diagnosticKey.msgType;
+    auto logPart = values.logPart;
+    MsgType msgType = values.msgType;
 
     countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 
