@@ -36,7 +36,7 @@ namespace finiteElement
  * @tparam MAXFACENODES The maximum number of nodes per face that the class expects.
  */
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
-class ConformingVirtualElementOrder1 final : public FiniteElementBase
+class ConformingVirtualElementOrder1_impl : public FiniteElementBase_impl< MAXCELLNODES, MAXFACENODES, 1 >
 {
 public:
   /// Type of MeshData::nodesCoords.
@@ -69,7 +69,7 @@ public:
    * stabilization matrix. Arrays are pre-allocated using @p MAXCELLNODES.
    * @sa setupStack.
    */
-  struct StackVariables : public FiniteElementBase::StackVariables
+  struct StackVariables
   {
 
     /// The number of support points.
@@ -93,7 +93,7 @@ public:
    * @tparam SUBREGION_TYPE The type of mesh sub-region.
    */
   template< typename SUBREGION_TYPE >
-  struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
+  struct MeshData
   {
     /// View to the array containing nodes coordinates.
     InputNodeCoords nodesCoords;
@@ -119,16 +119,18 @@ public:
     arrayView1d< real64 const > cellVolumes;
   };
 
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  inline
-  localIndex getNumQuadraturePoints() const override
+  inline static
+  localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
-  inline
-  virtual localIndex getMaxSupportPoints() const override
+  inline static
+  localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -143,6 +145,34 @@ public:
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     return stack.numSupportPoints;
+  }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const & stack,
+                       real64 (& J)[3][3] )
+  {
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( X );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        J[i][j] = ( i == j ) ? 1.0 : 0.0;
+      }
+    }
+    return stack.quadratureWeight; // * 1.0;
   }
 
   /**
@@ -357,8 +387,8 @@ public:
    * @return Zero.
    */
   GEOS_HOST_DEVICE
-  inline
-  localIndex getNumSupportPoints() const override
+  inline static
+  localIndex getNumSupportPoints()
   {
     GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     return 0;
@@ -433,6 +463,31 @@ public:
                                            real64 ( & J )[3][3] )
   {
     GEOS_ERROR( "No reference element map is defined for VEM classes" );
+    GEOS_UNUSED_VAR( q, X );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        J[i][j] = 0.0;
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              real64 (& J)[3][3] )
+  {
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     GEOS_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < 3; ++i )
     {
@@ -592,18 +647,66 @@ private:
   }
 };
 
+
+
+/// @copydoc ConformingVirtualElementOrder1_impl
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
+class ConformingVirtualElementOrder1 final : public ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >,
+  public FiniteElementBase
+{
+public:
+  /// The Implementation type
+  using ImplType = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numQuadraturePoints;
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl()
+  {
+    return static_cast< ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl() const
+  {
+    return static_cast< const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * >(this);
+  }
+
+  ConformingVirtualElementOrder1():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+  virtual ~ConformingVirtualElementOrder1() override final = default;
+
+
+};
+
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
-#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
-#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -617,11 +720,34 @@ using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
-#if !defined( GEOS_USE_HIP )
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
-#endif
-}
-}
+
+
+/// Convenience typedef for VEM on tetrahedra.
+using H1_Tetrahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 4, 3 >;
+/// Convenience typedef for VEM on hexahedra.
+using H1_Hexahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 8, 4 >;
+/// Convenience typedef for VEM on pyramids.
+using H1_Pyramid_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 5, 4 >;
+/// Convenience typedef for VEM on wedges.
+using H1_Wedge_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 6, 4 >;
+/// Convenience typedef for VEM on prism5.
+using H1_Prism5_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 10, 5 >;
+/// Convenience typedef for VEM on prism6.
+using H1_Prism6_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 12, 6 >;
+/// Convenience typedef for VEM on prism7.
+using H1_Prism7_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 14, 7 >;
+/// Convenience typedef for VEM on prism8.
+using H1_Prism8_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 16, 8 >;
+/// Convenience typedef for VEM on prism9.
+using H1_Prism9_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 18, 9 >;
+/// Convenience typedef for VEM on prism10.
+using H1_Prism10_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 20, 10 >;
+/// Convenience typedef for VEM on prism11.
+using H1_Prism11_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 22, 11 >;
+
+} // namespace finiteElement
+} // namespace geos
 
 #include "ConformingVirtualElementOrder1_impl.hpp"
 

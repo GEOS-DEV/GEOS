@@ -286,7 +286,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
   GEOS_ERROR_IF( bufferSize != packedSize,
-                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+                 GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
+                           bufferSize,
+                           packedSize ) );
 
 
 }
