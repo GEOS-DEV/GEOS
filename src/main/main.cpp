@@ -14,8 +14,8 @@
  */
 
 // Source includes
-#include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"
@@ -74,16 +74,23 @@ int main( int argc, char *argv[] )
     basicCleanup();
     return 0;
   }
-  catch( std::exception const & e )
-  {
-    GEOS_LOG( e.what() );
-    if( ErrorLogger::global().isOutputFileEnabled() )
-    {
-      ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
-    }
-    LvArray::system::callErrorHandler();
+  catch( geos::Exception & e )
+  { // GEOS generated exceptions management
+    ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup();
-    std::abort();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
+  }
+  catch( std::exception const & e )
+  { // native exceptions management
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
+                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                           .getDiagnosticMsg());
+    basicCleanup();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
   }
   return 0;
 }

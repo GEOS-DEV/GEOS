@@ -64,7 +64,8 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
 void CoulombFriction::postInputInitialization()
 {
   GEOS_THROW_IF( m_defaultFrictionCoefficient < 0.0,
-                 getFullName() << ": The provided default friction coefficient is less than zero. Value: " << m_defaultFrictionCoefficient,
+                 GEOS_FMT( ": The provided default friction coefficient is less than zero. Value: {}",
+                           m_defaultFrictionCoefficient ),
                  InputError, getDataContext() );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::cohesionString() ).

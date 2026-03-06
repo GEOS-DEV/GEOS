@@ -70,9 +70,9 @@ void CriticalVolume::postInputInitializationImpl( MultiFluidBase const * fluid,
   }
 
   GEOS_THROW_IF_NE_MSG( m_componentCriticalVolume.size(), numComponents,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
+                        GEOS_FMT( "invalid number of values in attribute '{}'",
                                   viewKeyStruct::componentCriticalVolumeString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 }
 
 void CriticalVolume::calculateCriticalVolume( integer const numComponents,

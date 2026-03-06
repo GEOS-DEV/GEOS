@@ -60,11 +60,11 @@ void CapillaryPressureBase::postInputInitialization()
 
   integer const numPhases = numFluidPhases();
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );

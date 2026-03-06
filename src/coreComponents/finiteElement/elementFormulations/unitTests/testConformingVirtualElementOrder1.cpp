@@ -35,8 +35,7 @@ constexpr real64 relTol = geos::testing::DEFAULT_REL_TOL*10;
 
 template< typename VEM >
 GEOS_HOST_DEVICE
-static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
-                                          typename VEM::StackVariables const & stack,
+static void checkIntegralMeanConsistency( typename VEM::StackVariables const & stack,
                                           real64 & sumBasisFunctions )
 {
   static constexpr localIndex
@@ -44,8 +43,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
   real64 basisFunctionsIntegralMean[maxSupportPoints];
   VEM::calcN( 0, stack, basisFunctionsIntegralMean );
   sumBasisFunctions = 0;
-  for( localIndex iBasisFun = 0;
-       iBasisFun < feBase.template numSupportPoints< VEM >( stack ); ++iBasisFun )
+  for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( stack ); ++iBasisFun )
   {
     sumBasisFunctions += basisFunctionsIntegralMean[iBasisFun];
   }
@@ -54,8 +52,7 @@ static void checkIntegralMeanConsistency( FiniteElementBase const & feBase,
 template< typename VEM >
 GEOS_HOST_DEVICE
 static void
-checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
-                                         typename VEM::StackVariables const & stack,
+checkIntegralMeanDerivativesConsistency( typename VEM::StackVariables const & stack,
                                          real64 & sumXDerivatives,
                                          real64 & sumYDerivatives,
                                          real64 & sumZDerivatives )
@@ -63,15 +60,12 @@ checkIntegralMeanDerivativesConsistency( FiniteElementBase const & feBase,
   static constexpr localIndex
     maxSupportPoints = VEM::maxSupportPoints;
   real64 const dummy[VEM::numNodes][3] { { 0.0 } };
-  localIndex const k = 0;
   for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
   {
     real64 basisDerivativesIntegralMean[maxSupportPoints][3]{};
-    feBase.template getGradN< VEM >( k, q, dummy, stack, basisDerivativesIntegralMean );
+    VEM::calcGradN( q, dummy, stack, basisDerivativesIntegralMean );
     sumXDerivatives = 0; sumYDerivatives = 0; sumZDerivatives = 0;
-    for( localIndex iBasisFun = 0;
-         iBasisFun < feBase.template numSupportPoints< VEM >( stack );
-         ++iBasisFun )
+    for( localIndex iBasisFun = 0; iBasisFun < VEM::getNumSupportPoints( stack ); ++iBasisFun )
     {
       sumXDerivatives += basisDerivativesIntegralMean[iBasisFun][0];
       sumYDerivatives += basisDerivativesIntegralMean[iBasisFun][1];
@@ -88,7 +82,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       localIndex const & cellIndex,
                                       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      FiniteElementBase const & feBase,
+                                      VEM const & feBase,
                                       typename VEM::StackVariables const & stack,
                                       arraySlice1d< real64 > & stabTimeMonomialDofsNorm )
 {
@@ -193,11 +187,11 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
   // Allocate and fill a VEM::MeshData struct.
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >;
   typename VEM::template MeshData< CellElementSubRegion > meshData;
-  FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
-                                        faceManager, cellSubRegion,
-                                        meshData );
+  VEM::template initialize< VEM >( nodeManager, edgeManager,
+                                   faceManager, cellSubRegion,
+                                   meshData );
 
   // Arrays that store quantities to be tested.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
@@ -221,9 +215,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     VEM virtualElement;
     virtualElement.template setup< VEM >( cellIndex, meshData, stack );
 
-    checkIntegralMeanConsistency< VEM >( virtualElement, stack,
+    checkIntegralMeanConsistency< VEM >( stack,
                                          sumBasisFunctionsView( cellIndex ) );
-    checkIntegralMeanDerivativesConsistency< VEM >( virtualElement, stack,
+    checkIntegralMeanDerivativesConsistency< VEM >( stack,
                                                     sumXDerivativesView( cellIndex ),
                                                     sumYDerivativesView( cellIndex ),
                                                     sumZDerivativesView( cellIndex )

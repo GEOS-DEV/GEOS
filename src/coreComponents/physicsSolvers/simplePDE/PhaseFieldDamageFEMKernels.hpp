@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SIMPLEPDE_PHASEFIELDDAMAGEKERNELS_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "finiteElement/elementFormulations/FiniteElementOperators.hpp"
 
 namespace geos
 {
@@ -152,13 +153,8 @@ public:
             nodalDamageLocal{ 0.0 }
     {}
 
-#if !defined(CALC_FEM_SHAPE_IN_KERNEL)
-    /// Dummy
-    int xLocal;
-#else
     /// C-array stack storage for element local the nodal positions.
     real64 xLocal[ numNodesPerElem ][ 3 ];
-#endif
 
     /// C-array storage for the element local primary field variable.
     real64 nodalDamageLocal[numNodesPerElem];
@@ -182,9 +178,7 @@ public:
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-#if defined(CALC_FEM_SHAPE_IN_KERNEL)
       LvArray::tensorOps::copy< 3 >( stack.xLocal[ a ], m_X[ localNodeIndex ] );
-#endif
 
       stack.nodalDamageLocal[ a ] = m_nodalDamage[ localNodeIndex ];
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
@@ -210,12 +204,12 @@ public:
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJ = FE_TYPE::calcGradN( q, stack.xLocal, dNdX );
     FE_TYPE::calcN( q, N );
 
     real64 qp_damage = 0.0;
     real64 qp_grad_damage[3] = {0, 0, 0};
-    FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
+    finiteElement::feOps::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
