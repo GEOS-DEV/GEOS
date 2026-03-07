@@ -141,7 +141,7 @@ foreach( test ${gtest_geosx_tests} )
   endforeach()
 endforeach()
 
-if( ENABLE_MPI )
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   set( nranks 2 )
 

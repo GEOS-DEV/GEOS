@@ -68,8 +68,8 @@ foreach(test ${gtest_geosx_tests})
 endforeach()
 
 # Special handling for testMixedDimSinglePhaseFlow which requires 4 MPI tasks
-if( ENABLE_MPI )
-    set( test "testMixedDimSinglePhaseFlow.cpp" )
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( test "testMixedDimSinglePhaseFlow_mpi.cpp" )
     # The MixedDimPartitionedFlowCases suite requires 4 ranks (e.g., 1x1x4 partitioning)
     set( nranks 4 )
 
@@ -101,8 +101,8 @@ if( ENABLE_MPI )
 endif()
 
 # Special handling for testMixedDimHydrostaticEquilibrium which requires 4 MPI tasks
-if( ENABLE_MPI )
-    set( test "testMixedDimHydrostaticEquilibrium.cpp" )
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( test "testMixedDimHydrostaticEquilibrium_mpi.cpp" )
     # The MixedDimHydrostaticEquilibriumCases suite requires 4 ranks (e.g., 1x1x4 partitioning)
     set( nranks 4 )
 
