@@ -12,9 +12,9 @@
  */
 
 /**
- * @file testMixedDimHydrostaticEquilibrium_mpi.cpp
+ * @file testMixedDimHydrostaticEquilibrium.cpp
  *
- * MPI (multi-rank) variant of the mixed-dimensional hydrostatic equilibrium test.
+ * Serial (single-rank) variant of the mixed-dimensional hydrostatic equilibrium test.
  * Test fixture and TEST_P body live in testMixedDimHydrostaticEquilibriumFixture.hpp.
  */
 
@@ -22,48 +22,31 @@
 
 CommandLineOptions g_commandLineOptions;
 
-// ---------------------------------------------------------------------------
-// Test suite instantiation
-//
-// All 28 fractured mesh variants x 6 domain partitions = 168 test cases
-// (run with 4 MPI ranks)
-// ---------------------------------------------------------------------------
+/**
+ * @brief Serial execution test cases (single rank, partition 1x1x1).
+ */
 INSTANTIATE_TEST_SUITE_P(
-  MixedDimHydrostaticEquilibriumCases,
+  MixedDimHydrostaticEquilibriumSerialCases,
   MixedDimHydrostaticEquilibriumTest,
   ::testing::Combine(
     ::testing::Values(
-      // Flat tet meshes - single and triple fracture only
       "fractured_mesh_tet_DFN_1.vtu",
       "fractured_mesh_tet_DFN_123.vtu",
-
-      // Wavy tet meshes - single and triple fracture only
       "fractured_wavy_mesh_tet_DFN_1.vtu",
       "fractured_wavy_mesh_tet_DFN_123.vtu",
-
-      // Full span hex meshes - single and triple fracture only
       "fractured_full_span_mesh_hex_DFN_1.vtu",
       "fractured_full_span_mesh_hex_DFN_123.vtu",
-
-      // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
       "fractured_full_span_mesh_tet_DFN_123.vtu",
-
-      // T-shaped wavy meshes
       "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
       "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
-
-      // Y-shaped wavy meshes
       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
       "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
-
-      // 5-fracture DFN market meshes
       "DFN_5_fractures_hex_binarized.vtu",
       "DFN_5_fractures_tet_binarized.vtu"
       ),
     ::testing::Values(
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 2, 1, 2 )
+      std::make_tuple( 1, 1, 1 )
       )
     )
   );

@@ -1,7 +1,4 @@
 # Specify list of tests
-set( gtest_geosx_tests
-     testFEMConsistency_mpi.cpp )
-
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface testingUtilities )
@@ -34,7 +31,8 @@ set( mesh_files
      DFN_5_fractures_tet_binarized.vtu
 )
 
-# Special handling for testFEMConsistency which requires 4 MPI tasks for the partitioned tests
+# testFEMConsistency: multi-rank MPI variant (4 ranks) on CPU-only builds,
+# serial (single-rank) variant on GPU or CPU builds.
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set( test "testFEMConsistency_mpi.cpp" )
     # The FractureStressCasesPartitioned suite requires 4 ranks (e.g., 1x1x4 partitioning)
@@ -54,7 +52,6 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
     target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 
-    # Copy necessary mesh files for testFEMConsistency
     foreach( mesh_file ${mesh_files} )
       add_custom_command(
           TARGET ${test_name} POST_BUILD
@@ -63,34 +60,28 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                   $<TARGET_FILE_DIR:${test_name}>
       )
     endforeach()
-elseif( NOT ENABLE_MPI )
-    # Non-MPI build - add tests without MPI
-    foreach(test ${gtest_geosx_tests})
-      get_filename_component( test_name ${test} NAME_WE )
+else()
+    # Serial (single-rank) variant — used on GPU builds or non-MPI builds
+    set( test "testFEMConsistency.cpp" )
+    get_filename_component( test_name ${test} NAME_WE )
 
-      blt_add_executable( NAME ${test_name}
-                          SOURCES ${test}
-                          OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                          DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 
-      geos_add_test( NAME ${test_name}
-                     COMMAND ${test_name} )
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} )
 
-      set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 
-      # Add TEST_BINARY_DIR as a compile definition
-      target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
-
-      # --- Copy mesh files to test binary dir ---
-      foreach( mesh_file ${mesh_files} )
-        add_custom_command(
-            TARGET ${test_name} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
-                    $<TARGET_FILE_DIR:${test_name}>
-        )
-      endforeach()
+    foreach( mesh_file ${mesh_files} )
+      add_custom_command(
+          TARGET ${test_name} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+                  $<TARGET_FILE_DIR:${test_name}>
+      )
     endforeach()
 endif()
-# Note: When ENABLE_MPI is ON with GPU (CUDA/HIP), testFEMConsistency is
-# intentionally skipped — the MPI integration test is not supported on GPU builds.

@@ -12,9 +12,9 @@
  */
 
 /**
- * @file testMixedDimSinglePhaseFlow_mpi.cpp
+ * @file testMixedDimSinglePhaseFlow.cpp
  *
- * MPI (multi-rank) variant of the mixed-dimensional single-phase flow test.
+ * Serial (single-rank) variant of the mixed-dimensional single-phase flow test.
  * Test fixture and TEST_P body live in testMixedDimSinglePhaseFlowFixture.hpp.
  */
 
@@ -23,15 +23,10 @@
 CommandLineOptions g_commandLineOptions;
 
 /**
- * @brief Parallel execution test cases (4 MPI ranks).
- *
- * Combinations:
- * - Meshes: 1 fracture, 2 fractures, 3 fractures
- * - Solver: Run solver (true) vs Initialization only (false)
- * - Partitioning: 1x1x4, 1x2x2 (4 ranks)
+ * @brief Serial execution test cases (single rank, partition 1x1x1).
  */
 INSTANTIATE_TEST_SUITE_P(
-  MixedDimPartitionedFlowCases,
+  MixedDimSerialFlowCases,
   MixedDimSinglePhaseFlowTest,
   ::testing::Combine(
     ::testing::Values(
@@ -39,8 +34,7 @@ INSTANTIATE_TEST_SUITE_P(
       ),
     ::testing::Bool(),
     ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 2, 2 )
+      std::make_tuple( 1, 1, 1 )
       )
     )
   );
