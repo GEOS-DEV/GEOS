@@ -249,7 +249,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
         if( runSolver )
         {
-          forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
+          forAll< geos::parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
             real64 const x = center[k][0];
             real64 const exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
@@ -260,7 +260,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         else
         {
           real64 const exactPressure = isMatrixCell ? 1.5 : 2.0;
-          forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
+          forAll< geos::parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
             real64 const relErr = LvArray::math::abs( pressure[k] - exactPressure ) / exactPressure;
             maxRelError.max( relErr );
