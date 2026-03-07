@@ -231,8 +231,8 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
       mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
       {
-        bool const isMatrixCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
-        bool const isFractureCell = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
+        bool const isMatrixCell = dynamic_cast< CellElementSubRegion const * >( &subRegion ) != nullptr;
+        bool const isFractureCell = dynamic_cast< FaceElementSubRegion const * >( &subRegion ) != nullptr;
         if( !isMatrixCell && !isFractureCell )
         {
           return;
@@ -241,22 +241,34 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         arrayView2d< real64 const > const center = subRegion.getElementCenter();
 
-        for( localIndex k = 0; k < subRegion.size(); ++k )
+        localIndex const numElems = subRegion.size();
+
+        // Use RAJA reduce to compute the maximum relative error on the device,
+        // since pressure data may reside on GPU memory in device builds.
+        RAJA::ReduceMax< parallelDeviceReduce, real64 > maxRelError( 0.0 );
+
+        if( runSolver )
         {
-          real64 numericalPressure = pressure[k];
-          real64 exactPressure = 0.0;
-          if( runSolver )
+          forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
           {
             real64 const x = center[k][0];
-            exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
-          }
-          else
-          {
-            exactPressure = isMatrixCell ? 1.5 : 2.0;
-          }
-          real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
-          EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
+            real64 const exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
+            real64 const relErr = LvArray::math::abs( pressure[k] - exactPressure ) / exactPressure;
+            maxRelError.max( relErr );
+          } );
         }
+        else
+        {
+          real64 const exactPressure = isMatrixCell ? 1.5 : 2.0;
+          forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
+          {
+            real64 const relErr = LvArray::math::abs( pressure[k] - exactPressure ) / exactPressure;
+            maxRelError.max( relErr );
+          } );
+        }
+
+        EXPECT_NEAR( maxRelError.get(), 0.0, relative_tolerance )
+          << ( isMatrixCell ? "Matrix" : "Fracture" ) << " subregion has inexact pressure.";
       } );
     }
   }
