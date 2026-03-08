@@ -178,7 +178,6 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
     std::reverse( pcVec.begin(), pcVec.end() );
     std::reverse( satVec.begin(), satVec.end() );
 
-
     auto inverseTable = std::make_shared< TableFunction >( "inverseCapPres", this );
 
     real64_array invPcVec( pcVec.size() );

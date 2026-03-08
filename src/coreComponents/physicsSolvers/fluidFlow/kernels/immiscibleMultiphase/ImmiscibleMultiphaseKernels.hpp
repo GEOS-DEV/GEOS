@@ -72,13 +72,16 @@ using namespace constitutive;
 
 GEOS_HOST_DEVICE
 inline
+constexpr bool ENABLE_LOCAL_SOLVER_DEBUG = false;
+
 static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector< real64 > pressures, stdVector< real64 > JFMultipliers, stdVector< real64 > trappedSats1,
                           stdVector< real64 > trappedSats2, stdVector< fields::cappres::ModeIndexType> modes, stdVector< real64 > transHat, stdVector< real64 > dTransHat_dP, stdVector< real64 > gravCoefHat, stdVector< real64 > gravCoef,
                           stdVector< real64 >  cellCenterDuT, stdVector< real64 > cellCenterDens, stdVector< real64 > cellCenterDens_dP,
                           std::vector< RelativePermeabilityBase * > relPerms, std::vector< CapillaryPressureBase * > capPressures,
                           std::vector< TwoPhaseImmiscibleFluid * > fluids, std::vector< real64 > &phi, std::vector< real64 > &grad_phi_P, std::vector< real64 > &grad_phi_S, bool &converged,
                           stdVector< real64 > const & phaseMaxHistVolFrac1, stdVector< real64 > const & phaseMinHistVolFrac1,
-                          stdVector< real64 > const & phaseMaxHistVolFrac2, stdVector< real64 > const & phaseMinHistVolFrac2 )
+                          stdVector< real64 > const & phaseMaxHistVolFrac2, stdVector< real64 > const & phaseMinHistVolFrac2,
+                          real64 & warmStartPc )
 {
 
   // getting wrappers:
@@ -180,9 +183,6 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           int max_iter = 50;
           converged = 0;
           bool damping = true;
-          bool bisection = false;
-          // bool lineSearch = false;
-          bool newton_path = false;
 
           // Local newton loop:
 
@@ -216,6 +216,14 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction1( 1, 2 );
           StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction2( 1, 2 );
           StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction2( 1, 2 );
+          StackArray< real64, 2, 2, compflow::LAYOUT_PHASE > phaseMode2PeakVolFraction1( 1, 2 );
+          StackArray< real64, 2, 2, compflow::LAYOUT_PHASE > phaseMode2PeakVolFraction2( 1, 2 );
+          phaseMode2PeakVolFraction1[0][0] = 0.0;
+          phaseMode2PeakVolFraction1[0][1] = 0.0;
+          phaseMode2PeakVolFraction2[0][0] = 0.0;
+          phaseMode2PeakVolFraction2[0][1] = 0.0;
+          arraySlice1d<real64, compflow::USD_PHASE - 1> phaseMode2PeakSlice1 = phaseMode2PeakVolFraction1[0];
+          arraySlice1d<real64, compflow::USD_PHASE - 1> phaseMode2PeakSlice2 = phaseMode2PeakVolFraction2[0];
 
           if( phaseMaxHistVolFrac1.size() >= 2 && phaseMaxHistVolFrac1[0] >= 0.0 )
           {
@@ -313,75 +321,84 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
           }
           else if constexpr (std::is_same_v< T1, TableCapillaryPressureHysteresis >) {
+            auto preComputeMode0 = modes[0];
             capPresWrapper1.compute( phaseVolFrac1[0],
                                      phaseMaxHistoricalVolFraction1[0],
                                      phaseMinHistoricalVolFraction1[0],
                                      trappedVolFrac1[0][0],
                                      capPres1[0][0],
                                      dCapPres1_dPhaseVolFrac[0][0],
-                                     modes[0] );   
+                                     modes[0],
+                                     phaseMode2PeakSlice1 );   
 
-            
-            facePhaseVolFrac1[0][1] = 0.0;
-            facePhaseVolFrac1[0][0] = 1.0;
-            capPresWrapper1.compute( facePhaseVolFrac1[0],
-                                     phaseMaxHistoricalVolFraction1[0],
-                                     phaseMinHistoricalVolFraction1[0],
-                                     faceTrappedVolFrac1[0][0],
-                                     faceCapPres1[0][0],
-                                     dCapPres1_dfacePhaseVolFrac[0][0],
-                                     modes[0] );    
-            Pc1_min = faceCapPres1[0][0][0];
-            
-            facePhaseVolFrac1[0][1] = 1.0;
-            facePhaseVolFrac1[0][0] = 0.0;
-            capPresWrapper1.compute( facePhaseVolFrac1[0],
-                                     phaseMaxHistoricalVolFraction1[0],
-                                     phaseMinHistoricalVolFraction1[0],
-                                     faceTrappedVolFrac1[0][0],
-                                     faceCapPres1[0][0],
-                                     dCapPres1_dfacePhaseVolFrac[0][0],
-                                     modes[0] );      
-            Pc1_max = faceCapPres1[0][0][0];
-            
-            // For hysteresis models, also evaluate at historical saturation range endpoints
-            // to ensure we capture the full range of the current curve
-            if (phaseMinHistoricalVolFraction1[0][0] >= 0.0 && phaseMaxHistoricalVolFraction1[0][0] >= 0.0) {
-              // Evaluate at min historical saturation
-              real64 const S_min_hist = phaseMinHistoricalVolFraction1[0][0];
-              if (S_min_hist > 0.0 && S_min_hist < 1.0) {
-                facePhaseVolFrac1[0][0] = S_min_hist;
-                facePhaseVolFrac1[0][1] = 1.0 - S_min_hist;
-                capPresWrapper1.compute( facePhaseVolFrac1[0],
-                                         phaseMaxHistoricalVolFraction1[0],
-                                         phaseMinHistoricalVolFraction1[0],
-                                         faceTrappedVolFrac1[0][0],
-                                         faceCapPres1[0][0],
-                                         dCapPres1_dfacePhaseVolFrac[0][0],
-                                         modes[0] );
-                Pc1_min = LvArray::math::min(Pc1_min, faceCapPres1[0][0][0]);
-                Pc1_max = LvArray::math::max(Pc1_max, faceCapPres1[0][0][0]);
-              }
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+            std::cout << "  [BOUNDS_DEBUG] Cell0: T1=TableCapillaryPressureHysteresis"
+                      << ", preComputeMode=" << static_cast<int>(preComputeMode0)
+                      << ", postComputeMode=" << static_cast<int>(modes[0])
+                      << ", S=" << phaseVolFrac1[0][0]
+                      << ", Pc=" << capPres1[0][0][0] << std::endl;
+            }
+
+            if (modes[0] == fields::cappres::ModeIndexType::DRAINAGE || 
+                modes[0] == fields::cappres::ModeIndexType::IMBIBITION) {
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell0: DRAINAGE/IMBIBITION path" << std::endl; }
+              integer const tableIdx1 = static_cast<integer>(modes[0]);
+              real64 Pc1_at_S1, dPc1_at_S1;
+              real64 Pc1_at_S0, dPc1_at_S0;
+              real64 const S_one = 1.0;
+              real64 const S_zero = 0.0;
+              capPresWrapper1.computeRawTablePc( tableIdx1, S_one, Pc1_at_S1, dPc1_at_S1 );
+              capPresWrapper1.computeRawTablePc( tableIdx1, S_zero, Pc1_at_S0, dPc1_at_S0 );
+              Pc1_min = LvArray::math::min( Pc1_at_S1, Pc1_at_S0 );
+              Pc1_max = LvArray::math::max( Pc1_at_S1, Pc1_at_S0 );
               
-              // Evaluate at max historical saturation
-              real64 const S_max_hist = phaseMaxHistoricalVolFraction1[0][0];
-              if (S_max_hist > 0.0 && S_max_hist < 1.0) {
-                facePhaseVolFrac1[0][0] = S_max_hist;
-                facePhaseVolFrac1[0][1] = 1.0 - S_max_hist;
-                capPresWrapper1.compute( facePhaseVolFrac1[0],
-                                         phaseMaxHistoricalVolFraction1[0],
-                                         phaseMinHistoricalVolFraction1[0],
-                                         faceTrappedVolFrac1[0][0],
-                                         faceCapPres1[0][0],
-                                         dCapPres1_dfacePhaseVolFrac[0][0],
-                                         modes[0] );
-                Pc1_min = LvArray::math::min(Pc1_min, faceCapPres1[0][0][0]);
-                Pc1_max = LvArray::math::max(Pc1_max, faceCapPres1[0][0][0]);
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell0: Pc1_min=" << Pc1_min 
+                        << " (table@S=1:" << Pc1_at_S1 << ", table@S=0:" << Pc1_at_S0 << ")" << std::endl; }
+            } else {
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell0: SCANNING path, modes[0]=" << static_cast<int>(modes[0]) << std::endl; }
+              real64 const S_min_hist1 = phaseMinHistoricalVolFraction1[0][0];
+              real64 const S_max_hist1 = phaseMaxHistoricalVolFraction1[0][0];
+              
+              auto scanBoundsMode1 = modes[0];
+              
+              if (modes[0] == fields::cappres::ModeIndexType::DRAINAGE_TO_IMBIBITION ||
+                  modes[0] == fields::cappres::ModeIndexType::IMBIBITION_TO_DRAINAGE ||
+                  modes[0] == fields::cappres::ModeIndexType::IMBIBITION_TO_DRAINAGE_FROM_SCANNING) {
+                capPresWrapper1.computeScanningCurvePcRange(
+                    S_min_hist1, S_max_hist1, modes[0], Pc1_min, Pc1_max );
+              }
+              else {
+              facePhaseVolFrac1[0][1] = 0.0;
+              facePhaseVolFrac1[0][0] = 1.0;
+                scanBoundsMode1 = modes[0];
+              capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                       phaseMaxHistoricalVolFraction1[0],
+                                       phaseMinHistoricalVolFraction1[0],
+                                       faceTrappedVolFrac1[0][0],
+                                       faceCapPres1[0][0],
+                                       dCapPres1_dfacePhaseVolFrac[0][0],
+                                         scanBoundsMode1,
+                                       phaseMode2PeakSlice1 );    
+              Pc1_min = faceCapPres1[0][0][0];
+              
+              facePhaseVolFrac1[0][1] = 1.0;
+              facePhaseVolFrac1[0][0] = 0.0;
+                scanBoundsMode1 = modes[0];
+              capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                       phaseMaxHistoricalVolFraction1[0],
+                                       phaseMinHistoricalVolFraction1[0],
+                                       faceTrappedVolFrac1[0][0],
+                                       faceCapPres1[0][0],
+                                       dCapPres1_dfacePhaseVolFrac[0][0],
+                                         scanBoundsMode1,
+                                       phaseMode2PeakSlice1 );      
+              Pc1_max = faceCapPres1[0][0][0];
               }
             }
           }
           else
           {
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell0: GENERIC (non-hysteresis) path" << std::endl; }
             capPresWrapper1.compute( phaseVolFrac1[0],
                                      capPres1[0][0],
                                      dCapPres1_dPhaseVolFrac[0][0] );
@@ -398,6 +415,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                      faceCapPres1[0][0],
                                      dCapPres1_dfacePhaseVolFrac[0][0] );
             Pc1_max = faceCapPres1[0][0][0];
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell0 GENERIC: Pc1_min=" << Pc1_min << ", Pc1_max=" << Pc1_max << std::endl; }
           }
 
           using T2 = std::decay_t< decltype(castedCapPres2) >;
@@ -428,75 +446,83 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
           }
           else if constexpr (std::is_same_v< T2, TableCapillaryPressureHysteresis >) {
+            auto preComputeMode1 = modes[1];
             capPresWrapper2.compute( phaseVolFrac2[0],
                                      phaseMaxHistoricalVolFraction2[0],
                                      phaseMinHistoricalVolFraction2[0],
                                      trappedVolFrac2[0][0],
                                      capPres2[0][0],
                                      dCapPres2_dPhaseVolFrac[0][0],
-                                     modes[1] );                         
+                                     modes[1],
+                                     phaseMode2PeakSlice2 );                         
 
-            
-            facePhaseVolFrac2[0][1] = 0.0;
-            facePhaseVolFrac2[0][0] = 1.0;
-            capPresWrapper2.compute( facePhaseVolFrac2[0],
-                                     phaseMaxHistoricalVolFraction2[0],
-                                     phaseMinHistoricalVolFraction2[0],
-                                     faceTrappedVolFrac2[0][0],
-                                     faceCapPres2[0][0],
-                                     dCapPres2_dfacePhaseVolFrac[0][0],
-                                     modes[1] );  
-            Pc2_min = faceCapPres2[0][0][0];
-            
-            facePhaseVolFrac2[0][1] = 1.0;
-            facePhaseVolFrac2[0][0] = 0.0;
-            capPresWrapper2.compute( facePhaseVolFrac2[0],
-                                     phaseMaxHistoricalVolFraction2[0],
-                                     phaseMinHistoricalVolFraction2[0],
-                                     faceTrappedVolFrac2[0][0],
-                                     faceCapPres2[0][0],
-                                     dCapPres2_dfacePhaseVolFrac[0][0],
-                                     modes[1] );      
-            Pc2_max = faceCapPres2[0][0][0];
-            
-            // For hysteresis models, also evaluate at historical saturation range endpoints
-            // to ensure we capture the full range of the current curve
-            if (phaseMinHistoricalVolFraction2[0][0] >= 0.0 && phaseMaxHistoricalVolFraction2[0][0] >= 0.0) {
-              // Evaluate at min historical saturation
-              real64 const S_min_hist = phaseMinHistoricalVolFraction2[0][0];
-              if (S_min_hist > 0.0 && S_min_hist < 1.0) {
-                facePhaseVolFrac2[0][0] = S_min_hist;
-                facePhaseVolFrac2[0][1] = 1.0 - S_min_hist;
-                capPresWrapper2.compute( facePhaseVolFrac2[0],
-                                         phaseMaxHistoricalVolFraction2[0],
-                                         phaseMinHistoricalVolFraction2[0],
-                                         faceTrappedVolFrac2[0][0],
-                                         faceCapPres2[0][0],
-                                         dCapPres2_dfacePhaseVolFrac[0][0],
-                                         modes[1] );
-                Pc2_min = LvArray::math::min(Pc2_min, faceCapPres2[0][0][0]);
-                Pc2_max = LvArray::math::max(Pc2_max, faceCapPres2[0][0][0]);
-              }
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+            std::cout << "  [BOUNDS_DEBUG] Cell1: T2=TableCapillaryPressureHysteresis"
+                      << ", preComputeMode=" << static_cast<int>(preComputeMode1)
+                      << ", postComputeMode=" << static_cast<int>(modes[1])
+                      << ", S=" << phaseVolFrac2[0][0]
+                      << ", Pc=" << capPres2[0][0][0] << std::endl;
+            }
+
+            if (modes[1] == fields::cappres::ModeIndexType::DRAINAGE || 
+                modes[1] == fields::cappres::ModeIndexType::IMBIBITION) {
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell1: DRAINAGE/IMBIBITION path" << std::endl; }
+              integer const tableIdx2 = static_cast<integer>(modes[1]);
+              real64 Pc2_at_S1, dPc2_at_S1;
+              real64 Pc2_at_S0, dPc2_at_S0;
+              real64 const S_one_2 = 1.0;
+              real64 const S_zero_2 = 0.0;
+              capPresWrapper2.computeRawTablePc( tableIdx2, S_one_2, Pc2_at_S1, dPc2_at_S1 );
+              capPresWrapper2.computeRawTablePc( tableIdx2, S_zero_2, Pc2_at_S0, dPc2_at_S0 );
+              Pc2_min = LvArray::math::min( Pc2_at_S1, Pc2_at_S0 );
+              Pc2_max = LvArray::math::max( Pc2_at_S1, Pc2_at_S0 );
               
-              // Evaluate at max historical saturation
-              real64 const S_max_hist = phaseMaxHistoricalVolFraction2[0][0];
-              if (S_max_hist > 0.0 && S_max_hist < 1.0) {
-                facePhaseVolFrac2[0][0] = S_max_hist;
-                facePhaseVolFrac2[0][1] = 1.0 - S_max_hist;
-                capPresWrapper2.compute( facePhaseVolFrac2[0],
-                                         phaseMaxHistoricalVolFraction2[0],
-                                         phaseMinHistoricalVolFraction2[0],
-                                         faceTrappedVolFrac2[0][0],
-                                         faceCapPres2[0][0],
-                                         dCapPres2_dfacePhaseVolFrac[0][0],
-                                         modes[1] );
-                Pc2_min = LvArray::math::min(Pc2_min, faceCapPres2[0][0][0]);
-                Pc2_max = LvArray::math::max(Pc2_max, faceCapPres2[0][0][0]);
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell1: Pc2_min=" << Pc2_min 
+                        << " (table@S=1:" << Pc2_at_S1 << ", table@S=0:" << Pc2_at_S0 << ")" << std::endl; }
+            } else {
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell1: SCANNING path, modes[1]=" << static_cast<int>(modes[1]) << std::endl; }
+              real64 const S_min_hist2 = phaseMinHistoricalVolFraction2[0][0];
+              real64 const S_max_hist2 = phaseMaxHistoricalVolFraction2[0][0];
+              auto scanBoundsMode2 = modes[1];
+              
+              if (modes[1] == fields::cappres::ModeIndexType::DRAINAGE_TO_IMBIBITION ||
+                  modes[1] == fields::cappres::ModeIndexType::IMBIBITION_TO_DRAINAGE ||
+                  modes[1] == fields::cappres::ModeIndexType::IMBIBITION_TO_DRAINAGE_FROM_SCANNING) {
+                capPresWrapper2.computeScanningCurvePcRange(
+                    S_min_hist2, S_max_hist2, modes[1], Pc2_min, Pc2_max );
+              }
+              else {
+              facePhaseVolFrac2[0][1] = 0.0;
+              facePhaseVolFrac2[0][0] = 1.0;
+                scanBoundsMode2 = modes[1];
+              capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                       phaseMaxHistoricalVolFraction2[0],
+                                       phaseMinHistoricalVolFraction2[0],
+                                       faceTrappedVolFrac2[0][0],
+                                       faceCapPres2[0][0],
+                                       dCapPres2_dfacePhaseVolFrac[0][0],
+                                         scanBoundsMode2,
+                                       phaseMode2PeakSlice2 );  
+              Pc2_min = faceCapPres2[0][0][0];
+              
+              facePhaseVolFrac2[0][1] = 1.0;
+              facePhaseVolFrac2[0][0] = 0.0;
+                scanBoundsMode2 = modes[1];
+              capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                       phaseMaxHistoricalVolFraction2[0],
+                                       phaseMinHistoricalVolFraction2[0],
+                                       faceTrappedVolFrac2[0][0],
+                                       faceCapPres2[0][0],
+                                       dCapPres2_dfacePhaseVolFrac[0][0],
+                                         scanBoundsMode2,
+                                       phaseMode2PeakSlice2 );      
+              Pc2_max = faceCapPres2[0][0][0];
               }
             }
           }
           else
           {
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell1: GENERIC (non-hysteresis) path" << std::endl; }
             // evaluating cell-center Pc:
 
             capPresWrapper2.compute( phaseVolFrac2[0],
@@ -517,6 +543,14 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                      faceCapPres2[0][0],
                                      dCapPres2_dfacePhaseVolFrac[0][0] );
             Pc2_max = faceCapPres2[0][0][0];
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) { std::cout << "  [BOUNDS_DEBUG] Cell1 GENERIC: Pc2_min=" << Pc2_min << ", Pc2_max=" << Pc2_max << std::endl; }
+          }
+
+          if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+          std::cout << "  [BOUNDS_DEBUG] FINAL: modes[0]=" << static_cast<int>(modes[0]) 
+                    << ", modes[1]=" << static_cast<int>(modes[1])
+                    << ", Pc1_min=" << Pc1_min << ", Pc1_max=" << Pc1_max 
+                    << ", Pc2_min=" << Pc2_min << ", Pc2_max=" << Pc2_max << std::endl;
           }
 
           // Use of the relative permeability kernel wrapper
@@ -659,43 +693,81 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           real64 const Pc1 = capPres1[0][0][0];
           real64 const Pc2 = capPres2[0][0][0];
 
-          real64 Pc_int = ( Pc1 + Pc2 ) / 2.0;
+          real64 Pc_union_min = fmin( Pc1_min, Pc2_min );
+          real64 Pc_union_max = fmax( Pc1_max, Pc2_max );
 
           real64 Pc_min_all = fmax( Pc1_min, Pc2_min );
           real64 Pc_max_all = fmin( Pc1_max, Pc2_max );
+          bool rangesOverlap = Pc_min_all < Pc_max_all;
 
-          if( Pc_int < Pc_min_all || Pc_int > Pc_max_all )
+          real64 Pc_bracket_lo = Pc_union_min;
+          real64 Pc_bracket_hi = Pc_union_max;
+          real64 res_bracket_lo = 0.0;
+          real64 res_bracket_hi = 0.0;
+          bool bracket_lo_set = false;
+          bool bracket_hi_set = false;
+
+          constexpr bool ENABLE_WARM_START = true;
+          real64 Pc_int;
+          bool usedWarmStart = false;
+          if( ENABLE_WARM_START && warmStartPc > 0.0 )
           {
-            Pc_int = ( Pc_min_all + Pc_max_all ) / 2.0;
+            Pc_int = warmStartPc;
+            usedWarmStart = true;
+            }
+            else
+            {
+            Pc_int = rangesOverlap ? ( Pc_min_all + Pc_max_all ) / 2.0
+                                   : LvArray::math::max( Pc1, Pc2 );
           }
+          Pc_int = fmin( Pc_union_max, fmax( Pc_int, Pc_union_min ) );
 
-          // While loop (newton loop)
+          real64 Pc_int_iterate = Pc_int;
+
           int iter = 0;
           int div = 0;
-          // int ext_iter0 = 0;
-          // int ext_iter1 = 0;
-          real64 next_Pc_int = 0.0;
-          real64 old_Pc_int = 0.0;
-          real64 old_residual = 0.0;
-          
-          if (bisection) { 
-            Pc_int = fmax( Pc1_max, Pc2_max );
-            next_Pc_int = fmin( Pc1_min, Pc2_min );
-          }
 
-          if (newton_path){ 
-            Pc_int = fmax( Pc1_max, Pc2_max );
-             Pc_int = 2.0e5;
-             next_Pc_int = (fmax( Pc1_max, Pc2_max ) - fmin( Pc1_min, Pc2_min )) / (max_iter - 1);
-             next_Pc_int = (2.0e5 - 5.0e4) / (max_iter - 1);
-          }
-  
-          real64 Pc_int_iterate = Pc_int;
+          int n_same_pc = 0;
+          real64 prev_Pc_evaluated = -1.0e30;
+          int stuck_probe_level = 0;
+
+          constexpr bool ENABLE_BEST_SOLUTION_FALLBACK = false;
+          constexpr real64 FALLBACK_TOL_FACTOR = 100.0;
+          real64 best_Pc = 0.0;
+          real64 best_absRes = 1.0e30;
+          bool fallback_used = false;
+
+          constexpr bool ENABLE_SWEEP_FALLBACK = true;
+          constexpr real64 SWEEP_DS = 0.005;
+          constexpr integer SWEEP_MIN_POINTS = 100;
+          constexpr real64 SWEEP_ACCEPT_TOL_FACTOR = 100.0;
+          bool sweep_active = false;
+          real64 sweep_best_Pc = 0.0;
+          real64 sweep_best_absRes = 1.0e30;
+          int sweep_newton_iter_end = 0;
+
+          real64 last_local_residual = 0.0;
+          real64 last_local_jacobian = 0.0;
+          real64 last_facePhaseVolFrac1_0 = 0.0;
+          real64 last_facePhaseVolFrac2_0 = 0.0;
+          real64 last_faceCapPres1 = 0.0;
+          real64 last_faceCapPres2 = 0.0;
+          integer last_iter = 0;
 
           while( iter < max_iter )
           {
 
             Pc_int_iterate = Pc_int;
+            
+            constexpr bool ENABLE_INITIAL_SAT_DEBUG = false;
+            if constexpr (ENABLE_INITIAL_SAT_DEBUG) {
+              if (iter == 0) {
+                std::cout << "[INITIAL_SAT_DEBUG] Local solver iter=" << iter << ", Initial S1=" << phaseVolFrac1[0][0] 
+                          << ", Initial S2=" << phaseVolFrac2[0][0] << std::endl;
+                std::cout << "[INITIAL_SAT_DEBUG] Initial Pc1=" << capPres1[0][0][0] 
+                          << ", Initial Pc2=" << capPres2[0][0][0] << std::endl;
+              }
+            }
 
             // clear working arrays
             real64 density[2]{};
@@ -724,17 +796,23 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             real64 local_residual = 0;
             real64 local_jacobian = 0;
 
-            // truncate the capillary pressure iterate (ensures the inverse will compute a saturation bounded between 0 and 1):
+            {
+              bool bracketReady = bracket_lo_set && bracket_hi_set;
+              real64 clamp_lo = bracketReady ? Pc_bracket_lo : Pc_union_min;
+              real64 clamp_hi = bracketReady ? Pc_bracket_hi : Pc_union_max;
+              Pc_int = fmin( clamp_hi, fmax( Pc_int, clamp_lo ) );
+            }
 
-            Pc_int = fmin( fmax( Pc1_max, Pc2_max ), fmax( Pc_int, fmin( Pc1_min, Pc2_min ) ));
-            
-            faceCapPres1[0][0][0] = fmin( Pc1_max, fmax( Pc_int, Pc1_min));
-            faceCapPres2[0][0][0] = fmin( Pc2_max, fmax( Pc_int, Pc2_min));
-
-            // Compute the inverse:
+            faceCapPres1[0][0][0] = fmin( Pc1_max, Pc_int );
+            faceCapPres2[0][0][0] = fmin( Pc2_max, Pc_int );
+            bool const faceCapPres1_clamped = (faceCapPres1[0][0][0] < Pc_int - 1e-10);
+            bool const faceCapPres2_clamped = (faceCapPres2[0][0][0] < Pc_int - 1e-10);
 
             JFunc1[0] = JFMultipliers[0];
             JFunc2[0] = JFMultipliers[1];
+
+            constexpr bool ENABLE_TCH_COMPUTEINV_DEBUG = false;
+            constexpr bool ENABLE_TCH_COMPUTE_DEBUG = false;
 
             using T3 = std::decay_t< decltype(castedCapPres1) >;
             if constexpr (std::is_same_v< T3, JFunctionCapillaryPressure >) {
@@ -752,22 +830,76 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
             }
             else if constexpr (std::is_same_v< T3, TableCapillaryPressureHysteresis >) {
+              if constexpr (ENABLE_TCH_COMPUTEINV_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "[TCH_COMPUTEINV_DEBUG] Cell1, iter=" << iter << std::endl;
+                  std::cout << "  BEFORE computeInv: Pc=" << faceCapPres1[0][0][0] 
+                            << ", S=" << facePhaseVolFrac1[0][0] 
+                            << ", mode=" << modes[0] << std::endl;
+                  std::cout << "  phaseMaxHistoricalVolFraction1[0][0]=" << phaseMaxHistoricalVolFraction1[0][0] 
+                            << ", phaseMinHistoricalVolFraction1[0][0]=" << phaseMinHistoricalVolFraction1[0][0] << std::endl;
+                }
+              }
+              
+              auto tempMode0 = modes[0];
               capPresWrapper1.computeInv( facePhaseVolFrac1[0],
                 phaseMaxHistoricalVolFraction1[0],
                 phaseMinHistoricalVolFraction1[0],
+                phaseMode2PeakSlice1,
                 faceTrappedVolFrac1[0][0],
                 faceCapPres1[0][0],
-                dCapPres1_dfacePhaseVolFrac[0][0],
-                modes[0] );   
+                dfacePhaseVolFrac_dCapPres1[0][0],
+                tempMode0 );   
+              real64 dS_dPc_after_computeInv_TCH = dfacePhaseVolFrac_dCapPres1[0][0][0][0];
               facePhaseVolFrac1[0][0] = fmin( 1.0, fmax( facePhaseVolFrac1[0][0], 0.0 ));
               facePhaseVolFrac1[0][1] = fmin( 1.0, fmax( facePhaseVolFrac1[0][1], 0.0 ));
+              
+              if constexpr (ENABLE_TCH_COMPUTEINV_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "  AFTER computeInv: Pc=" << faceCapPres1[0][0][0] 
+                            << ", S=" << facePhaseVolFrac1[0][0] 
+                            << ", dS_dPc=" << dS_dPc_after_computeInv_TCH << std::endl;
+                }
+              }
+              
+              real64 Pc_before_compute_TCH = faceCapPres1[0][0][0];
+              if( modes[0] == fields::cappres::ModeIndexType::DRAINAGE ||
+                  modes[0] == fields::cappres::ModeIndexType::IMBIBITION )
+              {
+                real64 rawPc = 0.0, rawDPcDS = 0.0;
+                capPresWrapper1.computeRawTablePc( static_cast< integer >( modes[0] ),
+                                                   facePhaseVolFrac1[0][0],
+                                                   rawPc, rawDPcDS );
+                faceCapPres1[0][0][0] = rawPc;
+                dCapPres1_dfacePhaseVolFrac[0][0][0][0] = rawDPcDS;
+              }
+              else
+              {
+                auto tempComputeMode0 = modes[0];
               capPresWrapper1.compute( facePhaseVolFrac1[0],
                                        phaseMaxHistoricalVolFraction1[0],
                                        phaseMinHistoricalVolFraction1[0],
                                        faceTrappedVolFrac1[0][0],
                                        faceCapPres1[0][0],
                                        dCapPres1_dfacePhaseVolFrac[0][0],
-                                       modes[0] );      
+                                         tempComputeMode0,
+                                       phaseMode2PeakSlice1 );
+              }
+              real64 dPc_dS_after_compute_TCH = dCapPres1_dfacePhaseVolFrac[0][0][0][0];
+              
+              if constexpr (ENABLE_TCH_COMPUTE_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "[TCH_COMPUTE_DEBUG] Cell1, iter=" << iter << std::endl;
+                  std::cout << "  BEFORE compute: Pc=" << Pc_before_compute_TCH 
+                            << ", S=" << facePhaseVolFrac1[0][0] << std::endl;
+                  std::cout << "  AFTER compute: Pc=" << faceCapPres1[0][0][0] 
+                            << ", dPc_dS=" << dPc_dS_after_compute_TCH << std::endl;
+                  std::cout << "  Pc change=" << (faceCapPres1[0][0][0] - Pc_before_compute_TCH) << std::endl;
+                  real64 product = dS_dPc_after_computeInv_TCH * dPc_dS_after_compute_TCH;
+                  std::cout << "  dS_dPc * dPc_dS = " << product 
+                            << " (should be ~1.0, error=" << std::abs(product - 1.0) << ")" << std::endl;
+                }
+              }
 
             }
             else
@@ -775,12 +907,36 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               capPresWrapper1.computeInv( facePhaseVolFrac1[0],
                                        faceCapPres1[0][0],
                                        dfacePhaseVolFrac_dCapPres1[0][0] );
+              real64 dS_dPc_after_computeInv_TCP = dfacePhaseVolFrac_dCapPres1[0][0][0][0];
               facePhaseVolFrac1[0][0] = fmin( 1.0, fmax( facePhaseVolFrac1[0][0], 0.0 ));
               facePhaseVolFrac1[0][1] = fmin( 1.0, fmax( facePhaseVolFrac1[0][1], 0.0 ));
               //get derivatives:
+              real64 Pc_before_compute_TCP = faceCapPres1[0][0][0];
+              real64 dPc_dS_before_TCP = dCapPres1_dfacePhaseVolFrac[0][0][0][0];
               capPresWrapper1.compute( facePhaseVolFrac1[0],
                                        faceCapPres1[0][0],
                                        dCapPres1_dfacePhaseVolFrac[0][0] );
+              real64 dPc_dS_after_compute_TCP = dCapPres1_dfacePhaseVolFrac[0][0][0][0];
+              constexpr bool ENABLE_COMPUTE_DEBUG = false;
+              if constexpr (ENABLE_COMPUTE_DEBUG) {
+                std::cout << "[COMPUTE_DEBUG_TCP] After computeInv(): dS_dPc=" << dS_dPc_after_computeInv_TCP 
+                          << ", S=" << facePhaseVolFrac1[0][0] << ", Pc=" << faceCapPres1[0][0][0] << std::endl;
+                std::cout << "[COMPUTE_DEBUG_TCP] After compute(): Pc_before=" << Pc_before_compute_TCP 
+                          << ", Pc_after=" << faceCapPres1[0][0][0] 
+                          << ", dPc_dS_before=" << dPc_dS_before_TCP
+                          << ", dPc_dS_after=" << dPc_dS_after_compute_TCP 
+                          << ", S=" << facePhaseVolFrac1[0][0] << std::endl;
+                real64 product = dS_dPc_after_computeInv_TCP * dPc_dS_after_compute_TCP;
+                std::cout << "[COMPUTE_DEBUG_TCP] dS_dPc * dPc_dS = " << product 
+                          << " (should be ~1.0, error=" << std::abs(product - 1.0) << ")" << std::endl;
+                real64 Pc_diff = faceCapPres1[0][0][0] - Pc_before_compute_TCP;
+                std::cout << "[COMPUTE_DEBUG_TCP] Pc change after compute() = " << Pc_diff 
+                          << " (should be ~0.0)" << std::endl;
+              }
+            }
+            
+            if (faceCapPres1_clamped) {
+              dfacePhaseVolFrac_dCapPres1[0][0][0][0] = 0.0;
             }
 
             using T4 = std::decay_t< decltype(castedCapPres2) >;
@@ -802,22 +958,77 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
             }
             else if constexpr (std::is_same_v< T4, TableCapillaryPressureHysteresis >) {
+              if constexpr (ENABLE_TCH_COMPUTEINV_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "[TCH_COMPUTEINV_DEBUG] Cell2, iter=" << iter << std::endl;
+                  std::cout << "  BEFORE computeInv: Pc=" << faceCapPres2[0][0][0] 
+                            << ", S=" << facePhaseVolFrac2[0][0] 
+                            << ", mode=" << modes[1] << std::endl;
+                  std::cout << "  phaseMaxHistoricalVolFraction2[0][0]=" << phaseMaxHistoricalVolFraction2[0][0] 
+                            << ", phaseMinHistoricalVolFraction2[0][0]=" << phaseMinHistoricalVolFraction2[0][0] << std::endl;
+                }
+              }
+              
+              auto tempMode1 = modes[1];
               capPresWrapper2.computeInv( facePhaseVolFrac2[0],
                 phaseMaxHistoricalVolFraction2[0],
                 phaseMinHistoricalVolFraction2[0],
+                phaseMode2PeakSlice2,
                 faceTrappedVolFrac2[0][0],
                 faceCapPres2[0][0],
-                dCapPres2_dfacePhaseVolFrac[0][0],
-                modes[1] );     
+                dfacePhaseVolFrac_dCapPres2[0][0],
+                tempMode1 );     
               facePhaseVolFrac2[0][0] = fmin( 1.0, fmax( facePhaseVolFrac2[0][0], 0.0 ));
               facePhaseVolFrac2[0][1] = fmin( 1.0, fmax( facePhaseVolFrac2[0][1], 0.0 ));
+              real64 dS_dPc_after_computeInv_TCH2 = dfacePhaseVolFrac_dCapPres2[0][0][0][0];
+              
+              if constexpr (ENABLE_TCH_COMPUTEINV_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "  AFTER computeInv: Pc=" << faceCapPres2[0][0][0] 
+                            << ", S=" << facePhaseVolFrac2[0][0] 
+                            << ", dS_dPc=" << dS_dPc_after_computeInv_TCH2 << std::endl;
+                }
+              }
+              
+              real64 Pc_before_compute_TCH2 = faceCapPres2[0][0][0];
+
+              if( modes[1] == fields::cappres::ModeIndexType::DRAINAGE ||
+                  modes[1] == fields::cappres::ModeIndexType::IMBIBITION )
+              {
+                real64 rawPc2 = 0.0, rawDPcDS2 = 0.0;
+                capPresWrapper2.computeRawTablePc( static_cast< integer >( modes[1] ),
+                                                   facePhaseVolFrac2[0][0],
+                                                   rawPc2, rawDPcDS2 );
+                faceCapPres2[0][0][0] = rawPc2;
+                dCapPres2_dfacePhaseVolFrac[0][0][0][0] = rawDPcDS2;
+              }
+              else
+              {
+                auto tempComputeMode1 = modes[1];
               capPresWrapper2.compute( facePhaseVolFrac2[0],
                                        phaseMaxHistoricalVolFraction2[0],
                                        phaseMinHistoricalVolFraction2[0],
                                        faceTrappedVolFrac2[0][0],
                                        faceCapPres2[0][0],
                                        dCapPres2_dfacePhaseVolFrac[0][0],
-                                       modes[1] );      
+                                         tempComputeMode1,
+                                       phaseMode2PeakSlice2 );
+              }
+              
+              if constexpr (ENABLE_TCH_COMPUTE_DEBUG) {
+                if (iter < 5 || iter % 10 == 0 || iter >= max_iter - 5) {
+                  std::cout << "[TCH_COMPUTE_DEBUG] Cell2, iter=" << iter << std::endl;
+                  std::cout << "  BEFORE compute: Pc=" << Pc_before_compute_TCH2 
+                            << ", S=" << facePhaseVolFrac2[0][0] << std::endl;
+                  std::cout << "  AFTER compute: Pc=" << faceCapPres2[0][0][0] 
+                            << ", dPc_dS=" << dCapPres2_dfacePhaseVolFrac[0][0][0] << std::endl;
+                  std::cout << "  Pc change=" << (faceCapPres2[0][0][0] - Pc_before_compute_TCH2) << std::endl;
+                  real64 dPc_dS_after_compute_TCH2 = dCapPres2_dfacePhaseVolFrac[0][0][0][0];
+                  real64 product = dS_dPc_after_computeInv_TCH2 * dPc_dS_after_compute_TCH2;
+                  std::cout << "  dS_dPc * dPc_dS = " << product 
+                            << " (should be ~1.0, error=" << std::abs(product - 1.0) << ")" << std::endl;
+                }
+              }
 
             }
             else
@@ -831,9 +1042,21 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
 //get derivatives:
 
+              real64 Pc_before_compute_TCP2 = faceCapPres2[0][0][0];
               capPresWrapper2.compute( facePhaseVolFrac2[0],
                                        faceCapPres2[0][0],
                                        dCapPres2_dfacePhaseVolFrac[0][0] );
+              constexpr bool ENABLE_COMPUTE_DEBUG = false;
+              if constexpr (ENABLE_COMPUTE_DEBUG) {
+                std::cout << "[COMPUTE_DEBUG_TCP] After compute() cell2: Pc_before=" << Pc_before_compute_TCP2 
+                          << ", Pc_after=" << faceCapPres2[0][0][0] 
+                          << ", dPc_dS=" << dCapPres2_dfacePhaseVolFrac[0][0][0] 
+                          << ", S=" << facePhaseVolFrac2[0][0] << std::endl;
+              }
+            }
+            
+            if (faceCapPres2_clamped) {
+              dfacePhaseVolFrac_dCapPres2[0][0][0][0] = 0.0;
             }
             
             // compute relative permeability for both faces:
@@ -857,6 +1080,19 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                        faceRelPerm1[0][0],
                                        dfacePhaseRelPerm1_dPhaseVolFrac[0][0] );
             }
+            
+            constexpr bool ENABLE_RELPERM_DEBUG = false;
+            if constexpr (ENABLE_RELPERM_DEBUG) {
+              if (iter == 0) {
+                std::cout << "[RELPERM_DEBUG] After relPerm1 compute: S1_face=" << facePhaseVolFrac1[0][0] 
+                          << ", faceRelPerm1[0][0][0]=" << faceRelPerm1[0][0][0] 
+                          << ", faceRelPerm1[0][0][1]=" << faceRelPerm1[0][0][1] << std::endl;
+                std::cout << "[RELPERM_DEBUG] dfacePhaseRelPerm1_dPhaseVolFrac[0][0][0][0]=" 
+                          << dfacePhaseRelPerm1_dPhaseVolFrac[0][0][0][0] 
+                          << ", dfacePhaseRelPerm1_dPhaseVolFrac[0][0][1][1]=" 
+                          << dfacePhaseRelPerm1_dPhaseVolFrac[0][0][1][1] << std::endl;
+              }
+            }
 
             using T8 = std::decay_t< decltype(castedRelPerm2) >;
             if constexpr (std::is_same_v< T8, constitutive::TableRelativePermeabilityHysteresis >) {
@@ -877,9 +1113,20 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                        faceRelPerm2[0][0],
                                        dfacePhaseRelPerm2_dPhaseVolFrac[0][0] );
             }
+            
+            if constexpr (ENABLE_RELPERM_DEBUG) {
+              if (iter == 0) {
+                std::cout << "[RELPERM_DEBUG] After relPerm2 compute: S2_face=" << facePhaseVolFrac2[0][0] 
+                          << ", faceRelPerm2[0][0][0]=" << faceRelPerm2[0][0][0] 
+                          << ", faceRelPerm2[0][0][1]=" << faceRelPerm2[0][0][1] << std::endl;
+                std::cout << "[RELPERM_DEBUG] dfacePhaseRelPerm2_dPhaseVolFrac[0][0][0][0]=" 
+                          << dfacePhaseRelPerm2_dPhaseVolFrac[0][0][0][0] 
+                          << ", dfacePhaseRelPerm2_dPhaseVolFrac[0][0][1][1]=" 
+                          << dfacePhaseRelPerm2_dPhaseVolFrac[0][0][1][1] << std::endl;
+              }
+            }
 
 
-            // Brenier and Jaffre's PPU upwinding:
             bool check = false;
             bool k_up_0_w = 1;
             bool k_up_1_w = 1;
@@ -1036,20 +1283,28 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
                     dGravHead_dP[ip][ke] += signTix[ke] * dTransHat_dP[ix] * dGravHead_dTrans;
 
-                    // real64 constexpr eps = 1e-18;
-                    real64 dCapPres_dS = dCapPres1_dPhaseVolFrac[0][0][ip][ip];
-
-                    if( ke == 1 && ix == 0 )
+                    real64 dCapPres_dS;
+                    if( ke == 0 )
                     {
+
+
                       dCapPres_dS = dCapPres1_dfacePhaseVolFrac[0][0][ip][ip];
                     }
-                    else if( ke == 1 && ix == 1 )
+                    else // ke == 1
                     {
+
+
                       dCapPres_dS = dCapPres2_dfacePhaseVolFrac[0][0][ip][ip];
                     }
-                    else if( ke == 0 && ix == 1 )
-                    {
-                      dCapPres_dS = dCapPres2_dPhaseVolFrac[0][0][ip][ip];
+
+                    constexpr bool ENABLE_DCAPPRES_DS_DEBUG = false;
+                    if constexpr (ENABLE_DCAPPRES_DS_DEBUG) {
+                      if (iter == 0 && ix == 0 && ip == 0 && ke == 0) {
+                        std::cout << "[DCAPPRES_DS_DEBUG] iter=" << iter << ", ix=" << ix << ", ip=" << ip << ", ke=" << ke << std::endl;
+                        std::cout << "[DCAPPRES_DS_DEBUG] dCapPres_dS=" << dCapPres_dS << " (from cell " << (ke+1) << ")" << std::endl;
+                        std::cout << "[DCAPPRES_DS_DEBUG] dCapPres1_dfacePhaseVolFrac[0][0][0][0]=" << dCapPres1_dfacePhaseVolFrac[0][0][0][0] << std::endl;
+                        std::cout << "[DCAPPRES_DS_DEBUG] dCapPres2_dfacePhaseVolFrac[0][0][0][0]=" << dCapPres2_dfacePhaseVolFrac[0][0][0][0] << std::endl;
+                      }
                     }
 
                     dCapGrad_dP[ip][ke] += signTix[ke] * dTransHat_dP[ix] * dCapGrad_dTrans;
@@ -1065,34 +1320,88 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                   // choose upstream cell
                   constexpr int sign[2] = {1, -1};
 
+                  constexpr bool ENABLE_UPWIND_DEBUG = false;
+                  if constexpr (ENABLE_UPWIND_DEBUG) {
+                    if (iter == 0 && ip == 0) {
+                      std::cout << "[UPWIND_DEBUG] iter=" << iter << ", ip=" << ip << ", ix=" << ix << ", k_up_0[ip]=" << k_up_0[ip] << ", k_up_1[ip]=" << k_up_1[ip] << std::endl;
+                      std::cout << "[UPWIND_DEBUG] potGrad=" << potGrad << ", capGrad[ip]=" << capGrad[ip] << std::endl;
+                      std::cout << "[UPWIND_DEBUG] dfacePhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip]=" << dfacePhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip] << std::endl;
+                      std::cout << "[UPWIND_DEBUG] dPhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip]=" << dPhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip] << std::endl;
+                    }
+                  }
+
                   if( k_up_0[ip] == 1 && ix == 0 )
                   {
                     mobility[ip] = faceRelPerm1[0][0][ip] / viscosity[ip];
                     dMob_dP[ip][k_up_0[ip]] = mobility[ip] * (-dVisc_dP[ip][ix] / viscosity[ip]);
 
                     dMob_dS[ip][k_up_0[ip]] = sign[ip] * dfacePhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip] / viscosity[ip];
+                    if constexpr (ENABLE_UPWIND_DEBUG) {
+                      if (iter == 0 && ip == 0) {
+                        std::cout << "[UPWIND_DEBUG] Branch: k_up_0[ip]==1 && ix==0" << std::endl;
+                        std::cout << "[UPWIND_DEBUG] dMob_dS[ip][k_up_0[ip]]=" << dMob_dS[ip][k_up_0[ip]] << ", ix=" << ix << std::endl;
+                      }
+                    }
                   }
                   else if( k_up_1[ip] == 0 && ix == 1 )
                   {
                     mobility[ip] = relPerm2[0][0][ip] / viscosity[ip];
                     dMob_dP[ip][0] = mobility[ip] * (-dVisc_dP[ip][ix] / viscosity[ip]);
                     dMob_dS[ip][0] = sign[ip] * dPhaseRelPerm2_dPhaseVolFrac[0][0][ip][ip] / viscosity[ip];
+                    if constexpr (ENABLE_UPWIND_DEBUG) {
+                      if (iter == 0 && ip == 0) {
+                        std::cout << "[UPWIND_DEBUG] Branch: k_up_1[ip]==0 && ix==1" << std::endl;
+                        std::cout << "[UPWIND_DEBUG] dMob_dS[ip][0]=" << dMob_dS[ip][0] << ", ix=" << ix << std::endl;
+                      }
+                    }
                   }
                   else if( k_up_1[ip] == 1 && ix == 1 )
                   {
                     mobility[ip] = faceRelPerm2[0][0][ip] / viscosity[ip];
                     dMob_dP[ip][1] = mobility[ip] * (-dVisc_dP[ip][ix] / viscosity[ip]);
                     dMob_dS[ip][1] = sign[ip] * dfacePhaseRelPerm2_dPhaseVolFrac[0][0][ip][ip] / viscosity[ip];
+                    if constexpr (ENABLE_UPWIND_DEBUG) {
+                      if (iter == 0 && ip == 0) {
+                        std::cout << "[UPWIND_DEBUG] Branch: k_up_1[ip]==1 && ix==1" << std::endl;
+                        std::cout << "[UPWIND_DEBUG] dMob_dS[ip][1]=" << dMob_dS[ip][1] << ", ix=" << ix << std::endl;
+                      }
+                    }
                   }
                   else
                   {
                     mobility[ip] = relPerm1[0][0][ip] / viscosity[ip];
                     dMob_dP[ip][ix] = mobility[ip] * (-dVisc_dP[ip][ix] / viscosity[ip]);
                     dMob_dS[ip][ix] = sign[ip] * dPhaseRelPerm1_dPhaseVolFrac[0][0][ip][ip] / viscosity[ip];
+                    if constexpr (ENABLE_UPWIND_DEBUG) {
+                      if (iter == 0 && ip == 0) {
+                        std::cout << "[UPWIND_DEBUG] Branch: else (default)" << std::endl;
+                        std::cout << "[UPWIND_DEBUG] dMob_dS[ip][ix]=" << dMob_dS[ip][ix] << ", ix=" << ix << std::endl;
+                      }
+                    }
                   }
                   real64 constexpr eps = 0.0;
                   total_mobility += mobility[ip] + eps;
                 } // loop over phases
+
+                constexpr bool ENABLE_MOBILITY_DEBUG = false;
+                if constexpr (ENABLE_MOBILITY_DEBUG) {
+                  if (iter == 0 && ix == 0) {
+                    std::cout << "[MOBILITY_DEBUG] ix=" << ix << ", S1_face=" << facePhaseVolFrac1[0][0] 
+                              << ", S2_face=" << facePhaseVolFrac2[0][0] << std::endl;
+                    std::cout << "[MOBILITY_DEBUG] mobility[0]=" << mobility[0] << ", mobility[1]=" << mobility[1] 
+                              << ", total_mobility=" << total_mobility << std::endl;
+                    std::cout << "[MOBILITY_DEBUG] dMob_dS[0][0]=" << dMob_dS[0][0] << ", dMob_dS[0][1]=" << dMob_dS[0][1] << std::endl;
+                    std::cout << "[MOBILITY_DEBUG] dMob_dS[1][0]=" << dMob_dS[1][0] << ", dMob_dS[1][1]=" << dMob_dS[1][1] << std::endl;
+                    if (ix == 0) {
+                      std::cout << "[MOBILITY_DEBUG] faceRelPerm1[0][0][0]=" << faceRelPerm1[0][0][0] 
+                                << ", faceRelPerm1[0][0][1]=" << faceRelPerm1[0][0][1] << std::endl;
+                      std::cout << "[MOBILITY_DEBUG] dfacePhaseRelPerm1_dPhaseVolFrac[0][0][0][0]=" 
+                                << dfacePhaseRelPerm1_dPhaseVolFrac[0][0][0][0] 
+                                << ", dfacePhaseRelPerm1_dPhaseVolFrac[0][0][1][1]=" 
+                                << dfacePhaseRelPerm1_dPhaseVolFrac[0][0][1][1] << std::endl;
+                    }
+                  }
+                }
 
                 /// Three Forces Flux Contribution: 1- Viscous 2- Gravitational 3- Capillary
                 constexpr int sign[2] = {1, -1};
@@ -1120,6 +1429,17 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                       dV1_dpc[ip][ke] = dV1_dS[ip][ke] * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
                       // GEOS_UNUSED_VAR( dV1_dpc[ip][ke] );
                       GEOS_UNUSED_VAR( dhalfFlux_duT[ip][ix] );
+                      
+                      constexpr bool ENABLE_DV_DEBUG = false;
+                      if constexpr (ENABLE_DV_DEBUG) {
+                        if (iter == 0 && ip == 0 && ke == 0) {
+                          std::cout << "[DV_DEBUG] ix=" << ix << ", ip=" << ip << ", ke=" << ke 
+                                    << ", dV_dS=" << dV_dS << ", dV1_dS[ip][ke]=" << dV1_dS[ip][ke] << std::endl;
+                          std::cout << "[DV_DEBUG] dMob_dS[0][ke]=" << dMob_dS[0][ke] << ", dMob_dS[1][ke]=" << dMob_dS[1][ke] << std::endl;
+                          std::cout << "[DV_DEBUG] mobility[0]=" << mobility[0] << ", mobility[1]=" << mobility[1] << std::endl;
+                          std::cout << "[DV_DEBUG] uT=" << uT << ", total_mobility=" << total_mobility << std::endl;
+                        }
+                      }
                     }
                     else
                     {
@@ -1225,7 +1545,6 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
               check = true;
 
-              // Brenier and Jaffre's PPU check:
               bool flip0[2] = {0, 0};
               bool flip0_k_up[2] = {0, 0};
               bool flip1[2] = {0, 0};
@@ -1267,7 +1586,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                 }
                 else
                 {
-                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )                                                 
+                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )
                   {
                     k_up_0_check[ip] = k_up_0_b;
                   }
@@ -1306,7 +1625,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
             } // while check for BJ PPU
 
-            real64 constexpr eps2 = 4.9304e-32;
+            real64 constexpr eps2 = 1e-12;
             // real64 constexpr eps2 = 0.0;
             // newton update
             dhalfFlux_dpc[0][0] = dhalfFlux1_dS[0][1]*dfacePhaseVolFrac_dCapPres1[0][0][0][0];
@@ -1324,19 +1643,129 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             dhalfFlux_dpc[1][0] = dhalfFlux_dpc10;
             dhalfFlux_dpc[1][1] = dhalfFlux_dpc11;
 
-            local_jacobian = dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps2;
+
+
+            real64 const denom = dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1];
+            real64 const denomAbs = LvArray::math::abs(denom);
+            local_jacobian = (denomAbs < eps2) ? (denom >= 0.0 ? eps2 : -eps2) : denom;
             local_residual = halfFluxVal[0][0] - halfFluxVal[0][1];
+            
 
-            // if (iter == 1) {
-            //   grad_phi[0] = local_residual;
-            // }
 
-            // Check convergence
-            if( std::fabs( local_residual ) < tol )
+            last_local_residual = local_residual;
+            last_local_jacobian = local_jacobian;
+            last_facePhaseVolFrac1_0 = facePhaseVolFrac1[0][0];
+            last_facePhaseVolFrac2_0 = facePhaseVolFrac2[0][0];
+            last_faceCapPres1 = faceCapPres1[0][0][0];
+            last_faceCapPres2 = faceCapPres2[0][0][0];
+            last_iter = iter;
+            
+            constexpr bool ENABLE_NEWTON_ITER_DEBUG = false;
+            if constexpr (ENABLE_NEWTON_ITER_DEBUG) {
+              if (iter < 10 || iter % 10 == 0 || iter >= max_iter - 3) {
+                std::cout << "  [NI] it=" << iter 
+                          << " Pc=" << Pc_int 
+                          << " S1=" << facePhaseVolFrac1[0][0] 
+                          << " S2=" << facePhaseVolFrac2[0][0]
+                          << " Pc1f=" << faceCapPres1[0][0][0] 
+                          << " Pc2f=" << faceCapPres2[0][0][0]
+                          << " dSdPc1=" << dfacePhaseVolFrac_dCapPres1[0][0][0][0]
+                          << " dSdPc2=" << dfacePhaseVolFrac_dCapPres2[0][0][0][0]
+                          << " res=" << local_residual 
+                          << " jac=" << local_jacobian 
+                          << " dPc=" << (std::abs(local_jacobian) > 1e-30 ? local_residual/local_jacobian : 0.0)
+                          << std::endl;
+              }
+            }
+            
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+              if (false) {
+                std::cout << "[LOCAL_SOLVER_DEBUG_ITER] iter=" << iter << ", Pc_int=" << Pc_int 
+                          << ", Pc1_face=" << faceCapPres1[0][0][0] << ", Pc2_face=" << faceCapPres2[0][0][0] << std::endl;
+                std::cout << "[LOCAL_SOLVER_DEBUG_ITER] S1_face=" << facePhaseVolFrac1[0][0] 
+                          << ", S2_face=" << facePhaseVolFrac2[0][0] << std::endl;
+                std::cout << "[LOCAL_SOLVER_DEBUG_ITER] halfFluxVal[0][0]=" << halfFluxVal[0][0] 
+                          << ", halfFluxVal[0][1]=" << halfFluxVal[0][1] << std::endl;
+                std::cout << "[LOCAL_SOLVER_DEBUG_ITER] dhalfFlux_dpc[0][0]=" << dhalfFlux_dpc[0][0] 
+                          << ", dhalfFlux_dpc[0][1]=" << dhalfFlux_dpc[0][1] << std::endl;
+                std::cout << "[LOCAL_SOLVER_DEBUG_ITER] local_residual=" << local_residual 
+                          << ", local_jacobian=" << local_jacobian << std::endl;
+              }
+            }
+
             {
-              // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) <eps2 ) {
-              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
-              // }
+              real64 absRes = std::fabs( local_residual );
+              if( absRes < best_absRes )
+              {
+                best_absRes = absRes;
+                best_Pc = Pc_int;
+              }
+            }
+
+            bool bracketEstablished = bracket_lo_set && bracket_hi_set;
+            if( !bracketEstablished )
+            {
+              if( !bracket_lo_set && !bracket_hi_set )
+              {
+                Pc_bracket_lo = Pc_int;
+                res_bracket_lo = local_residual;
+                bracket_lo_set = true;
+              }
+              else
+              {
+                if( res_bracket_lo * local_residual < 0.0 )
+                {
+                  Pc_bracket_hi = Pc_int;
+                  res_bracket_hi = local_residual;
+                  bracket_hi_set = true;
+                  if( Pc_bracket_lo > Pc_bracket_hi )
+                  {
+                    real64 tmpPc = Pc_bracket_lo;
+                    real64 tmpRes = res_bracket_lo;
+                    Pc_bracket_lo = Pc_bracket_hi;
+                    res_bracket_lo = res_bracket_hi;
+                    Pc_bracket_hi = tmpPc;
+                    res_bracket_hi = tmpRes;
+                  }
+                }
+                else
+                {
+                  Pc_bracket_lo = Pc_int;
+                  res_bracket_lo = local_residual;
+              }
+              }
+            }
+            else
+            {
+              if( local_residual * res_bracket_lo <= 0.0 )
+              {
+                Pc_bracket_hi = Pc_int;
+                res_bracket_hi = local_residual;
+              }
+              else
+              {
+                Pc_bracket_lo = Pc_int;
+                res_bracket_lo = local_residual;
+              }
+            }
+            bracketEstablished = bracket_lo_set && bracket_hi_set;
+
+            constexpr bool ENABLE_BRACKET_DEBUG = false;
+            if constexpr (ENABLE_BRACKET_DEBUG) {
+              if (iter < 5 || iter % 10 == 0) {
+                std::cout << "  [BRACKET] iter=" << iter 
+                          << " established=" << bracketEstablished
+                          << " lo=" << Pc_bracket_lo << " (res=" << res_bracket_lo << ")"
+                          << " hi=" << Pc_bracket_hi << " (res=" << res_bracket_hi << ")"
+                          << " width=" << (Pc_bracket_hi - Pc_bracket_lo) << std::endl;
+              }
+            }
+
+            real64 const convergeTol = ( ENABLE_BEST_SOLUTION_FALLBACK && fallback_used ) ? ( FALLBACK_TOL_FACTOR * tol ) : tol;
+            bool const eitherClamped = faceCapPres1_clamped || faceCapPres2_clamped;
+            bool const rejectClampedConvergence = eitherClamped && !bracketEstablished && iter < max_iter - 5;
+            if( std::fabs( local_residual ) < convergeTol && !rejectClampedConvergence )
+            {
               converged = 1;
               outFile << GEOS_FMT( "{:10.10e}", local_jacobian );
               outFile << GEOS_FMT( ",{:10.10e}", local_residual );
@@ -1372,122 +1801,230 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               outFile << std::endl;
               break; // Converged
             }
-            // converged = 0;
-            if( (!converged) && ( iter > (max_iter - 2)) )
-            {
-              if( div == 0 )
-              {
-                iter = 0;
-                div++;
-                Pc_int = Pc_min_all;
-              }
-              else if( div == 1 )
-              {
-                iter = 0;
-                div++;
-                Pc_int = Pc_max_all;
-              }
-              else if( div > 1 )
-              {
-              local_jacobian = 0.0;
 
-              iter = max_iter;
+            {
+              bool atLoBound = (std::fabs(Pc_int - Pc_union_min) < 1e-10 * (std::fabs(Pc_union_min) + 1.0));
+              bool atHiBound = (std::fabs(Pc_int - Pc_union_max) < 1e-10 * (std::fabs(Pc_union_max) + 1.0));
+              if( (atLoBound || atHiBound) && std::fabs( local_residual ) < 10.0 * tol && !rejectClampedConvergence )
+              {
+                converged = 1;
+                break;
+              }
+            }
+
+            if( iter >= max_iter - 1 )
+            {
+              if constexpr ( ENABLE_SWEEP_FALLBACK )
+              {
+                if( !sweep_active )
+                {
+                  sweep_active = true;
+                  sweep_newton_iter_end = iter;
+                  sweep_best_Pc = best_Pc;
+                  sweep_best_absRes = best_absRes;
+                  bracket_lo_set = false;
+                  bracket_hi_set = false;
+                  Pc_int = Pc_union_min;
+                  max_iter += 500;
+                  if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                    std::cout << "[SWEEP] Activated at iter=" << iter
+                              << ", sweeping [" << Pc_union_min << ", " << Pc_union_max << "]"
+                              << ", dS=" << SWEEP_DS << std::endl;
+                  }
+                  iter++;
+                  continue;  // re-enter loop to evaluate at Pc_union_min
+                }
+                else
+                {
+                  real64 const sweepAcceptTol = SWEEP_ACCEPT_TOL_FACTOR * tol;
+                  if( sweep_best_absRes < sweepAcceptTol )
+                  {
+                    Pc_int = sweep_best_Pc;
+                    converged = 1;
+                    if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                      std::cout << "[SWEEP] Accepted best: Pc=" << sweep_best_Pc
+                                << ", |res|=" << sweep_best_absRes
+                                << " < sweepTol=" << sweepAcceptTol << std::endl;
+                    }
+                    break;
+                  }
+                  else
+                  {
+                    if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                      std::cout << "[SWEEP] DIVERGED: sweep_best_Pc=" << sweep_best_Pc
+                                << ", sweep_best_absRes=" << sweep_best_absRes
+                                << ", sweepAcceptTol=" << sweepAcceptTol << std::endl;
+                    }
+                    div = 1;
+              local_jacobian = 0.0;
+                    break;
+              }
               }
             }
             else
             {
+                if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                  std::cout << "[LOCAL_SOLVER_DEBUG] DIVERGED: best_Pc=" << best_Pc
+                            << ", best_absRes=" << best_absRes
+                            << ", fallbackTol=" << FALLBACK_TOL_FACTOR * tol << std::endl;
+                }
+                div = 1;
+                local_jacobian = 0.0;
+                break;
+              }
+            }
 
-              real64 deltaPc = local_residual/local_jacobian;
-
-              if( std::fabs( local_residual ) < tol )
+            if( sweep_active && !bracketEstablished )
+            {
+              real64 const absRes_sweep = std::fabs( local_residual );
+              if( absRes_sweep < sweep_best_absRes )
               {
-
-                converged = 1;  
-              outFile << GEOS_FMT( "{:10.10e}", local_jacobian );
-              outFile << GEOS_FMT( ",{:10.10e}", local_residual );
-              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", Pc_int_iterate );
-              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres1[0][0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres2[0][0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", transHat[0] );
-              outFile << GEOS_FMT( ",{:10.10e}", transHat[1] );
-              outFile << GEOS_FMT( ",{:10.10e}", gravCoefHat[0] );
-              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[0] );
-              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[1] );
-              outFile << GEOS_FMT( ",{:10.10e}", uT );
-              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[0] );
-              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[0] );
-              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[1] );
-              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[1] );     
-              outFile << std::endl;
-                break; // Converged
+                sweep_best_absRes = absRes_sweep;
+                sweep_best_Pc = Pc_int;
               }
 
-              // Damping option:
+              real64 const absDSdPc1 = std::fabs( dfacePhaseVolFrac_dCapPres1[0][0][0][0] );
+              real64 const absDSdPc2 = std::fabs( dfacePhaseVolFrac_dCapPres2[0][0][0][0] );
+              real64 const max_absDSdPc = fmax( absDSdPc1, absDSdPc2 );
+              real64 const dPc_max_cap = ( Pc_union_max - Pc_union_min ) / static_cast< real64 >( SWEEP_MIN_POINTS );
+              real64 dPc_step;
+              if( max_absDSdPc > 1e-20 )
+              {
+                dPc_step = SWEEP_DS / max_absDSdPc;
+              }
+              else
+              {
+                dPc_step = dPc_max_cap;
+              }
+              dPc_step = fmin( dPc_step, dPc_max_cap );
+
+              real64 const Pc_next = Pc_int + dPc_step;
+
+              if( Pc_next >= Pc_union_max )
+              {
+                Pc_int = sweep_best_Pc;
+                max_iter = iter + 2;
+                if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                  std::cout << "[SWEEP] Completed full sweep, no sign change found."
+                            << " sweep_best_Pc=" << sweep_best_Pc
+                            << ", sweep_best_absRes=" << sweep_best_absRes << std::endl;
+                }
+              }
+              else
+              {
+                Pc_int = Pc_next;
+              }
+
+              if constexpr (ENABLE_BRACKET_DEBUG) {
+                if( (iter - sweep_newton_iter_end) % 20 == 0 || Pc_next >= Pc_union_max ) {
+                  std::cout << "  [SWEEP] Pc=" << Pc_int
+                            << ", dPc_step=" << dPc_step
+                            << ", best_Pc=" << sweep_best_Pc
+                            << ", best_absRes=" << sweep_best_absRes << std::endl;
+                }
+              }
+            }
+            else if( sweep_active && bracketEstablished )
+            {
+              if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+                std::cout << "[SWEEP] Bracket found! Switching to bisection."
+                          << " bracket=[" << Pc_bracket_lo << ", " << Pc_bracket_hi << "]" << std::endl;
+              }
+              Pc_int = ( Pc_bracket_lo + Pc_bracket_hi ) / 2.0;
+            }
+            else
+            {
+              real64 deltaPc = local_residual / local_jacobian;
+
               if (damping) {
                 real64 max_dpc = fmax( fabs(dCapPres1_dfacePhaseVolFrac[0][0][0][0]), fabs(dCapPres2_dfacePhaseVolFrac[0][0][0][0]));
-  
                   real64 sign = std::copysign(1.0, deltaPc);
-  
                   deltaPc = fmin( fabs(deltaPc), max_dpc * 0.1 );
                   deltaPc *= sign;
-  
+              }
+
+              real64 Pc_newton = Pc_int - deltaPc;
+
+              bool useBisection = false;
+              if( bracketEstablished )
+              {
+                real64 brak_width = Pc_bracket_hi - Pc_bracket_lo;
+                if( Pc_newton <= Pc_bracket_lo || Pc_newton >= Pc_bracket_hi ||
+                    std::fabs(deltaPc) > 0.75 * brak_width )
+                {
+                  useBisection = true;
+                }
+              }
+
+              if( useBisection )
+              {
+                Pc_int = ( Pc_bracket_lo + Pc_bracket_hi ) / 2.0;
+              }
+              else
+              {
+                Pc_int = fmin( Pc_union_max, fmax( Pc_newton, Pc_union_min ) );
+              }
+
+              if( std::fabs( Pc_int - prev_Pc_evaluated ) < 1e-10 * std::fabs( Pc_int ) + 1e-30 )
+              {
+                n_same_pc++;
+              }
+              else
+              {
+                n_same_pc = 0;
+              }
+              prev_Pc_evaluated = Pc_int_iterate;
+
+              if( n_same_pc >= 3 && !bracketEstablished )
+              {
+                real64 Pc_probe = 0.0;
+                real64 const Pc_inner_max = fmin( Pc1_max, Pc2_max );
+                if( stuck_probe_level == 0 )
+                {
+                  Pc_probe = ( Pc1 + Pc2 ) / 2.0;
+                }
+                else if( stuck_probe_level == 1 )
+                {
+                  Pc_probe = Pc_inner_max - 1.0;
+                }
+                else if( stuck_probe_level == 2 )
+                {
+                  Pc_probe = Pc_inner_max;
+                }
+                else
+                {
+                  if( std::fabs( Pc_int - Pc_union_min ) < std::fabs( Pc_int - Pc_union_max ) )
+                    Pc_probe = Pc_union_max;
+                  else
+                    Pc_probe = Pc_union_min;
                 }
 
-                if (bisection && iter < 7){
-                  if ( iter == 0 ){
-
-                  old_Pc_int = Pc_int;
-                  Pc_int = next_Pc_int;
-                  old_residual = local_residual;
-
-                  } else if (old_residual * local_residual < 0.0 ) { 
-                  
-                  Pc_int = (next_Pc_int + old_Pc_int) / 2.0;
-                  old_residual = local_residual;
-                  old_Pc_int = next_Pc_int;
-                  next_Pc_int = Pc_int;
-
-                  } else if (old_residual * local_residual > 0.0 ) {
-                  
-                  Pc_int = old_Pc_int;
-                  old_residual = local_residual;
-                  old_Pc_int = next_Pc_int;
-                  next_Pc_int = Pc_int;
-
-                  } else {
-
-                  Pc_int = old_Pc_int;
-                  old_residual = local_residual;
-                  old_Pc_int = next_Pc_int;
-                  next_Pc_int = Pc_int;
-
+                if( std::fabs( Pc_probe - Pc_int ) > 1e-10 * ( std::fabs( Pc_int ) + 1.0 ) )
+                {
+                  Pc_int = Pc_probe;
                 }
-
-                } else if (newton_path){
-                  Pc_int -= next_Pc_int;
-
-                } else {
-
-                  Pc_int -= deltaPc;
-
+                else
+                {
+                  stuck_probe_level++;
+                  continue;
                 }
-              
+                stuck_probe_level++;
+                n_same_pc = 0;
+
+                if constexpr (ENABLE_BRACKET_DEBUG) {
+                  std::cout << "  [STUCK] Forced probe (level " << (stuck_probe_level - 1)
+                            << ") to Pc_int=" << Pc_int << std::endl;
+                }
+              }
+
+              if constexpr (ENABLE_BRACKET_DEBUG) {
+                if (iter < 5 || iter % 10 == 0) {
+                  char const * stepName = useBisection ? "BISECTION" : "NEWTON";
+                  std::cout << "  [STEP] " << stepName
+                            << " -> Pc_int=" << Pc_int << std::endl;
+                }
+              }
+            } // end step selection
 
               // truncate the updated capillary pressure (extended capillary pressure condition) for reporting/plotting:
 
@@ -1531,24 +2068,56 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               outFile << std::endl;
 
               iter++;
-
-            }
-
-
+            
           } // while loop
 
+          if( converged )
+          {
+            warmStartPc = Pc_int;
+          }
 
+          if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+            const char* modeNames[] = {
+              "DRAINAGE",
+              "IMBIBITION", 
+              "DRAINAGE_TO_IMBIBITION",
+              "IMBIBITION_TO_DRAINAGE",
+              "IMBIBITION_TO_DRAINAGE_FROM_SCANNING"
+            };
+            integer mode0 = static_cast<integer>(modes[0]);
+            integer mode1 = static_cast<integer>(modes[1]);
+            const char* name0 = (mode0 >= 0 && mode0 <= 4) ? modeNames[mode0] : "UNKNOWN";
+            const char* name1 = (mode1 >= 0 && mode1 <= 4) ? modeNames[mode1] : "UNKNOWN";
+            
+            std::cout << "[LOCAL_SOLVER_DEBUG] converged=" << converged << ", iter=" << last_iter << ", div=" << div << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Modes: cell0=" << name0 << " (" << mode0 << "), cell1=" << name1 << " (" << mode1 << ")" << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Capillary Pressures: Pc1=" << Pc1 << ", Pc2=" << Pc2 << ", Pc_int=" << Pc_int << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Pc bounds: Pc1_min=" << Pc1_min << ", Pc1_max=" << Pc1_max << ", Pc2_min=" << Pc2_min << ", Pc2_max=" << Pc2_max << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Initial saturations: S1=" << saturations[0] << ", S2=" << saturations[1] << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Last face saturations: S1_face=" << last_facePhaseVolFrac1_0 << ", S2_face=" << last_facePhaseVolFrac2_0 << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Last face capillary pressures: Pc1_face=" << last_faceCapPres1 << ", Pc2_face=" << last_faceCapPres2 << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Last residual: local_residual=" << last_local_residual << ", local_jacobian=" << last_local_jacobian << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Best solution: best_Pc=" << best_Pc << ", best_absRes=" << best_absRes
+                      << ", fallbackTol=" << FALLBACK_TOL_FACTOR * tol << ", fallback_used=" << fallback_used << std::endl;
+            std::cout << "[LOCAL_SOLVER_DEBUG] Warm-start: used=" << usedWarmStart << ", warmStartPc=" << warmStartPc << std::endl;
+            if( sweep_active ) {
+              std::cout << "[LOCAL_SOLVER_DEBUG] Sweep: active, sweep_best_Pc=" << sweep_best_Pc
+                        << ", sweep_best_absRes=" << sweep_best_absRes
+                        << ", sweep_iter=" << (last_iter - sweep_newton_iter_end) << std::endl;
+            }
+          }
 
           if( converged )
           {
 
-            // Global derivatives:
-            real64 constexpr eps3 = 4.9304e-32;
-            // real64 constexpr eps3 = 0.0;
+            real64 constexpr eps3 = 1e-12;
+            real64 const denom_deriv = dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1];
+            real64 const denomAbs_deriv = LvArray::math::abs(denom_deriv);
+            real64 const denom_protected = (denomAbs_deriv < eps3) ? (denom_deriv >= 0.0 ? eps3 : -eps3) : denom_deriv;
 
-            real64 const dPc_int_dS1 =(-1.0) * (dhalfFlux1_dS[0][0] +  dhalfFlux_duT[0][0] * duT_dS[0] - dhalfFlux_duT[0][1] * duT_dS[0]) / (dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps3);
-            real64 const dPc_int_dS2 =(-1.0) * (dhalfFlux_duT[0][0] * duT_dS[1] - dhalfFlux2_dS[0][0] - dhalfFlux_duT[0][1] * duT_dS[1]) / (dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps3);
-            real64 const dPc_int_du =(-1.0) * (dhalfFlux_duT[0][0]  - dhalfFlux_duT[0][1]) / (dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps3);
+            real64 const dPc_int_dS1 =(-1.0) * (dhalfFlux1_dS[0][0] +  dhalfFlux_duT[0][0] * duT_dS[0] - dhalfFlux_duT[0][1] * duT_dS[0]) / denom_protected;
+            real64 const dPc_int_dS2 =(-1.0) * (dhalfFlux_duT[0][0] * duT_dS[1] - dhalfFlux2_dS[0][0] - dhalfFlux_duT[0][1] * duT_dS[1]) / denom_protected;
+            real64 const dPc_int_du =(-1.0) * (dhalfFlux_duT[0][0]  - dhalfFlux_duT[0][1]) / denom_protected;
 
             dFlux_dP[0][0] =  (dhalfFlux_duT[0][0] * duT_dP[0] + dhalfFlux_dpc[0][0] * dPc_int_du * duT_dP[0]) * density2[0] + halfFluxVal[0][0] * dDens_dP2[0][0];
             dFlux_dS[0][0] = (dhalfFlux1_dS[0][0] +  dhalfFlux_duT[0][0] * duT_dS[0] + dhalfFlux_dpc[0][0] * dPc_int_dS1) * density2[0];
@@ -1565,9 +2134,54 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             fluxVal[0] = halfFluxVal[0][0] * density2[0];
             fluxVal[1] = halfFluxVal[1][0] * density2[1];
 
+            constexpr bool ENABLE_GLOBAL_DERIVATIVES_DEBUG = false;
+            if constexpr (ENABLE_GLOBAL_DERIVATIVES_DEBUG) {
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] fluxVal[0]=" << fluxVal[0] << ", fluxVal[1]=" << fluxVal[1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] dFlux_dP[0][0]=" << dFlux_dP[0][0] << ", dFlux_dP[0][1]=" << dFlux_dP[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] dFlux_dP[1][0]=" << dFlux_dP[1][0] << ", dFlux_dP[1][1]=" << dFlux_dP[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] dFlux_dS[0][0]=" << dFlux_dS[0][0] << ", dFlux_dS[0][1]=" << dFlux_dS[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] dFlux_dS[1][0]=" << dFlux_dS[1][0] << ", dFlux_dS[1][1]=" << dFlux_dS[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG] Intermediate values:" << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dPc_int_dS1=" << dPc_int_dS1 << ", dPc_int_dS2=" << dPc_int_dS2 << ", dPc_int_du=" << dPc_int_du << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   halfFluxVal[0][0]=" << halfFluxVal[0][0] << ", halfFluxVal[0][1]=" << halfFluxVal[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   halfFluxVal[1][0]=" << halfFluxVal[1][0] << ", halfFluxVal[1][1]=" << halfFluxVal[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux_dpc[0][0]=" << dhalfFlux_dpc[0][0] << ", dhalfFlux_dpc[0][1]=" << dhalfFlux_dpc[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux_dpc[1][0]=" << dhalfFlux_dpc[1][0] << ", dhalfFlux_dpc[1][1]=" << dhalfFlux_dpc[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux1_dS[0][0]=" << dhalfFlux1_dS[0][0] << ", dhalfFlux1_dS[0][1]=" << dhalfFlux1_dS[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux1_dS[1][0]=" << dhalfFlux1_dS[1][0] << ", dhalfFlux1_dS[1][1]=" << dhalfFlux1_dS[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux2_dS[0][0]=" << dhalfFlux2_dS[0][0] << ", dhalfFlux2_dS[0][1]=" << dhalfFlux2_dS[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux2_dS[1][0]=" << dhalfFlux2_dS[1][0] << ", dhalfFlux2_dS[1][1]=" << dhalfFlux2_dS[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux_duT[0][0]=" << dhalfFlux_duT[0][0] << ", dhalfFlux_duT[0][1]=" << dhalfFlux_duT[0][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   dhalfFlux_duT[1][0]=" << dhalfFlux_duT[1][0] << ", dhalfFlux_duT[1][1]=" << dhalfFlux_duT[1][1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   duT_dS[0]=" << duT_dS[0] << ", duT_dS[1]=" << duT_dS[1] << std::endl;
+              std::cout << "[GLOBAL_DERIVATIVES_DEBUG]   density2[0]=" << density2[0] << ", density2[1]=" << density2[1] << std::endl;
+            }
+
           } else {
 
-             std::cout << "**********************Diverged*******************" << std::endl;
+            if constexpr (ENABLE_LOCAL_SOLVER_DEBUG) {
+            std::cout << "**********************Diverged*******************" << std::endl;
+            
+            const char* modeNames[] = {
+              "DRAINAGE",
+              "IMBIBITION", 
+              "DRAINAGE_TO_IMBIBITION",
+              "IMBIBITION_TO_DRAINAGE",
+              "IMBIBITION_TO_DRAINAGE_FROM_SCANNING"
+            };
+            integer mode0 = static_cast<integer>(modes[0]);
+            integer mode1 = static_cast<integer>(modes[1]);
+            const char* name0 = (mode0 >= 0 && mode0 <= 4) ? modeNames[mode0] : "UNKNOWN";
+            const char* name1 = (mode1 >= 0 && mode1 <= 4) ? modeNames[mode1] : "UNKNOWN";
+            std::cout << "  [DEBUG] Modes: cell0=" << name0 << " (" << mode0 << "), cell1=" << name1 << " (" << mode1 << ")" << std::endl;
+            std::cout << "  [DEBUG] Capillary Pressures: Pc1=" << Pc1 << ", Pc2=" << Pc2 << ", Pc_int=" << Pc_int << std::endl;
+            std::cout << "  [DEBUG] Pc bounds: Pc1_min=" << Pc1_min << ", Pc1_max=" << Pc1_max << ", Pc2_min=" << Pc2_min << ", Pc2_max=" << Pc2_max << std::endl;
+            std::cout << "  [DEBUG] Initial saturations: S1=" << saturations[0] << ", S2=" << saturations[1] << std::endl;
+            std::cout << "  [DEBUG] Last iteration values: iter=" << last_iter << ", div=" << div << std::endl;
+            std::cout << "  [DEBUG] Last face saturations: S1_face=" << last_facePhaseVolFrac1_0 << ", S2_face=" << last_facePhaseVolFrac2_0 << std::endl;
+            std::cout << "  [DEBUG] Last face capillary pressures: Pc1_face=" << last_faceCapPres1 << ", Pc2_face=" << last_faceCapPres2 << std::endl;
+            std::cout << "  [DEBUG] Last residual: local_residual=" << last_local_residual << ", local_jacobian=" << last_local_jacobian << std::endl;
+            }
 
           }
           
@@ -2166,16 +2780,6 @@ public:
           // compute the flux and derivatives using upstream cell mobility
           fluxVal[ip] = mobility[ip] * potGrad;  // F = M * DPhi
 
-          // DEBUG: Print flux computation for regular kernel
-          printf( "REGULAR_KERNEL_FLUX: iconn=%d, ip=%d, mobility[%d]=%.10e, potGrad=%.10e, fluxVal[%d]=%.10e\n",
-                  static_cast<int>(iconn),
-                  static_cast<int>(ip),
-                  static_cast<int>(ip),
-                  mobility[ip],
-                  potGrad,
-                  static_cast<int>(ip),
-                  fluxVal[ip] );
-
           for( integer ke = 0; ke < 2; ++ke )
           {
             dFlux_dP[ip][ke] *= mobility[ip];    // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 -
@@ -2199,15 +2803,6 @@ public:
           }
 
           // populate local flux vector and derivatives
-          printf( "REGULAR_KERNEL_ACCUM: iconn=%d, ip=%d, k[0]=%d, k[1]=%d, fluxVal[%d]=%.10e, dt=%.10e, adding=%.10e\n",
-                  static_cast<int>(iconn),
-                  static_cast<int>(ip),
-                  static_cast<int>(k[0]),
-                  static_cast<int>(k[1]),
-                  static_cast<int>(ip),
-                  fluxVal[ip],
-                  m_dt,
-                  m_dt * fluxVal[ip] );
           stack.localFlux[k[0]*numEqn + ip] += m_dt * fluxVal[ip];
           stack.localFlux[k[1]*numEqn + ip] -= m_dt * fluxVal[ip];
 
@@ -2446,7 +3041,13 @@ public:
     m_interfaceRegionByConnector( interfaceRegionByConnector )
     // ,
     // m_interfaceConstitutivePairs_temp( interfaceConstitutivePairs_temp )
-  {}
+  {
+    localIndex const numConn = stencilWrapper.size();
+    if( static_cast< localIndex >( m_convergedPcInt.size() ) < numConn )
+    {
+      m_convergedPcInt.resize( numConn, -1.0 );
+    }
+  }
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -2965,9 +3566,6 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
           stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
           stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
 
-          // // Debug: print if local_solver is being called
-          // printf( "DEBUG: local_solver called for iconn=%d, connectorHasInterfaceConditionQ=%d\n", 
-          //         static_cast<int>(iconn), static_cast<int>(connectorHasInterfaceConditionQ) );
 
           // Use extracted trapped saturations if available, otherwise use defaults
           if( trappedSats1_extracted[0] >= 0.0 )
@@ -2979,9 +3577,18 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
             trappedSats2 = trappedSats2_extracted;
           }
           
+          real64 warmStartPc = ( iconn < static_cast< localIndex >( m_convergedPcInt.size() ) )
+                               ? m_convergedPcInt[iconn] : -1.0;
+          
           local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs, 
             cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
-            phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2 );
+            phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2,
+            warmStartPc );
+
+          if( iconn < static_cast< localIndex >( m_convergedPcInt.size() ) )
+          {
+            m_convergedPcInt[iconn] = warmStartPc;
+          }
           
 
              fluxVal[0] = phi[0];
@@ -3039,6 +3646,8 @@ protected:
   // std::tuple< constitutive::RelativePermeabilityBase *,
   //             constitutive::CapillaryPressureBase *,
   //             constitutive::TwoPhaseImmiscibleFluid * > const m_interfaceConstitutivePairs_temp;
+
+  inline static std::vector< real64 > m_convergedPcInt;
 
 };
 

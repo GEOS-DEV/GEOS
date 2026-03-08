@@ -209,11 +209,9 @@ TableCapillaryPressure::KernelWrapper::
   auto inputSlice = input.toSliceConst();
 
   phaseVolFraction[ipWater] =
-    m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
-                                        &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
-  phaseVolFraction[ipWater] =
     m_inverseCapPresWrappers[0].compute( inputSlice,
                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+
   phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];
 
 }
@@ -229,9 +227,6 @@ TableCapillaryPressure::KernelWrapper::
   compute( phaseVolFraction,
            m_phaseCapPressure[k][q],
            m_dPhaseCapPressure_dPhaseVolFrac[k][q] );
-
-  std::cerr << "cell :" << k << "\n phaseCap " << m_phaseCapPressure[k][q] << std::endl;
-  std::cerr << "dPhaseCap_dS" << m_phaseCapPressure[k][q] << std::endl;
 }
 
 } // namespace constitutive

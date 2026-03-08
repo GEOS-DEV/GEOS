@@ -39,7 +39,8 @@ namespace geos {
                 DRAINAGE = 0,//to be used in array of Kernels
                 IMBIBITION = 1,
                 DRAINAGE_TO_IMBIBITION = 2,
-                IMBIBITION_TO_DRAINAGE = 3
+                IMBIBITION_TO_DRAINAGE = 3,
+                IMBIBITION_TO_DRAINAGE_FROM_SCANNING = 4
             };
 
             DECLARE_FIELD(phaseCapPressure,
@@ -98,6 +99,14 @@ namespace geos {
                           LEVEL_0,
                           WRITE_AND_READ,
                           "Phase min historical phase volume fraction");
+
+            DECLARE_FIELD(phaseMode2PeakVolFraction,
+                          "phaseMode2PeakVolFraction",
+                          array2dLayoutPhase,
+                          0,
+                          LEVEL_0,
+                          WRITE_AND_READ,
+                          "Peak saturation reached during Mode 2 (DRAINAGE_TO_IMBIBITION)");
 
 
         }

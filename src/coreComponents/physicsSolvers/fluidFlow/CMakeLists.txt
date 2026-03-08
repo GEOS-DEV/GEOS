@@ -158,8 +158,8 @@ set( kernelTemplateFileList "" )
 
 # Keep only the templates that are unrelated to hybrid flux/dirichlet
 if( ENABLE_HPCREACT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../constitutive/HPCReact/CMakeLists.txt" )
-  list( APPEND kernelTemplateFileList
-        ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+list( APPEND kernelTemplateFileList
+      ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
 endif()
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )

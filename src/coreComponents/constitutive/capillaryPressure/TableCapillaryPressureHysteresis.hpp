@@ -21,6 +21,7 @@
 
 #include "constitutive/KilloughHysteresis.hpp"
 #include "CapillaryPressureFields.hpp"
+#include "common/DataLayouts.hpp"
 
 namespace geos {
 
@@ -60,8 +61,11 @@ namespace geos {
 
                 KernelWrapper(
                         arrayView1d<TableFunction::KernelWrapper const> const &wettingNonWettingCapillaryPressureKernelWrappers,
+                        arrayView1d<TableFunction::KernelWrapper const> const &inverseWettingNonWettingCapillaryPressureKernelWrappers,
                         arrayView1d<TableFunction::KernelWrapper const> const &wettingIntermediateCapillaryPressureKernelWrappers,
+                        arrayView1d<TableFunction::KernelWrapper const> const &inverseWettingIntermediateCapillaryPressureKernelWrappers,
                         arrayView1d<TableFunction::KernelWrapper const> const &nonWettingIntermediateCapillaryPressureKernelWrappers,
+                        arrayView1d<TableFunction::KernelWrapper const> const &inverseNonWettingIntermediateCapillaryPressureKernelWrappers,
                         arrayView1d<integer const> const &phaseHasHysteresis,
                         arrayView1d<real64 const> const &landParam,
                         real64 const &jerauldParam_a,
@@ -72,6 +76,7 @@ namespace geos {
                         KilloughHysteresis::HysteresisCurve const &nonWettingCurve,
                         arrayView2d<real64 const, compflow::USD_PHASE> const &phaseMinHistoricalVolFraction,
                         arrayView2d<real64 const, compflow::USD_PHASE> const &phaseMaxHistoricalVolFraction,
+                        arrayView2d<real64, compflow::USD_PHASE> &phaseMode2PeakVolFraction,
                         arrayView1d<integer const> const &phaseTypes,
                         arrayView1d<integer const> const &phaseOrder,
                         arrayView1d<integer> const &mode,
@@ -95,6 +100,8 @@ namespace geos {
                         const geos::real64 &landParam,
                         const geos::real64 &phaseVolFraction,
                         const geos::real64 &phaseMinHistoricalVolFraction,
+                        const geos::real64 &phaseMaxHistoricalVolFraction,
+                        const geos::real64 &phaseMode2PeakVolFraction,
                         geos::real64 &phaseTrappedVolFrac,
                         geos::real64 &phaseCapPressure,
                         geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
@@ -109,6 +116,8 @@ namespace geos {
                         const geos::real64 &landParam,
                         const geos::real64 &phaseVolFraction,
                         const geos::real64 &phaseMinHistoricalVolFraction,
+                        const geos::real64 &phaseMaxHistoricalVolFraction,
+                        const geos::real64 &phaseMode2PeakVolFraction,
                         geos::real64 &phaseTrappedVolFrac,
                         geos::real64 &phaseCapPressure,
                         geos::real64 &dPhaseCapPressure_dPhaseVolFrac,
@@ -157,7 +166,8 @@ namespace geos {
                                             arraySlice1d<real64, relperm::USD_RELPERM - 2> const &phaseCapPressure,
                                             arraySlice2d<real64,
                                                     relperm::USD_RELPERM_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
-                                            ModeIndexType &mode) const;
+                                            ModeIndexType &mode,
+                                            arraySlice1d<real64, compflow::USD_PHASE - 1> &phaseMode2PeakVolFraction) const;
 
 
                 GEOS_HOST_DEVICE
@@ -189,7 +199,8 @@ namespace geos {
                                        arraySlice1d<real64, relperm::USD_RELPERM - 2> const &phaseCapPressure,
                                        arraySlice2d<real64,
                                                relperm::USD_RELPERM_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
-                                       ModeIndexType &mode) const;
+                                       ModeIndexType &mode,
+                                       arraySlice1d<real64, compflow::USD_PHASE - 1> &phaseMode2PeakVolFraction) const;
 
                 //uppermost call-wrappers
                 // Standard 3-argument compute method for compatibility with InverseCapillaryPressure
@@ -208,7 +219,8 @@ namespace geos {
                                      arraySlice1d<real64, cappres::USD_CAPPRES - 2> const &phaseCapPressure,
                                      arraySlice2d<real64,
                                              cappres::USD_CAPPRES_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
-                                     ModeIndexType &mode) const;
+                                     ModeIndexType &mode,
+                                     arraySlice1d<real64, compflow::USD_PHASE - 1> &phaseMode2PeakVolFraction) const;
 
                 GEOS_HOST_DEVICE
                 virtual void update(localIndex const k,
@@ -232,10 +244,112 @@ namespace geos {
                 void computeInv(arraySlice1d<real64, compflow::USD_PHASE - 1> const &phaseVolFraction,
                                 arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseMaxHistoricalVolFraction,
                                 arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseMinHistoricalVolFraction,
+                                arraySlice1d<real64 const, compflow::USD_PHASE - 1> const &phaseMode2PeakVolFraction,
                                 arraySlice1d<real64 const, cappres::USD_CAPPRES - 2> const &phaseTrappedVolFrac,
                                 arraySlice1d<real64 const, cappres::USD_CAPPRES - 2> const &phaseCapPressure,
                                 arraySlice2d<real64, cappres::USD_CAPPRES_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
                                 fields::cappres::ModeIndexType const &mode) const;
+
+                /**
+                 * @brief Evaluate the raw drainage or imbibition table at a given saturation,
+                 *        bypassing the hysteresis mode-transition logic in compute().
+                 * @param tableIdx Table index (0 = DRAINAGE, 1 = IMBIBITION)
+                 * @param phaseVolFraction Phase volume fraction to evaluate at
+                 * @param phaseCapPressure [out] Capillary pressure from the table
+                 * @param dPhaseCapPressure_dPhaseVolFrac [out] Derivative of Pc w.r.t. S
+                 */
+                GEOS_HOST_DEVICE
+                void computeRawTablePc( integer const tableIdx,
+                                        real64 const & phaseVolFraction,
+                                        real64 & phaseCapPressure,
+                                        real64 & dPhaseCapPressure_dPhaseVolFrac ) const
+                {
+                    computeBoundCapillaryPressure(
+                        m_wettingNonWettingCapillaryPressureKernelWrappers[tableIdx],
+                        phaseVolFraction, phaseCapPressure, dPhaseCapPressure_dPhaseVolFrac );
+                }
+
+                /**
+                 * @brief Compute the actual Pc range [Pc_lo, Pc_hi] for a scanning curve.
+                 *
+                 * For Mode 2 (DRAINAGE_TO_IMBIBITION):
+                 *   Pc_hi = Pc_drainage(Shy)          (departure point)
+                 *   Pc_lo = Pc_imbibition(Swma)       (endpoint, where F=1)
+                 * For Mode 3 (IMBIBITION_TO_DRAINAGE):
+                 *   Pc_lo = Pc_imbibition(Shy)         (departure point)
+                 *   Pc_hi = Pc_drainage(Scrt)          (endpoint, where F=1)
+                 *
+                 * @param phaseMinHistVolFrac  Minimum historical volume fraction (Shy for Mode 2)
+                 * @param phaseMaxHistVolFrac  Maximum historical volume fraction (Shy for Mode 3)
+                 * @param mode                 Hysteresis mode
+                 * @param Pc_lo  [out] Lower bound of scanning curve Pc range
+                 * @param Pc_hi  [out] Upper bound of scanning curve Pc range
+                 */
+                GEOS_HOST_DEVICE
+                void computeScanningCurvePcRange( real64 const phaseMinHistVolFrac,
+                                                  real64 const phaseMaxHistVolFrac,
+                                                  ModeIndexType const mode,
+                                                  real64 & Pc_lo,
+                                                  real64 & Pc_hi ) const
+                {
+                    integer const ipWater = 0;
+                    real64 dPc_dummy;
+
+                    if( mode == ModeIndexType::DRAINAGE_TO_IMBIBITION )
+                    {
+                        // Shy = min historical saturation (departure from drainage)
+                        real64 const Smin_curve = m_wettingCurve.oppositeBoundPhaseVolFraction;
+                        real64 const Shy = LvArray::math::max( phaseMinHistVolFrac, Smin_curve );
+
+                        // Compute Scrt (trapped saturation) from Land model
+                        real64 Scrt = 0.0;
+                        KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(
+                            m_wettingCurve, Shy, m_landParam[ipWater],
+                            m_jerauldParam_a, m_jerauldParam_b, Scrt );
+
+                        // For wetting phase, Swma = Scrt (= 1 - (1 - Scrt))
+                        real64 const Swma = Scrt;
+
+                        // Pc_hi = Pc_drainage(Shy) — departure point, highest Pc on scanning curve
+                        computeRawTablePc( 0 /* drainage */, Shy, Pc_hi, dPc_dummy );
+
+                        // Pc_lo = Pc_imbibition(Swma) — endpoint where F=1, lowest Pc on scanning curve
+                        computeRawTablePc( 1 /* imbibition */, Swma, Pc_lo, dPc_dummy );
+                    }
+                    else if( mode == ModeIndexType::IMBIBITION_TO_DRAINAGE ||
+                             mode == ModeIndexType::IMBIBITION_TO_DRAINAGE_FROM_SCANNING )
+                    {
+                        // Shy = max historical saturation (departure from imbibition)
+                        real64 const Smax_curve = m_wettingCurve.drainageExtremaPhaseVolFraction;
+                        real64 const Shy = LvArray::math::min( phaseMaxHistVolFrac, Smax_curve );
+
+                        // Compute Scrt
+                        real64 Scrt = 0.0;
+                        KilloughHysteresis::computeTrappedCriticalPhaseVolFraction(
+                            m_wettingCurve, Shy, m_landParam[ipWater],
+                            m_jerauldParam_a, m_jerauldParam_b, Scrt );
+
+                        // Pc_lo = Pc_imbibition(Shy) — departure point, lowest Pc on scanning curve
+                        computeRawTablePc( 1 /* imbibition */, Shy, Pc_lo, dPc_dummy );
+
+                        // Pc_hi = Pc_drainage(Scrt) — endpoint where F=1, highest Pc on scanning curve
+                        computeRawTablePc( 0 /* drainage */, Scrt, Pc_hi, dPc_dummy );
+                    }
+                    else
+                    {
+                        // Fallback: use raw table full range
+                        computeRawTablePc( 0 /* drainage */, 0.0, Pc_hi, dPc_dummy );
+                        computeRawTablePc( 1 /* imbibition */, 1.0, Pc_lo, dPc_dummy );
+                    }
+
+                    // Ensure Pc_lo <= Pc_hi
+                    if( Pc_lo > Pc_hi )
+                    {
+                        real64 tmp = Pc_lo;
+                        Pc_lo = Pc_hi;
+                        Pc_hi = tmp;
+                    }
+                }
 
             private:
 
@@ -271,6 +385,7 @@ namespace geos {
                         integer const ipPhase,
                         real64 const &phaseMinHistoricalVolFraction,
                         real64 const &phaseMaxHistoricalVolFraction,
+                        real64 const &phaseMode2PeakVolFraction,
                         arrayView1d<TableFunction::KernelWrapper const> const &capPresKernelWrappers,
                         KilloughHysteresis::HysteresisCurve const &wettingCurve,
                         KilloughHysteresis::HysteresisCurve const &nonWettingCurve,
@@ -289,9 +404,12 @@ namespace geos {
 
                 //2p
                 arrayView1d<TableFunction::KernelWrapper const> const m_wettingNonWettingCapillaryPressureKernelWrappers;
+                arrayView1d<TableFunction::KernelWrapper const> const m_inverseWettingNonWettingCapillaryPressureKernelWrappers;
                 //3p
                 arrayView1d<TableFunction::KernelWrapper const> const m_wettingIntermediateCapillaryPressureKernelWrappers;
+                arrayView1d<TableFunction::KernelWrapper const> const m_inverseWettingIntermediateCapillaryPressureKernelWrappers;
                 arrayView1d<TableFunction::KernelWrapper const> const m_nonWettingIntermediateCapillaryPressureKernelWrappers;
+                arrayView1d<TableFunction::KernelWrapper const> const m_inverseNonWettingIntermediateCapillaryPressureKernelWrappers;
 
                 ///Land Coeff
                 arrayView1d<integer const> m_phaseHasHysteresis;
@@ -317,6 +435,9 @@ namespace geos {
 
                 /// Maximum historical phase volume fraction for each phase
                 arrayView2d<real64 const, compflow::USD_PHASE> m_phaseMaxHistoricalVolFraction;
+
+                /// Peak saturation reached during Mode 2 (DRAINAGE_TO_IMBIBITION) for each phase (mutable for updates)
+                arrayView2d<real64, compflow::USD_PHASE> m_phaseMode2PeakVolFraction;
 
                 // Drainage / Imbibition flags cellwise
                 arrayView1d<ModeIndexType> m_mode;
@@ -429,9 +550,15 @@ namespace geos {
             /// 1- imbibition (cf. struct ModeIndexType)
             //2p
             array1d<TableFunction::KernelWrapper> m_wettingNonWettingCapillaryPressureKernelWrappers;
+            array1d<TableFunction::KernelWrapper> m_inverseWettingNonWettingCapillaryPressureKernelWrappers;
             //3p
             array1d<TableFunction::KernelWrapper> m_wettingIntermediateCapillaryPressureKernelWrappers;
+            array1d<TableFunction::KernelWrapper> m_inverseWettingIntermediateCapillaryPressureKernelWrappers;
             array1d<TableFunction::KernelWrapper> m_nonWettingIntermediateCapillaryPressureKernelWrappers;
+            array1d<TableFunction::KernelWrapper> m_inverseNonWettingIntermediateCapillaryPressureKernelWrappers;
+            
+            // Store inverse tables to keep them alive
+            std::vector<std::shared_ptr<TableFunction>> m_inverseTables;
 
 
             /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
@@ -459,6 +586,9 @@ namespace geos {
             /// Maximum historical phase volume fraction for each phase
             array2d<real64, compflow::LAYOUT_PHASE> m_phaseMaxHistoricalVolFraction;
 
+            /// Peak saturation reached during Mode 2 (DRAINAGE_TO_IMBIBITION) for each phase
+            array2d<real64, compflow::LAYOUT_PHASE> m_phaseMode2PeakVolFraction;
+
             //needed in hysteresis of wetting phase
             real64 m_phaseIntermediateMinVolFraction;
 
@@ -478,6 +608,7 @@ namespace geos {
             real64 phaseMaxHistoricalVolFraction[MAX_NUM_PHASES]{};
             real64 phaseMinHistoricalVolFraction[MAX_NUM_PHASES]{};
             real64 phaseTrappedVolFrac[MAX_NUM_PHASES]{};
+            real64 phaseMode2PeakVolFraction[MAX_NUM_PHASES]{};
             ModeIndexType mode = ModeIndexType::DRAINAGE; // Default to drainage mode
             
             // Create ArrayView from stack arrays, then get slices
@@ -491,6 +622,8 @@ namespace geos {
                 phaseMinHistoricalVolFraction, dims, strides );
             arraySlice1d< real64, cappres::USD_CAPPRES - 2 > phaseTrappedSlice(
                 phaseTrappedVolFrac, dims, strides );
+            arraySlice1d< real64, compflow::USD_PHASE - 1 > phaseMode2PeakSlice(
+                phaseMode2PeakVolFraction, dims, strides );
             
             // Call the full compute method
             compute( phaseVolFraction,
@@ -499,7 +632,8 @@ namespace geos {
                      phaseTrappedSlice,
                      phaseCapPressure,
                      dPhaseCapPressure_dPhaseVolFrac,
-                     mode );
+                     mode,
+                     phaseMode2PeakSlice );
         }
 
         GEOS_HOST_DEVICE
@@ -510,7 +644,8 @@ namespace geos {
                 arraySlice1d<real64, cappres::USD_CAPPRES - 2> const &phaseTrappedVolFrac,
                 arraySlice1d<real64, cappres::USD_CAPPRES - 2> const &phaseCapPressure,
                 arraySlice2d<real64, cappres::USD_CAPPRES_DS - 2> const &dPhaseCapPressure_dPhaseVolFrac,
-                ModeIndexType &mode
+                ModeIndexType &mode,
+                arraySlice1d<real64, compflow::USD_PHASE - 1> &phaseMode2PeakVolFraction
         ) const {
             // Early return if m_phaseOrder is empty or input arrays are empty
             if( m_phaseOrder.size() == 0 || 
@@ -538,7 +673,8 @@ namespace geos {
                                   phaseTrappedVolFrac,
                                   phaseCapPressure,
                                   dPhaseCapPressure_dPhaseVolFrac,
-                                  mode);
+                                  mode,
+                                  phaseMode2PeakVolFraction);
 
             } else if (ipWater < 0) {
                 computeTwoPhaseNonWetting(ipOil, // leading
@@ -559,7 +695,8 @@ namespace geos {
                                        phaseTrappedVolFrac,
                                        phaseCapPressure,
                                        dPhaseCapPressure_dPhaseVolFrac,
-                                       mode);
+                                       mode,
+                                       phaseMode2PeakVolFraction);
             } else if (ipGas < 0) {
                 computeTwoPhaseWetting(ipWater, //leading
                                        ipOil,   //deduced
@@ -569,7 +706,8 @@ namespace geos {
                                        phaseTrappedVolFrac,
                                        phaseCapPressure,
                                        dPhaseCapPressure_dPhaseVolFrac,
-                                       mode);
+                                       mode,
+                                       phaseMode2PeakVolFraction);
             }
 
 
@@ -581,13 +719,17 @@ namespace geos {
                                                                             const arraySlice1d<const geos::real64,
                                                                                     compflow::USD_PHASE
                                                                                     - 1> &phaseVolFraction) const {
+            // Create a reference to the Mode 2 peak slice for this element
+            // m_phaseMode2PeakVolFraction uses compflow::LAYOUT_PHASE, so use compflow::USD_PHASE - 1
+            arraySlice1d<real64, compflow::USD_PHASE - 1> phaseMode2PeakSlice = m_phaseMode2PeakVolFraction[k];
             compute(phaseVolFraction,
                     m_phaseMaxHistoricalVolFraction[k],
                     m_phaseMinHistoricalVolFraction[k],
                     m_phaseTrappedVolFrac[k][q],
                     m_phaseCapPressure[k][q],
                     m_dPhaseCapPressure_dPhaseVolFrac[k][q],
-                    m_mode[k]);
+                    m_mode[k],
+                    phaseMode2PeakSlice);
         }
 
 
