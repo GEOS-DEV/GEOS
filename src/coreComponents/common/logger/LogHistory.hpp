@@ -25,7 +25,6 @@
 #include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "DiagnosticMessage.hpp"
-#include "common/logger/MsgType.hpp"
 #include <string>
 
 

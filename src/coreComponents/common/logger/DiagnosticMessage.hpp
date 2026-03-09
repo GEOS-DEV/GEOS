@@ -17,10 +17,32 @@
  * @file DiagnosticMessage.hpp
  */
 
-#include "common/logger/MsgType.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
+
+/**
+ * @enum MsgType
+ * Enum listing the different types of possible errors
+ */
+enum class MsgType
+{
+  Error,
+  ExternalError,
+  Warning,
+  Exception,
+  Undefined
+};
+
+/// Declare strings associated with output MsgType values.
+ENUM_STRINGS( MsgType,
+              "Error",
+              "ExternalError",
+              "Warning",
+              "Exception",
+              "Undefined" );
+
 
 /**
  * @struct DiagnosticContext
@@ -85,6 +107,7 @@ struct DiagnosticContext
 
   /**
    * @brief Set the priority value of the current error context information
+   * This way the different context information will appear in descending order during the error log output
    * @param priority the new value to asign
    * @return the reference to the corresponding error
    */
@@ -113,7 +136,7 @@ struct DiagnosticMsg
   std::string m_cause;
   /// the rank(s) on which the diagnostic occured
   std::set< int > m_ranksInfo;
-  /// the source location file
+  /// the path of the source location file
   std::string m_file;
   /// the source location line (default is 0)
   integer m_line = 0;
@@ -181,7 +204,7 @@ public:
   }
 
   /**
-   * @brief Add the dectection location the DiagnosticMsg
+   * @brief Add the detection location the DiagnosticMsg
    * @param detectionLocation The context where the diagnostic happoned
    * @return The instance, for builder pattern.
    */
@@ -196,6 +219,7 @@ public:
    * @return The instance, for builder pattern.
    */
   DiagnosticMsgBuilder & addSignal( integer sig, bool toEnd = false );
+
   /**
    * @brief Set the source code location values (file and line where the error is detected)
    * @param msgFile Name of the source file location to add
@@ -209,24 +233,27 @@ public:
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & setType( MsgType msgType );
+
   /**
    * @brief Set the cause of the error
    * @param cause See documentation of m_cause.
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & setCause( std::string_view cause );
+
   /**
    * @brief Add a rank on which the error has been raised
    * @param rank The value to add
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addRank( integer rank );
+
   /**
    * @brief Add stack trace information about the error
    * @param ossStackTrace stack trace information to add
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
+  DiagnosticMsgBuilder & addCallStackInfo( std::string_view stacktrace );
 
   /**
    * @return Get the DiagnosticMsg

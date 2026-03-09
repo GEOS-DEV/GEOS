@@ -45,7 +45,6 @@ set( common_headers
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
      logger/LogHistory.hpp
-     logger/MsgType.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp

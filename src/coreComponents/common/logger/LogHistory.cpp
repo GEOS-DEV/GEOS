@@ -24,7 +24,6 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "common/format/table/TableTypes.hpp"
-#include "common/logger/MsgType.hpp"
 #include "common/MpiWrapper.hpp"
 #include <cstring>
 #include <string>

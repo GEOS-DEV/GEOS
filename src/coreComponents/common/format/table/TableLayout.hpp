@@ -685,13 +685,13 @@ private:
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
    */
-  void addColumns( stdVector< TableLayout::Column > const & columnNames );
+  TableLayout::Column & addColumns( stdVector< TableLayout::Column > const & columnNames );
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columns The columns list
    */
-  void addColumns( stdVector< string > const & columns );
+  TableLayout::Column & addColumns( stdVector< string > const & columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string

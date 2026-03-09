@@ -37,7 +37,7 @@ public:
    * @param logPartTitle The title who will be used for top and bottom LogPart
    * @param enableOutput Boolean to activate or not csv output
    */
-  LogPart( string const & logPartTitle, bool enableOutput );
+  LogPart( string_view logPartTitle, bool enableOutput );
 
   /**
    * @brief Add a description to the top LogPart
