@@ -333,6 +333,17 @@ jobs:
 
         exit ${EXIT_STATUS}
 
+    - name: Prepare Codecov verification key
+      if: inputs.CODE_COVERAGE
+      run: |
+        set -euxo pipefail
+        GNUPGHOME="${RUNNER_TEMP}/codecov-gnupg"
+        mkdir -p "${GNUPGHOME}"
+        chmod 700 "${GNUPGHOME}"
+        gpg --batch --import "${GITHUB_WORKSPACE}/.github/codecov/verification.gpg.asc" || true
+        gpg --batch --list-keys 806BB28AED779869 >/dev/null
+        echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
+
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
       uses: codecov/codecov-action@v5.4.2
@@ -350,5 +361,3 @@ jobs:
           -v "${GITHUB_WORKSPACE}:/tmp/geos" \
           alpine:3.20 \
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
-
-
