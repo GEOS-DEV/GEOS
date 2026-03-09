@@ -585,6 +585,7 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
           real64 const dS        = 1e-2;
               // real64 Si = 0.0;
               //  real64 Sj = 0.9;
+             real64 warmStartPc = 1000;
           
           for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
           {
@@ -598,8 +599,9 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
 // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
       cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
-      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2,
-      warmStartPc );
+      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2, warmStartPc );
+
+
 
 auto t1 = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> elapsed = t1 - t0;
