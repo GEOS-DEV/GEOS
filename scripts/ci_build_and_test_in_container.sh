@@ -27,6 +27,39 @@ function or_die () {
     fi
 }
 
+function now_utc () {
+    date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
+function run_with_heartbeat () {
+    local label=$1
+    shift
+
+    echo "[$(now_utc)] Starting: ${label}"
+    "$@" &
+    local cmd_pid=$!
+    local heartbeat_secs=60
+
+    while kill -0 "${cmd_pid}" 2>/dev/null; do
+        echo "[$(now_utc)] Still running: ${label} (pid=${cmd_pid})"
+        sleep "${heartbeat_secs}"
+    done &
+    local heartbeat_pid=$!
+
+    wait "${cmd_pid}"
+    local status=$?
+
+    kill "${heartbeat_pid}" 2>/dev/null || true
+    wait "${heartbeat_pid}" 2>/dev/null || true
+
+    if [[ ${status} != 0 ]] ; then
+        echo "[$(now_utc)] Failed: ${label} (exit=${status})"
+        exit ${status}
+    fi
+
+    echo "[$(now_utc)] Finished: ${label}"
+}
+
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -300,7 +333,7 @@ else
     echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}"
     GEOS_TPL_DIR=${GEOSX_TPL_DIR}
     echo tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
-    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
+    run_with_heartbeat "Packaging ${DATA_BASENAME_WE}.tar.gz" tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
 
@@ -310,8 +343,12 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  echo "Starting coverage target coreComponents_coverage..."
-  time or_die cmake --build . --target coreComponents_coverage
+  echo "Coverage build directory: ${GEOS_BUILD_DIR}"
+  echo "Coverage source directory: ${GEOS_SRC_DIR}"
+  echo "Running coverage target coreComponents_coverage in verbose mode..."
+  run_with_heartbeat "cmake --build coreComponents_coverage" cmake --build . --verbose --target coreComponents_coverage
+  echo "Coverage artifacts in ${GEOS_BUILD_DIR}:"
+  ls -lh ${GEOS_BUILD_DIR}/coreComponents_coverage.info* || true
   echo "Copying cleaned coverage report to ${GEOS_SRC_DIR}/geos_coverage.info.cleaned"
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
   echo "Coverage report copied."
