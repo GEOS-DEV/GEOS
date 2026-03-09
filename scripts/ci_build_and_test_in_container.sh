@@ -60,6 +60,26 @@ function run_with_heartbeat () {
     echo "[$(now_utc)] Finished: ${label}"
 }
 
+function print_process_snapshot () {
+    local root_pid=$1
+
+    echo "[$(now_utc)] Process snapshot for root pid=${root_pid}"
+
+    local queue=("${root_pid}")
+    while [[ ${#queue[@]} -gt 0 ]]; do
+        local pid=${queue[0]}
+        queue=("${queue[@]:1}")
+
+        ps -p "${pid}" -o pid=,ppid=,stat=,etime=,%cpu=,%mem=,cmd= || true
+
+        while read -r child_pid; do
+            if [[ -n "${child_pid}" ]]; then
+                queue+=("${child_pid}")
+            fi
+        done < <(pgrep -P "${pid}" || true)
+    done
+}
+
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -345,8 +365,30 @@ fi
 if [[ "${CODE_COVERAGE}" = true ]]; then
   echo "Coverage build directory: ${GEOS_BUILD_DIR}"
   echo "Coverage source directory: ${GEOS_SRC_DIR}"
+  echo "Ninja query for coreComponents_coverage:"
+  ninja -t query coreComponents_coverage || true
+  echo "Ninja commands for coreComponents_coverage:"
+  ninja -t commands coreComponents_coverage || true
   echo "Running coverage target coreComponents_coverage in verbose mode..."
-  run_with_heartbeat "cmake --build coreComponents_coverage" cmake --build . --verbose --target coreComponents_coverage
+  run_with_heartbeat "cmake --build coreComponents_coverage" bash -lc 'cmake --build . --verbose --target coreComponents_coverage' &
+  coverage_wrapper_pid=$!
+
+  while kill -0 "${coverage_wrapper_pid}" 2>/dev/null; do
+    print_process_snapshot "${coverage_wrapper_pid}"
+    sleep 60
+  done &
+  coverage_snapshot_pid=$!
+
+  wait "${coverage_wrapper_pid}"
+  coverage_status=$?
+  kill "${coverage_snapshot_pid}" 2>/dev/null || true
+  wait "${coverage_snapshot_pid}" 2>/dev/null || true
+
+  if [[ ${coverage_status} != 0 ]] ; then
+    echo "Coverage target failed with exit status ${coverage_status}"
+    exit ${coverage_status}
+  fi
+
   echo "Coverage artifacts in ${GEOS_BUILD_DIR}:"
   ls -lh ${GEOS_BUILD_DIR}/coreComponents_coverage.info* || true
   echo "Copying cleaned coverage report to ${GEOS_SRC_DIR}/geos_coverage.info.cleaned"
