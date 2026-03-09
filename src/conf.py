@@ -116,7 +116,11 @@ bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/so
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/StrainHardeningPolymer.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Graphite.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/VonMisesJ.bib",
-                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/CeramicDamage.bib"]
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/CeramicDamage.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Chiumenti.bib"]
+
+print("BIBFILES:", bibtex_bibfiles)
+
 
 #bibtex_bibfiles = [
 #  "coreComponents/constitutive/docs/solid/Geomechanics.bib",

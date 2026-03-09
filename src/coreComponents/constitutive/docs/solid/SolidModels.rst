@@ -10,6 +10,7 @@ known models.
    :maxdepth: 1
 
    CeramicDamage
+   Chiumenti
    Damage
    DelftEgg
    DruckerPrager
