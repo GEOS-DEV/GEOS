@@ -50,6 +50,8 @@ std::set< string >
 CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & region,
                                                   string_view matchPattern ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   std::set< string > matchedCellBlocks;
   bool matching = false;
   for( auto const & [cellBlockName, owners] : m_cellBlocksOwners )
@@ -78,6 +80,8 @@ void
 CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & region,
                                                       std::set< string > const & cellBlockNames ) const
 {
+  GEOS_UNUSED_VAR( region );
+
   for( string const & requestedCellBlockName : cellBlockNames )
   {
     // if cell block does not exist in the mesh
