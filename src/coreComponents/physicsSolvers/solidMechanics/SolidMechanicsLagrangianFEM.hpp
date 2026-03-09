@@ -226,6 +226,8 @@ public:
 
   void enableFixedStressPoromechanicsUpdate();
 
+  void enableExplicitChemomechanicsUpdate();
+
   virtual void saveSequentialIterationState( DomainPartition & domain ) override;
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
@@ -308,6 +310,9 @@ protected:
   bool m_isFixedStressPoromechanicsUpdate;
   /// Flag to indicate that the solver is going to perform stress initialization
   bool m_performStressInitialization;
+
+  /// Flag to indicate that the solver is running with explicit chemomechancis update
+  bool m_isExplicitChemomechanicsUpdate;
 
   /// Rigid body modes; TODO remove mutable hack
   mutable array1d< ParallelVector > m_rigidBodyModes;

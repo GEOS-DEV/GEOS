@@ -121,6 +121,12 @@ public:
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError, this->solidMechanicsSolver()->getDataContext() );
 
+    GEOS_THROW_IF( this->flowSolver()->getCatalogName() == "SinglePhaseReactiveTransport" &&
+                   this->getNonlinearSolverParameters().m_couplingType != NonlinearSolverParameters::CouplingType::Sequential,
+                   GEOS_FMT( "{} {}: The coupling type must be Sequential since it is coupled with {}",
+                             this->getCatalogName(), this->getName(), this->flowSolver()->getCatalogName() ),
+                   InputError );
+
     setMGRStrategy();
   }
 
@@ -185,10 +191,20 @@ public:
 
     if( this->getNonlinearSolverParameters().m_couplingType == NonlinearSolverParameters::CouplingType::Sequential )
     {
-      // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
-      solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
-      // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
-      flowSolver()->enableFixedStressPoromechanicsUpdate();
+      if( flowSolver()->getCatalogName() == "SinglePhaseReactiveTransport" )
+      {
+        // to let the solid mechanics solver to account for anelastic strain due to chemistry
+        solidMechanicsSolver()->enableExplicitChemomechanicsUpdate();
+        // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+        flowSolver()->enableFixedStressPoromechanicsUpdate();
+      }
+      else
+      {
+        // to let the solid mechanics solver that there is a pressure and temperature RHS in the mechanics solve
+        solidMechanicsSolver()->enableFixedStressPoromechanicsUpdate();
+        // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+        flowSolver()->enableFixedStressPoromechanicsUpdate();
+      }
     }
 
     if( m_stabilizationType == stabilization::StabilizationType::Global || m_stabilizationType == stabilization::StabilizationType::Local )
@@ -647,8 +663,10 @@ protected:
     }
   }
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override
   {
+    GEOS_UNUSED_VAR( dt );
+
     GEOS_MARK_FUNCTION;
 
     /// After the flow solver
@@ -661,8 +679,12 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics )
         && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
-      // compute the average of the mean total stress increment over quadrature points
-      averageMeanTotalStressIncrement( domain );
+      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for
+                                                                             // ChemoMechanics
+      {
+        // compute the average of the mean total stress increment over quadrature points
+        averageMeanTotalStressIncrement( domain );
+      }
 
       this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
                                                                                     MeshLevel & mesh,
@@ -691,7 +713,11 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics ) &&
         this->getNonlinearSolverParameters().m_nonlinearAccelerationType== NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
-      recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
+      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for
+                                                                             // ChemoMechanics
+      {
+        recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
+      }
     }
   }
 

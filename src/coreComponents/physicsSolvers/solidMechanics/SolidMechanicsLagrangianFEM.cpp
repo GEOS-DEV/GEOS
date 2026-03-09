@@ -25,6 +25,7 @@
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
 #include "kernels/FixedStressThermoPoromechanics.hpp"
+#include "kernels/ExplicitChemoMechanics.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -48,6 +49,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsExplicitChemoMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 namespace geos
@@ -69,7 +71,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
   m_isFixedStressPoromechanicsUpdate( false ),
-  m_performStressInitialization( false )
+  m_performStressInitialization( false ),
+  m_isExplicitChemomechanicsUpdate( false )
 {
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
@@ -1188,6 +1191,22 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
       m_maxForce = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
     }
+    else if( m_isExplicitChemomechanicsUpdate )
+    {
+
+      // first pass for coupled poromechanics regions
+      real64 const chemomechanicsMaxForce= assemblyLaunch< SolidMechanicsExplicitChemoMechanicsKernelsDispatchTypeList,
+                                                           solidMechanicsLagrangianFEMKernels::ExplicitChemoMechanicsFactory >( mesh,
+                                                                                                                                dofManager,
+                                                                                                                                regionNames,
+                                                                                                                                FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                                                                localMatrix,
+                                                                                                                                localRhs,
+                                                                                                                                dt );
+
+
+      m_maxForce = chemomechanicsMaxForce;
+    }
     else
     {
       if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
@@ -1562,6 +1581,11 @@ SolidMechanicsLagrangianFEM::scalingForSystemSolution( DomainPartition & domain,
 void SolidMechanicsLagrangianFEM::enableFixedStressPoromechanicsUpdate()
 {
   m_isFixedStressPoromechanicsUpdate = true;
+}
+
+void SolidMechanicsLagrangianFEM::enableExplicitChemomechanicsUpdate()
+{
+  m_isExplicitChemomechanicsUpdate = true;
 }
 
 void SolidMechanicsLagrangianFEM::saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
