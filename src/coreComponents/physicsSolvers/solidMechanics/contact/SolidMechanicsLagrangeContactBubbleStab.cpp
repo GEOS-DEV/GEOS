@@ -1143,6 +1143,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
     // Sort indexes to enable efficient searching using binary search.
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    // Move data back to host: after the device sort the buffer lives on the GPU,
+    // but SortedArray::insert is a host-only operation that dereferences the iterators.
+    tmpSpace.move( LvArray::MemorySpace::host );
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
 
     // Search for bubble element on each CellElementSubRegion and
