@@ -137,7 +137,7 @@ public:
 
     // 2. Update the porosity due to solid deformation
     m_newPorosity[k][q] = m_porosity_n[k][q]
-                          - reactionPorosityIncrement;
+                          + reactionPorosityIncrement;
     // + m_meanEffectiveStressIncrement_k[k][q]/m_bulkModulus[k];
 
     if( m_newPorosity[k][q] < 0 )
