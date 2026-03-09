@@ -363,6 +363,8 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
+  export OMP_NUM_THREADS=1
+  echo "OMP_NUM_THREADS=${OMP_NUM_THREADS}"
   echo "Coverage build directory: ${GEOS_BUILD_DIR}"
   echo "Coverage source directory: ${GEOS_SRC_DIR}"
   echo "Ninja query for coreComponents_coverage:"
