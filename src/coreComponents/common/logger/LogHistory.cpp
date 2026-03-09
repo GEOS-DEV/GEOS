@@ -54,45 +54,39 @@ LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
   m_value( values )
 {}
 
-void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes )
+void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
-  // todo inverser ptr et T ET renommer
-  writeInField( m_key.filename, logRecordBytes );
-  std::cout << "m_key.filename" << m_key.filename << std::endl;
-  writeInField( m_key.lineId, logRecordBytes );
-  writeInField( m_value.logPart, logRecordBytes );
-  writeInField( m_value.msgType, logRecordBytes );
+  deserializeField( m_key.m_filename, logRecordBytes, end );
+  deserializeField( m_key.m_lineId, logRecordBytes, end );
+  deserializeField( m_value.m_logPart, logRecordBytes, end );
+  deserializeField( m_value.m_msgType, logRecordBytes, end );
 
   m_value.m_count = 0;
 }
 
-stdVector< buffer_unit_type > LogHistory::LogRecord::serialize() const
+void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  stdVector< buffer_unit_type >  gTuple;
-  gTuple.reserve( getSerializedSize());
-  auto filenameSize = m_key.filename.size();
-  auto logPartSize = m_value.logPart.size();
+  auto filenameSize = m_key.m_filename.size();
+  auto logPartSize = m_value.m_logPart.size();
 
-  auto const appendData = [&]( void const * data, size_t size )
+  auto const serializeField = [&]( void const * data, size_t size )
   {
     buffer_unit_type const * d = (buffer_unit_type const *) data;
-    gTuple.insert( gTuple.end(), d, d + size );
+    out.insert( out.end(), d, d + size );
   };
-  appendData( &filenameSize, sizeof(string::size_type));
-  appendData( m_key.filename.data(), m_key.filename.size());
-  appendData( &m_key.lineId, sizeof(integer));
-  appendData( &logPartSize, sizeof(string::size_type));
-  appendData( m_value.logPart.data(), m_value.logPart.size());
-  appendData( &m_value.msgType, sizeof(MsgType) );
-
-  return gTuple;
+  serializeField( &filenameSize, sizeof(string::size_type));
+  serializeField( m_key.m_filename.data(), m_key.m_filename.size());
+  serializeField( &m_key.m_lineId, sizeof(integer));
+  serializeField( &logPartSize, sizeof(string::size_type));
+  serializeField( m_value.m_logPart.data(), m_value.m_logPart.size());
+  serializeField( &m_value.m_msgType, sizeof(MsgType) );
 }
 
 void LogHistory::insertDiagnosticReport( LogRecord logRecord )
 {
   auto & entry =  m_diagnosticHistory.get_inserted( {logRecord.m_key} );
-  entry.logPart = logRecord.m_value.logPart;
-  entry.msgType = logRecord.m_value.msgType;
+  entry.m_logPart = logRecord.m_value.m_logPart;
+  entry.m_msgType = logRecord.m_value.m_msgType;
   entry.m_count +=  1;
 }
 
@@ -133,7 +127,6 @@ gatherBufferRank0( stdVector< T > const & bufferToSend )
     {
       displs[i] = totalSize;
       totalSize += recvCounts[i];
-      std::cout << "i  "<< i << " recvCounts" <<recvCounts[i]<<std::endl;
     }
     globalAllocations.resize( totalSize );
   }
@@ -151,43 +144,42 @@ gatherBufferRank0( stdVector< T > const & bufferToSend )
 size_t LogHistory::LogRecord::getSerializedSize() const
 {
   return
-    sizeOfField( m_key.filename ) +
-    sizeOfField( m_key.lineId ) +
-    sizeOfField( m_value.logPart ) +
-    sizeOfField( m_value.msgType );
+    sizeOfField( m_key.m_filename ) +
+    sizeOfField( m_key.m_lineId ) +
+    sizeOfField( m_value.m_logPart ) +
+    sizeOfField( m_value.m_msgType );
 }
 
 void LogHistory::diagnosticStatsReport()
 {
   LogHistory & history = ErrorLogger::global().getLoggerReportData();
-  stdVector< buffer_unit_type > gTuple( 0 );
+  stdVector< buffer_unit_type > localLogRecords( 0 );
   integer totalSize = 0;
 
   //0 - dry run
   for( auto const & [key, value] : getDiagnosticHistory() )
   {
-    LogRecord localRecord( key, value );
-    totalSize +=  localRecord.getSerializedSize();
+    LogRecord record( key, value );
+    totalSize +=  record.getSerializedSize();
   }
-  gTuple.reserve( totalSize );
+  localLogRecords.reserve( totalSize );
 
   //1 - Packing
   if( getDiagnosticHistory().size() > 0 )
   {
     for( auto const & [key, value] :  getDiagnosticHistory() )
     {
-      LogRecord localRecord( key, value );
-      stdVector< buffer_unit_type > localBuffer = localRecord.serialize();
-      std::copy( localBuffer.begin(), localBuffer.end(), std::back_inserter( gTuple ));
+      LogRecord record( key, value );
+      record.serialize( localLogRecords );
     }
   }
 
-  auto [tuplesPerIt, recvCounts] = gatherBufferRank0( gTuple );
+  auto [globalLogRecords, recvCounts] = gatherBufferRank0( localLogRecords );
 
   //2 - Unpacking
   if( MpiWrapper::commRank() == 0 )
   {
-    buffer_unit_type const * rankStart = tuplesPerIt.data();
+    buffer_unit_type const * rankStart = globalLogRecords.data();
     for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
     {
       integer byteFromThisRank = recvCounts[idxRank];
@@ -195,7 +187,7 @@ void LogHistory::diagnosticStatsReport()
       while( rankStart < rankEnd )
       {
         LogRecord unpackRecord;
-        unpackRecord.deserialize( rankStart );
+        unpackRecord.deserialize( rankStart,rankEnd );
         history.insertDiagnosticReport( unpackRecord );
       }
     }
@@ -231,8 +223,8 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   // TODO
   for( const auto & [key, values] : messageCounts.getDiagnosticHistory())
   {
-    auto logPart = values.logPart;
-    MsgType msgType = values.msgType;
+    auto logPart = values.m_logPart;
+    MsgType msgType = values.m_msgType;
 
     countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 

@@ -27,7 +27,6 @@
 #include "DiagnosticMessage.hpp"
 #include "common/logger/MsgType.hpp"
 #include <string>
-#include <unordered_set>
 
 
 namespace geos
@@ -45,24 +44,23 @@ public:
     /// POD characterizing an unique diagnostic message
     struct Key
     {
-      string filename;
-      integer lineId;
+      string m_filename;
+      integer m_lineId;
     } m_key;
 
     struct Values
     {
-      string logPart;
-      MsgType msgType;
+      string m_logPart;
+      MsgType m_msgType;
       integer m_count;
     } m_value;
 
     size_t getSerializedSize() const;
     LogRecord();
     LogRecord( Key const &, Values const & );
-    LogRecord( stdVector< buffer_unit_type > & buffer );
 
-    stdVector< buffer_unit_type > serialize() const;
-    void deserialize( buffer_unit_type const * & );
+    void serialize( stdVector< buffer_unit_type > & out ) const;
+    void deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const* end  );
 
     template< typename T >
     unsigned long sizeOfField( T ) const
@@ -72,20 +70,18 @@ public:
     { return sizeof(string::size_type) + str.size(); }
 
     template< typename T >
-    typename std::enable_if_t< std::is_trivially_copyable_v< T > >
-    writeInField( T & data, buffer_unit_type const * & ptr )
+    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const* end )
     {
       static_assert( std::is_trivially_copyable_v< T > );
+      if(ptr + sizeof(T)> end) throw std::runtime_error("Buffer truncated");
       memcpy( &data, ptr, sizeof(T) );
       ptr += sizeof(T);
     }
 
-    void writeInField( string & str, buffer_unit_type const * & ptr )
+    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const* end )
     {
       string::size_type strSize = 0;
-      memcpy( &strSize, ptr, sizeof(string::size_type));
-      ptr += sizeof(string::size_type);
-
+      deserializeField( strSize, ptr,end );
       str.assign( ptr, ptr + strSize );
       ptr += str.size();
     }
@@ -118,8 +114,8 @@ private:
 
     size_t operator()( LogRecord::Key const & key ) const noexcept
     {
-      size_t h1 = std::hash< string >{} (key.filename);
-      size_t h2 = std::hash< integer >{} (key.lineId);
+      size_t h1 = std::hash< string >{} (key.m_filename);
+      size_t h2 = std::hash< integer >{} (key.m_lineId);
 
       return h1 ^ (h2 << 1);
     }
@@ -134,8 +130,8 @@ private:
     bool operator()( LogRecord::Key const & lhs,
                      LogRecord::Key const & rhs ) const
     {
-      return lhs.filename == rhs.filename  &&
-             lhs.lineId == rhs.lineId;
+      return lhs.m_filename == rhs.m_filename  &&
+             lhs.m_lineId == rhs.m_lineId;
     }
   };
   /// @endcond
