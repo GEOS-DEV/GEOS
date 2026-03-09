@@ -182,8 +182,7 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
 
   integer const numPhases = m_phaseNames.size();
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
-                 GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
-                           getFullName() ),
+                 "the expected number of fluid phases is either two, or three",
                  InputError, getDataContext() );
 
   m_phaseHasHysteresis.resize( numPhases );
@@ -194,16 +193,14 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.empty(),
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables "
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify the relative permeability tables "
                              "for the pair (wetting phase, non-wetting phase)",
-                             getFullName(),
                              viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_drainageWettingNonWettingRelPermTableNames.size() != 2,
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify exactly two names: "
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify exactly two names: "
                              "first the name of the wetting phase relperm table, second the name on the non-wetting phase relperm table",
-                             getFullName(),
                              viewKeyStruct::drainageWettingNonWettingRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
@@ -217,25 +214,22 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
   else if( numPhases == 3 )
   {
     GEOS_THROW_IF( m_drainageWettingIntermediateRelPermTableNames.empty() || m_drainageNonWettingIntermediateRelPermTableNames.empty(),
-                   GEOS_FMT( "{}: for a three-phase flow simulation, "
+                   GEOS_FMT( "for a three-phase flow simulation, "
                              "we must use {} to specify the relative permeability tables for the pair (wetting phase, intermediate phase), "
                              "and {} to specify the relative permeability tables for the pair (non-wetting phase, intermediate phase)",
-                             getFullName(),
                              viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString(),
                              viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString()  ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_drainageWettingIntermediateRelPermTableNames.size() != 2,
-                   GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: "
+                   GEOS_FMT( "for a three-phase flow simulation, we must use {} to specify exactly two names: "
                              "first the name of the wetting phase relperm table, second the name on the intermediate phase relperm table",
-                             getFullName(),
                              viewKeyStruct::drainageWettingIntermediateRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_drainageNonWettingIntermediateRelPermTableNames.size() != 2,
-                   GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: "
+                   GEOS_FMT( "for a three-phase flow simulation, we must use {} to specify exactly two names: "
                              "first the name of the non-wetting phase relperm table, second the name on the intermediate phase relperm table",
-                             getFullName(),
                              viewKeyStruct::drainageNonWettingIntermediateRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
@@ -453,8 +447,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateRelPermTable(
 
   // check if the table actually exists
   GEOS_THROW_IF( !functionManager.hasGroup( relPermTableName ),
-                 GEOS_FMT( "{}: the table function named {} could not be found",
-                           getFullName(),
+                 GEOS_FMT( "the table function named {} could not be found",
                            relPermTableName ),
                  InputError, getDataContext() );
   TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( relPermTableName );

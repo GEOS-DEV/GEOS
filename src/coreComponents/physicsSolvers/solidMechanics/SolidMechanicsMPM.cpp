@@ -542,7 +542,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   }
   else
   {
-    GEOS_ERROR( "MPM solver only currently supports explicit time stepping!" );
+    GEOS_ERROR( "MPM solver only currently supports explicit time stepping!", getDataContext() );
   }
 
   return dtReturn;
@@ -3714,7 +3714,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
         }
       default:
         {
-          GEOS_ERROR( "Particle type \"" << particleType << "\" is not yet supported." );
+          GEOS_ERROR( GEOS_FMT( "Particle type \"{}\" is not yet supported.", particleType ), getDataContext() );
           break;
         }
     }
@@ -4048,7 +4048,8 @@ void SolidMechanicsMPM::populateMappingArrays( ParticleManager & particleManager
 
       default:
         {
-          GEOS_ERROR( "Particle type \"" << subRegion.getParticleType() << "\" is not yet supported." );
+          GEOS_ERROR( GEOS_FMT( "Particle type \"{}\" is not yet supported.", subRegion.getParticleType() ),
+                      getDataContext() );
           break;
         }
     }

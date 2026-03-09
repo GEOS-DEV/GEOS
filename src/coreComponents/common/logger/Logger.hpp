@@ -20,12 +20,9 @@
 #ifndef GEOS_COMMON_LOGGER_HPP
 #define GEOS_COMMON_LOGGER_HPP
 
-// Source incldes
-#include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
-#include "common/format/Format.hpp"
+// Source includes
 #include "LvArray/src/Macros.hpp"
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/GeosExceptions.hpp"
 
 // System includes
 #include <stdexcept>
@@ -137,8 +134,8 @@
  * @note - Currently not available on GPU.
  *       - Possible to pre-define it in any source file (e.g. for unit tests)
  */
-#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_ERROR_LOGGER_INSTANCE)
-#define GEOS_ERROR_LOGGER_INSTANCE ErrorLogger::global()
+#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_GLOBAL_LOGGER)
+#define GEOS_GLOBAL_LOGGER ErrorLogger::global()
 #endif
 
 /**
@@ -158,34 +155,19 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string __message =  __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** ERROR\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         __message, \
-                                         ::geos::logger::internal::g_rank, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setCause( __cause ); \
-        msgStruct.addCallStackInfo( stackHistory ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Error, __msgoss.str(), \
+                                                      ::geos::logger::internal::g_rank ) \
+        .setCodeLocation( __FILE__, __LINE__ ) \
+        .setCause( __causemsgsoss.str() ) \
+        .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
+      GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
-  } while( false )
-#elif __CUDA_ARCH__
+  }while( false )
+  #elif __CUDA_ARCH__
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -199,6 +181,28 @@
                                                                                                           "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      GEOS_UNUSED_VAR( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ); \
+      constexpr char const * formatString = "***** ERROR\n" \
+                                            "***** LOCATION" LOCATION "\n" \
+                                                                      "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                      "***** THREAD: [%u, %u, %u]\n" \
+                                                                      "***** %s\n" \
+                                                                      "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
     } \
   } while( false )
 #endif
@@ -238,35 +242,20 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      std::string __message =  __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** EXCEPTION\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        if( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
-        { /* first throw site, we initialize the error message completly */ \
-          GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
-            .setType( ErrorLogger::MsgType::Exception ) \
-            .setCodeLocation( __FILE__, __LINE__ ) \
-            .setCause( __cause ) \
-            .addRank( ::geos::logger::internal::g_rank ) \
-            .addCallStackInfo( stackHistory ); \
-        } \
-        GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
-          .addToMsg( __message ) \
-          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      } \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      DiagnosticMsg exceptionMsg =  GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Exception, __msgoss.str(), \
+                                                                                    ::geos::logger::internal::g_rank ) \
+                                     .setCodeLocation( __FILE__, __LINE__ ) \
+                                     .setCause( __causemsgsoss.str() ) \
+                                     .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                     .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                     .getDiagnosticMsg(); \
+      auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
+      ex.prepareWhat( exceptionMsg ); \
+      throw ex; \
     } \
-  } while( false )
+  }while( false )
 #elif __CUDA_ARCH__
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
@@ -281,6 +270,29 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      ::geos::internal::DeviceNullStream __geosNullStream; \
+      __geosNullStream << MSG; \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** %s\n" \
+                                                                   "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
     } \
   } while( false )
 #endif
@@ -321,29 +333,19 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string __message = __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** WARNING\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::cout << __oss.str() << std::endl; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         __message, \
-                                         ::geos::logger::internal::g_rank, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setCause( __cause ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream __causemsgsoss; \
+      __causemsgsoss << CAUSE_MESSAGE; \
+      DiagnosticMsg __warningMsg; \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( DiagnosticMsgBuilder::init( __warningMsg, \
+                                                                    MsgType::Warning, __msgoss.str(), \
+                                                                    ::geos::logger::internal::g_rank ) \
+                                          .setCodeLocation( __FILE__, __LINE__ ) \
+                                          .setCause( __causemsgsoss.str() ) \
+                                          .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                          .getDiagnosticMsg() ); \
     } \
-  } while( false )
+  }while( false )
 #elif __CUDA_ARCH__
 #define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
@@ -358,6 +360,27 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** WARNING\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** %s\n" \
+                                                                   "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
     } \
   } while( false )
 #endif
@@ -1044,7 +1067,7 @@ extern std::string g_rankString;
 
 extern std::ostream * g_rankStream;
 
-} // namespace internal
+}       // namespace internal
 
 #if defined(GEOS_USE_MPI)
 /**
@@ -1066,8 +1089,8 @@ void InitializeLogger( const std::string & rank_output_dir="" );
  */
 void FinalizeLogger();
 
-}   // namespace logger
+}     // namespace logger
 
-} // namespace geos
+}   // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */

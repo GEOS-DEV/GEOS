@@ -30,20 +30,20 @@ namespace constitutive
 
 void
 TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction const & capPresTable,
-                                                               string const & fullConstitutiveName,
+                                                               string const &,
                                                                bool const capPresMustBeIncreasing )
 {
   ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
 
   GEOS_THROW_IF_NE_MSG( capPresTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                        GEOS_FMT( "{}: in table '{}' interpolation method must be linear", fullConstitutiveName, capPresTable.getName() ),
-                        InputError );
+                        GEOS_FMT( "in table '{}' interpolation method must be linear", capPresTable.getName() ),
+                        InputError, capPresTable.getDataContext() );
   GEOS_THROW_IF_NE_MSG( capPresTable.numDimensions(), 1,
-                        GEOS_FMT( "{}: table '{}' must have a single independent coordinate", fullConstitutiveName, capPresTable.getName() ),
-                        InputError );
+                        GEOS_FMT( "table '{}' must have a single independent coordinate", capPresTable.getName() ),
+                        InputError, capPresTable.getDataContext() );
   GEOS_THROW_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
-                        GEOS_FMT( "{}: table `{}` must contain at least two values", fullConstitutiveName, capPresTable.getName() ),
-                        InputError );
+                        GEOS_FMT( "table `{}` must contain at least two values", capPresTable.getName() ),
+                        InputError, capPresTable.getDataContext() );
 
   arraySlice1d< real64 const > phaseVolFrac = coords[0];
   arrayView1d< real64 const > const capPres = capPresTable.getValues();
@@ -52,8 +52,8 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
   {
     // check phase volume fraction
     GEOS_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
-                   GEOS_FMT( "{}: in table '{}' values must be between 0 and 1", fullConstitutiveName, capPresTable.getName() ),
-                   InputError );
+                   GEOS_FMT( "in table '{}' values must be between 0 and 1", capPresTable.getName() ),
+                   InputError, capPresTable.getDataContext() );
 
     // note that the TableFunction class has already checked that the coordinates are monotone
 
@@ -61,14 +61,14 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
     if( capPresMustBeIncreasing )
     {
       GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-15,
-                     GEOS_FMT( "{}: in table '{}' values must be strictly increasing (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
-                     InputError );
+                     "values must be strictly increasing (i.e. |Delta Pc| > 1e-15 between two non-zero values)",
+                     InputError, capPresTable.getDataContext() );
     }
     else
     {
       GEOS_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) > 1e-15,
-                     GEOS_FMT( "{}: in table '{}' values must be strictly decreasing  (i.e. |Delta Pc| > 1e-15 between two non-zero values)", fullConstitutiveName, capPresTable.getName() ),
-                     InputError );
+                     "values must be strictly decreasing  (i.e. |Delta Pc| > 1e-15 between two non-zero values)",
+                     InputError, capPresTable.getDataContext() );
     }
   }
 }

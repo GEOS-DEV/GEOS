@@ -135,8 +135,7 @@ void JFunctionCapillaryPressure::postInputInitialization()
 
   integer const numPhases = m_phaseNames.size();
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
-                 GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
-                           getFullName() ),
+                 "the expected number of fluid phases is either two, or three",
                  InputError, getDataContext() );
 
   // Populate the minimum phase volume fractions
@@ -145,31 +144,27 @@ void JFunctionCapillaryPressure::postInputInitialization()
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_wettingNonWettingJFuncTableName.empty(),
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the J-function table for the pair (wetting phase, non-wetting phase)",
-                             getFullName(),
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify the J-function table for the pair (wetting phase, non-wetting phase)",
                              viewKeyStruct::wettingNonWettingJFuncTableNameString() ),
                    InputError, getDataContext() );
     GEOS_THROW_IF( m_wettingNonWettingSurfaceTension <= 0,
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the surface tension for the pair (wetting phase, non-wetting phase)",
-                             getFullName(),
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify the surface tension for the pair (wetting phase, non-wetting phase)",
                              viewKeyStruct::wettingNonWettingSurfaceTensionString() ),
                    InputError, getDataContext() );
   }
   else if( numPhases == 3 )
   {
     GEOS_THROW_IF( m_wettingIntermediateJFuncTableName.empty() || m_nonWettingIntermediateJFuncTableName.empty(),
-                   GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the J-function table"
+                   GEOS_FMT( "for a three-phase flow simulation, we must use {} to specify the J-function table"
                              "for the pair (wetting phase, intermediate phase), "
                              "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
-                             getFullName(),
                              viewKeyStruct::wettingIntermediateJFuncTableNameString(),
                              viewKeyStruct::nonWettingIntermediateJFuncTableNameString()  ),
                    InputError, getDataContext() );
     GEOS_THROW_IF( m_wettingIntermediateSurfaceTension <= 0 || m_nonWettingIntermediateSurfaceTension <= 0,
-                   GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the surface tension"
+                   GEOS_FMT( "for a three-phase flow simulation, we must use {} to specify the surface tension"
                              "for the pair (wetting phase, intermediate phase), "
                              "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
-                             getFullName(),
                              viewKeyStruct::wettingIntermediateSurfaceTensionString(),
                              viewKeyStruct::nonWettingIntermediateSurfaceTensionString()  ),
                    InputError, getDataContext() );
@@ -186,8 +181,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_wettingNonWettingJFuncTableName ),
-                   GEOS_FMT( "{}: the table function named {} could not be found",
-                             getFullName(),
+                   GEOS_FMT( "the table function named {} could not be found",
                              m_wettingNonWettingJFuncTableName ),
                    InputError, getDataContext() );
     TableFunction const & jFuncTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingJFuncTableName );
@@ -200,16 +194,14 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
   else if( numPhases == 3 )
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_wettingIntermediateJFuncTableName ),
-                   GEOS_FMT( "{}: the table function named {} could not be found",
-                             getFullName(),
+                   GEOS_FMT( "the table function named {} could not be found",
                              m_wettingIntermediateJFuncTableName ),
                    InputError, getDataContext() );
     TableFunction const & jFuncTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateJFuncTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTableWI, getFullName(), false );
 
     GEOS_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateJFuncTableName ),
-                   GEOS_FMT( "{}: the table function named {} could not be found",
-                             getFullName(),
+                   GEOS_FMT( "the table function named {} could not be found",
                              m_nonWettingIntermediateJFuncTableName ),
                    InputError, getDataContext() );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
