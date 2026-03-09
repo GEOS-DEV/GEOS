@@ -1167,6 +1167,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
       arrayView1d< localIndex > const perms_v = perms.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
+      // Move faceIdList to device so that the SortedArrayView can be safely
+      // accessed inside the GPU kernel (faceIdList was populated on the host).
+      faceIdList.move( parallelDeviceMemorySpace );
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
