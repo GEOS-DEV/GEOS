@@ -58,8 +58,17 @@ public:
     LogRecord();
     LogRecord( Key const &, Values const & );
 
+    /**
+     * @brief Serialize all the LogRecord fields
+     * @param out The resulting vector containaing all fields serialized
+     */
     void serialize( stdVector< buffer_unit_type > & out ) const;
-    void deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const* end  );
+    /**
+     * @brief Deserialize all the LogRecord fields
+     * @param logRecordBytes The vector containing the data serialized
+     * @param end 
+     */
+    void deserialize( stdVector< buffer_unit_type > const & logRecordBytes, integer nbBytes );
 
     template< typename T >
     unsigned long sizeOfField( T ) const

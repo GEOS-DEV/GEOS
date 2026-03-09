@@ -53,14 +53,19 @@ LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
   m_value( values )
 {}
 
-void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
+void LogHistory::LogRecord::deserialize( stdVector< buffer_unit_type > const & logRecordBytes, integer nbBytes )
 {
-  deserializeField( m_key.m_filename, logRecordBytes, end );
-  deserializeField( m_key.m_lineId, logRecordBytes, end );
-  deserializeField( m_value.m_logPart, logRecordBytes, end );
-  deserializeField( m_value.m_msgType, logRecordBytes, end );
-
-  m_value.m_count = 0;
+  buffer_unit_type const * start = logRecordBytes.data();
+  buffer_unit_type const * end = start + nbBytes;
+  while( start < end )
+  {
+    LogRecord unpackRecord;
+    deserializeField( m_key.m_filename, start, end );
+    deserializeField( m_key.m_lineId, start, end );
+    deserializeField( m_value.m_logPart, start, end );
+    deserializeField( m_value.m_msgType, start, end );
+    m_value.m_count = 0;
+  }
 }
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
@@ -178,18 +183,13 @@ void LogHistory::diagnosticStatsReport()
   //2 - Unpacking
   if( MpiWrapper::commRank() == 0 )
   {
-    buffer_unit_type const * rankStart = globalLogRecords.data();
     for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
     {
-      integer byteFromThisRank = recvCounts[idxRank];
-      buffer_unit_type const * rankEnd= rankStart + byteFromThisRank;
-      while( rankStart < rankEnd )
-      {
-        LogRecord unpackRecord;
-        unpackRecord.deserialize( rankStart,rankEnd );
-        history.insertDiagnosticReport( unpackRecord );
-      }
+      LogRecord unpackRecord;
+      unpackRecord.deserialize( globalLogRecords, recvCounts[idxRank] );
+      history.insertDiagnosticReport( unpackRecord );
     }
+
   }
 
   //3 - Display
