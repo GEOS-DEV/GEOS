@@ -434,8 +434,8 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  loggerMsgReportData.notifyMsg( getCurrentLogPart(),
-                                 errMsg );
+  loggerMsgReportData.recordDiagnostic( getCurrentLogPart(),
+                                        errMsg );
   writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
@@ -445,8 +445,8 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushCurrentExceptionMessage()
 {
-  loggerMsgReportData.notifyMsg( getCurrentLogPart(),
-                                 m_getCurrentExceptionMsg );
+  loggerMsgReportData.recordDiagnostic( getCurrentLogPart(),
+                                        m_getCurrentExceptionMsg );
 
   writeToLogStream( m_getCurrentExceptionMsg );
   if( isOutputFileEnabled() )

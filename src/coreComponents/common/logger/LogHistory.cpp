@@ -53,19 +53,14 @@ LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
   m_value( values )
 {}
 
-void LogHistory::LogRecord::deserialize( stdVector< buffer_unit_type > const & logRecordBytes )
+void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
-  buffer_unit_type const * start = logRecordBytes.data();
-  buffer_unit_type const * end = logRecordBytes.end().base();
-  while( start < end )
-  {
-    LogRecord unpackRecord;
-    deserializeField( m_key.m_filename, start, end );
-    deserializeField( m_key.m_lineId, start, end );
-    deserializeField( m_value.m_logPart, start, end );
-    deserializeField( m_value.m_msgType, start, end );
-    m_value.m_count = 0;
-  }
+  deserializeField( m_key.m_filename, logRecordBytes, end );
+  deserializeField( m_key.m_lineId, logRecordBytes, end );
+  deserializeField( m_value.m_logPart, logRecordBytes, end );
+  deserializeField( m_value.m_msgType, logRecordBytes, end );
+
+  m_value.m_count = 0;
 }
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
@@ -75,7 +70,7 @@ void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) con
 
   auto const serializeField = [&]( void const * data, size_t size )
   {
-    buffer_unit_type const * d = (buffer_unit_type const *) data;
+    buffer_unit_type const * d = reinterpret_cast<buffer_unit_type const *>(&data) ;
     out.insert( out.end(), d, d + size );
   };
   serializeField( &filenameSize, sizeof(string::size_type));
@@ -86,20 +81,20 @@ void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) con
   serializeField( &m_value.m_msgType, sizeof(MsgType) );
 }
 
+void LogHistory::recordDiagnostic( string_view logPartName, DiagnosticMsg const & msgType )
+{
+  string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
+  integer lineCount = msgType.m_line;
+  insertDiagnosticReport( { {string( fileName ), lineCount},
+                            {string( logPartName ), msgType.m_type, 1} } );
+}
+
 void LogHistory::insertDiagnosticReport( LogRecord logRecord )
 {
   auto & entry =  m_diagnosticHistory.get_inserted( {logRecord.m_key} );
   entry.m_logPart = logRecord.m_value.m_logPart;
   entry.m_msgType = logRecord.m_value.m_msgType;
   entry.m_count +=  1;
-}
-
-void LogHistory::notifyMsg( string_view logPartName, DiagnosticMsg const & msgType )
-{
-  string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
-  integer lineCount = msgType.m_line;
-  insertDiagnosticReport( { {string( fileName ), lineCount},
-                            {string( logPartName ), msgType.m_type, 1} } );
 }
 
 template< typename T >
@@ -183,16 +178,18 @@ void LogHistory::diagnosticStatsReport()
   //2 - Unpacking
   if( MpiWrapper::commRank() == 0 )
   {
-    auto startGlobalRecord =  globalLogRecords.begin();
+    buffer_unit_type const * startGlobalRecord = globalLogRecords.data();
     for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
     {
-      auto end =  globalLogRecords.begin();
-      LogRecord unpackRecord;
-      unpackRecord.deserialize( stdVector< buffer_unit_type >( startGlobalRecord, end ));
-      history.insertDiagnosticReport( unpackRecord );
-      startGlobalRecord += recvCounts[idxRank];
+      integer byteFromThisRank = recvCounts[idxRank];
+      buffer_unit_type const * rankEnd= startGlobalRecord + byteFromThisRank;
+      while( startGlobalRecord < rankEnd )
+      {
+        LogRecord unpackRecord;
+        unpackRecord.deserialize( startGlobalRecord,rankEnd );
+        history.insertDiagnosticReport( unpackRecord );
+      }
     }
-
   }
 
   //3 - Display

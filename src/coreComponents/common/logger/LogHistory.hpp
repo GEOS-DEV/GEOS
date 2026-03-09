@@ -40,67 +40,104 @@ public:
 
   struct LogRecord
   {
-    /// POD characterizing an unique diagnostic message
+    /** @brief Identifier for a diagnostic message (source localization). */
     struct Key
     {
-      string m_filename;
-      integer m_lineId;
+      string m_filename; ///< Source file name
+      integer m_lineId;  ///< Line number in the file.
     } m_key;
 
+    /** @brief Content and metadata of the diagnostic message. */
     struct Values
     {
-      string m_logPart;
-      MsgType m_msgType;
-      integer m_count;
+      string m_logPart;  ///< The string logPart.
+      MsgType m_msgType; ///< Message type.
+      integer m_count;   ///< Number of occurrences detected.
     } m_value;
 
+    /** @brief Calculates the total size required for the serialization.
+     * @return Size in bytes.
+     */
     size_t getSerializedSize() const;
-    LogRecord();
-    LogRecord( Key const &, Values const & );
 
     /**
-     * @brief Serialize all the LogRecord fields
-     * @param out The resulting vector containaing all fields serialized
+     * @brief Construct an empty Log Record object
+     */
+    LogRecord();
+
+    /**
+     * @brief Construct a new Log Record object
+     * @param key The log record key
+     * @param values The log record values
+     */
+    LogRecord( Key const & key, Values const & values );
+
+    /** @brief Serializes the record fields into a binary buffer.
+     * @param out Destination vector for the serialized data.
      */
     void serialize( stdVector< buffer_unit_type > & out ) const;
-    /**
-     * @brief Deserialize all the LogRecord fields
-     * @param logRecordBytes The vector containing the data serialized
-     */
-    void deserialize( stdVector< buffer_unit_type > const & logRecordBytes );
 
+    /**
+     * @brief Deserializes a complete record and advances the read pointer.
+     * @param logRecordBytes Reference to the read pointer.
+     * @param end Upper limit of readable memory.
+     */
+    void deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end );
+
+    /**
+     * @tparam T The trivial type
+     * @return Returns the size occupied by a trivial type in memory.
+     */
     template< typename T >
     unsigned long sizeOfField( T ) const
     { return sizeof(T); }
 
+    /**
+     * @brief Returns the size of a string (header size + content).
+     * @param str The target string
+     * @return Size in bytes.
+     */
     unsigned long sizeOfField( string_view str ) const
     { return sizeof(string::size_type) + str.size(); }
 
+    /** @brief Reads a trivial value from the buffer and advances the pointer.
+     * @param data Destination variable.
+     * @param ptr Current read pointer (advanced by sizeof(T)).
+     * @param end Safety: maximum buffer limit.
+     */
     template< typename T >
-    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const* end )
+    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
     {
       static_assert( std::is_trivially_copyable_v< T > );
-      if(ptr + sizeof(T)> end) throw std::runtime_error("Buffer truncated");
+      if( ptr + sizeof(T)> end ) throw std::runtime_error( "Buffer truncated" );
       memcpy( &data, ptr, sizeof(T) );
       ptr += sizeof(T);
     }
 
-    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const* end )
+    /** @brief Reads a string value from the buffer and advances the pointer.
+     * @param data Destination variable.
+     * @param ptr Current read pointer (advanced by sizeof(string)).
+     * @param end Safety: maximum buffer limit.
+     */
+    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
     {
       string::size_type strSize = 0;
-      deserializeField( strSize, ptr,end );
+      deserializeField( strSize, ptr, end );
+      if( std::distance( ptr, end ) < (long) strSize )
+      {
+        throw std::runtime_error( "Buffer truncated reading string" );
+      }
       str.assign( ptr, ptr + strSize );
       ptr += str.size();
     }
 
   };
 
-  /**
-   * @brief Report a diagnostic message
-   * @param logPartName The logPart where the message occured
-   * @param diagMsg The DiagnosticMsg to record
+  /** * @brief Records a diagnostic message occurrence in the history.
+   * @param logPartName The string log part name.
+   * @param diagMsg The diagnostic message associated
    */
-  void notifyMsg( string_view logPartName, DiagnosticMsg const & diagMsg );
+  void recordDiagnostic( string_view logPartName, DiagnosticMsg const & diagMsg );
 
   /**
    * @brief Display the diagnostic statistics to the log
@@ -143,6 +180,10 @@ private:
   };
   /// @endcond
 
+  /**
+   * @brief Insert a LogRepord in the m_diagnosticHistory
+   * @param log The logRecord with all the information
+   */
   void insertDiagnosticReport( LogRecord log );
 
   /**
