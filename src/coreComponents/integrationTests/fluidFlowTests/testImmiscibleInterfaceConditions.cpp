@@ -481,7 +481,7 @@ RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & 
 class ImmiscibleInterfaceConditionsTest : public FluidModelTest< TwoPhaseImmiscibleFluid, 2 >
 {
 public:
-  ImmiscibleInterfaceConditionsTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions )), 
+  ImmiscibleInterfaceConditionsTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions )),
   m_parent( "TestParentGroup", m_node )
 
   {}
@@ -557,6 +557,7 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
   stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
   stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
   bool converged = false;
+  real64 warmStartPc = -1.0;
 
   std::ofstream outFile( "local_solver_results.csv" );
 
@@ -597,7 +598,8 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
 // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
       cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
-      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2 );
+      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2,
+      warmStartPc );
 
 auto t1 = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> elapsed = t1 - t0;
@@ -678,13 +680,12 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalSolverResults )
   stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
   stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
   bool converged = false;
-
-
-
+  real64 warmStartPc = -1.0;
 // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
       cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
-      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2 );
+      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2,
+      warmStartPc );
 
   real64 const tolerance_eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
