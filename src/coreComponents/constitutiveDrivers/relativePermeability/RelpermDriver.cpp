@@ -13,9 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "RelpermDriver.hpp"
-
-//#include "common/MpiWrapper.hpp"
+#include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
