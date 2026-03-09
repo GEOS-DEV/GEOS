@@ -182,10 +182,9 @@ void StatsTask::outputLogStats( real64 const statsTime,
   {
     tableData.addSeparator();
     tableData.addRow( merge, merge, merge, "" );
-
-    tableData.addSeparator();
     tableData.addRow( merge, merge, merge, targetName );
     tableData.addSeparator();
+
     tableData.addRow( "statistics", "min", "average", "max" );
     tableData.addSeparator();
 

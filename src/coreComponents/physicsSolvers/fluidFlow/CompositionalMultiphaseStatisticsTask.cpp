@@ -269,10 +269,9 @@ void StatsTask::outputLogStats( real64 const statsTime,
   {
     tableData.addSeparator();
     tableData.addRow( merge, merge, merge, "" );
+    tableData.addRow( merge, merge, merge, targetName );
+    tableData.addSeparator();
 
-    tableData.addSeparator();
-    tableData.addRow( merge, merge, merge, GEOS_FMT( "Region '{}'", targetName ) );
-    tableData.addSeparator();
     tableData.addRow( "statistics", "min", "average", "max" );
     tableData.addSeparator();
 
@@ -332,12 +331,13 @@ void StatsTask::outputLogStats( real64 const statsTime,
   };
 
   // apply the lambda for each region and, finally, the mesh summary
+  outputRegionStats( GEOS_FMT( "Discretization '{}'", mesh.getName() ), meshRegionsStatistics );
+
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
                                      [&] ( CellElementRegion & region, RegionStatistics & stats )
   {
-    outputRegionStats( region.getName(), stats );
+    outputRegionStats( GEOS_FMT( "Region '{}'", region.getName() ), stats );
   } );
-  outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
   // output to log
   GEOS_LOG_RANK_0( formatter.toString( tableData ) );
