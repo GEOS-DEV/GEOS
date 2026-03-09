@@ -53,10 +53,10 @@ LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
   m_value( values )
 {}
 
-void LogHistory::LogRecord::deserialize( stdVector< buffer_unit_type > const & logRecordBytes, integer nbBytes )
+void LogHistory::LogRecord::deserialize( stdVector< buffer_unit_type > const & logRecordBytes )
 {
   buffer_unit_type const * start = logRecordBytes.data();
-  buffer_unit_type const * end = start + nbBytes;
+  buffer_unit_type const * end = logRecordBytes.end().base();
   while( start < end )
   {
     LogRecord unpackRecord;
@@ -183,11 +183,14 @@ void LogHistory::diagnosticStatsReport()
   //2 - Unpacking
   if( MpiWrapper::commRank() == 0 )
   {
+    auto startGlobalRecord =  globalLogRecords.begin();
     for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
     {
+      auto end =  globalLogRecords.begin();
       LogRecord unpackRecord;
-      unpackRecord.deserialize( globalLogRecords, recvCounts[idxRank] );
+      unpackRecord.deserialize( stdVector< buffer_unit_type >( startGlobalRecord, end ));
       history.insertDiagnosticReport( unpackRecord );
+      startGlobalRecord += recvCounts[idxRank];
     }
 
   }

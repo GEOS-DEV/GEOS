@@ -66,9 +66,8 @@ public:
     /**
      * @brief Deserialize all the LogRecord fields
      * @param logRecordBytes The vector containing the data serialized
-     * @param end 
      */
-    void deserialize( stdVector< buffer_unit_type > const & logRecordBytes, integer nbBytes );
+    void deserialize( stdVector< buffer_unit_type > const & logRecordBytes );
 
     template< typename T >
     unsigned long sizeOfField( T ) const
