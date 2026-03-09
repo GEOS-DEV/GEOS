@@ -70,7 +70,7 @@ void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) con
 
   auto const serializeField = [&]( void const * data, size_t size )
   {
-    buffer_unit_type const * d = reinterpret_cast<buffer_unit_type const *>(&data) ;
+    buffer_unit_type const * d = reinterpret_cast<buffer_unit_type const *>(data) ;
     out.insert( out.end(), d, d + size );
   };
   serializeField( &filenameSize, sizeof(string::size_type));
