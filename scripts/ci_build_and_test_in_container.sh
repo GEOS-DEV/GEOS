@@ -310,8 +310,11 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  or_die cmake --build . --target coreComponents_coverage
+  echo "Starting coverage target coreComponents_coverage..."
+  time or_die cmake --build . --target coreComponents_coverage
+  echo "Copying cleaned coverage report to ${GEOS_SRC_DIR}/geos_coverage.info.cleaned"
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
+  echo "Coverage report copied."
 fi
 
 # Run the unit tests (excluding previously ran checks).
