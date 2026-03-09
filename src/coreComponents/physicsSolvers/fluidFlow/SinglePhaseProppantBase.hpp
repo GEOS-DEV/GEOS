@@ -55,6 +55,8 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
+  using SinglePhaseBase::updatePorosityAndPermeability;
+
   virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const override;

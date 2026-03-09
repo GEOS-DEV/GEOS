@@ -701,16 +701,12 @@ public:
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
-#if !defined( GEOS_USE_HIP )
-/// Convenience typedef for VEM on tetrahedra.
+/// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
-#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
-#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -723,24 +719,18 @@ using H1_Prism8_VEM_Gauss1 = ConformingVirtualElementOrder1< 16, 8 >;
 using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on prism11.
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
-#endif
 
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 4, 3 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 8, 4 >;
-#endif
 /// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 5, 4 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 6, 4 >;
-#endif
 /// Convenience typedef for VEM on prism5.
 using H1_Prism5_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
@@ -753,10 +743,8 @@ using H1_Prism8_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 16, 8 >;
 using H1_Prism9_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
 using H1_Prism10_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 20, 10 >;
-#if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on prism11.
 using H1_Prism11_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 22, 11 >;
-#endif
 
 } // namespace finiteElement
 } // namespace geos
