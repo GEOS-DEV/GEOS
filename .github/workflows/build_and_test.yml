@@ -123,6 +123,30 @@ jobs:
           exit 1
         fi
 
+    - name: Prepare Codecov verification key
+      if: inputs.CODE_COVERAGE
+      run: |
+        set -euxo pipefail
+        GNUPGHOME="${RUNNER_TEMP}/codecov-gnupg"
+        export GNUPGHOME
+        mkdir -p "${GNUPGHOME}"
+        chmod 700 "${GNUPGHOME}"
+        gpg --batch --import "${GITHUB_WORKSPACE}/.github/codecov/verification.gpg.asc" || true
+        gpg --batch --list-keys 806BB28AED779869 >/dev/null
+        echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
+
+    - name: Check Codecov token availability
+      if: inputs.CODE_COVERAGE
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CODECOV_TOKEN}" ]; then
+          echo "CODECOV_TOKEN is not available in this workflow context." >&2
+          exit 1
+        fi
+        echo "CODECOV_TOKEN is available."
+
     - name: 'Set up Cloud SDK'
       if: inputs.GCP_BUCKET
       uses: 'google-github-actions/setup-gcloud@v2.1.4'
@@ -347,18 +371,6 @@ jobs:
 
         exit ${EXIT_STATUS}
 
-    - name: Prepare Codecov verification key
-      if: inputs.CODE_COVERAGE
-      run: |
-        set -euxo pipefail
-        GNUPGHOME="${RUNNER_TEMP}/codecov-gnupg"
-        export GNUPGHOME
-        mkdir -p "${GNUPGHOME}"
-        chmod 700 "${GNUPGHOME}"
-        gpg --batch --import "${GITHUB_WORKSPACE}/.github/codecov/verification.gpg.asc" || true
-        gpg --batch --list-keys 806BB28AED779869 >/dev/null
-        echo "GNUPGHOME=${GNUPGHOME}" >> "${GITHUB_ENV}"
-
     - name: Prepare pip for Codecov
       if: inputs.CODE_COVERAGE
       run: |
@@ -373,18 +385,6 @@ jobs:
         EOF
         chmod +x "${RUNNER_TEMP}/codecov-bin/pip"
         echo "${RUNNER_TEMP}/codecov-bin" >> "${GITHUB_PATH}"
-
-    - name: Check Codecov token availability
-      if: inputs.CODE_COVERAGE
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      run: |
-        set -euo pipefail
-        if [ -z "${CODECOV_TOKEN}" ]; then
-          echo "CODECOV_TOKEN is not available in this workflow context." >&2
-          exit 1
-        fi
-        echo "CODECOV_TOKEN is available."
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
