@@ -69,6 +69,8 @@ on:
         required: false
         type: string
     secrets:
+      CODECOV_TOKEN:
+        required: false
       GOOGLE_CLOUD_GCP:
         required: false
 jobs:
@@ -371,6 +373,18 @@ jobs:
         EOF
         chmod +x "${RUNNER_TEMP}/codecov-bin/pip"
         echo "${RUNNER_TEMP}/codecov-bin" >> "${GITHUB_PATH}"
+
+    - name: Check Codecov token availability
+      if: inputs.CODE_COVERAGE
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CODECOV_TOKEN}" ]; then
+          echo "CODECOV_TOKEN is not available in this workflow context." >&2
+          exit 1
+        fi
+        echo "CODECOV_TOKEN is available."
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
