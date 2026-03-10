@@ -15,7 +15,7 @@
       zCoords="{ 0, 5, 10 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 200, 200 }"
+      nz="{ 250, 250 }"
       cellBlockNames="{ cb_left, cb_right }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
@@ -56,7 +56,7 @@
 -->
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="86.4e+03"
+      maxEventDt="86.4e+02"
       target="/Solvers/FlowSolver"/>    
   </Events>
 </Problem>

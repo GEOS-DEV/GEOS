@@ -179,8 +179,8 @@ static void local_solver( real64 uT, stdVector< real64 > const & saturations, st
 
 
           // nonlinear solver's parameters
-          real64 tol = 1.0e-9;
-          int max_iter = 50;
+          real64 tol = 1.0e-10;
+          int max_iter = 100;
           converged = 0;
           bool damping = true;
 
