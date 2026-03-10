@@ -136,7 +136,16 @@ private:
     integer m_numComps;
     stdVector< string > m_phaseNames;
     stdVector< string > m_compNames;
-    stdVector< stdVector< string > > m_phaseCompNames;
+    stdVector< string > m_phaseCompNames;
+
+    /**
+     * @param phaseId index of the phase for which we want the name
+     * @param compId index of the component for which we want the name
+     * @return string& reference of the name string
+     */
+    string & phaseCompName( integer phaseId, integer compId )
+    { return m_phaseCompNames[phaseId * m_numComps + compId]; }
+
   } m_fluid;
 
 };

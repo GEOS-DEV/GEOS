@@ -129,13 +129,11 @@ void StatsTask::prepareFluidMetaData()
   m_fluid.m_phaseNames = fluid.phaseNames();
   m_fluid.m_compNames = fluid.componentNames();
 
-  m_fluid.m_phaseCompNames.resize(
-    m_fluid.m_numPhases,
-    stdVector< string >( m_fluid.m_numComps, string() ) );
+  m_fluid.m_phaseCompNames.resize( m_fluid.m_numPhases * m_fluid.m_numComps, string() );
 
   for( int ip = 0; ip < m_fluid.m_numPhases; ++ip )
     for( int ic = 0; ic < m_fluid.m_numComps; ++ic )
-      m_fluid.m_phaseCompNames[ip][ic] = GEOS_FMT( "{}/{}", m_fluid.m_phaseNames[ip], m_fluid.m_compNames[ic] );
+      m_fluid.phaseCompName( ip, ic ) = GEOS_FMT( "{} / {}", m_fluid.m_phaseNames[ip], m_fluid.m_compNames[ic] );
 }
 
 void StatsTask::prepareLogTableLayouts( string_view meshName )
@@ -325,7 +323,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Component mass [{}]", massUnit ),
-                      "TODO" /*stringutilities::join( m_fluid.m_phaseCompNames, '\n' )*/,
+                      stringutilities::join( m_fluid.m_phaseCompNames, '\n' ),
                       CellType::MergeNext,
                       stringutilities::join( stats.m_componentMass, '\n' ) );
   };
