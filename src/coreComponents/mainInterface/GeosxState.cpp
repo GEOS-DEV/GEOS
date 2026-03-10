@@ -73,7 +73,7 @@ std::ostream & operator<<( std::ostream & os, State const state )
     return os << "State::COMPLETED";
   }
 
-  GEOS_ERROR( "Unrecognized state. The integral value is: " << static_cast< int >( state ) );
+  GEOS_ERROR( GEOS_FMT( "Unrecognized state. The integral value is: {}", static_cast< int >( state ) ) );
   return os;
 }
 

@@ -293,8 +293,8 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
-                ": Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain",
+                getWrapperDataContext( viewKeyStruct::strainTheoryString() ) );
   }
 
   return rval;
@@ -499,6 +499,18 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
+
+    // Check if mesh was modified by an external event (e.g., SurfaceGen) before this solver step
+    // This ensures setupSystem is called before implicitStepSetup when topology changes occur
+    Timestamp const initialMeshModificationTimestamp = getMeshModificationTimestamp( domain );
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName );
+    if( initialMeshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() )
+    {
+      m_dofManager.clear();
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+    }
+
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
@@ -507,10 +519,10 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
       // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( meshModificationTimestamp );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
@@ -611,7 +623,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -624,7 +637,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -746,17 +760,18 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     {
       char const bcLogMessage[] =
         "\nWarning!"
-        "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+        "\nThere is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
+      GEOS_UNUSED_VAR( bcLogMessage );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'x' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'y' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'z' ),
+                       getDataContext() );
     }
   }
 
@@ -796,6 +811,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
                  blockLocalDofNumber,
                  dofRankOffset,
                  faceManager,
+                 nodeManager.referencePosition(),
                  targetSet,
                  localRhs );
     } );

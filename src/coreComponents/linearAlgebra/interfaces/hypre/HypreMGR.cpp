@@ -44,6 +44,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
 
@@ -202,6 +203,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
       setStrategy< SinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
+    case LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseReservoirFVM:
+    {
+      setStrategy< ThermalSinglePhaseReservoirFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
     case LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirHybridFVM:
     {
       setStrategy< SinglePhaseReservoirHybridFVM >( params.mgr, numComponentsPerField, precond, mgrData );
@@ -219,7 +225,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Unsupported MGR strategy: " << params.mgr.strategy );
+      GEOS_ERROR( GEOS_FMT( "Unsupported MGR strategy: {}", params.mgr.strategy ) );
     }
   }
 
