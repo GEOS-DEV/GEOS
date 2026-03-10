@@ -367,6 +367,8 @@ jobs:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
         use_pypi: true
+        use_legacy_upload_endpoint: true
+        verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
