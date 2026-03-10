@@ -3021,10 +3021,8 @@ public:
                                        stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                                                           constitutive::CapillaryPressureBase *,
                                                                           constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
-                                       unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                                      //  std::tuple< constitutive::RelativePermeabilityBase *,
-                                      //              constitutive::CapillaryPressureBase *,
-                                      //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
+                                       arrayView1d< localIndex const > const & interfaceRegionLookup,
+                                       arrayView1d< real64 > const & convergedPcInt,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
             rankOffset,
@@ -3044,16 +3042,9 @@ public:
     // m_relPermWrapper( relPermWrapper ),
     m_interfaceFaceSetNames( interfaceFaceSetNames ),
     m_interfaceConstitutivePairs( interfaceConstitutivePairs ),
-    m_interfaceRegionByConnector( interfaceRegionByConnector )
-    // ,
-    // m_interfaceConstitutivePairs_temp( interfaceConstitutivePairs_temp )
-  {
-    localIndex const numConn = stencilWrapper.size();
-    if( static_cast< localIndex >( m_convergedPcInt.size() ) < numConn )
-    {
-      m_convergedPcInt.resize( numConn, -1.0 );
-    }
-  }
+    m_interfaceRegionLookup( interfaceRegionLookup ),
+    m_convergedPcInt( convergedPcInt )
+  {}
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
@@ -3074,7 +3065,7 @@ public:
      bool anyInterfaceConditionsQ = not m_interfaceConstitutivePairs.empty();
      if (anyInterfaceConditionsQ) {
          connectorHasInterfaceConditionQ =
-             m_interfaceRegionByConnector.find(iconn) != m_interfaceRegionByConnector.end();
+             ( iconn < m_interfaceRegionLookup.size() && m_interfaceRegionLookup[iconn] >= 0 );
      }
 
 
@@ -3458,7 +3449,7 @@ public:
           // std::vector< TwoPhaseImmiscibleFluid * > fluids = {std::get< 2 >( m_interfaceConstitutivePairs_temp ), std::get< 2 >( m_interfaceConstitutivePairs_temp )};
 
           // auto const & pairArray = m_interfaceConstitutivePairs[0];
-          localIndex const surfaceRegionIndex = m_interfaceRegionByConnector.at(iconn);
+          localIndex const surfaceRegionIndex = m_interfaceRegionLookup[iconn];
 auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
 
 std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
@@ -3583,7 +3574,7 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
             trappedSats2 = trappedSats2_extracted;
           }
           
-          real64 warmStartPc = ( iconn < static_cast< localIndex >( m_convergedPcInt.size() ) )
+          real64 warmStartPc = ( iconn < m_convergedPcInt.size() )
                                ? m_convergedPcInt[iconn] : -1.0;
           
           local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
@@ -3591,7 +3582,7 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
             phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2,
             warmStartPc );
 
-          if( iconn < static_cast< localIndex >( m_convergedPcInt.size() ) )
+          if( iconn < m_convergedPcInt.size() )
           {
             m_convergedPcInt[iconn] = warmStartPc;
           }
@@ -3648,12 +3639,10 @@ protected:
   stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                      constitutive::CapillaryPressureBase *,
                                      constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  const m_interfaceConstitutivePairs;
-  unordered_map< localIndex, localIndex > const m_interfaceRegionByConnector;
-  // std::tuple< constitutive::RelativePermeabilityBase *,
-  //             constitutive::CapillaryPressureBase *,
-  //             constitutive::TwoPhaseImmiscibleFluid * > const m_interfaceConstitutivePairs_temp;
+  arrayView1d< localIndex const > const m_interfaceRegionLookup;
 
-  inline static std::vector< real64 > m_convergedPcInt;
+  /// Per-instance warm-start capillary pressure array (one entry per connection)
+  arrayView1d< real64 > const m_convergedPcInt;
 
 };
 
@@ -3750,9 +3739,6 @@ public:
                                                       constitutive::CapillaryPressureBase *,
                                                       constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
                    unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                  //  std::tuple< constitutive::RelativePermeabilityBase *,
-                  //              constitutive::CapillaryPressureBase *,
-                  //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -3761,26 +3747,46 @@ public:
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
     localIndex const domainSize = subRegion.size();
+    localIndex const numConn = stencilWrapper.size();
+
+    // Pre-compute the interface region lookup as a flat array for parallel-safe access.
+    // This replaces unordered_map::find/at inside the parallel kernel, which is not thread-safe.
+    array1d< localIndex > interfaceRegionLookup( numConn );
+    interfaceRegionLookup.setValues< serialPolicy >( -1 );
+    for( auto const & entry : interfaceRegionByConnector )
+    {
+      if( entry.first < numConn )
+      {
+        interfaceRegionLookup[entry.first] = entry.second;
+      }
+    }
+
+    // Per-kernel warm-start capillary pressure storage.
+    // Using a static local to persist across calls (same behavior as the original inline static)
+    // but properly scoped and sized per stencil.
+    static array1d< real64 > s_convergedPcInt;
+    if( s_convergedPcInt.size() < numConn )
+    {
+      s_convergedPcInt.resize( numConn );
+      s_convergedPcInt.setValues< serialPolicy >( -1.0 );
+    }
+
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    // using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER, RELPERMWRAPPER >;
-        using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
-    // kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
-    //                    flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
-    //                    dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-    //                    checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, interfaceConstitutivePairs_temp, domainSize );
     kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, domainSize );
-    kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+                       checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs,
+                       interfaceRegionLookup.toViewConst(), s_convergedPcInt.toView(), domainSize );
+    kernelType::template launch< POLICY >( numConn, kernel );
   }
 };
 
