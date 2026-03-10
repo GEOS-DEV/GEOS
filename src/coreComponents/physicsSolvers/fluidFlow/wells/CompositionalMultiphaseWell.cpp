@@ -709,6 +709,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 flashPressure;
   real64 flashTemperature;
+  bool usePTDer = false;
   if( useSurfaceConditions )
   {
     // use surface conditions
@@ -741,6 +742,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
       // region name not set, use segment conditions
       flashPressure   = pres[iwelemRef];
       flashTemperature = temp[iwelemRef];
+      usePTDer = true;
     }
     else
     {
@@ -790,6 +792,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
                                   dPhaseFrac,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
+                                  &usePTDer,
                                   &flashPressure,
                                   &flashTemperature,
                                   &currentTotalVolRate,
@@ -849,10 +852,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
         currentTotalVolRate = currentTotalRate * totalDensInv;
         // Compute derivatives  dP dT
         real64 const dTotalDensInv_dPres = -dTotalDens[iwelemRef][0][Deriv::dP] * totalDensInv * totalDensInv;
-        dCurrentTotalVolRate[COFFSET_WJ::dP] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
+        dCurrentTotalVolRate[COFFSET_WJ::dP] = ( usePTDer ==  1 ) * currentTotalRate * dTotalDensInv_dPres;
         if constexpr ( IS_THERMAL )
         {
-          dCurrentTotalVolRate[COFFSET_WJ::dT] = ( useSurfaceConditions ==  0 ) * currentTotalRate * -dTotalDens[iwelemRef][0][Deriv::dT] * totalDensInv * totalDensInv;
+          dCurrentTotalVolRate[COFFSET_WJ::dT] = ( usePTDer ==  1 ) * currentTotalRate * -dTotalDens[iwelemRef][0][Deriv::dT] * totalDensInv * totalDensInv;
         }
 
         if( logSurfaceCondition && useSurfaceConditions )
@@ -888,13 +891,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
 
           // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
           currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
-          dCurrentPhaseVolRate[ip][COFFSET_WJ::dP] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
+          dCurrentPhaseVolRate[ip][COFFSET_WJ::dP] = ( usePTDer ==  1 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
           dCurrentPhaseVolRate[ip][COFFSET_WJ::dQ] = phaseFracTimesPhaseDensInv;
           if constexpr (IS_THERMAL )
           {
             real64 const dPhaseFracTimesPhaseDensInv_dTemp = dPhaseFrac[iwelemRef][0][ip][Deriv::dT] * phaseDensInv
                                                              - dPhaseDens[iwelemRef][0][ip][Deriv::dT] * phaseFracTimesPhaseDensInv * phaseDensInv;
-            dCurrentPhaseVolRate[ip][COFFSET_WJ::dT] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dTemp;
+            dCurrentPhaseVolRate[ip][COFFSET_WJ::dT] = ( usePTDer ==  1 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dTemp;
           }
 
           for( integer ic = 0; ic < numComp; ++ic )

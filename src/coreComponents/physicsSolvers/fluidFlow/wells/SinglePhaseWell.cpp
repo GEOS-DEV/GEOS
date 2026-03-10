@@ -285,6 +285,7 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   bool const logSurfaceCondition = isLogLevelActive< logInfo::WellControl >( wellControls.getLogLevel());
   integer const useSurfaceConditions = wellControls.useSurfaceConditions();
   real64 flashPressure, flashTemperature;
+  bool usePTDer = false;
   if( useSurfaceConditions )
   {
     // use surface conditions
@@ -318,6 +319,7 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
       // use segment conditions
       flashPressure   = pres[iwelemRef];
       flashTemperature = temp[iwelemRef];
+      usePTDer = true;
     }
   }
   real64 & currentVolRate =
@@ -343,6 +345,7 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
                                   dDens,
                                   logSurfaceCondition,
                                   &useSurfaceConditions,
+                                  &usePTDer,
                                   &flashPressure,
                                   &flashTemperature,
                                   &currentVolRate,
@@ -384,11 +387,11 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
         real64 const densInv = 1.0 / dens[iwelemRef][0];
         currentVolRate = connRate[iwelemRef] * densInv;
 
-        dCurrentVolRate[COFFSET_WJ::dP] = -( useSurfaceConditions ==  0 ) * dDens[iwelemRef][0][DerivOffset::dP] * currentVolRate * densInv;
+        dCurrentVolRate[COFFSET_WJ::dP] = -( usePTDer ==  1 ) * dDens[iwelemRef][0][DerivOffset::dP] * currentVolRate * densInv;
         dCurrentVolRate[COFFSET_WJ::dQ] = densInv;
         if constexpr ( IS_THERMAL )
         {
-          dCurrentVolRate[COFFSET_WJ::dT] = -( useSurfaceConditions ==  0 ) * dDens[iwelemRef][0][DerivOffset::dT] * currentVolRate * densInv;
+          dCurrentVolRate[COFFSET_WJ::dT] = -( usePTDer ==  1 ) * dDens[iwelemRef][0][DerivOffset::dT] * currentVolRate * densInv;
         }
         if( logSurfaceCondition && useSurfaceConditions )
         {
