@@ -1283,17 +1283,26 @@ static void local_solver( real64 uT, stdVector< real64 > const & saturations, st
 
                     dGravHead_dP[ip][ke] += signTix[ke] * dTransHat_dP[ix] * dGravHead_dTrans;
 
+                    // dCapPres_dS must match the capPres value endpoint:
+                    //   ix=0, ke=0: cell 0 center  -> dCapPres1_dPhaseVolFrac
+                    //   ix=0, ke=1: face (side 0)  -> dCapPres1_dfacePhaseVolFrac
+                    //   ix=1, ke=0: cell 1 center  -> dCapPres2_dPhaseVolFrac
+                    //   ix=1, ke=1: face (side 1)  -> dCapPres2_dfacePhaseVolFrac
                     real64 dCapPres_dS;
-                    if( ke == 0 )
+                    if( ix == 0 && ke == 0 )
                     {
-
-
+                      dCapPres_dS = dCapPres1_dPhaseVolFrac[0][0][ip][ip];
+                    }
+                    else if( ix == 0 && ke == 1 )
+                    {
                       dCapPres_dS = dCapPres1_dfacePhaseVolFrac[0][0][ip][ip];
                     }
-                    else // ke == 1
+                    else if( ix == 1 && ke == 0 )
                     {
-
-
+                      dCapPres_dS = dCapPres2_dPhaseVolFrac[0][0][ip][ip];
+                    }
+                    else // ix == 1 && ke == 1
+                    {
                       dCapPres_dS = dCapPres2_dfacePhaseVolFrac[0][0][ip][ip];
                     }
 
@@ -2119,17 +2128,20 @@ static void local_solver( real64 uT, stdVector< real64 > const & saturations, st
             real64 const dPc_int_dS2 =(-1.0) * (dhalfFlux_duT[0][0] * duT_dS[1] - dhalfFlux2_dS[0][0] - dhalfFlux_duT[0][1] * duT_dS[1]) / denom_protected;
             real64 const dPc_int_du =(-1.0) * (dhalfFlux_duT[0][0]  - dhalfFlux_duT[0][1]) / denom_protected;
 
-            dFlux_dP[0][0] =  (dhalfFlux_duT[0][0] * duT_dP[0] + dhalfFlux_dpc[0][0] * dPc_int_du * duT_dP[0]) * density2[0] + halfFluxVal[0][0] * dDens_dP2[0][0];
-            dFlux_dS[0][0] = (dhalfFlux1_dS[0][0] +  dhalfFlux_duT[0][0] * duT_dS[0] + dhalfFlux_dpc[0][0] * dPc_int_dS1) * density2[0];
+            // All derivatives use side 0 because phi[ip] = halfFluxVal[ip][0] * density2[ip]
+            // dphi/dP[cell]: through uT(P) and Pc_int(uT(P)), plus density(P) product rule
+            // dphi/dS[cell]: direct (cell 0 only) + through uT(S) + through Pc_int(S)
+            dFlux_dP[0][0] = (dhalfFlux_duT[0][0] * duT_dP[0] + dhalfFlux_dpc[0][0] * dPc_int_du * duT_dP[0]) * density2[0] + halfFluxVal[0][0] * dDens_dP2[0][0];
+            dFlux_dS[0][0] = (dhalfFlux1_dS[0][0] + dhalfFlux_duT[0][0] * duT_dS[0] + dhalfFlux_dpc[0][0] * dPc_int_dS1) * density2[0];
 
-            dFlux_dP[0][1] = (dhalfFlux_duT[0][1] * duT_dP[1] + dhalfFlux_dpc[0][1] * dPc_int_du * duT_dP[1]) * density2[0] + halfFluxVal[0][1] * dDens_dP2[0][1];
-            dFlux_dS[0][1] = (dhalfFlux2_dS[0][0] +  dhalfFlux_duT[0][1] * duT_dS[1] + dhalfFlux_dpc[0][1] * dPc_int_dS2) * density2[0];
+            dFlux_dP[0][1] = (dhalfFlux_duT[0][0] * duT_dP[1] + dhalfFlux_dpc[0][0] * dPc_int_du * duT_dP[1]) * density2[0] + halfFluxVal[0][0] * dDens_dP2[0][1];
+            dFlux_dS[0][1] = (dhalfFlux_duT[0][0] * duT_dS[1] + dhalfFlux_dpc[0][0] * dPc_int_dS2) * density2[0];
 
-            dFlux_dP[1][0] =  (dhalfFlux_duT[1][0] * duT_dP[0] + dhalfFlux_dpc[1][0] * dPc_int_du * duT_dP[0]) * density2[1] + halfFluxVal[1][0] * dDens_dP2[1][0];
-            dFlux_dS[1][0] = (dhalfFlux1_dS[1][0] +  dhalfFlux_duT[1][0] * duT_dS[0] + dhalfFlux_dpc[1][0] * dPc_int_dS1) * density2[1];
+            dFlux_dP[1][0] = (dhalfFlux_duT[1][0] * duT_dP[0] + dhalfFlux_dpc[1][0] * dPc_int_du * duT_dP[0]) * density2[1] + halfFluxVal[1][0] * dDens_dP2[1][0];
+            dFlux_dS[1][0] = (dhalfFlux1_dS[1][0] + dhalfFlux_duT[1][0] * duT_dS[0] + dhalfFlux_dpc[1][0] * dPc_int_dS1) * density2[1];
 
-            dFlux_dP[1][1] = (dhalfFlux_duT[1][1] * duT_dP[1] + dhalfFlux_dpc[1][1] * dPc_int_du * duT_dP[1]) * density2[1] + halfFluxVal[1][1] * dDens_dP2[1][1];
-            dFlux_dS[1][1] = (dhalfFlux2_dS[1][0] +  dhalfFlux_duT[1][1] * duT_dS[1] + dhalfFlux_dpc[1][1] * dPc_int_dS2) * density2[1];
+            dFlux_dP[1][1] = (dhalfFlux_duT[1][0] * duT_dP[1] + dhalfFlux_dpc[1][0] * dPc_int_du * duT_dP[1]) * density2[1] + halfFluxVal[1][0] * dDens_dP2[1][1];
+            dFlux_dS[1][1] = (dhalfFlux_duT[1][0] * duT_dS[1] + dhalfFlux_dpc[1][0] * dPc_int_dS2) * density2[1];
 
             fluxVal[0] = halfFluxVal[0][0] * density2[0];
             fluxVal[1] = halfFluxVal[1][0] * density2[1];

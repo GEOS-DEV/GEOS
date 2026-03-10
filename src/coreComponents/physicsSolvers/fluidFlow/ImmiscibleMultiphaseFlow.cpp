@@ -222,6 +222,13 @@
      Group const & faceSetGroup = faceManager.sets();
      ElementRegionManager & elemManager = meshLevel.getElemManager();
      m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
+     // Explicitly initialize all tuple entries to nullptr so that ranks without
+     // interface face elements don't leave garbage pointers in the tuples
+     for( size_t i = 0; i < m_interfaceConstitutivePairs.size(); ++i )
+     {
+       m_interfaceConstitutivePairs[i][0] = std::make_tuple( nullptr, nullptr, nullptr );
+       m_interfaceConstitutivePairs[i][1] = std::make_tuple( nullptr, nullptr, nullptr );
+     }
  
      // this is the FaceElement Level
      for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )

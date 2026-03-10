@@ -6,16 +6,19 @@
    gravityVector="{ 0.0, 0.0, 9.81 }">
     <ImmiscibleMultiphaseFlow
       name="FlowSolver"
-      logLevel="2"
+      logLevel="0"
       discretization="TPFA"
       temperature="300"
       initialDt="0.00001"
       targetRegions="{ region_left, region_right }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1.0e-6"
         newtonMaxIter="20"
         maxTimeStepCuts="20"
-	maxSubSteps="2000"/>
+	     maxSubSteps="2000"
+       lineSearchAction="None"
+       timeStepIncreaseIterLimit="0.5"
+       timeStepDecreaseIterLimit="0.6"/>
 <!--      <LinearSolverParameters
         solverType="direct"
         directParallel="0"  
@@ -25,7 +28,7 @@
         preconditionerType="mgr"
         krylovTol="1e-6"
         krylovMaxIter="100"
-        logLevel="1" />
+        logLevel="0" />
     </ImmiscibleMultiphaseFlow>  
   </Solvers>
   <!-- SPHINX_SOLVER_END -->

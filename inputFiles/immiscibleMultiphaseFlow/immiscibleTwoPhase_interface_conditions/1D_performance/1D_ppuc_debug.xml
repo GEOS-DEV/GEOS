@@ -15,7 +15,7 @@
       zCoords="{ 0, 5, 10 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 100, 100 }"
+      nz="{ 1000, 1000 }"
       cellBlockNames="{ cb_left, cb_right }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
@@ -39,7 +39,7 @@
   </Geometry>
 
   <Events
-    maxTime="86.4e+05">
+    maxTime="8.64e+06">
       
     <PeriodicEvent
       name="outputs"
