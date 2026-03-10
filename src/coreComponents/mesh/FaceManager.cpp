@@ -276,8 +276,8 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( "Face " << faceIndex <<
-                  " is not connected to any cell. You might have an invalid mesh.", getDataContext()  );
+      GEOS_ERROR( GEOS_FMT( "Face {} is not connected to any cell. You might have an invalid mesh.", faceIndex ),
+                  getDataContext()  );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.

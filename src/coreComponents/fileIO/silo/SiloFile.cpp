@@ -1371,7 +1371,7 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
     default:
     {
-      GEOS_ERROR( "Unsupported element type: " << elementType );
+      GEOS_ERROR( GEOS_FMT( "Unsupported element type: {}", elementType ) );
     }
   }
   return -1;

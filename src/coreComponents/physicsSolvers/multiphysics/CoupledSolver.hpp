@@ -77,6 +77,7 @@ public:
                              string const & solverWrapperKey,
                              string const & solverType )
   {
+    GEOS_UNUSED_VAR( solverWrapperKey );
     string_array availableSolvers;
 
     this->getParent().template forSubGroups< T >( [&]( T & group )
