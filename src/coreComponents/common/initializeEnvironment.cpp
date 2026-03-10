@@ -207,7 +207,7 @@ void setupCUDA()
   {
     cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
     GEOS_ERROR_IF( status != cudaSuccess,
-                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+                   GEOS_FMT( "Failed to set CUDA stack size. Error {}: {}", status, cudaGetErrorString( status ) ) );
   }
 #endif
 }
@@ -219,7 +219,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
-  GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  GEOS_ERROR_IF( caliperManager.error(),
+                 GEOS_FMT( "Caliper config error: {}", caliperManager.error_msg() ) );
   caliperManager.start();
 
 #if defined( GEOS_USE_ADIAK )
