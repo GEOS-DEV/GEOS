@@ -557,7 +557,7 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
   stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
   stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
   bool converged = false;
-  real64 warmStartPc = -1.0;
+
 
   std::ofstream outFile( "local_solver_results.csv" );
 
@@ -682,7 +682,7 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalSolverResults )
   stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
   stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
   bool converged = false;
-  real64 warmStartPc = -1.0;
+  real64 warmStartPc = 1000;
 // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
       cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,

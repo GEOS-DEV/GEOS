@@ -1283,18 +1283,19 @@ static void local_solver( real64 uT, stdVector< real64 > const & saturations, st
 
                     dGravHead_dP[ip][ke] += signTix[ke] * dTransHat_dP[ix] * dGravHead_dTrans;
 
-                    real64 dCapPres_dS;
-                    if( ke == 0 )
+                    real64 dCapPres_dS = dCapPres1_dPhaseVolFrac[0][0][ip][ip];
+
+                    if( ke == 1 && ix == 0 )
                     {
-
-
                       dCapPres_dS = dCapPres1_dfacePhaseVolFrac[0][0][ip][ip];
                     }
-                    else // ke == 1
+                    else if( ke == 1 && ix == 1 )
                     {
-
-
                       dCapPres_dS = dCapPres2_dfacePhaseVolFrac[0][0][ip][ip];
+                    }
+                    else if( ke == 0 && ix == 1 )
+                    {
+                      dCapPres_dS = dCapPres2_dPhaseVolFrac[0][0][ip][ip];
                     }
 
                     constexpr bool ENABLE_DCAPPRES_DS_DEBUG = false;
@@ -2133,6 +2134,11 @@ static void local_solver( real64 uT, stdVector< real64 > const & saturations, st
 
             fluxVal[0] = halfFluxVal[0][0] * density2[0];
             fluxVal[1] = halfFluxVal[1][0] * density2[1];
+
+            // std::cout << "dhalfFlux1_dS[0][0]=" << dhalfFlux1_dS[0][0] << ", duT_dS[0]=" << duT_dS[0] << std::endl;
+            // std::cout << "dhalfFlux_dpc[0][1]=" << dhalfFlux_dpc[0][1] << ", dPc_int_dS1=" << dPc_int_dS1 << std::endl;
+            // std::cout << "dhalfFlux1_dS[1][0]=" << dhalfFlux1_dS[1][0] << ", duT_dS[1]=" << duT_dS[1] << std::endl;
+            // std::cout << "dhalfFlux2_dS[0][0]=" << dhalfFlux2_dS[0][0] << ", dPc_int_dS2=" << dPc_int_dS2 << std::endl;
 
             constexpr bool ENABLE_GLOBAL_DERIVATIVES_DEBUG = false;
             if constexpr (ENABLE_GLOBAL_DERIVATIVES_DEBUG) {
