@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -48,20 +48,6 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( 1.0 ).
-    setDescription( "Biot coefficient" );
-
-  registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
-    setApplyDefaultValue( -1.0 ).
-    setDescription( "Grain Bulk modulus." );
-
-  registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
-
-  registerField( fields::porosity::meanTotalStressIncrement_k{}, &m_meanTotalStressIncrement_k );
-
-  registerField( fields::porosity::averageMeanTotalStressIncrement_k{}, &m_averageMeanTotalStressIncrement_k );
-
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
@@ -69,14 +55,23 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid shear modulus" );
+
+  registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
+
+  registerField< fields::porosity::grainBulkModulus >( &m_grainBulkModulus );
+
+  registerField< fields::porosity::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
+
+  registerField< fields::porosity::meanTotalStressIncrement_k >( &m_meanTotalStressIncrement_k );
+
+  registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
 }
 
-void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_meanTotalStressIncrement_k.resize( 0, numPts );
 
-  m_meanTotalStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
+  PorosityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void BiotPorosity::postInputInitialization()

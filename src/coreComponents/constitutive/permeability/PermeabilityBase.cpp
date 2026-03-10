@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -30,19 +30,10 @@ namespace constitutive
 
 
 PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_permeability(),
-  m_dPerm_dPressure()
+  ConstitutiveBase( name, parent )
 {
-  registerField( fields::permeability::permeability{}, &m_permeability );
-  registerField( fields::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
-}
-
-std::unique_ptr< ConstitutiveBase >
-PermeabilityBase::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
+  registerField< fields::permeability::permeability >( &m_permeability );
+  registerField< fields::permeability::dPerm_dPressure >( &m_dPerm_dPressure );
 }
 
 void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > scalingFactors ) const
@@ -59,14 +50,14 @@ void PermeabilityBase::scaleHorizontalPermeability( arrayView1d< real64 const > 
   }
 }
 
-void PermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
+void PermeabilityBase::allocateConstitutiveData( Group & parent,
+                                                 localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_permeability.resize( 0, 1, 3 );
   m_dPerm_dPressure.resize( 0, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 }

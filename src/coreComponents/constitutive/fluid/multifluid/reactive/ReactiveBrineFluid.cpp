@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,8 +18,10 @@
  */
 #include "ReactiveBrineFluid.hpp"
 
+#include "constitutive/fluid/multifluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -69,6 +71,14 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Names of the files defining the parameters of the viscosity and density models" );
 
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n"
+                    "If the table is requested to be output in the log, and it is too large,"
+                    "a CSV file will be generated even if `writeCSV` is set to 0." );
+
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
   {
@@ -80,6 +90,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
       setPlotLevel( PlotLevel::LEVEL_0 ).
       setRestartFlags( RestartFlags::WRITE_AND_READ );
   }
+
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 template< typename PHASE >
@@ -94,6 +106,7 @@ std::unique_ptr< ConstitutiveBase >
 ReactiveBrineFluid< PHASE > ::
 deliverClone( string const & name, Group * const parent ) const
 {
+
   std::unique_ptr< ConstitutiveBase > clone = ReactiveMultiFluid::deliverClone( name, parent );
 
   ReactiveBrineFluid & newConstitutiveRelation = dynamicCast< ReactiveBrineFluid & >( *clone );
@@ -129,10 +142,9 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
 template< typename PHASE >
 void ReactiveBrineFluid< PHASE > ::createPVTModels()
 {
-
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
-  array1d< array1d< string > > phase1InputParams;
+  stdVector< string_array > phase1InputParams;
   phase1InputParams.resize( 3 );
 
   // 1) Create the viscosity, density, enthalpy models
@@ -142,13 +154,13 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
     string str;
     while( std::getline( is, str ) )
     {
-      array1d< string > const strs = stringutilities::tokenizeBySpaces< array1d >( str );
+      string_array const strs = stringutilities::tokenizeBySpaces< stdVector >( str );
 
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
                        GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
-                       InputError );
+                       InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
         {
@@ -183,19 +195,25 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
-                 InputError );
+                 InputError, getDataContext() );
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
-                 InputError );
+                 InputError, getDataContext() );
   // we also detect any inconsistency arising in the enthalpy models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
                  ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                  GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
-                 InputError );
+                 InputError, getDataContext() );
+
+  bool const isClone = this->isClone();
+  TableFunction::OutputOptions const pvtOutputOpts = {
+    !isClone && m_writeCSV, // writeCSV
+    !isClone && isLogLevelActive< logInfo::TableLogOutput >( this->getLogLevel()) // writeInLog
+  };
 
   // then, we are ready to instantiate the phase models
   m_phase = std::make_unique< PHASE >( getName() + "_phaseModel1", phase1InputParams, m_componentNames, m_componentMolarWeight,
-                                       getLogLevel() > 0 && logger::internal::rank==0 );
+                                       pvtOutputOpts );
 }
 
 template< typename PHASE >
@@ -217,6 +235,9 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
   {
     string const errorMsg = GEOS_FMT( "Table input error (in table from {}).\n",
                                       stringutilities::join( m_phasePVTParaFiles ) );
+    ErrorLogger::global().currentErrorMsg()
+      .addToMsg( errorMsg )
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );
   }
 }

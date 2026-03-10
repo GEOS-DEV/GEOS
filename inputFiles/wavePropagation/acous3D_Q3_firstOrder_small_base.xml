@@ -32,7 +32,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region"
-      cellBlocks="{ cb }"
+      cellBlocks="{ * }"
       materialList="{ nullModel }"/>
   </ElementRegions>
 
@@ -64,6 +64,7 @@
       name="zposFreeSurface"
       objectPath="mesh/FE1/faceManager"
       fieldName="FreeSurface"
+      errorSetMode="warning"
       scale="0.0"
       setNames="{ zpos }"/>
   </FieldSpecifications>

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -37,7 +37,7 @@ TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params )
   m_nullSpacePointer{}
 {}
 
-void convertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
+void convertRigidBodyModes( arrayView1d< EpetraVector const > nearNullKernel,
                             array2d< real64 > & nullSpacePointer )
 {
   if( nearNullKernel.empty() )
@@ -62,7 +62,7 @@ void convertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
 }
 
 TrilinosPreconditioner::TrilinosPreconditioner( LinearSolverParameters params,
-                                                array1d< Vector > const & nearNullKernel )
+                                                arrayView1d< Vector const > nearNullKernel )
   : Base{},
   m_params( std::move( params ) ),
   m_precond{},
@@ -82,7 +82,7 @@ namespace
 
 string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CycleType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, "MGV" },
     { LinearSolverParameters::AMG::CycleType::W, "MGW" },
@@ -94,7 +94,7 @@ string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 
 string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, "Chebyshev" },
     { LinearSolverParameters::AMG::SmootherType::jacobi, "Jacobi" },
@@ -104,8 +104,8 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
     { LinearSolverParameters::AMG::SmootherType::sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::l1sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::chebyshev, "Chebyshev" },
-    { LinearSolverParameters::AMG::SmootherType::ic0, "IC" },
-    { LinearSolverParameters::AMG::SmootherType::ilu0, "ILU" },
+    { LinearSolverParameters::AMG::SmootherType::ick, "IC" },
+    { LinearSolverParameters::AMG::SmootherType::iluk, "ILU" },
     { LinearSolverParameters::AMG::SmootherType::ilut, "ILUT" },
   };
 
@@ -115,7 +115,7 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
 
 string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, "Amesos-KLU" },
     { LinearSolverParameters::AMG::CoarseType::jacobi, "Jacobi" },
@@ -134,7 +134,7 @@ string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 
 string getMLPreOrPostSmoothingType( LinearSolverParameters::AMG::PreOrPost const & value )
 {
-  static std::map< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
   {
     { LinearSolverParameters::AMG::PreOrPost::pre, "pre" },
     { LinearSolverParameters::AMG::PreOrPost::post, "post" },
@@ -155,14 +155,17 @@ createMLOperator( LinearSolverParameters const & params,
 
   list.set( "ML output", params.logLevel );
   list.set( "max levels", params.amg.maxLevels );
+  list.set( "coarse: max size", params.amg.maxCoarseSize );
   list.set( "aggregation: type", "Uncoupled" );
   list.set( "aggregation: threshold", params.amg.threshold );
-  list.set( "PDE equations", params.dofsPerNode );
+  list.set( "PDE equations", params.amg.numFunctions );
   list.set( "smoother: sweeps", params.amg.numSweeps );
   list.set( "prec type", getMLCycleType( params.amg.cycleType ) );
   list.set( "smoother: type", getMLSmootherType( params.amg.smootherType ) );
   list.set( "smoother: pre or post", getMLPreOrPostSmoothingType( params.amg.preOrPostSmoothing ) );
   list.set( "coarse: type", getMLCoarseType( params.amg.coarseType ) );
+  list.set( "repartition: enable", 1 );
+  list.set( "repartition: partitioner", "ParMETIS" );
 
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
   {
@@ -176,25 +179,24 @@ createMLOperator( LinearSolverParameters const & params,
     list.set( "null space: dimension", LvArray::integerConversion< integer >( nullSpacePointer.size( 0 ) ) );
   }
 
-  std::unique_ptr< Epetra_Operator > precond =
-    std::make_unique< ML_Epetra::MultiLevelPreconditioner >( matrix, list );
-
-  return precond;
+  return std::make_unique< ML_Epetra::MultiLevelPreconditioner >( matrix, list, true );
 }
 
 Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
-    { LinearSolverParameters::PreconditionerType::ic, Ifpack::IC },
+    { LinearSolverParameters::PreconditionerType::ick, Ifpack::IC },
     { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
     { LinearSolverParameters::PreconditionerType::chebyshev, Ifpack::CHEBYSHEV },
     { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::fgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::bgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::l1sgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
 
@@ -203,11 +205,14 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, "Jacobi" },
     { LinearSolverParameters::PreconditionerType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::bgs, "Gauss-Seidel" },
     { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::l1sgs, "symmetric Gauss-Seidel" },
   };
 
   GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
@@ -246,6 +251,11 @@ createIfpackOperator( LinearSolverParameters const & params,
       list.set( "fact: ict level-of-fill", std::max( real64( params.ifact.fill ), 1.0 ) );
       break;
     }
+    case Ifpack::CHEBYSHEV:
+    {
+      list.set( "relaxation: sweeps", params.chebyshev.order );
+      list.set( "chebyshev: eigenvalue max iterations", params.chebyshev.eigNumIter );
+    }
     default:
     {
       break;
@@ -267,11 +277,19 @@ EpetraMatrix const & TrilinosPreconditioner::setupPreconditioningMatrix( EpetraM
     mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
-  return mat;
+  else
+  {
+    // To avoid the issue of ML destructor crashing if matrix has been disposed of,
+    // we always perform setup on a copy of the input matrix
+    m_precondMatrix = mat;
+  }
+  return m_precondMatrix;
 }
 
 void TrilinosPreconditioner::setup( Matrix const & mat )
 {
+  m_precond.reset();
+
   EpetraMatrix const & precondMat = setupPreconditioningMatrix( mat );
   Base::setup( precondMat );
 
@@ -287,13 +305,15 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
       break;
     }
     case LinearSolverParameters::PreconditionerType::jacobi:
+    case LinearSolverParameters::PreconditionerType::l1jacobi:
     case LinearSolverParameters::PreconditionerType::fgs:
     case LinearSolverParameters::PreconditionerType::bgs:
     case LinearSolverParameters::PreconditionerType::sgs:
+    case LinearSolverParameters::PreconditionerType::l1sgs:
     case LinearSolverParameters::PreconditionerType::chebyshev:
     case LinearSolverParameters::PreconditionerType::iluk:
     case LinearSolverParameters::PreconditionerType::ilut:
-    case LinearSolverParameters::PreconditionerType::ic:
+    case LinearSolverParameters::PreconditionerType::ick:
     case LinearSolverParameters::PreconditionerType::ict:
     case LinearSolverParameters::PreconditionerType::direct:
     {
@@ -302,7 +322,6 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
     }
     case LinearSolverParameters::PreconditionerType::none:
     {
-      m_precond.reset();
       break;
     }
     default:

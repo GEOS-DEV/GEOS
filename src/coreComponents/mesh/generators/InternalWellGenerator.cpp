@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -27,8 +27,6 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   WellGeneratorBase( name, parent )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::polylineNodeCoordsString(), &m_polyNodeCoords ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -45,17 +43,17 @@ void InternalWellGenerator::postInputInitialization()
   GEOS_THROW_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
                  "InternalWell " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) <<
                  ": Invalid number of physical coordinates.",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) );
 
   GEOS_THROW_IF( m_segmentToPolyNodeMap.size( 1 ) != 2,
                  "InternalWell " << getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) <<
                  ": Invalid size.",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) );
 
   GEOS_THROW_IF( m_polyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
                  "Incompatible sizes of " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) <<
                  " and " << getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ),
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) );
 
   // TODO: add more checks here
   // TODO: check that the connectivity of the well is valid
@@ -63,5 +61,5 @@ void InternalWellGenerator::postInputInitialization()
 }
 
 
-REGISTER_CATALOG_ENTRY( WellGeneratorBase, InternalWellGenerator, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MeshComponentBase, InternalWellGenerator, string const &, Group * const )
 }

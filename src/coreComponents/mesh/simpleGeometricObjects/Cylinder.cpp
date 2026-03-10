@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -53,14 +53,9 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
 
 }
 
-Cylinder::~Cylinder()
-{}
-
 
 bool Cylinder::isCoordInObject( real64 const ( &targetPt ) [3] ) const
 {
-  bool rval = false;
-
   // Assuming the cylinder is defined by (pt1,pt2,innerRadius,outerRadius),
   // we check that the target point is inside using the following formulas
   //
@@ -88,15 +83,15 @@ bool Cylinder::isCoordInObject( real64 const ( &targetPt ) [3] ) const
   LvArray::tensorOps::crossProduct( crossProd, targetPtPt1, pt2Pt1 );
   real64 const radius = LvArray::tensorOps::l2Norm< 3 >( crossProd ) / LvArray::tensorOps::l2Norm< 3 >( pt2Pt1 );
 
-  if( radius < m_radius &&
-      radius >= m_innerRadius &&
-      dotProd_pt2Pt1_targetPtPt1 > 0 &&
-      dotProd_pt2Pt1_targetPtPt2 < 0 )
+  if( radius < m_radius + m_epsilon &&
+      radius >= m_innerRadius - m_epsilon &&
+      dotProd_pt2Pt1_targetPtPt1 > -m_epsilon &&
+      dotProd_pt2Pt1_targetPtPt2 < m_epsilon )
   {
-    rval = true;
+    return true;
   }
 
-  return rval;
+  return false;
 }
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, Cylinder, string const &, Group * const )

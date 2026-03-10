@@ -19,7 +19,7 @@
     <CellElementRegion
       name="all"
       meshBody="mesh"
-      cellBlocks="{ cellBlock1 }"
+      cellBlocks="{ * }"
       materialList="{ materialPlastic }"/>
   </ElementRegions>
 
@@ -60,9 +60,8 @@
 
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SolidMechanics_LagrangianFEM
+    <SolidMechanicsLagrangianFEM
       name="solidMechanics"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ mesh/all }"
       logLevel="1"
@@ -72,7 +71,7 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </SolidMechanics_LagrangianFEM>
+    </SolidMechanicsLagrangianFEM>
   </Solvers>
 
  <Tasks> 
@@ -154,10 +153,8 @@
 
   <Outputs>
     <VTK
-      name="vtkOutput"
-      parallelThreads="32"/>
+      name="vtkOutput"/>
     <Restart
       name="restartOutput"/>
   </Outputs>
 </Problem>
-

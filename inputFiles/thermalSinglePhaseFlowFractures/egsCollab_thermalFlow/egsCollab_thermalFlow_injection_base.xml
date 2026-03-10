@@ -9,7 +9,7 @@
    <ElementRegions>
     <CellElementRegion
       name="matrix"
-      cellBlocks="{ cb }"
+      cellBlocks="{ * }"
       materialList="{ water, rock, thermalCond }"/>
 
     <SurfaceElementRegion
@@ -99,16 +99,14 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="2e6"
-      setNames="{ zpos }"
-      logLevel="0"/>
+      setNames="{ zpos }"/>
 
     <FieldSpecification
       name="topTemperature"
       objectPath="faceManager"
       fieldName="temperature"
       scale="296.0153"
-      setNames="{ zpos }"
-      logLevel="0"/>   
+      setNames="{ zpos }"/>   
 
     <FieldSpecification
       name="botTemperature"

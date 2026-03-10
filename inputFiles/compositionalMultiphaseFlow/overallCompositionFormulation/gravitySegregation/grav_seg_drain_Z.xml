@@ -1,0 +1,99 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="grav_seg_base.xml"/>
+  </Included>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      temperature="300"
+      initialDt="10"
+      formulationType="OverallComposition"
+      minCompFrac="1e-10"
+      useMass="1"
+      targetRegions="{ region }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-8"
+        timeStepDecreaseIterLimit="1.0"
+        timeStepIncreaseIterLimit="0.9"
+        newtonMaxIter="200"
+        maxTimeStepCuts="1000"
+        maxSubSteps="1000"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"  
+        logLevel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <Functions>
+    <TableFunction
+      name="drainageWaterRelativePermeabilityTable"
+      coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
+      voxelFile="tables/drainageRelPerm_water.txt"/>
+    <TableFunction
+      name="drainageGasRelativePermeabilityTable"
+      coordinateFiles="{ tables/drainagePhaseVolFraction_gas.txt }"
+      voxelFile="tables/drainageRelPerm_gas.txt"/>
+    <TableFunction
+      name="imbibitionWaterRelativePermeabilityTable"
+      coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
+      voxelFile="tables/drainageRelPerm_water.txt"/>
+    <TableFunction
+      name="imbibitionGasRelativePermeabilityTable"
+      coordinateFiles="{ tables/drainagePhaseVolFraction_gas.txt }"
+      voxelFile="tables/drainageRelPerm_gas.txt"/>
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput_drain"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/phaseVolumeFractionCollection}"
+      filename="saturationHistory_drain" />
+
+    <Restart
+      name="restartOutput"/> 
+  </Outputs>
+
+  <Events
+    maxTime="86400">
+    
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="3600" 
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput_drain"/>
+
+    <PeriodicEvent
+      name="timeHistoryOutput"
+      timeFrequency="3600" 
+      targetExactTimestep="1"
+      target="/Outputs/timeHistoryOutput" />
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="3600" 
+      targetExactTimestep="1"
+      target="/Tasks/phaseVolumeFractionCollection" />
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="360" 
+      target="/Solvers/compflow" />
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="3600"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"
+    />    
+  </Events>
+</Problem>

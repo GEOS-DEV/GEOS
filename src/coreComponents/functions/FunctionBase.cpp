@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,6 +18,7 @@
  */
 
 #include "FunctionBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -28,16 +29,22 @@ using namespace dataRepository;
 
 FunctionBase::FunctionBase( const string & name,
                             Group * const parent ):
-  Group( name, parent ),
-  m_inputVarNames()
+  Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( keys::inputVarNames, &m_inputVarNames ).
+  registerWrapper( viewKeyStruct::inputVarNamesString(), &m_inputVarNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Name of fields are input to function." );
+
+  registerWrapper( viewKeyStruct::inputVarScaleString(), &m_inputVarScale ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDefaultValue( 1.0 ).
+    setSizedFromParent( 0 ).
+    setDescription( "Scaling applied to function inputs before function evaluation." );
+  m_inputVarScale.resizeDefault( MAX_VARS, 1.0 );
 }
 
 integer FunctionBase::isFunctionOfTime() const
@@ -47,6 +54,11 @@ integer FunctionBase::isFunctionOfTime() const
     return 1 + ( m_inputVarNames.size() == 1 );
   }
   return 0;
+}
+
+void FunctionBase::postInputInitialization()
+{
+  initializeFunction();
 }
 
 real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
@@ -70,6 +82,25 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
   result[1] /= N;
 
   return result;
+}
+
+string const & FunctionBase::getOutputDirectory()
+{
+  static string outputDirectory;
+  return outputDirectory;
+}
+void FunctionBase::setOutputDirectory( string const & dir )
+{
+  string & outputDirectory = const_cast< string & >( getOutputDirectory() );
+  outputDirectory = dir;
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    makeDirsForPath( dir );
+  }
+
+  // barrier commented as the child classes does not make any output on other ranks than rank 0
+  // MpiWrapper::barrier( MPI_COMM_GEOS );
 }
 
 

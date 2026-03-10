@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testBrine"
+      fluid="brine"
+      feedComposition="{ 0.3, 0.3, 0.4 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="152"
+      outputMassDensity="1"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      output="testPVT_CompositionalPhillipsBrine_brine.txt"
+      logLevel="1" />
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventtestBrine"
+      target="/Tasks/testBrine" />
+  </Events>
+
+  <Constitutive>
+    <CompositionalTwoPhaseFluidPhillipsBrine
+      name="brine"
+      phaseNames="{ liquid, gas }"
+      equationsOfState="{ SoreideWhitson, PengRobinson }"
+      componentNames="{ CH4, CO2, H2O }"
+      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 3.44300e-01 }"
+      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 1.80153e-02 }"
+      pressureCoordinates="{
+        1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05,
+        1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07,
+        2.066e+07, 3.521e+07, 6.000e+07
+      }"
+      temperatureCoordinates="{ 373.15, 389.15, 405.15, 421.15, 437.15, 453.15 }"
+      waterCompressibility="4.1483E-10" />
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      interpolation="linear"
+      coordinates="{
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+        26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38
+      }"
+      values="{
+        1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05, 1.437e+06,
+        2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07, 2.066e+07, 3.521e+07,
+        6.000e+07,
+        1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05, 1.437e+06,
+        2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07, 2.066e+07, 3.521e+07,
+        6.000e+07,
+        1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05, 1.437e+06,
+        2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07, 2.066e+07, 3.521e+07,
+        6.000e+07
+      }" />
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      interpolation="linear"
+      coordinates="{ 0, 12, 13, 25, 26, 38 }"
+      values="{ 376.15, 376.15, 423.15, 423.15, 443.15, 443.15 }" />
+  </Functions>
+</Problem>

@@ -73,15 +73,19 @@ public:
    **/
   static string catalogName() { return "MPMEventBase"; }
 
+  virtual string getCatalogName() const = 0;
+
+  virtual void postInputInitialization() override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    static constexpr char const * timeString() { return "time"; }
-    static constexpr char const * intervalString() { return "interval"; }
+    static constexpr char const * startTimeString() { return "startTime"; }
+    static constexpr char const * endTimeString() { return "endTime"; }
     static constexpr char const * isCompleteString() { return "isComplete"; }
 
-    dataRepository::ViewKey time = { timeString() };
-    dataRepository::ViewKey interval = { intervalString() };
+    dataRepository::ViewKey startTime = { startTimeString() };
+    dataRepository::ViewKey endTime = { endTimeString() };
     dataRepository::ViewKey isComplete = { isCompleteString() };
   } viewKeys;
   /// @endcond
@@ -92,16 +96,17 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
-  real64 getTime() const { return m_time; }
-  real64 getInterval() const { return m_interval; }
+  real64 getStartTime() const { return m_startTime; }
+  real64 getEndTime() const { return m_endTime; }
+  real64 getTimeInterval() const { return m_endTime - m_startTime; }
 
   int isComplete() const { return m_isComplete; }
   void setIsComplete( int isComplete ) { m_isComplete = isComplete; }
 
 protected:
   // Event variables
-  real64 m_time;
-  real64 m_interval;
+  real64 m_startTime;
+  real64 m_endTime;
   int m_isComplete;
 };
 

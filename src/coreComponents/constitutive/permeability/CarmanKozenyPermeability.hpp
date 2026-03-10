@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -83,17 +83,17 @@ class CarmanKozenyPermeability : public PermeabilityBase
 {
 public:
 
-  CarmanKozenyPermeability( string const & name, Group * const parent );
+  CarmanKozenyPermeability( string const & name, dataRepository::Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                                    dataRepository::Group * const parent ) const override;
 
   static string catalogName() { return "CarmanKozenyPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CarmanKozenyPermeabilityUpdate;
@@ -119,7 +119,13 @@ public:
     static constexpr char const * particleDiameterString() { return "particleDiameter"; }
     static constexpr char const * sphericityString() { return "sphericity"; }
     static constexpr char const * anisotropyString() { return "anisotropy"; }
-  } viewKeys;
+  };
+
+  virtual void initializeState() const override final;
+
+protected:
+
+  virtual void postInputInitialization() override;
 
 private:
 
@@ -143,7 +149,7 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 180;
+  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 150;
 
   real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity), 2 );
 

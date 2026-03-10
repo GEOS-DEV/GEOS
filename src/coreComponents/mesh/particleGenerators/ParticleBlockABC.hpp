@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -120,13 +120,7 @@ public:
    * @brief Get the list of particle material directions in this subregion.
    * @return the list of particle material directions in this subregion.
    */
-  virtual array2d< real64 > getParticleInitialMaterialDirection() const = 0;
-
-  /**
-   * @brief Get the list of particle material directions in this subregion.
-   * @return the list of particle material directions in this subregion.
-   */
-  virtual array2d< real64 > getParticleMaterialDirection() const = 0;
+  virtual array3d< real64 > getParticleMaterialDirection() const = 0;
 
   /**
    * @brief Get the list of particle volumes in this subregion.
@@ -147,22 +141,10 @@ public:
   virtual bool hasRVectors() const = 0;
 
   /**
-   * @brief Get the list of particle initial surface normal in this subregion.
-   * @return the list of particle initial surface normal in this subregion.
-   */
-  virtual array2d< real64 > getParticleInitialSurfaceNormal() const = 0;
-
-  /**
    * @brief Get the list of particle surface normal in this subregion.
    * @return the list of particle surface normal in this subregion.
    */
   virtual array2d< real64 > getParticleSurfaceNormal() const = 0;
-
-  /**
-   * @brief Get the list of particle initial surface position in this subregion.
-   * @return the list of particle initial surface position in this subregion.
-   */
-  virtual array2d< real64 > getParticleInitialSurfacePosition() const = 0;
 
   /**
    * @brief Get the list of particle surface position in this subregion.
@@ -171,16 +153,16 @@ public:
   virtual array2d< real64 > getParticleSurfacePosition() const = 0;
 
   /**
-   * @brief Get the list of particle initial surface traction in this subregion.
-   * @return the list of particle initial surface traction in this subregion.
-   */
-  virtual array2d< real64 > getParticleInitialSurfaceTraction() const = 0;
-
-  /**
    * @brief Get the list of particle surface traction in this subregion.
    * @return the list of particle surface traction in this subregion.
    */
   virtual array2d< real64 > getParticleSurfaceTraction() const = 0;
+
+  /**
+   * @brief Get the list of particle cohesive zone tag in this subregion.
+   * @return the list of particle cohesive zone tag in this subregion.
+   */
+  virtual array1d< int > getParticleCZTag() const = 0;
 
   /**
    * @brief Get the number of particles.

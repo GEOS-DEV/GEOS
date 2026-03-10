@@ -17,13 +17,12 @@
         directParallel="0"/>
     </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="solidMechSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ casing, cement, rock }">
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
    
     <SinglePhaseFVM
       name="flowSolver"
@@ -142,17 +141,17 @@
     <!-- SPHINX_PermeabilityPropertiesEnd -->
 
     <!-- SPHINX_ThermalProperties -->
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="casingThermalCond"
-      thermalConductivityComponents="{ 15, 15, 15 }"/>
+      defaultThermalConductivityComponents="{ 15, 15, 15 }"/>
 
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="cementThermalCond"
-      thermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
+      defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>
 
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="rockThermalCond"
-      thermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
+      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"/>
     <!-- SPHINX_ThermalPropertiesEnd -->
 
     <!-- SPHINX_FluidProperties -->
@@ -248,7 +247,7 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="0"
-      scale="573913043.5"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_casing"
       initialCondition="1"
@@ -256,7 +255,7 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="1"
-      scale="573913043.5"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_casing"
       initialCondition="1"
@@ -264,8 +263,8 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="2"
-      scale="573913043.5"/>
-    <!-- SPHINX_StressCasingInit -->
+      scale="0.0"/>
+    <!-- SPHINX_StressCasingInitEnd -->
 
     <FieldSpecification
       name="initialSigma_x_cement"
@@ -274,7 +273,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="0"
-      scale="13793103.45"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_cement"
       initialCondition="1"
@@ -282,7 +281,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="1"
-      scale="13793103.45"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_cement"
       initialCondition="1"
@@ -290,7 +289,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="2"
-      scale="13793103.45"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialSigma_x_rock"
@@ -299,7 +298,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="0"
-      scale="33214285.71"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_rock"
       initialCondition="1"
@@ -307,7 +306,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="1"
-      scale="33214285.71"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_rock"
       initialCondition="1"
@@ -315,7 +314,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="2"
-      scale="33214285.71"/>
+      scale="0.0"/>
 
     <!-- SPHINX_ZeroPorePressureBC -->
     <FieldSpecification

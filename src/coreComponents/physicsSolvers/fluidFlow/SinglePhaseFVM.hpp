@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -39,25 +39,13 @@ class SinglePhaseFVM : public BASE
 {
 public:
 
-
-  // Aliasing public/protected members/methods of Group so we don't
-  // have to use this->member etc.
-  using BASE::getLogLevel;
-
-  // Aliasing public/protected members/methods of SolverBase so we don't
+  // Aliasing public/protected members/methods of PhysicsSolverBase so we don't
   // have to use this->member etc.
   using BASE::forDiscretizationOnMeshTargets;
-  using BASE::m_cflFactor;
-  using BASE::m_maxStableDt;
-  using BASE::m_nextDt;
   using BASE::m_discretizationName;
-  using BASE::m_dofManager;
-  using BASE::m_matrix;
-  using BASE::m_rhs;
-  using BASE::m_solution;
-  using BASE::m_localMatrix;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
+  using BASE::m_precond;
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
@@ -114,7 +102,7 @@ public:
   }
 
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -136,6 +124,9 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true ) override;
+
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
 
   virtual void
   applyBoundaryConditions( real64 const time_n,

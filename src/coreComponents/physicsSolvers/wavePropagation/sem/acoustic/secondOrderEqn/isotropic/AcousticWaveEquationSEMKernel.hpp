@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -30,8 +30,6 @@
 namespace geos
 {
 
-using namespace fields;
-
 /// Namespace to contain the acoustic wave kernels.
 namespace acousticWaveEquationSEMKernels
 {
@@ -55,12 +53,13 @@ namespace acousticWaveEquationSEMKernels
 
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE >
-class ExplicitAcousticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                              CONSTITUTIVE_TYPE,
-                                                              FE_TYPE,
-                                                              1,
-                                                              1 >
+          typename FE_TYPE,
+          typename S = fields::acousticfields::StiffnessVector >
+class ExplicitAcousticSEMBase : public finiteElement::KernelBase< SUBREGION_TYPE,
+                                                                  CONSTITUTIVE_TYPE,
+                                                                  FE_TYPE,
+                                                                  1,
+                                                                  1 >
 {
 public:
 
@@ -94,21 +93,21 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-  ExplicitAcousticSEM( NodeManager & nodeManager,
-                       EdgeManager const & edgeManager,
-                       FaceManager const & faceManager,
-                       localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const & elementSubRegion,
-                       FE_TYPE const & finiteElementSpace,
-                       CONSTITUTIVE_TYPE & inputConstitutiveType,
-                       real64 const dt ):
+  ExplicitAcousticSEMBase( NodeManager & nodeManager,
+                           EdgeManager const & edgeManager,
+                           FaceManager const & faceManager,
+                           localIndex const targetRegionIndex,
+                           SUBREGION_TYPE const & elementSubRegion,
+                           FE_TYPE const & finiteElementSpace,
+                           CONSTITUTIVE_TYPE & inputConstitutiveType,
+                           real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
     m_nodeCoords( nodeManager.getField< fields::referencePosition32 >() ),
-    m_p_n( nodeManager.getField< acousticfields::Pressure_n >() ),
-    m_stiffnessVector( nodeManager.getField< acousticfields::StiffnessVector >() ),
-    m_density( elementSubRegion.template getField< acousticfields::AcousticDensity >() ),
+    m_p_n( nodeManager.getField< fields::acousticfields::Pressure_n >() ),
+    m_stiffnessVector( nodeManager.getField< S >() ),
+    m_density( elementSubRegion.template getField< fields::acousticfields::AcousticDensity >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -120,7 +119,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::StackVariables
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticSEMBase Description
    * Adds a stack arrays for the nodal force, primary displacement variable, etc.
    */
   struct StackVariables : Base::StackVariables
@@ -180,7 +179,7 @@ public:
   /**
    * @copydoc geos::finiteElement::KernelBase::quadraturePointKernel
    *
-   * ### ExplicitAcousticSEM Description
+   * ### ExplicitAcousticSEMBase Description
    * Calculates stiffness vector
    *
    */
@@ -191,7 +190,7 @@ public:
                               StackVariables & stack ) const
   {
 
-    m_finiteElementSpace.template computeStiffnessTerm( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
+    m_finiteElementSpace.template computeStiffnessTerm<>( q, stack.xLocal, [&] ( const int i, const int j, const real64 val )
     {
       real32 const localIncrement = stack.invDensity*val*m_p_n[m_elemsToNodes( k, j )];
       stack.stiffnessVectorLocal[ i ] += localIncrement;
@@ -219,9 +218,83 @@ protected:
 
 
 
-/// The factory used to construct a ExplicitAcousticWaveEquation kernel.
+/// Specialization for standard iso elastic kernel
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+using ExplicitAcousticSEM = ExplicitAcousticSEMBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
 using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
                                                                  real64 >;
+
+/// Specialization for attenuation kernel
+template< typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE >
+class ExplicitAcousticAttenuativeSEM : public ExplicitAcousticSEMBase< SUBREGION_TYPE,
+                                                                       CONSTITUTIVE_TYPE,
+                                                                       FE_TYPE,
+                                                                       fields::acousticfields::StiffnessVectorA >
+{
+public:
+
+  /// Alias for the base class;
+  using Base = ExplicitAcousticSEMBase< SUBREGION_TYPE,
+                                        CONSTITUTIVE_TYPE,
+                                        FE_TYPE,
+                                        fields::acousticfields::StiffnessVectorA >;
+
+//*****************************************************************************
+  /**
+   * @brief Constructor
+   * @copydoc geos::finiteElement::KernelBase::KernelBase
+   * @param nodeManager Reference to the NodeManager object.
+   * @param edgeManager Reference to the EdgeManager object.
+   * @param faceManager Reference to the FaceManager object.
+   * @param targetRegionIndex Index of the region the subregion belongs to.
+   * @param dt The time interval for the step.
+   */
+  ExplicitAcousticAttenuativeSEM( NodeManager & nodeManager,
+                                  EdgeManager const & edgeManager,
+                                  FaceManager const & faceManager,
+                                  localIndex const targetRegionIndex,
+                                  SUBREGION_TYPE const & elementSubRegion,
+                                  FE_TYPE const & finiteElementSpace,
+                                  CONSTITUTIVE_TYPE & inputConstitutiveType,
+                                  real64 const dt ):
+    Base( nodeManager,
+          edgeManager,
+          faceManager,
+          targetRegionIndex,
+          elementSubRegion,
+          finiteElementSpace,
+          inputConstitutiveType,
+          dt ),
+    m_qualityFactor( elementSubRegion.template getField< fields::acousticfields::AcousticQualityFactor >() )
+  {}
+
+  /**
+   * @copydoc geos::finiteElement::KernelBase::setup
+   *
+   * Copies the primary variable, and position into the local stack array.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  void setup( localIndex const k,
+              typename Base::StackVariables & stack ) const
+  {
+    Base::setup( k, stack );
+    stack.invDensity = stack.invDensity / m_qualityFactor[ k ];
+  }
+
+protected:
+
+  /// The array containing the acoustic attenuation quality factor
+  arrayView1d< real32 const > const m_qualityFactor;
+
+};
+
+using ExplicitAcousticAttenuativeSEMFactory = finiteElement::KernelFactory< ExplicitAcousticAttenuativeSEM,
+                                                                            real64 >;
 
 
 } // namespace acousticWaveEquationSEMKernels

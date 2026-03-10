@@ -35,7 +35,7 @@ class ConfiningPressureMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   ConfiningPressureMPMEvent( const string & name,
-                  Group * const parent );
+                             Group * const parent );
 
   /// Destructor
   virtual ~ConfiningPressureMPMEvent() override;
@@ -46,7 +46,9 @@ public:
    **/
   static string catalogName() { return "ConfiningPressure"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * confiningPressureBoxMinString() { return "confiningPressureBoxMin"; }
@@ -57,11 +59,11 @@ public:
   } ConfiningPressureMPMEventViewKeys;
   /// @endcond
 
-  array1d< real64 > getConfiningPressureBoxMin() const { return m_confiningPressureBoxMin; } 
-  array1d< real64 > getConfiningPressureBoxMax() const { return m_confiningPressureBoxMax; } 
-  real64 getStartPressure() const { return m_startPressure; } 
-  real64 getEndPressure() const { return m_endPressure; } 
-  int getInterpType() const { return m_interpType; } 
+  array1d< real64 > getConfiningPressureBoxMin() const { return m_confiningPressureBoxMin; }
+  array1d< real64 > getConfiningPressureBoxMax() const { return m_confiningPressureBoxMax; }
+  real64 getStartPressure() const { return m_startPressure; }
+  real64 getEndPressure() const { return m_endPressure; }
+  int getInterpType() const { return m_interpType; }
 
 protected:
   virtual void postInputInitialization() override final;

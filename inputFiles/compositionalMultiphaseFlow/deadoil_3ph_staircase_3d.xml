@@ -13,7 +13,7 @@
       temperature="300">
       <NonlinearSolverParameters
         newtonTol="1.0e-10"
-        newtonMaxIter="40"/>
+        newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseFVM>
@@ -57,11 +57,11 @@
     maxTime="2e8">
     <PeriodicEvent
       name="siloOutputs"
-      timeFrequency="1e7"
+      timeFrequency="1e8"
       target="/Outputs/siloOutput"/>
     <PeriodicEvent
       name="vtkOutputs"
-      timeFrequency="1e7"
+      timeFrequency="1e8"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
@@ -140,7 +140,7 @@
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.2"
-      referencePressure="0.0"
+      referencePressure="7.5e6"
       compressibility="1.0e-9"/>
 
     <BrooksCoreyBakerRelativePermeability
@@ -202,7 +202,6 @@
     <!-- Injection pressure: ~100 bar -->
     <FieldSpecification
       name="sourceTermPressure"
-      logLevel="1"
       objectPath="faceManager"
       fieldName="pressure"
       scale="1e7"
@@ -241,7 +240,6 @@
     <!-- Production pressure: ~50 bar, -->
     <FieldSpecification
       name="sinkTermPressure"
-      logLevel="1"
       objectPath="faceManager"
       fieldName="pressure"
       scale="5e6"

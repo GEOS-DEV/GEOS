@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,9 +21,16 @@
 
 #include "dataRepository/InputFlags.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "kernels/SeismicityRateKernels.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "SeismicityRateKernels.hpp"
+#include "physicsSolvers/inducedSeismicity/inducedSeismicityFields.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+
 
 namespace geos
 {
@@ -34,16 +41,16 @@ using namespace constitutive;
 
 SeismicityRate::SeismicityRate( const string & name,
                                 Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_stressSolver( nullptr )
 {
   this->registerWrapper( viewKeyStruct::directEffectString(), &m_directEffect ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Rate-and-state friction direct effect parameter" );
+    setDescription( "Rate-and-state friction direct effect parameter." );
 
   this->registerWrapper( viewKeyStruct::backgroundStressingRateString(), &m_backgroundStressingRate ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Background stressing rate" );
+    setDescription( "Background stressing rate (Pa/s)." );
 
   this->registerWrapper( viewKeyStruct::stressSolverNameString(), &m_stressSolverName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -78,10 +85,10 @@ void SeismicityRate::postInputInitialization()
   // Initialize member stress solver as specified in XML input
   if( !m_stressSolverName.empty() )
   {
-    m_stressSolver = &this->getParent().getGroup< SolverBase >( m_stressSolverName );
+    m_stressSolver = &this->getParent().getGroup< PhysicsSolverBase >( m_stressSolverName );
   }
 
-  SolverBase::postInputInitialization();
+  PhysicsSolverBase::postInputInitialization();
 }
 
 SeismicityRate::~SeismicityRate()
@@ -91,11 +98,11 @@ SeismicityRate::~SeismicityRate()
 
 void SeismicityRate::registerDataOnMesh( Group & meshBodies )
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  PhysicsSolverBase::registerDataOnMesh( meshBodies );
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -167,7 +174,7 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
 
     string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
-    constitutive::ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
+    ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
       // Initialize biotCoefficient as const arrayView before passing it through the lambda cast
       arrayView1d< real64 const > const biotCoefficient = castedPorousSolid.getBiotCoefficient();
@@ -184,12 +191,12 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
   }
 }
 
-void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > const biotCoefficient,
-                                                arrayView1d< real64 const > const pres,
+void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > const & biotCoefficient,
+                                                arrayView1d< real64 const > const & pres,
                                                 real64 const (&faultNormalProjectionTensor)[6],
                                                 real64 const (&faultShearProjectionTensor)[6],
-                                                arrayView1d< real64 > const sig,
-                                                arrayView1d< real64 > const tau ) const
+                                                arrayView1d< real64 > const & sig,
+                                                arrayView1d< real64 > const & tau ) const
 {
   // To calculate the action of the total stress on the fault from our previous calculations,
   // we need to project the action of the pore pressure on the stress tensor onto the fault
@@ -207,6 +214,7 @@ void SeismicityRate::computeTotalStressOnFault( arrayView1d< real64 const > cons
     sig[k] += pressureOnFaultNormal;
     tau[k] += pressureOnFaultShear;
   } );
+
 }
 
 void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const cycleNumber, DomainPartition & domain ) const
@@ -220,7 +228,7 @@ void SeismicityRate::initializeFaultTraction( real64 const time_n, integer const
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -282,7 +290,7 @@ real64 SeismicityRate::solverStep( real64 const & time_n,
   // Loop over subRegions to solve for seismicity rate
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & regionNames )
+                                                               string_array const & regionNames )
 
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
@@ -316,7 +324,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
     // 2. Loop over subRegions to update stress on faults
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
-                                                                 arrayView1d< string const > const & regionNames )
+                                                                 string_array const & regionNames )
 
     {
       mesh.getElemManager().forElementSubRegions( regionNames,
@@ -339,13 +347,13 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
 
     forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                    MeshLevel & mesh,
-                                                                   arrayView1d< string const > const & )
+                                                                   string_array const & )
     {
 
       FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-      std::vector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
-                                           inducedSeismicity::projectedShearTraction::key() };
+      stdVector< string > const keys = { inducedSeismicity::projectedNormalTraction::key(),
+                                         inducedSeismicity::projectedShearTraction::key() };
 
       for( auto const & key : keys )
       {
@@ -358,13 +366,12 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
                                                       ElementSubRegionBase & subRegion,
                                                       string const & )
         {
-          if( fs.getLogLevel() >= 1 )
-          {
-            globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-            GEOS_LOG_RANK_0( GEOS_FMT( bcLogMessage,
-                                       this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                       fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-          }
+          globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
+                                          GEOS_FMT( bcLogMessage,
+                                                    this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                                    fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
+                                          fs );
 
           // Specify the bc value of the field
           fs.applyFieldValue< FieldSpecificationEqual,
@@ -410,5 +417,5 @@ void SeismicityRate::integralSolverStep( real64 const & time_n,
   }
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase, SeismicityRate, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SeismicityRate, string const &, dataRepository::Group * const )
 } // namespace geos

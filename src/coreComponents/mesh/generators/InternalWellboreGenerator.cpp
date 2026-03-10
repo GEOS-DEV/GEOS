@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,7 +19,7 @@
 
 #include "InternalWellboreGenerator.hpp"
 
-#include "LvArray/src/tensorOps.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
@@ -117,18 +117,21 @@ void InternalWellboreGenerator::postInputInitialization()
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the theta direction is currently supported. " );
+                 ": Only one block in the theta direction is currently supported. ",
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the z direction is currently supported. " );
+                 ": Only one block in the z direction is currently supported. ",
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
                  getWrapperDataContext( viewKeyStruct::trajectoryString() ) <<
                  ": Input for trajectory should be specified in the form of "
-                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
+                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }.",
+                 getWrapperDataContext( viewKeyStruct::trajectoryString() ) );
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
@@ -272,9 +275,9 @@ void InternalWellboreGenerator::postInputInitialization()
                    GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size(),
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
-                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size() ) );
 
     // step 2: check that the cartesian inner radius is valid
     bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
@@ -302,7 +305,7 @@ void InternalWellboreGenerator::postInputInitialization()
   InternalMeshGenerator::postInputInitialization();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                                    integer ( & numNodesInDir )[3] )
 {
   if( m_isFullAnnulus )
@@ -316,11 +319,12 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( PartitionDesc
       partition.setPeriodic( 1, 1 );
     }
   }
-
 }
 
-void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int ( & globalIJK )[3] )
+void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                                                        int ( & globalIJK )[3] )
 {
+  GEOS_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
     if( globalIJK[1] == m_nElems[1].back() + 1 )
@@ -345,7 +349,7 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & gl
   }
 }
 
-void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
 {
   localIndex const numNodes = X.size( 0 );
 
@@ -355,10 +359,10 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   SortedArray< localIndex > & ynegNodes = nodeSets.at( "yneg" );
   SortedArray< localIndex > & yposNodes = nodeSets.at( "ypos" );
   // Created on the fly
-  SortedArray< localIndex > & rnegNodes = nodeSets["rneg"];
-  SortedArray< localIndex > & rposNodes = nodeSets["rpos"];
-  SortedArray< localIndex > & tnegNodes = nodeSets["tneg"];
-  SortedArray< localIndex > & tposNodes = nodeSets["tpos"];
+  SortedArray< localIndex > & rnegNodes = nodeSets.get_inserted( "rneg" );
+  SortedArray< localIndex > & rposNodes = nodeSets.get_inserted( "rpos" );
+  SortedArray< localIndex > & tnegNodes = nodeSets.get_inserted( "tneg" );
+  SortedArray< localIndex > & tposNodes = nodeSets.get_inserted( "tpos" );
 
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )

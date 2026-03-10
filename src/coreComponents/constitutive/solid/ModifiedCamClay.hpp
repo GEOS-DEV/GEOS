@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,7 +23,7 @@
 #include "ElasticIsotropicPressureDependent.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -73,7 +73,7 @@ public:
                           arrayView2d< real64 > const & density,
                           arrayView2d< real64 > const & wavespeed,
                           bool const & disableInelasticity ):
-    ElasticIsotropicPressureDependentUpdates( refPressure, 
+    ElasticIsotropicPressureDependentUpdates( refPressure,
                                               refStrainVol,
                                               recompressionIndex,
                                               shearModulus,
@@ -105,7 +105,7 @@ public:
   ModifiedCamClayUpdates & operator=( ModifiedCamClayUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
@@ -496,16 +496,9 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  ModifiedCamClay( string const & name, Group * const parent );
+  ModifiedCamClay( string const & name, dataRepository::Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~ModifiedCamClay() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void saveConvergedState() const override;
 
@@ -514,13 +507,10 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ModifiedCamClay";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ModifiedCamClay"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -539,18 +529,6 @@ public:
 
     /// string/key for default preconsolidation pressure
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
-
-    /// string/key for virgin compression index
-    static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
-
-    /// string/key for slope of the criticalstate line
-    static constexpr char const * cslSlopeString() { return "cslSlope"; }
-
-    /// string/key for new preconsolidation pressure
-    static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
-
-    /// string/key for old preconsolidation pressure
-    static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
   };
 
   /**
@@ -602,8 +580,8 @@ public:
                           m_disableInelasticity );
   }
 
-
 protected:
+
   virtual void postInputInitialization() override;
 
   /// Material parameter: The default value of the virgin compression index

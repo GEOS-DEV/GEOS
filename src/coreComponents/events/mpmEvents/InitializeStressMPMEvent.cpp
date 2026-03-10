@@ -21,36 +21,38 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  InitializeStressMPMEvent::InitializeStressMPMEvent( const string & name,
-                                  Group * const parent ) :
-                                  MPMEventBase(  name, parent ),
-                                  m_pressure( 0.0 ),
-                                  m_targetRegion( "mat1" )
-  {  
-    registerWrapper( viewKeyStruct::pressureString(), &m_pressure ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Starting temperature to ramp from" );
-        
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform anneal on" );
+using namespace dataRepository;
 
-  }
+InitializeStressMPMEvent::InitializeStressMPMEvent( const string & name,
+                                                    Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_pressure( 0.0 ),
+  m_targetRegion( "mat1" )
+{
+  registerWrapper( viewKeyStruct::pressureString(), &m_pressure ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Starting temperature to ramp from" );
 
-  InitializeStressMPMEvent::~InitializeStressMPMEvent() 
-  {}
+  registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Particle region to perform anneal on" );
 
-  void InitializeStressMPMEvent::postInputInitialization()
-  {
-    GEOS_LOG_RANK_0( "InitializeStressEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "pressure=" << m_pressure << ", " << 
-                     "targetRegion=" << m_targetRegion );
-  }
+}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, InitializeStressMPMEvent, string const &, Group * const )
+InitializeStressMPMEvent::~InitializeStressMPMEvent()
+{}
+
+void InitializeStressMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+
+  GEOS_LOG_RANK_0( "InitializeStressEvent: " <<
+                   "Start time=" << m_startTime << ", " <<
+                   "Time interval=" << getTimeInterval() << ", " <<
+                   "pressure=" << m_pressure << ", " <<
+                   "targetRegion=" << m_targetRegion );
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, InitializeStressMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -55,13 +55,10 @@ Box::Box( const string & name, Group * const parent ):
   registerWrapper( viewKeyStruct::sinStrikeString(), &m_sinStrike );
 }
 
-Box::~Box()
-{}
-
-
-
 void Box::postInputInitialization()
 {
+  SimpleGeometricObjectBase::postInputInitialization();
+
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
   LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
@@ -72,7 +69,7 @@ void Box::postInputInitialization()
     if( m_max[i]<m_min[i] )
     {
       std::swap( m_max[i], m_min[i] );
-      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition for {} component as {} < {} ", i, m_max[i], m_min[i] ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition {} for {} component as {} < {} ", getName(), i, m_max[i], m_min[i] ) );
     }
   }
 
@@ -81,7 +78,8 @@ void Box::postInputInitialization()
   {
     GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
                    getDataContext() << ": When a strike angle is specified, the box is supposed to" <<
-                   " represent a plane normal to the y direction. This box seems to be too thick." );
+                   " represent a plane normal to the y direction. This box seems to be too thick.",
+                   getDataContext() );
 
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );
@@ -103,7 +101,7 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
   for( int i = 0; i < 3; ++i )
   {
-    if( coord0[i] < m_min[i] || coord0[i] > m_max[i] )
+    if( coord0[i] < m_min[i] - m_epsilon || coord0[i] > m_max[i] + m_epsilon )
     {
       return false;
     }

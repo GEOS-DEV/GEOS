@@ -21,35 +21,31 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  MaterialSwapMPMEvent::MaterialSwapMPMEvent( const string & name,
-                                              Group * const parent ) :
-                                              MPMEventBase(  name, parent ),
-                                              m_sourceRegion( "mat1" ),
-                                              m_destinationRegion( "mat2" )
-  {
-    registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to transfer particles from" );
+using namespace dataRepository;
 
-    registerWrapper( viewKeyStruct::destinationRegionString(), &m_destinationRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to transfer particles to" );
-  }
+MaterialSwapMPMEvent::MaterialSwapMPMEvent( const string & name,
+                                            Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_sourceRegion( "mat1" ),
+  m_destinationRegion( "mat2" )
+{
+  registerWrapper( viewKeyStruct::sourceRegionString(), &m_sourceRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Particle region to transfer particles from" );
 
-  MaterialSwapMPMEvent::~MaterialSwapMPMEvent() 
-  {}
+  registerWrapper( viewKeyStruct::destinationRegionString(), &m_destinationRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Particle region to transfer particles to" );
+}
 
-  void MaterialSwapMPMEvent::postInputInitialization()
-  {
-    GEOS_LOG_RANK_0( "MaterialSwapEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "Source region=" << m_sourceRegion << ", " << 
-                     "Destination region=" << m_destinationRegion );
-  }
+MaterialSwapMPMEvent::~MaterialSwapMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, MaterialSwapMPMEvent, string const &, Group * const )
+void MaterialSwapMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, MaterialSwapMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

@@ -15,3 +15,5 @@ Carbon Storage
 
    isothermalHystInjection/Example
 
+   spe11b/Example
+

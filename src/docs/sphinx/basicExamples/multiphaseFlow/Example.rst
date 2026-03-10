@@ -13,7 +13,7 @@ Injection and production are simulated using boundary conditions.
 
 **Objective**
 
-The main objective of this example is to review the main elements of a simple two-phase simulation in GEOS, including:
+The objective of this example is to review the main elements of a simple two-phase simulation in GEOS, including:
 
 - the compositional multiphase flow solver,
 - the multiphase constitutive models,
@@ -37,6 +37,7 @@ The XML file considered here follows the typical structure of the GEOS input fil
  #. :ref:`ElementRegions <ElementRegions_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`Constitutive <Constitutive_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_dead_oil_bottom_layers_spe10>`
+ #. :ref:`Statistics <Stats_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`   
 
 .. _Solver_tag_dead_oil_bottom_layers_spe10:
@@ -53,12 +54,12 @@ More information on this solver can be found at :ref:`CompositionalMultiphaseFlo
 Let us have a closer look at the **Solvers** XML block displayed below.
 The solver has a name (here, ``compflow``) that can be chosen by the user and is not imposed by GEOS.
 Note that this name is used in the **Events** XML block to trigger the application of the solver.
-Using the ``targetRegions`` attribute, the solver defines the target regions on which it is applied.
+Using the ``targetRegions`` attribute, the solver defines target regions on which it is applied.
 In this example, there is only one region, named ``reservoir``.
 
-The **CompositionalMultiphaseFVM** block contains two important sub-blocks, namely **NonlinearSolverParameters** and **LinearSolverParameters**.
-In **NonlinearSolverParameters**, one can finely tune the nonlinear tolerance, the application of the linear search algorithm, and the heuristics used to increase the time step size.
-In **LinearSolverParameters**, the user can specify the linear tolerance, the type of (direct or iterative) linear solver, and the
+The **CompositionalMultiphaseFVM** block contains two important sub-blocks, **NonlinearSolverParameters** and **LinearSolverParameters**.
+In **NonlinearSolverParameters**, we can tune the nonlinear tolerance, the application of the linear search algorithm, and the heuristics that control time step sizes.
+In **LinearSolverParameters**, we can specify the linear tolerance, the type of (direct or iterative) linear solver, and the
 type of preconditioner, if any.
 For large multiphase flow problems, we recommend using an iterative linear solver (``solverType="gmres"`` or ``solverType="fgmres"``) combined
 with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``). More information about the MGR preconditioner can be found in :ref:`LinearSolvers`.
@@ -81,10 +82,10 @@ with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``)
 Mesh
 -------
 
-In this simulation, we define a simple mesh generated internally using the **InternalMesh** generator, as
-illustrated in the previous examples.
-The mesh dimensions and cell sizes are chosen to be those specified in the SPE10 test case, but are limited to the two bottom layers.
-The mesh description must be done in meters.
+In this simulation, we define a mesh generated internally using the **InternalMesh** generator, 
+illustrated in the first tutorial (:ref:`TutorialSinglePhaseFlowWithInternalMesh`).
+The mesh dimensions and cell sizes are chosen to be those specified in the the two bottom layers of the SPE10 test case.
+The mesh dimensions are specified in meters.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_benchmark.xml
   :language: xml
@@ -97,8 +98,8 @@ The mesh description must be done in meters.
 Geometry
 ------------
 
-As in the previous examples, the **Geometry** XML block is used to select the cells in which the boundary conditions are applied.
-To mimic the setup of the original SPE10 test case, we place a source term in the middle of the domain, and a sink term in each corner.
+The **Geometry** XML block is used to select cells where boundary conditions are applied.
+To mimic the setup of the original SPE10 test case, we place a box-shaped source term in the middle of the domain and a sink term in each corner.
 The specification of the boundary conditions applied to the selected mesh cells is done in the **FieldSpecifications** block of the XML file
 using the names of the boxes defined here.
 
@@ -113,30 +114,30 @@ using the names of the boxes defined here.
 Events
 ------------------------
 
-In the **Events** XML block of this example, we specify two types of **PeriodicEvents**
-serving different purposes, namely solver application and result output.
+In the **Events** XML block of this example, we specify two types of **PeriodicEvents**:
+one for solver application, and one for result output.
 
 The periodic event named ``solverApplications`` triggers the application of the solver on its target region. 
 This event must point to the solver by name.
 In this example, the name of the solver is ``compflow`` and was defined in the **Solvers** block.
 The time step is initialized using the ``initialDt`` attribute of the flow solver.
 Then, if the solver converges in less than a certain number of nonlinear iterations (by default, 40% of the
-maximum number of nonlinear iterations), the time step will be increased until it reaches the maximum
+maximum number of nonlinear iterations), the time step will increase until it reaches the maximum
 time step size specified with ``maxEventDt``. 
-If the time step fails, the time step will be cut. The parameters defining the time stepping strategy
-can be finely tuned by the user in the flow solver block.
-Note that all times are in seconds.
+If convergence fails, the time step will be cut. Parameters defining the time stepping strategy
+can be adjusted by the user in the flow solver block.
+All times are in seconds.
 
-The output event forces GEOS to write out the results at the frequency specified by the attribute
+The output event instructs GEOS to write out results in a given format at the frequency specified by the attribute
 ``timeFrequency``.
-Here, we choose to output the results using the VTK format (see :ref:`TutorialSinglePhaseFlowExternalMesh`
+Here, we output the results using the VTK format (see :ref:`TutorialSinglePhaseFlowExternalMesh`
 for a tutorial that uses the Silo output file format).
-Using ``targetExactTimestep=1`` in this XML block forces GEOS to adapt the time stepping to
-ensure that an output is generated exactly at the time frequency requested by the user.
-In the ``target`` attribute, we must use the name defined in the **VTK** XML tag
+Here, by setting ``targetExactTimestep=1``, we make sure that the time stepping strategy is constrained 
+to generate an output exactly at the chosen frequency, even if solvers could take larger time steps.
+In the ``target`` attribute, we use the name defined in the **VTK** XML tag
 inside the **Output** XML section, as documented at the end of this example (here, ``vtkOutput``).
 
-More information about events can be found at :ref:`EventManager`.
+More information about Events can be found at :ref:`EventManager`.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
@@ -155,8 +156,6 @@ Numerical methods
 
 In the **NumericalMethods** XML block, we select a two-point flux approximation (TPFA) finite-volume scheme to
 discretize the governing equations on the reservoir mesh.
-TPFA is currently the only numerical scheme that can be used with a flow solver of type
-**CompositionalMultiphaseFVM**.
 
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
@@ -173,13 +172,12 @@ Reservoir region
 
 In the **ElementRegions** XML block, we define a **CellElementRegion** named ``reservoir`` corresponding to the
 reservoir mesh.
-The attribute ``cellBlocks`` is set to ``block`` to point this element region
-to the hexahedral mesh defined internally.
+``cellBlocks`` is set to ``{ * }`` to automatically include all cells of the mesh.
 
-The **CellElementRegion** must also point to the constitutive models that are used to update
-the dynamic rock and fluid properties in the cells of the reservoir mesh.
+The **CellElementRegion** must point to the constitutive models that update
+the dynamic rock and fluid properties in the reservoir cells.
 The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
-correspond to the attribute ``name`` of the **Constitutive** block.
+correspond to the **Constitutive** blocks.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
@@ -205,11 +203,10 @@ at least four types of constitutive models must be specified in the **Constituti
 All these models use SI units exclusively.
 A capillary pressure model can also be specified in this block but is omitted here for simplicity.
   
-Here, we introduce a fluid model describing a simplified mixture thermodynamic behavior.
-Specifically, we use an immiscible two-phase (Dead Oil) model by placing the XML tag **DeadOilFluid**.
+Here, we use a simplified fluid model corresponding to an immiscible two-phase model (Dead Oil) by using the XML tag **DeadOilFluid**.
 Other fluid models can be used with the **CompositionalMultiphaseFVM** solver, as explained in :ref:`FluidModels`.
 
-With the tag **BrooksCoreyRelativePermeability**, we define a relative permeability model.
+We define a relative permeability model with the tag **BrooksCoreyRelativePermeability**.
 A list of available relative permeability models can be found at
 :ref:`RelativePermeabilityModels`.
 
@@ -220,11 +217,11 @@ The properties are chosen to match those of the original SPE10 test case.
    (here, **DeadOilFluid**) and the relative permeability model (here, **BrooksCoreyRelativePermeability**).
    Otherwise, GEOS will throw an error and terminate.
 
-We also introduce models to define rock compressibility and permeability.
+We introduce models to define rock compressibility and permeability.
 This step is similar to what is described in the previous examples
 (see for instance :ref:`TutorialSinglePhaseFlowWithInternalMesh`).
 
-We remind the reader that the attribute ``name`` of the constitutive models defined here
+The attribute ``name`` of the constitutive models defined here
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
@@ -242,17 +239,17 @@ regions and the physics solvers to their respective constitutive models.
 Initial and boundary conditions
 --------------------------------
 
-In the **FieldSpecifications** section, we define the initial and boundary conditions as well
-as the geological properties (porosity, permeability).
-All this is done using SI units.
-Here, we focus on the specification of the initial and boundary conditions for
+In the **FieldSpecifications** section, we define initial and boundary conditions, as well
+as geological properties (porosity, permeability).
+Everything is specified using SI units.
+We focus on the specification of the initial and boundary conditions for
 a simulation performed with the **CompositionalMultiphaseFVM** solver.
 We refer to :ref:`TutorialSinglePhaseFlowWithInternalMesh` for a more general
 discussion on the **FieldSpecification** XML blocks.
 
 For a simulation performed with the **CompositionalMultiphaseFVM** solver,
-we have to set the initial pressure as well as the initial global component
-fractions (in this case, the oil and water component fractions).
+we set the initial pressure and the initial global component
+fractions (here, the oil and water component fractions).
 The ``component`` attribute of the **FieldSpecification** XML block must use the
 order in which the ``phaseNames`` have been defined in the **DeadOilFluid**
 XML block. In other words, ``component=0`` is used to initialize the oil
@@ -260,9 +257,9 @@ global component fraction and ``component=1`` is used to initialize the water gl
 component fraction, because we previously set ``phaseNames="{oil, water}"``
 in the **DeadOilFluid** XML block. 
 
-To specify the sink terms, we use the **FieldSpecification** mechanism in a similar
+To specify sink terms, we use the **FieldSpecification** mechanism in a similar
 fashion to impose the sink pressure and composition.
-This is done to mimic a pressure-controlled well (before breakthrough).
+This mimics a pressure-controlled well (before breakthrough).
 To specify the source term, we use a **SourceFlux**  block to impose a fixed mass
 injection rate of component 1 (water) to mimic a rate-controlled well.
 
@@ -272,7 +269,40 @@ injection rate of component 1 (water) to mimic a rate-controlled well.
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
 
 
+.. _Stats_tag_dead_oil_bottom_layers_spe10:
 
+------------------------
+Source flux statistics
+------------------------
+
+GEOS reports source flux statistics to help monitor the overall mass balance and flow rates of a group of wells defined using ``SourceFlux``.
+This functionality is implemented through a ``SourceFluxStatistics`` **Task** that reports statistics at regular intervals via :ref:`Events <Events_tag_dead_oil_bottom_layers_spe10>` to:
+
+  - a CSV file (comma-separated values) that reports all fluxes and regions details and sum, when specifying ``writeCSV="1"``.
+  - console log output, when specifying ``logLevel="1"`` (value ``1`` stands for a sum of all fluxes, ``2`` adds per-flux details and ``3`` adds per-region details).
+
+The group of target **SourceFlux** is defined in ``fluxNames`` by specifying their names, or by using ``*`` to report all source fluxes.
+The task requires a ``flowSolverName`` referring to the solver used for flow calculations.
+
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
+  :language: xml
+  :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->
+  :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->
+
+To output these statistics during the simulation, an event must be defined (previously shown ``sourceFluxStatsEvent``).
+
+In addition to the complete information reported in the ``fluxesStats.csv`` file, the source flux values are reported in table format in the console log output:
+
+.. code-block:: console
+
+  -----------------------------------------------------------------------------------------------------
+  |                           fluxesStats, flux statistics for: sourceTerm                            |
+  |---------------------------------------------------------------------------------------------------|
+  |   Flux(es)   |    Region     |  Element Count  |      Prod. mass [kg]       |  Prod. rate [kg/s]  |
+  |--------------|---------------|-----------------|----------------------------|---------------------|
+  |  sourceTerm  |  all_regions  |              2  |  [0, -57048.521447934894]  |      [0, -0.07279]  |
+  |    flux_set  |  all_regions  |              2  |  [0, -57048.521447934894]  |      [0, -0.07279]  |
+  -----------------------------------------------------------------------------------------------------
 
 .. _Outputs_tag_dead_oil_bottom_layers_spe10:
 
@@ -296,6 +326,12 @@ All elements are now in place to run GEOS.
 ------------------------------------
 Running GEOS
 ------------------------------------
+
+The simulation can be launched with:
+
+.. code-block:: console
+
+  geosx -i deadOilSpe10Layers84_85_benchmark.xml
 
 The first few lines appearing to the console are indicating that the XML elements are read and registered correctly:
 

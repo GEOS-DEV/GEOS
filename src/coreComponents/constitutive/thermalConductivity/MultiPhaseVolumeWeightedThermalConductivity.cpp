@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -43,24 +43,16 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
-                                                           Group * const parent ) const
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
-
-void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                            localIndex const numConstitutivePointsPerParentIndex )
-{
-  // NOTE: enforcing 1 quadrature point
   m_rockThermalConductivity.resize( 0, 1, 3 );
 
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
+  // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
@@ -79,14 +71,14 @@ void MultiPhaseVolumeWeightedThermalConductivity::postInputInitialization()
                  m_rockThermalConductivityComponents[2] <= 0,
                  GEOS_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF( m_phaseThermalConductivity[ip] <= 0,
                    GEOS_FMT( "{}: the phase thermal conductivity for phase {} must be strictly positive",
                              getFullName(), ip ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 

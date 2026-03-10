@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,7 +23,6 @@
 #include <array>
 #include <map>
 
-constexpr int nsdof = 3;
 namespace geos
 {
 
@@ -38,66 +37,82 @@ namespace geos
 // CC: Taken from old geos
 // Planar Sorter
 // Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
-class PlanarSorter {
+class PlanarSorter
+{
 
 public:
-	PlanarSorter(const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPos, int dim) :
-               dimension(dim), 
-               refPositions(refPos) {};
+  PlanarSorter( const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > & refPos, int dim ):
+    dimension( dim ),
+    refPositions( refPos ) {};
 
-	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
-	bool operator()(const std::pair<localIndex, localIndex>& lhs,
-	                const std::pair<localIndex, localIndex>& rhs) 
+  // sort operator for pairs containing local indexes (sort based on 1st element in pair)
+  bool operator()( const std::pair< localIndex, localIndex > & lhs,
+                   const std::pair< localIndex, localIndex > & rhs )
   {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
+    bool rv = false;
+    int a = 0;
+    int b = 2;
+    if( dimension == 0 )
+      a = 1;
+    if( dimension == 2 )
+      b = 1;
 
-		const arraySlice1d<real64 const>& lhsVect = refPositions[lhs.first];
-		const arraySlice1d<real64 const>& rhsVect = refPositions[rhs.first];
 
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
+    auto const & lhsVect = refPositions[lhs.first];
+    auto const & rhsVect = refPositions[rhs.first];
 
-		return rv;
-	};
+    // const arraySlice1d<real64 const>& lhsVect = refPositions[lhs.first];
+    // const arraySlice1d<real64 const>& rhsVect = refPositions[rhs.first];
 
-	// sort operator for local indexes
-	bool operator()(const localIndex& lhs, 
-                  const localIndex& rhs)
+    if( lhsVect[a] < rhsVect[a] )
+    {
+      rv = true;
+    }
+    else if( isEqual( lhsVect[a], rhsVect[a] )
+             && (lhsVect[b] < rhsVect[b]))
+    {
+      rv = true;
+    }
+    ;
+
+    return rv;
+  };
+
+  // sort operator for local indexes
+  bool operator()( const localIndex & lhs,
+                   const localIndex & rhs )
   {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
+    bool rv = false;
+    int a = 0;
+    int b = 2;
+    if( dimension == 0 )
+      a = 1;
+    if( dimension == 2 )
+      b = 1;
 
-		const arraySlice1d<real64 const>& lhsVect = refPositions[lhs];
-		const arraySlice1d<real64 const>& rhsVect = refPositions[rhs];
+    // const arraySlice1d<real64 const>& lhsVect = refPositions[lhs];
+    // const arraySlice1d<real64 const>& rhsVect = refPositions[rhs];
 
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
+    auto const & lhsVect = refPositions[lhs];
+    auto const & rhsVect = refPositions[rhs];
 
-		return rv;
-	};
+    if( lhsVect[a] < rhsVect[a] )
+    {
+      rv = true;
+    }
+    else if( isEqual( lhsVect[a], rhsVect[a] )
+             && (lhsVect[b] < rhsVect[b]))
+    {
+      rv = true;
+    }
+    ;
+
+    return rv;
+  };
 
 private:
-	int dimension;
-	const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPositions;
+  int dimension;
+  const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > & refPositions;
 };
 
 /**
@@ -111,7 +126,7 @@ public:
 
   ~SpatialPartition() override;
 
-    struct viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * periodicString() { return "periodic"; }
     static constexpr char const * minString() { return "min"; }
@@ -126,49 +141,44 @@ public:
   } partitionViewKeys;
 
   static string catalogName() { return "SpatialPartition"; }
-  
+
   virtual string getCatalogName() const override { return catalogName(); }
 
-  void postInputInitialization() override; 
+  void postInputInitialization() override;
+
+  void setSizes( real64 const ( &min )[ 3 ],
+                 real64 const ( &max )[ 3 ] );
+
+  void updateSizes( arrayView1d< real64 > const domainL,
+                    real64 const dt );
 
   bool isCoordInPartition( const real64 & coord, const int dir ) const override;
 
   bool isCoordInPartitionBoundingBox( const R1Tensor & elemCenter,
                                       const real64 & boundaryRadius ) const;
 
-  void updateSizes( arrayView1d< real64 > const domainL,
-                    real64 const dt );
-
-//  void setSizes( real64 const ( &min )[ 3 ],
-//                 real64 const ( &max )[ 3 ] ) override;
-
-  void initializeNeighbors();
-
-  // real64 * getLocalMin()
   array1d< real64 > const & getLocalMin()
   {
     return m_min;
   }
 
-  // real64 * getLocalMax()
   array1d< real64 > const & getLocalMax()
   {
     return m_max;
   }
 
-  // real64 * getGlobalMin()
   array1d< real64 > const & getGlobalMin()
   {
     return m_gridMin;
   }
 
-  // real64 * getGlobalMax()
   array1d< real64 > const & getGlobalMax()
   {
     return m_gridMax;
   }
 
-  void setCoords( array1d< int > coords ) {
+  void setCoords( array1d< int > coords )
+  {
     m_coords = coords;
   }
 
@@ -180,7 +190,7 @@ public:
   {
     return m_coords;
   }
-  
+
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;
@@ -194,28 +204,33 @@ public:
     return m_partitions;
   }
 
-  void setPeriodic( array1d< int > periodic ) {
+  void setPeriodic( array1d< int > periodic )
+  {
     m_periodic = periodic;
   }
 
-  array1d< int > const & getPeriodic() const {
+  void setPeriodic( int index, int periodic )
+  {
+    m_periodic[index] = periodic;
+  }
+
+  array1d< int > const & getPeriodic() const
+  {
     return m_periodic;
   }
 
   int getColor() override;
 
-  void repartitionMasterParticles( ParticleSubRegion & subRegion,
-                                   MPI_iCommData & commData );
-
-  void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
-                                                   MPI_iCommData & commData,
-                                                   const real64 & boundaryRadius );
-
-  //CC: overrides global indices on periodic faces so they are matched when finding neighboring nodes
   void setPeriodicDomainBoundaryObjects( MeshBody & grid,
                                          NodeManager & nodeManager,
                                          EdgeManager & edgeManager,
                                          FaceManager & faceManager );
+
+  void repartitionMasterParticles( DomainPartition & domain,
+                                   ParticleSubRegion & subRegion );
+
+  void getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
+                                                   const real64 & boundaryRadius );
 
   /**
    * @brief Send coordinates to neighbors as part of repartition.
@@ -225,19 +240,19 @@ public:
    */
   void sendCoordinateListToNeighbors( arrayView1d< R1Tensor > const & particleCoordinatesSendingToNeighbors,
                                       MPI_iCommData & commData,
-                                      std::vector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
+                                      stdVector< array1d< R1Tensor > > & particleCoordinatesReceivedFromNeighbors
                                       );
 
   template< typename indexType >
-  void sendListOfIndicesToNeighbors( std::vector< array1d< indexType > > & listSendingToEachNeighbor,
+  void sendListOfIndicesToNeighbors( stdVector< array1d< indexType > > & listSendingToEachNeighbor,
                                      MPI_iCommData & commData,
-                                     std::vector< array1d< indexType > > & listReceivedFromEachNeighbor );
+                                     stdVector< array1d< indexType > > & listReceivedFromEachNeighbor );
 
   void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
-                                std::vector< int > const & newParticleStartingIndices,
-                                std::vector< int > const & numberOfIncomingParticles,
+                                stdVector< int > const & newParticleStartingIndices,
+                                stdVector< int > const & numberOfIncomingParticles,
                                 MPI_iCommData & commData,
-                                std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
+                                stdVector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
   /**
    * @brief Get the metis neighbors indices, const version. @see DomainPartition#m_metisNeighborList
@@ -252,9 +267,10 @@ public:
    * @brief Sets the list of metis neighbor list.
    * @param metisNeighborList A reference to the Metis neighbor list.
    */
-  void setMetisNeighborList( std::set< int > const & metisNeighborList )
+  void setMetisNeighborList( stdVector< int > const & metisNeighborList )
   {
-    m_metisNeighborList = metisNeighborList;
+    m_metisNeighborList.clear();
+    m_metisNeighborList.insert( metisNeighborList.cbegin(), metisNeighborList.cend() );
   }
 
   void setGrid( std::array< real64, 9 > const & grid )
@@ -289,6 +305,9 @@ public:
     m_max[1] = bb[4];
     m_max[2] = bb[5];
   }
+
+  // dimensions into which the simulation is executed
+  static constexpr int m_nsdof = 3;
 
 private:
 
@@ -327,13 +346,13 @@ private:
 
   /// Maximum extent of problem dimensions (excluding ghost objects).
   array1d< real64 > m_gridMax;
-  
+
   /// Total length of problem dimensions (excluding ghost objects).
   array1d< real64 > m_gridSize;
-  
+
   /// ijk partition indexes
   array1d< int > m_coords;
-  
+
   /// number of partitions
   array1d< int > m_partitions;
 
@@ -348,7 +367,7 @@ private:
   /**
    * @brief Ghost position (max).
    */
-   array1d< real64 > m_contactGhostMax;
+  array1d< real64 > m_contactGhostMax;
 
   /**
    * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.

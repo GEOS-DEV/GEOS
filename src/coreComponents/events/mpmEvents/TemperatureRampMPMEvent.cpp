@@ -21,44 +21,39 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  TemperatureRampMPMEvent::TemperatureRampMPMEvent( const string & name,
-                                                    Group * const parent ) :
-                                                    MPMEventBase(  name, parent ),
-                                                    m_startTemperature( 0.0 ),
-                                                    m_endTemperature( 0.0 ),
-                                                    m_interpType( 1 )
-  {  
-    registerWrapper( viewKeyStruct::startTemperatureString(), &m_startTemperature ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Starting temperature to ramp from" );
+using namespace dataRepository;
 
-    registerWrapper( viewKeyStruct::endTemperatureString(), &m_endTemperature ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "End temperature to ramp to" );
+TemperatureRampMPMEvent::TemperatureRampMPMEvent( const string & name,
+                                                  Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_startTemperature( 0.0 ),
+  m_endTemperature( 0.0 ),
+  m_interpType( 1 )
+{
+  registerWrapper( viewKeyStruct::startTemperatureString(), &m_startTemperature ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Starting temperature to ramp from" );
 
-    registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setApplyDefaultValue( m_interpType ).
-        setDescription( "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Sigmoid)" ); // CC: double check this!
-  }
+  registerWrapper( viewKeyStruct::endTemperatureString(), &m_endTemperature ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "End temperature to ramp to" );
 
-  TemperatureRampMPMEvent::~TemperatureRampMPMEvent() 
-  {}
+  registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_interpType ).
+    setDescription( "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Sigmoid)" );     // CC: double check this!
+}
 
-  void TemperatureRampMPMEvent::postInputInitialization()
-  {
-    GEOS_ERROR_IF( m_startTemperature < 0.0 || m_endTemperature < 0.0  , "Temperatures must be positive!");
+TemperatureRampMPMEvent::~TemperatureRampMPMEvent()
+{}
 
-    GEOS_LOG_RANK_0( "TemperatureRampEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "startTemperature=" << m_startTemperature << ", " << 
-                     "endTemperature=" << m_endTemperature << ", " << 
-                     "interpType=" << m_interpType );
-  }
+void TemperatureRampMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureRampMPMEvent, string const &, Group * const )
+  GEOS_ERROR_IF( m_startTemperature < 0.0 || m_endTemperature < 0.0, "Temperatures must be positive!" );
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureRampMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

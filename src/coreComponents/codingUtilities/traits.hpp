@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -97,6 +97,14 @@ HAS_MEMBER_FUNCTION( capacity, localIndex, );
 HAS_MEMBER_FUNCTION_NO_RTYPE( resize, 0 );
 
 /**
+ * @brief Defines a static constexpr bool HasMemberFunction_resizeDefault< @p CLASS >
+ *        that is true iff the method @p CLASS ::resizeDefault( int, int, int) exists.
+ * @tparam CLASS The type to test.
+ */
+HAS_MEMBER_FUNCTION_NO_RTYPE( resizeDefault, 0, 0 );
+
+
+/**
  * @brief Defines a static constexpr bool HasMemberFunction_reserve< @p CLASS >
  *        that is true iff the method @p CLASS ::reserve( localIndex ) exists.
  * @tparam CLASS The type to test.
@@ -184,6 +192,18 @@ constexpr bool is_sorted_array_view = LvArray::isSortedArrayView< T >;
 /// True if T is an instantiation of LvArray::ArrayView or LvArray::Array
 template< typename T >
 constexpr bool is_array_type = traits::is_array_view< T > || traits::is_array< T >;
+
+/// True if T is an instantiation of LvArray::ArrayOfArrays.
+template< typename T >
+constexpr bool is_array_of_arrays = LvArray::isArrayOfArrays< T >;
+
+/// True if T is an instantiation of LvArray::ArrayOfArraysView.
+template< typename T >
+constexpr bool is_array_of_arrays_view = LvArray::isArrayOfArraysView< T >;
+
+/// True if T is an instantiation of LvArray::ArrayOfArraysView or LvArray::ArrayOfArrays
+template< typename T >
+constexpr bool is_array_of_arrays_type = traits::is_array_of_arrays_view< T > || traits::is_array_of_arrays< T >;
 
 /// True if T is an instantiation of LvArray::SortedArrayView or LvArray::SortedArray
 template< typename T >

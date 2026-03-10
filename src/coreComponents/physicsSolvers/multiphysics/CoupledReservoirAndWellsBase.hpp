@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -48,7 +48,7 @@ namespace coupledReservoirAndWellsInternal
  * @param wellElemDofName name of the well element dofs
  */
 void
-addCouplingNumNonzeros( SolverBase const * const solver,
+addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
                         DomainPartition & domain,
                         DofManager & dofManager,
                         arrayView1d< localIndex > const & rowLengths,
@@ -64,7 +64,7 @@ addCouplingNumNonzeros( SolverBase const * const solver,
  * @param wellSolver the well solver
  * @param domain the physical domain object
  */
-bool validateWellPerforations( SolverBase const * const reservoirSolver,
+bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
                                WellSolverBase const * const wellSolver,
                                DomainPartition const & domain );
 
@@ -107,72 +107,43 @@ public:
   }
 
   /**
-   * @brief default destructor
-   */
-  virtual ~CoupledReservoirAndWellsBase () override {}
-
-  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override
   {
-    GEOS_MARK_FUNCTION;
-
-    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
-    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-    dofManager.setDomain( domain );
-
-    Base::setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
-    // Set the sparsity pattern without reservoir-well coupling
+    // Set the reservoir sparsity pattern without reservoir-well coupling
     SparsityPattern< globalIndex > patternDiag;
-    dofManager.setSparsityPattern( patternDiag );
+    reservoirSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternDiag );
 
     // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternDiag.numRows() );
+    array1d< localIndex > rowLengths( patternDiag.numRows());
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
       rowLengths[localRow] = patternDiag.numNonZeros( localRow );
     }
 
     // Add the number of nonzeros induced by coupling on perforations
-    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
     // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
       globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
     }
 
     // Add the nonzeros from coupling
-    addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-    // Finally, steal the pattern into a CRS matrix
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-    localMatrix.setName( this->getName() + "/localMatrix" );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+    addCouplingSparsityPattern( domain, dofManager, pattern.toView());
   }
 
   /**@}*/
@@ -201,8 +172,19 @@ public:
     // Validate well perforations: Ensure that each perforation is in a region targeted by the solver
     if( !validateWellPerforations( domain ))
     {
-      return;
+      GEOS_ERROR( GEOS_FMT( "{}: well perforations validation failed, bad perforations found", this->getName()));
     }
+  }
+
+  virtual void
+  postInputInitialization() override
+  {
+    Base::postInputInitialization();
+
+    // assume that reservoir solver discretization is the primary one
+    this->m_discretizationName = reservoirSolver()->getDiscretizationName();
+
+    setMGRStrategy();
   }
 
   virtual void
@@ -223,6 +205,8 @@ public:
     }
   }
 
+  void initializeState( DomainPartition & domain ) const { return reservoirSolver()->initializeState( domain ); }
+
   void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
@@ -241,8 +225,11 @@ public:
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return reservoirSolver()->updateFluidState( subRegion ); }
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+
+  template< typename ELEMENT_SUB_REGION >
+  void updatePorosityAndPermeability( ELEMENT_SUB_REGION & subRegion ) const
   { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 
@@ -254,8 +241,11 @@ public:
   void enableFixedStressPoromechanicsUpdate()
   { reservoirSolver()->enableFixedStressPoromechanicsUpdate(); }
 
-  void setKeepFlowVariablesConstantDuringInitStep( bool const keepFlowVariablesConstantDuringInitStep )
-  { reservoirSolver()->setKeepFlowVariablesConstantDuringInitStep( keepFlowVariablesConstantDuringInitStep ); }
+  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
+  {
+    reservoirSolver()->setKeepVariablesConstantDuringInitStep( keepVariablesConstantDuringInitStep );
+    wellSolver()->setKeepVariablesConstantDuringInitStep( keepVariablesConstantDuringInitStep );
+  }
 
   virtual void saveSequentialIterationState( DomainPartition & domain ) override
   { reservoirSolver()->saveSequentialIterationState( domain ); }
@@ -295,6 +285,12 @@ protected:
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
 
+  virtual void setMGRStrategy()
+  {
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
+
   /// Flag to determine whether the well transmissibility needs to be computed
   bool m_isWellTransmissibilityComputed;
 
@@ -316,9 +312,9 @@ private:
    */
   void computeWellTransmissibility( DomainPartition & domain ) const
   {
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & meshLevel,
-                                                                                 arrayView1d< string const > const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & meshLevel,
+                                                                                   string_array const & regionNames )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -364,12 +360,12 @@ private:
           forAll< serialPolicy >( perforationData.size(), [=] ( localIndex const iperf )
           {
             GEOS_UNUSED_VAR( iperf ); // unused if geos_error_if is nulld
-            GEOS_LOG_RANK( GEOS_FMT( "Perforation at ({},{},{}); perforated element center: ({},{},{}); transmissibility: {} Pa.s.rm^3/s/Pa",
-                                     perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
+            GEOS_LOG_RANK( GEOS_FMT( "{}: perforation at ({},{},{}), perforated element center = ({},{},{}), transmissibility = {} [{}]",
+                                     this->getName(), perfLocation[iperf][0], perfLocation[iperf][1], perfLocation[iperf][2],
                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][0],
                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][1],
                                      elemCenter[resElemRegion[iperf]][resElemSubRegion[iperf]][resElemIndex[iperf]][2],
-                                     perfTrans[iperf] ) );
+                                     perfTrans[iperf], getSymbol( units::Transmissibility ) ) );
           } );
         }
       } );

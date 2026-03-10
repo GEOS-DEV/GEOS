@@ -21,50 +21,44 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  BoreholePressureMPMEvent::BoreholePressureMPMEvent( const string & name,
-                                                    Group * const parent ) :
-                                                    MPMEventBase(  name, parent ),
-                                                    m_boreholeRadius( 0.0 ),
-                                                    m_startPressure( 0.0 ),
-                                                    m_endPressure( 0.0 ),
-                                                    m_interpType( 1 )
-  {  
-    registerWrapper( viewKeyStruct::boreholeRadiusString(), &m_boreholeRadius ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Starting temperature to ramp from" );
+using namespace dataRepository;
 
-    registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Starting temperature to ramp from" );
+BoreholePressureMPMEvent::BoreholePressureMPMEvent( const string & name,
+                                                    Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_boreholeRadius( 0.0 ),
+  m_startPressure( 0.0 ),
+  m_endPressure( 0.0 ),
+  m_interpType( 1 )
+{
+  registerWrapper( viewKeyStruct::boreholeRadiusString(), &m_boreholeRadius ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Starting temperature to ramp from" );
 
-    registerWrapper( viewKeyStruct::endPressureString(), &m_endPressure ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "End temperature to ramp to" );
+  registerWrapper( viewKeyStruct::startPressureString(), &m_startPressure ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Starting temperature to ramp from" );
 
-    registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setApplyDefaultValue( m_interpType ).
-        setDescription( "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Smooth-step)" ); // CC: double check this!
-  }
+  registerWrapper( viewKeyStruct::endPressureString(), &m_endPressure ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "End temperature to ramp to" );
 
-  BoreholePressureMPMEvent::~BoreholePressureMPMEvent() 
-  {}
+  registerWrapper( viewKeyStruct::interpTypeString(), &m_interpType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_interpType ).
+    setDescription( "Interpolation scheme: 0 (Linear), 1 (Cosine), 2 (Smooth-step)" );     // CC: double check this!
+}
 
-  void BoreholePressureMPMEvent::postInputInitialization()
-  {
-    GEOS_ERROR_IF( m_boreholeRadius < 0.0   , "Borehole radius must be positive!");
+BoreholePressureMPMEvent::~BoreholePressureMPMEvent()
+{}
 
-    GEOS_LOG_RANK_0( "BoreholePressureEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "boreholeRadius=" << m_boreholeRadius << ", " << 
-                     "startPressure=" << m_startPressure << ", " << 
-                     "endPressure=" << m_endPressure << ", " << 
-                     "interpType=" << m_interpType );
-  }
+void BoreholePressureMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, BoreholePressureMPMEvent, string const &, Group * const )
+  GEOS_ERROR_IF( m_boreholeRadius < 0.0, "Borehole radius must be positive!" );
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, BoreholePressureMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

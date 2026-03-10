@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -14,6 +14,10 @@
  */
 
 #include "HistoryCollectionBase.hpp"
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
+#include "fileIO/timeHistory/PackCollection.hpp"
+#include <stdexcept>
 
 namespace geos
 {
@@ -94,7 +98,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
     }
     else // relative objectPaths use relative lookup identical to fieldSpecification to make xml input spec easier
     {
-      std::vector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
+      stdVector< string > targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
       dataRepository::Group const * targetGroup = nullptr;
@@ -171,6 +175,11 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
 
       if( targetTokens[2]== MeshLevel::groupStructKeys::elemManagerString() )
       {
+
+        GEOS_THROW_IF( targetTokens.size() <= 4,
+                       GEOS_FMT( " Object Path '{}' does not target any element sub region",
+                                 objectPath ),
+                       std::runtime_error );
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
         string const elemRegionName = targetTokens[3];
         ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
@@ -189,9 +198,6 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
-            string const targetTokensStr = stringutilities::join( targetTokens.begin(),
-                                                                  targetTokens.begin()+pathLevel,
-                                                                  '/' );
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
                         std::domain_error );
@@ -203,6 +209,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
   }
   catch( std::exception const & e )
   {
+    ErrorLogger::global().currentErrorMsg()
+      .addToMsg( getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" )
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }

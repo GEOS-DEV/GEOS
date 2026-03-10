@@ -17,6 +17,8 @@ Welcome to the GEOS user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
+   /coreComponents/constitutiveDrivers/docs/ConstitutiveDrivers
+
    /coreComponents/fieldSpecification/docs/FieldSpecification
    
    /coreComponents/events/docs/EventManager
@@ -25,12 +27,14 @@ Welcome to the GEOS user guide.
 
    /coreComponents/functions/docs/FunctionManager
 
+   /coreComponents/physicsSolvers/multiphysics/docs/Initialization.rst
+
    /coreComponents/linearAlgebra/docs/LinearSolvers.rst
 
    /coreComponents/discretizationMethods/docs/NumericalMethodsManager
 
    /coreComponents/mesh/mpiCommunications/docs/SpatialPartition.rst
 
-   /coreComponents/fileIO/doc/Outputs.rst
+   /coreComponents/fileIO/doc/Index.rst
 
    /pygeosx/pygeosx_documentation.rst

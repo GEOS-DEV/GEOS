@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2018-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -111,24 +111,14 @@ public:
   void setParticleVelocity( array2d< real64 > const particleVelocity )
   { m_particleVelocity = particleVelocity; }
 
-  array2d< real64 > getParticleInitialMaterialDirection() const override
-  { return m_particleInitialMaterialDirection; }
-
-  /**
-   * @brief Set the list of material directions in this subregion.
-   * @param particleInitialMaterialDirection The input list of initial directions
-   */
-  void setParticleInitialMaterialDirection( array2d< real64 > const particleInitialMaterialDirection )
-  { m_particleInitialMaterialDirection = particleInitialMaterialDirection; }
-
-  array2d< real64 > getParticleMaterialDirection() const override
+  array3d< real64 > getParticleMaterialDirection() const override
   { return m_particleMaterialDirection; }
 
   /**
    * @brief Set the list of material directions in this subregion.
    * @param particleMaterialDirection The input list of directions
    */
-  void setParticleMaterialDirection( array2d< real64 > const particleMaterialDirection )
+  void setParticleMaterialDirection( array3d< real64 > const particleMaterialDirection )
   { m_particleMaterialDirection = particleMaterialDirection; }
 
   array1d< int > getParticleGroup() const override
@@ -181,7 +171,6 @@ public:
   void setParticleTemperature( array1d< real64 > const particleTemperature )
   { m_particleTemperature = particleTemperature; }
 
-
   array1d< real64 > getParticleTemperatureRate() const override
   { return m_particleTemperatureRate; }
 
@@ -225,16 +214,6 @@ public:
   bool hasRVectors() const override
   { return m_hasRVectors; }
 
-  array2d< real64 > getParticleInitialSurfaceNormal() const override
-  { return m_particleInitialSurfaceNormal; }
-
-  /**
-   * @brief Set the list of surface normals in this subregion.
-   * @param particleInitialSurfaceNormal The input list of initial normals
-   */
-  void setParticleInitialSurfaceNormal( array2d< real64 > const particleInitialSurfaceNormal )
-  { m_particleInitialSurfaceNormal = particleInitialSurfaceNormal; }
-
   array2d< real64 > getParticleSurfaceNormal() const override
   { return m_particleSurfaceNormal; }
 
@@ -244,16 +223,6 @@ public:
    */
   void setParticleSurfaceNormal( array2d< real64 > const particleSurfaceNormal )
   { m_particleSurfaceNormal = particleSurfaceNormal; }
-
-  array2d< real64 > getParticleInitialSurfacePosition() const override
-  { return m_particleInitialSurfacePosition; }
-
-  /**
-   * @brief Set the list of surface positions in this subregion.
-   * @param particleInitialSurfacePosition The input list of initial surface positions
-   */
-  void setParticleInitialSurfacePosition( array2d< real64 > const particleInitialSurfacePosition )
-  { m_particleInitialSurfacePosition = particleInitialSurfacePosition; }
 
   array2d< real64 > getParticleSurfacePosition() const override
   { return m_particleSurfacePosition; }
@@ -265,16 +234,6 @@ public:
   void setParticleSurfacePosition( array2d< real64 > const particleSurfacePosition )
   { m_particleSurfacePosition = particleSurfacePosition; }
 
-  array2d< real64 > getParticleInitialSurfaceTraction() const override
-  { return m_particleInitialSurfaceTraction; }
-
-  /**
-   * @brief Set the list of surface tractions in this subregion.
-   * @param particleInitialSurfaceTraction The input list of initial surface tractions
-   */
-  void setParticleInitialSurfaceTraction( array2d< real64 > const particleInitialSurfaceTraction )
-  { m_particleInitialSurfaceTraction = particleInitialSurfaceTraction; }
-
   array2d< real64 > getParticleSurfaceTraction() const override
   { return m_particleSurfaceTraction; }
 
@@ -284,6 +243,16 @@ public:
    */
   void setParticleSurfaceTraction( array2d< real64 > const particleSurfaceTraction )
   { m_particleSurfaceTraction = particleSurfaceTraction; }
+
+  array1d< localIndex > getParticleCZTag() const override
+  { return m_particleCZTag; }
+
+  /**
+   * @brief Set the list of cohesive zone tags in this subregion.
+   * @param particleCZTag The input list of cohesive zone tags
+   */
+  void setParticleCZTag( array1d< localIndex > const particleCZTag )
+  { m_particleCZTag = particleCZTag; }
 
   localIndex numParticles() const override
   { return size(); }
@@ -342,7 +311,7 @@ private:
   /// Member level field for the particle temperature.
   array1d< real64 > m_particleTemperature;
 
-  /// Member level field for the particle temperature rate.
+  /// Member level field for the particle temperature.
   array1d< real64 > m_particleTemperatureRate;
 
   /// Member level field for the particle strength scale.
@@ -354,11 +323,8 @@ private:
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
 
-  /// Member level field for the particle initial material direction.
-  array2d< real64 > m_particleInitialMaterialDirection;
-
   /// Member level field for the particle material direction.
-  array2d< real64 > m_particleMaterialDirection;
+  array3d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the particle volume.
   array1d< real64 > m_particleVolume;
@@ -372,23 +338,17 @@ private:
   /// R-vectors
   array3d< real64 > m_particleRVectors;
 
-  /// Member level field for the particle initial surface normal.
-  array2d< real64 > m_particleInitialSurfaceNormal;
-
   /// Member level field for the particle surface normal.
   array2d< real64 > m_particleSurfaceNormal;
-
-  /// Member level field for the particle initial surface position.
-  array2d< real64 > m_particleInitialSurfacePosition;
 
   /// Member level field for the particle surface position.
   array2d< real64 > m_particleSurfacePosition;
 
-  /// Member level field for the particle initial surface traction.
-  array2d< real64 > m_particleInitialSurfaceTraction;
-
   /// Member level field for the particle surface traction.
   array2d< real64 > m_particleSurfaceTraction;
+
+  /// Member level field for the particle cohesive zone tag.
+  array1d< localIndex > m_particleCZTag;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

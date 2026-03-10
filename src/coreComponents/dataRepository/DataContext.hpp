@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,9 +21,10 @@
 #define GEOS_DATAREPOSITORY_DATACONTEXT_HPP_
 
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "xmlWrapper.hpp"
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
@@ -47,7 +48,7 @@ public:
    * @brief Construct a new DataContext object.
    * @param targetName the target object name
    */
-  DataContext( string const & targetName );
+  DataContext( string_view targetName );
 
   /**
    * @brief Destroy the DataContext object
@@ -59,6 +60,20 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
+
+  /**
+   * @brief Returns contextual information, including the file name and the line number
+   * @return ErrorLogger::ErrorContext
+   */
+  virtual ErrorLogger::ErrorContext getContextInfo() const = 0;
+
+  /**
+   * @brief Conversion operator to ErrorLogger::ErrorContext
+   * @return ErrorLogger::ErrorContext
+   */
+  explicit operator ErrorLogger::ErrorContext() const {
+    return getContextInfo();
+  }
 
   /**
    * @return Get the target object name
@@ -95,12 +110,12 @@ protected:
      * @param filePath the input file path where the target is declared.
      * @param line the line in the file where the target is declared.
      */
-    ToStringInfo( string const & targetName, string const & filePath, size_t line );
+    ToStringInfo( string_view targetName, string_view filePath, size_t line );
     /**
      * @brief Construct a new ToStringInfo object from a DataContext that has no input file info.
      * @param targetName the target name.
      */
-    ToStringInfo( string const & targetName );
+    ToStringInfo( string_view targetName );
     /**
      * @return true if a location has been found to declare the target in an input file.
      */
@@ -143,9 +158,23 @@ public:
                    xmlWrapper::xmlAttributePos const & attPos );
 
   /**
+   * @brief Constructs the file context of a Group from a C++ source file.
+   * @param targetName The name of the target Group.
+   * @param file The name of the source file.
+   * @param line The line number in the source file.
+   */
+  DataFileContext( string_view targetName, string_view file, size_t line );
+
+  /**
    * @return the target object name followed by the the file and line declaring it.
    */
   string toString() const override;
+
+  /**
+   * @brief Return contextual information (file and line of the input file where the error occured)
+   * @return ErrorLogger::ErrorContext ErrorLogger instance updated with context information
+   */
+  ErrorLogger::ErrorContext getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

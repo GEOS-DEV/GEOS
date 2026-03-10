@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -38,7 +38,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum volume fraction value for each phase" );
+    setDescription( "Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability " );
 
   registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
@@ -63,7 +63,7 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
-    GEOS_THROW_IF_NE_MSG( array.size(), m_phaseNames.size(),
+    GEOS_THROW_IF_NE_MSG( array.size(), LvArray::integerConversion< int >( m_phaseNames.size()),
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
   };

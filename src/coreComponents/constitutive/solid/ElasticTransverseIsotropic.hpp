@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -71,7 +71,7 @@ public:
                                      arrayView2d< real64 > const & density,
                                      arrayView2d< real64 > const & wavespeed,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
                       wavespeed,
@@ -143,10 +143,10 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
-                                             real64 const ( & strainIncrement)[6],
-                                             real64 ( & stress )[6]) const override;
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
+                                             real64 const ( &strainIncrement)[6],
+                                             real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -169,6 +169,16 @@ public:
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override;
 
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( &elasticStrain )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+
   /**
    * @brief Getter for apparent shear modulus.
    * @return reference to shear modulus that will be used for computing stabilization scalling parameter.
@@ -181,6 +191,15 @@ public:
 
 
 protected:
+
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const (&stress)[6],
+                                     real64 ( &elasticStrain )[6] ) const;
+
+
+private:
 
   /// A reference to the ArrayView holding c11 for each element.
   arrayView1d< real64 > const m_c11;
@@ -231,6 +250,57 @@ void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[3][3] = m_c44[k];
   stiffness[4][4] = m_c44[k];
   stiffness[5][5] = m_c66[k];
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::computeElasticStrain( localIndex const k,
+                                                              localIndex const q,
+                                                              real64 const (&stress)[6],
+                                                              real64 ( & elasticStrain)[6] ) const
+{
+  GEOS_UNUSED_VAR( q );
+  real64 const c12 = ( m_c11[k] - 2.0 * m_c66[k] );
+  real64 const detC = m_c11[k]*(m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k]) - c12*(c12*m_c33[k] - m_c13[k]*m_c13[k]) + m_c13[k]*(c12*m_c13[k] - m_c11[k]*m_c13[k]);
+
+  elasticStrain[0] =
+    ( (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[0] + (m_c13[k]*m_c13[k] - c12*m_c33[k])*stress[1] + (c12*m_c13[k] - m_c13[k]*m_c11[k])*stress[2] ) / detC;
+  elasticStrain[1] =
+    ( (m_c13[k]*m_c13[k] - c12*m_c33[k])*stress[0] + (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[1] + (m_c13[k]*c12 - m_c11[k]*m_c13[k])*stress[2] ) / detC;
+  elasticStrain[2] = ( (c12*m_c13[k] - m_c11[k]*m_c13[k])*stress[0] + (c12*m_c13[k] - m_c11[k]*m_c13[k])*stress[1] + (m_c11[k]*m_c11[k] - c12*c12)*stress[2] ) / detC;
+
+  elasticStrain[3] = stress[3] / m_c44[k];
+  elasticStrain[4] = stress[4] / m_c44[k];
+  elasticStrain[5] = stress[5] / m_c66[k];
+}
+
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::getElasticStrain( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 ( & elasticStrain)[6] ) const
+{
+
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrain );
+
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                             localIndex const q,
+                                                             real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
 }
 
 inline
@@ -296,12 +366,12 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const & timeIncrement,
-                                                         real64 const ( & beginningRotation )[3][3],
-                                                         real64 const ( & endRotation )[3][3],
-                                                         real64 const ( & strainIncrement )[6],
-                                                         real64 ( & stress )[6] ) const
+                                                                      localIndex const q,
+                                                                      real64 const & timeIncrement,
+                                                                      real64 const ( &beginningRotation )[3][3],
+                                                                      real64 const ( &endRotation )[3][3],
+                                                                      real64 const ( &strainIncrement )[6],
+                                                                      real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( endRotation );
@@ -309,26 +379,26 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   // Unrotate the material direction first so transforming the stiffness matrix only occurs once
 
   // Get inverse of rotation matrix using transpose
-  real64 beginningRotationTranspose[3][3] = { { 0 } };
+  real64 beginningRotationTranspose[3][3] = { };
   LvArray::tensorOps::transpose< 3, 3 >( beginningRotationTranspose, beginningRotation );
-  
+
   // Normalize the material direction for safety
   real64 materialDirection[3] ={ 0 };
   LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Use beginning rotation to unrotate material direction
-  real64 unrotatedMaterialDirection[3] = { 0 };
+  real64 unrotatedMaterialDirection[3] = { };
   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, beginningRotationTranspose, materialDirection );
 
   // Compute the rotational axis between the z direction of the stiffness tensor and the material direction
-  real64 axis[3] = {0};
+  real64 axis[3] = { };
   axis[2] = 1;
   real64 rotationAxis[3] = { 0 };
   LvArray::tensorOps::crossProduct( rotationAxis, axis, unrotatedMaterialDirection );
 
   // Compute the rotation matrix to transform the stiffness tensor
-  real64 v[3][3] = { { 0 } };
+  real64 v[3][3] = { };
   v[0][1] = -rotationAxis[2];
   v[0][2] = rotationAxis[1];
   v[1][2] = -rotationAxis[0];
@@ -336,34 +406,28 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   v[2][0] = -rotationAxis[1];
   v[2][1] = rotationAxis[0];
 
-  real64 v_copy[3][3] = { { 0 } };
-  v_copy[0][1] = -rotationAxis[2];
-  v_copy[0][2] = rotationAxis[1];
-  v_copy[1][2] = -rotationAxis[0];
-  v_copy[1][0] = rotationAxis[2];
-  v_copy[2][0] = -rotationAxis[1];
-  v_copy[2][1] = rotationAxis[0];
-
   real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
   real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
 
-  real64 R[3][3] = { { 0 } };
-  LvArray::tensorOps::addIdentity< 3 >( R, 1);
-  LvArray::tensorOps::add< 3, 3 >( R, v);
+  real64 R[3][3] = { };
+  LvArray::tensorOps::addIdentity< 3 >( R, 1 );
+  LvArray::tensorOps::add< 3, 3 >( R, v );
 
-  real64 temp[3][3] = { {0} };
+  real64 v_copy[3][3] = { };
+  real64 temp[3][3] = { };
+  LvArray::tensorOps::copy< 3, 3 >( v_copy, v );
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v_copy, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
 
   // Get M to transform stiffness matrix in Voigt notation
-  real64 M[6][6] = { {0} };
+  real64 M[6][6] = { };
   M[0][0] = R[0][0] * R[0][0];
   M[0][1] = R[0][1] * R[0][1];
   M[0][2] = R[0][2] * R[0][2];
   M[0][3] = 2 * R[0][1] * R[0][2];
   M[0][4] = 2 * R[0][0] * R[0][2];
-  M[0][5] = 2 * R[0][0] * R[0][1]; 
+  M[0][5] = 2 * R[0][0] * R[0][1];
 
   M[1][0] = R[1][0] * R[1][0];
   M[1][1] = R[1][1] * R[1][1];
@@ -408,7 +472,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   real64 const c66 = m_c66[k];
   real64 const c12 = ( c11 - 2.0 * c66 );
 
-  real64 stiffnessMatrix[6][6] = { { 0 } };
+  real64 stiffnessMatrix[6][6] = { };
   stiffnessMatrix[0][0] = c11;
   stiffnessMatrix[0][1] = c12;
   stiffnessMatrix[0][2] = c13;
@@ -425,14 +489,14 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   stiffnessMatrix[4][4] = c44;
   stiffnessMatrix[5][5] = c66;
 
-  real64 temp2[6][6] = { { 0 } };
+  real64 temp2[6][6] = { };
   LvArray::tensorOps::Rij_eq_AikBkj< 6, 6, 6 >( temp2, M, stiffnessMatrix ); // M * S
-  real64 rotatedStiffnessMatrix[6][6] = { { 0 } };
+  real64 rotatedStiffnessMatrix[6][6] = { };
   LvArray::tensorOps::Rij_eq_AikBjk< 6, 6, 6 >( rotatedStiffnessMatrix, temp2, M ); // ( M * S ) * M^T
 
   LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( stress, rotatedStiffnessMatrix, strainIncrement );
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );
-  saveStress( k, q, stress );  
+  saveStress( k, q, stress );
 
   // GEOS_UNUSED_VAR( beginningRotation );
   // GEOS_UNUSED_VAR( endRotation );
@@ -505,13 +569,10 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticTransverseIsotropic";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ElasticTransverseIsotropic"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
   ///@}
@@ -551,25 +612,10 @@ public:
     /// string/key for default c66 component of Voigt stiffness tensor
     static constexpr char const * defaultC66String() { return "defaultC66"; };
 
-    /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr char const * c11String() { return "c11"; }
-
-    /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr char const * c13String() { return "c13"; }
-
-    /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr char const * c33String() { return "c33"; }
-
-    /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr char const * c44String() { return "c44"; }
-
-    /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr char const * c66String() { return "c66"; }
-
-    /// string/key for effective bulk modulus 
+    /// string/key for effective bulk modulus
     static constexpr char const * effectiveBulkModulusString() { return "effectiveBulkModulus"; }
 
-    /// string/key for effective shear modulus 
+    /// string/key for effective shear modulus
     static constexpr char const * effectiveShearModulusString() { return "effectiveShearModulus"; }
 
     /// string/key for material direction value
@@ -741,7 +787,7 @@ public:
    */
   arrayView1d< real64 const > const effectiveBulkModulus() const { return m_effectiveBulkModulus; }
 
- /**
+  /**
    * @brief Accessor for effective bulk modulus
    * @return A const reference to arrayView1d<real64> containing the effective bulk
    *         modulus (at every element).
@@ -763,9 +809,9 @@ public:
   arrayView1d< real64 const > getEffectiveBulkModulus() const { return m_effectiveBulkModulus; }
 
   /**
-  * @brief Getter for effective shear modulus.
-  * @return reference to mutable effective shear modulus.
-  */
+   * @brief Getter for effective shear modulus.
+   * @return reference to mutable effective shear modulus.
+   */
   GEOS_HOST_DEVICE
   arrayView1d< real64 const > getEffectiveShearModulus() const { return m_effectiveShearModulus; }
 
@@ -865,7 +911,7 @@ protected:
 
   /// The effective shear modulus
   array1d< real64 > m_effectiveShearModulus;
-  
+
   /// State variable: The material direction for each element/particle
   array2d< real64 > m_materialDirection;
 };

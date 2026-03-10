@@ -19,10 +19,10 @@
 #include "ParticleBlockManager.hpp"
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
-template<typename Enum>
+template< typename Enum >
 constexpr auto EnumSize = static_cast< int >(Enum::Count);
 
 namespace geos
@@ -62,6 +62,7 @@ public:
     Temperature,
     TemperatureRate,
     StrengthScale,
+    CZTag,
     RVectorXX,
     RVectorXY,
     RVectorXZ,
@@ -71,9 +72,15 @@ public:
     RVectorZX,
     RVectorZY,
     RVectorZZ,
-    MaterialDirectionX,
-    MaterialDirectionY,
-    MaterialDirectionZ,
+    MaterialDirectionXX,
+    MaterialDirectionXY,
+    MaterialDirectionXZ,
+    MaterialDirectionYX,
+    MaterialDirectionYY,
+    MaterialDirectionYZ,
+    MaterialDirectionZX,
+    MaterialDirectionZY,
+    MaterialDirectionZZ,
     SurfaceNormalX,
     SurfaceNormalY,
     SurfaceNormalZ,
@@ -133,13 +140,13 @@ private:
   // Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
-  array1d< string > m_blockNames;
+  string_array m_blockNames;
 
   /// String array of particle material names associated with the particle mesh
-  array1d< string > m_materialNames;
+  string_array m_materialNames;
 
   /// String array listing the particle types present
-  array1d< string > m_particleTypes;
+  string_array m_particleTypes;
 };
 
 ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
@@ -159,6 +166,7 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "Temperature",
               "TemperatureRate",
               "StrengthScale",
+              "CZTag",
               "RVectorXX",
               "RVectorXY",
               "RVectorXZ",
@@ -168,9 +176,15 @@ ENUM_STRINGS( ParticleMeshGenerator::ParticleColumnHeaders,
               "RVectorZX",
               "RVectorZY",
               "RVectorZZ",
-              "MaterialDirectionX",
-              "MaterialDirectionY",
-              "MaterialDirectionZ",
+              "MaterialDirectionXX",
+              "MaterialDirectionXY",
+              "MaterialDirectionXZ",
+              "MaterialDirectionYX",
+              "MaterialDirectionYY",
+              "MaterialDirectionYZ",
+              "MaterialDirectionZX",
+              "MaterialDirectionZY",
+              "MaterialDirectionZZ",
               "SurfaceNormalX",
               "SurfaceNormalY",
               "SurfaceNormalZ",

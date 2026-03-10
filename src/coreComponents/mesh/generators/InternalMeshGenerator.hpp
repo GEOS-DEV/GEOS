@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,9 +20,10 @@
 #ifndef GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 #define GEOS_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
@@ -78,7 +79,7 @@ public:
    * @param partition The partitioning object
    * @param numNodes The number of nodes in each coordinate direction.
    */
-  virtual void reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
+  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                   integer (& numNodes) [3] )
   {
     GEOS_UNUSED_VAR( partition, numNodes );
@@ -90,9 +91,10 @@ public:
    * @param index The indices to be evaluated for periodic indexing merging.
    */
   virtual void
-  setNodeGlobalIndicesOnPeriodicBoundary( int (& index)[3] )
+  setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                          int (& index)[3] )
   {
-    GEOS_UNUSED_VAR( index );
+    GEOS_UNUSED_VAR( partition, index );
   }
 
   /**
@@ -129,7 +131,7 @@ public:
    * @param[in,out] X The nodes coordinates.
    * @param[in,out] nodeSets The name to node sets mapping.
    */
-  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+  virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
   {
     GEOS_UNUSED_VAR( X );
     GEOS_UNUSED_VAR( nodeSets );
@@ -190,7 +192,7 @@ protected:
 private:
 
   /// String array of region names
-  array1d< string > m_regionNames;
+  string_array m_regionNames;
 
   /// Ndim x nBlock spatialized array of first element index in the cellBlock
   array1d< integer > m_firstElemIndexForBlock[3];
@@ -202,7 +204,7 @@ private:
   globalIndex m_numElemsTotal[3];
 
   /// String array listing the element type present
-  array1d< string > m_elementType;
+  string_array m_elementType;
 
   /// Array of number of element per box
   array1d< integer > m_numElePerBox;
@@ -261,7 +263,7 @@ private:
   /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.
@@ -321,7 +323,7 @@ private:
         int startingIndex = 0;
         int endingIndex = 0;
         int block = 0;
-        for( block=0; block<m_nElems[i].size(); ++block )
+        for( block=0; block < m_nElems[i].size(); ++block )
         {
           startingIndex = endingIndex;
           endingIndex = startingIndex + m_nElems[i][block];
@@ -343,11 +345,14 @@ private:
           // Verify that the bias is non-zero and applied to more than one block:
           if( ( !isZero( m_nElemBias[i][block] ) ) && (m_nElems[i][block]>1))
           {
+            dataRepository::DataContext const & wrapperContext =
+              getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
+                                     i == 1 ? viewKeyStruct::yBiasString() :
+                                     viewKeyStruct::zBiasString() );
             GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
-                           getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
-                                                  i == 1 ? viewKeyStruct::yBiasString() :
-                                                  viewKeyStruct::zBiasString() ) <<
-                           ", block index = " << block << " : Mesh bias must between -1 and 1!" );
+                           wrapperContext <<
+                           ", block index = " << block << " : Mesh bias must between -1 and 1!",
+                           wrapperContext );
 
             real64 len = max -  min;
             real64 xmean = len / m_nElems[i][block];
@@ -380,6 +385,10 @@ private:
       X[i] = m_min[i] + (m_max[i]-m_min[i]) * ( ( k[i] + 0.5 ) / m_numElemsTotal[i] );
     }
   }
+
+public:
+
+
 };
 
 } /* namespace geos */

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -25,11 +25,9 @@
 #include "DamageSpectralUtilities.hpp"
 #include "PropertyConversions.hpp"
 #include "SolidBase.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 
 #define QUADRATIC_DISSIPATION 0
-
-using namespace LvArray;
 
 namespace geos
 {
@@ -41,25 +39,29 @@ class DamageSpectralUpdates : public DamageUpdates< UPDATE_BASE >
 {
 public:
   template< typename ... PARAMS >
-  DamageSpectralUpdates( arrayView2d< real64 > const & inputDamage,
+  DamageSpectralUpdates( arrayView2d< real64 > const & inputNewDamage,
+                         arrayView2d< real64 > const & inputOldDamage,
+                         arrayView3d< real64 > const & inputDamageGrad,
                          arrayView2d< real64 > const & inputStrainEnergyDensity,
+                         arrayView2d< real64 > const & inputVolumetricStrain,
                          arrayView2d< real64 > const & inputExtDrivingForce,
                          real64 const & inputLengthScale,
-                         real64 const & inputCriticalFractureEnergy,
+                         arrayView1d< real64 > const & inputCriticalFractureEnergy,
                          real64 const & inputcriticalStrainEnergy,
                          real64 const & inputDegradationLowerLimit,
                          int const & inputExtDrivingForceFlag,
-                         real64 const & inputTensileStrength,
-                         real64 const & inputCompressStrength,
-                         real64 const & inputDeltaCoefficient,
+                         arrayView1d< real64 > const & inputTensileStrength,
+                         arrayView1d< real64 > const & inputCompressiveStrength,
+                         arrayView1d< real64 > const & inputDeltaCoefficient,
+                         arrayView1d< real64 > const & inputBiotCoefficient,
                          PARAMS && ... baseParams ):
-    DamageUpdates< UPDATE_BASE >( inputDamage, inputStrainEnergyDensity, inputExtDrivingForce, inputLengthScale,
+    DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient,
+                                  inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
@@ -70,15 +72,19 @@ public:
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
+  using DamageUpdates< UPDATE_BASE >::m_volStrain;
   using DamageUpdates< UPDATE_BASE >::m_criticalStrainEnergy;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForce;
   using DamageUpdates< UPDATE_BASE >::m_criticalFractureEnergy;
   using DamageUpdates< UPDATE_BASE >::m_lengthScale;
-  using DamageUpdates< UPDATE_BASE >::m_damage;
+  using DamageUpdates< UPDATE_BASE >::m_newDamage;
+  using DamageUpdates< UPDATE_BASE >::m_oldDamage;
+  using DamageUpdates< UPDATE_BASE >::m_damageGrad;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
-  using DamageUpdates< UPDATE_BASE >::m_compressStrength;
+  using DamageUpdates< UPDATE_BASE >::m_compressiveStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
+  using DamageUpdates< UPDATE_BASE >::m_biotCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
 
 
@@ -93,23 +99,23 @@ public:
                                       localIndex const q ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
     #endif
     real64 p = 1;
-    return pow( 1 - m_damage( k, q ), 2 ) /( pow( 1 - m_damage( k, q ), 2 ) + m * m_damage( k, q ) * (1 + p*m_damage( k, q )) );
+    return pow( 1 - m_newDamage( k, q ), 2 ) /( pow( 1 - m_newDamage( k, q ), 2 ) + m * m_newDamage( k, q ) * (1 + p*m_newDamage( k, q )) );
   }
 
 
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationDerivative( real64 const d ) const override
+  virtual real64 getDegradationDerivative( localIndex const k, real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
     #endif
     real64 p = 1;
     return -m*(1 - d)*(1 + (2*p + 1)*d) / pow( pow( 1-d, 2 ) + m*d*(1+p*d), 2 );
@@ -118,12 +124,12 @@ public:
 
   inline
   GEOS_HOST_DEVICE
-  virtual real64 getDegradationSecondDerivative( real64 const d ) const override
+  virtual real64 getDegradationSecondDerivative( localIndex const k, real64 const d ) const override
   {
     #if QUADRATIC_DISSIPATION
-    real64 m = m_criticalFractureEnergy/(2*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = m_criticalFractureEnergy[k]/(2*m_lengthScale*m_criticalStrainEnergy);
     #else
-    real64 m = 3*m_criticalFractureEnergy/(8*m_lengthScale*m_criticalStrainEnergy);
+    real64 m = 3*m_criticalFractureEnergy[k]/(8*m_lengthScale*m_criticalStrainEnergy);
     #endif
     real64 p = 1;
     return -2*m*( pow( d, 3 )*(2*m*p*p + m*p + 2*p + 1) + pow( d, 2 )*(-3*m*p*p -3*p) + d*(-3*m*p - 3) + (-m+p+2) )/pow( pow( 1-d, 2 ) + m*d*(1+p*d), 3 );
@@ -176,8 +182,8 @@ public:
 
     // get trace+ and trace-
 
-    real64 tracePlus = fmax( traceOfStrain, 0.0 );
-    real64 traceMinus = fmin( traceOfStrain, 0.0 );
+    real64 tracePlus = LvArray::math::max( traceOfStrain, 0.0 );
+    real64 traceMinus = LvArray::math::min( traceOfStrain, 0.0 );
 
     // build symmetric matrices of positive and negative eigenvalues
 
@@ -188,8 +194,8 @@ public:
     for( int i = 0; i < 3; i++ )
     {
       Itensor[i] = 1;
-      eigenPlus[i] = fmax( eigenValues[i], 0.0 );
-      eigenMinus[i] = fmin( eigenValues[i], 0.0 );
+      eigenPlus[i] = LvArray::math::max( eigenValues[i], 0.0 );
+      eigenMinus[i] = LvArray::math::min( eigenValues[i], 0.0 );
     }
 
     real64 positivePartOfStrain[6] = {};
@@ -291,8 +297,11 @@ public:
 
   using KernelWrapper = DamageSpectralUpdates< typename BASE::KernelWrapper >;
 
-  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_newDamage;
+  using Damage< BASE >::m_oldDamage;
+  using Damage< BASE >::m_damageGrad;
   using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_volStrain;
   using Damage< BASE >::m_extDrivingForce;
   using Damage< BASE >::m_criticalFractureEnergy;
   using Damage< BASE >::m_lengthScale;
@@ -300,30 +309,34 @@ public:
   using Damage< BASE >::m_degradationLowerLimit;
   using Damage< BASE >::m_extDrivingForceFlag;
   using Damage< BASE >::m_tensileStrength;
-  using Damage< BASE >::m_compressStrength;
+  using Damage< BASE >::m_compressiveStrength;
   using Damage< BASE >::m_deltaCoefficient;
+  using Damage< BASE >::m_biotCoefficient;
 
   DamageSpectral( string const & name, dataRepository::Group * const parent );
-  virtual ~DamageSpectral() override;
 
 
-  static string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageSpectral" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
 
   KernelWrapper createKernelUpdates() const
   {
-    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
+    return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_newDamage.toView(),
+                                                                       m_oldDamage.toView(),
+                                                                       m_damageGrad.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_volStrain.toView(),
                                                                        m_extDrivingForce.toView(),
                                                                        m_lengthScale,
-                                                                       m_criticalFractureEnergy,
+                                                                       m_criticalFractureEnergy.toView(),
                                                                        m_criticalStrainEnergy,
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
-                                                                       m_tensileStrength,
-                                                                       m_compressStrength,
-                                                                       m_deltaCoefficient );
+                                                                       m_tensileStrength.toView(),
+                                                                       m_compressiveStrength.toView(),
+                                                                       m_deltaCoefficient.toView(),
+                                                                       m_biotCoefficient.toView() );
   }
 
 };

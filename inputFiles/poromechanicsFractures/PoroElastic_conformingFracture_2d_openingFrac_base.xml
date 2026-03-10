@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA_stab"/>  
     </FiniteVolume>
     <FiniteElements>
       <FiniteElementSpace
@@ -18,13 +17,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ porousRock, water }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="FractureSubRegion"
-      materialList="{ water, fractureFilling, fractureContact }"
+      materialList="{ water, fractureFilling, frictionLaw, hApertureModel }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -78,10 +77,13 @@
       name="fracturePerm"/>
 
     <Coulomb
-      name="fractureContact"
+      name="frictionLaw"
       cohesion="0.0"
-      frictionCoefficient="0.577350269"
-      apertureTableName="apertureTable"/>
+      frictionCoefficient="0.577350269"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>    
   </Constitutive>
 
   <Functions>

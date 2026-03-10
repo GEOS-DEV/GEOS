@@ -1,0 +1,116 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 3 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 4 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="1.0e-3">
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0e-3"
+      target="/Solvers/lagsolve"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- ElementRegion name="Region1" cellBlocks="cb1"     numericalMethod="FE1" material="granite"/-->
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ * }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="4.16667e9"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="v0"
+      component="0"
+      fieldName="velocity"
+      functionName="timeFunction"
+      objectPath="nodeManager"
+      scale="1.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="velocity"
+      component="0"
+      scale="0.0"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="velocity"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="velocity"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0e-6, 2.0e-6, 1.0e9 }"
+      values="{ 0.0, 1.0, 1.0, 1.0 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      childDirectory="sub"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="perf"
+      xMin="{ 0, 0, 0 }"
+      xMax="{ 1, 1, 1 }"/>
+  </Geometry>
+</Problem>

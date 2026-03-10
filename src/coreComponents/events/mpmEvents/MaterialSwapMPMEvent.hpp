@@ -33,8 +33,8 @@ class MaterialSwapMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  MaterialSwapMPMEvent(  const string & name,
-                         Group * const parent );
+  MaterialSwapMPMEvent( const string & name,
+                        Group * const parent );
 
   /// Destructor
   virtual ~MaterialSwapMPMEvent() override;
@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "MaterialSwap"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * sourceRegionString() { return "sourceRegion"; }

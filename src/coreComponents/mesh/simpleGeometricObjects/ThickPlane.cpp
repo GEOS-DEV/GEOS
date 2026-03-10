@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -43,19 +43,20 @@ ThickPlane::ThickPlane( const string & name, Group * const parent ):
     setDescription( "The total thickness of the plane (with half to each side)" );
 }
 
-ThickPlane::~ThickPlane()
-{}
-
 
 void ThickPlane::postInputInitialization()
 {
+  SimpleGeometricObjectBase::postInputInitialization();
+
   m_thickness *= 0.5; // actually store the half-thickness
   GEOS_ERROR_IF( m_thickness <= 0,
-                 getDataContext() << ": The plane appears to have zero or negative thickness" );
+                 getDataContext() << ": The plane appears to have zero or negative thickness",
+                 getDataContext() );
 
   LvArray::tensorOps::normalize< 3 >( m_normal );
   GEOS_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
-                 getDataContext() << ": Could not properly normalize input normal." );
+                 getDataContext() << ": Could not properly normalize input normal.",
+                 getDataContext() );
 }
 
 
@@ -67,7 +68,7 @@ bool ThickPlane::isCoordInObject( real64 const ( &coord ) [3] ) const
     normalDistance += m_normal[i]*(coord[i]-m_origin[i]);
   }
 
-  return std::fabs( normalDistance ) <= m_thickness;
+  return std::fabs( normalDistance ) <= m_thickness + m_epsilon;
 }
 
 REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, ThickPlane, string const &, Group * const )

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
-
+#include "common/Timer.hpp"
 
 namespace geos
 {
@@ -50,7 +50,7 @@ public:
    * @brief Getter for the output directory
    * @return The output directory
    **/
-  static string getOutputDirectory() {return m_outputDirectory;}
+  static string const & getOutputDirectory();
 
   /**
    * @brief Setter for the file name root
@@ -62,7 +62,7 @@ public:
    * @brief Getter for the file name root
    * @return The file name root
    **/
-  static string getFileNameRoot() { return m_fileNameRoot; }
+  static string const & getFileNameRoot();
 
   /// Method for setting up output directories.
   virtual void setupDirectoryStructure();
@@ -76,7 +76,6 @@ public:
   struct viewKeysStruct
   {
     static constexpr auto childDirectoryString = "childDirectory";
-    static constexpr auto parallelThreadsString = "parallelThreads";
   } outputBaseViewKeys;
   /// @endcond
 
@@ -86,12 +85,6 @@ public:
    **/
   string childDirectory() const { return m_childDirectory; }
 
-  /**
-   * @brief Get the number of parallel threads to use to write plotfiles
-   * @return The number of threads
-   **/
-  integer parallelThreads() const { return m_parallelThreads; }
-
 protected:
   /**
    * @brief Do initialization prior to calling initialization operations
@@ -100,12 +93,18 @@ protected:
    **/
   virtual void initializePreSubGroups() override;
 
+  /// Timer used to track duration of file writing operations for this specific output type
+  std::chrono::system_clock::duration m_outputTimer;
+
+  /// @copydoc geos::ExecutableGroup::cleanup
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
+
 private:
   string m_childDirectory;
-  integer m_parallelThreads;
-
-  static string m_outputDirectory;
-  static string m_fileNameRoot;
 
 };
 

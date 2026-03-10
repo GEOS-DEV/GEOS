@@ -5,6 +5,8 @@ import h5py
 import xml.etree.ElementTree as ElementTree
 import math
 from math import sin, cos, tan, exp, atan, asin
+import os
+import argparse
 
 
 class Analytical:
@@ -112,40 +114,49 @@ def dispRotation(disp, phi_x):
 
 
 def main():
+
+   # Initialize the argument parser
+    parser = argparse.ArgumentParser(description="Script to generate figure from tutorial.")
+
+    # Add arguments to accept individual file paths
+    parser.add_argument('--geosDir', help='Path to the GEOS repository ', default='../../../../../../..')
+    parser.add_argument('--outputDir', help='Path to output directory', default='.')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
     # Load and process GEOSX results
     # File path
-    hdf5File1Path = "stress_history.hdf5"
-    hdf5File2Path = "displacement_history.hdf5"
-    xmlFile1Path = "../../../../../../../inputFiles/solidMechanics/KirschProblem_base.xml"
-    xmlFile2Path = "../../../../../../../inputFiles/solidMechanics/KirschProblem_benchmark.xml"
+    outputDir = args.outputDir
+    geosDir = args.geosDir
+    hdf5File1Path = outputDir + "/stress_history.hdf5"
+    hdf5File2Path = outputDir + "/displacement_history.hdf5"
+    xmlFile1Path = geosDir + "/inputFiles/solidMechanics/KirschProblem_base.xml"
+    xmlFile2Path = geosDir + "/inputFiles/solidMechanics/KirschProblem_benchmark.xml"
 
     # Read HDF5
     # Global Coordinate of Element Center
     hf = h5py.File(hdf5File1Path, 'r')
-    xl_elm = hf.get('rock_stress elementCenter')
-    xl_elm = np.array(xl_elm)
+    xl_elm = hf.get('averageStress elementCenter')
+    xl_elm = np.asarray(xl_elm)
     xcord_elm = xl_elm[0, :, 0]
     ycord_elm = xl_elm[0, :, 1]
     zcord_elm = xl_elm[0, :, 2]
     # Load Stress Components
-    sigma = hf.get('rock_stress')
-    sigma = np.array(sigma)
-    sigma_Cart = np.zeros([len(sigma[0, :, 0]), 6])
-    for i in range(0, len(sigma[0, :, 0])):
-        for j in range(0, 6):
-            for k in range(0, 8):
-                sigma_Cart[i, j] += sigma[0, i, j + 6 * k] / 8.
+    sigma = hf.get('averageStress')
+    sigma = np.asarray(sigma)
+    sigma_Cart = sigma[0, :, :]
 
     # Global Coordinate of Nodal Point
     hf = h5py.File(hdf5File2Path, 'r')
     xl_node = hf.get('totalDisplacement ReferencePosition')
-    xl_node = np.array(xl_node)
+    xl_node = np.asarray(xl_node)
     xcord_node = xl_node[0, :, 0]
     ycord_node = xl_node[0, :, 1]
     zcord_node = xl_node[0, :, 2]
     # Load Displacement Components
     disp_load = hf.get('totalDisplacement')
-    disp_load = np.array(disp_load)
+    disp_load = np.asarray(disp_load)
     disp_Cart = disp_load[0, :, :]
 
     # Extract Mechanical Properties and Fracture Geometry from XML
@@ -233,7 +244,7 @@ def main():
                    markersize=msize,
                    alpha=malpha,
                    label=u"\u03C3"
-                   r'$_{rr}$ - GEOSX')
+                   r'$_{rr}$ - GEOS')
     ax[0].semilogx(x_analytical,
                    -s00_analytical,
                    lw=lw,
@@ -248,7 +259,7 @@ def main():
                    markersize=msize,
                    alpha=malpha,
                    label=u"\u03C3"
-                   r'$_{\theta\theta}$ - GEOSX')
+                   r'$_{\theta\theta}$ - GEOS')
     ax[0].semilogx(x_analytical,
                    -sr0_analytical,
                    lw=lw,
@@ -274,9 +285,9 @@ def main():
     ax[0].yaxis.set_tick_params(labelsize=fsize)
 
     ax[1].semilogx(x_analytical, ur_analytical, lw=lw, alpha=0.5, color=cmap(0), label=r'u$_{r}$ - Analytical')
-    ax[1].semilogx(rlist_node, u_r, 'o', color=cmap(0), markersize=msize, alpha=malpha, label=r'u$_{r}$ - GEOSX')
+    ax[1].semilogx(rlist_node, u_r, 'o', color=cmap(0), markersize=msize, alpha=malpha, label=r'u$_{r}$ - GEOS')
     ax[1].semilogx(x_analytical, u0_analytical, lw=lw, alpha=0.5, color=cmap(1), label=r'u$_{\theta}$ - Analytical')
-    ax[1].semilogx(rlist_node, u_t, 'o', color=cmap(1), markersize=msize, alpha=malpha, label=r'u$_{\theta}$ - GEOSX')
+    ax[1].semilogx(rlist_node, u_t, 'o', color=cmap(1), markersize=msize, alpha=malpha, label=r'u$_{\theta}$ - GEOS')
     ax[1].set_xlim(rw, rout)
     ax[1].set_xlabel(r'r (m)', size=fsize, weight="bold")
     ax[1].set_ylabel(r'Displacement (mm)', size=fsize, weight="bold")

@@ -19,16 +19,14 @@
         newtonTol="1e-3"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="direct"
-        krylovTol="1e-6"
-        preconditionerType="mgr"/>        
+        solverType="direct"/>        
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Domain, Fracture }"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"/>
+      discretization="FE1"
+      contactPenaltyStiffness="1e12"/>
 
     <SinglePhaseFVM
       name="flowSolver"

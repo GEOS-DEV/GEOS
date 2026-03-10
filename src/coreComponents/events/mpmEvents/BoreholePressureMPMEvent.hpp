@@ -34,7 +34,7 @@ class BoreholePressureMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   BoreholePressureMPMEvent( const string & name,
-                  Group * const parent );
+                            Group * const parent );
 
   /// Destructor
   virtual ~BoreholePressureMPMEvent() override;
@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "BoreholePressure"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * boreholeRadiusString() { return "boreholeRadius"; }
@@ -55,10 +57,10 @@ public:
   } BoreholePressureMPMEventViewKeys;
   /// @endcond
 
-  real64 getBoreholeRadius() const { return m_boreholeRadius; } 
-  real64 getStartPressure() const { return m_startPressure; } 
-  real64 getEndPressure() const { return m_endPressure; } 
-  int getInterpType() const { return m_interpType; } 
+  real64 getBoreholeRadius() const { return m_boreholeRadius; }
+  real64 getStartPressure() const { return m_startPressure; }
+  real64 getEndPressure() const { return m_endPressure; }
+  int getInterpType() const { return m_interpType; }
 
 protected:
   virtual void postInputInitialization() override final;

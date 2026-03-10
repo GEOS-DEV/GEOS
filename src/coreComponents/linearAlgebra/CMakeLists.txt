@@ -1,4 +1,29 @@
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#
+#--------------------------------------------------------------------------------------------------
+
+#[[
+Package: linearAlgebra
+
+Contains:
+ - management implementations to handle all degrees of freedom associated with field element on
+    mesh elements.
+ - linear solvers implementations.
+ - interfaces to different external linear solvers libraries (hypre, Petsc, trilinos).
+#]]
+
+#
 # Specify all headers
+#
 set( linearAlgebra_headers
      DofManager.hpp
      DofManagerHelpers.hpp
@@ -10,6 +35,22 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
+     multiscale/LevelBuilderBase.hpp
+     multiscale/MultiscalePreconditioner.hpp
+     multiscale/mesh/DofManager.hpp
+     multiscale/mesh/MeshData.hpp
+     multiscale/mesh/MeshLevel.hpp
+     multiscale/mesh/MeshObjectManager.hpp
+     multiscale/mesh/MeshUtils.hpp
+     multiscale/mesh/coarsening/CartesianPartitioner.hpp
+     multiscale/mesh/coarsening/Coarsening.hpp
+     multiscale/mesh/coarsening/GraphPartitioner.hpp
+     multiscale/mesh/coarsening/PartitionerBase.hpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.hpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.hpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
+     multiscale/msrsb/MsrsbLevelBuilder.hpp
+     multiscale/msrsb/MsrsbUtils.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -19,6 +60,8 @@ set( linearAlgebra_headers
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
+     solvers/PreconditionerNull.hpp
+     solvers/RichardsonSolver.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -35,28 +78,46 @@ set( linearAlgebra_headers
      utilities/NormalOperator.hpp
      utilities/ReverseCutHillMcKeeOrdering.hpp
      utilities/TransposeOperator.hpp )
-
+#
 # Specify all sources
+#
 set( linearAlgebra_sources
      DofManager.cpp
+     multiscale/LevelBuilderBase.cpp
+     multiscale/MultiscalePreconditioner.cpp
+     multiscale/mesh/DofManager.cpp
+     multiscale/mesh/MeshLevel.cpp
+     multiscale/mesh/MeshObjectManager.cpp
+     multiscale/mesh/MeshUtils.cpp
+     multiscale/mesh/coarsening/CartesianPartitioner.cpp
+     multiscale/mesh/coarsening/Coarsening.cpp
+     multiscale/mesh/coarsening/GraphPartitioner.cpp
+     multiscale/mesh/coarsening/PartitionerBase.cpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.cpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.cpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
+     multiscale/msrsb/MsrsbLevelBuilder.cpp
+     multiscale/msrsb/MsrsbUtils.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
-set( dependencyList ${parallelDeps} mesh denseLinearAlgebra )
+set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
+set( tplDependencyList "" )
 
 list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
 list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
-list( APPEND dependencyList suitesparse )
+list( APPEND tplDependencyList suitesparse )
 
 if( ENABLE_SUPERLU_DIST )
       list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )
       list( APPEND linearAlgebra_sources interfaces/direct/SuperLUDist.cpp )
-      list( APPEND dependencyList superlu_dist )
+      list( APPEND tplDependencyList superlu_dist )
 endif( )
 
 if( ENABLE_TRILINOS )
@@ -78,7 +139,7 @@ if( ENABLE_TRILINOS )
           interfaces/trilinos/TrilinosPreconditioner.cpp
           interfaces/trilinos/TrilinosSolver.cpp )
 
-    list( APPEND dependencyList trilinos )
+    list( APPEND tplDependencyList trilinos )
 
 endif()
 
@@ -100,7 +161,10 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/CompositionalMultiphaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/Hydrofracture.hpp
+          interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp
+          interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp
+          interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
@@ -109,6 +173,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/SinglePhaseReservoirHybridFVM.hpp
           interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
+          interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
           interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp )
     list( APPEND linearAlgebra_sources
@@ -122,7 +187,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreUtils.cpp
           interfaces/hypre/HypreVector.cpp )
 
-    list( APPEND dependencyList hypre umpire )
+    list( APPEND tplDependencyList hypre umpire )
 
 endif()
 
@@ -145,21 +210,41 @@ if( ENABLE_PETSC )
           interfaces/petsc/PetscSolver.cpp
           interfaces/petsc/PetscVector.cpp )
 
-    list( APPEND dependencyList petsc )
+    list( APPEND tplDependencyList petsc )
 
 endif()
+
+# Optionally depend on METIS for multiscale coarsening
+if( ENABLE_METIS )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/MetisInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/MetisInterface.cpp )
+    list( APPEND tplDependencyList metis )
+endif()
+
+# Optionally depend on SCOTCH for multiscale coarsening
+if( ENABLE_SCOTCH )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/ScotchInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/ScotchInterface.cpp )
+    list( APPEND tplDependencyList SCOTCH::scotch SCOTCH::scotcherr )
+endif()
+
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       linearAlgebra
                  SOURCES    ${linearAlgebra_sources}
                  HEADERS    ${linearAlgebra_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies} ${tplDependencyList}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
+install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( utilities/unitTests )
 endif( )
 

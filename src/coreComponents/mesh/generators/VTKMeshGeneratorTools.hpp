@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,8 @@
 #ifndef GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 #define GEOS_VTK_MESH_GENERATORS_VTKMESHGENERATORTOOLS_HPP_
 
+#include "common/StdContainerWrappers.hpp"
+
 #include <vtkPartitionedDataSet.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -27,7 +29,7 @@
 #include <mpi.h>
 
 // NOTE: do NOT include anything from GEOS here.
-// In particular, nothing that directly or transitively includes "common/Format.hpp".
+// In particular, nothing that directly or transitively includes "common/format/Format.hpp".
 // The reason is "diy2" library includes an older version of {fmt} than the one used by GEOS.
 // Collision of includes leads to all kinds of impossible to fix compilation errors.
 // Thankfully, no link errors, owing to namespace versioning employed by {fmt}.
@@ -55,7 +57,7 @@ redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm );
  * @param mpiComm the MPI communicator
  * @return a vector of bounding boxes, one per rank in @p mpiComm
  */
-std::vector< vtkBoundingBox >
+stdVector< vtkBoundingBox >
 exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm );
 
 } // namespace geos::vtk

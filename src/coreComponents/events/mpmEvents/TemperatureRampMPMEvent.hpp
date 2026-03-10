@@ -34,7 +34,7 @@ class TemperatureRampMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   TemperatureRampMPMEvent( const string & name,
-                  Group * const parent );
+                           Group * const parent );
 
   /// Destructor
   virtual ~TemperatureRampMPMEvent() override;
@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "TemperatureRamp"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * startTemperatureString() { return "startTemperature"; }
@@ -54,9 +56,9 @@ public:
   } TemperatureRampMPMEventViewKeys;
   /// @endcond
 
-  real64 getStartTemperature() const { return m_startTemperature; } 
-  real64 getEndTemperature() const { return m_endTemperature; } 
-  int getInterpType() const { return m_interpType; } 
+  real64 getStartTemperature() const { return m_startTemperature; }
+  real64 getEndTemperature() const { return m_endTemperature; }
+  int getInterpType() const { return m_interpType; }
 
 protected:
   virtual void postInputInitialization() override final;

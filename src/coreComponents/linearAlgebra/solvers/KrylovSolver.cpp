@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 #include "linearAlgebra/solvers/BicgstabSolver.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
 #include "linearAlgebra/solvers/GmresSolver.hpp"
+#include "linearAlgebra/solvers/RichardsonSolver.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
 namespace geos
@@ -68,6 +69,12 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
                                                         matrix,
                                                         precond );
     }
+    case LinearSolverParameters::SolverType::richardson:
+    {
+      return std::make_unique< RichardsonSolver< Vector > >( parameters,
+                                                             matrix,
+                                                             precond );
+    }
     default:
     {
       GEOS_ERROR( "Unsupported linear solver type: " << parameters.solverType );
@@ -82,8 +89,18 @@ void KrylovSolver< VECTOR >::logProgress() const
   GEOS_ASSERT( !m_residualNorms.empty() );
   if( m_params.logLevel >= 2 )
   {
-    real64 const relNorm = m_residualNorms[0] > 0.0 ? m_residualNorms.back() / m_residualNorms[0] : 0.0;
-    GEOS_LOG_RANK_0( GEOS_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
+    constexpr char const * headFormat = "{:>4}   {:>12}   {:>9}   {:>12}";
+    constexpr char const * lineFormat = "{:>4}   {:>12.6e}   {:>9.6f}   {:>12.6e}";
+    integer const iter = m_result.numIterations;
+    if( iter == 0 )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "[{}] start iteration", methodName() ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( headFormat, "iter", "resid.norm", "conv.rate", "rel.res.norm" ) );
+    }
+    real64 const norm = m_residualNorms[iter];
+    real64 const relNorm = m_residualNorms[0] > 0.0 ? norm / m_residualNorms[0] : 0.0;
+    real64 const convRate = iter > 0 ? norm / m_residualNorms[iter - 1] : 1.0;
+    GEOS_LOG_RANK_0( GEOS_FMT( lineFormat, iter, norm, convRate, relNorm ) );
   }
 }
 

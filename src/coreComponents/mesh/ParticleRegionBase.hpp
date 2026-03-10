@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -26,7 +26,7 @@ namespace geos
  * @class ParticleRegionBase
  * @brief The ParticleRegionBase is the base class to manage the data stored at the particle level.
  *
- * The ParticleRegion base is the base class for the ParticleRegion class. It may be depreciated at
+ * The ParticleRegionBase is the base class for the ParticleRegion class. It may be depreciated at
  * some point since no other classes are currently derived from ParticleRegionBase.
  */
 class ParticleRegionBase : public ObjectManagerBase
@@ -160,12 +160,12 @@ public:
   template< typename SUBREGIONTYPE = ParticleSubRegionBase, typename ... SUBREGIONTYPES >
   localIndex getNumberOfParticles() const
   {
-    localIndex numParticle = 0;
+    localIndex numParticles = 0;
     this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      numParticle += group.size();
+      numParticles += group.size();
     } );
-    return numParticle;
+    return numParticles;
   }
 
   /**

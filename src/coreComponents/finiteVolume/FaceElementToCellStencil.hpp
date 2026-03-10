@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -271,7 +271,15 @@ inline void FaceElementToCellStencilWrapper::
 
   // Will change when implementing collocation points.
   LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  real64 t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  if( t0 < 0.0 )
+  {
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
+                                              coefficient[er0][esr0][ei0][0],
+                                              m_cellToFaceVec[iconn] );
+    t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  }
+
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
@@ -285,8 +293,8 @@ inline void FaceElementToCellStencilWrapper::
   real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
   real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][2];
 
-  dWeight_dVar[0][0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar[0][1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][0] = m_transMultiplier[iconn] * ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar[0][1] = m_transMultiplier[iconn] * ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
 GEOS_HOST_DEVICE
@@ -333,7 +341,14 @@ FaceElementToCellStencilWrapper::
 
   // Will change when implementing collocation points.
   LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er0][esr0][ei0][0], m_faceNormal[iconn] );
-  real64 const t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  real64 t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  if( t0 < 0.0 )
+  {
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal,
+                                              coefficient[er0][esr0][ei0][0],
+                                              m_cellToFaceVec[iconn] );
+    t0 = m_weights[iconn][0] * LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], faceConormal );
+  }
   // We consider the 3rd component of the permeability which is the normal one.
   real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][2];
 
@@ -349,11 +364,11 @@ FaceElementToCellStencilWrapper::
   real64 const dt0_dVar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
   real64 const dt1_dVar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][2];
 
-  dWeight_dVar1[0][0] = ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar1[0][1] = ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar1[0][0] = m_transMultiplier[iconn] * ( dt0_dVar1 * t1 * sumOfTrans - dt0_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar1[0][1] = m_transMultiplier[iconn] * ( t0 * dt1_dVar1 * sumOfTrans - dt1_dVar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 
-  dWeight_dVar2[0][0] = ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-  dWeight_dVar2[0][1] = ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[0][0] = m_transMultiplier[iconn] * ( dt0_dVar2 * t1 * sumOfTrans - dt0_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+  dWeight_dVar2[0][1] = m_transMultiplier[iconn] * ( t0 * dt1_dVar2 * sumOfTrans - dt1_dVar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
 }
 
 GEOS_HOST_DEVICE

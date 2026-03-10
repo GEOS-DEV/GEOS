@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -30,7 +30,7 @@ namespace
 {
 
 void convertRigidBodyModes( LinearSolverParameters const & params,
-                            array1d< PetscVector > const & nearNullKernel,
+                            arrayView1d< PetscVector const > nearNullKernel,
                             MatNullSpace & nullsp )
 {
   if( nearNullKernel.empty() )
@@ -49,7 +49,7 @@ void convertRigidBodyModes( LinearSolverParameters const & params,
       GEOS_LAI_CHECK_ERROR( VecSetBlockSize( nullvecs[i], params.dofsPerNode ) );
       GEOS_LAI_CHECK_ERROR( VecSetUp( nullvecs[i] ) );
     }
-    GEOS_LAI_CHECK_ERROR( MatNullSpaceCreate( MPI_COMM_GEOSX, PETSC_FALSE, numRBM, nullvecs.data(), &nullsp ) );
+    GEOS_LAI_CHECK_ERROR( MatNullSpaceCreate( MPI_COMM_GEOS, PETSC_FALSE, numRBM, nullvecs.data(), &nullsp ) );
     for( localIndex i = 0; i < numRBM; ++i )
     {
       GEOS_LAI_CHECK_ERROR( VecDestroy( &nullvecs[i] ) );
@@ -59,10 +59,10 @@ void convertRigidBodyModes( LinearSolverParameters const & params,
 
 PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, PCILU },
-    { LinearSolverParameters::PreconditionerType::ic, PCICC },
+    { LinearSolverParameters::PreconditionerType::ick, PCICC },
     { LinearSolverParameters::PreconditionerType::jacobi, PCJACOBI },
     { LinearSolverParameters::PreconditionerType::l1jacobi, PCJACOBI },
     { LinearSolverParameters::PreconditionerType::fgs, PCSOR },
@@ -144,14 +144,6 @@ void createPetscAMG( LinearSolverParameters const & params,
   // Default options only for the moment
   GEOS_LAI_CHECK_ERROR( PCSetType( precond, PCGAMG ) );
 
-  if( !params.isSymmetric )
-  {
-    // Usually GEOSX matrix is not symmetric, but GAMG is designed for symmetric matrices
-    // In case of a general matrix, we need to compute a symmetric graph (slightly heavier
-    // than the default, but necessary in case of asymmetric matrices).
-    GEOS_LAI_CHECK_ERROR( PCGAMGSetSymGraph( precond, PETSC_TRUE ) );
-  }
-
   // Add user-defined null space / rigid body mode support
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes && nullsp )
   {
@@ -166,6 +158,9 @@ void createPetscAMG( LinearSolverParameters const & params,
 
   // Set max number of levels
   GEOS_LAI_CHECK_ERROR( PCGAMGSetNlevels( precond, params.amg.maxLevels ) );
+
+  // Set coarse grid max size (coarsening will stop once this limit is reached)
+  GEOS_LAI_CHECK_ERROR( PCGAMGSetCoarseEqLim( precond, params.amg.maxCoarseSize ) );
 
   // TODO: need someone familiar with PETSc to take a look at this
 #if 0
@@ -222,7 +217,7 @@ void createPetscAMG( LinearSolverParameters const & params,
 
       // Sanity checks
       GEOS_LAI_ASSERT_EQ( n_local, 1 );
-      GEOS_LAI_ASSERT_EQ( first_local, MpiWrapper::commRank( MPI_COMM_GEOSX ) );
+      GEOS_LAI_ASSERT_EQ( first_local, MpiWrapper::commRank( MPI_COMM_GEOS ) );
 
       // Set up local block ILU preconditioner
       PC prec_local;
@@ -251,7 +246,7 @@ PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params )
 { }
 
 PetscPreconditioner::PetscPreconditioner( LinearSolverParameters params,
-                                          array1d< Vector > const & nearNullKernel )
+                                          arrayView1d< Vector const > nearNullKernel )
   : Base{},
   m_params( std::move( params ) ),
   m_precond{},
@@ -327,7 +322,7 @@ void PetscPreconditioner::setup( PetscMatrix const & mat )
       case LinearSolverParameters::PreconditionerType::bgs:
       case LinearSolverParameters::PreconditionerType::sgs:
       case LinearSolverParameters::PreconditionerType::iluk:
-      case LinearSolverParameters::PreconditionerType::ic:
+      case LinearSolverParameters::PreconditionerType::ick:
       {
         createPetscSmoother( m_params, m_precond );
         break;

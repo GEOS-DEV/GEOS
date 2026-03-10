@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -132,7 +132,7 @@ private:
   /// The discrete number of time history states expected to be written to the file
   integer m_recordCount;
   /// The buffered time history output objects for each collector to collect data into and to use to configure/write to file.
-  std::vector< std::unique_ptr< BufferedHistoryIO > > m_io;
+  stdVector< std::unique_ptr< BufferedHistoryIO > > m_io;
 };
 }
 

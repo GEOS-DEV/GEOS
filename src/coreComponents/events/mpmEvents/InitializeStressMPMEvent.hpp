@@ -34,7 +34,7 @@ class InitializeStressMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   InitializeStressMPMEvent( const string & name,
-                  Group * const parent );
+                            Group * const parent );
 
   /// Destructor
   virtual ~InitializeStressMPMEvent() override;
@@ -45,18 +45,20 @@ public:
    **/
   static string catalogName() { return "InitializeStress"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * pressureString() { return "pressure"; }
     static constexpr char const * targetRegionString() { return "targetRegion"; }
-   
+
     dataRepository::ViewKey targetRegion = { targetRegionString() };
   } InitializeStressMPMEventViewKeys;
   /// @endcond
 
-  string getTargetRegion() const { return m_targetRegion; } 
-  real64 getPressure() const { return m_pressure; } 
+  string getTargetRegion() const { return m_targetRegion; }
+  real64 getPressure() const { return m_pressure; }
 
 protected:
   virtual void postInputInitialization() override final;

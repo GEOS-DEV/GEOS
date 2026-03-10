@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -108,8 +108,10 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+  string const transMultName = m_coeffName + viewKeyStruct::transMultiplierString();
+  arrayView1d< real64 const > const transMultiplier = faceManager.hasWrapper( transMultName )
+                                                    ? faceManager.getReference< array1d< real64 > >( transMultName )
+                                                    : arrayView1d< real64 const >{};
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
@@ -124,7 +126,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  arrayView1d< string const > const targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
+  string_array const & targetRegions = m_targetRegions.at( mesh.getParent().getParent().getName() );
   elemManager.forElementRegionsComplete< CellElementRegion >( targetRegions,
                                                               [&]( localIndex,
                                                                    localIndex const ei,
@@ -140,8 +142,11 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   forAll< serialPolicy >( faceManager.size(), [=, &stencil]( localIndex const kf )
   {
-    // Filter out boundary faces
-    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )
+    // Filter out faces that are not surrounded by matrix cells on this rank
+    // This means that if either element associated with a face is not present, it is excluded from the stencil.
+    // Similarly if an element is not present in the faceElement, it is excluded from the faceToMatrix stencil.
+    real64 const transMult = !transMultiplier.empty() ? transMultiplier[kf] : 1.0;
+    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMult ) )
     {
       return;
     }
@@ -217,7 +222,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  stencilWeights.data(),
                  kf );
 
-    stencil.addVectors( transMultiplier[kf], sumStabilizationWeight, faceNormal, cellToFaceVec );
+    stencil.addVectors( transMult, sumStabilizationWeight, faceNormal, cellToFaceVec );
   } );
 }
 
@@ -384,6 +389,7 @@ void TwoPointFluxApproximation::cleanMatrixMatrixConnectionsDFM( MeshLevel & mes
     // This is there to shut off previously connected cells
     // that are not connected anymore due to dynamic fracturing.
     cellStencil.zero( faceMap[kfe][0] );
+    cellStencil.zero( faceMap[kfe][1] );
   } );
 }
 
@@ -418,14 +424,14 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( faceElementRegionName );
   localIndex const fractureRegionIndex = fractureRegion.getIndexInParent();
   FaceElementSubRegion & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
-  OrderedVariableToManyElementRelation const & elems2dToElems3d = fractureSubRegion.getToCellRelation();
+  FixedToManyElementRelation const & elems2dToElems3d = fractureSubRegion.getToCellRelation();
 
   SortedArrayView< localIndex const > const new2dElems = fractureSubRegion.m_newFaceElements.toViewConst();
   FaceElementSubRegion::FaceMapType const & faceMap = fractureSubRegion.faceList();
 
-  ArrayOfArraysView< localIndex const > elemRegionList = elems2dToElems3d.m_toElementRegion.toViewConst();
-  ArrayOfArraysView< localIndex const > elemSubRegionList = elems2dToElems3d.m_toElementSubRegion.toViewConst();
-  ArrayOfArraysView< localIndex const > elemList = elems2dToElems3d.m_toElementIndex.toViewConst();
+  arrayView2d< localIndex const > const elemRegionList = elems2dToElems3d.m_toElementRegion.toViewConst();
+  arrayView2d< localIndex const > const elemSubRegionList = elems2dToElems3d.m_toElementSubRegion.toViewConst();
+  arrayView2d< localIndex const > const elemList = elems2dToElems3d.m_toElementIndex.toViewConst();
 
   // reserve memory for the connections of this region
   if( cellStencil.size() != 0 )
@@ -447,7 +453,6 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
   forAll< serialPolicy >( new2dElems.size(),
                           [ new2dElems,
-                            &elems2dToElems3d,
                             &faceToCellStencil,
                             &faceMap,
                             elemRegionList,
@@ -465,7 +470,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
   {
     localIndex const kfe = new2dElems[k];
     {
-      localIndex const numElems = elems2dToElems3d.m_toElementSubRegion.sizeOfArray( kfe );
+      localIndex const numElems = 2;
 
       GEOS_ERROR_IF( numElems > maxElems, "Max stencil size exceeded by fracture-cell connector " << kfe );
 
@@ -473,53 +478,56 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsDFM( MeshLevel & mes
 
       localIndex connectorIndex = faceToCellStencil.size();
 
-      for( localIndex ke = 0; ke < numElems; ++ke )
+      if( elemList[kfe][0] >= 0 && elemList[kfe][1] >= 0 )
       {
-        connectorIndex += ke;
-
-        localIndex const faceIndex = faceMap[kfe][ke];
-        localIndex const er  = elemRegionList[kfe][ke];
-        localIndex const esr = elemSubRegionList[kfe][ke];
-        localIndex const ei  = elemList[kfe][ke];
-
-        // remove cell-to-cell connections from cell stencil and add in new connections
-        if( !regionIndices.contains( er ) )
+        for( localIndex ke = 0; ke < numElems; ++ke )
         {
-          continue;
+          connectorIndex += ke;
+
+          localIndex const faceIndex = faceMap[kfe][ke];
+          localIndex const er  = elemRegionList[kfe][ke];
+          localIndex const esr = elemSubRegionList[kfe][ke];
+          localIndex const ei  = elemList[kfe][ke];
+
+          // remove cell-to-cell connections from cell stencil and add in new connections
+          if( !regionIndices.contains( er ) )
+          {
+            continue;
+          }
+
+          // Filter out entries where both fracture and cell element are ghosted
+          if( elemGhostRank[fractureRegionIndex][0][kfe] >= 0 && elemGhostRank[er][esr][ei] >= 0 )
+          {
+            continue;
+          }
+
+          LvArray::tensorOps::copy< 3 >( faceNormalVector, faceNormal[faceIndex] );
+
+          LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter[faceIndex] );
+          LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
+
+          real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
+
+          real64 const ht = faceArea[faceIndex] / c2fDistance;
+          // Note: this is done solely to avoid crashes when using the SolidMechanicsLagrangeContact that builds a stencil but does not
+          // register the
+          // hydraulicAperture
+          real64 const aperture_h =  hydraulicAperture[fractureRegionIndex][0].size() == 0 ? 1.0 : hydraulicAperture[fractureRegionIndex][0][kfe];
+
+          localIndex const stencilCellsRegionIndex[2]{ er, fractureRegionIndex };
+          localIndex const stencilCellsSubRegionIndex[2]{ esr, 0 };
+          localIndex const stencilCellsIndex[2]{ ei, kfe };
+          real64 const stencilWeights[2]{ ht, 2. * faceArea[faceIndex] / aperture_h };
+
+          faceToCellStencil.add( 2,
+                                 stencilCellsRegionIndex,
+                                 stencilCellsSubRegionIndex,
+                                 stencilCellsIndex,
+                                 stencilWeights,
+                                 connectorIndex );
+
+          faceToCellStencil.addVectors( transMultiplier[faceIndex], faceNormalVector, cellToFaceVec );
         }
-
-        // Filter out entries where both fracture and cell element are ghosted
-        if( elemGhostRank[fractureRegionIndex][0][kfe] >= 0 && elemGhostRank[er][esr][ei] >= 0 )
-        {
-          continue;
-        }
-
-        LvArray::tensorOps::copy< 3 >( faceNormalVector, faceNormal[faceIndex] );
-
-        LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter[faceIndex] );
-        LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[er][esr][ei] );
-
-        real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
-        real64 const ht = faceArea[faceIndex] / c2fDistance;
-        // Note: this is done solely to avoid crashes when using the SolidMechanicsLagrangeContact that builds a stencil but does not
-        // register the
-        // hydraulicAperture
-        real64 const aperture_h =  hydraulicAperture[fractureRegionIndex][0].size() == 0 ? 1.0 : hydraulicAperture[fractureRegionIndex][0][kfe];
-
-        localIndex const stencilCellsRegionIndex[2]{ er, fractureRegionIndex };
-        localIndex const stencilCellsSubRegionIndex[2]{ esr, 0 };
-        localIndex const stencilCellsIndex[2]{ ei, kfe };
-        real64 const stencilWeights[2]{ ht, 2. * faceArea[faceIndex] / aperture_h };
-
-        faceToCellStencil.add( 2,
-                               stencilCellsRegionIndex,
-                               stencilCellsSubRegionIndex,
-                               stencilCellsIndex,
-                               stencilWeights,
-                               connectorIndex );
-
-        faceToCellStencil.addVectors( transMultiplier[faceIndex], faceNormalVector, cellToFaceVec );
       }
     }
   } );
@@ -591,7 +599,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnectionsEDFM( MeshLevel & me
       stencilCellsRegionIndex[1] = fractureRegionIndex;
       stencilCellsSubRegionIndex[1] = 0;
       stencilCellsIndex[1] = kes;
-      stencilWeights[1] = 4. * faceArea[fractureRegionIndex] / hydraulicAperture[fractureRegionIndex][0][kes];
+      stencilWeights[1] = 4. * faceArea[kes] / hydraulicAperture[fractureRegionIndex][0][kes];
 
       edfmStencil.add( 2,
                        stencilCellsRegionIndex.data(),
@@ -745,8 +753,10 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< localIndex const > const & elemList           = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+  string const transMultName = m_coeffName + viewKeyStruct::transMultiplierString();
+  arrayView1d< real64 const > const transMultiplier = faceManager.hasWrapper( transMultName )
+                                                    ? faceManager.getReference< array1d< real64 > >( transMultName )
+                                                    : arrayView1d< real64 const >{};
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
@@ -756,7 +766,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
-  arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
+  string_array const & targetRegions = m_targetRegions.at( meshBodyName );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -842,7 +852,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
                    stencilWeights.data(),
                    kf );
 
-      stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
+      real64 const transMult = !transMultiplier.empty() ? transMultiplier[kf] : 1.0;
+      stencil.addVectors( transMult, faceNormal, cellToFaceVec );
     }
   }
 }
@@ -884,12 +895,12 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 1: count individual aquifers
 
-  std::map< string, localIndex > aquiferNameToAquiferId;
+  stdMap< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 
@@ -951,11 +962,10 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
     localSumFaceAreasView[aquiferIndex] += targetSetSumFaceAreas.get();
   } );
 
-  MpiWrapper::allReduce( localSumFaceAreas.data(),
-                         globalSumFaceAreas.data(),
-                         localSumFaceAreas.size(),
-                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                         MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localSumFaceAreas,
+                         globalSumFaceAreas,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
 
   // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -124,10 +124,34 @@ public:
    */
   void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = std::move( inputVarNames ); }
 
+  /**
+   * @brief Get the output directory for function output
+   * @return a string containing the output directory
+   */
+  static string const & getOutputDirectory();
+
+  /**
+   * @brief Set the output directory for function output
+   * @param outputDir The output directory
+   */
+  static void setOutputDirectory( string const & outputDir );
 
 protected:
+
+  /// Keys appearing in XML
+  struct viewKeyStruct
+  {
+    /// @return Function input variable names
+    static constexpr char const * inputVarNamesString() { return "inputVarNames"; }
+    /// @return Factors used to pre-scale function inputs
+    static constexpr char const * inputVarScaleString() { return "inputVarScale"; }
+  };
+
   /// names for the input variables
   string_array m_inputVarNames;
+
+  /// scaling for input variables
+  array1d< real64 > m_inputVarScale;
 
   /**
    * @brief Method to apply an function with an arbitrary type of output
@@ -143,7 +167,7 @@ protected:
                   SortedArrayView< localIndex const > const & set,
                   arrayView1d< real64 > const & result ) const;
 
-  virtual void postInputInitialization() override { initializeFunction(); }
+  virtual void postInputInitialization() override;
 
 };
 
@@ -192,21 +216,25 @@ void FunctionBase::evaluateT( dataRepository::Group const & group,
   // Make sure the inputs do not exceed the maximum length
   GEOS_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS,
                         getDataContext() << ": Function input size exceeded" );
+  GEOS_ERROR_IF_GT_MSG( totalVarSize, m_inputVarScale.size(),
+                        getDataContext() << ": Insufficient number of  scale values provided" );
 
   // Make sure the result / set size match
   GEOS_ERROR_IF_NE_MSG( result.size(), set.size(),
                         getDataContext() << ": To apply a function to a set, the size of the result and set must match" );
 
+  arrayView1d< real64 const > const scale = m_inputVarScale.toViewConst();
   forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
     localIndex const index = set[i];
     real64 input[MAX_VARS]{};
-    int offset = 0;
+    int inputIndex = 0;
     for( integer varIndex = 0; varIndex < numVars; ++varIndex )
     {
-      for( localIndex compIndex = 0; compIndex < varSize[varIndex]; ++compIndex )
+      for( localIndex compIndex = 0; compIndex < varSize[varIndex]; ++compIndex, ++inputIndex )
       {
-        input[offset++] = inputPtrs[varIndex][index * varStride[varIndex][0] + compIndex * varStride[varIndex][1]];
+        localIndex const varOffset = index * varStride[varIndex][0] + compIndex * varStride[varIndex][1];
+        input[inputIndex] = ( inputPtrs[varIndex][varOffset] ) * scale[inputIndex];
       }
     }
     result[i] = static_cast< LEAF const * >( this )->evaluate( input );

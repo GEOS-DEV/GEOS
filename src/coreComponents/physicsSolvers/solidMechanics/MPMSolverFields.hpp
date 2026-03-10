@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -33,6 +33,14 @@ namespace fields
 namespace mpm
 {
 
+DECLARE_FIELD( particleMass,
+               "particleMass",
+               array1d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An array that stores particle masses." );
+
 DECLARE_FIELD( particleDeleteFlag,
                "particleDeleteFlag",
                array1d< int >,
@@ -57,14 +65,6 @@ DECLARE_FIELD( particleMaterialType,
                WRITE_AND_READ,
                "An array that stores index of particle material type (assumes single material for each particle region)." );
 
-DECLARE_FIELD( particleMass,
-               "particleMass",
-               array1d< real64 >,
-               0.0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "An array that stores particle masses." );
-
 DECLARE_FIELD( particleWavespeed,
                "particleWavespeed",
                array1d< real64 >,
@@ -80,14 +80,6 @@ DECLARE_FIELD( particleHeatCapacity,
                LEVEL_1,
                WRITE_AND_READ,
                "An array that stores particle heat capacity." );
-
-DECLARE_FIELD( particleInitialTemperature,
-               "particleInitialTemperature",
-               array1d< real64 >,
-               0.0,
-               LEVEL_1,
-               WRITE_AND_READ,
-               "An array that stores particle initial temperature (is this the same as the initialDomaintemperature?)." );
 
 DECLARE_FIELD( particleReferenceTemperature,
                "particleReferenceTemperature",
@@ -249,13 +241,13 @@ DECLARE_FIELD( particleSurfaceFlag,
                WRITE_AND_READ,
                "An array that holds particle surface flags." );
 
-DECLARE_FIELD( particleSphF,
-               "particleSphF",
+DECLARE_FIELD( particleSPHF,
+               "particleSPHF",
                array3d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
-               "ParticleSphF" );
+               "ParticleSPHF" );
 
 DECLARE_FIELD( particleOverlap,
                "particleOverlap",
@@ -273,32 +265,32 @@ DECLARE_FIELD( particleReferencePosition,
                WRITE_AND_READ,
                "ParticleReferencePosition" );
 
-DECLARE_FIELD( particleReferenceMaterialDirection, 
-               "particleReferenceMaterialDirection", 
-               array2d< real64 >,
+DECLARE_FIELD( particleReferenceMaterialDirection,
+               "particleReferenceMaterialDirection",
+               array3d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceMaterialDirection" );
 
-DECLARE_FIELD( particleReferenceSurfaceNormal, 
-               "particleReferenceSurfaceNormal", 
+DECLARE_FIELD( particleReferenceSurfaceNormal,
+               "particleReferenceSurfaceNormal",
                array2d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceSurfaceNormal" );
 
-DECLARE_FIELD( particleReferenceSurfacePosition, 
-               "particleReferenceSurfacePosition", 
+DECLARE_FIELD( particleReferenceSurfacePosition,
+               "particleReferenceSurfacePosition",
                array2d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceSurfacePosition" );
 
-DECLARE_FIELD( particleReferenceSurfaceTraction, 
-               "particleReferenceSurfaceTraction", 
+DECLARE_FIELD( particleReferenceSurfaceTraction,
+               "particleReferenceSurfaceTraction",
                array2d< real64 >,
                0.0,
                LEVEL_1,
@@ -313,77 +305,133 @@ DECLARE_FIELD( particleCohesiveForce,
                WRITE_AND_READ,
                "ParticleCohesiveForce" );
 
-DECLARE_FIELD( particleCohesiveZoneFlag, 
-               "particleCohesiveZoneFlag", 
+DECLARE_FIELD( particleCohesiveZoneFlag,
+               "particleCohesiveZoneFlag",
                array1d< int >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleCohesiveZoneFlag" );
 
-DECLARE_FIELD( particleReferenceMappedNodes, 
-               "particleReferenceMappedNodes", 
+DECLARE_FIELD( particleReferenceMappedNodes,
+               "particleReferenceMappedNodes",
                array2d< globalIndex >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceMappedNodes" );
 
-DECLARE_FIELD( particleReferenceShapeFunctionValues, 
-               "particleReferenceShapeFunctionValues", 
+DECLARE_FIELD( particleReferenceShapeFunctionValues,
+               "particleReferenceShapeFunctionValues",
                array2d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceShapeFunctionValues" );
 
-DECLARE_FIELD( particleReferenceShapeFunctionGradientValues, 
-               "particleReferenceShapeFunctionGradientValues", 
+DECLARE_FIELD( particleReferenceShapeFunctionGradientValues,
+               "particleReferenceShapeFunctionGradientValues",
                array3d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
                "ParticleReferenceShapeFunctionGradientValues" );
 
-DECLARE_FIELD( particleCohesiveReferenceSurfaceNormal, 
-               "particleCohesiveReferenceSurfaceNormal", 
+DECLARE_FIELD( particleCohesiveReferencePosition,
+               "particleCohesiveReferencePosition",
                array2d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,
-               "ParticleCohesiveReferenceSurfaceNormal" );
+               "particleCohesiveReferencePosition" );
 
-DECLARE_FIELD( particleCohesiveFieldMapping, 
-               "particleCohesiveFieldMapping", 
+DECLARE_FIELD( particleCohesiveReferenceSurfaceNormal,
+               "particleCohesiveReferenceSurfaceNormal",
+               array2d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleCohesiveReferenceSurfaceNormal" );
+
+DECLARE_FIELD( particleCohesiveReferenceSurfacePosition,
+               "particleCohesiveReferenceSurfacePosition",
+               array2d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleCohesiveReferenceSurfacePosition" );
+
+DECLARE_FIELD( particleCohesiveReferenceDeformationGradient,
+               "particleCohesiveReferenceDeformationGradient",
+               array3d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleCohesiveReferenceDeformationGradient" );
+
+DECLARE_FIELD( particleCohesiveFieldMapping,
+               "particleCohesiveFieldMapping",
                array2d< int >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleCohesiveFieldMapping" );     
+               "particleCohesiveFieldMapping" );
 
-DECLARE_FIELD( particleSubdivideFlag, 
-               "particleSubdivideFlag", 
+DECLARE_FIELD( particleSubdivideFlag,
+               "particleSubdivideFlag",
                array1d< int >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleSubdivideFlag" );   
+               "particleSubdivideFlag" );
 
-DECLARE_FIELD( particleCopyFlag, 
-               "particleCopyFlag", 
+DECLARE_FIELD( particleCopyFlag,
+               "particleCopyFlag",
                array1d< int >,
                -1,
                LEVEL_1,
                WRITE_AND_READ,
                "particleCopyFlag" );
 
-DECLARE_FIELD( particleDomainScaledFlag, 
-               "particleDomainScaledFlag", 
+DECLARE_FIELD( particleDomainScaledFlag,
+               "particleDomainScaledFlag",
                array1d< int >,
                -1,
                LEVEL_1,
                WRITE_AND_READ,
-               "particleDomainScaledFlag" );            
+               "particleDomainScaledFlag" );
+
+DECLARE_FIELD( particleColor,
+               "particleColor",
+               array1d< int >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleColor" );
+
+DECLARE_FIELD( particleSurfaceCurvature,
+               "particleSurfaceCurvature",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleSurfaceCurvature" );
+
+DECLARE_FIELD( particleResidueBinderFlag,
+               "particleResidueBinderFlag",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleResidueBinderFlag" );
+
+DECLARE_FIELD( particleEstimatedSurfacePosition,
+               "particleEstimatedSurfacePosition",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleEstimatedSurfacePosition" );
 }
 
 }

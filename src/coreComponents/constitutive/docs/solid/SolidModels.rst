@@ -9,12 +9,18 @@ known models.
 .. toctree::
    :maxdepth: 1
 
+<<<<<<< HEAD
    CeramicDamage
    Chiumenti
    Damage
    DelftEgg
    DruckerPrager
    DruckerPragerExtended
+=======
+   Theory
+   Voight
+   Plasticity
+>>>>>>> feature/mpm
    ElasticIsotropic
    ElasticIsotropicPressureDependent
    ElasticOrthotropic

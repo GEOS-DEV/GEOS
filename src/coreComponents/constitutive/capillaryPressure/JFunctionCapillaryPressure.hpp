@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,7 +22,7 @@
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos
@@ -47,7 +47,7 @@ public:
   JFunctionCapillaryPressure( std::string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   virtual void initializeRockState( arrayView2d< real64 const > const & initialPorosity,
                                     arrayView3d< real64 const > const & initialPermeability ) const override;
@@ -112,7 +112,6 @@ private:
     static constexpr char const * porosityExponentString() { return "porosityExponent"; }
     static constexpr char const * permeabilityExponentString() { return "permeabilityExponent"; }
     static constexpr char const * permeabilityDirectionString() { return "permeabilityDirection"; }
-    static constexpr char const * jFunctionWrappersString() { return "jFunctionWrappers"; }
   };
 
   /**
@@ -125,7 +124,6 @@ private:
     Y,  ///< use permy only
     Z,  ///< use permz only
   };
-
 
 private:
 

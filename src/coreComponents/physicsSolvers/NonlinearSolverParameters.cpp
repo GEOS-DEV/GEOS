@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -14,8 +14,9 @@
  */
 
 #include "NonlinearSolverParameters.hpp"
-#include "common/Logger.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -28,16 +29,13 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 {
   setInputFlags( InputFlags::OPTIONAL );
 
-  // This enables logLevel filtering
-  enableLogLevelInput();
-
   registerWrapper( viewKeysStruct::lineSearchActionString(), &m_lineSearchAction ).
     setApplyDefaultValue( LineSearchAction::Attempt ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "How the line search is to be used. Options are: \n "
                     "* None    - Do not use line search.\n"
                     "* Attempt - Use line search. Allow exit from line search without achieving smaller residual than starting residual.\n"
-                    "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time step." );
+                    "* Require - Use line search. If smaller residual than starting resdual is not achieved, cut time-step." );
 
   registerWrapper( viewKeysStruct::lineSearchInterpolationTypeString(), &m_lineSearchInterpType ).
     setApplyDefaultValue( LineSearchInterpolationType::Linear ).
@@ -69,9 +67,9 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
 
   registerWrapper( viewKeysStruct::normTypeString(), &m_normType ).
     setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( solverBaseKernels::NormType::Linf ).
+    setApplyDefaultValue( physicsSolverBaseKernels::NormType::Linf ).
     setDescription( "Norm used by the flow solver to check nonlinear convergence. "
-                    "Valid options:\n* " + EnumStrings< solverBaseKernels::NormType >::concat( "\n* " ) );
+                    "Valid options:\n* " + EnumStrings< physicsSolverBaseKernels::NormType >::concat( "\n* " ) );
 
   registerWrapper( viewKeysStruct::minNormalizerString(), &m_minNormalizer ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
@@ -112,32 +110,37 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
   registerWrapper( viewKeysStruct::timeStepDecreaseIterLimString(), &m_timeStepDecreaseIterLimit ).
     setApplyDefaultValue( 0.7 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time step." );
+    setDescription( "Fraction of the max Newton iterations above which the solver asks for the time-step to be decreased for the next time-step." );
 
   registerWrapper( viewKeysStruct::timeStepIncreaseIterLimString(), &m_timeStepIncreaseIterLimit ).
     setApplyDefaultValue( 0.4 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time step." );
+    setDescription( "Fraction of the max Newton iterations below which the solver asks for the time-step to be increased for the next time-step." );
 
   registerWrapper( viewKeysStruct::timeStepDecreaseFactorString(), &m_timeStepDecreaseFactor ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which the time step is decreased when the number of Newton iterations is large." );
+    setDescription( "Factor by which the time-step is decreased when the number of Newton iterations is large." );
 
   registerWrapper( viewKeysStruct::timeStepIncreaseFactorString(), &m_timeStepIncreaseFactor ).
     setApplyDefaultValue( 2.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which the time step is increased when the number of Newton iterations is small." );
+    setDescription( "Factor by which the time-step is increased when the number of Newton iterations is small." );
+
+  registerWrapper( viewKeysStruct::minTimeStepIncreaseIntervalString(), &m_minTimeStepIncreaseInterval ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Minimum number of steps since the last time-step cut for increasing the time-step again." );
 
   registerWrapper( viewKeysStruct::timeStepCutFactorString(), &m_timeStepCutFactor ).
     setApplyDefaultValue( 0.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Factor by which the time step will be cut if a timestep cut is required." );
+    setDescription( "Factor by which the time-step will be cut if a time-step cut is required." );
 
   registerWrapper( viewKeysStruct::maxTimeStepCutsString(), &m_maxTimeStepCuts ).
     setApplyDefaultValue( 2 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Max number of time step cuts" );
+    setDescription( "Max number of time-step cuts" );
 
   registerWrapper( viewKeysStruct::maxSubStepsString(), &m_maxSubSteps ).
     setApplyDefaultValue( 10 ).
@@ -177,6 +180,36 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
+  registerWrapper( viewKeysStruct::oscillationScalingString(), &m_oscillationScaling ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable oscillation detection and scaling. "
+                    "If set to 1, oscillation detection is enabled and the solution will be scaled if oscillations are detected." );
+
+  registerWrapper( viewKeysStruct::oscillationScalingFactorString(), &m_oscillationScalingFactor ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Scaling factor to dump solution oscillations." );
+
+  registerWrapper( viewKeysStruct::oscillationCheckDepthString(), &m_oscillationCheckDepth ).
+    setApplyDefaultValue( 3 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Depth in solution history to check for oscillations." );
+
+  registerWrapper( viewKeysStruct::oscillationToleranceString(), &m_oscillationTolerance ).
+    setApplyDefaultValue( 0.01 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Tolerance for oscillation detection." );
+
+  registerWrapper( viewKeysStruct::oscillationFractionString(), &m_oscillationFraction ).
+    setApplyDefaultValue( 0.05 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Fraction of dofs oscillating to declare oscillation." );
+
+  addLogLevel< logInfo::Convergence >();
+  addLogLevel< logInfo::NonlinearSolver >();
+  addLogLevel< logInfo::LineSearch >();
+  addLogLevel< logInfo::TimeStep >();
 }
 
 void NonlinearSolverParameters::postInputInitialization()
@@ -187,6 +220,25 @@ void NonlinearSolverParameters::postInputInitialization()
 
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
                         getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
+
+  if( m_oscillationScaling > 0 )
+  {
+    // check oscillation parameters
+    GEOS_ERROR_IF_LE_MSG( m_oscillationScalingFactor, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString() ) << ": should be positive" );
+    GEOS_ERROR_IF_GT_MSG( m_oscillationScalingFactor, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString() ) << ": can not be more than 1.0" );
+    GEOS_ERROR_IF_LT_MSG( m_oscillationCheckDepth, 2,
+                          getWrapperDataContext( viewKeysStruct::oscillationCheckDepthString() ) << ": can not be less than 2" );
+    GEOS_ERROR_IF_LE_MSG( m_oscillationTolerance, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": should be positive" );
+    GEOS_ERROR_IF_GE_MSG( m_oscillationTolerance, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": can not be more than 1.0" );
+    GEOS_ERROR_IF_LT_MSG( m_oscillationFraction, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationFractionString() ) << ": can not be negative" );
+    GEOS_ERROR_IF_GT_MSG( m_oscillationFraction, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationFractionString() ) << ": can not be more than 1.0" );
+  }
 
   if( getLogLevel() > 0 )
   {
@@ -215,13 +267,14 @@ void NonlinearSolverParameters::print() const
   tableData.addRow( "Minimum iterations", m_minIterNewton );
   tableData.addRow( "Maximum allowed residual norm", m_maxAllowedResidualNorm );
   tableData.addRow( "Allow non-converged", m_allowNonConverged );
-  tableData.addRow( "Time step decrease iterations limit", m_timeStepDecreaseIterLimit );
-  tableData.addRow( "Time step increase iterations limit", m_timeStepIncreaseIterLimit );
-  tableData.addRow( "Time step decrease factor", m_timeStepDecreaseFactor );
-  tableData.addRow( "Time step increase factor", m_timeStepDecreaseFactor );
-  tableData.addRow( "Time step cut factor", m_timeStepCutFactor );
-  tableData.addRow( "Maximum time step cuts", m_maxTimeStepCuts );
-  tableData.addRow( "Maximum sub time steps", m_maxSubSteps );
+  tableData.addRow( "Time-step decrease iterations limit", m_timeStepDecreaseIterLimit );
+  tableData.addRow( "Time-step increase iterations limit", m_timeStepIncreaseIterLimit );
+  tableData.addRow( "Time-step decrease factor", m_timeStepDecreaseFactor );
+  tableData.addRow( "Time-step increase factor", m_timeStepDecreaseFactor );
+  tableData.addRow( "Time-step cut factor", m_timeStepCutFactor );
+  tableData.addRow( "Minimum time-step increase interval", m_minTimeStepIncreaseInterval );
+  tableData.addRow( "Maximum time-step cuts", m_maxTimeStepCuts );
+  tableData.addRow( "Maximum sub time-steps", m_maxSubSteps );
   tableData.addRow( "Maximum number of configuration attempts", m_maxNumConfigurationAttempts );
   tableData.addRow( "Coupling type", m_couplingType );
   if( m_couplingType == CouplingType::Sequential )
@@ -229,10 +282,18 @@ void NonlinearSolverParameters::print() const
     tableData.addRow( "Sequential convergence criterion", m_sequentialConvergenceCriterion );
     tableData.addRow( "Subcycling", m_subcyclingOption );
   }
-  TableLayout const tableLayout = TableLayout( {
-      TableLayout::ColumnParam{"Parameter", TableLayout::Alignment::left},
-      TableLayout::ColumnParam{"Value", TableLayout::Alignment::left},
-    }, GEOS_FMT( "{}: nonlinear solver", getParent().getName() ) );
+  tableData.addRow( "Oscillation detection and scaling", m_oscillationScaling );
+  if( m_oscillationScaling > 0 )
+  {
+    tableData.addRow( "  Scaling factor", m_oscillationScalingFactor );
+    tableData.addRow( "  Check depth", m_oscillationCheckDepth );
+    tableData.addRow( "  Tolerance", m_oscillationTolerance );
+    tableData.addRow( "  Fraction of dofs oscillating", m_oscillationFraction );
+  }
+
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: nonlinear solver", getParent().getName() ),
+                                               { TableLayout::Column().setName( "Parameter" ).setValuesAlignment( TableLayout::Alignment::left ),
+                                                 "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }

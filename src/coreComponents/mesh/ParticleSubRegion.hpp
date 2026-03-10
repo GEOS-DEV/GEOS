@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -17,7 +17,7 @@
 #ifndef GEOS_MESH_PARTICLEELEMENTSUBREGION_HPP_
 #define GEOS_MESH_PARTICLEELEMENTSUBREGION_HPP_
 
-#include "particleGenerators/ParticleBlockABC.hpp"
+#include "mesh/particleGenerators/ParticleBlockABC.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ParticleSubRegionBase.hpp"
 
@@ -85,50 +85,13 @@ public:
    */
   void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
-  // /**
-  //  * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
-  //  * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
-  //  */
-  // void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
-
-  ///@}
-
-  /**
-   * @name Miscellaneous
-   */
-  ///@{
-
-  /**
-   * @brief Helper function to apply a lambda function over all constructive groups
-   * @tparam LAMBDA the type of the lambda function
-   * @param lambda the lambda function
-   */
-  template< typename LAMBDA >
-  void forMaterials( LAMBDA lambda )
-  {
-    for( auto & constitutiveGroup : m_constitutiveGrouping )
-    {
-      lambda( constitutiveGroup );
-    }
-  }
-
-  ///@}
-
   /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ParticleSubRegionBase::viewKeyStruct
   {
-    /// @return String key for the constitutive grouping
-    static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
-    /// @return String key for the constitutive map
-    static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
-
-    /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
-    /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
+    // Left blank
   }
   /// viewKey struct for the ParticleSubRegion class
   m_ParticleBlockSubRegionViewKeys;
@@ -137,9 +100,6 @@ public:
   virtual viewKeyStruct const & viewKeys() const override { return m_ParticleBlockSubRegionViewKeys; }
 
 private:
-
-  /// Map used for constitutive grouping
-  map< string, localIndex_array > m_constitutiveGrouping;
 
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;

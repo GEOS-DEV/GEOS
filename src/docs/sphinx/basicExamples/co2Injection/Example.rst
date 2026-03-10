@@ -134,8 +134,9 @@ The **TwoPointFluxApproximation** is chosen for the fluid equation discretizatio
 Element regions
 ---------------
 
-We define a **CellElementRegion** pointing to the cell block defining the reservoir mesh, and a **WellElementRegion** for the well.
+We define a **CellElementRegion** pointing to all reservoir mesh cells, and a **WellElementRegion** for the well.
 The two regions contain a list of constitutive model names.
+The keyword "all" is used here to automatically select all cells of the mesh.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
@@ -168,9 +169,7 @@ The model definition requires three text files:
 
 In *co2flash.txt*, we define the CO :sub:`2` solubility model used to compute the amount of CO :sub:`2` dissolved in the brine phase as a function of pressure (in Pascal), temperature (in Kelvin), and salinity (in units of molality):
 
-.. code::
-
-   FlashModel CO2Solubility  1e6 1.5e7 5e4 367.15 369.15 1 0
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/co2flash.txt
 
 The first keyword is an identifier for the model type (here, a flash model). It is followed by the model name. Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
 The trailing 0 defines a zero-salinity in the model. 
@@ -179,15 +178,9 @@ Note that the water component is not allowed to evaporate into the CO :sub:`2` -
 
 The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the density and viscosity of the two phases, as follows:
 
-.. code:: 
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtgas.txt
 
-        DensityFun SpanWagnerCO2Density 1.0e5 7.5e7 1e5 285.15 395.15 5
-        ViscosityFun FenghourCO2Viscosity 1.0e5 7.5e7 1e5 285.15 395.15 5 
-
-.. code::
-  
-        DensityFun PhillipsBrineDensity 1.0e5 7.5e7 1e5 285.15 395.15 5 0
-        ViscosityFun PhillipsBrineViscosity 0
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/pvtliquid.txt
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
 It is followed by the model name.
@@ -264,13 +257,13 @@ The simulation can be launched with 4 cores using MPI-parallelism:
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial.xml -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -x 2 -y 1 -z 2
 
 A restart from a checkpoint file `simpleCo2InjTutorial_restart_000000024.root` is always available thanks to the following command line :
 
 .. code-block:: console
 
-  mpirun -np 4 geosx -i simpleCo2InjTutorial.xml -r simpleCo2InjTutorial_restart_000000024 -x 1 -y 1 -z 4
+  mpirun -np 4 geosx -i simpleCo2InjTutorial_smoke.xml -r simpleCo2InjTutorial_restart_000000024 -x 2 -y 1 -z 2
 
 The output then shows the loading of HDF5 restart files by each core. 
 
@@ -296,16 +289,20 @@ forming a gas cap at the top of the domain,
 
 .. |pic1| image:: fcCo2-sat-0.png
    :width: 32%
+   :alt: Gas saturation after 2e7 s
 .. |pic2| image:: fcCo2-sat-1.png
    :width: 32%
+   :alt: Gas saturation after 15e7 s
 .. |pic3| image:: fcCo2-sat-2.png
    :width: 32%
+   :alt: Gas saturation after 50e7 s
 
-The heterogeneous values of the log permeability field can also be visualized in Paraview as shown below:
+The heterogeneous values of the permeability field can also be visualized in Paraview as shown below:
 
-.. image:: fcCo2-logK.png
+.. image:: fcCo2-K.png
    :width: 400px
    :align: center
+   :alt: Vertical permeability
 
 ------------------------------------
 To go further

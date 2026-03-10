@@ -24,7 +24,7 @@
 #include "HyperelasticMMS.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -58,19 +58,19 @@ public:
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
   ChiumentiUpdates( arrayView2d< real64 > const & damage,
-                        arrayView1d< real64 > const & lengthScale,
-                        arrayView1d< real64 > const & strengthScale,
-                        real64 const & criticalLength,
-                        real64 const & failureStrength,
-                        real64 const & energyReleaseRate,
-                        arrayView1d< real64 const > const & lambda,
-                        arrayView1d< real64 const > const & shearModulus,
-                        arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                        arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                        arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                        arrayView2d< real64 > const & density,
-                        arrayView2d< real64 > const & wavespeed,
-                        bool const & disableInelasticity ):
+                    arrayView1d< real64 > const & lengthScale,
+                    arrayView1d< real64 > const & strengthScale,
+                    real64 const & criticalLength,
+                    real64 const & failureStrength,
+                    real64 const & energyReleaseRate,
+                    arrayView1d< real64 const > const & lambda,
+                    arrayView1d< real64 const > const & shearModulus,
+                    arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                    arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                    arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                    arrayView2d< real64 > const & density,
+                    arrayView2d< real64 > const & wavespeed,
+                    bool const & disableInelasticity ):
     HyperelasticMMSUpdates( lambda,
                             shearModulus,
                             thermalExpansionCoefficient,
@@ -103,49 +103,49 @@ public:
   ChiumentiUpdates & operator=( ChiumentiUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic; // TODO: typo in anistropic (fix in DiscOps PR)
 
   // Bring in base implementations to prevent hiding warnings
   using HyperelasticMMSUpdates::smallStrainUpdate;
-  
+
   GEOS_HOST_DEVICE
   void smallStrainNoStateUpdate_StressOnly( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const ( &totalStrain )[6],
-                                                    real64 ( &stress )[6] ) const override final;
+                                            localIndex const q,
+                                            real64 const ( &totalStrain )[6],
+                                            real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   void smallStrainNoStateUpdate( localIndex const k,
-                                         localIndex const q,
-                                         real64 const ( &totalStrain )[6],
-                                         real64 ( &stress )[6],
-                                         real64 ( &stiffness )[6][6] ) const override final;
+                                 localIndex const q,
+                                 real64 const ( &totalStrain )[6],
+                                 real64 ( &stress )[6],
+                                 real64 ( &stiffness )[6][6] ) const override final;
 
   GEOS_HOST_DEVICE
   void smallStrainNoStateUpdate( localIndex const k,
-                                         localIndex const q,
-                                         real64 const ( &totalStrain )[6],
-                                         real64 ( &stress )[6],
-                                         DiscretizationOps & stiffness ) const;
+                                 localIndex const q,
+                                 real64 const ( &totalStrain )[6],
+                                 real64 ( &stress )[6],
+                                 DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate_StressOnly( localIndex const k,
-                                             localIndex const q,
-                                             real64 const & timeIncrement,
-                                             real64 const ( &strainIncrement )[6],
-                                             real64 ( &stress )[6] ) const override;
+                                     localIndex const q,
+                                     real64 const & timeIncrement,
+                                     real64 const ( &strainIncrement )[6],
+                                     real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
-void smallStrainUpdate( localIndex const k,
+  void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & timeIncrement,
                           real64 const ( &strainIncrement )[6],
@@ -153,22 +153,22 @@ void smallStrainUpdate( localIndex const k,
                           real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
-void smallStrainUpdate( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrement )[6],
-                                  real64 ( &stress )[6],
-                                  DiscretizationOps & stiffness ) const;
+  void smallStrainUpdate( localIndex const k,
+                          localIndex const q,
+                          real64 const & timeIncrement,
+                          real64 const ( &strainIncrement )[6],
+                          real64 ( &stress )[6],
+                          DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
-void getElasticStiffness( localIndex const k,
-                                    localIndex const q,
-                                    real64 ( &stiffness )[6][6] ) const override;
+  void getElasticStiffness( localIndex const k,
+                            localIndex const q,
+                            real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
-void getElasticStrain( localIndex const k,
-                                 localIndex const q,
-                                 real64 ( &elasticStrain )[6] ) const override final;
+  void getElasticStrain( localIndex const k,
+                         localIndex const q,
+                         real64 ( &elasticStrain )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   virtual void viscousStateUpdate( localIndex const k,
@@ -178,15 +178,15 @@ void getElasticStrain( localIndex const k,
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6],
+                            real64 ( &stiffness )[6][6] ) const override final;
 
 private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
@@ -211,9 +211,9 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ChiumentiUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const ( &totalStrain )[6],
-                                                    real64 ( &stress )[6] ) const
+                                                            localIndex const q,
+                                                            real64 const ( &totalStrain )[6],
+                                                            real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -227,15 +227,15 @@ GEOS_FORCE_INLINE
 void ChiumentiUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &totalStrain )[6],
-                                                 real64 ( &stress )[6],
-                                                 real64 ( &stiffness )[6][6] ) const 
+                                                 real64 ( & stress )[6],
+                                                 real64 ( & stiffness )[6][6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( totalStrain );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "smallStrainNoStateUpdate overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( totalStrain );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainNoStateUpdate overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -243,15 +243,15 @@ GEOS_FORCE_INLINE
 void ChiumentiUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const ( &totalStrain )[6],
-                                                 real64 ( &stress )[6],
+                                                 real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( totalStrain );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "smallStrainNoStateUpdate overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( totalStrain );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainNoStateUpdate overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -260,14 +260,14 @@ void ChiumentiUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                      localIndex const q,
                                                      real64 const & timeIncrement,
                                                      real64 const ( &strainIncrement )[6],
-                                                     real64 ( &stress )[6] ) const
+                                                     real64 ( & stress )[6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( timeIncrement );
-    GEOS_UNUSED_VAR( strainIncrement );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -275,19 +275,19 @@ GEOS_FORCE_INLINE
 void ChiumentiUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                      localIndex const q,
                                                      real64 const & timeIncrement,
-                                                     real64 const ( & beginningRotation )[3][3],
-                                                     real64 const ( & endRotation )[3][3],
+                                                     real64 const ( &beginningRotation )[3][3],
+                                                     real64 const ( &endRotation )[3][3],
                                                      real64 const ( &strainIncrement )[6],
-                                                     real64 ( &stress )[6] ) const
+                                                     real64 ( & stress )[6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( timeIncrement );
-    GEOS_UNUSED_VAR( beginningRotation );
-    GEOS_UNUSED_VAR( endRotation );
-    GEOS_UNUSED_VAR( strainIncrement );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -296,16 +296,16 @@ void ChiumentiUpdates::smallStrainUpdate( localIndex const k,
                                           localIndex const q,
                                           real64 const & timeIncrement,
                                           real64 const ( &strainIncrement )[6],
-                                          real64 ( &stress )[6],
-                                          real64 ( &stiffness )[6][6] ) const
+                                          real64 ( & stress )[6],
+                                          real64 ( & stiffness )[6][6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( timeIncrement );
-    GEOS_UNUSED_VAR( strainIncrement );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "smallStrainUpdate overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -314,40 +314,40 @@ void ChiumentiUpdates::smallStrainUpdate( localIndex const k,
                                           localIndex const q,
                                           real64 const & timeIncrement,
                                           real64 const ( &strainIncrement )[6],
-                                          real64 ( &stress )[6],
+                                          real64 ( & stress )[6],
                                           DiscretizationOps & stiffness ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( timeIncrement );
-    GEOS_UNUSED_VAR( strainIncrement );
-    GEOS_UNUSED_VAR( stress );
-    GEOS_UNUSED_VAR( stiffness );
-    GEOS_ERROR( "smallStrainUpdate overload not implemented for Chiumenti" );
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( timeIncrement );
+  GEOS_UNUSED_VAR( strainIncrement );
+  GEOS_UNUSED_VAR( stress );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "smallStrainUpdate overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ChiumentiUpdates::getElasticStiffness( localIndex const k,
                                             localIndex const q,
-                                            real64 ( &stiffness )[6][6] ) const
+                                            real64 ( & stiffness )[6][6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( stiffness );   
-    GEOS_ERROR( "getElasticStiffness overload not implemented for Chiumenti" ); 
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( stiffness );
+  GEOS_ERROR( "getElasticStiffness overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ChiumentiUpdates::getElasticStrain( localIndex const k,
                                          localIndex const q,
-                                         real64 ( &elasticStrain )[6] ) const
+                                         real64 ( & elasticStrain )[6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( elasticStrain );   
-    GEOS_ERROR( "getElasticStrain overload not implemented for Chiumenti" ); 
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( elasticStrain );
+  GEOS_ERROR( "getElasticStrain overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
@@ -356,29 +356,29 @@ void ChiumentiUpdates::viscousStateUpdate( localIndex const k,
                                            localIndex const q,
                                            real64 beta ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( beta );   
-    GEOS_ERROR( "viscousStateUpdate overload not implemented for Chiumenti" ); 
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( beta );
+  GEOS_ERROR( "viscousStateUpdate overload not implemented for Chiumenti" );
 }
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ChiumentiUpdates::hyperUpdate( localIndex const k,
                                     localIndex const q,
-                                    real64 const ( & FminusI )[3][3],
+                                    real64 const ( &FminusI )[3][3],
                                     real64 ( & stress )[6] ) const
 {
-    // Compute hyperelastic trial update of stress
-    HyperelasticMMSUpdates::hyperUpdate( k, 
-                                         q,
-                                         FminusI,
-                                         stress );
+  // Compute hyperelastic trial update of stress
+  HyperelasticMMSUpdates::hyperUpdate( k,
+                                       q,
+                                       FminusI,
+                                       stress );
 
-    if( m_disableInelasticity )
-    {
-        return;
-    }
+  if( m_disableInelasticity )
+  {
+    return;
+  }
 
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
 //   failureStrength *= 1.0 - m_damage[k][q];
@@ -407,7 +407,7 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
 //   {
 //     for(int j = 0; j < 3; j ++)
 //     {
-//         ss << eigenVectors[i][j] << ", "; 
+//         ss << eigenVectors[i][j] << ", ";
 //     }
 //     ss << "\n";
 //   }
@@ -417,7 +417,7 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
   real64 maximumPrincipalStress = 0.0;
   for( localIndex i = 0; i < 3; ++i )
   {
-    maximumPrincipalStress = fmax( principalStresses[i], maximumPrincipalStress );
+    maximumPrincipalStress = LvArray::math::max( principalStresses[i], maximumPrincipalStress );
   }
 
   if( maximumPrincipalStress > failureStrength )
@@ -425,9 +425,9 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
     real64 newDamage = 1.0;
     if( maximumPrincipalStress <= failureStrength*(1.0+1.0/brittlenessFactorScaled) )
     {
-        newDamage = (1.0+brittlenessFactorScaled) * (1.0-failureStrength / maximumPrincipalStress);
-    }   
-    m_damage[k][q] = fmax(0.0, fmin(1.0, fmax(m_damage[k][q], newDamage)));
+      newDamage = (1.0+brittlenessFactorScaled) * (1.0-failureStrength / maximumPrincipalStress);
+    }
+    m_damage[k][q] = LvArray::math::max( 0.0, LvArray::math::min( 1.0, LvArray::math::max( m_damage[k][q], newDamage )));
   }
 //   ss << "Updated damage" << m_damage[k][q] << "\n";
 
@@ -436,18 +436,24 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
   {
     for( int i = 0; i < 3; i++ )
     {
-        principalStresses[i] *= ( principalStresses[i] > 0.0 ) ? (1.0-m_damage[k][q]) : 1.0;
+      principalStresses[i] *= ( principalStresses[i] > 0.0 ) ? (1.0-m_damage[k][q]) : 1.0;
     }
   }
 
 //   ss << "Dense stress" << "\n";
   real64 denseStress[3][3] = { { 0.0 } };
-  for(int i = 0; i < 3; i++)
+  for( int i = 0; i < 3; i++ )
   {
-    for(int j = 0; j < 3; j++)
-    { 
-        denseStress[i][j] = principalStresses[0] * eigenVectors[0][i] * eigenVectors[0][j] + principalStresses[1] * eigenVectors[1][i] * eigenVectors[1][j] + principalStresses[2] * eigenVectors[2][i] * eigenVectors[2][j]; // Change magnitude and orientation of eigenvectors
-        // ss << denseStress[i][j] << ", ";
+    for( int j = 0; j < 3; j++ )
+    {
+      denseStress[i][j] = principalStresses[0] * eigenVectors[0][i] * eigenVectors[0][j] + principalStresses[1] * eigenVectors[1][i] * eigenVectors[1][j] + principalStresses[2] * eigenVectors[2][i] *
+                          eigenVectors[2][j];                                                                                                                                                                                 // Change
+                                                                                                                                                                                                                              // magnitude
+                                                                                                                                                                                                                              // and
+                                                                                                                                                                                                                              // orientation
+                                                                                                                                                                                                                              // of
+                                                                                                                                                                                                                              // eigenvectors
+      // ss << denseStress[i][j] << ", ";
     }
     // ss << "\n";
   }
@@ -459,12 +465,12 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ChiumentiUpdates::hyperUpdate( localIndex const k,
-                                          localIndex const q,
-                                          real64 const ( & FminusI )[3][3],
-                                          real64 ( & stress )[6],
-                                          real64 ( & stiffness )[6][6] ) const
+                                    localIndex const q,
+                                    real64 const ( &FminusI )[3][3],
+                                    real64 ( & stress )[6],
+                                    real64 ( & stiffness )[6][6] ) const
 {
-  hyperUpdate(k, q, FminusI, stress);
+  hyperUpdate( k, q, FminusI, stress );
   getElasticStiffness( k, q, stiffness );
 }
 
@@ -525,7 +531,7 @@ public:
 
     /// string/key for element/particle length scale
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
-    
+
     /// string/key for strength scale value
     static constexpr char const * strengthScaleString() { return "strengthScale"; }
 

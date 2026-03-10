@@ -67,7 +67,12 @@
       proppantSolverName="ProppantTransport"
       flowSolverName="SinglePhaseFVM"
       targetRegions="{ Fracture }"
-      logLevel="1"/>
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonMaxIter="8"
+	lineSearchAction="None"  	  
+        couplingType="Sequential"/>
+    </FlowProppantTransport>
 <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
 
 
@@ -92,7 +97,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      rockToughness="1e6"
+      initialRockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
  

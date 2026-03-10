@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -83,13 +83,13 @@ void PerfectlyMatchedLayer::postInputInitialization()
                                   << viewKeyStruct::xMinString()
                                   << " must be smaller than "
                                   << viewKeyStruct::xMaxString(),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( (m_reflectivity<=0 || m_reflectivity>1),
                  getCatalogName() << " " << getDataContext() << " "
                                   << viewKeyStruct::reflectivityString()
                                   << " must satisfy 0 < reflectivity <= 1",
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( (m_xMin[0]<smallestXMin || m_xMin[1]<smallestXMin || m_xMin[2]<smallestXMin),
                       getCatalogName() << " " << getDataContext() << " "

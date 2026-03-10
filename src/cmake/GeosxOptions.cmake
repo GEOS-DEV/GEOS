@@ -4,7 +4,8 @@ message( "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}" )
 message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 
 ### OPTIONS ###
-option( GEOS_ENABLE_TESTS "" ON )
+option( GEOS_ENABLE_FPE "Enables floating point exceptions" ON )
+option( GEOS_ENABLE_TESTS "Enables unit tests" ON )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
@@ -20,7 +21,22 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
+if( NOT CMAKE_CONFIGURATION_TYPES )
+    ######################################################
+    # Add define we can use when debug builds are enabled
+    ######################################################
+    if ( CMAKE_BUILD_TYPE MATCHES "Debug" )
+        set( GEOS_ENABLE_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+    endif()
+endif()
+if( GEOS_ENABLE_BOUNDS_CHECK )
+  set( LVARRAY_BOUNDS_CHECK ON CACHE BOOL "" FORCE )
+endif()
+
 option( ENABLE_PVTPackage "" ON )
+
+option( ENABLE_HPCREACT "" OFF )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 
@@ -83,6 +99,8 @@ else()
   option( ENABLE_OPENMP "Enables OpenMP compiler support" ON )
 endif()
 
+option( ENABLE_CUDA_STACK_SIZE "Allows the CUDA stack size limit to be adjusted" OFF )
+
 ### BUILD & BLT SETUP ###
 
 option( GEOS_INSTALL_SCHEMA "Enables schema generation and installation" ON )
@@ -102,6 +120,16 @@ if( GEOS_PARALLEL_LINK_JOBS )
     set_property( GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${GEOS_PARALLEL_LINK_JOBS} )
     set( CMAKE_JOB_POOL_LINK link_job_pool )
 endif()
+
+# Physics packages
+option( GEOS_ENABLE_CONTACT "Enables contact physics package" OFF )
+option( GEOS_ENABLE_FLUIDFLOW "Enables fluid flow physics package" OFF )
+option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics package" OFF )
+option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" OFF )
+option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" OFF )
+option( GEOS_ENABLE_SOLIDMECHANICS "Enables solid mechanics physics package" ON )
+option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" OFF )
+option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" OFF )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
@@ -125,7 +153,7 @@ blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
-                                 GNU "-Wno-unused-parameter -Wno-unused-variable -Wno-dangling-reference"
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
                                  CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                )
 
@@ -146,18 +174,6 @@ endif()
 
 if( ${CMAKE_MAKE_PROGRAM} STREQUAL "ninja" OR ${CMAKE_MAKE_PROGRAM} MATCHES ".*/ninja$" )
   set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GEOS_NINJA_FLAGS}" )
-endif()
-
-
-if( CMAKE_HOST_APPLE )
-#    set(GEOS_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
-#    set(GEOS_LINK_POSTPEND_FLAG "" CACHE STRING "")
-# elseif( ENABLE_CUDA )
-#     set( GEOS_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
-#     set( GEOS_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
-else()
-    set( GEOS_LINK_PREPEND_FLAG  "-Wl,--whole-archive"    CACHE STRING "" )
-    set( GEOS_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
 set( GEOS_LOCALINDEX_TYPE "int" CACHE STRING "" )
@@ -206,6 +222,5 @@ message( "GEOS_GLOBALINDEX_TYPE_FLAG = ${GEOS_GLOBALINDEX_TYPE_FLAG}" )
 
 
 message( "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}" )
-message( "GEOS_LINK_PREPEND_FLAG=${GEOS_LINK_PREPEND_FLAG}" )
-message( "GEOS_LINK_POSTPEND_FLAG=${GEOS_LINK_POSTPEND_FLAG}" )
+
 message( "Leaving GeosxOptions.cmake\n" )

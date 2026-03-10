@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -82,12 +82,19 @@ public:
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto onlyPlotSpecifiedFieldNames = "onlyPlotSpecifiedFieldNames";
     static constexpr auto fieldNames = "fieldNames";
+    static constexpr auto parallelThreadsString = "parallelThreads";
   } siloOutputViewKeys;
   /// @endcond
 
 private:
 
   void postInputInitialization() override;
+
+  /**
+   * @brief Get the number of parallel threads to use to write plotfiles
+   * @return The number of threads
+   **/
+  integer parallelThreads() const { return m_parallelThreads; }
 
   string m_plotFileRoot;
   integer m_writeEdgeMesh;
@@ -100,8 +107,9 @@ private:
   integer m_onlyPlotSpecifiedFieldNames;
 
   /// array of names of the fields to output
-  array1d< string > m_fieldNames;
+  string_array m_fieldNames;
 
+  integer m_parallelThreads;
 };
 
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,8 +21,8 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_
 
 #include "FunctionBase.hpp"
-
-#include "codingUtilities/EnumStrings.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
@@ -33,8 +33,12 @@ namespace constitutive
 namespace compositional
 {
 
+class ModelParameters;
+
 class LohrenzBrayClarkViscosityUpdate final : public FunctionBaseUpdate
 {
+  static integer constexpr maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+
 public:
 /**
  * @brief Mixing types for phase viscosity
@@ -296,7 +300,6 @@ public:
     ~Parameters() override = default;
 
     string m_componentMixingType;
-    array1d< real64 > m_componentCriticalVolume;
 
 private:
     void registerParametersImpl( MultiFluidBase * fluid ) override;
@@ -304,29 +307,15 @@ private:
 
     struct viewKeyStruct
     {
-      static constexpr char const * componentCriticalVolumeString() { return "componentCriticalVolume"; }
       static constexpr char const * componentMixingTypeString() { return "viscosityMixingRule"; }
     };
-
-    /**
-     * @brief Estimate critical volumes using Ihmels' (2010) correlation
-     * @details reference: http://dx.doi.org/10.1021/je100167w
-     * @param[in] numComponents The number of components
-     * @param[in] criticalPressure The component critical pressures
-     * @param[in] criticalTemperature The component critical temperatures
-     * @param[in] criticalVolume The component critical volumes
-     */
-    static void calculateCriticalVolume( integer const numComponents,
-                                         arrayView1d< const real64 > const criticalPressure,
-                                         arrayView1d< const real64 > const criticalTemperature,
-                                         arrayView1d< real64 > const criticalVolume );
   };
 
   // Create parameters unique to this model
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
 private:
-  Parameters const * m_parameters{};
+  ModelParameters const & m_parameters;
 };
 
 /// Declare strings associated with enumeration values.
@@ -342,6 +331,6 @@ ENUM_STRINGS( LohrenzBrayClarkViscosityUpdate::MixingType,
 } // end namespace geos
 
 // Implementation
-#include "LohrenzBrayClarkViscosityImpl.hpp"
+#include "LohrenzBrayClarkViscosity_Impl.hpp"
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_MODELS_LOHRENZBRAYCLARKVISCOSITY_HPP_

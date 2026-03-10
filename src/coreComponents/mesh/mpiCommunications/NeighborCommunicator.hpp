@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
+#include "../ElementRegionManager.hpp"
 
 namespace geos
 {
@@ -30,17 +31,21 @@ inline int CommTag( int const GEOS_UNUSED_PARAM( senderRank ),
                     int const comm )
 {
 //  int m_size;
-//  MPI_Comm_size( MPI_COMM_GEOSX, &m_size );
+//  MPI_Comm_size( MPI_COMM_GEOS, &m_size );
 //  return senderRank * m_size + receiverRank + m_size * m_size * comm;
   return comm;
 }
 
+class ObjectManagerBase;
 class MeshLevel;
 class MPI_iCommData;
 
 class NeighborCommunicator
 {
 public:
+  using ElemAdjListViewType = ElementRegionManager::ElementViewAccessor< arrayView1d< localIndex > >;
+  using ElemAdjListRefWrapType = ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > >;
+  using ElemAdjListRefType = ElementRegionManager::ElementReferenceAccessor< localIndex_array >;
 
   explicit NeighborCommunicator( int rank );
 
@@ -193,6 +198,9 @@ public:
   void unpackGhosts( MeshLevel & meshLevel,
                      int const commID );
 
+  void unpackGhostsData( MeshLevel & meshLevel,
+                         int const commID );
+
   /**
    * Posts non-blocking sends to m_neighborRank for
    *  both the size and regular communication buffers
@@ -210,7 +218,7 @@ public:
 
   /**
    * Unpack the receive buffer and process synchronization
-   *  list information recieved from m_neighborRank.
+   *  list information received from m_neighborRank.
    *  This must be called after PostRecv is called, and
    *  the request associated with that recv has
    *  completed (retrieve the request using GetRecvRequest)
@@ -218,17 +226,34 @@ public:
   void unpackAndRebuildSyncLists( MeshLevel & meshLevel,
                                   int const CommID );
 
+  void packCommBufferForSync( string_array const & fieldNames,
+                              ObjectManagerBase const & manager,
+                              int const commID,
+                              bool onDevice,
+                              parallelDeviceEvents & events );
+
   void packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool onDevice,
                               parallelDeviceEvents & events );
 
+  int packCommSizeForSync( string_array const & fieldNames,
+                           ObjectManagerBase const & manager,
+                           int const commID,
+                           bool onDevice,
+                           parallelDeviceEvents & events );
+
   int packCommSizeForSync( FieldIdentifiers const & fieldsToBeSync,
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
                            parallelDeviceEvents & events );
+
+  void unpackBufferForSync( ObjectManagerBase & manager,
+                            int const commID,
+                            bool onDevice,
+                            parallelDeviceEvents & events );
 
   void unpackBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                             MeshLevel & meshLevel,
@@ -291,8 +316,17 @@ private:
   int m_sendBufferSize[maxComm];
   int m_receiveBufferSize[maxComm];
 
-  std::vector< buffer_type > m_sendBuffer;
-  std::vector< buffer_type > m_receiveBuffer;
+  stdVector< buffer_type > m_sendBuffer;
+  stdVector< buffer_type > m_receiveBuffer;
+
+  localIndex_array m_nodeUnpackList;
+  localIndex_array m_edgeUnpackList;
+  localIndex_array m_faceUnpackList;
+  ElemAdjListRefType m_elementAdjacencyReceiveListArray;
+  buffer_type::size_type m_unpackedSize = 0;
+  buffer_unit_type const * m_receiveBufferPtr = nullptr;
+
+
 
 };
 

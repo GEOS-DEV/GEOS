@@ -13,6 +13,7 @@ git submodule update --init src/cmake/blt
 git submodule update --init src/coreComponents/LvArray
 git submodule update --init src/coreComponents/constitutive/PVTPackage
 git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
+git submodule update --init src/coreComponents/constitutive/HPCReact
 
 
 # Initialize PR submodule hashes
@@ -30,7 +31,8 @@ declare -Ar main_branches=(
   ["LvArray"]="origin/develop"
   ["integratedTests"]="origin/develop"
   ["hdf5_interface"]="origin/master"
-  ["PVTPackage"]="origin/master"
+  ["PVTPackage"]="origin/develop"
+  ["HPCReact"]="origin/main"
 )
 
 

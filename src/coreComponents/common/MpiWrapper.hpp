@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,9 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
+#include "common/TypesHelpers.hpp"
+
+#include <numeric>
 
 #if defined(GEOS_USE_MPI)
   #include <mpi.h>
@@ -40,6 +43,7 @@ typedef int MPI_Datatype;
 #define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
 #define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
 #define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
+#define MPI_C_BOOL         ((MPI_Datatype)0x4c00013f)
 #define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
 #define MPI_SHORT          ((MPI_Datatype)0x4c000203)
 #define MPI_UNSIGNED_SHORT ((MPI_Datatype)0x4c000204)
@@ -98,6 +102,13 @@ struct MPI_Status
 namespace geos
 {
 
+/// Global MPI communicator used by GEOSX.
+#ifdef GEOS_USE_MPI
+extern MPI_Comm MPI_COMM_GEOS;
+#else
+extern int MPI_COMM_GEOS;
+#endif
+
 /**
  * @struct MpiWrapper
  * This struct is a wrapper for all mpi.h functions that are used in GEOSX, and provides a collection of
@@ -121,6 +132,30 @@ public:
     Min,  //!< Min
     Sum,  //!< Sum
     Prod, //!< Prod
+    LogicalAnd, //!< Logical and
+    LogicalOr, //!< Logical or
+  };
+
+  /**
+   * @enum PairReduction
+   * Strongly typed enum class for calling collective functions processing pairs (ie. indexed values).
+   */
+  enum class PairReduction
+  {
+    Max, //!< Max pair first value
+    Min, //!< Min pair first value
+  };
+
+  /**
+   * @struct PairType
+   * Represents a pair of values. `first` (typically, a given measure) is the primary value for comparison,
+   * `second` (typically an index) will be compared in case of `first` equality.
+   */
+  template< typename FIRST, typename SECOND >
+  struct PairType
+  {
+    FIRST first;
+    SECOND second;
   };
 
   MpiWrapper() = delete;
@@ -139,7 +174,7 @@ public:
    */
   ///@{
 
-  static void barrier( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static void barrier( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOS );
 
   static int cartCoords( MPI_Comm comm, int rank, int maxdims, int coords[] );
 
@@ -150,9 +185,9 @@ public:
 
   static void commFree( MPI_Comm & comm );
 
-  static int commRank( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static int commRank( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOS );
 
-  static int commSize( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOSX );
+  static int commSize( MPI_Comm const & MPI_PARAM( comm )=MPI_COMM_GEOS );
 
   static bool commCompare( MPI_Comm const & comm1, MPI_Comm const & comm2 );
 
@@ -160,6 +195,10 @@ public:
 
   static int init( int * argc, char * * * argv );
 
+  /**
+   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * Please note that once called, MPI functions, communicators and resources can no longer be used.
+   */
   static void finalize();
 
   static MPI_Comm commDup( MPI_Comm const comm );
@@ -259,7 +298,7 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitSomeCompletePhase( const int participants,
-                                          std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                          stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
 
   /**
    * Active blocking phased communication with multiple participants,
@@ -275,13 +314,13 @@ public:
    * @return MPI_SUCCESS or and MPI_ERROR from internal calls to MPI_WaitAny.
    */
   static int activeWaitOrderedCompletePhase( const int participants,
-                                             std::vector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
+                                             stdVector< std::tuple< MPI_Request *, MPI_Status *, std::function< MPI_Request ( int ) > > > const & phases );
   ///@}
 
 #if !defined(GEOS_USE_MPI)
-  static std::map< int, std::pair< int, void * > > & getTagToPointersMap()
+  static stdMap< int, std::pair< int, void * > > & getTagToPointersMap()
   {
-    static std::map< int, std::pair< int, void * > > tagToPointers;
+    static stdMap< int, std::pair< int, void * > > tagToPointers;
     return tagToPointers;
   }
 #endif
@@ -308,7 +347,7 @@ public:
                         int sendcount,
                         T_RECV * recvbuf,
                         int recvcount,
-                        MPI_Comm comm );
+                        MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allgatherv.
@@ -328,7 +367,7 @@ public:
                          T_RECV * recvbuf,
                          int * recvcounts,
                          int * displacements,
-                         MPI_Comm comm );
+                         MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for MPI_Allgather.
@@ -337,24 +376,17 @@ public:
    * @param[out] allValues The values recived from each rank.
    */
   template< typename T >
-  static void allGather( T const myValue, array1d< T > & allValues, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void allGather( T const myValue, array1d< T > & allValues, MPI_Comm comm = MPI_COMM_GEOS );
 
   template< typename T >
   static int allGather( arrayView1d< T const > const & sendbuf,
                         array1d< T > & recvbuf,
-                        MPI_Comm comm = MPI_COMM_GEOSX );
+                        MPI_Comm comm = MPI_COMM_GEOS );
 
-  /**
-   * @brief Strongly typed wrapper around MPI_Allreduce.
-   * @param[in] sendbuf The pointer to the sending buffer.
-   * @param[out] recvbuf The pointer to the receive buffer.
-   * @param[in] count The number of values to send/receive.
-   * @param[in] op The MPI_Op to perform.
-   * @param[in] comm The MPI_Comm over which the gather operates.
-   * @return The return value of the underlying call to MPI_Allreduce().
-   */
   template< typename T >
-  static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOSX );
+  static int allGatherv( arrayView1d< T const > const & sendbuf,
+                         array1d< T > & recvbuf,
+                         MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Allreduce function.
@@ -365,7 +397,7 @@ public:
    * @return The value of reduction across all ranks
    */
   template< typename T >
-  static T allReduce( T const & value, Reduction const op, MPI_Comm comm = MPI_COMM_GEOSX );
+  static T allReduce( T const & value, Reduction const op, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Allreduce function. Version for sequences.
@@ -376,8 +408,57 @@ public:
    * @param comm The communicator.
    */
   template< typename T >
-  static void allReduce( Span< T const > src, Span< T > dst, Reduction const op, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void allReduce( Span< T const > src, Span< T > dst, Reduction const op, MPI_Comm comm = MPI_COMM_GEOS );
 
+  /**
+   * @brief Convenience wrapper for the MPI_Allreduce function. Version for arrays.
+   * @tparam T type of data to reduce. Must correspond to a valid MPI_Datatype.
+   * @param src[in] The values to send to the reduction.
+   * @param dst[out] The resulting values.
+   * @param op The Reduction enum to perform.
+   * @param comm The communicator.
+   */
+  template< typename SRC_CONTAINER_TYPE, typename DST_CONTAINER_TYPE >
+  static void allReduce( SRC_CONTAINER_TYPE const & src, DST_CONTAINER_TYPE & dst, Reduction const op, MPI_Comm const comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Convenience wrapper for the MPI_Allreduce function. Version for arrays.
+   * @tparam T type of data to reduce. Must correspond to a valid MPI_Datatype.
+   * @param src[in] The values to send to the reduction.
+   * @param dst[out] The resulting values.
+   * @param count The number of contiguos elements of the arrays to perform the reduction on (must be leq than the size).
+   * @param op The Reduction enum to perform.
+   * @param comm The communicator.
+   */
+  template< typename SRC_CONTAINER_TYPE, typename DST_CONTAINER_TYPE >
+  static void allReduce( SRC_CONTAINER_TYPE const & src, DST_CONTAINER_TYPE & dst, int const count, Reduction const op, MPI_Comm const comm );
+
+  /**
+   * @brief Perform a collective reduction on a pair using MPI.
+   * @tparam FIRST Pair first element type. Typically a numerical quantity (e.g., real64, int).
+   * @tparam SECOND Pair second element type. Typically a numerical quantity (e.g., localIndex, globalIndex).
+   * @tparam OP The reduction operation to apply (`PairReduction::Max`, `PairReduction::Min`).
+   * @param pair The local pair to reduce.
+   * @param comm The MPI communicator to use.
+   * @return The resulting reduced pair, consistent across all processes.
+   */
+  template< typename FIRST, typename SECOND, PairReduction OP >
+  static PairType< FIRST, SECOND > allReduce( PairType< FIRST, SECOND > const & pair,
+                                              MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Perform a collective reduction on a container of pairs using MPI.
+   * @tparam FIRST Pairs first element type. Typically a numerical quantity (e.g., real64, int).
+   * @tparam SECOND Pairs second element type. Typically a numerical quantity (e.g., localIndex, globalIndex).
+   * @tparam CONTAINER Pairs container type (e.g., `stdVector<PairType<FIRST, SECOND>>`).
+   * @tparam OP The reduction operation to apply (`PairReduction::Max` or `PairReduction::Min`).
+   * @param pairs The local container of pairs to be reduced.
+   * @param comm The MPI communicator to use.
+   * @return The resulting reduced pair, consistent across all processes.
+   */
+  template< typename FIRST, typename SECOND, typename CONTAINER, PairReduction OP >
+  static PairType< FIRST, SECOND > allReduce( CONTAINER const & pairs,
+                                              MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Strongly typed wrapper around MPI_Reduce.
@@ -389,7 +470,7 @@ public:
    * @return The return value of the underlying call to MPI_Reduce().
    */
   template< typename T >
-  static int reduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+  static int reduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, int root, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Reduce function.
@@ -400,7 +481,7 @@ public:
    * @return The value of reduction (only significant at root)
    */
   template< typename T >
-  static T reduce( T const & value, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+  static T reduce( T const & value, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Reduce function. Version for sequences.
@@ -411,14 +492,14 @@ public:
    * @param comm The communicator.
    */
   template< typename T >
-  static void reduce( Span< T const > src, Span< T > dst, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void reduce( Span< T const > src, Span< T > dst, Reduction const op, int root, MPI_Comm comm = MPI_COMM_GEOS );
 
 
   template< typename T >
-  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+  static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOS );
 
   template< typename T >
-  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
+  static int exscan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Strongly typed wrapper around MPI_Bcast.
@@ -429,7 +510,7 @@ public:
    * @return The return value of the underlying call to MPI_Bcast().
    */
   template< typename T >
-  static int bcast( T * buffer, int count, int root, MPI_Comm comm );
+  static int bcast( T * buffer, int count, int root, MPI_Comm comm = MPI_COMM_GEOS );
 
 
   /**
@@ -439,7 +520,7 @@ public:
    * @param srcRank The rank that is sending the \p value.
    */
   template< typename T >
-  static void broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void broadcast( T & value, int srcRank = 0, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Strongly typed wrapper around MPI_Gather().
@@ -459,7 +540,28 @@ public:
                      TR * const recvbuf,
                      int recvcount,
                      int root,
-                     MPI_Comm comm );
+                     MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Strongly typed wrapper around MPI_Gather().
+   * @tparam TS The pointer type for \p sendbuf
+   * @tparam TR The pointer type for \p recvbuf
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[out] recvbuf The pointer to the receive buffer.
+   * @param[in] recvcount The number of values to receive.
+   * @param[in] root The rank recieving the data.
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @return
+   */
+  template< typename T, typename DST_CONTAINER,
+            typename = std::enable_if_t<
+              std::is_trivially_copyable_v< T > &&
+              std::is_same_v< decltype(std::declval< DST_CONTAINER >().size()), std::size_t > &&
+              std::is_same_v< decltype(std::declval< DST_CONTAINER >().data()), T * > > >
+  static int gather( T const & value,
+                     DST_CONTAINER & destValuesBuffer,
+                     int root,
+                     MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Strongly typed wrapper around MPI_Gatherv.
@@ -482,7 +584,53 @@ public:
                       const int * recvcounts,
                       const int * displs,
                       int root,
-                      MPI_Comm comm );
+                      MPI_Comm comm = MPI_COMM_GEOS );
+
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatter.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcount The number of values to send.
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatter().
+ */
+  template< typename TS, typename TR >
+  static int scatter( TS const * const sendbuf,
+                      int sendcount,
+                      TR * const recvbuf,
+                      int recvcount,
+                      int root,
+                      MPI_Comm comm = MPI_COMM_GEOS );
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatterv.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcounts The number of values to send.
+ * @param[in] displs integer array (of length group size). Entry i specifies the displacement relative to sendbuf at
+ *                   which to take the outgoing data from process i (significant only at root).
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatterv().
+ */
+  template< typename TS, typename TR >
+  static int scatterv( TS const * const sendbuf,
+                       const int * sendcounts,
+                       const int * displs,
+                       TR * const recvbuf,
+                       int recvcount,
+                       int root,
+                       MPI_Comm comm = MPI_COMM_GEOS );
+
+
 
   /**
    * @brief Returns an MPI_Op associated with our strongly typed Reduction enum.
@@ -524,6 +672,22 @@ public:
                     MPI_Request * request );
 
   /**
+   * @brief Strongly typed wrapper around MPI_Send()
+   * @param[in] buf The pointer to the buffer that contains the data to be sent.
+   * @param[in] count The number of elements in \p buf.
+   * @param[in] dest The rank of the destination process within \p comm.
+   * @param[in] tag The message tag that is be used to distinguish different types of messages.
+   * @param[in] comm The handle to the MPI_Comm.
+   * @return
+   */
+  template< typename T >
+  static int send( T const * const buf,
+                   int count,
+                   int dest,
+                   int tag,
+                   MPI_Comm comm );
+
+  /**
    * @brief Strongly typed wrapper around MPI_Isend()
    * @param[in] buf The pointer to the buffer that contains the data to be sent.
    * @param[in] count The number of elements in \p buf.
@@ -549,7 +713,7 @@ public:
    * @return a pair where first is the prefix sum, second is the full sum
    */
   template< typename U, typename T >
-  static U prefixSum( T const value, MPI_Comm comm = MPI_COMM_GEOSX );
+  static U prefixSum( T const value, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_SUM operation.
@@ -557,7 +721,7 @@ public:
    * @return The sum of all \p value across the ranks.
    */
   template< typename T >
-  static T sum( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
+  static T sum( T const & value, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_SUM operation.
@@ -566,7 +730,7 @@ public:
    * @return The sum of all \p value across the ranks.
    */
   template< typename T >
-  static void sum( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void sum( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_MIN operation.
@@ -574,7 +738,7 @@ public:
    * @return The minimum of all \p value across the ranks.
    */
   template< typename T >
-  static T min( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
+  static T min( T const & value, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_MIN operation.
@@ -583,7 +747,25 @@ public:
    * @return The minimum of all \p value across the ranks.
    */
   template< typename T >
-  static void min( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void min( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Convenience function for a MPI_Allreduce using a min-pair operation.
+   * @param[in] value the value to send into the reduction.
+   * @param[out] dst The resulting values.
+   * @return The maximum of all \p value across the ranks.
+   */
+  template< typename FIRST, typename SECOND >
+  static PairType< FIRST, SECOND > min( PairType< FIRST, SECOND > const & pair, MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Convenience function for a MPI_Allreduce using a min-pair operation.
+   * @param[in] value the value to send into the reduction.
+   * @param[out] dst The resulting values.
+   * @return The maximum of all \p value across the ranks.
+   */
+  template< typename FIRST, typename SECOND, typename CONTAINER >
+  static PairType< FIRST, SECOND > min( CONTAINER const & pairs, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_MAX operation.
@@ -591,7 +773,7 @@ public:
    * @return The maximum of all \p value across the ranks.
    */
   template< typename T >
-  static T max( T const & value, MPI_Comm comm = MPI_COMM_GEOSX );
+  static T max( T const & value, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience function for a MPI_Allreduce using a MPI_MAX operation.
@@ -600,11 +782,65 @@ public:
    * @return The maximum of all \p value across the ranks.
    */
   template< typename T >
-  static void max( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOSX );
+  static void max( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Convenience function for a MPI_Allreduce using a max-pair operation.
+   * @param[in] value the value to send into the reduction.
+   * @param[out] dst The resulting values.
+   * @return The maximum of all \p value across the ranks.
+   */
+  template< typename FIRST, typename SECOND >
+  static PairType< FIRST, SECOND > max( PairType< FIRST, SECOND > const & pair, MPI_Comm comm = MPI_COMM_GEOS );
+
+  /**
+   * @brief Convenience function for a MPI_Allreduce using a max-pair operation.
+   * @param[in] value the value to send into the reduction.
+   * @param[out] dst The resulting values.
+   * @return The maximum of all \p value across the ranks.
+   */
+  template< typename FIRST, typename SECOND, typename CONTAINER >
+  static PairType< FIRST, SECOND > max( CONTAINER const & pairs, MPI_Comm comm = MPI_COMM_GEOS );
+
+private:
+
+  /**
+   * @brief Strongly typed wrapper around MPI_Allreduce.
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[out] recvbuf The pointer to the receive buffer.
+   * @param[in] count The number of values to send/receive.
+   * @param[in] op The MPI_Op to perform.
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @return The return value of the underlying call to MPI_Allreduce().
+   */
+  template< typename T >
+  static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm = MPI_COMM_GEOS );
 };
 
 namespace internal
 {
+
+/// @brief The list of MPI resources, managed by this class, that need to be freed at mpi finalization.
+struct ManagedResources
+{
+  // The list of managed MPI_Op instances
+  std::set< MPI_Op > m_mpiOps;
+
+  // The list of managed MPI_Type instances
+  std::set< MPI_Datatype > m_mpiTypes;
+
+  /**
+   * @brief Simply free the MPI managed resources and clear the resource sets. To be called just
+   * before MPI_Finalize().
+   */
+  void finalize();
+};
+
+/**
+ * @brief For internal use.
+ * @return The ManagedResources set.
+ */
+ManagedResources & getManagedResources();
 
 template< typename T, typename ENABLE = void >
 struct MpiTypeImpl {};
@@ -635,10 +871,75 @@ struct MpiTypeImpl< T, std::enable_if_t< std::is_enum< T >::value > >
   static MPI_Datatype get() { return MpiTypeImpl< std::underlying_type_t< T > >::get(); }
 };
 
+template<>
+struct MpiTypeImpl< bool * >
+{
+  static MPI_Datatype get()
+  {
+    // Return the appropriate MPI_Datatype for bool*
+    return MPI_C_BOOL;
+  }
+};
+
+
 template< typename T >
 MPI_Datatype getMpiType()
 {
   return MpiTypeImpl< T >::get();
+}
+
+template< typename FIRST, typename SECOND >
+MPI_Datatype getMpiPairType()
+{
+  static_assert( "no default implementation, please add a template specialization and add it in the \"testMpiWrapper\" unit test." );
+  return {};
+}
+template<> MPI_Datatype getMpiPairType< int, int >();
+template<> MPI_Datatype getMpiPairType< long int, int >();
+template<> MPI_Datatype getMpiPairType< long int, long int >();
+template<> MPI_Datatype getMpiPairType< long long int, long long int >();
+template<> MPI_Datatype getMpiPairType< float, int >();
+template<> MPI_Datatype getMpiPairType< double, int >();
+template<> MPI_Datatype getMpiPairType< double, long int >();
+template<> MPI_Datatype getMpiPairType< double, long long int >();
+template<> MPI_Datatype getMpiPairType< double, double >();
+
+// It is advised to always use this custom operator for pairs as MPI_MAXLOC is not a true lexicographical comparator.
+template< typename FIRST, typename SECOND, MpiWrapper::PairReduction OP >
+MPI_Op getMpiPairReductionOp()
+{
+  static auto const createOpHolder = [] () {
+    using PAIR_T = MpiWrapper::PairType< FIRST, SECOND >;
+
+    auto const customOpFunc =
+      []( void * invec, void * inoutvec, int * len, MPI_Datatype * )
+    {
+      for( int i = 0; i < *len; ++i )
+      {
+        PAIR_T & in = static_cast< PAIR_T * >(invec)[i];
+        PAIR_T & inout = static_cast< PAIR_T * >(inoutvec)[i];
+        if constexpr ( OP == MpiWrapper::PairReduction::Min )
+        {
+          if( std::tie( in.first, in.second ) < std::tie( inout.first, inout.second ) )
+            inout = in;
+        }
+        else
+        {
+          if( std::tie( in.first, in.second ) > std::tie( inout.first, inout.second ) )
+            inout = in;
+        }
+      }
+    };
+
+    MPI_Op mpiOp;
+    GEOS_ERROR_IF_NE( MPI_Op_create( customOpFunc, 1, &mpiOp ), MPI_SUCCESS );
+    // Resource registered to be destroyed at MpiWrapper::finalize().
+    internal::getManagedResources().m_mpiOps.emplace( mpiOp );
+    return mpiOp;
+  };
+  // Static storage to ensure the MPI operation is created only once and reused for all calls to this function.
+  static MPI_Op mpiOp{ createOpHolder() };
+  return mpiOp;
 }
 
 }
@@ -662,6 +963,14 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
     case Reduction::Prod:
     {
       return MPI_PROD;
+    }
+    case Reduction::LogicalAnd:
+    {
+      return MPI_LAND;
+    }
+    case Reduction::LogicalOr:
+    {
+      return MPI_LOR;
     }
     default:
       GEOS_ERROR( "Unsupported reduction operation" );
@@ -744,6 +1053,38 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
                         sendSize,
                         internal::getMpiType< T >(),
                         comm );
+
+#else
+  allValues.resize( sendSize );
+  for( localIndex a=0; a<sendSize; ++a )
+  {
+    allValues[a] = sendValues[a];
+  }
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::allGatherv( arrayView1d< T const > const & sendValues,
+                            array1d< T > & allValues,
+                            MPI_Comm MPI_PARAM( comm ) )
+{
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
+#ifdef GEOS_USE_MPI
+  int const mpiSize = commSize( comm );
+  array1d< int > counts;
+  allGather( sendSize, counts, comm );
+  array1d< int > displs( mpiSize + 1 );
+  std::partial_sum( counts.begin(), counts.end(), displs.begin() + 1 );
+  allValues.resize( displs.back() );
+  return MPI_Allgatherv( sendValues.data(),
+                         sendSize,
+                         internal::getMpiType< T >(),
+                         allValues.data(),
+                         counts.data(),
+                         displs.data(),
+                         internal::getMpiType< T >(),
+                         comm );
 
 #else
   allValues.resize( sendSize );
@@ -883,6 +1224,25 @@ int MpiWrapper::gather( TS const * const sendbuf,
 #endif
 }
 
+template< typename T, typename DST_CONTAINER, typename >
+int MpiWrapper::gather( T const & value,
+                        DST_CONTAINER & destValuesBuffer,
+                        int root,
+                        MPI_Comm MPI_PARAM( comm ) )
+{
+  if( commRank() == 0 )
+    GEOS_ERROR_IF_LT_MSG( destValuesBuffer.size(), size_t( commSize() ),
+                          "Receive buffer is not large enough to contain the values to receive." );
+#ifdef GEOS_USE_MPI
+  return MPI_Gather( &value, sizeof( T ), internal::getMpiType< uint8_t >(),
+                     destValuesBuffer.data(), sizeof( T ), internal::getMpiType< uint8_t >(),
+                     root, comm );
+#else
+  memcpy( destValuesBuffer.data(), &value, sendBufferSize );
+  return 0;
+#endif
+}
+
 template< typename TS, typename TR >
 int MpiWrapper::gatherv( TS const * const sendbuf,
                          int sendcount,
@@ -907,6 +1267,56 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
 #endif
 }
 
+
+template< typename TS, typename TR >
+int MpiWrapper::scatter( TS const * const sendbuf,
+                         int sendcount,
+                         TR * const recvbuf,
+                         int recvcount,
+                         int MPI_PARAM( root ),
+                         MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatter( sendbuf, sendcount, internal::getMpiType< TS >(),
+                      recvbuf, recvcount, internal::getMpiType< TR >(),
+                      root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatter() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcount * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+template< typename TS, typename TR >
+int MpiWrapper::scatterv( TS const * const sendbuf,
+                          const int * sendcounts,
+                          const int * MPI_PARAM( displs ),
+                          TR * const recvbuf,
+                          int recvcount,
+                          int MPI_PARAM( root ),
+                          MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatterv( sendbuf, sendcounts, displs, internal::getMpiType< TS >(),
+                       recvbuf, recvcount, internal::getMpiType< TR >(),
+                       root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcounts * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+
+
 template< typename T >
 int MpiWrapper::iRecv( T * const buf,
                        int count,
@@ -920,8 +1330,8 @@ int MpiWrapper::iRecv( T * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
@@ -991,6 +1401,20 @@ int MpiWrapper::iSend( arrayView1d< T > const & buf,
 }
 
 template< typename T >
+int MpiWrapper::send( T const * const buf,
+                      int count,
+                      int dest,
+                      int tag,
+                      MPI_Comm comm )
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Send( buf, count, internal::getMpiType< T >(), dest, tag, comm );
+#else
+  GEOS_ERROR( "Not implemented without MPI" );
+#endif
+}
+
+template< typename T >
 int MpiWrapper::iSend( T const * const buf,
                        int count,
                        int MPI_PARAM( dest ),
@@ -1003,8 +1427,8 @@ int MpiWrapper::iSend( T const * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
@@ -1052,6 +1476,35 @@ T MpiWrapper::allReduce( T const & value, Reduction const op, MPI_Comm const com
 template< typename T >
 void MpiWrapper::allReduce( Span< T const > const src, Span< T > const dst, Reduction const op, MPI_Comm const comm )
 {
+  GEOS_ASSERT_EQ( src.size(), dst.size() );
+  allReduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), comm );
+}
+
+template< typename SRC_CONTAINER_TYPE, typename DST_CONTAINER_TYPE >
+void MpiWrapper::allReduce( SRC_CONTAINER_TYPE const & src, DST_CONTAINER_TYPE & dst, int const count, Reduction const op, MPI_Comm const comm )
+{
+  static_assert( std::is_trivially_copyable< typename get_value_type< SRC_CONTAINER_TYPE >::type >::value,
+                 "The type in the source container must be trivially copyable." );
+  static_assert( std::is_trivially_copyable< typename get_value_type< DST_CONTAINER_TYPE >::type >::value,
+                 "The type in the destination container must be trivially copyable." );
+  static_assert( std::is_same< typename get_value_type< SRC_CONTAINER_TYPE >::type,
+                               typename get_value_type< DST_CONTAINER_TYPE >::type >::value,
+                 "Source and destination containers must have the same value type." );
+  GEOS_ASSERT_GE( src.size(), count );
+  GEOS_ASSERT_GE( dst.size(), count );
+  allReduce( src.data(), dst.data(), count, getMpiOp( op ), comm );
+}
+
+template< typename SRC_CONTAINER_TYPE, typename DST_CONTAINER_TYPE >
+void MpiWrapper::allReduce( SRC_CONTAINER_TYPE const & src, DST_CONTAINER_TYPE & dst, Reduction const op, MPI_Comm const comm )
+{
+  static_assert( std::is_trivially_copyable< typename get_value_type< SRC_CONTAINER_TYPE >::type >::value,
+                 "The type in the source container must be trivially copyable." );
+  static_assert( std::is_trivially_copyable< typename get_value_type< DST_CONTAINER_TYPE >::type >::value,
+                 "The type in the destination container must be trivially copyable." );
+  static_assert( std::is_same< typename get_value_type< SRC_CONTAINER_TYPE >::type,
+                               typename get_value_type< DST_CONTAINER_TYPE >::type >::value,
+                 "Source and destination containers must have the same value type." );
   GEOS_ASSERT_EQ( src.size(), dst.size() );
   allReduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), comm );
 }
@@ -1108,6 +1561,57 @@ void MpiWrapper::reduce( Span< T const > const src, Span< T > const dst, Reducti
   reduce( src.data(), dst.data(), LvArray::integerConversion< int >( src.size() ), getMpiOp( op ), root, comm );
 }
 
+template< typename FIRST, typename SECOND, MpiWrapper::PairReduction const OP >
+MpiWrapper::PairType< FIRST, SECOND >
+MpiWrapper::allReduce( PairType< FIRST, SECOND > const & localPair, MPI_Comm comm )
+{
+#ifdef GEOS_USE_MPI
+  auto const type = internal::getMpiPairType< FIRST, SECOND >();
+  auto const mpiOp = internal::getMpiPairReductionOp< FIRST, SECOND, OP >();
+  PairType< FIRST, SECOND > pair{ localPair.first, localPair.second };
+  MPI_Allreduce( MPI_IN_PLACE, &pair, 1, type, mpiOp, comm );
+  return pair;
+#else
+  return localPair;
+#endif
+}
+
+template< typename FIRST, typename SECOND, typename CONTAINER, MpiWrapper::PairReduction const OP >
+MpiWrapper::PairType< FIRST, SECOND >
+MpiWrapper::allReduce( CONTAINER const & pairs, MPI_Comm const comm )
+{
+  using PAIR_T = PairType< FIRST, SECOND >;
+  std::function< PAIR_T( PAIR_T, PAIR_T ) > const getMin = []( PAIR_T const & a, PAIR_T const & b ) {
+    return ( std::tie( a.first, a.second ) < std::tie( b.first, b.second ) ) ? a : b;
+  };
+  std::function< PAIR_T( PAIR_T, PAIR_T ) > const getMax = []( PAIR_T const & a, PAIR_T const & b ) {
+    return ( std::tie( a.first, a.second ) > std::tie( b.first, b.second ) ) ? a : b;
+  };
+  PAIR_T const defaultPair{
+    OP == PairReduction::Min ? std::numeric_limits< FIRST >::max() : std::numeric_limits< FIRST >::lowest(),
+    OP == PairReduction::Min ? std::numeric_limits< SECOND >::max() : std::numeric_limits< SECOND >::lowest()
+  };
+  // based on the operation, pair will be the minimum / maximum element (or defaultPair if pairs is empty)
+  PAIR_T pair = std::accumulate( pairs.begin(), pairs.end(), defaultPair,
+                                 OP == PairReduction::Min ? getMin : getMax );
+  return allReduce< FIRST, SECOND, OP >( pair, comm );
+}
+
+template< typename FIRST, typename SECOND >
+MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::min( MpiWrapper::PairType< FIRST, SECOND > const & pair, MPI_Comm comm )
+{ return allReduce< FIRST, SECOND, PairReduction::Min >( pair, comm ); }
+
+template< typename FIRST, typename SECOND, typename CONTAINER >
+MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::min( CONTAINER const & pairs, MPI_Comm comm )
+{ return allReduce< FIRST, SECOND, CONTAINER, PairReduction::Min >( pairs, comm ); }
+
+template< typename FIRST, typename SECOND >
+MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::max( MpiWrapper::PairType< FIRST, SECOND > const & pair, MPI_Comm comm )
+{ return allReduce< FIRST, SECOND, PairReduction::Max >( pair, comm ); }
+
+template< typename FIRST, typename SECOND, typename CONTAINER >
+MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::max( CONTAINER const & pairs, MPI_Comm comm )
+{ return allReduce< FIRST, SECOND, CONTAINER, PairReduction::Max >( pairs, comm ); }
 
 } /* namespace geos */
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -44,9 +44,14 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( fields::cappres::phaseCapPressure{}, &m_phaseCapPressure );
-  registerField( fields::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Minimum volume fraction value for each phase" );
 
+  registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
+  registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postInputInitialization()
@@ -81,33 +86,24 @@ void CapillaryPressureBase::postInputInitialization()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );
-
   // set labels on array wrappers for plottable fields
   setLabels();
 }
 
-void CapillaryPressureBase::resizeFields( localIndex const size,
-                                          localIndex const numPts )
+void CapillaryPressureBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   integer const NP = numFluidPhases();
 
-  m_phaseCapPressure.resize( size, numPts, NP );
-  m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
+  m_phaseCapPressure.resize( 0, numPts, NP );
+  m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numPts, NP, NP );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void CapillaryPressureBase::setLabels()
 {
   getField< fields::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
-}
-
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
-{
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

@@ -60,7 +60,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_maximumStretchT0()
 {
   // register default values
-   
+
   registerWrapper( viewKeyStruct::strainHardeningSlopeString(), &m_strainHardeningSlope ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Strain hardening slope" );
@@ -127,16 +127,12 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Yield strength T0" );
 
-  // registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Temperature independent bulk modulus" );
-
   registerWrapper( viewKeyStruct::bulkModulusAString(), &m_bulkModulusA ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus A parameter" );
 
-   registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
+  registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus B parameter" );
@@ -145,10 +141,6 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setApplyDefaultValue( 300.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus T0 parameter" );
-
-  // registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Temperature independent shear modulus" );
 
   registerWrapper( viewKeyStruct::shearModulusAString(), &m_shearModulusA ).
     setApplyDefaultValue( 0.0 ).
@@ -170,18 +162,15 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch" );
 
-
   registerWrapper( viewKeyStruct::maximumStretchAString(), &m_maximumStretchA ).
     setApplyDefaultValue( 300 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "max Stretch A" );
 
-
   registerWrapper( viewKeyStruct::maximumStretchBString(), &m_maximumStretchB ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch B" );
-
 
   registerWrapper( viewKeyStruct::maximumStretchT0String(), &m_maximumStretchT0 ).
     setApplyDefaultValue( DBL_MAX ).
@@ -231,8 +220,8 @@ void StrainHardeningPolymer::allocateConstitutiveData( dataRepository::Group & p
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_deformationGradient.resize( 0, 3, 3);
-  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6);
+  m_deformationGradient.resize( 0, 3, 3 );
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_yieldStrength.resize( 0 );
@@ -244,14 +233,16 @@ void StrainHardeningPolymer::postInputInitialization()
   ElasticIsotropic::postInputInitialization();
 
   // CC: need checks for strain hardening and softening inputs
-  GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these are the rules for inputs
+  GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these
+                                                                                                                  // are the rules for
+                                                                                                                  // inputs
   GEOS_THROW_IF( m_shearSofteningMagnitude < 0.0, "Shear softening magnitude must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter1 < 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter2 < 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
   //GEOS_THROW_IF( m_maximumStretch < 0.0, "Max stretch must be greater than 0", InputError );
 
-  // We are using defeault yield strength to be the temperature-independent value, that will be modified by thermal softening.
+  // We are using default yield strength to be the temperature-independent value, that will be modified by thermal softening.
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).setApplyDefaultValue( m_defaultYieldStrength );
 }
 

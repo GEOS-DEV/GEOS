@@ -30,18 +30,18 @@ def main():
 		
 		# Get stress, time and element center
 		hf_stress = h5py.File(filePath_stress, 'r')
-		time = np.array( hf_stress.get(stress_field_name + ' Time') )
-		center = np.array( hf_stress.get(stress_field_name + ' elementCenter') )
-		stress = np.array( hf_stress.get(stress_field_name) )
+		time = np.asarray( hf_stress.get(stress_field_name + ' Time') )
+		center = np.asarray( hf_stress.get(stress_field_name + ' elementCenter') )
+		stress = np.asarray( hf_stress.get(stress_field_name) )
 
 		# Get temperature
 		hf_temperature = h5py.File(filePath_temperature, 'r')
-		temperature = np.array( hf_temperature.get('temperature') )
+		temperature = np.asarray( hf_temperature.get('temperature') )
 
 		# Compute total stress
-		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
+		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
 		stress_yz_total = stress[:,:,3]
 		stress_xz_total = stress[:,:,4]
 		stress_xy_total = stress[:,:,5]

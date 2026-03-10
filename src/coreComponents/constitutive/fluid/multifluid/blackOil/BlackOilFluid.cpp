@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -49,7 +49,7 @@ void BlackOilFluid::postInputInitialization()
 
 void BlackOilFluid::readInputDataFromTableFunctions()
 {
-  GEOS_THROW( GEOS_FMT( "{}: this option is not implemented yet, please provide PVT files in standard Eclipse format", getFullName() ),
+  GEOS_THROW( GEOS_FMT( "{}: this option is not implemented yet, please provide PVT files in standard text format", getFullName() ),
               InputError );
 }
 
@@ -57,7 +57,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
 {
   GEOS_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
                  GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   using PT = BlackOilFluid::PhaseType;
 
@@ -93,7 +93,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   extendUndersaturatedProperties();
 
   // refine table branches
-  refineUndersaturatedTables( 100 );
+  refineUndersaturatedTables( numRefinedPoints );
 
   // check consistency
   checkTableConsistency();
@@ -279,7 +279,7 @@ void BlackOilFluid::createUndersaturatedProperties()
 
       // Step 1: collect all the pressure values in the undersaturated pressure tables on these branches
 
-      std::vector< real64 > allPressures( m_PVTO.undersaturatedPressure[iBranchUp].begin(), m_PVTO.undersaturatedPressure[iBranchUp].end() );
+      stdVector< real64 > allPressures( m_PVTO.undersaturatedPressure[iBranchUp].begin(), m_PVTO.undersaturatedPressure[iBranchUp].end() );
       allPressures.insert( allPressures.end(), m_PVTO.undersaturatedPressure[iBranchLow].begin(), m_PVTO.undersaturatedPressure[iBranchLow].end() );
       std::sort( allPressures.begin(), allPressures.end() );
       allPressures.erase( std::unique( allPressures.begin(), allPressures.end() ), allPressures.end() );
@@ -441,7 +441,7 @@ void BlackOilFluid::checkTableConsistency() const
   // check for the presence of one bubble point
   GEOS_THROW_IF( m_PVTO.undersaturatedPressure[m_PVTO.numSaturatedPoints - 1].size() <= 1,
                  GEOS_FMT( "{}: at least one bubble pressure is required in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                 InputError );
+                 InputError, getDataContext() );
 
   // check for saturated region
   for( integer i = 0; i < m_PVTO.numSaturatedPoints - 1; ++i )
@@ -449,16 +449,16 @@ void BlackOilFluid::checkTableConsistency() const
     // Rs must increase with Pb
     GEOS_THROW_IF( ( m_PVTO.Rs[i + 1] - m_PVTO.Rs[i] ) <= 0,
                    GEOS_FMT( "{}: Rs must increase with Pb in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                   InputError );
+                   InputError, getDataContext() );
     // Bo must increase with Pb
     GEOS_THROW_IF( ( m_PVTO.saturatedBo[i + 1] - m_PVTO.saturatedBo[i] ) <= 0,
                    GEOS_FMT( "{}: Bo must increase with Pb in saturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                   InputError );
+                   InputError, getDataContext() );
 
     // Viscosity must decrease with Pb
     GEOS_THROW_IF( ( m_PVTO.saturatedViscosity[i + 1] - m_PVTO.saturatedViscosity[i] ) >= 0,
                    GEOS_FMT( "{}: Viscosity must decrease with Pb in saturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 
   // check for under-saturated branches
@@ -469,15 +469,15 @@ void BlackOilFluid::checkTableConsistency() const
       // Pressure
       GEOS_THROW_IF( ( m_PVTO.undersaturatedPressure[i][j + 1] - m_PVTO.undersaturatedPressure[i][j] ) <= 0,
                      GEOS_FMT( "{}: P must decrease in undersaturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                     InputError );
+                     InputError, getDataContext() );
       // Bo must decrease with P
       GEOS_THROW_IF( ( m_PVTO.undersaturatedBo[i][j + 1] - m_PVTO.undersaturatedBo[i][j] ) >= 0,
                      GEOS_FMT( "{}: Bo must decrease with P in undersaturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                     InputError );
+                     InputError, getDataContext() );
       // Viscosity must increase with Pb
       GEOS_THROW_IF( ( m_PVTO.undersaturatedViscosity[i][j + 1] - m_PVTO.undersaturatedViscosity[i][j] ) < -1e-10,
                      GEOS_FMT( "{}: viscosity must increase with P in undersaturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
-                     InputError );
+                     InputError, getDataContext() );
     }
   }
 }

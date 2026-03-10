@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -49,7 +49,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
     subRegion.copyFromParticleBlock( source );
 
     // Set the rank of particles on each subregion
-    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOS );
     subRegion.setParticleRank( mpiRank );
 
     // Set the number of vertices of the particles on each subregion
@@ -60,7 +60,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
 // TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that
 // we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCorners() const
-{ 
+{
   int const size = 8 * ( this->getNumberOfParticles() );
   array2d< real64 > coords( size, 3 );
   int index = 0;

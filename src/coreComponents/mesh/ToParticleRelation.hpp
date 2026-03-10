@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 #define GEOS_MESH_TOPARTICLERELATION_HPP_
 
 #include "InterObjectRelation.hpp"
+#include "../codingUtilities/traits.hpp"
 
 namespace geos
 {
@@ -36,23 +37,94 @@ template< typename BASETYPE >
 class ToParticleRelation
 {
 public:
+  // Default constructor
+  ToParticleRelation()
+  {
+    static_assert( traits::is_array_of_arrays_type< BASETYPE > || traits::is_array_type< BASETYPE >, "ToParticalRelation can only be instantiated with an Array or ArrayOfArrays" );
+  }
+
+  // Deleted move operators
+  // ToParticleRelation( ToParticleRelation && ) = delete;
+  // ToParticleRelation& operator=( ToParticleRelation && ) = delete;
+
+  // // Copy constructor
+  // ToParticleRelation( ToParticleRelation & src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation( ToParticleRelation & src)");
+  //   m_numParticles = src.m_numParticles;
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   m_particleManager = src.m_particleManager;
+  // }
+
+  // // Copy Constructor
+  // ToParticleRelation( const ToParticleRelation & src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation( const ToParticleRelation & src)");
+  //   m_numParticles = src.m_numParticles;
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   m_particleManager = src.m_particleManager;
+  // }
+
+  // // Copy assignment operator
+  // ToParticleRelation& operator=(const ToParticleRelation& src)
+  // {
+  //   GEOS_LOG_RANK("Called ToParticleRelation& operator=(const ToParticleRelation& src)");
+  //   m_numParticles = src.m_numParticles;
+  //   GEOS_LOG_RANK("Copied m_numparticles");
+  //   m_toParticleRegion = src.m_toParticleRegion;
+  //   GEOS_LOG_RANK("Copied m_toParticleRegion");
+  //   m_toParticleSubRegion = src.m_toParticleSubRegion;
+  //   GEOS_LOG_RANK("Copied m_toParticleSubRegion");
+  //   m_toParticleIndex = src.m_toParticleIndex;
+  //   GEOS_LOG_RANK("Copied m_toParticleIndex");
+  //   m_particleManager = src.m_particleManager;
+  //   GEOS_LOG_RANK("Copied m_particleManager");
+  //   return *this;
+  // }
 
   /// The type of the underlying relationship storage object.
   using base_type = BASETYPE;
 
-  /**
-   * @brief Resize the underlying relationship storage.
-   * @tparam DIMS The types of each dimensions resize parameter.
-   * @param newdims A parameter pack of appropriate size to resize each
-   *                dimension of the relationship storage.
-   */
-  template< typename ... DIMS >
-  void resize( DIMS... newdims )
+  void resizeFromCapacities( array1d< localIndex > const & counts )
   {
-    m_toParticleRegion.resize( newdims ... );
-    m_toParticleSubRegion.resize( newdims ... );
-    m_toParticleIndex.resize( newdims ... );
+    if constexpr ( traits::is_array_of_arrays_type< BASETYPE > )
+    {
+      m_toParticleRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_toParticleSubRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_toParticleIndex.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
+      m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
+      for( localIndex i = 0; i < counts.size(); ++i )
+      {
+        m_numParticles[i] = counts[i];
+        m_toParticleRegion.resizeArray( i, counts[i] );
+        m_toParticleSubRegion.resizeArray( i, counts[i] );
+        m_toParticleIndex.resizeArray( i, counts[i] );
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Cannot resize array2d from capacities." );
+    }
+  }
+
+  void resize( localIndex count, localIndex defaultArraySize = 0 )
+  {
+    m_toParticleRegion.resize( count, defaultArraySize );
+    m_toParticleSubRegion.resize( count, defaultArraySize );
+    m_toParticleIndex.resize( count, defaultArraySize );
     m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
+  }
+
+  void freeOnDevice()
+  {
+    m_toParticleRegion.toView().freeOnDevice();
+    m_toParticleSubRegion.toView().freeOnDevice();
+    m_toParticleIndex.toView().freeOnDevice();
+    m_numParticles.toView().freeOnDevice();
   }
 
   /**
@@ -110,6 +182,17 @@ typedef ToParticleRelation< array2d< localIndex > > FixedToManyParticleRelation;
 
 /// @brief A ToParticleRelation where each object is related to an arbitrary number of particles.
 typedef ToParticleRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyParticleRelation;
+
+/**
+ * @brief Resize the particle relation at index
+ * @param relation The relationship mapping to remove a single particle relation from
+ *                 a single object from.
+ * @param index The index of the particle to resize relations.
+ * @param size The size of the new particle relation.
+ */
+void resizeArray( OrderedVariableToManyParticleRelation & relation,
+                  localIndex const index,
+                  localIndex const size );
 
 /**
  * @brief Remove a particle relation from an object in the relation.
@@ -170,9 +253,9 @@ void fastInsert( OrderedVariableToManyParticleRelation & relation,
  */
 void insertMany( OrderedVariableToManyParticleRelation & relation,
                  localIndex const firstIndex,
-                 std::vector< localIndex > const & erArray,
-                 std::vector< localIndex > const & esrArray,
-                 std::vector< localIndex > const & eiArray );
+                 stdVector< localIndex > const & erArray,
+                 stdVector< localIndex > const & esrArray,
+                 stdVector< localIndex > const & eiArray );
 
 /**
  * @brief Reserve a set number of entities for a particle to relate to

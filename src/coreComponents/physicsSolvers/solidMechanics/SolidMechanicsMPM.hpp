@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,18 +20,18 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
+
+#include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "MPMSolverFields.hpp"
 #include "events/mpmEvents/MPMEventManager.hpp"
-
+#include "mesh/CohesiveZoneManager.hpp"
 
 namespace geos
 {
@@ -44,7 +44,7 @@ class SpatialPartition;
  *
  * This class implements a material point method solution to the equations of motion.
  */
-class SolidMechanicsMPM : public SolverBase
+class SolidMechanicsMPM : public PhysicsSolverBase
 {
 public:
 
@@ -88,22 +88,23 @@ public:
 
   /**
    * @enum SurfaceFlag
-   * 
+   *
    * The flags associated with different surface types
-  */
+   */
   enum struct SurfaceFlag : integer
   {
     Interior,
     FullyDamaged,
     Surface,
-    Cohesive    
+    Cohesive,
+    DamagedCohesive
   };
 
   /**
    * @enum InterpolationOption
-   * 
+   *
    * The options for interpolating tables
-  */
+   */
   enum struct InterpolationOption : integer
   {
     Linear,
@@ -113,23 +114,24 @@ public:
 
   /**
    * @enum ContactNormalTypeOption
-   * 
+   *
    * The options for contact gap correction
-  */
+   */
   enum struct ContactNormalTypeOption : integer
   {
     Difference,
     MassWeighted,
     LargerMass,
     Mixed,
-    Aligned
+    Aligned,
+    LogisticRegression
   };
 
   /**
    * @enum ContactGapCorrectionOption
-   * 
+   *
    * The options for contact gap correction
-  */
+   */
   enum struct ContactGapCorrectionOption : integer
   {
     Simple,
@@ -138,10 +140,21 @@ public:
   };
 
   /**
+   * @enum AreaIntegrationOption
+   *
+   * The options for nodal area integration
+   */
+  enum struct AreaIntegrationOption : integer
+  {
+    BruteForce,
+    Mesh
+  };
+
+  /**
    * @enum OverlapCorrectionOption
-   * 
+   *
    * The options for overlap correction
-  */
+   */
   enum struct OverlapCorrectionOption : integer
   {
     Off,
@@ -152,14 +165,30 @@ public:
 
   /**
    * @enum CohesiveLawOption
-   * 
+   *
    * The options for cohesive laws
-  */
+   */
   enum struct CohesiveLawOption : integer
   {
     Uncoupled,
     NeedlemanXu,
     Polymer
+  };
+
+  enum struct GPUSchemeOption : integer
+  {
+    Atomics,
+    NoAtomics,
+    RandomMix,
+    MinimalAtomics,
+    Reduction,
+    Colors
+  };
+
+  enum struct NormalsAndPositionsMethodOption : integer
+  {
+    LogisticRegression,
+    DFGAndVolumeIntegration
   };
 
   /**
@@ -180,24 +209,21 @@ public:
   /**
    * destructor
    */
-  virtual ~SolidMechanicsMPM() override {};
+  virtual ~SolidMechanicsMPM() override {}
 
   /**
-   * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
+   * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
 
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
   virtual void initializePreSubGroups() override;
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
-
-  void updateIntrinsicNodalData( DomainPartition * const domain );
-
 
   /**
    * @defgroup Solver Interface Functions
@@ -248,22 +274,18 @@ public:
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
-                                 arrayView1d< string const > const & targetRegions,
+                                 string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
+                                 
+  struct groupKeyStruct : PhysicsSolverBase::groupKeyStruct
+  {
+    static constexpr char const * mpmEventManagerString() { return "MPMEvents"; };
+    static constexpr char const * cohesiveZoneManagerString() { return "CohesiveZoneManager"; };
+  };
 
-  /**
-   * Applies displacement boundary conditions to the system for implicit time integration
-   * @param time The time to use for any lookups associated with this BC
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain The DomainPartition.
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   */
-
-  struct viewKeyStruct : SolverBase::viewKeyStruct
+  struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
@@ -271,6 +293,7 @@ public:
 
     static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
     static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
+    static constexpr char const * gridSurfaceTensionForceString() { return "gridSurfaceForceTension"; }
     static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
     static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
     static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
@@ -290,6 +313,7 @@ public:
     static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
     static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
     static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
+    static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
 
     static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
     static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
@@ -299,6 +323,8 @@ public:
     static constexpr char const * gridReferenceSurfacePositionString() { return "gridReferenceSurfacePosition"; }
     static constexpr char const * gridReferenceMaterialVolumeString() { return "gridReferenceMaterialVolume"; }
 
+    static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
+
     static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
     static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
     static constexpr char const * gridExplicitSurfaceNormalString() { return "gridExplicitSurfaceNormal"; }
@@ -307,21 +333,18 @@ public:
     static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
     static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
-    
+
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
     static constexpr char const * gridVPlusString() { return "gridVPlus"; }
     static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
 
+    static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
+    static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
+
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
-
-  /// Child group viewKeys
-  struct groupKeysStruct
-  {
-    dataRepository::GroupKey mpmEventManager = { "MPMEvents" }; ///< MPM Events key
-  } groupKeys; ///< Child group viewKeys
 
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
@@ -337,7 +360,8 @@ public:
                              arraySlice1d< real64 const > const gridDamageGradient );
 
   void triggerEvents( const real64 dt,
-                      const real64 time_n, 
+                      const real64 time_n,
+                      DomainPartition & domain,
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
@@ -349,7 +373,7 @@ public:
                    NodeManager & nodeManager,
                    real64 const dt );
 
-  void syncGridFields( std::vector< std::string > const & fieldNames,
+  void syncGridFields( stdVector< std::string > const & fieldNames,
                        DomainPartition & domain,
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
@@ -373,20 +397,54 @@ public:
                                           ParticleManager & particleManager,
                                           SpatialPartition & partition );
 
-  void computeGridSurfaceNormals( ParticleManager & particleManager,
-                                  NodeManager & nodeManager );
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 bruteForceNodalAreaIntegration( real64 const (&hEl)[3],
+                                         integer const & numSurfaceIntegrationPoints,
+                                         real64 const & L,
+                                         real64 const & dA,
+                                         arraySlice1d< real64 const > const surfaceNormal,
+                                         arraySlice1d< real64 const > const surfacePosition );
 
-  void computeGridSurfacePositions( ParticleManager & particleManager,
-                                    NodeManager & nodeManager );
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 meshNodalAreaIntegration( real64 const (&hEl)[3],
+                                  integer const & numSurfaceIntegrationPoints,
+                                  localIndex const & numNeighbors,
+                                  arraySlice1d< localIndex const > const neighborRegions,
+                                  arraySlice1d< localIndex const > const neighborSubRegions,
+                                  arraySlice1d< localIndex const > const neighborIndices,
+                                  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particleCenter,
+                                  ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleRVectors,
+                                  arraySlice1d< real64 const > const surfaceNormal,
+                                  arraySlice1d< real64 const > const surfacePosition );
 
-  void normalizeGridSurfaceNormals( NodeManager & nodeManager );
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 convexHullAreaIntegration( real64 const (& hEl)[3],
+                                                     real64 const (& nodePosition)[3],
+                                                     integer const & maxNodalNeighbors,
+                                                     integer const & numSurfaceIntegrationPoints,
+                                                     localIndex const & numNeighbors,
+                                                     arraySlice1d< localIndex const > const neighborRegions,
+                                                     arraySlice1d< localIndex const > const neighborSubRegions,
+                                                     arraySlice1d< localIndex const > const neighborIndices,
+                                                     ParticleManager::ParticleViewConst< arrayView2d< real64 const > > const particleCenter,
+                                                     ParticleManager::ParticleViewConst< arrayView3d< real64 const > > const particleRVectors,
+                                                     arraySlice1d< real64 const > const surfaceNormal,
+                                                     arraySlice1d< real64 const > const surfacePosition );
 
-  void normalizeGridSurfacePositions( NodeManager & nodeManager );
+  void computeNodalAreas( NodeManager & nodeManager );
+
+  void normalizeGridSurfaceNormalsAndPositions( NodeManager & nodeManager );
+
+  // void normalizeGridSurfacePositions( NodeManager & nodeManager );
 
   void computeGridSurfaceNormalWeights( ParticleManager & particleManager,
                                         NodeManager & nodeManager );
 
   void computeContactForces( real64 const dt,
+                             ParticleManager & particleManager,
                              NodeManager & nodeManager );
 
   void initializeFrictionCoefficients();
@@ -395,10 +453,19 @@ public:
                                   int const b,
                                   real64 & frictionCoefficient );
 
-  void computePairwiseNodalContactForce( int & separable,
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
+                                         OverlapCorrectionOption const & overlapCorrection,
+                                         real64 const (&hEl) [3],
+                                         int const & planeStrain,
+                                         real64 const & smallMass,
+                                         int const & useSurfacePositionForContact,
                                          int const & useCohesiveTangentialForces,
+                                         int & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
+                                         real64 ( &nAB )[3],
                                          real64 const & mA,
                                          real64 const & mB,
                                          real64 const & VA,
@@ -407,21 +474,19 @@ public:
                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
                                          arraySlice1d< real64 const > const qA,
                                          arraySlice1d< real64 const > const qB,
-                                         arraySlice1d< real64 const > const nA,
-                                         arraySlice1d< real64 const > const nB,
                                          real64 const spmA,
                                          real64 const spmB,
                                          arraySlice1d< real64 const > const sA,
-                                         arraySlice1d< real64 const > const sB, 
+                                         arraySlice1d< real64 const > const sB,
                                          arraySlice1d< real64 const > const xA, // Position of field A
                                          arraySlice1d< real64 const > const xB, // Position of field B
                                          arraySlice1d< real64 const > const centerOfVolumeA,
                                          arraySlice1d< real64 const > const centerOfVolumeB,
-                                         real64 const & wA, // Surface normal weights of field A
-                                         real64 const & wB, // Surface normal weights of field A
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   void computeOrthonormalBasis( const real64 * e1,  // input "normal" unit vector.
                                 real64 * e2,        // output "tangential" unit vector.
                                 real64 * e3 );      // output "tangential" unit vector.
@@ -430,53 +495,140 @@ public:
 
   void solverProfiling( std::string label );
 
-  void solverProfilingIf( std::string label, bool condition );
-
   real64 computeNeighborList( ParticleManager & particleManager );
+
+  void generateNodalNeighborList( ParticleManager & particleManager,
+                                  NodeManager & nodeManager );
 
   void optimizeBinSort( ParticleManager & particleManager );
 
+  void particleColorSort( ParticleManager & particleManager );
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   real64 kernel( real64 const & r ); // distance from particle to query point
 
-  void kernelGradient( arraySlice1d< real64 const > const x,  // query point
-                       std::vector< real64 > & xp,            // particle location
-                       real64 const & r,                      // distance from particle to query point
-                       real64 * result );
+  GEOS_HOST
+  GEOS_FORCE_INLINE
+  real64 inverseKernel( real64 const & d );
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 kernelDevice( real64 const & r,
+                       real64 const & neighborRadius,
+                       int const & planeStrain ); // distance from particle to query point
+
+  void kernelGradient( arraySlice1d< real64 const > const & x,  // query point
+                       arraySlice1d< real64 const > const & xp, // particle location
+                       real64 const & r,                        // distance from particle to query point
+                       real64 ( &result )[3] );
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void kernelGradientDevice( arraySlice1d< real64 const > const & x,  // query point
+                             real64 const (&xp)[3],  //arraySlice1d< real64 const > const & xp, // particle location
+                             real64 const & r,                        // distance from particle to query point
+                             real64 const & neighborRadius,
+                             int const & planeStrain,
+                             real64 ( &result )[3] );
+
+  GEOS_HOST
+  GEOS_FORCE_INLINE
   real64 computeKernelField( arraySlice1d< real64 const > const x,    // query point
-                             arrayView2d< real64 const > const xp,    // List of neighbor particle locations.
-                             arrayView1d< real64 const > const Vp,    // List of neighbor particle volumes.
-                             arrayView1d< real64 const > const fp );  // scalar field values (e.g. damage) at neighbor particles
-  
-  real64 computeKernelField( arraySlice1d< real64 const > const x,  // query point
-                             std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                             std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                             std::vector< real64 > & fp                 // scalar field values (e.g. damage) at
-                             );
+                             localIndex const numNeighbors,
+                             arrayView2d< real64 const > const & xp,    // List of neighbor particle locations.
+                             arrayView1d< real64 const > const & Vp,    // List of neighbor particle volumes.
+                             arrayView1d< real64 const > const & fp );  // scalar field values (e.g. damage) at neighbor particles
 
-  void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
-                                   std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                                   std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                   std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 computeKernelFieldDevice( arraySlice1d< real64 const > const x,  // query point
+                                   real64 const & neighborRadius,
+                                   int const & planeStrain,
+                                   localIndex const & numNeighbors,
+                                   arraySlice1d< localIndex const > const regionIndices,
+                                   arraySlice1d< localIndex const > const subRegionIndices,
+                                   arraySlice1d< localIndex const > const particleIndices,
+                                   ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                   ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                   const std::function< real64( localIndex, localIndex, localIndex ) > damage );
+
+  GEOS_HOST
+  GEOS_FORCE_INLINE
+  void computeKernelFieldGradient( arraySlice1d< real64 const > const x, // query point
+                                   localIndex const numNeighbors,
+                                   arrayView2d< real64 const > const & xp,           // List of neighbor particle locations.
+                                   arrayView1d< real64 const > const & Vp,           // List of neighbor particle volumes.
+                                   arrayView1d< real64 const > const & fp,           // scalar field values (e.g. damage) at neighbor
+                                                                                     // particles
                                    arraySlice1d< real64 > const result );
-  
+
   void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
                                    std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
                                    std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
-                                   real64 (& result)[3] );
+                                   real64 ( &result )[3] );
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeKernelFieldGradientDevice( arraySlice1d< real64 const > const x, // query point
+                                         real64 const & neighborRadius,
+                                         int const & planeStrain,
+                                         localIndex const & numNeighbors,
+                                         arraySlice1d< localIndex const > const regionIndices,
+                                         arraySlice1d< localIndex const > const subRegionIndices,
+                                         arraySlice1d< localIndex const > const particleIndices,
+                                         ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                         ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                         const std::function< real64( localIndex, localIndex, localIndex ) > damage,
+                                         real64 ( &result )[3] );
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeKernelFieldDivergenceDevice( arraySlice1d< real64 const > const x, // query point
+                                           real64 const & neighborRadius,
+                                           int const & planeStrain,
+                                           localIndex const & numNeighbors,
+                                           arraySlice1d< localIndex const > const regionIndices,
+                                           arraySlice1d< localIndex const > const subRegionIndices,
+                                           arraySlice1d< localIndex const > const particleIndices,
+                                           ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particleVectorView,
+                                           real64 & result );
+
+  GEOS_HOST
+  GEOS_FORCE_INLINE
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
-                                    std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                                    std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                    std::vector< std::vector< real64 > > & fp,  // vector field values (e.g. velocity) at neighbor particles
+                                    localIndex const numNeighbors,
+                                    arrayView2d< real64 const > const & xp,  // List of neighbor particle locations.
+                                    arrayView1d< real64 const > const & Vp,                 // List of neighbor particle volumes.
+                                    arrayView2d< real64 const > const & fp,  // vector field values (e.g. velocity) at neighbor particles
                                     arraySlice2d< real64 > const result );
 
-  real64 inverseKernel( const real64 & d ); // value of kernel function                                    
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void computeKernelVectorGradientDevice( arraySlice1d< real64 const > const x,       // query point
+                                          real64 const & neighborRadius,
+                                          int const & planeStrain,
+                                          localIndex const numNeighbors,
+                                          arraySlice1d< localIndex const > const regionIndices,
+                                          arraySlice1d< localIndex const > const subRegionIndices,
+                                          arraySlice1d< localIndex const > const particleIndices,
+                                          ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                          ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                          ParticleManager::ParticleView< arrayView2d< real64 const > > particleDisplacementView,
+                                          arraySlice2d< real64 > const result );
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  bool markSurfaceAsDamage( int const & surfaceFlag );
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
 
   void computeDistanceToCrackTip( ParticleManager & particleManager );
+
+  void estimateParticleSurfacePosition( ParticleManager & particleManager );
 
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
@@ -485,6 +637,9 @@ public:
                                          NodeManager & nodeManager,
                                          MeshLevel & mesh );
 
+  void computeParticleFieldMappings( ParticleManager & particleManager,
+                                     NodeManager & nodeManager );
+
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
 
@@ -492,20 +647,23 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
-  void initializeConstitutiveModelDependencies( ParticleManager & particleManager);
+  void initializeParticleFields( ParticleManager & particleManager );
+
+  void initializeConstitutiveModelDependencies( ParticleManager & particleManager );
 
   void updateConstitutiveModelDependencies( ParticleManager & particleManager );
 
   void updateStress( real64 dt,
                      ParticleManager & particleManager );
 
-  void particleKinematicUpdate( ParticleManager & particleManager );
+  void particleKinematicUpdate( const real64 dt,
+                                ParticleManager & particleManager );
 
   void computeAndWriteBoxAverage( const real64 dt,
                                   const real64 time_n,
                                   ParticleManager & particleManager );
 
-  void writeParticleData( const real64 time_n, 
+  void writeParticleData( const real64 time_n,
                           ParticleManager & particleManager );
 
   void computeBoxMetrics( ParticleManager & particleManager,
@@ -517,92 +675,131 @@ public:
   void boundaryConditionUpdate( real64 dt, real64 time_n );
 
   void projectParticleSurfaceNormalsToGrid( DomainPartition & domain,
-                                            ParticleManager& particleManager,
+                                            ParticleManager & particleManager,
                                             NodeManager & nodeManager,
-                                            MeshLevel & mesh  );
+                                            MeshLevel & mesh );
 
   void initializeCohesiveReferenceConfiguration( DomainPartition & domain,
-                                                 ParticleManager& particleManager,
+                                                 ParticleManager & particleManager,
                                                  NodeManager & nodeManager,
                                                  MeshLevel & mesh );
 
   bool interiorToParticleProjectedArea( ParticleManager & particleManager,
                                         globalIndex const GEOS_UNUSED_PARAM( gridIndex ),
                                         int const gridFieldIndex,
-                                        real64 const (& gridSurfaceNormal)[3],
-                                        real64 const (& gridSurfacePoint)[3] );
+                                        real64 const (&gridSurfaceNormal)[3],
+                                        real64 const (&gridSurfacePoint)[3] );
 
-  void projectToPlane( real64 const (& vector)[3],
-                       real64 const (& normal)[3],
-                       real64 (& projection)[3] );
+  void projectToPlane( real64 const (&vector)[3],
+                       real64 const (&normal)[3],
+                       real64 ( &projection )[3] );
 
-  void enforceCohesiveLaw(  ParticleManager & particleManager,
-                            NodeManager & nodeManager );
+  void enforceCohesiveLaw( real64 dt,
+                           ParticleManager & particleManager,
+                           NodeManager & nodeManager );
 
-  void computeDistanceToParticleSurface( real64 (& normal)[3],
-                                         arraySlice2d< real64 const > const rVectors,
-                                         real64 distanceToSurface );
+  GEOS_HOST_DEVICE
+  real64 computeDistanceToParticleSurface( real64 ( &normal )[3],
+                                           arraySlice2d< real64 const > const rVectors );
 
-  void computeCohesiveTraction( int g,
-                                int a,
-                                int b, 
-                                real64 mA,
-                                real64 mB,
-                                arraySlice1d< real64 const > const dA,
-                                arraySlice1d< real64 const > const dB,
-                                real64 const (& aA )[3],
-                                real64 const (& aB )[3],
-                                arraySlice1d< real64 const > const nA,
-                                arraySlice1d< real64 const > const nB, 
-                                arraySlice1d< real64 > const tA,
-                                arraySlice1d< real64 > const tB );
-
-  void uncoupledCohesiveLaw( real64 normalDisplacement,
-                            real64 tangentialDisplacement,
-                            real64 & normalStress,
-                            real64 & shearStress,
-                            real64 & damage );
-
-  void needlemanXuCohesiveLaw( real64 normalDisplacement,
-                              real64 tangentialDisplacement,
-                              real64 & normalStress,
-                              real64 & shearStress,
-                              real64 & damage );
-
-  void polymerCohesiveLaw( real64 normalDisplacement,
-                           real64 tangentialDisplacement,
-                           real64 & normalStress,
-                           real64 & shearStress,
-                           real64 & damage );
+  void updateGridBackgroundStress( NodeManager & nodeManager );
 
   void particleToGrid( real64 const time_n,
                        integer const cycleNumber,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
+  void particleToGrid_reduction( real64 const time_n,
+                                 integer const cycleNumber,
+                                 ParticleManager & particleManager,
+                                 NodeManager & nodeManager );
+
+  void particleToGrid_noAtomics( real64 const time_n,
+                                 integer const cycleNumber,
+                                 ParticleManager & particleManager,
+                                 NodeManager & nodeManager );
+
+  void particleToGrid_randomMix( real64 const time_n,
+                                 integer const cycleNumber,
+                                 ParticleManager & particleManager,
+                                 NodeManager & nodeManager );
+
+  void particleToGrid_minimalAtomics( real64 const time_n,
+                                      integer const cycleNumber,
+                                      ParticleManager & particleManager,
+                                      NodeManager & nodeManager );
+
+  void particleToGrid_colors( real64 const time_n,
+                              integer const cycleNumber,
+                              ParticleManager & particleManager,
+                              NodeManager & nodeManager );
+
+  void computeSPHSurfaceCurvature( ParticleManager & particleManager );
+
   void gridTrialUpdate( real64 dt,
                         NodeManager & nodeManager );
 
   void enforceContact( real64 dt,
-                       DomainPartition & domain,
+                       //  DomainPartition & domain,
                        ParticleManager & particleManager,
-                       NodeManager & nodeManager,
-                       MeshLevel & mesh );
+                       NodeManager & nodeManager
+                       //  MeshLevel & mesh
+                       );
 
-void interpolateTable( real64 x, 
-                       real64 dx,
-                       array2d< real64 > table,
-                       arrayView1d< real64 > output,
-                       arrayView1d< real64 > outputRate,
-                       SolidMechanicsMPM::InterpolationOption interpolationType );
+  void computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
+                                                  NodeManager & nodeManager );
 
-void interpolateValueInRange( real64 const & x, 
-                              real64 const & xmin,
-                              real64 const & xmax,
-                              real64 const & ymin,
-                              real64 const & ymax,
-                              real64 & output,
-                              int interpolationType );
+  void computePairwiseLogisticRegressionSurfaceNormalsAndPositions( ParticleManager & particleManager,
+                                                                    NodeManager & nodeManager );
+
+  void computeGridSurfacePositionFromVolume( NodeManager & nodeManager );
+
+  real64 computeVolumeFromSurfacePosition( real64 const (&n)[3],
+                                           real64 const offset,
+                                           real64 const (&hEl) [3] );
+
+  real64 computeMaximumSurfacePositionOffset( real64 ( &n )[3],
+                                              real64 const (&hEl)[3] );
+
+  void logisticRegression( int const & planeStrain,
+                           integer const & numContactGroups,
+                           integer const & damageFieldPartitioning,
+                           integer const & maxLRIterations,
+                           real64 const & LRtolerance,
+                           real64 const (&hEl)[3],
+                           localIndex const & fieldA,
+                           localIndex const & fieldB,
+                           localIndex const & numNeighboringParticles,
+                           arraySlice1d< localIndex const > const neighborRegions,
+                           arraySlice1d< localIndex const > const neighborSubRegions,
+                           arraySlice1d< localIndex const > const neighborIndices,
+                           ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                           ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradient,
+                           ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormal,
+                           ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                           arraySlice1d< real64 const > const gridPosition,
+                           arraySlice1d< real64 const > const gridDamageGradient,
+                           real64 ( &normal0 )[3],
+                           real64 ( &normal )[3],
+                           real64 ( &surfacePosition )[3] );
+
+  void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
+                                                 NodeManager & nodeManager );
+
+  void interpolateTable( real64 x,
+                         real64 dx,
+                         array2d< real64 > table,
+                         arrayView1d< real64 > output,
+                         arrayView1d< real64 > outputRate,
+                         SolidMechanicsMPM::InterpolationOption interpolationType );
+
+  void interpolateValueInRange( real64 const & x,
+                                real64 const & xmin,
+                                real64 const & xmax,
+                                real64 const & ymin,
+                                real64 const & ymax,
+                                real64 & output,
+                                SolidMechanicsMPM::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 
@@ -613,7 +810,7 @@ void interpolateValueInRange( real64 const & x,
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
                        NodeManager & nodeManager,
-                       DomainPartition & domain, 
+                       DomainPartition & domain,
                        MeshLevel & mesh );
 
   void performFLIPUpdate( real64 dt,
@@ -627,13 +824,13 @@ void interpolateValueInRange( real64 const & x,
   void performXPICUpdate( real64 dt,
                           ParticleManager & particleManager,
                           NodeManager & nodeManager,
-                          DomainPartition & domain, 
+                          DomainPartition & domain,
                           MeshLevel & mesh );
 
   void performFMPMUpdate( real64 dt,
                           ParticleManager & particleManager,
                           NodeManager & nodeManager,
-                          DomainPartition & domain, 
+                          DomainPartition & domain,
                           MeshLevel & mesh );
 
   void updateSolverDependencies( ParticleManager & particleManager );
@@ -656,7 +853,15 @@ void interpolateValueInRange( real64 const & x,
 
   // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
-  int evaluateSeparabilityCriterion( localIndex const & A,
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  int evaluateSeparabilityCriterion( int const & planeStrain,
+                                     int const & numContactGroups,
+                                     int const & treatFullyDamagedAsSingleField,
+                                     real64 const & separabilityMinDamage,
+                                     real64 const & thinFeatureDFGThreshold,
+                                     real64 const & neighborRadius,
+                                     localIndex const & A,
                                      localIndex const & B,
                                      real64 const & damageA,
                                      real64 const & damageB,
@@ -678,30 +883,66 @@ void interpolateValueInRange( real64 const & x,
 
   void populateMappingArrays( ParticleManager & particleManager,
                               NodeManager & nodeManager ); //,
-                                              //  SpatialPartition & partition  );
+  //  SpatialPartition & partition  );
 
-GEOS_FORCE_INLINE
-GEOS_HOST_DEVICE
-void computeSinglePointShapeFunctions( arrayView2d< real64 const > const gridPosition,
-                                       arraySlice1d< real64 const > const particlePosition,
-                                       arrayView3d< int const > const ijkMap,
-                                       real64 const (& xLocalMin)[3],
-                                       real64 const (&hEl)[3],
-                                       arraySlice1d< int > const mappedNodes,
-                                       arraySlice1d< real64 > const shapeFunctionValues,
-                                       arraySlice2d< real64 > const shapeFunctionGradientValues );
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                         arraySlice1d< real64 const > const particlePosition,
+                                         arrayView3d< int const > const ijkMap,
+                                         real64 const (&xLocalMin)[3],
+                                         real64 const (&hEl)[3],
+                                         arraySlice1d< int > const mappedNodes,
+                                         arraySlice1d< real64 > const shapeFunctionValues,
+                                         arraySlice2d< real64 > const shapeFunctionGradientValues );
 
-GEOS_FORCE_INLINE
-GEOS_HOST_DEVICE
-void computeCPDIShapeFunctions( arrayView2d< real64 const > const gridPosition,
-                                arraySlice1d< real64 const > const particlePosition,
-                                arraySlice2d< real64 const > const particleRVectors,
-                                arrayView3d< int const > const ijkMap,
-                                real64 const (& xLocalMin)[3],
-                                real64 const (&hEl)[3],
-                                arraySlice1d< int > const mappedNodes,
-                                arraySlice1d< real64 > const shapeFunctionValues,
-                                arraySlice2d< real64 > const shapeFunctionGradientValues );
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                  arraySlice1d< real64 const > const particlePosition,
+                                  arraySlice2d< real64 const > const particleRVectors,
+                                  arrayView3d< int const > const ijkMap,
+                                  real64 const (&xLocalMin)[3],
+                                  real64 const (&hEl)[3],
+                                  arraySlice1d< int > const mappedNodes,
+                                  arraySlice1d< real64 > const shapeFunctionValues,
+                                  arraySlice2d< real64 > const shapeFunctionGradientValues );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void mapNodesAndComputeShapeFunctions( arrayView3d< localIndex const > const ijkMap,
+                                         real64 const (&xLocalMin)[3],
+                                         real64 const (&hEl)[3],
+                                         ParticleType particleType,
+                                         arraySlice1d< real64 const > const particlePosition,
+                                         arraySlice2d< real64 const > const particleRVectors,
+                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                         localIndex * const mappedNode,
+                                         real64 * const shapeFunctionValues,
+                                         real64 shapeFunctionGradientValues[][3] );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeSinglePointParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                 arraySlice1d< real64 const > const particlePosition,
+                                                 arrayView3d< int const > const ijkMap,
+                                                 real64 const (&xLocalMin)[3],
+                                                 real64 const (&hEl)[3],
+                                                 localIndex * const mappedNodes,
+                                                 real64 * const shapeFunctionValues,
+                                                 real64 shapeFunctionGradientValues[][3] );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeCPDIParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                          arraySlice1d< real64 const > const particlePosition,
+                                          arraySlice2d< real64 const > const particleRVectors,
+                                          arrayView3d< int const > const ijkMap,
+                                          real64 const (&xLocalMin)[3],
+                                          real64 const (&hEl)[3],
+                                          localIndex * const mappedNodes,
+                                          real64 * const shapeFunctionValues,
+                                          real64 shapeFunctionGradientValues[][3] );
 
   void computeBodyForce( ParticleManager & particleManager );
 
@@ -709,15 +950,18 @@ void computeCPDIShapeFunctions( arrayView2d< real64 const > const gridPosition,
 
   void computeSPHJacobian( ParticleManager & particleManager );
 
-  void overlapCorrection( real64 const dt ,
+  void overlapCorrection( real64 const dt,
                           ParticleManager & particleManager );
+
+  void sphOverlapCorrection( real64 const dt,
+                             ParticleManager & particleManager );
 
   void computeInternalEnergyAndTemperature( const real64 dt,
                                             ParticleManager & particleManager );
 
   void computeGeneralizedVortexMMSBodyForce( real64 const time_n,
                                              ParticleManager & particleManager );
- 
+
   void correctGhostParticleCentersAcrossPeriodicBoundaries( ParticleManager & particleManager,
                                                             SpatialPartition & partition );
 
@@ -736,14 +980,22 @@ void computeCPDIShapeFunctions( arrayView2d< real64 const > const gridPosition,
                         NodeManager & nodeManager,
                         SpatialPartition & partition );
 
-  void cofactor( real64 const (& F)[3][3],
-                 real64 (& Fc)[3][3] );
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void cofactor( real64 const (&F)[3][3],
+                 real64 ( &Fc )[3][3] );
 
-  real64 Mod(real64 num, real64 denom);
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 Mod( real64 num, real64 denom );
 
-  int combinations( int n, 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  int combinations( int n,
                     int k );
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   int factorial( int n );
 
 protected:
@@ -753,79 +1005,47 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
-  std::vector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
-                                                      // # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
-                                                          // subregions, # of particles, # of nodes a particle on the subregion maps to}
-  std::vector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
-                                                                  // value][direction]. dims = {# of subregions, # of particles, # of nodes
-                                                                  // a particle on the subregion maps to, 3}
+  stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
+                                                    // # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array2d< integer > > m_mappedFields;
+  stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
+                                                        // subregions, # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
+                                                                // value][direction]. dims = {# of subregions, # of particles, # of nodes
+                                                                // a particle on the subregion maps to, 3}
 
+  // Domain options
+  int m_numDims;
+  int m_planeStrain;
+  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
+  array1d< real64 > m_hEl;                // Grid spacing in x-y-z
+  array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
+  array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
+  array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
+  array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
+  array3d< localIndex > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
+  localIndex m_numberOfSubRegions;
+  real64 m_smallMass;
+
+  // Debugging / Profiling options
   int m_solverProfiling;
-  std::vector< real64 > m_profilingTimes;
-  std::vector< std::string > m_profilingLabels;
+  int m_logStartCycle;
+  stdVector< real64 > m_profilingTimes;
+  stdVector< std::string > m_profilingLabels;
 
-  array1d< string > m_plottableFields;
+  // Plotting options
+  int m_plotGridFields;
+  string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
+  int m_plotUnscaledParticles;
 
-  TimeIntegrationOption m_timeIntegrationOption;
-  UpdateMethodOption m_updateMethod;
-  int m_updateOrder;
-
-  MPI_iCommData m_iComm;
-
-  int m_prescribedBcTable;
-  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
-  array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
-  array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
-  array2d< real64 > m_bcTable;
-
-  int m_prescribedFTable;
-  int m_prescribedBoundaryFTable;
-  InterpolationOption m_fTableInterpType;
-
-  array2d< real64 > m_fTable;
-  array1d< real64 > m_domainF;
-  array1d< real64 > m_domainL;
-
-  array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
-  array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces 
-
-  array1d< real64 > m_globalFaceReactions;
-
-  array1d< real64 > m_bodyForce;
-
-  // borehole fluid pressure and radius used in the boreholePressure event.
-  real64 m_boreholePressure;
-  real64 m_boreholeRadius;
-
-  real64 m_confiningPressure;
-  array1d< real64 > m_confiningPressureBoxMin;
-  array1d< real64 > m_confiningPressureBoxMax;
-
-  array1d< int > m_stressControl;
-  InterpolationOption m_stressTableInterpType;
-  array2d< real64 > m_stressTable;
-
-  InterpolationOption m_temperatureTableInterpType;
-  array2d< real64 > m_temperatureTable;
-
-  
-
-  real64 m_stressControlKp;
-  real64 m_stressControlKi;
-  real64 m_stressControlKd;
-  array1d< real64 > m_domainStress;
-  real64 m_domainTemperature;
-  int m_setDomainTemperature;
-  real64 m_domainTemperatureRate;
-  int m_setDomainTemperatureRate;
-
-  array1d< real64 > m_stressControlLastError;
-  array1d< real64 > m_stressControlITerm;
-
+  // Output options
   int m_boxAverageHistory;
-  int m_boxAverageResizeWithDomain;  // 0 use constant box_average domain, 1: resize with domainL 
+  int m_boxAverageResizeWithDomain;  // 0 use constant box_average domain, 1: resize with domainL
   real64 m_boxAverageWriteInterval;
   real64 m_nextBoxAverageWriteTime;
   array1d< real64 > m_boxAverageMin;
@@ -839,144 +1059,160 @@ protected:
   real64 m_particleDataWriteInterval;
   real64 m_nextParticleDataWriteTime;
 
-  real64 m_explicitSurfaceNormalInfluence;
-  int m_computeSurfaceNormalsOnlyOnInitialization;
-  int m_computeSurfaceNormals;
-  int m_computeSurfacePositions;
+  int m_computeXProfile;
+  real64 m_xProfileWriteInterval;
+  real64 m_nextXProfileWriteTime;
+  real64 m_xProfileVx0;
 
-  // Cohesive law variables
-  int m_referenceCohesiveZone;
-  int m_enableCohesiveLaws;
-  CohesiveLawOption m_cohesiveLaw;
-  int m_enableCohesiveFailure;
-  int m_preventCZInterpentration;
-  real64 m_normalForceConstant;
-  real64 m_shearForceConstant;
-
-  real64 m_numSurfaceIntegrationPoints;
-  real64 m_maxCohesiveNormalStress;
-  real64 m_maxCohesiveShearStress;
-  real64 m_characteristicNormalDisplacement;
-  real64 m_characteristicTangentialDisplacement;
-  real64 m_maxCohesiveNormalDisplacement;
-  real64 m_maxCohesiveTangentialDisplacement;
-
-  real64 m_polymerCZThickness;
-  real64 m_polymerCZBulkModulus;
-  real64 m_polymerCZShearModulus;
-  real64 m_polymerCZYieldStrength0;
-  real64 m_polymerCZR0;
-  real64 m_polymerCZR1;
-  real64 m_polymerCZR2;
-  real64 m_polymerCZGr;
-  real64 m_polymerCZMaxStretch;
-
-  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
-  array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
-  array2d< real64 > m_referenceCohesiveGridNodeAreas;
-  array2d< real64 > m_referenceCohesiveGridNodePositions;
-  array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
-  array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
-  array2d< real64 > m_cohesiveGridNodeDamages;
-  array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
-
-  int m_needsNeighborList;
-  real64 m_neighborRadius;
-  int m_binSizeMultiplier;
-
-  real64 m_thinFeatureDFGThreshold;
-
-  int m_useDamageAsSurfaceFlag;
-
+  // Integration options
+  TimeIntegrationOption m_timeIntegrationOption;
+  UpdateMethodOption m_updateMethod;
+  int m_updateOrder;
   int m_FSubcycles;
   int m_LBar;
   real64 m_LBarScale;
   int m_exactJIntegration;
   int m_useAPIC;
   int m_useInteralForceAsFaceReaction;
-  
-  real64 m_maxParticleVelocity;
-  real64 m_maxParticleVelocitySquared;
-  real64 m_minParticleJacobian;
-  real64 m_maxParticleJacobian;
-  
-  OverlapCorrectionOption m_overlapCorrection;
-  real64 m_overlapThreshold1;
-  real64 m_overlapThreshold2;
-  int m_computeSPHJacobian;
 
-  // parameters for crack-tip detection used for stress concentration factor
-  int m_useCrackTipDetection;
-  real64 m_crackTipDetectionThreshold;
+  // Boundary condition options
+  int m_prescribedBcTable;
+  array2d< real64 > m_bcTable;
+  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
+  array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
+  array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
 
-  // Currently initializes all particles to this temperature
-  // TODO: read in from particle file
+  int m_prescribedFTable;
+  int m_prescribedBoundaryFTable;
+  InterpolationOption m_fTableInterpType;
+  array2d< real64 > m_fTable;
+  array1d< real64 > m_domainF;
+  array1d< real64 > m_domainL;
+
+  array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
+  array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces
+
+  array1d< real64 > m_globalFaceReactions;
+
+  array1d< int > m_stressControl;
+  InterpolationOption m_stressTableInterpType;
+  array2d< real64 > m_stressTable;
+  real64 m_stressControlKp;
+  real64 m_stressControlKi;
+  real64 m_stressControlKd;
+  array1d< real64 > m_stressControlLastError;
+  array1d< real64 > m_stressControlITerm;
+  array1d< real64 > m_domainStress;
+
+  array1d< real64 > m_bodyForce;
+
+  int m_enableSurfaceTension;
+  real64 m_surfaceTensionCoefficient;
+
+  // Borehole options - borehole fluid pressure and radius used in the boreholePressure event.
+  int m_enableBoreholePressure;
+  array1d< real64 > m_boreholeStress;
+  real64 m_boreholeRadius;
+
+  int m_enableConfiningPressure;
+  array1d< real64 > m_confiningStress;
+  array1d< real64 > m_confiningPressureBoxMin;
+  array1d< real64 > m_confiningPressureBoxMax;
+
+  // Temperature options
+  InterpolationOption m_temperatureTableInterpType;
+  array2d< real64 > m_temperatureTable;
+  real64 m_domainTemperature;
+  int m_setDomainTemperature;
+  real64 m_domainTemperatureRate;
+  int m_setDomainTemperatureRate;
+
   int m_shockHeating;
   int m_computeInternalEnergyAndTemperature;
   int m_useArtificialViscosity;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
 
-  int m_cpdiDomainScaling;
-  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
-  int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
-  int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
-
-  int m_generalizedVortexMMS;
-  
-  real64 m_smallMass;
-
-  int m_numContactGroups, m_numContactFlags, m_numVelocityFields;
+  // DFG options
+  int m_damageFieldPartitioning;
+  int m_numContactGroups;
+  int m_numContactFlags;
+  int m_numVelocityFields;
   real64 m_separabilityMinDamage;
   int m_treatFullyDamagedAsSingleField;
-  int m_surfaceDetection;
-  int m_damageFieldPartitioning;
+  real64 m_thinFeatureDFGThreshold;
+  int m_useDamageAsSurfaceFlag;
 
-
-
-  int m_useSurfacePositionForContact;
+  // Contact options
+  int m_enableContact;
+  int m_hasContact;
   ContactNormalTypeOption m_contactNormalType;
-  real64 m_contactNormalExponent;
   ContactGapCorrectionOption m_contactGapCorrection;
-  // int m_directionalOverlapCorrection;
-
-  int m_resetDefGradForFullyDamagedParticles;
-  int m_plotUnscaledParticles;
-
+  int m_useSurfacePositionForContact;
+  real64 m_explicitSurfaceNormalInfluence;
+  int m_computeParticleSurfaceNormalsAndPositions;
   real64 m_frictionCoefficient;
-  array2d< real64 > m_frictionCoefficientTable; 
+  array2d< real64 > m_frictionCoefficientTable;
+  NormalsAndPositionsMethodOption m_normalAndPositionMethod;
+  int m_overwriteExistingNormalsAndPositions;
+  real64 m_contactNormalExponent;
+  int m_maxLRIterations;
+  real64 m_LRtolerance;
+  int m_surfaceDetection;
 
-  int m_planeStrain;
-  int m_numDims;
+  // Performance options
+  GPUSchemeOption m_gpuScheme;
 
+  // Cohesive zone options
+  AreaIntegrationOption m_areaIntegrationMethod;
+  real64 m_numSurfaceIntegrationPoints;
+  int m_preventCZInterpenetration;
+  real64 m_totalBinderVolume;
+  real64 m_polymerCZThickness;
 
+  // Neighborlist options
+  int m_needsNeighborList;
+  real64 m_neighborRadius;
+  int m_binSizeMultiplier;
+  int m_needsNodalNeighborList;
+  OrderedVariableToManyParticleRelation m_nodalNeighborList;
+  int m_maxNodalNeighbors;
 
-  array1d< real64 > m_hEl;                // Grid spacing in x-y-z
-  array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
-  array1d< real64 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
-  array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
-  array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
-  array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
-  array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
-  array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
-  array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
-  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
+  // Conditioning options
+  int m_cpdiDomainScaling;
+  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
+  real64 m_maxParticleVelocity;
+  real64 m_maxParticleVelocitySquared;
+  real64 m_minParticleJacobian;
+  real64 m_maxParticleJacobian;
+  int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
+  int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
+  real64 m_surfaceNormalAndPositionDamageThreshold;
+  int m_resetDefGradForFullyDamagedParticles;
+  int m_resetDefGradForScaledSurfaceParticles;
+  int m_useReferenceVectorsForParticleUpdate;
 
-  array3d< int > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
+  // Overlap correction options
+  OverlapCorrectionOption m_overlapCorrection;
+  real64 m_overlapThreshold1;
+  real64 m_overlapThreshold2;
+  int m_computeSPHJacobian;
+  int m_directionalOverlapCorrection;
 
+  // Crack Tip options - parameters for crack-tip detection used for stress concentration factor
+  int m_useCrackTipDetection;
+  real64 m_crackTipDetectionThreshold;
+
+  // Event options
   int m_useEvents;                   // Events flag
-  MPMEventManager* m_mpmEventManager;
-
   int m_surfaceHealing;
 
-  int m_debugFlag;
+  // Method of manufactured solutions (MMS) options
+  int m_generalizedVortexMMS;
 
-  int m_computeXProfile;
-  real64 m_xProfileWriteInterval;
-  real64 m_nextXProfileWriteTime;
-  real64 m_xProfileVx0;
-
-  real64 m_implicitContinuumFluidPressure; // Borehole collapse
+  // Misc
+  int m_computeNodalArea;
+  int m_useNodePosForArea;
 
 private:
   struct BinKey
@@ -1007,8 +1243,7 @@ private:
     }
   };
 
-  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
-  // void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
+  void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 };
 
 ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
@@ -1038,12 +1273,18 @@ ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
               "MassWeighted",
               "LargerMass",
               "Mixed",
-              "Aligned" );
+              "Aligned",
+              "LogisticRegression" );
 
 ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
               "Simple",
               "Implicit",
               "Softened" );
+
+ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
+              "BruteForce",
+              "Mesh" );
+
 
 ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",
@@ -1055,6 +1296,18 @@ ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
               "NeedlemanXu",
               "Polymer" );
 
+ENUM_STRINGS( SolidMechanicsMPM::GPUSchemeOption,
+              "Atomics",
+              "NoAtomics",
+              "RandomMix",
+              "MinimalAtomics",
+              "Reduction",
+              "Colors" );
+
+ENUM_STRINGS( SolidMechanicsMPM:: NormalsAndPositionsMethodOption,
+              "LogisticRegression",
+              "DFGAndVolumeIntegration" );
+
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 //**********************************************************************************************************************
@@ -1062,4 +1315,4 @@ ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
 
 } /* namespace geos */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSMPM_HPP_ */

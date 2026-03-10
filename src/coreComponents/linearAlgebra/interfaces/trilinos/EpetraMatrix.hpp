@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -108,6 +108,10 @@ public:
   using MatrixBase::residual;
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
+  using MatrixBase::extract;
+  using MatrixBase::extractLocal;
+  using MatrixBase::multiplyPtAP;
+  using MatrixBase::multiplyP1tAP2;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -244,6 +248,8 @@ public:
   virtual void leftRightScale( EpetraVector const & vecLeft,
                                EpetraVector const & vecRight ) override;
 
+  virtual void computeScalingVector( EpetraVector & scaling ) const override;
+
   virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
                             RowSumType const rowSumType ) override;
 
@@ -268,6 +274,11 @@ public:
                              bool const excludeDiag ) override;
 
   /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLengthLocal
+   */
+  virtual localIndex maxRowLengthLocal() const override;
+
+  /**
    * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
@@ -276,11 +287,19 @@ public:
 
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
+  virtual void getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const override;
+
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
   virtual void extractDiagonal( EpetraVector & dst ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
+
+  virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const override;
 
   virtual void getRowSums( EpetraVector & dst,
                            RowSumType const rowSumType ) const override;

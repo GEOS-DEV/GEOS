@@ -57,7 +57,7 @@ public:
                        arrayView2d< real64 > const & density,
                        arrayView2d< real64 > const & wavespeed,
                        const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
                       wavespeed,
@@ -119,8 +119,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -170,15 +170,15 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6],
+                            real64 ( &stiffness )[6][6] ) const override final;
 
 protected:
 
@@ -194,8 +194,8 @@ protected:
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::getElasticStiffness( localIndex const k,
-                                                   localIndex const q,
-                                                   real64 ( & stiffness )[6][6] ) const
+                                               localIndex const q,
+                                               real64 ( & stiffness )[6][6] ) const
 {
   GEOS_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
@@ -269,10 +269,10 @@ void HyperelasticUpdates::smallStrainNoStateUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainNoStateUpdate( localIndex const k,
-                                                        localIndex const q,
-                                                        real64 const ( &totalStrain )[6],
-                                                        real64 ( & stress )[6],
-                                                        DiscretizationOps & stiffness ) const
+                                                    localIndex const q,
+                                                    real64 const ( &totalStrain )[6],
+                                                    real64 ( & stress )[6],
+                                                    DiscretizationOps & stiffness ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
 
@@ -284,10 +284,10 @@ void HyperelasticUpdates::smallStrainNoStateUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                            localIndex const q,
-                                                            real64 const & timeIncrement,
-                                                            real64 const ( &strainIncrement )[6],
-                                                            real64 ( & stress )[6] ) const
+                                                        localIndex const q,
+                                                        real64 const & timeIncrement,
+                                                        real64 const ( &strainIncrement )[6],
+                                                        real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
@@ -296,14 +296,14 @@ void HyperelasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 }
 
 GEOS_HOST_DEVICE
-inline 
+inline
 void HyperelasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                           localIndex const q,
-                                                           real64 const & timeIncrement,
-                                                           real64 const ( & beginningRotation )[3][3],
-                                                           real64 const ( & endRotation )[3][3],
-                                                           real64 const ( & strainIncrement )[6],
-                                                           real64 ( &stress )[6] ) const
+                                                        localIndex const q,
+                                                        real64 const & timeIncrement,
+                                                        real64 const ( &beginningRotation )[3][3],
+                                                        real64 const ( &endRotation )[3][3],
+                                                        real64 const ( &strainIncrement )[6],
+                                                        real64 ( & stress )[6] ) const
 {
   // CC: confirm this is correct
   GEOS_UNUSED_VAR( beginningRotation );
@@ -319,11 +319,11 @@ void HyperelasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & timeIncrement,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 real64 ( & stiffness )[6][6] ) const
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( & stress )[6],
+                                             real64 ( & stiffness )[6][6] ) const
 {
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   getElasticStiffness( k, q, stiffness );
@@ -333,11 +333,11 @@ void HyperelasticUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void HyperelasticUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & timeIncrement,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 DiscretizationOps & stiffness ) const
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( & stress )[6],
+                                             DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
@@ -347,8 +347,8 @@ void HyperelasticUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperelasticUpdates::viscousStateUpdate( localIndex const k,
-                                                  localIndex const q,
-                                                  real64 beta ) const
+                                              localIndex const q,
+                                              real64 beta ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -360,7 +360,7 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperelasticUpdates::hyperUpdate( localIndex const k,
                                        localIndex const q,
-                                       real64 const ( & FminusI )[3][3],
+                                       real64 const ( &FminusI )[3][3],
                                        real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( q );
@@ -368,18 +368,18 @@ void HyperelasticUpdates::hyperUpdate( localIndex const k,
   real64 K = m_bulkModulus[k];
   real64 G = m_shearModulus[k];
 
-  real64 F [3][3];
+  real64 F[3][3];
   LvArray::tensorOps::copy< 3, 3 >( F, FminusI );
   F[0][0] += 1;
   F[1][1] += 1;
   F[2][2] += 1;
 
   real64 C[3][3] = { { 0.0 } };
-  for(int i = 0; i < 3; i++)
+  for( int i = 0; i < 3; i++ )
   {
-    for(int j = 0; j < 3; j++)
+    for( int j = 0; j < 3; j++ )
     {
-      for(int kk = 0; kk < 3; kk++)
+      for( int kk = 0; kk < 3; kk++ )
       {
         C[i][j] += F[i][kk] * F[j][kk];
       }
@@ -392,8 +392,8 @@ void HyperelasticUpdates::hyperUpdate( localIndex const k,
              F[0][1] * ( F[1][0] * F[2][2] - F[1][2] * F[2][0] ) +
              F[0][2] * ( F[1][0] * F[2][1] - F[1][1] * F[2][0] );
 
-  real64 const x1 = G / std::pow(J, 5/3);
-  real64 const x2 = K * ( J-1 ) - G / std::pow(J, 5/3) * trFtF / 3.0;
+  real64 const x1 = G / std::pow( J, 5/3 );
+  real64 const x2 = K * ( J-1 ) - G / std::pow( J, 5/3 ) * trFtF / 3.0;
 
   stress[0] = x1 * C[0][0] + x2;
   stress[1] = x1 * C[1][1] + x2;
@@ -408,12 +408,12 @@ void HyperelasticUpdates::hyperUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperelasticUpdates::hyperUpdate( localIndex const k,
-                                          localIndex const q,
-                                          real64 const ( & FminusI )[3][3],
-                                          real64 ( & stress )[6],
-                                          real64 ( & stiffness )[6][6] ) const
+                                       localIndex const q,
+                                       real64 const ( &FminusI )[3][3],
+                                       real64 ( & stress )[6],
+                                       real64 ( & stiffness )[6][6] ) const
 {
-  hyperUpdate(k, q, FminusI, stress);
+  hyperUpdate( k, q, FminusI, stress );
   getElasticStiffness( k, q, stiffness );
 }
 

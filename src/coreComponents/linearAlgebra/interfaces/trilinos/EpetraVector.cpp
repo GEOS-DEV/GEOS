@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
 
 #include "EpetraVector.hpp"
 
+#include "codingUtilities/RTTypes.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "linearAlgebra/interfaces/trilinos/EpetraUtils.hpp"
 
@@ -186,17 +187,20 @@ void EpetraVector::axpby( real64 const alpha,
   touch();
 }
 
-void EpetraVector::pointwiseProduct( EpetraVector const & x,
-                                     EpetraVector & y ) const
+void EpetraVector::pointwiseProduct( EpetraVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
-  GEOS_LAI_ASSERT( y.ready() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( ( y.unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
-  y.touch();
+  GEOS_LAI_CHECK_ERROR( ( unwrapped() ).Multiply( 1.0, unwrapped(), x.unwrapped(), 0.0 ) );
+  touch();
+}
+
+void EpetraVector::pointwiseDivide( EpetraVector const & x )
+{
+  GEOS_UNUSED_VAR( x );
+  GEOS_ERROR( "Not implemented!!!" );
 }
 
 real64 EpetraVector::norm1() const
@@ -293,7 +297,7 @@ MPI_Comm EpetraVector::comm() const
 #ifdef GEOS_USE_MPI
   return dynamicCast< Epetra_MpiComm const & >( m_vec->Map().Comm() ).Comm();
 #else
-  return MPI_COMM_GEOSX;
+  return MPI_COMM_GEOS;
 #endif
 }
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
  */
 
 #include "SolidBase.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -31,36 +32,28 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   ContinuumBase( name, parent ),
   m_thermalExpansionCoefficient()
 {
-  string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
-
   registerWrapper( viewKeyStruct::defaultThermalExpansionCoefficientString(), &m_defaultThermalExpansionCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame" );
 
-  registerWrapper( viewKeyStruct::thermalExpansionCoefficientString(), &m_thermalExpansionCoefficient ).
-    setApplyDefaultValue( -1.0 ). // will be overwritten
-    setDescription( "Linear Thermal Expansion Coefficient Field" );
+  // register fields
+  registerField< fields::solid::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
 }
-
-
-SolidBase::~SolidBase()
-{}
 
 
 void SolidBase::postInputInitialization()
 {
   ContinuumBase::postInputInitialization();
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::thermalExpansionCoefficientString() ).
+  getField< fields::solid::thermalExpansionCoefficient >().
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 
 
-void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                          localIndex const numConstitutivePointsPerParentIndex )
+void SolidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ContinuumBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ContinuumBase::allocateConstitutiveData( parent, numPts );
 
   m_thermalExpansionCoefficient.resize( 0 );
 }

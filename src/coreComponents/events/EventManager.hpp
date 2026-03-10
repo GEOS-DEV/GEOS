@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "EventBase.hpp"
+#include "common/format/LogPart.hpp"
 
 namespace geos
 {
@@ -134,7 +135,19 @@ private:
    * @brief ouput time information to the log
    *
    */
-  void outputTime() const;
+  void outputTime( LogPart & section ) const;
+
+  /**
+   * @brief output information about the cycle to the log
+   * @param logpart the end of section to be displayed
+   * @param cycleNumber the current cycle number
+   * @param numOfSubSteps the number of substeps taken
+   * @param subStepDts the time step size for each substep
+   */
+  void logEndOfCycleInformation( LogPart & logpart,
+                                 integer const cycleNumber,
+                                 integer const numOfSubSteps,
+                                 stdVector< real64 > const & subStepDts ) const;
 
   /// Min time for a simulation
   real64 m_minTime;

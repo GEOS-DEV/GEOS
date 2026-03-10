@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -34,9 +34,6 @@
 
 namespace geos
 {
-
-using namespace dataRepository;
-
 namespace vtk
 {
 
@@ -60,7 +57,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
+using CellMapType = stdMap< ElementType, stdUnorderedMap< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -82,7 +79,7 @@ public:
    * @param faceBlocks The fractures meshes.
    */
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
-             std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+             stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
     m_faceBlocks( faceBlocks )
   { }
@@ -98,7 +95,7 @@ public:
   /**
    * @return a mapping linking the name of each face block to its mesh.
    */
-  std::map< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
+  stdMap< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
   {
     return m_faceBlocks;
   }
@@ -116,7 +113,7 @@ public:
    * @brief Defines the face blocks/fractures.
    * @param faceBlocks A map which connects each name of the face block to its mesh.
    */
-  void setFaceBlocks( std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+  void setFaceBlocks( stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
   {
     m_faceBlocks = faceBlocks;
   }
@@ -126,7 +123,7 @@ private:
   vtkSmartPointer< vtkDataSet > m_main;
 
   /// The face meshes (namely the fractures).
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
 /**
@@ -138,15 +135,15 @@ private:
  */
 AllMeshes loadAllMeshes( Path const & filePath,
                          string const & mainBlockName,
-                         array1d< string > const & faceBlockNames );
+                         string_array const & faceBlockNames );
 
 /**
  * @brief Compute the rank neighbor candidate list.
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated
  */
-std::vector< int >
-findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
+stdVector< int >
+findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
 
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
@@ -154,19 +151,23 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitionning method
+ * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
+ * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
  * @return the vtk grid redistributed
  */
 AllMeshes
 redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
-                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
-                    int const useGlobalIds );
+                    int const useGlobalIds,
+                    string const & structuredIndexAttributeName,
+                    int const numPartZ );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -221,9 +222,9 @@ string buildCellBlockName( ElementType const type, int const regionId );
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importMaterialField( std::vector< vtkIdType > const & cellIds,
+void importMaterialField( stdVector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
-                          WrapperBase & wrapper );
+                          dataRepository::WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
@@ -231,9 +232,9 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importRegularField( std::vector< vtkIdType > const & cellIds,
+void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
-                         WrapperBase & wrapper );
+                         dataRepository::WrapperBase & wrapper );
 
 /**
  * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, for all the elements/cells of the provided wrapper.
@@ -241,7 +242,7 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
  * @param wrapper The destination.
  */
 void importRegularField( vtkDataArray * vtkArray,
-                         WrapperBase & wrapper );
+                         dataRepository::WrapperBase & wrapper );
 
 
 } // namespace vtk
@@ -254,25 +255,26 @@ void importRegularField( vtkDataArray * vtkArray,
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
  * @param[in] translate translate the dataset
  * @param[in] scale scale the dataset
- * @return size of the dataset on x-axis
  */
-real64 writeNodes( integer const logLevel,
-                   vtkDataSet & mesh,
-                   string_array & nodesetNames,
-                   CellBlockManager & cellBlockManager,
-                   const geos::R1Tensor & translate,
-                   const geos::R1Tensor & scale );
+void writeNodes( integer const logLevel,
+                 vtkDataSet & mesh,
+                 string_array & nodesetNames,
+                 CellBlockManager & cellBlockManager,
+                 const geos::R1Tensor & translate,
+                 const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
  * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geos::vtk::CellMapType & cellMap,
+                 vtk::CellMapType const & cellMap,
+                 string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -288,6 +290,13 @@ void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
                     const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
+
+/**
+ * @brief Compute the global length of the mesh and its offset.
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @return A pair containing the global length and the offset of the mesh.
+ */
+std::pair< real64, real64 > getGlobalLengthAndOffset( vtkDataSet & mesh );
 
 } // namespace geos
 

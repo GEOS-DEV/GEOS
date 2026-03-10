@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -24,6 +24,15 @@
 namespace geos
 {
 
+void resizeArray( OrderedVariableToManyParticleRelation & relation,
+                  localIndex const index,
+                  localIndex const size )
+{
+  relation.m_numParticles[index] = size;
+  relation.m_toParticleRegion.resizeArray( index, size );
+  relation.m_toParticleSubRegion.resizeArray( index, size );
+  relation.m_toParticleIndex.resizeArray( index, size );
+}
 
 void erase( OrderedVariableToManyParticleRelation & relation,
             localIndex const firstIndex,
@@ -84,9 +93,9 @@ void fastInsert( OrderedVariableToManyParticleRelation & relation,
 
 void insertMany( OrderedVariableToManyParticleRelation & relation,
                  localIndex const firstIndex,
-                 std::vector< localIndex > const & erArray,
-                 std::vector< localIndex > const & esrArray,
-                 std::vector< localIndex > const & eiArray )
+                 stdVector< localIndex > const & erArray,
+                 stdVector< localIndex > const & esrArray,
+                 stdVector< localIndex > const & eiArray )
 {
   relation.m_numParticles[firstIndex] += erArray.size();
   relation.m_toParticleRegion.appendToArray( firstIndex, erArray.begin(), erArray.end() );

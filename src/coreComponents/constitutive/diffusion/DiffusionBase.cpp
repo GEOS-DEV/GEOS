@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -40,9 +40,9 @@ DiffusionBase::DiffusionBase( string const & name, Group * const parent )
     setApplyDefaultValue( 1.0 ).
     setDescription( "List of phase diffusivity multipliers" );
 
-  registerField( fields::diffusion::diffusivity{}, &m_diffusivity );
-  registerField( fields::diffusion::dDiffusivity_dTemperature{}, &m_dDiffusivity_dTemperature );
-  registerField( fields::diffusion::phaseDiffusivityMultiplier{}, &m_phaseDiffusivityMultiplier );
+  registerField< fields::diffusion::diffusivity >( &m_diffusivity );
+  registerField< fields::diffusion::dDiffusivity_dTemperature >( &m_dDiffusivity_dTemperature );
+  registerField< fields::diffusion::phaseDiffusivityMultiplier >( &m_phaseDiffusivityMultiplier );
 }
 
 void DiffusionBase::postInputInitialization()
@@ -60,24 +60,19 @@ void DiffusionBase::postInputInitialization()
   GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
                  GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
-                 InputError );
-
-  m_diffusivity.resize( 0, 0, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
+                 InputError, getDataContext() );
 }
 
-void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_diffusivity.resize( 0, 1, 3 );
   m_dDiffusivity_dTemperature.resize( 0, 1, 3 );
   m_phaseDiffusivityMultiplier.resize( 0, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -88,7 +83,6 @@ void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
       }
     }
   }
-
 }
 
 } // namespace constitutive

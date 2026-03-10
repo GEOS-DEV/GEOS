@@ -12,8 +12,8 @@
       initialDt="1e2"
       targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="40"/>
+        newtonTol="1.0e-3"
+        newtonMaxIter="12"/>
       <LinearSolverParameters
         directParallel="0"/>
     </CompositionalMultiphaseReservoir>
@@ -51,12 +51,12 @@
   <ElementRegions>
     <CellElementRegion
       name="reservoir"
-      cellBlocks="{ 1_hexahedra }"
+      cellBlocks="{ * }"
       materialList="{ fluid, rock, relperm, cappres }"/>
 
     <WellElementRegion
       name="wellRegion"
-      materialList="{ fluid, relperm, cappres }"/>
+      materialList="{ fluid }"/>
   </ElementRegions>
  
   <NumericalMethods>

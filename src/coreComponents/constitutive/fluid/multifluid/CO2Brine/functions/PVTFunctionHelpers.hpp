@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,8 +19,8 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Units.hpp"
-
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/format/StringUtilities.hpp"
 
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_CO2BRINE_FUNCTIONS_PVTFUNCTIONHELPERS_HPP_
@@ -136,8 +136,7 @@ public:
 
   array1d< array1d< real64 > > const & getCoords() const { return coords; }
 
-  static const inline std::vector< units::Unit > coordsUnits =
-  { units::Pressure, units::TemperatureInC };
+  static const inline stdVector< units::Unit > coordsUnits{ units::Pressure, units::TemperatureInC };
 
 private:
 
@@ -207,10 +206,10 @@ initializePropertyTable( string_array const & inputParameters,
     real64 const dT = stod( inputParameters[7] );
 
     real64 const minT = 10;
-    real64 const maxT = 350;
-    GEOS_THROW_IF( TStart < minT, "Temperature must be in Kelvin and must be larger than " << minT << " K",
+    real64 const maxT = 200;
+    GEOS_THROW_IF( TStart < minT, "Temperature " << units::convertCToK( TStart ) << " must be in Kelvin and must be larger than " << units::convertCToK( minT ) << " K",
                    InputError );
-    GEOS_THROW_IF( TEnd > maxT, "Temperature must be in Kelvin and must be smaller than " << maxT << " K",
+    GEOS_THROW_IF( TEnd > maxT, "Temperature " << units::convertCToK( TEnd ) << " must be in Kelvin and must be smaller than " << units::convertCToK( maxT ) << " K",
                    InputError );
     GEOS_THROW_IF( TStart >= TEnd, "TStart must be strictly smaller than TEnd",
                    InputError );

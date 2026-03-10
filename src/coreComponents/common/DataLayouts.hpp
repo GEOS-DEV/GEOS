@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -155,16 +155,16 @@ namespace cells
 /// Cell node map permutation when using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
 
-/// Cell strain permutation when using cuda
-using STRAIN_PERM = RAJA::PERM_JI;
+/// Cell tensor (i.e. average stress and strain) permutation when using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_JI;
 
 #else
 
 /// Cell node map permutation when not using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
 
-/// Cell strain permutation when not using cuda
-using STRAIN_PERM = RAJA::PERM_IJ;
+/// Cell tensor (i.e. average stress and strain) permutation when not using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_IJ;
 
 #endif
 
@@ -172,7 +172,7 @@ using STRAIN_PERM = RAJA::PERM_IJ;
 static constexpr int NODE_MAP_USD = LvArray::typeManipulation::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
 
 /// Cell strain unit stride dimension
-static constexpr int STRAIN_USD = LvArray::typeManipulation::getStrideOneDimension( STRAIN_PERM {} );
+static constexpr int RANK2_TENSOR_USD = LvArray::typeManipulation::getStrideOneDimension( RANK2_TENSOR_PERM {} );
 
 } // namespace cells
 
@@ -204,6 +204,44 @@ static constexpr int STRESS_USD = LvArray::typeManipulation::getStrideOneDimensi
 static constexpr int STIFFNESS_USD = LvArray::typeManipulation::getStrideOneDimension( STIFFNESS_PERMUTATION {} );
 
 } // namespace solid
+
+
+namespace immiscibleFlow
+{
+#if defined( GEOS_USE_DEVICE )
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_JI;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_JKI;
+
+#else
+
+/// Phase property array layout
+using LAYOUT_PHASE = RAJA::PERM_IJ;
+
+/// Phase property array layout
+using LAYOUT_PHASE_DS = RAJA::PERM_IJK;
+
+#endif
+
+/// Phase property unit stride dimension
+static constexpr int USD_PHASE = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE{} );
+
+/// Phase property compositional derivative unit stride dimension
+static constexpr int USD_PHASE_DS = LvArray::typeManipulation::getStrideOneDimension( LAYOUT_PHASE_DS{} );
+
+/// indices of pressure and saturation derivatives
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static int constexpr dP = 0;
+  /// index of first derivative wrt compositions
+  static int constexpr dS = 1;
+};
+
+} // namespace immiscibleFlow
 
 namespace compflow
 {

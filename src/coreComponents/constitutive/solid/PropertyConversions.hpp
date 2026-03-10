@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -338,7 +338,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toFirstLame( real64 const & G, real64 const & E )
 {
-  return  G * ( E - 2 * G) / ( 3 * G - E);
+  return G * ( E - 2 * G) / ( 3 * G - E);
 }
 
 } /* namespace shearModAndYoungMod*/
@@ -356,7 +356,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toShearMod( real64 const & lambda, real64 const & E )
 {
-  return 0.25 * (E-3*lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda));
+  return 0.25 * (E-3*lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ));
 }
 
 /**
@@ -369,7 +369,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & lambda, real64 const & E )
 {
-  return (E+3*lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda))/6;
+  return (E+3*lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ))/6;
 }
 
 /**
@@ -382,7 +382,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toPoissonRatio( real64 const & lambda, real64 const & E )
 {
-  return 2*lambda / (E+lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda));
+  return 2*lambda / (E+lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ));
 }
 
 }

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -252,7 +252,7 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & strainIncrement )[6],
+                                             real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
@@ -279,9 +279,9 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
-                                             real64 const ( & strainIncrement )[6],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
@@ -367,6 +367,24 @@ public:
   }
 
   /**
+   * @brief Return the current elastic strain increment at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrainInc Current elastic strain increment
+   */
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( & elasticStrainInc )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrainInc );
+    GEOS_ERROR( "getElasticStrainInc() of SolidBase was called." );
+  }
+
+  /**
    * @brief Perform a viscous (rate-dependent) state update
    *
    * @param beta time-dependent parameter
@@ -385,8 +403,8 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const 
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
@@ -398,7 +416,7 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
+                            real64 const ( &FminusI )[3][3],
                             real64 ( & stress )[6],
                             real64 ( & stiffness )[6][6] ) const
   {
@@ -408,7 +426,7 @@ public:
     GEOS_UNUSED_VAR( stress );
     GEOS_UNUSED_VAR( stiffness );
     GEOS_ERROR( "hyperUpdate() not implemented for this model" );
-  }                     
+  }
 
   /**
    * @brief Return the strain energy density at a given material point
@@ -502,10 +520,10 @@ public:
     real64 eps = 1e-4*norm;     // finite difference perturbation
 
     smallStrainUpdate( k,
-                       q, 
+                       q,
                        timeIncrement,
-                       strainIncrement, 
-                       stress, 
+                       strainIncrement,
+                       stress,
                        stiffness );
 
     for( localIndex i=0; i<6; ++i )
@@ -517,11 +535,11 @@ public:
         strainIncrementFD[i-1] -= eps;
       }
 
-      smallStrainUpdate( k, 
-                         q, 
+      smallStrainUpdate( k,
+                         q,
                          timeIncrement,
-                         strainIncrementFD, 
-                         stressFD, 
+                         strainIncrementFD,
+                         stressFD,
                          stiffnessFD );
 
       for( localIndex j=0; j<6; ++j )
@@ -558,16 +576,16 @@ public:
     real64 stiffnessFD[6][6]{};   // finite difference approximation
     real64 stress[6]{};           // original stress
 
-    smallStrainUpdate( k, 
-                       q, 
+    smallStrainUpdate( k,
+                       q,
                        timeIncrement,
-                       strainIncrement, 
-                       stress, 
+                       strainIncrement,
+                       stress,
                        stiffness );
-    computeSmallStrainFiniteDifferenceStiffness( k, 
-                                                 q, 
-                                                 timeIncrement, 
-                                                 strainIncrement, 
+    computeSmallStrainFiniteDifferenceStiffness( k,
+                                                 q,
+                                                 timeIncrement,
+                                                 strainIncrement,
                                                  stiffnessFD );
 
     // compute relative error between two versions
@@ -620,10 +638,7 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -648,24 +663,11 @@ public:
   /// Keys for data in this class
   struct viewKeyStruct : public ContinuumBase::viewKeyStruct
   {
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
-                                                                                                                   // drained
-                                                                                                                   // linear
-                                                                                                                   // thermal
-                                                                                                                   // expansion
-                                                                                                                   // coefficient
-                                                                                                                   // key
+    /// Thermal expansion coefficients
+    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
+    // Default drained linear thermal expansion coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;

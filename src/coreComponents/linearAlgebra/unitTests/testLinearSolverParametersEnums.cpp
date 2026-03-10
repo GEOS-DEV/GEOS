@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -34,6 +34,7 @@ TEST( LinearSolverParametersEnums, SolverType )
   ASSERT_EQ( "gmres", toString( EnumType::gmres ) );
   ASSERT_EQ( "fgmres", toString( EnumType::fgmres ) );
   ASSERT_EQ( "bicgstab", toString( EnumType::bicgstab ) );
+  ASSERT_EQ( "richardson", toString( EnumType::richardson ) );
   ASSERT_EQ( "preconditioner", toString( EnumType::preconditioner ) );
 }
 
@@ -51,7 +52,7 @@ TEST( LinearSolverParametersEnums, PreconditionerType )
   ASSERT_EQ( "chebyshev", toString( EnumType::chebyshev ) );
   ASSERT_EQ( "iluk", toString( EnumType::iluk ) );
   ASSERT_EQ( "ilut", toString( EnumType::ilut ) );
-  ASSERT_EQ( "icc", toString( EnumType::ic ) ); // Notice the discrepancy here
+  ASSERT_EQ( "ick", toString( EnumType::ick ) ); // Notice the discrepancy here
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
   ASSERT_EQ( "amg", toString( EnumType::amg ) );
   ASSERT_EQ( "mgr", toString( EnumType::mgr ) );
@@ -97,6 +98,7 @@ TEST( LinearSolverParametersEnums, MGRStrategyType )
   ASSERT_EQ( "compositionalMultiphaseHybridFVM", toString( EnumType::compositionalMultiphaseHybridFVM ) );
   ASSERT_EQ( "compositionalMultiphaseReservoirFVM", toString( EnumType::compositionalMultiphaseReservoirFVM ) );
   ASSERT_EQ( "compositionalMultiphaseReservoirHybridFVM", toString( EnumType::compositionalMultiphaseReservoirHybridFVM ) );
+  ASSERT_EQ( "immiscibleMultiphaseFVM", toString( EnumType::immiscibleMultiphaseFVM ) );
   ASSERT_EQ( "multiphasePoromechanics", toString( EnumType::multiphasePoromechanics ) );
   ASSERT_EQ( "hydrofracture", toString( EnumType::hydrofracture ) );
   ASSERT_EQ( "lagrangianContactMechanics", toString( EnumType::lagrangianContactMechanics ) );
@@ -134,9 +136,9 @@ TEST( LinearSolverParametersEnums, AMGSmootherType )
   ASSERT_EQ( "sgs", toString( EnumType::sgs ) );
   ASSERT_EQ( "l1sgs", toString( EnumType::l1sgs ) );
   ASSERT_EQ( "chebyshev", toString( EnumType::chebyshev ) );
-  ASSERT_EQ( "ilu0", toString( EnumType::ilu0 ) );
+  ASSERT_EQ( "iluk", toString( EnumType::iluk ) );
   ASSERT_EQ( "ilut", toString( EnumType::ilut ) );
-  ASSERT_EQ( "ic0", toString( EnumType::ic0 ) );
+  ASSERT_EQ( "ick", toString( EnumType::ick ) );
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
 }
 

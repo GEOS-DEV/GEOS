@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -26,6 +26,9 @@
 #include "mesh/FaceManager.hpp"
 #include "mesh/ToElementRelation.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
+#include "common/MpiWrapper.hpp"
+
+#include "common/MpiWrapper.hpp"
 
 #include "common/MpiWrapper.hpp"
 
@@ -161,9 +164,9 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   m_referencePosition = cellBlockManager.getNodePositions();
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
   array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );
@@ -273,7 +276,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 
   string temp;
   unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOS_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
+  GEOS_ERROR_IF_NE( temp, viewKeyStruct::edgeListString() );
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEdgesRelation,
                                      packList,
@@ -300,6 +303,8 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
 
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToEdges.size(), 0 );
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToFaces.size(), 0 );
   return unPackedSize;
 }
 
@@ -362,6 +367,90 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, string const &, Group * const )
+void NodeManager::outputObjectConnectivity() const
+{
+
+  int const numRanks = MpiWrapper::commSize();
+  int const thisRank = MpiWrapper::commRank();
+
+  for( int rank=0; rank<numRanks; ++rank )
+  {
+    if( rank==thisRank )
+    {
+      printf( "rank %d\n", rank );
+      printf( "NodeManager: %s\n", this->getName().c_str() );
+
+      printf( "  Reference positions:\n" );
+      for( localIndex a=0; a<this->size(); ++a )
+      {
+        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap( a ), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
+      }
+
+      printf( "\n  Reference positions (sorted by global):\n" );
+      map< globalIndex, localIndex > const sortedGlobalToLocalMap( m_globalToLocalMap.begin(), m_globalToLocalMap.end());
+      for( auto indexPair : sortedGlobalToLocalMap )
+      {
+        localIndex const a = indexPair.second;
+        printf( "  %3d( %3lld ): %6.2f, %6.2f, %6.2f \n", a, m_localToGlobalMap( a ), m_referencePosition( a, 0 ), m_referencePosition( a, 1 ), m_referencePosition( a, 2 ) );
+      }
+
+      printf( "  toEdgesRelation: \n" );
+      arrayView1d< globalIndex const > const & edgeLocalToGlobal = m_toEdgesRelation.relatedObjectLocalToGlobal();
+      for( localIndex a=0; a<this->size(); ++a )
+      {
+        printf( "  %3d(%3lld): ", a, m_localToGlobalMap( a ) );
+
+        for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3d", m_toEdgesRelation( a, b ) );
+          if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( "\n           (" );
+        for( localIndex b=0; b<m_toEdgesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3lld", edgeLocalToGlobal( m_toEdgesRelation( a, b ) ) );
+          if( b != m_toEdgesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( " )\n" );
+      }
+
+      printf( "  toFacesRelation: \n" );
+      arrayView1d< globalIndex const > const & faceLocalToGlobal = m_toFacesRelation.relatedObjectLocalToGlobal();
+      for( localIndex a=0; a<this->size(); ++a )
+      {
+        printf( "  %3d(%3lld): ", a, m_localToGlobalMap( a ) );
+
+        for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3d", m_toFacesRelation( a, b ) );
+          if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( "\n           (" );
+        for( localIndex b=0; b<m_toFacesRelation.sizeOfSet( a ); ++b )
+        {
+          printf( "%3lld", faceLocalToGlobal( m_toFacesRelation( a, b ) ) );
+          if( b != m_toFacesRelation.sizeOfSet( a ) - 1 )
+          {
+            printf( ", " );
+          }
+        }
+        printf( " )\n" );
+      }
+    }
+    MpiWrapper::barrier();
+  }
 
 }
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, string const &, Group * const )
+
+} // namespace geos

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,8 +23,9 @@
 
 #include "physicsSolvers/wavePropagation/shared/WaveSolverBase.hpp"
 #include "mesh/MeshFields.hpp"
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
+#include "physicsSolvers/wavePropagation/shared/WaveSolverTypeDefSEM.hpp"
 
 namespace geos
 {
@@ -53,7 +54,7 @@ public:
 
   static string catalogName() { return "ElasticSEM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -72,13 +73,13 @@ public:
                                       real64 const & dt,
                                       integer const cycleNumber,
                                       DomainPartition & domain,
-                                      bool const computeGradient ) override;
+                                      integer const computeGradient ) override;
 
   virtual real64 explicitStepBackward( real64 const & time_n,
                                        real64 const & dt,
                                        integer const cycleNumber,
                                        DomainPartition & domain,
-                                       bool const computeGradient ) override;
+                                       integer const computeGradient ) override;
   /**@}*/
 
   /**
@@ -88,7 +89,7 @@ public:
    * @param rhsy the right hand side vector to be computed (y-component)
    * @param rhsz the right hand side vector to be computed (z-component)
    */
-  void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
+  void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real32 > const rhsx, arrayView1d< real32 > const rhsy, arrayView1d< real32 > const rhsz );
 
   /**
    * TODO: move implementation into WaveSolverBase once 'm_receiverIsLocal' is also moved
@@ -101,6 +102,9 @@ public:
   void computeDAS( arrayView2d< real32 > const xCompRcv,
                    arrayView2d< real32 > const yCompRcv,
                    arrayView2d< real32 > const zCompRcv );
+
+  virtual real64 computeTimeStep( real64 & dtOut ) override;
+
 
   /**
    * @brief Overridden from ExecutableGroup. Used to write last seismogram if needed.
@@ -124,6 +128,8 @@ public:
 
     static constexpr char const * useVtiString() { return "useVTI"; }
 
+    static constexpr char const * useTtiString() { return "useTTI"; }
+
   } waveEquationViewKeys;
 
 
@@ -132,29 +138,32 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
+   * @param meshBodyName the name of the mesh body
    * @param domain the domain object
    * @return return the timestep that was achieved during the step.
    */
   real64 explicitStepInternal( real64 const & time_n,
                                real64 const & dt,
-                               integer const cycleNumber,
                                DomainPartition & domain );
 
   void computeUnknowns( real64 const & time_n,
                         real64 const & dt,
-                        integer const cycleNumber,
                         DomainPartition & domain,
                         MeshLevel & mesh,
-                        arrayView1d< string const > const & regionNames );
+                        string_array const & regionNames );
 
   void synchronizeUnknowns( real64 const & time_n,
                             real64 const & dt,
-                            integer const cycleNumber,
                             DomainPartition & domain,
                             MeshLevel & mesh,
-                            arrayView1d< string const > const & regionNames );
+                            string_array const & regionNames );
 
   void prepareNextTimestep( MeshLevel & mesh );
+
+  /**
+   * @brief Get the minimum wavespeed on a mesh (S-wavespeed in the elastic case)
+   */
+  virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Computes the minimum attenuation quality factor over all the mesh. This is useful for computing anelasticity coefficients, which
@@ -173,10 +182,11 @@ private:
   /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
+   * @param baseMesh the level-0 mesh
    * @param mesh mesh of the computational domain
    * @param regionNames the names of the region you loop on
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -226,6 +236,12 @@ private:
 
   /// Flag to appliy VTI anisotropy
   integer m_useVTI;
+
+  /// Flag to appliy TTI anisotropy
+  integer m_useTTI;
+
+  real64 m_rotationMatrix[ 3 ][ 3 ]{};
+
 
 };
 

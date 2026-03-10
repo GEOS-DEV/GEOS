@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,6 +18,7 @@
  */
 
 #include "ElasticIsotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,17 +27,13 @@ namespace constitutive
 {
 
 ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultBulkModulus(),
-  m_defaultShearModulus(),
-  m_bulkModulus(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Bulk Modulus Parameter" );
-  
+
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,17 +49,12 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Bulk Modulus Field" );
+  // register fields
 
-  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Shear Modulus Field" );
+  registerField< fields::solid::bulkModulus >( &m_bulkModulus );
+
+  registerField< fields::solid::shearModulus >( &m_shearModulus );
 }
-
-ElasticIsotropic::~ElasticIsotropic()
-{}
 
 void ElasticIsotropic::postInputInitialization()
 {
@@ -144,15 +136,24 @@ void ElasticIsotropic::postInputInitialization()
   }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
+
+  getField< fields::solid::bulkModulus >().
     setApplyDefaultValue( m_defaultBulkModulus );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 
   this->getWrapper< array2d< real64 > >( viewKeyStruct::wavespeedString() ).
     setApplyDefaultValue( sqrt( ( m_defaultBulkModulus + (4.0/3.0) * m_defaultShearModulus ) / m_defaultDensity ) );
+}
 
+void ElasticIsotropic::allocateConstitutiveData( dataRepository::Group & parent,
+                                                 localIndex const numConstitutivePointsPerParentIndex )
+{
+  ContinuumBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  m_bulkModulus.resize( 0 );
+  m_shearModulus.resize( 0 );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )

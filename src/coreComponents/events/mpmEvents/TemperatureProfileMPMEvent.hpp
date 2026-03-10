@@ -34,7 +34,7 @@ class TemperatureProfileMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   TemperatureProfileMPMEvent( const string & name,
-                  Group * const parent );
+                              Group * const parent );
 
   /// Destructor
   virtual ~TemperatureProfileMPMEvent() override;
@@ -45,11 +45,11 @@ public:
    **/
   static string catalogName() { return "TemperatureProfile"; }
 
- /// @cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
-  {
+  virtual string getCatalogName() const override { return catalogName(); }
 
-  } TemperatureProfileMPMEventViewKeys;
+  /// @cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {} TemperatureProfileMPMEventViewKeys;
   /// @endcond
 
 protected:

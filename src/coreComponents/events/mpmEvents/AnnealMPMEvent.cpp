@@ -21,29 +21,26 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  AnnealMPMEvent::AnnealMPMEvent( const string & name,
-                                  Group * const parent ) :
-                                  MPMEventBase(  name, parent ),
-                                  m_targetRegion( "mat1" )
-  {  
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform anneal on" );
-  }
+using namespace dataRepository;
 
-  AnnealMPMEvent::~AnnealMPMEvent() 
-  {}
+AnnealMPMEvent::AnnealMPMEvent( const string & name,
+                                Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_targetRegion( "mat1" )
+{
+  registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Particle region to perform anneal on" );
+}
 
-  void AnnealMPMEvent::postInputInitialization()
-  {
-    GEOS_LOG_RANK_0( "AnnealEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "targetRegion=" << m_targetRegion );
-  }
+AnnealMPMEvent::~AnnealMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, AnnealMPMEvent, string const &, Group * const )
+void AnnealMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, AnnealMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

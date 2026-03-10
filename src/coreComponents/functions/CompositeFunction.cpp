@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -60,7 +60,7 @@ CompositeFunction::~CompositeFunction()
 void CompositeFunction::initializeFunction()
 {
   // Register variables
-  for( localIndex ii=0; ii<m_variableNames.size(); ++ii )
+  for( auto ii=0u; ii<m_variableNames.size(); ++ii )
   {
     parserContext.addVariable( m_variableNames[ii].c_str(), static_cast< int >(ii * sizeof(double)));
   }
@@ -76,7 +76,9 @@ void CompositeFunction::initializeFunction()
   m_numSubFunctions = LvArray::integerConversion< localIndex >( m_functionNames.size());
   for( localIndex ii=0; ii<m_numSubFunctions; ++ii )
   {
-    m_subFunctions.emplace_back( &functionManager.getGroup< FunctionBase >( m_functionNames[ii] ) );
+    FunctionBase * function = &functionManager.getGroup< FunctionBase >( m_functionNames[ii] );
+    function->initializeFunction();
+    m_subFunctions.emplace_back( function );
   }
 }
 

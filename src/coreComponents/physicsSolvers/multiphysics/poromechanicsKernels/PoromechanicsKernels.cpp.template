@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron 
+ * Copyright (c) 2023-2024 Chevron 
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -16,8 +16,9 @@
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanics_impl.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanics_impl.hpp"
-#include "policies.hpp"
 
+using SinglePhasePoromechanicsPolicy = @SinglePhasePoromechanicsPolicy@;
+using MultiphasePoromechanicsPolicy = @MultiphasePoromechanicsPolicy@;
 
 #define INSTANTIATION( NAME )\
 template class NAME < @SUBREGION_TYPE@, @CONSTITUTIVE_TYPE@, @FE_TYPE@ >; \
@@ -34,7 +35,7 @@ using namespace finiteElement;
 namespace poromechanicsKernels
 {
   INSTANTIATION( SinglePhasePoromechanics )
-  INSTANTIATION( MultiphasePoromechanics )  
+  INSTANTIATION( MultiphasePoromechanics )
 }
 }
 

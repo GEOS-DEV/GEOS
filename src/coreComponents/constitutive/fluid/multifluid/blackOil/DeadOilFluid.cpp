@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -33,6 +33,16 @@ DeadOilFluid::DeadOilFluid( string const & name,
   BlackOilFluidBase( name, parent )
 {}
 
+void DeadOilFluid::postInputInitialization()
+{
+  BlackOilFluidBase::postInputInitialization();
+
+  integer const numComps = numFluidComponents();
+  GEOS_THROW_IF( numComps != 2 && numComps != 3,
+                 GEOS_FMT( "{}: this model only supports 2 or 3 components", getFullName() ),
+                 InputError, getDataContext() );
+}
+
 void DeadOilFluid::readInputDataFromPVTFiles()
 {
   GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
@@ -40,7 +50,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
                         InputError );
   GEOS_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
                  GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   array1d< array1d< real64 > > tableValues;
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
@@ -63,7 +73,7 @@ void DeadOilFluid::readInputDataFromTableFunctions()
 {
   GEOS_THROW_IF( !m_tableFiles.empty(),
                  GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   integer const ipWater = m_phaseOrder[PhaseType::WATER];
   integer const ipGas = m_phaseOrder[PhaseType::GAS];
@@ -85,7 +95,7 @@ void DeadOilFluid::readInputDataFromTableFunctions()
     errorIfPositiveValue( m_waterParams.compressibility, viewKeyStruct::waterCompressibilityString() );
   }
 
-  integer const numExpectedTables = (ipGas >= 0) ? 2 : 1;
+  size_t const numExpectedTables = (ipGas >= 0) ? 2 : 1;
   GEOS_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
                         GEOS_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
                         InputError );
@@ -106,10 +116,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
                    GEOS_FMT( "{}: formation volume factor table '{}' not found", getFullName(), m_formationVolFactorTableNames[iph] ),
-                   InputError );
+                   InputError, getDataContext() );
     GEOS_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
                    GEOS_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 

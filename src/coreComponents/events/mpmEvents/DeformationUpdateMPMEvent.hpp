@@ -34,7 +34,7 @@ class DeformationUpdateMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   DeformationUpdateMPMEvent( const string & name,
-                  Group * const parent );
+                             Group * const parent );
 
   /// Destructor
   virtual ~DeformationUpdateMPMEvent() override;
@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "DeformationUpdate"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * prescribedFTableString() { return "prescribedFTable"; }
@@ -54,9 +56,9 @@ public:
   } DeformationUpdateMPMEventViewKeys;
   /// @endcond
 
-  int getPrescribedBoundaryFTable() const { return m_prescribedBoundaryFTable; } 
-  int getPrescribedFTable() const { return m_prescribedFTable; } 
-  array1d< int > getStressControl() const { return m_stressControl; } 
+  int getPrescribedBoundaryFTable() const { return m_prescribedBoundaryFTable; }
+  int getPrescribedFTable() const { return m_prescribedFTable; }
+  array1d< int > getStressControl() const { return m_stressControl; }
 
 protected:
   virtual void postInputInitialization() override final;

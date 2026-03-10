@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -61,6 +61,15 @@ char const * parseValueImpl( char const * const first,
   return ptr;
 }
 
+template< typename T, std::enable_if_t< std::is_same< T, std::string >::value > * = nullptr >
+char const * parseValueImpl( char const * const first,
+                             char const * const last,
+                             T & value )
+{
+  value = std::string( first, last );
+  return last;
+}
+
 }
 
 template< typename T >
@@ -80,6 +89,7 @@ INST_PARSEVALUE( short );
 INST_PARSEVALUE( int );
 INST_PARSEVALUE( long );
 INST_PARSEVALUE( long long );
+INST_PARSEVALUE( std::string );
 // Add other types as needed
 
 #undef INST_PARSEVALUE

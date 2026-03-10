@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,26 +20,24 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSCONFORMINGFRACTURES_HPP_
 
+#include "physicsSolvers/multiphysics/PoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
-#include "physicsSolvers/multiphysics/CoupledSolver.hpp"
-#include "physicsSolvers/contact/SolidMechanicsLagrangeContact.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "dataRepository/Group.hpp"
 
 namespace geos
 {
 
 template< typename FLOW_SOLVER = SinglePhaseBase >
-class SinglePhasePoromechanicsConformingFractures : public SinglePhasePoromechanics< FLOW_SOLVER, SolidMechanicsLagrangeContact >
+class SinglePhasePoromechanicsConformingFractures : public PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER >
 {
 public:
 
-  using Base = SinglePhasePoromechanics< FLOW_SOLVER, SolidMechanicsLagrangeContact >;
+  using Base = PoromechanicsConformingFractures< SinglePhasePoromechanics, FLOW_SOLVER >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
   using Base::m_rhs;
   using Base::m_solution;
+  using Base::m_maxFaceNodes;
 
   /// String used to form the solverName used to register solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFractures"; }
@@ -73,7 +71,7 @@ public:
   }
 
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -84,114 +82,34 @@ public:
    */
   /**@{*/
 
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override;
+  virtual void setMGRStrategy() override
+  {
+    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
-
-  virtual void assembleSystem( real64 const time,
+  virtual void assembleSystem( real64 const time_n,
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override final;
-
-  virtual void updateState( DomainPartition & domain ) override final;
+                               arrayView1d< real64 > const & localRhs ) override
+  { Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
 
   /**@}*/
 
-private:
+protected:
 
-  static const localIndex m_maxFaceNodes=11; // Maximum number of nodes on a contact face
+  virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
+                                                                   string_array const & regionNames,
+                                                                   DofManager const & dofManager,
+                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   arrayView1d< real64 > const & localRhs ) override;
 
-  void assembleElementBasedContributions( real64 const time_n,
-                                          real64 const dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs );
+  virtual integer numFluidComponents() const override { return 1; }
 
-  virtual void assembleCouplingTerms( real64 const time_n,
-                                      real64 const dt,
-                                      DomainPartition const & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override final;
+  virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
 
-  void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
-                                                   arrayView1d< string const > const & regionNames,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
-
-  void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                           arrayView1d< string const > const & regionNames,
-                                                           DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs );
-
-  /**
-   * @Brief add the nnz induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param rowLenghts the nnz in each row
-   */
-  void addTransmissibilityCouplingNNZ( DomainPartition const & domain,
-                                       DofManager const & dofManager,
-                                       arrayView1d< localIndex > const & rowLengths ) const;
-
-  /**
-   * @Brief add the sparsity pattern induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           SparsityPatternView< globalIndex > const & pattern ) const;
-
-  /**
-   * @brief Set up the Dflux_dApertureMatrix object
-   *
-   * @param domain
-   * @param dofManager
-   * @param localMatrix
-   */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
-
-  /**
-   * @brief
-   *
-   * @param domain
-   */
-  void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
-
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture;
-  }
-
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  }
-
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
-  }
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-
-  string const m_pressureKey = SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 };
 
 } /* namespace geos */

@@ -25,7 +25,7 @@ the hyperbolic relationship
    b = b_i + \frac{\lambda}{m+\lambda} \left( b_r - b_i \right)
 
 with :math:`m` a parameter controlling the hardening rate.  Here, :math:`b_r` is the residual yield surface slope.  
-If :math:`b_r < b_i`, hardening behavior will be observed, while for :math:`b_r < b_i` softening behavior will occur.
+If :math:`b_r > b_i`, hardening behavior will be observed, while for :math:`b_r < b_i` softening behavior will occur.
 
 In the resulting model, the yield surface begins at an initial position defined by the initial cohesion and friction angle.
 As plastic deformation occurs, the friction angle hardens (or softens) so that it asymptoptically approaches a

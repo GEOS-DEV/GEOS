@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,7 +20,7 @@
 /// Source includes
 #include "schemaUtilities.hpp"
 
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/InputFlags.hpp"
@@ -96,34 +96,37 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
 {
   string const advanced_match_string = ".*[\\[\\]`$].*|";
 
+  // Create simpleType node
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
+  GEOS_ERROR_IF( ( !newNode ), GEOS_FMT( "Failed to create xsd:simpleType node for {}", name ) );
   newNode.append_attribute( "name" ) = name.c_str();
-  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
-  restrictionNode.append_attribute( "base" ) = "xsd:string";
-  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
 
-  // Handle the default regex
-  if( regex.empty() )
-  {
-    GEOS_WARNING( "schema regex not defined for " << name );
-    patternNode.append_attribute( "value" ) = "(?s).*";
-  }
-  else
-  {
-    string const patternString = advanced_match_string + regex;
-    patternNode.append_attribute( "value" ) = patternString.c_str();
-  }
+  // Create restriction node
+  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
+  GEOS_ERROR_IF( ( !restrictionNode ), GEOS_FMT( "Failed to create xsd:restriction node for {}", name ) );
+  restrictionNode.append_attribute( "base" ) = "xsd:string";
+
+  // Create pattern node
+  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
+  GEOS_ERROR_IF( ( !patternNode ), GEOS_FMT( "Failed to create xsd:pattern node for {}", name ) );
+
+  // Determine pattern string
+  GEOS_WARNING_IF( regex.empty(), GEOS_FMT( "schema regex not defined for {}", name ) );
+  string const patternString = regex.empty() ? "(?s).*" : advanced_match_string + regex;
+
+  // Set attribute
+  patternNode.append_attribute( "value" ) = patternString.c_str();
 }
 
 void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   auto const regexes = rtTypes::createBasicTypesRegexMap();
+
   for( auto const & [typeName, regex] : regexes )
   {
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
-
 
 void SchemaConstruction( Group & group,
                          xmlWrapper::xmlNode schemaRoot,

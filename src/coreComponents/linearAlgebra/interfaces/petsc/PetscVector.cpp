@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -214,17 +214,24 @@ void PetscVector::axpby( real64 const alpha,
   }
 }
 
-void PetscVector::pointwiseProduct( PetscVector const & x,
-                                    PetscVector & y ) const
+void PetscVector::pointwiseProduct( PetscVector const & x )
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT( x.ready() );
-  GEOS_LAI_ASSERT( y.ready() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), x.globalSize() );
-  GEOS_LAI_ASSERT_EQ( globalSize(), y.globalSize() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( VecPointwiseMult( y.m_vec, m_vec, x.m_vec ) );
-  y.touch();
+  GEOS_LAI_CHECK_ERROR( VecPointwiseMult( m_vec, m_vec, x.m_vec ) );
+  touch();
+}
+
+void PetscVector::pointwiseDivide( PetscVector const & x )
+{
+  GEOS_LAI_ASSERT( ready() );
+  GEOS_LAI_ASSERT( x.ready() );
+  GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
+
+  GEOS_LAI_CHECK_ERROR( VecPointwiseDivide( m_vec, m_vec, x.m_vec ) );
+  touch();
 }
 
 real64 PetscVector::norm1() const

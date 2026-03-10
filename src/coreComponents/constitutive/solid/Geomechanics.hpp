@@ -1269,7 +1269,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // equilibrium porosity at the start of the step.
     // TODO: make the temperature dependence of the equilibrium porosity based on input parameters not these hard-wired terms
     real64 phi_e = std::max(1.e-10 , 
-                            m_creepA * exp( -std::pow( p/m_creepB ,equilibriumPorosityPressureExponent) ) 
+                            m_creepA * exp( -std::pow( p / m_creepB ,equilibriumPorosityPressureExponent) ) 
                             + equilibriumPorosityOffset  
                             + (-m_phiEqAlpha * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) 
                             + (-m_phiEqBeta * std::max(temperature - m_referenceTemperature, 0.0))
@@ -1307,11 +1307,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
       //std :: cout << "Creep compaction: dphidt = " << dphidt << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", phi_c = " << phi_c << std::endl;
       real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
-
-
-      //std::cout << "evp_C = " << evp_c << ", -m_p3 = " << - m_p3 << std::endl;
-      evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
-
+      evp_c = std::max( evp_c, -0.99999999*m_p3 ); // don't let porosity go negative.
       real64 devp = evp_c - evp;  // creep vol. strain increment
 
       real64 p_c;  // pressure after relaxation.
@@ -1509,7 +1505,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
     bulk  = m_b0 + m_b1;  // Bulk Modulus
 
     shear = m_g0;  // Default behavior is constant shear modulus   
-    if( isNotZero( m_g1 ) ) // Poisson ratio control.
+    if( !isZero( m_g1 ) ) // Poisson ratio control.
     {
       real64 nu = m_g1 + m_g2; // high-pressure limit.
 
@@ -1564,7 +1560,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
 
     // In  compression, or with fluid effects if the strain is more compressive
     // than the zero fluid pressure volumetric strain:
-	if ( evp <= ev0 && isNotZero( Kf ) )
+	if ( evp <= ev0 && !isZero( Kf ) )
     {   // ..........................................................Undrained
 		// Compute the porosity from the strain using Homel's simplified model, and
 		// then use this in the Biot-Gassmann formula to compute the bulk modulus.
@@ -1609,7 +1605,7 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
   
   shear = m_g0;  // Default behavior is constant shear modulus
   
-  if( isNotZero( m_g1 ) ) // Poisson ratio control.
+  if( !isZero( m_g1 ) ) // Poisson ratio control.
   {
     real64 nu = m_g1;
     if ( I1 < -1.e-12 ) // in compression scale the poisson ratio
@@ -1961,7 +1957,7 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
       X = m_p0 * std::pow( 1.0 + evp, 1.0 / ( m_p0 * m_p1 * m_p3 ) );
     }
 
-    if( isNotZero( Kf ) && evp <= ev0 ) { // ------------------------------------------- Fluid Effects
+    if( !isZero( Kf ) && evp <= ev0 ) { // ------------------------------------------- Fluid Effects
       // First we evaluate the elastic volumetric strain to yield from the
       // empirical crush curve (Xfit) and bulk modulus (Kfit) formula for
       // the drained material.  Xfit was computed as X above.
@@ -2703,7 +2699,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   rJ2_new = r_to_rJ2*r_0;
 
   LvArray::tensorOps::copy< 6 >( S_new, S_trial );
-  if ( isNotZero( rJ2_trial ) )
+  if ( !isZero( rJ2_trial ) )
   {
 	  // S_new = S_trial; //S_trial*rJ2_new/rJ2_trial;
 	  // S_new *= rJ2_new/rJ2_trial;
@@ -2985,7 +2981,7 @@ real64 GeomechanicsUpdates::computedZetadevp( real64 const & fluid_pressure_init
   real64 dZetadevp = 0.0;           // Evolution rate of isotropic backstress
   //std::cout << "m~2956: computedZetadevp" << std::endl;
 
-  if (evp <= ev0 && isNotZero( Kf ) ) { // .................................... Fluid effects are active
+  if (evp <= ev0 && !isZero( Kf ) ) { // .................................... Fluid effects are active
     real64 pfi = fluid_pressure_initial; // initial fluid pressure
 
     // This is an expensive calculation, but fasterexp() seemed to cause errors.
@@ -3739,7 +3735,6 @@ protected:
   real64 m_creepE;
   real64 m_creepF;
   real64 m_creepG;
-
 
   // strain-hardening parameters
   real64 m_strainHardeningN;

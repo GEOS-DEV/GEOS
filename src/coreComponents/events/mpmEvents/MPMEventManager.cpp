@@ -30,23 +30,16 @@ using namespace dataRepository;
 
 MPMEventManager::MPMEventManager( string const & name,
                                   Group * const parent ):
-                                  Group( name, parent )
+  Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
-
-  // This enables logLevel filtering
-  enableLogLevelInput();
+  setRestartFlags( RestartFlags::NO_WRITE );
 }
-
-
-MPMEventManager::~MPMEventManager()
-{}
-
 
 Group * MPMEventManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding MPM Event: " << childKey << ", " << childName );
-  std::unique_ptr< MPMEventBase > event = MPMEventBase::CatalogInterface::factory( childKey, childName, this );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  std::unique_ptr< MPMEventBase > event =  MPMEventBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup< MPMEventBase >( childName, std::move( event ) );
 }
 

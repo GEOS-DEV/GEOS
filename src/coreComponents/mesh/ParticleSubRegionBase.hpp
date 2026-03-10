@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -24,7 +24,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 #include "ToParticleRelation.hpp"
 
 namespace geos
@@ -150,7 +149,7 @@ public:
   arrayView1d< real64 > getParticlePorosity()
   { return m_particlePorosity; }
 
-   /**
+  /**
    * @brief Get the temperature of each particle in this subregion.
    * @return an arrayView1d of const particle temperature
    */
@@ -163,8 +162,7 @@ public:
   arrayView1d< real64 > getParticleTemperature()
   { return m_particleTemperature; }
 
-
-   /**
+  /**
    * @brief Get the temperature rate of each particle in this subregion.
    * @return an arrayView1d of const particle temperature
    */
@@ -176,8 +174,6 @@ public:
    */
   arrayView1d< real64 > getParticleTemperatureRate()
   { return m_particleTemperatureRate; }
-
-
 
   /**
    * @brief Get the strength scale of each particle in this subregion.
@@ -241,15 +237,15 @@ public:
 
   /**
    * @brief Get the material direction of each particle in this subregion.
-   * @return an arrayView1d of const particle material direction
+   * @return an arrayView3d of const particle material direction
    */
-  arrayView2d< real64 const > getParticleMaterialDirection() const
+  arrayView3d< real64 const > getParticleMaterialDirection() const
   { return m_particleMaterialDirection; }
 
   /**
    * @copydoc getParticleMaterialDirection() const
    */
-  arrayView2d< real64 > getParticleMaterialDirection()
+  arrayView3d< real64 > getParticleMaterialDirection()
   { return m_particleMaterialDirection; }
 
   /**
@@ -316,6 +312,19 @@ public:
    */
   arrayView2d< real64 > getParticleSurfaceTraction()
   { return m_particleSurfaceTraction; }
+
+  /**
+   * @brief Get the cohesive zone tag of each particle in this subregion.
+   * @return an arrayView1d of const particle cohesive zone tag
+   */
+  arrayView1d< int const > getParticleCZTag() const
+  { return m_particleCZTag; }
+
+  /**
+   * @copydoc getParticleCZTag() const
+   */
+  arrayView1d< int > getParticleCZTag()
+  { return m_particleCZTag; }
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -457,15 +466,18 @@ public:
 
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
-  
+
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
 
     /// @return String key for the member level field for the particle surface position.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
-  
+
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
+
+    /// @return String key for the member level field for the particle cohesive zone tag.
+    static constexpr char const * particleCZTagString() { return "particleCZTag"; }
   };
 
   /**
@@ -538,9 +550,12 @@ private:
   dataRepository::Group m_constitutiveModels;
 
 protected:
+  /// Type of particles in this subregion.
+  ParticleType m_particleType;
+  
   /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
-
+  
   /// The number of vertices each particle has
   int m_numVerticesPerParticle;
 
@@ -578,13 +593,10 @@ protected:
   array2d< real64 > m_particleVelocity;
 
   /// Member level field for the particle material direction.
-  array2d< real64 > m_particleMaterialDirection;
+  array3d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
-
-  /// Type of particles in this subregion.
-  ParticleType m_particleType;
 
   /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;
@@ -597,6 +609,9 @@ protected:
 
   /// Member level field for the particle surface traction.
   array2d< real64 > m_particleSurfaceTraction;
+
+  /// Member level field for the particle cohesive zone tag.
+  array1d< localIndex > m_particleCZTag;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

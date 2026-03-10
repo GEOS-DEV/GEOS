@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,7 +19,7 @@
 
 #include "PeriodicEvent.hpp"
 
-#include "common/Format.hpp"
+#include "common/format/Format.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geos
@@ -267,22 +267,22 @@ void PeriodicEvent::validate() const
     return;
   }
 
-  GEOS_THROW_IF( m_timeFrequency > 0 &&
-                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+  constexpr auto determinesTimeStepSize = ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize;
+
+  GEOS_THROW_IF( m_timeFrequency > 0 && target->getTimesteppingBehavior() == determinesTimeStepSize,
                  GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
                            "step size. Therefore, `{}` cannot be used here. However, forcing a "
                            "constant time step size can still be achived with `{}`.",
                            getDataContext(), viewKeyStruct::timeFrequencyString(),
                            EventBase::viewKeyStruct::forceDtString() ),
-                 InputError );
-  GEOS_THROW_IF( m_cycleFrequency != 1 &&
-                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 InputError, getDataContext() );
+  GEOS_THROW_IF( m_cycleFrequency != 1 && target->getTimesteppingBehavior() == determinesTimeStepSize,
                  GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
                            "step size. Therefore, `{}` cannot be used here. However, forcing a "
                            "constant time step size can still be achived with `{}`.",
                            getDataContext(), viewKeyStruct::cycleFrequencyString(),
                            EventBase::viewKeyStruct::forceDtString() ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )

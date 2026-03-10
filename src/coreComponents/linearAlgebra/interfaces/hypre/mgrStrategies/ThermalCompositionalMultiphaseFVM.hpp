@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -77,8 +77,8 @@ public:
 
     m_levelFRelaxType[1]          = MGRFRelaxationType::none;
     m_levelInterpType[1]          = MGRInterpolationType::injection;
-    m_levelRestrictType[1]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
+    m_levelRestrictType[1]        = MGRRestrictionType::partialColLumped; // True-IMPES for thermal
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[1] = 1;
   }

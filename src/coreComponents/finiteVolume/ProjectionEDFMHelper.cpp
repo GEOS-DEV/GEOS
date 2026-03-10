@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -65,7 +65,7 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
       CellElementSubRegion const & cellSubRegion = cellRegion.getSubRegion< CellElementSubRegion >( hostCellSubRegionIdx );
 
       // pick faces for non-neighboring pEDFM connections
-      std::vector< localIndex > const faces = selectFaces( cellSubRegion.faceList(), cellID, fracElement, fractureSubRegion );
+      stdVector< localIndex > const faces = selectFaces( cellSubRegion.faceList(), cellID, fracElement, fractureSubRegion );
       for( localIndex const faceIdx : faces )
       {
         CellDescriptor neighborCell = otherCell( faceIdx, cellID );
@@ -82,10 +82,10 @@ void ProjectionEDFMHelper::addNonNeighboringConnections() const
   }
 }
 
-std::vector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
-                                                             CellDescriptor const & hostCellID,
-                                                             localIndex const fracElement,
-                                                             EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
+stdVector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelation const & subRegionFaces,
+                                                           CellDescriptor const & hostCellID,
+                                                           localIndex const fracElement,
+                                                           EmbeddedSurfaceSubRegion const & fractureSubRegion ) const
 {
   arraySlice1d< real64 const > const n = fractureSubRegion.getNormalVector( fracElement );
   arrayView2d< real64 const > const & centers = fractureSubRegion.getElementCenter().toViewConst();
@@ -95,7 +95,7 @@ std::vector< localIndex > ProjectionEDFMHelper::selectFaces( FixedOneToManyRelat
   real64 distToFrac = getSignedDistanceCellCenterToFracPlane( hostCellID, n, fracCenter, cellCenterToFracCenter );
 
   // pick faces that intersect the fracture
-  std::vector< localIndex > faces;
+  stdVector< localIndex > faces;
   for( localIndex const iface : subRegionFaces[hostCellID.index] )
   {
     if( isBoundaryFace( iface ))

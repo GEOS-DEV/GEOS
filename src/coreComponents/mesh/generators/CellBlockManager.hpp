@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -90,7 +90,7 @@ public:
    */
   arrayView1d< globalIndex > getNodeLocalToGlobal();
 
-  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
+  stdMap< string, SortedArray< localIndex > > const & getNodeSets() const override;
 
   /**
    * @brief Returns a mutable reference to the node sets.
@@ -100,7 +100,7 @@ public:
    * While the values are sorted arrays which sizes are meant to be managed by the client code.
    * This member function is meant to be used like a setter.
    */
-  std::map< string, SortedArray< localIndex > > & getNodeSets();
+  stdMap< string, SortedArray< localIndex > > & getNodeSets();
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
@@ -157,6 +157,9 @@ public:
 
   Group & getCellBlocks() override;
 
+  stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const override
+  { return m_regionAttributesCellBlocks; }
+
   Group const & getFaceBlocks() const override;
 
   Group & getFaceBlocks() override;
@@ -169,6 +172,14 @@ public:
    * @return A reference to the new cell block. The CellBlockManager owns this new instance.
    */
   CellBlock & registerCellBlock( string const & name );
+
+  /**
+   * @brief Registers and returns a cell block of name @p name.
+   * @param cellBlockName The name of the created cell block.
+   * @param regionAttribute The region attribute of the created cell block.
+   * @return A reference to the new cell block. The CellBlockManager owns this new instance.
+   */
+  CellBlock & registerCellBlock( string const & cellBlockName, integer regionAttribute );
 
   /**
    * @brief Registers and returns a face block of name @p name.
@@ -201,6 +212,14 @@ public:
    * @param globalLength the global length
    */
   void setGlobalLength( real64 globalLength ) { m_globalLength = globalLength; }
+
+  real64 getGlobalOffset() const override { return m_globalOffset; }
+
+  /**
+   * @brief Setter for the global offset
+   * @param globalOffset the global offset
+   */
+  void setGlobalOffset( real64 globalOffset ) { m_globalOffset = globalOffset; }
 
 private:
 
@@ -269,9 +288,12 @@ private:
 
   array1d< globalIndex > m_nodeLocalToGlobal;
 
-  std::map< string, SortedArray< localIndex > > m_nodeSets;
+  stdMap< string, SortedArray< localIndex > > m_nodeSets;
+
+  stdMap< integer, std::set< string > > m_regionAttributesCellBlocks;
 
   real64 m_globalLength;
+  real64 m_globalOffset;
 
   localIndex m_numNodes;
   localIndex m_numFaces;

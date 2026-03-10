@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,11 +18,10 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "fileIO/Table/TableLayout.hpp"
-#include "fileIO/Table/TableData.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
+#include "logger/ErrorHandling.hpp"
+#include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
@@ -65,10 +64,102 @@ namespace geos
 void setupLogger()
 {
 #ifdef GEOS_USE_MPI
-  logger::InitializeLogger( MPI_COMM_GEOSX );
+  logger::InitializeLogger( MPI_COMM_GEOS );
 #else
   logger::InitializeLogger();
 #endif
+
+  { // setup error handling (using LvArray helper system functions)
+    using ErrorContext = ErrorLogger::ErrorContext;
+
+    ///// set Post-Handled Error behaviour /////
+    LvArray::system::setErrorHandler( []()
+    {
+  #if defined( GEOS_USE_MPI )
+      int mpi = 0;
+      MPI_Initialized( &mpi );
+      if( mpi )
+      {
+        MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+      }
+  #endif
+      std::abort();
+    } );
+
+    ///// set external error handling behaviour /////
+    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
+                                                           string_view detectionLocation )
+    {
+      // Filter out INFO level messages from external libraries (e.g., VTK)
+      // TODO: use dedicated functions to make the process easier to read
+      // ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
+      if( errorMsg.find( "INFO|" ) != string_view::npos )
+      {
+        // Just print the message without error formatting
+        GEOS_LOG( errorMsg );
+        return;
+      }
+
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+
+      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
+                          "***** LOCATION: (external error, detected {})\n"
+                          "{}\n{}",
+                          detectionLocation, errorMsg, stackHistory ) );
+      if( ErrorLogger::global().isOutputFileEnabled() )
+      {
+        ErrorLogger::ErrorMsg error;
+        error.setType( ErrorLogger::MsgType::Error );
+        error.addToMsg( errorMsg );
+        error.addRank( ::geos::logger::internal::g_rank );
+        error.addCallStackInfo( stackHistory );
+        error.addContextInfo(
+          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
+
+        ErrorLogger::global().flushErrorMsg( error );
+      }
+
+      // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
+    } );
+    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
+
+    ///// set signal handling behaviour /////
+    LvArray::system::setSignalHandling( []( int const signal )
+    {
+      // Disable signal handling to prevent catching exit signal (infinite loop)
+      LvArray::system::setSignalHandling( nullptr );
+
+      // first of all, external error can await to be output, we must output them
+      ExternalErrorHandler::instance().flush( "before signal error output" );
+
+      // error message output
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+      ErrorLogger::ErrorMsg error;
+      error.addSignalToMsg( signal );
+
+      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
+                          "***** SIGNAL: {}\n"
+                          "***** LOCATION: (external error, captured by signal handler)\n"
+                          "{}\n{}",
+                          signal, error.m_msg, stackHistory ) );
+
+      if( ErrorLogger::global().isOutputFileEnabled() )
+      {
+        error.setType( ErrorLogger::MsgType::Error );
+        error.addRank( ::geos::logger::internal::g_rank );
+        error.addCallStackInfo( stackHistory );
+        error.addContextInfo(
+          ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
+          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
+
+        ErrorLogger::global().flushErrorMsg( error );
+      }
+
+      // call program termination
+      LvArray::system::callErrorHandler();
+    } );
+
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,26 +171,14 @@ void finalizeLogger()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupLvArray()
 {
-  LvArray::system::setErrorHandler( []()
-  {
-  #if defined( GEOS_USE_MPI )
-    int mpi = 0;
-    MPI_Initialized( &mpi );
-    if( mpi )
-    {
-      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-    }
-  #endif
-    std::abort();
-  } );
-
-  LvArray::system::setSignalHandling( []( int const signal ) { LvArray::system::stackTraceHandler( signal, true ); } );
-
 #if defined(GEOS_USE_FPE)
   LvArray::system::setFPE();
 #else
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 #endif
+
+  /* Disable chai callbacks by default */
+  chai::ArrayManager::getInstance()->disableCallbacks();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,20 +205,34 @@ void setupMPI( int argc, char * argv[] )
     MpiWrapper::init( &argc, &argv );
   }
 
-  MPI_COMM_GEOSX = MpiWrapper::commDup( MPI_COMM_WORLD );
+  MPI_COMM_GEOS = MpiWrapper::commDup( MPI_COMM_WORLD );
 
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     // Can't use logging macros prior to logger init
-    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOSX ) << std::endl;
+    std::cout << "Num ranks: " << MpiWrapper::commSize( MPI_COMM_GEOS ) << std::endl;
   }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void finalizeMPI()
 {
-  MpiWrapper::commFree( MPI_COMM_GEOSX );
+  MpiWrapper::commFree( MPI_COMM_GEOS );
   MpiWrapper::finalize();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#if defined( GEOS_USE_CUDA ) && defined( GEOS_CUDA_STACK_SIZE )
+  size_t const stackSize = (GEOS_CUDA_STACK_SIZE) * 1024;
+  if( 0 < stackSize )
+  {
+    cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
+    GEOS_ERROR_IF( status != cudaSuccess,
+                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+  }
+#endif
 }
 
 #if defined( GEOS_USE_CALIPER )
@@ -154,7 +247,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 
 #if defined( GEOS_USE_ADIAK )
 #if defined( GEOS_USE_MPI )
-  adiak::init( &MPI_COMM_GEOSX );
+  adiak::init( &MPI_COMM_GEOS );
 #else
   adiak::init( nullptr );
 #endif
@@ -247,117 +340,10 @@ void finalizeCaliper()
 #endif
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief For each Umpire::Allocator compute the total high water mark across all ranks
- *        and if using Adiak add statistics about the high water mark.
- */
-static void addUmpireHighWaterMarks()
-{
-  umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
-  integer size;
-  MPI_Comm_size( MPI_COMM_WORLD, &size );
-  size_t nbRank = (std::size_t)size;
-  // Get a list of all the allocators and sort it so that it's in the same order on each rank.
-  std::vector< string > allocatorNames = rm.getAllocatorNames();
-  std::sort( allocatorNames.begin(), allocatorNames.end() );
-
-  // If each rank doesn't have the same number of allocators you can't aggregate them.
-  std::size_t const numAllocators = allocatorNames.size();
-  std::size_t const minNumAllocators = MpiWrapper::min( numAllocators );
-
-  if( numAllocators != minNumAllocators )
-  {
-    GEOS_WARNING( "Not all ranks have created the same number of umpire allocators, cannot compute high water marks." );
-    return;
-  }
-
-  // Loop over the allocators.
-  unsigned MAX_NAME_LENGTH = 100;
-
-  TableData tableData;
-  for( string const & allocatorName : allocatorNames )
-  {
-    // Skip umpire internal allocators.
-    if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
-      continue;
-
-    GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
-    string allocatorNameFixedSize = allocatorName;
-    allocatorNameFixedSize.resize( MAX_NAME_LENGTH, '\0' );
-    string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
-
-    // Make sure that each rank is looking at the same allocator.
-    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOSX );
-    if( allocatorNameFixedSize != allocatorNameMinChars )
-    {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
-      continue;
-    }
-
-    umpire::Allocator allocator = rm.getAllocator( allocatorName );
-    umpire::strategy::AllocationStrategy const * allocationStrategy = allocator.getAllocationStrategy();
-    umpire::MemoryResourceTraits const traits = allocationStrategy->getTraits();
-    umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
-    MemoryInfos const memInfos( resourceType );
-
-    if( !memInfos.isPhysicalMemoryHandled() )
-    {
-      continue;
-    }
-
-    // Get the total number of bytes allocated with this allocator across ranks.
-    // This is a little redundant since
-    std::size_t const mark = allocator.getHighWatermark();
-    std::size_t const minMark = MpiWrapper::min( mark );
-    std::size_t const maxMark = MpiWrapper::max( mark );
-    std::size_t const sumMark = MpiWrapper::sum( mark );
-
-    string percentage;
-    if( memInfos.getTotalMemory() == 0 )
-    {
-      percentage = 0.0;
-      GEOS_WARNING( "umpire memory percentage could not be resolved" );
-    }
-    else
-    {
-      percentage = GEOS_FMT( "({:.1f}%)", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
-    }
-
-    string const minMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( minMark ), percentage );
-    string const maxMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( maxMark ), percentage );
-    string const avgMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark / nbRank ), percentage );
-    string const sumMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark ), percentage );
-
-    tableData.addRow( allocatorName,
-                      minMarkValue,
-                      maxMarkValue,
-                      avgMarkValue,
-                      sumMarkValue );
-
-    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
-    pushStatsIntoAdiak( allocatorName + " rank max", mark );
-  }
-
-  TableLayout const memoryStatLayout ( {"Umpire Memory Pool\n(reserved / % over total)",
-                                        "Min over ranks",
-                                        "Max  over ranks",
-                                        "Avg  over ranks",
-                                        "Sum over ranks" } );
-  TableTextFormatter const memoryStatLog( memoryStatLayout );
-
-  GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+  setupCUDA();
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
@@ -368,9 +354,9 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
+  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
-  addUmpireHighWaterMarks();
   finalizeCaliper();
   finalizeMPI();
 }

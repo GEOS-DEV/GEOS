@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -75,7 +77,7 @@ public:
    */
   static string catalogName() { return "CompositionalMultiphaseWell"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -138,10 +140,10 @@ public:
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
+   * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  void updateVolRatesForConstraint( WellElementSubRegion & subRegion );
+  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -162,7 +164,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const;
+  real64 updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Recompute total mass densities from mass density and phase volume fractions
@@ -174,13 +176,16 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void computePerforationRates( DomainPartition & domain ) override;
+  virtual void computePerforationRates( real64 const & time_n,
+                                        real64 const & dt, DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual void updateState( DomainPartition & domain ) override;
+
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -189,6 +194,8 @@ public:
   virtual localIndex numFluidComponents() const override { return m_numComponents; }
 
   virtual localIndex numFluidPhases() const override { return m_numPhases; }
+
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -199,12 +206,13 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleFluxTerms( real64 const dt,
-                                  DomainPartition const & domain,
+
+  virtual void assembleFluxTerms( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) override;
-
+                                  arrayView1d< real64 > const & localRhs )override;
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -212,22 +220,12 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void assembleAccumulationTerms( DomainPartition const & domain,
+  virtual void assembleAccumulationTerms( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
-
-  /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -246,28 +244,10 @@ public:
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief apply a special treatment to the wells that are shut
-   * @param time_n the time at the previous converged time step
-   * @param dt the time step size
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void shutDownWell( real64 const time_n,
-                             real64 const dt,
-                             DomainPartition const & domain,
-                             DofManager const & dofManager,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             arrayView1d< real64 > const & localRhs ) override;
-
-  /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
-
-  arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -279,8 +259,6 @@ public:
 
     static constexpr char const * useTotalMassEquationString() { return CompositionalMultiphaseBase::viewKeyStruct::useTotalMassEquationString(); }
 
-    static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
-
     static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
 
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
@@ -289,18 +267,23 @@ public:
 
     static constexpr char const * maxRelativeCompDensChangeString() { return "maxRelativeCompDensChange"; }
 
+    static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
+
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // control data (not registered on the mesh)
 
     static constexpr char const * massDensityString() { return "massDensity";}
+
     static constexpr char const * currentBHPString() { return "currentBHP"; }
+    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
 
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
-
     static constexpr char const * dCurrentBHP_dCompDensString() { return "dCurrentBHP_dCompDens"; }
 
     static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
+    static constexpr char const * dCurrentPhaseVolRateString() { return "dCurrentPhaseVolumetricRate"; }
+
 
     static constexpr char const * dCurrentPhaseVolRate_dPresString() { return "dCurrentPhaseVolumetricRate_dPres"; }
 
@@ -309,6 +292,9 @@ public:
     static constexpr char const * dCurrentPhaseVolRate_dRateString() { return "dCurrentPhaseVolumetricRate_dRate"; }
 
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
+    static constexpr char const * dCurrentTotalVolRateString() { return "dCurrentTotalVolumetricRate"; }
+
+    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
 
     static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
 
@@ -326,12 +312,13 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
    * @detail
    * This function will produce an error if one of the well constitutive models
-   * (fluid, relperm) is incompatible with the corresponding models in reservoir
+   * is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
   void validateConstitutiveModels( DomainPartition const & domain ) const;
@@ -354,10 +341,16 @@ protected:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
@@ -369,24 +362,17 @@ private:
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void initializeWells( DomainPartition & domain ) override;
+  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  /// the max number of fluid phases
-  integer m_numPhases;
 
-  /// the number of fluid components
-  integer m_numComponents;
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
   /// flag indicating whether total mass equation should be used
   integer m_useTotalMassEquation;
-
-  /// list of relative permeability model names per target region
-  array1d< string > m_relPermModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
@@ -400,6 +386,9 @@ private:
   /// maximum (relative) change in component density between two Newton iterations
   real64 m_maxRelativeCompDensChange;
 
+  /// maximum (relative) change in temperature in a Newton iteration
+  real64 m_maxRelativeTempChange;
+
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;
 
@@ -409,8 +398,7 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
-  /// name of the fluid constitutive model used as a reference for component/phase description
-  string m_referenceFluidModelName;
+
 
 };
 

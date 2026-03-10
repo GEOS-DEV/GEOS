@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -35,7 +35,7 @@ namespace geos
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class GmresSolver : public KrylovSolver< VECTOR >
+class GmresSolver final : public KrylovSolver< VECTOR >
 {
 public:
 
@@ -72,9 +72,9 @@ public:
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
-  virtual void solve( Vector const & b, Vector & x ) const override final;
+  virtual void solve( Vector const & b, Vector & x ) const override;
 
-  virtual string methodName() const override final
+  virtual string methodName() const override
   {
     return "GMRES";
   };
@@ -96,10 +96,7 @@ protected:
   using Base::logResult;
 
   /// Storage for Krylov subspace vectors
-  array1d< VectorTemp > m_kspace;
-
-  /// Flag indicating whether kspace vectors have been created
-  bool mutable m_kspaceInitialized;
+  mutable array1d< VectorTemp > m_kspace;
 };
 
 } // namespace geos

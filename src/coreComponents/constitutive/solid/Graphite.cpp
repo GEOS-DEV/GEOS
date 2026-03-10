@@ -166,37 +166,37 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Coupled Shear Response M1" );
 
-  registerWrapper( viewKeyStruct::distortionStrainHardeningC0(), &m_distortionStrainHardeningC0).
+  registerWrapper( viewKeyStruct::distortionStrainHardeningC0(), &m_distortionStrainHardeningC0 ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription("Distortion Strain Hardening Multiplier C0" );
+    setDescription( "Distortion Strain Hardening Multiplier C0" );
 
-  registerWrapper( viewKeyStruct::inPlaneStrainHardeningC0(), &m_inPlaneStrainHardeningC0).
+  registerWrapper( viewKeyStruct::inPlaneStrainHardeningC0(), &m_inPlaneStrainHardeningC0 ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription("In Plane train Hardening Multiplier C0" );
+    setDescription( "In Plane train Hardening Multiplier C0" );
 
-  registerWrapper( viewKeyStruct::coupledStrainHardeningC0(), &m_coupledStrainHardeningC0).
+  registerWrapper( viewKeyStruct::coupledStrainHardeningC0(), &m_coupledStrainHardeningC0 ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription("Coupled Strain Hardening Multiplier C0" );
+    setDescription( "Coupled Strain Hardening Multiplier C0" );
 
   registerWrapper( viewKeyStruct::maximumPlasticStrainString(), &m_maximumPlasticStrain ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum plastic strain" );
 
   // register fields
-  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient).
+  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Velocity gradient" );
 
-  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain).
+  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Plastic strain" );
 
-  registerWrapper( viewKeyStruct::relaxationString(), &m_relaxation).
+  registerWrapper( viewKeyStruct::relaxationString(), &m_relaxation ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Relaxation" );
@@ -224,7 +224,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point temperatureRate values" );
 
-registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
+  registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point jacobian values" );
@@ -243,10 +243,10 @@ registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Effective bulk modulus for stress control and wavespeed calculations" );
-  
+
   registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
-    setInputFlag( InputFlags::FALSE).
-    setDescription( "Effective shear modulus for stress control and wavespeed calculations");
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Effective shear modulus for stress control and wavespeed calculations" );
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -259,13 +259,13 @@ Graphite::~Graphite()
 
 
 void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+                                         localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   m_effectiveBulkModulus.resize( 0 );
   m_effectiveShearModulus.resize( 0 );
-  m_materialDirection.resize( 0, 3 );
+  m_materialDirection.resize( 0, 3, 3 );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
@@ -282,28 +282,27 @@ void Graphite::postInputInitialization()
 
   // TODO: initialize m_effectiveBulkModulus here. it might be needed by stress control before first updateStress.
 
-
-  // GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
-  //                  "Ep: " << m_defaultYoungModulusTransverse << "\n" << 
-  //                  "Nup: " << m_defaultPoissonRatioTransverse << "\n" << 
-  //                  "Nuzp: " << m_defaultPoissonRatioAxialTransverse << "\n" << 
-  //                  "Gzp: " << m_defaultShearModulusAxialTransverse << "\n" << 
-  //                  "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" << 
-  //                  "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" << 
-  //                  "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" << 
-  //                  "sigmaFail: " << m_failureStrength << "\n" << 
-  //                  "crackSpeed: " << m_crackSpeed << "\n" << 
-  //                  "ds X2: " << m_distortionShearResponseX2 << "\n" << 
-  //                  "ds Y1: " << m_distortionShearResponseY1 << "\n" << 
-  //                  "ds Y2: " << m_distortionShearResponseY2 << "\n" << 
+  // GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" <<
+  //                  "Ep: " << m_defaultYoungModulusTransverse << "\n" <<
+  //                  "Nup: " << m_defaultPoissonRatioTransverse << "\n" <<
+  //                  "Nuzp: " << m_defaultPoissonRatioAxialTransverse << "\n" <<
+  //                  "Gzp: " << m_defaultShearModulusAxialTransverse << "\n" <<
+  //                  "dEzdp: " << m_defaultYoungModulusAxialPressureDerivative << "\n" <<
+  //                  "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" <<
+  //                  "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" <<
+  //                  "sigmaFail: " << m_failureStrength << "\n" <<
+  //                  "crackSpeed: " << m_crackSpeed << "\n" <<
+  //                  "ds X2: " << m_distortionShearResponseX2 << "\n" <<
+  //                  "ds Y1: " << m_distortionShearResponseY1 << "\n" <<
+  //                  "ds Y2: " << m_distortionShearResponseY2 << "\n" <<
   //                  "ds M1: " << m_distortionShearResponseM1 << "\n" <<
-  //                  "ips X2: " << m_inPlaneShearResponseX2 << "\n" << 
-  //                  "ips Y1: " << m_inPlaneShearResponseY1 << "\n" << 
-  //                  "ips Y2: " << m_inPlaneShearResponseY2 << "\n" << 
-  //                  "ips M1: " << m_inPlaneShearResponseM1 << "\n" << 
-  //                  "cs X2: " << m_coupledShearResponseX2 << "\n" << 
-  //                  "cs Y1: " << m_coupledShearResponseY1 << "\n" << 
-  //                  "cs Y2: " << m_coupledShearResponseY2 << "\n" << 
+  //                  "ips X2: " << m_inPlaneShearResponseX2 << "\n" <<
+  //                  "ips Y1: " << m_inPlaneShearResponseY1 << "\n" <<
+  //                  "ips Y2: " << m_inPlaneShearResponseY2 << "\n" <<
+  //                  "ips M1: " << m_inPlaneShearResponseM1 << "\n" <<
+  //                  "cs X2: " << m_coupledShearResponseX2 << "\n" <<
+  //                  "cs Y1: " << m_coupledShearResponseY1 << "\n" <<
+  //                  "cs Y2: " << m_coupledShearResponseY2 << "\n" <<
   //                  "cs M1: " << m_coupledShearResponseM1 << "\n" <<
   //                  "max ep: " << m_maximumPlasticStrain );
 
@@ -311,7 +310,7 @@ void Graphite::postInputInitialization()
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
-  
+
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 
   GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
@@ -329,7 +328,7 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_coupledShearResponseY2 < 0.0, "Coupled shear response y2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_coupledShearResponseM1 < 0.0, "Coupled shear response m1 must be a positive number.", InputError );
 
-  GEOS_THROW_IF( m_maximumPlasticStrain < 0.0, "Maximum plastic strain must be a positive number.", InputError);
+  GEOS_THROW_IF( m_maximumPlasticStrain < 0.0, "Maximum plastic strain must be a positive number.", InputError );
 }
 
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -60,6 +60,10 @@ public:
   {
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     stackArray1d< real64, numComps > composition;
@@ -77,7 +81,15 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     bool status = NegativeTwoPhaseFlash::compute(
       numComps,
@@ -85,8 +97,9 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -125,6 +138,10 @@ public:
 
     auto componentProperties = this->m_fluid->createKernelWrapper();
 
+    constitutive::compositional::FlashData flashData;
+    flashData.liquidEos = EOS_TYPE;
+    flashData.vapourEos = EOS_TYPE;
+
     bool const expectedStatus = std::get< 3 >( data );
     if( !expectedStatus ) return;
 
@@ -137,7 +154,15 @@ public:
     stackArray1d< real64, numComps > liquidComposition( numComps );
     stackArray1d< real64, numComps > vapourComposition( numComps );
     stackArray2d< real64, numComps > kValues( 1, numComps );
-    kValues.zero();
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues[0] );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     stackArray1d< real64, numDofs > vapourFractionDerivs( numDofs );
     stackArray2d< real64, numComps * numDofs > liquidCompositionDerivs( numComps, numDofs );
@@ -158,14 +183,21 @@ public:
       stackArray1d< real64, numComps > displacedLiquidComposition( numComps );
       stackArray1d< real64, numComps > displacedVapourComposition( numComps );
 
+      KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                          p,
+                                                          t,
+                                                          componentProperties,
+                                                          kValues[0] );
+
       NegativeTwoPhaseFlash::compute(
         numComps,
         p,
         t,
         zmf.toSliceConst(),
         componentProperties,
-        EOS_TYPE,
-        EOS_TYPE,
+        flashData,
+        flashParameters->m_continuousParameters,
+        flashParameters->m_discreteParameters,
         kValues.toSlice(),
         values[0],
         displacedLiquidComposition.toSlice(),
@@ -183,8 +215,9 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
+      flashParameters->m_continuousParameters,
+      flashParameters->m_discreteParameters,
       kValues.toSlice(),
       vapourFraction,
       liquidComposition.toSlice(),
@@ -196,8 +229,7 @@ public:
       temperature,
       composition.toSliceConst(),
       componentProperties,
-      EOS_TYPE,
-      EOS_TYPE,
+      flashData,
       vapourFraction,
       liquidComposition.toSliceConst(),
       vapourComposition.toSliceConst(),
@@ -425,7 +457,7 @@ INSTANTIATE_TEST_SUITE_P(
     FlashData( 8.000000e+07, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.000363, 0.000007, 0.003471, 0.006007, 0.018423, 0.034034, 0.042565, 0.056120, 0.839010}, 1, 0.000000, {0.000363, 0.839010}, {0.000363, 0.839010} ),
     FlashData( 1.000000e+08, 8.731500e+02, {0.009000, 0.003000, 0.534700, 0.114600, 0.087900, 0.045600, 0.020900, 0.015100, 0.169200}, 1, 1.000000, {0.009000, 0.169200}, {0.009000, 0.169200} ),
-    FlashData( 1.000000e+08, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} )    
+    FlashData( 1.000000e+08, 8.731500e+02, {0.007026, 0.006161, 0.827761, 0.091046, 0.045353, 0.015026, 0.004474, 0.001898, 0.001256}, 1, 1.000000, {0.007026, 0.001256}, {0.007026, 0.001256} )
    )
   );
 

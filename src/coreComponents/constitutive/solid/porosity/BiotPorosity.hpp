@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -105,7 +105,9 @@ public:
     dPorosity_dPressure = biotSkeletonModulusInverse;
     dPorosity_dTemperature = -porosityThermalExpansion;
 
-    savePorosity( k, q, porosity, dPorosity_dPressure, dPorosity_dTemperature );
+    m_newPorosity[k][q] = porosity;
+    m_dPorosity_dPressure[k][q] = dPorosity_dPressure;
+    m_dPorosity_dTemperature[k][q] = dPorosity_dTemperature;
   }
 
   GEOS_HOST_DEVICE
@@ -229,14 +231,13 @@ protected:
 class BiotPorosity : public PorosityBase
 {
 public:
-  BiotPorosity( string const & name, Group * const parent );
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  BiotPorosity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "BiotPorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
@@ -255,7 +256,7 @@ public:
     static constexpr char const *useUniaxialFixedStressString() { return "useUniaxialFixedStress"; }
 
     static constexpr char const *defaultBiotCoefficientString() { return "defaultBiotCoefficient"; }
-  } viewKeys;
+  };
 
   virtual void initializeState() const override final;
 
@@ -311,7 +312,6 @@ public:
 
 protected:
   virtual void postInputInitialization() override;
-
 
   /// Default thermal expansion coefficients (read from XML)
   real64 m_defaultThermalExpansionCoefficient;

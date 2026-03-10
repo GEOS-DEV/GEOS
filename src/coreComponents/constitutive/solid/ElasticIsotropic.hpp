@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -58,7 +58,7 @@ public:
                            arrayView2d< real64 > const & density,
                            arrayView2d< real64 > const & wavespeed,
                            const bool & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
                       wavespeed,
@@ -120,8 +120,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -152,13 +152,18 @@ public:
                                  real64 ( &elasticStrain )[6] ) const override;
 
   GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
   virtual real64 getBulkModulus( localIndex const k ) const override final
   {
     return m_bulkModulus[k];
   }
 
   // GEOS_HOST_DEVICE
-  // virtual void setBulkModulus(localIndex const k, 
+  // virtual void setBulkModulus(localIndex const k,
   //                             real64 const & value ) const
   // {
   //   m_bulkModulus[k] = value;
@@ -180,17 +185,24 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6],
+                            real64 ( &stiffness )[6][6] ) const override final;
 
 protected:
+
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const ( &stress )[6],
+                                     real64 ( &elasticStrainInc )[6] ) const;
+
 
   /// A reference to the ArrayView holding the bulk modulus for each element.
   arrayView1d< real64 > const m_bulkModulus;
@@ -233,22 +245,51 @@ void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
 
 GEOS_HOST_DEVICE
 inline
+void ElasticIsotropicUpdates::computeElasticStrain( localIndex const k,
+                                                    localIndex const q,
+                                                    real64 const ( &stress )[6],
+                                                    real64 ( & elasticStrain)[6] ) const
+{
+  GEOS_UNUSED_VAR( q );
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+
+  elasticStrain[0] = (    stress[0] - nu*stress[1] - nu*stress[2])/E;
+  elasticStrain[1] = (-nu*stress[0] +    stress[1] - nu*stress[2])/E;
+  elasticStrain[2] = (-nu*stress[0] - nu*stress[1] +    stress[2])/E;
+
+  elasticStrain[3] = stress[3] / m_shearModulus[k];
+  elasticStrain[4] = stress[4] / m_shearModulus[k];
+  elasticStrain[5] = stress[5] / m_shearModulus[k];
+}
+
+GEOS_HOST_DEVICE
+inline
 void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
-  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
-  elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
-  elasticStrain[2] = (-nu*m_newStress[k][q][0] - nu*m_newStress[k][q][1] +    m_newStress[k][q][2])/E;
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
 
-  elasticStrain[3] = m_newStress[k][q][3] / m_shearModulus[k];
-  elasticStrain[4] = m_newStress[k][q][4] / m_shearModulus[k];
-  elasticStrain[5] = m_newStress[k][q][5] / m_shearModulus[k];
+  computeElasticStrain( k, q, stress, elasticStrain );
+
 }
 
+GEOS_HOST_DEVICE
+inline
+void ElasticIsotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
+}
 
 GEOS_HOST_DEVICE
 inline
@@ -310,7 +351,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 {
   GEOS_UNUSED_VAR( timeIncrement );
   smallStrainNoStateUpdate_StressOnly( k, q, strainIncrement, stress ); // stress  = incrementalStress
-  m_wavespeed[k][0] = sqrt(( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0]);
+  m_wavespeed[k][0] = sqrt(( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );            // stress += m_oldStress
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
@@ -319,12 +360,12 @@ void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                            localIndex const q,
-                                            real64 const & timeIncrement,
-                                            real64 const ( & beginningRotation )[3][3],
-                                            real64 const ( & endRotation )[3][3],
-                                            real64 const ( & strainIncrement )[6],
-                                            real64 ( & stress )[6] ) const
+                                                            localIndex const q,
+                                                            real64 const & timeIncrement,
+                                                            real64 const ( &beginningRotation )[3][3],
+                                                            real64 const ( &endRotation )[3][3],
+                                                            real64 const ( &strainIncrement )[6],
+                                                            real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( beginningRotation );
   GEOS_UNUSED_VAR( endRotation );
@@ -346,10 +387,10 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stress )[6],
                                                  real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, 
-                                q, 
+  smallStrainUpdate_StressOnly( k,
+                                q,
                                 timeIncrement,
-                                strainIncrement, 
+                                strainIncrement,
                                 stress );
   getElasticStiffness( k, q, stiffness );
 }
@@ -365,9 +406,9 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate_StressOnly( k,
-                                q, 
+                                q,
                                 timeIncrement,
-                                strainIncrement, 
+                                strainIncrement,
                                 stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
@@ -389,9 +430,9 @@ void ElasticIsotropicUpdates::viscousStateUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const ( & FminusI )[3][3],
-                          real64 ( & stress )[6] ) const
+                                           localIndex const q,
+                                           real64 const ( &FminusI )[3][3],
+                                           real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -405,10 +446,10 @@ void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticIsotropicUpdates::hyperUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const ( & FminusI )[3][3],
-                          real64 ( & stress )[6],
-                          real64 ( & stiffness )[6][6] ) const
+                                           localIndex const q,
+                                           real64 const ( &FminusI )[3][3],
+                                           real64 ( & stress )[6],
+                                           real64 ( & stiffness )[6][6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -487,27 +528,19 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  ElasticIsotropic( string const & name, 
+  ElasticIsotropic( string const & name,
                     Group * const parent );
-
-  /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropic() override;
 
   /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropic";
-
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropic"; }
 
   /**
    * @brief Get catalog name
@@ -531,14 +564,15 @@ public:
 
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
-
-    /// string/key for bulk modulus
-    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
-
   };
+
+  /**
+   * @brief Allocate constitutive arrays
+   * @param parent Object's parent group (element subregion)
+   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
+   */
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
    * @brief Accessor for bulk modulus
@@ -576,12 +610,6 @@ public:
   {
     return m_bulkModulus;
   }
-
-  // virtual void setBulkModulus(localIndex const k, 
-  //                             real64 const & value ) const
-  // {
-  //   m_bulkModulus[k] = value;
-  // }
 
   GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getShearModulus() const override final

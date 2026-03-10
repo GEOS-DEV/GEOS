@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,10 +21,10 @@
 namespace geos
 {
 
-// Like most physics solvers, the Laplace solver derives from a generic SolverBase class.
+// Like most physics solvers, the Laplace solver derives from a generic PhysicsSolverBase class.
 // The base class is densely Doxygen-commented and worth a look if you have not done so already.
 // Most important system assembly steps, linear and non-linear resolutions, and time-stepping mechanisms
-// are implemented at the SolverBase class level and can thus be used in Laplace without needing reimplementation.
+// are implemented at the PhysicsSolverBase class level and can thus be used in Laplace without needing reimplementation.
 
 //START_SPHINX_INCLUDE_BEGINCLASS
 class LaplaceFEM : public LaplaceBaseH1
@@ -38,14 +38,11 @@ public:
   LaplaceFEM( const string & name,
               Group * const parent );
 
-  /// Destructor
-  virtual ~LaplaceFEM() override;
-
   /// "CatalogName()" return the string used as XML tag in the input file.  It ties the XML tag with
   /// this C++ classes. This is important.
   static string catalogName() { return "LaplaceFEM"; }
   /**
-   * @copydoc SolverBase::getCatalogName()
+   * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override { return catalogName(); }
 
@@ -58,13 +55,11 @@ public:
 // /**@{*/
 
 //START_SPHINX_INCLUDE_SOLVERINTERFACE
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = false ) override;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void
   assembleSystem( real64 const time,

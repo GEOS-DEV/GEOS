@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "CrystalHeal"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * targetRegionString() { return "targetRegion"; }
@@ -60,7 +62,7 @@ public:
   int getHealType() const { return m_healType; }
   int getMarkedParticlesToHeal() const { return m_markedParticlesToHeal; }
 
-  void setMarkedParticlesToHeal(int markedParticlesToHeal ) { m_markedParticlesToHeal = markedParticlesToHeal; }
+  void setMarkedParticlesToHeal( int markedParticlesToHeal ) { m_markedParticlesToHeal = markedParticlesToHeal; }
 
 protected:
   virtual void postInputInitialization() override final;

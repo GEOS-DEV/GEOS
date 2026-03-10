@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,6 +18,7 @@
  */
 
 #include "ElasticTransverseIsotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -27,20 +28,7 @@ namespace constitutive
 {
 
 ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultYoungModulusTransverse(),
-  m_defaultYoungModulusAxial(),
-  m_defaultPoissonRatioTransverse(),
-  m_defaultPoissonRatioAxialTransverse(),
-  m_defaultShearModulusAxialTransverse(),
-  m_c11(),
-  m_c13(),
-  m_c33(),
-  m_c44(),
-  m_c66(),
-  m_effectiveBulkModulus(),
-  m_effectiveShearModulus(),
-  m_materialDirection()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
     setApplyDefaultValue( -1 ).
@@ -92,33 +80,14 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C66" );
 
-  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C11" );
-
-  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C13" );
-
-  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C33" );
-
-  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C44" );
-
-  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C66" );
-
+  // register fields
   registerWrapper( viewKeyStruct::effectiveBulkModulusString(), &m_effectiveBulkModulus ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Effective bulk modulus for stress control and wavespeed calculations" );
-  
+
   registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
-    setInputFlag( InputFlags::FALSE).
-    setDescription( "Effective shear modulus for stress control and wavespeed calculations");
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Effective shear modulus for stress control and wavespeed calculations" );
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -128,12 +97,18 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
 ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 {}
 
-void ElasticTransverseIsotropic::allocateConstitutiveData( dataRepository::Group & parent, 
+void ElasticTransverseIsotropic::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_materialDirection.resize( 0, 3 );
+  registerField< fields::solid::c11 >( &m_c11 );
+  registerField< fields::solid::c13 >( &m_c13 );
+  registerField< fields::solid::c33 >( &m_c33 );
+  registerField< fields::solid::c44 >( &m_c44 );
+  registerField< fields::solid::c66 >( &m_c66 );
+
+  m_materialDirection.resizeDimension<1>( 3 );
 }
 
 void ElasticTransverseIsotropic::postInputInitialization()
@@ -152,7 +127,8 @@ void ElasticTransverseIsotropic::postInputInitialization()
   real64 & Nuat = m_defaultPoissonRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
 
-  // CC: TODO make sure that if stiffness constants are set or issues with other variable error is through or other logic to ensure effective bulk and shear moduli can be computed
+  // CC: TODO make sure that if stiffness constants are set or issues with other variable error is through or other logic to ensure
+  // effective bulk and shear moduli can be computed
   if( Et > 0.0 && Ea > 0.0 && Gat > 0.0 && Nut > -0.5 && Nut < 0.5 )
   {
     real64 const Nuta = Nuat * ( Et / Ea );
@@ -166,8 +142,8 @@ void ElasticTransverseIsotropic::postInputInitialization()
       c44 = 2.0 * Gat;
       c66 = Et / ( 1.0 + Nut );
     }
-  } 
-  else 
+  }
+  else
   {
     Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 - c13 * c13 );
     Ea = c33 - c13 * c13 / ( c11 - c66 );
@@ -176,19 +152,15 @@ void ElasticTransverseIsotropic::postInputInitialization()
     Nuat = c13 / ( 2 * ( c11 - c66 ) );
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
+  getField< fields::solid::c11 >().
     setApplyDefaultValue( c11 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
+  getField< fields::solid::c13 >().
     setApplyDefaultValue( c13 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
+  getField< fields::solid::c33 >().
     setApplyDefaultValue( c33 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
+  getField< fields::solid::c44 >().
     setApplyDefaultValue( c44 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
+  getField< fields::solid::c66 >().
     setApplyDefaultValue( c66 );
 
   real64 Keff = -Et*Ea/(2*Ea*(Nut+Nuat-1) + Et*(2*Nuat-1));

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/SolidFields.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "surfaceGenerationKernelsHelpers.hpp"
@@ -31,8 +32,6 @@ namespace geos
 
 namespace surfaceGenerationKernels
 {
-
-using namespace surfaceGenerationKernelsHelpers;
 
 class NodalForceKernel
 {
@@ -46,9 +45,9 @@ public:
     m_detJ( elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( dataRepository::keys::detJ ) ),
     m_bulkModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager ) ),
     m_shearModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager ) ),
-    m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( constitutive::SolidBase::viewKeyStruct::stressString(),
-                                                                                                               constitutiveManager ) )
+    m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                             arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                                     constitutiveManager ) )
   {
     m_solidMaterialFullIndex.resize( elemManager.numRegions() );
     elemManager.forElementRegionsComplete< CellElementRegion >( [&]( localIndex regionIndex,
@@ -76,11 +75,11 @@ public:
     {
       real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
       real64 const dNdX[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( m_dNdX[er][esr][ei][q][targetNode] );
-      computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
+      surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
     }
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-    scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
+    surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
   }
 
 protected:
@@ -142,11 +141,11 @@ public:
       /// TODO: make it work for the thermal case as well
       LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -m_biotCoefficient[er][esr][m_porosityMaterialFullIndex[er]][ei] * m_pressure[er][esr][ei] );
 
-      computeNodalForce( totalStress, dNdX, m_detJ[er][esr][ei][q], force );
+      surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX, m_detJ[er][esr][ei][q], force );
     }
 
     //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-    scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
+    surfaceGenerationKernelsHelpers::scaleNodalForce( m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei], m_shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei], force );
   }
 
 private:

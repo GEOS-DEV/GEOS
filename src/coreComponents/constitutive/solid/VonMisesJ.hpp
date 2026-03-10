@@ -61,13 +61,13 @@ public:
                     arrayView2d< real64 > const & density,
                     arrayView2d< real64 > const & wavespeed,
                     const bool & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, 
-                             shearModulus, 
+    ElasticIsotropicUpdates( bulkModulus,
+                             shearModulus,
                              thermalExpansionCoefficient,
-                             newStress, 
+                             newStress,
                              oldStress,
                              density,
-                             wavespeed, 
+                             wavespeed,
                              disableInelasticity ),
     m_yieldStrength( yieldStrength ),
     m_deformationGradient( deformationGradient ),
@@ -127,8 +127,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -164,7 +164,7 @@ public:
                                        const real64 timeIncrement,
                                        real64 const ( &strainIncrement )[6],
                                        real64 const ( &stressIncrement )[6],
-                                       real64 ( & plasticStrainIncrement )[6] ) const;
+                                       real64 ( &plasticStrainIncrement )[6] ) const;
 
 protected:
 
@@ -173,7 +173,7 @@ protected:
 
   /// A reference to the ArrayView holding the deformation gradient for each element.
   arrayView3d< real64 const > const m_deformationGradient;
-  
+
   /// A reference to the ArrayView holding the velocity gradient for each element.
   arrayView3d< real64 const > const m_velocityGradient;
 
@@ -219,10 +219,10 @@ void VonMisesJUpdates::getElasticStrain( localIndex const k,
                                          localIndex const q,
                                          real64 ( & elasticStrain)[6] ) const
 {
-    GEOS_UNUSED_VAR( k );
-    GEOS_UNUSED_VAR( q );
-    GEOS_UNUSED_VAR( elasticStrain );
-    GEOS_ERROR( "getElasticStrain not implemented for VonMisesJ model");
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
+  GEOS_UNUSED_VAR( elasticStrain );
+  GEOS_ERROR( "getElasticStrain not implemented for VonMisesJ model" );
 }
 
 
@@ -233,8 +233,8 @@ void VonMisesJUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                             real64 const ( &totalStrain )[6],
                                                             real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( k ); 
-  GEOS_UNUSED_VAR( q );                                          
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( totalStrain );
   GEOS_UNUSED_VAR( stress );
   GEOS_ERROR( "smallStrainNoStateUpdate_StressOnly is not implemented for VonMisesJ model" );
@@ -276,8 +276,8 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                      real64 const ( &strainIncrement )[6],
                                                      real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( k ); 
-  GEOS_UNUSED_VAR( q );                                          
+  GEOS_UNUSED_VAR( k );
+  GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
@@ -290,9 +290,9 @@ inline
 void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                      localIndex const q,
                                                      real64 const & timeIncrement,
-                                                     real64 const ( & beginningRotation )[3][3],
-                                                     real64 const ( & endRotation )[3][3],
-                                                     real64 const ( & strainIncrement )[6],
+                                                     real64 const ( &beginningRotation )[3][3],
+                                                     real64 const ( &endRotation )[3][3],
+                                                     real64 const ( &strainIncrement )[6],
                                                      real64 ( & stress )[6] ) const
 {
   real64 previousStress[6] = { 0 };
@@ -305,15 +305,15 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                      trialP,
                                      trialQ,
                                      oldDeviatoricStress );
-  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, sqrt(2.0 / 3.0)*trialQ );
+  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, LvArray::math::sqrt( 2.0 / 3.0 )*trialQ );
 
-  // Exactly compute pressure 
+  // Exactly compute pressure
   real64 J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
-  real64 pressure = -m_bulkModulus[k] * std::log( J );
+  real64 pressure = -m_bulkModulus[k] * LvArray::math::log( J );
 
   // Hypoelastically compute deviatoric stress
   real64 rotationTranspose[3][3] = { { 0 } };
-  LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
+  LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
 
   real64 unrotatedVelocityGradient[3][3]  = { { 0 } };
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, rotationTranspose, m_velocityGradient[k] );
@@ -328,7 +328,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
 
   real64 D[6] = { 0 };
-  LvArray::tensorOps::denseToSymmetric<3>( D, denseD );
+  LvArray::tensorOps::denseToSymmetric< 3 >( D, denseD );
 
   // Get deviatoric part of D
   real64 trD = LvArray::tensorOps::symTrace< 3 >( D ) / 3.0;
@@ -341,7 +341,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
   LvArray::tensorOps::copy< 6 >( stress, oldDeviatoricStress );
   LvArray::tensorOps::add< 6 >( stress, deviatoricStressIncrement );
-  LvArray::tensorOps::symAddIdentity< 3 >( stress, -pressure);
+  LvArray::tensorOps::symAddIdentity< 3 >( stress, -pressure );
 
   if( m_disableInelasticity )
   {
@@ -375,7 +375,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
     real64 plasticStrainIncrement[6] = {0};
     computePlasticStrainIncrement( k,
                                    q,
-                                   timeIncrement,           
+                                   timeIncrement,
                                    strainIncrement,
                                    stressIncrement,
                                    plasticStrainIncrement );
@@ -423,10 +423,10 @@ void VonMisesJUpdates::smallStrainUpdate( localIndex const k,
                                           real64 ( & stress )[6],
                                           real64 ( & stiffness )[6][6] ) const
 {
-  smallStrainUpdate_StressOnly( k, 
-                                q, 
+  smallStrainUpdate_StressOnly( k,
+                                q,
                                 timeIncrement,
-                                strainIncrement, 
+                                strainIncrement,
                                 stress );
   getElasticStiffness( k, q, stiffness );
 }
@@ -435,16 +435,16 @@ void VonMisesJUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 inline
 void VonMisesJUpdates::smallStrainUpdate( localIndex const k,
-                                                 localIndex const q,
-                                                 real64 const & timeIncrement,
-                                                 real64 const ( &strainIncrement )[6],
-                                                 real64 ( & stress )[6],
-                                                 DiscretizationOps & stiffness ) const
+                                          localIndex const q,
+                                          real64 const & timeIncrement,
+                                          real64 const ( &strainIncrement )[6],
+                                          real64 ( & stress )[6],
+                                          DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate_StressOnly( k,
-                                q, 
+                                q,
                                 timeIncrement,
-                                strainIncrement, 
+                                strainIncrement,
                                 stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
@@ -453,15 +453,15 @@ void VonMisesJUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void VonMisesJUpdates::computePlasticStrainIncrement ( localIndex const k,
-                                                                    localIndex const q,
-                                                                    const real64 timeIncrement,
-                                                                    real64 const ( & strainIncrement )[6],
-                                                                    real64 const ( & stressIncrement )[6],
-                                                                    real64 ( & plasticStrainIncrement )[6] ) const
-{ 
+                                                       localIndex const q,
+                                                       const real64 timeIncrement,
+                                                       real64 const ( &strainIncrement )[6],
+                                                       real64 const ( &stressIncrement )[6],
+                                                       real64 ( & plasticStrainIncrement )[6] ) const
+{
   GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( timeIncrement );
-  
+
   // For hypo-elastic models we compute the increment in plastic strain assuming
   // for some increment in total strain and stress and elastic properties.
 
@@ -479,24 +479,24 @@ void VonMisesJUpdates::computePlasticStrainIncrement ( localIndex const k,
   stressIncrementIsostatic[1] = trialP;
   stressIncrementIsostatic[2] = trialP;
 
-  // For damage or softening it there may be cases where bulk or shear are approx 0, 
+  // For damage or softening it there may be cases where bulk or shear are approx 0,
   // so we need to be careful that we compute this
   real64 elasticStrainIncrement[6] = {0};
   for( int i = 0; i < 6; ++i )
   {
-    if (m_bulkModulus[k] > 1.0e-12)
+    if( m_bulkModulus[k] > 1.0e-12 )
     {
       // CC: off diagonal elements need x2 for strain
       elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * stressIncrementIsostatic[i] * 1.0/3.0/m_bulkModulus[k];
     }
-    if (m_shearModulus[k] > 1.0e-12)
+    if( m_shearModulus[k] > 1.0e-12 )
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2/3 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 
-  LvArray::tensorOps::copy< 6 >( plasticStrainIncrement, strainIncrement);
-  LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement);
+  LvArray::tensorOps::copy< 6 >( plasticStrainIncrement, strainIncrement );
+  LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement );
 }
 
 /**
@@ -516,8 +516,8 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  VonMisesJ( string const & name, 
-                    Group * const parent );
+  VonMisesJ( string const & name,
+             Group * const parent );
 
   /**
    * Default Destructor
@@ -568,7 +568,7 @@ public:
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
   };
 
- GEOS_HOST_DEVICE
+  GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getYieldStrength() const final
   {
     return m_yieldStrength;

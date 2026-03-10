@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -13,10 +13,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
-#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+/**
+ * @file PreconditionerIdentity.hpp
+ */
 
-#include "linearAlgebra/common/LinearOperator.hpp"
+#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
 namespace geos
@@ -40,8 +43,6 @@ public:
   /// Alias for matrix type
   using Matrix = typename Base::Matrix;
 
-  virtual ~PreconditionerIdentity() = default;
-
   /**
    * @brief Apply operator to a vector.
    *
@@ -57,6 +58,6 @@ public:
   }
 };
 
-}
+} // namespace geos
 
 #endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_

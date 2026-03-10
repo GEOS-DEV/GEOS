@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 
 #include "dataRepository/xmlWrapper.hpp"
+#include "common/format/EnumStrings.hpp"
 
 using namespace geos;
 
@@ -25,7 +26,7 @@ TEST( testXmlWrapper, array3d_errors )
   array3d< int > array;
 
   {
-    std::vector< string > workingInputs = {
+    stdVector< string > workingInputs = {
       // testing without spaces with various array sizes
       "{{{0}}}",
       "{{{0,1,2}}}",
@@ -53,7 +54,7 @@ TEST( testXmlWrapper, array3d_errors )
     }
   }
   {
-    std::vector< string > erroneousInputs = {
+    stdVector< string > erroneousInputs = {
       // fordbiden characters
       "{{{0,1,2},{3, hello,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
       "{{{0,1,2 + 2},{3, 2 * 2,5},{3,4,5}},{{6,7,8},{9,10,11},{12,13,14}},{{15,16,17},{18,19,20},{21,22,23}}}",
@@ -328,6 +329,32 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "1 2", 0, true )));
 
 
+enum class TestEnum { None, Default, Value, Value2 };
+ENUM_STRINGS( TestEnum, "None", "Default", "Value", "Value2" );
+
+class enumAttributeTestFixture : public AttributeReadTestFixture< TestEnum > {};
+
+TEST_P( enumAttributeTestFixture, testParsing )
+{
+  testParams = GetParam();
+  this->test();
+}
+
+INSTANTIATE_TEST_SUITE_P(
+  enumAttributeTests,
+  enumAttributeTestFixture,
+  ::testing::Values( std::make_tuple( "None", TestEnum::None, false ),
+                     std::make_tuple( "Default", TestEnum::Default, false ),
+                     std::make_tuple( "Value", TestEnum::Value, false ),
+                     std::make_tuple( "Value2", TestEnum::Value2, false ),
+                     std::make_tuple( "0", TestEnum( 0 ), true ),
+                     std::make_tuple( "4.", TestEnum( 0 ), true ),
+                     std::make_tuple( "alpha", TestEnum( 0 ), true ),
+                     std::make_tuple( "Val", TestEnum( 0 ), true ),
+                     std::make_tuple( "Def ault", TestEnum( 0 ), true ),
+                     std::make_tuple( "None123", TestEnum( 0 ), true ) ) );
+
+
 TEST( testXmlWrapper, testGroupNamesFormats )
 {
   struct GroupNameTest
@@ -342,7 +369,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
   string groupName;
 
   {
-    std::vector< GroupNameTest > workingInputs = {
+    stdVector< GroupNameTest > workingInputs = {
       GroupNameTest( groupNameRegex, "testname" ),
       GroupNameTest( groupNameRegex, "testname01" ),
       GroupNameTest( groupNameRegex, "test_name" ),
@@ -356,7 +383,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     }
   }
   {
-    std::vector< GroupNameTest > erroneousInputs = {
+    stdVector< GroupNameTest > erroneousInputs = {
       //empty entries
       GroupNameTest( groupNameRegex, "" ),
       GroupNameTest( groupNameRegex, " " ),

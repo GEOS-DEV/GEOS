@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -36,6 +36,7 @@ auto const hostMemorySpace = LvArray::MemorySpace::host;
 using serialPolicy = RAJA::seq_exec;
 using serialAtomic = RAJA::seq_atomic;
 using serialReduce = RAJA::seq_reduce;
+using serialMultiReduce = RAJA::seq_multi_reduce;
 
 using serialStream = RAJA::resources::Host;
 using serialEvent = RAJA::resources::HostEvent;
@@ -46,6 +47,7 @@ auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = RAJA::omp_parallel_for_exec;
 using parallelHostReduce = RAJA::omp_reduce;
+using parallelHostMultiReduce = RAJA::omp_multi_reduce;
 using parallelHostAtomic = RAJA::builtin_atomic;
 
 // issues with Raja::resources::Omp on lassen
@@ -60,6 +62,7 @@ auto const parallelHostMemorySpace = hostMemorySpace;
 
 using parallelHostPolicy = serialPolicy;
 using parallelHostReduce = serialReduce;
+using parallelHostMultiReduce = serialMultiReduce;
 using parallelHostAtomic = serialAtomic;
 using parallelHostStream = serialStream;
 using parallelHostEvent = serialEvent;
@@ -81,6 +84,7 @@ using parallelDeviceStream = RAJA::resources::Cuda;
 using parallelDeviceEvent = RAJA::resources::Event;
 
 using parallelDeviceReduce = RAJA::cuda_reduce;
+using parallelDeviceMultiReduce = cuda_multi_reduce_atomic;
 using parallelDeviceAtomic = RAJA::cuda_atomic;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::cuda_synchronize >(); }
@@ -105,6 +109,7 @@ using parallelDeviceStream = RAJA::resources::Hip;
 using parallelDeviceEvent = RAJA::resources::Event;
 
 using parallelDeviceReduce = RAJA::hip_reduce;
+using parallelDeviceMultiReduce = RAJA::hip_multi_reduce_atomic;
 using parallelDeviceAtomic = RAJA::hip_atomic;
 
 void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
@@ -133,6 +138,7 @@ using parallelDeviceStream = parallelHostStream;
 using parallelDeviceEvent = parallelHostEvent;
 
 using parallelDeviceReduce = parallelHostReduce;
+using parallelDeviceMultiReduce = parallelHostMultiReduce;
 using parallelDeviceAtomic = parallelHostAtomic;
 
 void RAJA_INLINE parallelDeviceSync() { parallelHostSync( ); }
@@ -146,7 +152,7 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOS_UNUSED_PARAM( stream ),
 
 #endif
 
-using parallelDeviceEvents = std::vector< parallelDeviceEvent >;
+using parallelDeviceEvents = stdVector< parallelDeviceEvent >;
 
 namespace internalRajaInterface
 {
@@ -159,6 +165,7 @@ struct PolicyMap< serialPolicy >
 {
   using atomic = serialAtomic;
   using reduce = serialReduce;
+  using multiReduce = serialMultiReduce;
 };
 
 #if defined(GEOS_USE_OPENMP)
@@ -167,6 +174,7 @@ struct PolicyMap< RAJA::omp_parallel_for_exec >
 {
   using atomic = RAJA::builtin_atomic;
   using reduce = RAJA::omp_reduce;
+  using multiReduce = RAJA::omp_multi_reduce;
 };
 #endif
 
@@ -176,6 +184,7 @@ struct PolicyMap< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, A
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;
+  using multiReduce = RAJA::cuda_multi_reduce_atomic;
 };
 #endif
 
@@ -185,6 +194,7 @@ struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE, ASYNC > >
 {
   using atomic = RAJA::hip_atomic;
   using reduce = RAJA::hip_reduce;
+  using multiReduce = RAJA::hip_multi_reduce_atomic;
 };
 #endif
 }
@@ -192,6 +202,9 @@ struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE, ASYNC > >
 
 template< typename POLICY >
 using ReducePolicy = typename internalRajaInterface::PolicyMap< POLICY >::reduce;
+
+template< typename POLICY >
+using MultiReducePolicy = typename internalRajaInterface::PolicyMap< POLICY >::multiReduce;
 
 template< typename POLICY >
 using AtomicPolicy = typename internalRajaInterface::PolicyMap< POLICY >::atomic;

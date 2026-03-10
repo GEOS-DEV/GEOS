@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOS_MESH_SIMPLEGEOMETRICOBJECTS_SIMPLEGEOMETRICOBJECTBASE_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "codingUtilities/StringUtilities.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
 
 class Function;
@@ -45,24 +45,12 @@ class SimpleGeometricObjectBase : public dataRepository::Group
 public:
 
   /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
   explicit SimpleGeometricObjectBase( string const & name,
                                       Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~SimpleGeometricObjectBase();
-
-  ///@}
 
   /**
    * @name Static Factory Catalog Functions
@@ -93,6 +81,21 @@ public:
    * @return true if the coordinates are in the object, false otherwise
    */
   virtual bool isCoordInObject( real64 const ( &coord ) [3] ) const = 0;
+
+  /// @cond DO_NOT_DOCUMENT
+  struct viewKeyStruct
+  {
+    /// Key for the epsilon parameter
+    static constexpr char const * epsilonString() { return "epsilon"; }
+  };
+  /// @endcond
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  /// Tolerance for coordinate checks
+  real64 m_epsilon = 0.0;
 
 };
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -25,13 +25,13 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "common/Logger.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/contact/ContactBase.hpp"
+#include "constitutive/contact/FrictionBase.hpp"
 #include "constitutive/NullModel.hpp"
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -235,10 +235,7 @@ template<> int GetTensorRank< string >()
   return DB_VARTYPE_SCALAR;
 }
 
-
-
 }
-
 
 
 using namespace constitutive;
@@ -264,7 +261,7 @@ SiloFile::SiloFile():
   m_writeFaceMesh( 0 ),
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
-  m_plotLevel( dataRepository::PlotLevel::LEVEL_1 ),
+  m_plotLevel( PlotLevel::LEVEL_1 ),
   m_requireFieldRegistrationCheck( true ),
   m_ghostFlags( true )
 {
@@ -283,7 +280,7 @@ void SiloFile::makeSiloDirectories()
 
   int rank=0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
 
   if( rank==0 )
@@ -305,12 +302,12 @@ void SiloFile::initialize( int const MPI_PARAM( numGroups ) )
 #else
   m_numGroups = 1;
 #endif
-  MpiWrapper::bcast( &m_numGroups, 1, 0, MPI_COMM_GEOSX );
-//  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOSX);
+  MpiWrapper::bcast( &m_numGroups, 1, 0, MPI_COMM_GEOS );
+//  MPI_Bcast( const_cast<int*>(&m_driver), 1, MPI_INT, 0, MPI_COMM_GEOS);
   // Initialize PMPIO, pass a pointer to the driver type as the user data.
   m_baton = PMPIO_Init( m_numGroups,
                         PMPIO_WRITE,
-                        MPI_COMM_GEOSX,
+                        MPI_COMM_GEOS,
                         1,
                         PMPIO_DefaultCreate,
                         PMPIO_DefaultOpen,
@@ -348,7 +345,7 @@ void SiloFile::waitForBatonWrite( int const domainNumber,
 
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
 
@@ -382,7 +379,7 @@ void SiloFile::waitForBaton( int const domainNumber, string const & restartFileN
 
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   int const groupRank = PMPIO_GroupRank( m_baton, rank );
 
@@ -416,7 +413,7 @@ void SiloFile::handOffBaton()
 
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   if( rank==0 )
   {
@@ -578,7 +575,7 @@ void SiloFile::writeMeshObject( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   if( rank == 0 )
   {
@@ -653,7 +650,7 @@ void SiloFile::writeBeamMesh( string const & meshName,
   {
     int rank = 0;
   #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
   #endif
     if( rank == 0 )
     {
@@ -686,7 +683,7 @@ void SiloFile::writePointMesh( string const & meshName,
   {
     int rank = 0;
   #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
   #endif
     if( rank == 0 )
     {
@@ -709,7 +706,7 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
   if( nmat > 0 )
   {
     array1d< int > matnos( nmat );
-    std::vector< string > materialNameStrings( nmat );
+    stdVector< string > materialNameStrings( nmat );
     array1d< char const * > materialNames( nmat+1 );
     materialNames.back() = nullptr;
 
@@ -814,15 +811,15 @@ void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegio
     // write multimesh object
     int rank = 0;
   #ifdef GEOS_USE_MPI
-    MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
   #endif
     if( rank == 0 )
     {
 
-      int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
+      int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
 
-      array1d< string > vBlockNames( size );
-      std::vector< char * > BlockNames( size );
+      string_array vBlockNames( size );
+      stdVector< char * > BlockNames( size );
       char currentDirectory[256];
 
       DBGetDir( m_dbBaseFilePtr, currentDirectory );
@@ -983,8 +980,8 @@ void SiloFile::writeMaterialVarDefinition( string const & subDir,
 void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 {
 
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
 
   string sendbufferVars;
   string sendbufferMesh;
@@ -1015,7 +1012,7 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
 
   integer_array rcounts( size );
   integer_array displs( size );
-  MpiWrapper::gather( &sizeOfSendBufferVars, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gather( &sizeOfSendBufferVars, 1, rcounts.data(), 1, 0, MPI_COMM_GEOS );
 
   int sizeOfReceiveBuffer = 0;
   displs[0] = 0;
@@ -1032,10 +1029,10 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
                         rcounts.data(),
                         displs.data(),
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
 
-  MpiWrapper::gather( &sizeOfSendBufferMesh, 1, rcounts.data(), 1, 0, MPI_COMM_GEOSX );
+  MpiWrapper::gather( &sizeOfSendBufferMesh, 1, rcounts.data(), 1, 0, MPI_COMM_GEOS );
 
   int sizeOfReceiveBufferMesh = 0;
   displs[0] = 0;
@@ -1052,7 +1049,7 @@ void SiloFile::clearEmptiesFromMultiObjects( int const cycleNum )
                         rcounts.data(),
                         displs.data(),
                         0,
-                        MPI_COMM_GEOSX );
+                        MPI_COMM_GEOS );
 
 
 
@@ -1223,10 +1220,10 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
 {
   // TODO: This is a hack.
   conduit::Node conduitNode;
-  dataRepository::Group fakeGroup( elemRegion.getName(), conduitNode );
+  Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  std::vector< std::map< string, WrapperBase const * > > viewPointers;
+  stdVector< stdMap< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
@@ -1242,7 +1239,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
-        viewPointers[esr][fieldName] = &wrapper;
+        viewPointers[esr].get_inserted( fieldName ) = &wrapper;
 
         types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
@@ -1327,7 +1324,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
 
 }
 
-static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
+static stdVector< int > getSiloNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
@@ -1410,7 +1407,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     array1d< char > ghostZoneFlag;
 
 
-    std::vector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
+    stdVector< FixedOneToManyRelation > elementToNodeMap( numElementShapes );
 
     int count = 0;
 
@@ -1424,7 +1421,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement() );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      std::vector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
+      stdVector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
@@ -1454,12 +1451,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     } );
 
     string_array
-      regionSolidMaterialList = elementRegion.getConstitutiveNames< constitutive::SolidBase >();
+      regionSolidMaterialList = elementRegion.getConstitutiveNames< SolidBase >();
 
     localIndex const numSolids = regionSolidMaterialList.size();
 
-    string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< constitutive::SingleFluidBase >();
-    string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< constitutive::MultiFluidBase >();
+    string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< SingleFluidBase >();
+    string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< MultiFluidBase >();
 
     for( string const & matName : regionMultiPhaseFluidList )
     {
@@ -1468,12 +1465,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
     localIndex const numFluids = regionFluidMaterialList.size();
 
     string_array
-      fractureContactMaterialList = elementRegion.getConstitutiveNames< constitutive::ContactBase >();
+      fractureContactMaterialList = elementRegion.getConstitutiveNames< FrictionBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
 
     string_array
-      nullModelMaterialList = elementRegion.getConstitutiveNames< constitutive::NullModel >();
+      nullModelMaterialList = elementRegion.getConstitutiveNames< NullModel >();
 
     localIndex const numNullModels = nullModelMaterialList.size();
 
@@ -1689,9 +1686,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
       // It is not documented in silo manual.
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array1d< localIndex > > faceToNodeMapCopy( numFaceTypes );
       {
@@ -1740,9 +1737,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
       array1d< localIndex * > faceConnectivity( numFaceTypes );
       array1d< globalIndex const * > globalFaceNumbers( numFaceTypes );
-      std::vector< int > fshapecnt( numFaceTypes );
-      std::vector< int > fshapetype( numFaceTypes );
-      std::vector< int > fshapesize( numFaceTypes );
+      stdVector< int > fshapecnt( numFaceTypes );
+      stdVector< int > fshapetype( numFaceTypes );
+      stdVector< int > fshapesize( numFaceTypes );
 
       array1d< array2d< localIndex > > faceToNodeMapCopy( numFaceTypes );
 
@@ -1812,9 +1809,9 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
 
     array1d< localIndex * > edgeConnectivity( numEdgeTypes );
     array1d< globalIndex const * > globalEdgeNumbers( numEdgeTypes );
-    std::vector< int > eshapecnt( numEdgeTypes );
-    std::vector< int > eshapetype( numEdgeTypes );
-    std::vector< int > eshapesize( numEdgeTypes );
+    stdVector< int > eshapecnt( numEdgeTypes );
+    stdVector< int > eshapetype( numEdgeTypes );
+    stdVector< int > eshapesize( numEdgeTypes );
 
     array1d< array2d< localIndex > > edgeToNodeMap( numEdgeTypes );
 
@@ -1922,8 +1919,8 @@ void SiloFile::writePolygonMeshObject( const string & meshName,
 
     DBClearOptlist( optlist );
 
-    std::vector< int > nodelist( lnodelist );
-    std::vector< globalIndex > globalZoneNumber( lnodelist );
+    stdVector< int > nodelist( lnodelist );
+    stdVector< globalIndex > globalZoneNumber( lnodelist );
 
     int elemCount = 0;
     for( int j = 0; j < lnodelist; ++j )
@@ -2010,7 +2007,7 @@ int getTensorRankOfArray( ArrayView< TYPE const, NDIM, USD > const & field )
 
 template< typename OUTPUTTYPE >
 void SiloFile::writeWrappersToSilo( string const & meshname,
-                                    const dataRepository::Group::wrapperMap & wrappers,
+                                    const Group::wrapperMap & wrappers,
                                     int const centering,
                                     int const cycleNum,
                                     real64 const problemTime,
@@ -2034,13 +2031,13 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       // TODO This is wrong. problem with uniqueness
       if( typeID==typeid(array1d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array1d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array1d< real64 > > const & >( *wrapper );
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(array2d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array2d< real64 > > const & >( *wrapper );
 
         arrayView2d< real64 const > const & array = wrapperT.reference();
         this->writeDataField< real64 >( meshname.c_str(),
@@ -2056,7 +2053,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       }
       if( typeID==typeid(array2d< real64, RAJA::PERM_JI >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array2d< real64, RAJA::PERM_JI > > const & >( *wrapper );
 
         arrayView2d< real64 const, LvArray::typeManipulation::getStrideOneDimension( RAJA::PERM_JI {} ) > const &
         array = wrapperT.reference();
@@ -2072,25 +2069,25 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
       }
       if( typeID==typeid(array3d< real64 >) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< array3d< real64 > > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< array3d< real64 > > const & >( *wrapper );
         this->writeDataField< real64 >( meshname.c_str(), fieldName,
                                         wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(integer_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< integer_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< integer_array > const & >( *wrapper );
         this->writeDataField< integer >( meshname.c_str(), fieldName,
                                          wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(localIndex_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< localIndex_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< localIndex_array > const & >( *wrapper );
         this->writeDataField< localIndex >( meshname.c_str(), fieldName,
                                             wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
       if( typeID==typeid(globalIndex_array) )
       {
-        auto const & wrapperT = dynamic_cast< dataRepository::Wrapper< globalIndex_array > const & >( *wrapper );
+        auto const & wrapperT = dynamic_cast< Wrapper< globalIndex_array > const & >( *wrapper );
         this->writeDataField< globalIndex >( meshname.c_str(), fieldName,
                                              wrapperT.reference(), centering, cycleNum, problemTime, multiRoot );
       }
@@ -2112,7 +2109,7 @@ void SiloFile::writeMultiXXXX( const DBObjectType type,
 
   int size = 1;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_size( MPI_COMM_GEOSX, &size );
+  MPI_Comm_size( MPI_COMM_GEOS, &size );
 #endif
 
   string_array vBlockNames( size );
@@ -2260,7 +2257,7 @@ void SiloFile::writeDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   if( rank == 0 )
   {
@@ -2529,7 +2526,7 @@ void SiloFile::writeDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   if( rank == 0 )
   {
@@ -2767,7 +2764,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
       }
     } );
 
-    for( localIndex a=0; a<materialNames.size(); ++a )
+    for( auto a=0u; a<materialNames.size(); ++a )
     {
       regionpnames[a] = const_cast< char * >(materialNames[a].c_str());
     }
@@ -2817,7 +2814,7 @@ void SiloFile::writeMaterialDataField( string const & meshName,
   // write multimesh object
   int rank = 0;
 #ifdef GEOS_USE_MPI
-  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 #endif
   if( rank == 0 )
   {
@@ -3127,7 +3124,7 @@ void SiloFile::writeStressVarDefinition( string const & MatDir )
 void SiloFile::writeVectorVarDefinition( string const & fieldName,
                                          string const & subDirectory )
 {
-  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     DBSetDir( m_dbBaseFilePtr, subDirectory.c_str() );
     DBtoc * const siloTOC = DBGetToc ( m_dbBaseFilePtr );
@@ -3195,7 +3192,7 @@ int SiloFile::getMeshType( string const & meshName ) const
   return meshType;
 }
 
-bool SiloFile::isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const
+bool SiloFile::isFieldPlotEnabled( WrapperBase const & wrapper ) const
 {
   return outputUtilities::isFieldPlotEnabled( wrapper.getPlotLevel(),
                                               m_plotLevel,

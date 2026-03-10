@@ -1,3 +1,23 @@
+# SPDX-License-Identifier: LGPL-2.1-only
+#
+# Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+# Copyright (c) 2018-2024 TotalEnergies
+# Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+# Copyright (c) 2023-2024 Chevron
+# Copyright (c) 2019-     GEOS/GEOSX Contributors
+# All rights reserved
+#
+# See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+#
+#--------------------------------------------------------------------------------------------------
+
+#[[
+Package: events
+
+Contains GEOS event types.
+Manages the events and tasks.
+#]]
+
 #
 # Specify all headers
 #
@@ -5,6 +25,7 @@ set( events_headers
      EventBase.hpp
      EventManager.hpp
      HaltEvent.hpp
+     LogLevelsInfo.hpp
      PeriodicEvent.hpp
      SoloEvent.hpp
      tasks/TaskBase.hpp
@@ -15,6 +36,7 @@ set( events_headers
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/InitializeStressMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
+     mpmEvents/PolymerHealMPMEvent.hpp
      mpmEvents/CrystalHealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
      mpmEvents/MachineSampleMPMEvent.hpp
@@ -23,8 +45,10 @@ set( events_headers
      mpmEvents/DeformationUpdateMPMEvent.hpp
      mpmEvents/BoreholePressureMPMEvent.hpp
      mpmEvents/ConfiningPressureMPMEvent.hpp
-     mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
+     mpmEvents/CohesiveZoneMPMEvent.hpp
+     mpmEvents/ResetDeformationGradientMPMEvent.hpp
      mpmEvents/TemperatureProfileMPMEvent.hpp
+     mpmEvents/TransformParticlesMPMEvent.hpp
    )
 
 #
@@ -44,6 +68,7 @@ set( events_sources
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/InitializeStressMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
+     mpmEvents/PolymerHealMPMEvent.cpp
      mpmEvents/CrystalHealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
      mpmEvents/MachineSampleMPMEvent.cpp
@@ -52,18 +77,26 @@ set( events_sources
      mpmEvents/DeformationUpdateMPMEvent.cpp
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ConfiningPressureMPMEvent.cpp
-     mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
+     mpmEvents/CohesiveZoneMPMEvent.cpp
+     mpmEvents/BoreholePressureMPMEvent.cpp
+     mpmEvents/ResetDeformationGradientMPMEvent.cpp
      mpmEvents/TemperatureProfileMPMEvent.cpp
+     mpmEvents/TransformParticlesMPMEvent.cpp
    )
 
-set( dependencyList ${parallelDeps} common fileIO dataRepository )
+set( dependencyList ${parallelDeps} functions )
+
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 blt_add_library( NAME       events
                  SOURCES    ${events_sources}
                  HEADERS    ${events_headers}
-                 DEPENDS_ON ${dependencyList}
+                 DEPENDS_ON ${decoratedDependencies}
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
+                 SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
 target_include_directories( events PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+install( TARGETS events LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )

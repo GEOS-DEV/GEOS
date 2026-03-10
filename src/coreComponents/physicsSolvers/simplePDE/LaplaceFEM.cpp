@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -16,6 +16,8 @@
 /**
  * @file LaplaceFEM.cpp
  */
+
+#include "mesh/DomainPartition.hpp"
 
 // Source includes
 #include "LaplaceFEM.hpp"
@@ -65,7 +67,7 @@ using namespace dataRepository;
 /* CONSTRUCTOR
    First, let us inspect the constructor of a "LaplaceFEM" object.
    This constructor does three important things:
-   1 - It constructs an instance of the LaplaceFEM class (here: using the SolverBase constructor and passing through the arguments).
+   1 - It constructs an instance of the LaplaceFEM class (here: using the PhysicsSolverBase constructor and passing through the arguments).
    2 - It sets some default values for the LaplaceFEM-specific private variables (here: m_fieldName and m_timeIntegrationOption).
    3 - It creates and activates a "registerWrapper" for each private variable.
    This is where the private variables are declared either as REQUIRED or OPTIONAL.
@@ -81,36 +83,26 @@ LaplaceFEM::LaplaceFEM( const string & name,
 {}
 //END_SPHINX_INCLUDE_CONSTRUCTOR
 
-LaplaceFEM::~LaplaceFEM()
-{
-  // TODO Auto-generated destructor stub
-}
-
-/* SETUP SYSTEM
-   Setting up the system using the base class method
+/* SETUP MATRIX PATTERN
+   This method sets up the sparsity pattern of the matrix that will be used to solve the
+   Laplace equation.
  */
-void LaplaceFEM::setupSystem( DomainPartition & domain,
-                              DofManager & dofManager,
-                              CRSMatrix< real64, globalIndex > & localMatrix,
-                              ParallelVector & rhs,
-                              ParallelVector & solution,
-                              bool const setSparsity )
+void LaplaceFEM::setSparsityPattern( DomainPartition & domain,
+                                     DofManager & dofManager,
+                                     CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                     SparsityPattern< globalIndex > & pattern )
 {
-  GEOS_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  pattern.resize( dofManager.numLocalDofs(),
+                  dofManager.numGlobalDofs(),
+                  8 * 8 * 3 );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
-    string const dofKey = dofManager.getKey( m_fieldName );
     arrayView1d< globalIndex const > const &
-    dofIndex = nodeManager.getReference< globalIndex_array >( dofKey );
-
-    SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-                                                    dofManager.numGlobalDofs(),
-                                                    8*8*3 );
+    dofIndex = nodeManager.getReference< globalIndex_array >( dofManager.getKey( m_fieldName ) );
 
     finiteElement::fillSparsity< CellElementSubRegion,
                                  LaplaceFEMKernel >( mesh,
@@ -118,13 +110,12 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
                                                      this->getDiscretizationName(),
                                                      dofIndex,
                                                      dofManager.rankOffset(),
-                                                     sparsityPattern );
+                                                     pattern );
 
-    sparsityPattern.compress();
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
   } );
-}
 
+  pattern.compress();
+}
 
 /*
    ASSEMBLE SYSTEM
@@ -152,7 +143,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
     string const dofKey = dofManager.getKey( m_fieldName );
@@ -177,6 +168,6 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 //END_SPHINX_INCLUDE_ASSEMBLY
 
 //START_SPHINX_INCLUDE_REGISTER
-REGISTER_CATALOG_ENTRY( SolverBase, LaplaceFEM, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, LaplaceFEM, string const &, Group * const )
 //END_SPHINX_INCLUDE_REGISTER
 } /* namespace geos */

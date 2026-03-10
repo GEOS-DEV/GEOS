@@ -21,34 +21,32 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  FrictionCoefficientSwapMPMEvent::FrictionCoefficientSwapMPMEvent( const string & name,
-                              Group * const parent ) :
-                              MPMEventBase(  name, parent ),
-                              m_frictionCoefficient( -1.0 ),
-                              m_frictionCoefficientTable()
-  {
-    registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
-        setApplyDefaultValue( -1 ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
+using namespace dataRepository;
 
-    registerWrapper( "frictionCoefficientTable", &m_frictionCoefficientTable ).
-        setInputFlag( InputFlags::OPTIONAL ).
-        setDescription( "Friction coefficient table for different groups" );
-  }
+FrictionCoefficientSwapMPMEvent::FrictionCoefficientSwapMPMEvent( const string & name,
+                                                                  Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_frictionCoefficient( -1.0 ),
+  m_frictionCoefficientTable()
+{
+  registerWrapper( "frictionCoefficient", &m_frictionCoefficient ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Coefficient of friction, currently assumed to be the same everywhere" );
 
-  FrictionCoefficientSwapMPMEvent::~FrictionCoefficientSwapMPMEvent() 
-  {}
+  registerWrapper( "frictionCoefficientTable", &m_frictionCoefficientTable ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Friction coefficient table for different groups" );
+}
 
-  void FrictionCoefficientSwapMPMEvent::postInputInitialization()
-  {
-    GEOS_LOG_RANK_0( "FrictionCoefficientSwapEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval );
-  }
+FrictionCoefficientSwapMPMEvent::~FrictionCoefficientSwapMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, FrictionCoefficientSwapMPMEvent, string const &, Group * const )
+void FrictionCoefficientSwapMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, FrictionCoefficientSwapMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -46,6 +46,7 @@ void CellBlockManager::resize( integer_array const & numElements,
 
 Group * CellBlockManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
 {
+  // Unused as all children are created within the constructor
   return nullptr;
 }
 
@@ -64,9 +65,9 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
   toBlock.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
   toCell.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
 
-  forAll< parallelHostPolicy >( numObjects, [toBlock = toBlock.toView(),
-                                             toCell = toCell.toView(),
-                                             srcMap]( localIndex const objIndex )
+  forAll< POLICY >( numObjects, [toBlock = toBlock.toView(),
+                                 toCell = toCell.toView(),
+                                 srcMap]( localIndex const objIndex )
   {
     arraySlice1d< CellBlockIndexPair const > const cells = srcMap[ objIndex ];
     for( CellBlockIndexPair const & e : cells )
@@ -210,11 +211,11 @@ struct NodesAndElementOfFace
 {
   NodesAndElementOfFace( localIndex const duplicateFaceNodesIdx,
                          localIndex const cellIdx,
-                         localIndex const blockIdx,
+                         localIndex const blockId,
                          localIndex const faceNum ):
     duplicateFaceNodesIndex( duplicateFaceNodesIdx ),
     cellIndex( cellIdx ),
-    blockIndex( blockIdx ),
+    blockIndex( blockId ),
     faceNumber( faceNum )
   {}
 
@@ -249,13 +250,13 @@ struct FaceBuilder
    */
   auto duplicateFaceEquality() const
   {
-    return [duplicateFaces = duplicateFaces.toViewConst()]
+    return [faces = duplicateFaces.toViewConst()]
              ( NodesAndElementOfFace const & lhs, NodesAndElementOfFace const & rhs )
     {
-      return std::equal( duplicateFaces[ lhs.duplicateFaceNodesIndex ].begin(),
-                         duplicateFaces[ lhs.duplicateFaceNodesIndex ].end(),
-                         duplicateFaces[ rhs.duplicateFaceNodesIndex ].begin(),
-                         duplicateFaces[ rhs.duplicateFaceNodesIndex ].end() );
+      return std::equal( faces[ lhs.duplicateFaceNodesIndex ].begin(),
+                         faces[ lhs.duplicateFaceNodesIndex ].end(),
+                         faces[ rhs.duplicateFaceNodesIndex ].begin(),
+                         faces[ rhs.duplicateFaceNodesIndex ].end() );
     };
   }
 
@@ -769,6 +770,14 @@ CellBlock & CellBlockManager::registerCellBlock( string const & name )
   return this->getCellBlocks().registerGroup< CellBlock >( name );
 }
 
+CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,
+                                                 integer regionAttribute )
+{
+  CellBlock & cb = this->getCellBlocks().registerGroup< CellBlock >( cellBlockName );
+  m_regionAttributesCellBlocks.get_inserted( regionAttribute ).emplace( cellBlockName );
+  return cb;
+}
+
 FaceBlock & CellBlockManager::registerFaceBlock( string const & name )
 {
   return this->getFaceBlocks().registerGroup< FaceBlock >( name );
@@ -807,12 +816,12 @@ arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
   return m_nodeLocalToGlobal.toView();
 }
 
-std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
+stdMap< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
 {
   return m_nodeSets;
 }
 
-std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
+stdMap< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
 {
   return m_nodeSets;
 }
@@ -1071,7 +1080,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                 [ =, faceToNodesMapSource=faceToNodesMapSource.toView(),
                                   edgeToNodeMapNew=edgeToNodeMapNew.toView(),
                                   faceToNodeMapNew=faceToNodeMapNew.toView(),
-                                  m_faceToEdges=m_faceToEdges.toView(),
+                                  faceToEdges=m_faceToEdges.toView(),
                                   refPosSrc=refPosSource.toView(),
                                   refPosNew=refPosNew.toView(),
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
@@ -1099,7 +1108,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       for( localIndex iter_node=0; iter_node<numInternalNodesPerEdge; iter_node++ )
       {
         localIndex nodeIdxInMap = numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node;
-        localIndex edge = m_faceToEdges[ iter_face ][ iter_edge ];
+        localIndex edge = faceToEdges[ iter_face ][ iter_edge ];
         faceToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][ iter_node + 1 ];
         nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ] = nodeIdxInMap;
       }

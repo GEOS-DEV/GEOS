@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -139,7 +139,7 @@ DECLARE_FIELD( phaseInternalEnergy,
                "phaseInternalEnergy",
                array3dLayoutPhase,
                0,
-               NOPLOT, // default behavior overridden by thermal models
+               LEVEL_0, // default behavior overridden by thermal models
                NO_WRITE,
                "Phase internal energy" );
 
@@ -206,6 +206,14 @@ DECLARE_FIELD( dTotalDensity,
                NOPLOT,
                NO_WRITE,
                "Derivative of total density with respect to pressure, temperature, and global component fractions" );
+
+DECLARE_FIELD( kValues,
+               "kValues",
+               array4dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase equilibrium ratios" );
 
 }
 

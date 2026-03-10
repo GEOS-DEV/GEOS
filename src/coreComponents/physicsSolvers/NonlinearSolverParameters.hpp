@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -16,9 +16,9 @@
 #ifndef GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 #define GEOS_PHYSICSSOLVERS_NONLINEARSOLVERPARAMETERS_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
-#include "physicsSolvers/SolverBaseKernels.hpp"
+#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 
 namespace geos
 {
@@ -79,6 +79,7 @@ public:
     m_timeStepIncreaseIterLimit = params.m_timeStepIncreaseIterLimit;
     m_timeStepDecreaseFactor = params.m_timeStepDecreaseFactor;
     m_timeStepIncreaseFactor = params.m_timeStepIncreaseFactor;
+    m_minTimeStepIncreaseInterval = params.m_minTimeStepIncreaseInterval;
     m_maxSubSteps = params.m_maxSubSteps;
     m_maxTimeStepCuts = params.m_maxTimeStepCuts;
     m_timeStepCutFactor = params.m_timeStepCutFactor;
@@ -125,6 +126,7 @@ public:
     static constexpr char const * timeStepIncreaseIterLimString() { return "timeStepIncreaseIterLimit"; }
     static constexpr char const * timeStepDecreaseFactorString()  { return "timeStepDecreaseFactor"; }
     static constexpr char const * timeStepIncreaseFactorString()  { return "timeStepIncreaseFactor"; }
+    static constexpr char const * minTimeStepIncreaseIntervalString()  { return "minTimeStepIncreaseInterval"; }
 
     static constexpr char const * maxSubStepsString()             { return "maxSubSteps"; }
     static constexpr char const * maxTimeStepCutsString()         { return "maxTimeStepCuts"; }
@@ -138,6 +140,12 @@ public:
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
     static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
+
+    static constexpr char const * oscillationScalingString() { return "oscillationScaling"; }
+    static constexpr char const * oscillationScalingFactorString() { return "oscillationScalingFactor"; }
+    static constexpr char const * oscillationCheckDepthString() { return "oscillationCheckDepth"; }
+    static constexpr char const * oscillationToleranceString() { return "oscillationTolerance"; }
+    static constexpr char const * oscillationFractionString() { return "oscillationFraction"; }
   } viewKeys;
 
   /**
@@ -227,10 +235,19 @@ public:
   }
 
   /**
+   * @brief Getter for the minimum interval for increasing the time-step
+   * @return the minimum interval for increasing the time-step
+   */
+  integer minTimeStepIncreaseInterval() const
+  {
+    return m_minTimeStepIncreaseInterval;
+  }
+
+  /**
    * @brief Getter for the norm type used to check convergence in the flow/well solvers
    * @return the norm type
    */
-  solverBaseKernels::NormType normType() const
+  physicsSolverBaseKernels::NormType normType() const
   {
     return m_normType;
   }
@@ -272,7 +289,7 @@ public:
   real64 m_lineSearchResidualFactor;
 
   /// Norm used to check the nonlinear loop convergence
-  solverBaseKernels::NormType m_normType;
+  physicsSolverBaseKernels::NormType m_normType;
 
   /// The tolerance for the nonlinear convergence check.
   real64 m_newtonTol;
@@ -304,6 +321,9 @@ public:
   /// Factor used to increase the time step size
   real64 m_timeStepIncreaseFactor;
 
+  /// Minimum interval, since the last time-step cut, for increasing the time-step
+  integer m_minTimeStepIncreaseInterval;
+
   /// Maximum number of time sub-steps allowed for the solver
   integer m_maxSubSteps;
 
@@ -323,7 +343,7 @@ public:
   integer m_maxNumConfigurationAttempts;
 
   /// Configuration tolerance
-  double m_configurationTolerance;
+  real64 m_configurationTolerance;
 
   /// Type of coupling
   CouplingType m_couplingType;
@@ -338,7 +358,22 @@ public:
   NonlinearAccelerationType m_nonlinearAccelerationType;
 
   /// Value used to make sure that residual normalizers are not too small when computing residual norm
-  real64 m_minNormalizer = 1e-12;
+  real64 m_minNormalizer;
+
+  /// Flag to enable oscillation detection and scaling
+  integer m_oscillationScaling;
+
+  /// Oscillation scaling factor
+  real64 m_oscillationScalingFactor;
+
+  /// Oscillation check depth in solution history
+  integer m_oscillationCheckDepth;
+
+  /// Tolerance for oscillation detection
+  real64 m_oscillationTolerance;
+
+  /// Fraction of dofs oscillating to declare oscillation
+  real64 m_oscillationFraction;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,

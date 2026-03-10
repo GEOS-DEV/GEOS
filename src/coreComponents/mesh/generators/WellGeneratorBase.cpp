@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -17,19 +17,18 @@
 #include "LineBlockABC.hpp"
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/generators/LogLevelsInfo.hpp"
 #include "mesh/Perforation.hpp"
 
 #include "LvArray/src/genericTensorOps.hpp"
-#include "fileIO/Table/TableLayout.hpp"
-#include "fileIO/Table/TableData.hpp"
-#include "fileIO/Table/TableFormatter.hpp"
-#include "common/Format.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/Format.hpp"
 namespace geos
 {
 using namespace dataRepository;
 
 WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent ):
-  WellGeneratorABC( name, parent )
+  MeshComponentBase( name, parent )
   , m_numPerforations( 0 )
   , m_numElemsPerSegment( 0 )
   , m_minSegmentLength( 1e-2 )
@@ -43,8 +42,6 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
   , m_nDims( 3 )
   , m_polylineHeadNodeId( -1 )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
@@ -76,35 +73,27 @@ WellGeneratorBase::WellGeneratorBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Name of the set of constraints associated with this well" );
+
+  addLogLevel< logInfo::GenerateWell >();
 }
 
 Group * WellGeneratorBase::createChild( string const & childKey, string const & childName )
 {
-  if( childKey == viewKeyStruct::perforationString() )
-  {
-    ++m_numPerforations;
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  const auto childTypes = { viewKeyStruct::perforationString() };
+  GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
 
-    // keep track of the perforations that have been added
-    m_perforationList.emplace_back( childName );
-    GEOS_LOG_RANK_0( "Adding Well attribute: " << childKey << ", " << childName );
-    return &registerGroup< Perforation >( childName );
-  }
-  else
-  {
-    GEOS_THROW( "Unrecognized node: " << childKey, InputError );
-  }
-  return nullptr;
+  ++m_numPerforations;
+  m_perforationList.emplace_back( childName );
+
+  return &registerGroup< Perforation >( childName );
 }
 
 void WellGeneratorBase::expandObjectCatalogs()
 {
   createChild( viewKeyStruct::perforationString(), viewKeyStruct::perforationString() );
-}
-
-WellGeneratorBase::CatalogInterface::CatalogType & WellGeneratorBase::getCatalog()
-{
-  static WellGeneratorBase::CatalogInterface::CatalogType catalog;
-  return catalog;
 }
 
 void WellGeneratorBase::generateWellGeometry( )
@@ -130,7 +119,10 @@ void WellGeneratorBase::generateWellGeometry( )
   m_perfDistFromHead.resize( m_numPerforations );
   m_perfTransmissibility.resize( m_numPerforations );
   m_perfSkinFactor.resize( m_numPerforations );
+  m_perfTargetRegion.resize( m_numPerforations );
   m_perfElemId.resize( m_numPerforations );
+  m_perfStatusTableName.resize( m_numPerforations );
+  m_perfName.resize( m_numPerforations );
 
   // construct a reverse map from the polyline nodes to the segments
   constructPolylineNodeToSegmentMap();
@@ -147,12 +139,11 @@ void WellGeneratorBase::generateWellGeometry( )
   // make sure that the perforation locations are valid
   checkPerforationLocationsValidity();
 
-  if( getLogLevel() >= 1 && MpiWrapper::commRank() == 0 )
+  if( isLogLevelActive< logInfo::GenerateWell >( this->getLogLevel() ) && MpiWrapper::commRank() == 0 )
   {
     logInternalWell();
     logPerforationTable();
   }
-
 }
 
 void WellGeneratorBase::postInputInitialization()
@@ -360,6 +351,9 @@ void WellGeneratorBase::connectPerforationsToWellElements()
     m_perfDistFromHead[iperf]  = perf.getDistanceFromWellHead();
     m_perfTransmissibility[iperf] = perf.getWellTransmissibility();
     m_perfSkinFactor[iperf] = perf.getWellSkinFactor();
+    m_perfTargetRegion[iperf] = perf.getTargetRegion();
+    m_perfStatusTableName[iperf] = perf.getPerfStatusTableName();
+    m_perfName[iperf] = perf.getName();
 
     // search in all the elements of this well between head and bottom
     globalIndex iwelemTop    = 0;
@@ -460,7 +454,7 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
   // merge perforations to make sure that no well element is shared between two MPI domains
   // TODO: instead of merging perforations, split the well elements and do not change the physical location of the
   // perforation
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
   if( mpiSize > 1 )
   {
     mergePerforations( elemToPerfMap );
@@ -487,7 +481,6 @@ void WellGeneratorBase::checkPerforationLocationsValidity()
 
 void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > const & elemToPerfMap )
 {
-
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     // collect the indices of the elems with more that one perforation
@@ -530,7 +523,7 @@ void WellGeneratorBase::mergePerforations( array1d< array1d< localIndex > > cons
 
 void WellGeneratorBase::logInternalWell() const
 {
-  TableData tableWellData;
+  TableData wellData;
   for( globalIndex iwelem = 0; iwelem < m_numElems; ++iwelem )
   {
     std::optional< globalIndex > nextElement;
@@ -546,40 +539,38 @@ void WellGeneratorBase::logInternalWell() const
       prevElement =  m_prevElemId[iwelem][0];
     }
 
-    tableWellData.addRow( iwelem,
-                          m_elemCenterCoords[iwelem][0],
-                          m_elemCenterCoords[iwelem][1],
-                          m_elemCenterCoords[iwelem][2],
-                          prevElement,
-                          nextElement );
+    wellData.addRow( iwelem,
+                     m_elemCenterCoords[iwelem][0],
+                     m_elemCenterCoords[iwelem][1],
+                     m_elemCenterCoords[iwelem][2],
+                     prevElement,
+                     nextElement );
   }
 
-  string const wellTitle = GEOS_FMT( "Well '{}' Element Table", getName() );
-  TableLayout const tableWellLayout = TableLayout( {
-      TableLayout::ColumnParam{"Element no.", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordX", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordY", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"CoordZ", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"Prev\nElement", TableLayout::Alignment::right},
-      TableLayout::ColumnParam{"Next\nElement", TableLayout::Alignment::right},
-    }, wellTitle );
+  TableLayout const wellLayout( GEOS_FMT( "Well '{}' Element Table", getName() ),
+                                {"Element no.",
+                                 "CoordX",
+                                 "CoordY",
+                                 "CoordZ",
+                                 "Prev\nElement",
+                                 "Next\nElement"} );
 
-  TableTextFormatter const tableFormatter( tableWellLayout );
-  GEOS_LOG_RANK_0( tableFormatter.toString( tableWellData ));
+  TableTextFormatter const wellFormatter( wellLayout );
+  GEOS_LOG_RANK_0( wellFormatter.toString( wellData ));
 }
 
 void WellGeneratorBase::logPerforationTable() const
 {
-  TableData tablePerfoData;
+  TableData dataPerforation;
   for( globalIndex iperf = 0; iperf < m_numPerforations; ++iperf )
   {
-    tablePerfoData.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
+    dataPerforation.addRow( iperf, m_perfCoords[iperf], m_perfElemId[iperf] );
   }
 
-  TableLayout const tableLayoutPerfo ( {"Perforation no.", "Coordinates", "connected to"},
-                                       GEOS_FMT( "Well '{}' Perforation Table", getName() ) );
-  TableTextFormatter const tablePerfoLog( tableLayoutPerfo );
-  GEOS_LOG_RANK_0( tablePerfoLog.toString( tablePerfoData ));
+  TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", getName()),
+                                        { "Perforation no.", "Coordinates", "Well element no." } );
+  TableTextFormatter const logPerforation( layoutPerforation );
+  GEOS_LOG_RANK_0( logPerforation.toString( dataPerforation ));
 }
 
 }
