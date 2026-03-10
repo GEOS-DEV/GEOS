@@ -397,6 +397,9 @@ jobs:
         verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        SSL_CERT_FILE: /etc/pki/tls/certs/ca-bundle.crt
+        REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
+        CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
 
     - name: 'Cleanup build folder'
       if: always()
