@@ -338,6 +338,7 @@ jobs:
       run: |
         set -euxo pipefail
         GNUPGHOME="${RUNNER_TEMP}/codecov-gnupg"
+        export GNUPGHOME
         mkdir -p "${GNUPGHOME}"
         chmod 700 "${GNUPGHOME}"
         gpg --batch --import "${GITHUB_WORKSPACE}/.github/codecov/verification.gpg.asc" || true
