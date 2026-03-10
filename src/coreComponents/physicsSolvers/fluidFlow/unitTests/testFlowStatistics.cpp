@@ -212,13 +212,9 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
   }
 }
 
-template< typename SolverType >
-real64 getTotalFluidMass( ProblemManager & problem, SolverType & solver, string_view statsTaskPath );
-
-template<>
-real64 getTotalFluidMass< SinglePhaseBase >( ProblemManager & problem,
-                                             SinglePhaseBase & solver,
-                                             string_view statsTaskPath )
+real64 getTotalFluidMass( ProblemManager & problem,
+                          SinglePhaseBase & solver,
+                          string_view statsTaskPath )
 {
   using namespace singlePhaseStatistics;
   MeshLevel & mesh = problem.getDomainPartition()
@@ -230,10 +226,9 @@ real64 getTotalFluidMass< SinglePhaseBase >( ProblemManager & problem,
   return stats.m_totalMass;
 }
 
-template<>
-real64 getTotalFluidMass< CompositionalMultiphaseBase >( ProblemManager & problem,
-                                                         CompositionalMultiphaseBase & solver,
-                                                         string_view statsTaskPath )
+real64 getTotalFluidMass( ProblemManager & problem,
+                          CompositionalMultiphaseBase & solver,
+                          string_view statsTaskPath )
 {
   using namespace compositionalMultiphaseStatistics;
   MeshLevel & mesh = problem.getDomainPartition()
