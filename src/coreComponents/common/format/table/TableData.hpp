@@ -113,16 +113,6 @@ public:
   { m_errors->clear(); }
 
   /**
-   * @return The const rows of the table
-   */
-  stdVector< stdVector< CellData > > const & getTableDataRows() const;
-
-  /**
-   * @return The rows of the table
-   */
-  stdVector< stdVector< CellData > > & getTableDataRows();
-
-  /**
    * @brief Get all error messages
    * @return The vector of error messages
    */
@@ -135,15 +125,18 @@ public:
   { return m_rows; }
 
   /**
+   * @return The const table data rows
+   */
+  DataRows & getCellsData()
+  { return m_rows; }
+
+  /**
    * @brief Comparison operator for data rows
    * @param comparingTable The tableData values to compare
    * @return The comparison result
    */
   inline bool operator==( TableData const & comparingTable ) const
-  {
-
-    return getCellsData() == comparingTable.getCellsData();
-  }
+  { return getCellsData() == comparingTable.getCellsData(); }
 
   /**
    * @brief Get all error messages

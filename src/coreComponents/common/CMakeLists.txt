@@ -24,9 +24,10 @@ Also provides commonly used components for such as logging, formatting, memory a
 #
 set( common_headers
      ${CMAKE_BINARY_DIR}/include/common/GeosxConfig.hpp
-     format/table/TableLayout.hpp
-     format/table/TableFormatter.hpp
      format/table/TableData.hpp
+     format/table/TableFormatter.hpp
+     format/table/TableLayout.hpp
+     format/table/TableMpiComponents.hpp
      format/EnumStrings.hpp
      format/LogPart.hpp
      format/Format.hpp
@@ -75,9 +76,10 @@ endif( )
 #
 set( common_sources
      format/EnumStrings.cpp
-     format/table/TableLayout.cpp
-     format/table/TableFormatter.cpp
      format/table/TableData.cpp
+     format/table/TableFormatter.cpp
+     format/table/TableLayout.cpp
+     format/table/TableMpiComponents.cpp
      format/LogPart.cpp
      format/StringUtilities.cpp
      logger/GeosExceptions.cpp
