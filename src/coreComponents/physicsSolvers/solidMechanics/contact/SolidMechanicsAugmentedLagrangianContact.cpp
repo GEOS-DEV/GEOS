@@ -1489,10 +1489,12 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
 void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainPartition & domain ) const
 {
 
+  GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList] >>> BEFORE forDiscretizationOnMeshTargets lambda" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
+    GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]   >>> ENTERED forDiscretizationOnMeshTargets lambda" );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
@@ -1506,6 +1508,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     {
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]     >>> BEFORE forAll #1 (populate tmpSpace with face indices), subRegion.size() = " << subRegion.size() );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
       {
 
@@ -1513,6 +1516,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         tmpSpace_v[2*kfe] = kf0, tmpSpace_v[2*kfe+1] = kf1;
 
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]     <<< AFTER forAll #1 (populate tmpSpace with face indices)" );
     }
 
     // Sort indexes to enable efficient searching using binary search.
@@ -1524,8 +1528,10 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
     // Search for bubble element on each CellElementSubRegion and
     // store element indexes, global and local face indexes.
+    GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]     >>> BEFORE forElementSubRegions lambda" );
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & cellElementSubRegion )
     {
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> ENTERED forElementSubRegions lambda, cellElementSubRegion.size() = " << cellElementSubRegion.size() );
 
       arrayView2d< localIndex const > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
 
@@ -1546,6 +1552,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       faceIdList.move( parallelDeviceMemorySpace );
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #2 (search for bubble elements), cellElementSubRegion.size() = " << cellElementSubRegion.size() << ", n_max = " << n_max );
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
@@ -1568,12 +1575,14 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
           }
         }
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #2 (search for bubble elements)" );
 
       // Sort perms according to keys to ensure that bubble elements are adjacent
       // and occupy the first positions of the list.
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       nBubElems = " << nBubElems );
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, perms_v );
 
       array1d< localIndex > bubbleElemsList;
@@ -1581,36 +1590,45 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView1d< localIndex > const bubbleElemsList_v = bubbleElemsList.toView();
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #3 (reorder vals by perms), n_max = " << n_max );
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         keys_v[k] = vals_v[perms_v[k]];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #3 (reorder vals by perms)" );
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #4 (copy bubbleElemsList), nBubElems = " << nBubElems );
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #4 (copy bubbleElemsList)" );
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array1d< localIndex > & bubbleCellsStorage =
         cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
       bubbleCellsStorage.resize( nBubElems );
       arrayView1d< localIndex > const bubbleCellsStorage_v = bubbleCellsStorage.toView();
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #5 (copy to bubbleCellsStorage), nBubElems = " << nBubElems );
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #5 (copy to bubbleCellsStorage)" );
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #6 (reorder localFaceIds by perms), n_max = " << n_max );
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         keys_v[k] = localFaceIds_v[perms_v[k]];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #6 (reorder localFaceIds by perms)" );
 
       array2d< localIndex > faceElemsList;
       faceElemsList.resize( nBubElems, 2 );
 
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #7 (build faceElemsList), nBubElems = " << nBubElems );
       forAll< parallelDevicePolicy<> >( nBubElems,
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const k )
@@ -1619,21 +1637,28 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #7 (build faceElemsList)" );
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array2d< localIndex > & faceElemsStorage =
         cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );
       faceElemsStorage.resize( nBubElems, 2 );
       arrayView2d< localIndex > const faceElemsStorage_v = faceElemsStorage.toView();
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       >>> BEFORE forAll #8 (copy to faceElemsStorage), nBubElems = " << nBubElems );
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
         faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
       } );
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< AFTER forAll #8 (copy to faceElemsStorage)" );
 
+      GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]       <<< EXITING forElementSubRegions lambda" );
     } );
+    GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]     <<< AFTER forElementSubRegions lambda" );
 
+    GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList]   <<< EXITING forDiscretizationOnMeshTargets lambda" );
   } );
+  GEOS_LOG_RANK_0( "DEBUG [createBubbleCellList] <<< AFTER forDiscretizationOnMeshTargets lambda" );
 
 }
 
