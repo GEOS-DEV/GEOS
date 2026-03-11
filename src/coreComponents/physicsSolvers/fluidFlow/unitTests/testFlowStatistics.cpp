@@ -212,35 +212,17 @@ void setRateTable( array2d< real64 > & rateTable, std::initializer_list< std::in
   }
 }
 
+template< typename SolverType, typename StatTaskType >
 real64 getTotalFluidMass( ProblemManager & problem,
-                          SinglePhaseBase & solver,
-                          string_view statsTaskPath )
+                          SolverType & solver,
+                          StatTaskType const & statsTask )
 {
-  using namespace singlePhaseStatistics;
   MeshLevel & mesh = problem.getDomainPartition()
                        .getMeshBody( 0 )
                        .getMeshLevel( solver.getDiscretizationName() );
-  StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
-  StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
-  RegionStatistics const & stats = statsAggregator.getRegionsStatistics( mesh );
+  auto const & statsAggregator = statsTask.getStatisticsAggregator();
+  auto const & stats = statsAggregator.getRegionsStatistics( mesh );
   return stats.m_totalMass;
-}
-
-real64 getTotalFluidMass( ProblemManager & problem,
-                          CompositionalMultiphaseBase & solver,
-                          string_view statsTaskPath )
-{
-  using namespace compositionalMultiphaseStatistics;
-  MeshLevel & mesh = problem.getDomainPartition()
-                       .getMeshBody( 0 )
-                       .getMeshLevel( solver.getDiscretizationName() );
-  StatsTask const & statsTask = problem.getGroupByPath< StatsTask >( string( statsTaskPath ) );
-  StatsAggregator const & statsAggregator = statsTask.getStatisticsAggregator();
-  RegionStatistics const & stats = statsAggregator.getRegionsStatistics( mesh );
-  double totalMass = 0.0;
-  for( integer i = 0; i < statsAggregator.getNumPhases(); ++i )
-    totalMass += stats.m_phaseMass[i];
-  return totalMass;
 }
 
 /**
@@ -584,6 +566,8 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
 
   SinglePhaseBase & flowSolver =
     problem.getGroupByPath< SinglePhaseBase >( testSet.inputs.flowSolverPath );
+  singlePhaseStatistics::StatsTask & statsTask =
+    problem.getGroupByPath< singlePhaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
 
   real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
@@ -597,7 +581,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
     }
   } );
 
@@ -608,7 +592,7 @@ TEST_F( FlowStatisticsTest, checkSinglePhaseFluxStatistics )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check singlephasestatistics results
-  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
   real64 const massDiffTol = 1e-7;
   EXPECT_NEAR( lastMass - firstMass,
                -testSet.totalMassProd[0],
@@ -876,6 +860,8 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
 
   CompositionalMultiphaseBase & flowSolver =
     problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+  compositionalMultiphaseStatistics::StatsTask & statsTask =
+    problem.getGroupByPath< compositionalMultiphaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
 
   real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
@@ -889,7 +875,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
     }
   } );
 
@@ -900,7 +886,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMass )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check compositionalmultiphasestatistics results
-  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
   real64 const massDiffTol = 1e-5;
   EXPECT_NEAR( lastMass - firstMass,
                -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),
@@ -1172,6 +1158,8 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
 
   CompositionalMultiphaseBase & flowSolver =
     problem.getGroupByPath< CompositionalMultiphaseBase >( testSet.inputs.flowSolverPath );
+  auto const & statsTask =
+    problem.getGroupByPath< compositionalMultiphaseStatistics::StatsTask >( string( testSet.inputs.statsTaskPath ) );
 
   real64 firstMass;
   TimeStepChecker & timeStepChecker = problem.getGroupByPath< TimeStepChecker >( testSet.inputs.timeStepCheckerPath );
@@ -1185,7 +1173,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
     if( !passedFirstTimeStep )
     {
       passedFirstTimeStep = true;
-      firstMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+      firstMass = getTotalFluidMass( problem, flowSolver, statsTask );
     }
   } );
 
@@ -1196,7 +1184,7 @@ TEST_F( FlowStatisticsTest, checkMultiPhaseFluxStatisticsMol )
   checkWholeSimTimeStepStats( problem, testSet, timeStepChecker );
 
   // check compositionalmultiphasestatistics results
-  real64 const lastMass = getTotalFluidMass( problem, flowSolver, testSet.inputs.statsTaskPath );
+  real64 const lastMass = getTotalFluidMass( problem, flowSolver, statsTask );
   real64 const massDiffTol = 1e-5;
   EXPECT_NEAR( lastMass - firstMass,
                -( testSet.totalMassProd[0] + testSet.totalMassProd[1] ),

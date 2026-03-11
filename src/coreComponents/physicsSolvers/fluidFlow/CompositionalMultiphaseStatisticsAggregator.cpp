@@ -229,6 +229,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
   stats.m_maxTemperature = 0.0;
   stats.m_minTemperature = LvArray::NumericLimits< real64 >::max;
 
+  stats.m_totalMass = 0.0;
+
   stats.m_totalPoreVolume = 0.0;
   stats.m_totalUncompactedPoreVolume = 0.0;
   stats.m_phaseDynamicPoreVolume.setValues< serialPolicy >( 0.0 );
@@ -382,6 +384,7 @@ void StatsAggregator::postAggregateStats( RegionStatistics & stats )
 
   for( integer ip = 0; ip < m_numPhases; ++ip )
   {
+    stats.m_totalMass += stats.m_phaseMass[ip];
     stats.m_totalPoreVolume += stats.m_phaseDynamicPoreVolume[ip];
     stats.m_nonTrappedPhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_trappedPhaseMass[ip];
     stats.m_mobilePhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_immobilePhaseMass[ip];

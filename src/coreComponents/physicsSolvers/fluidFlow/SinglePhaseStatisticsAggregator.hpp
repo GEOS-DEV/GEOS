@@ -125,13 +125,13 @@ public:
   /// maximum region temperature
   real64 m_maxTemperature;
 
+  /// fluid mass
+  real64 m_totalMass;
+
   /// total region pore volume
   real64 m_totalDynamicPoreVolume;
   /// total region uncompacted pore volume (not necessarily output, useful for weighting cell pressure data)
   real64 m_totalUncompactedPoreVolume;
-
-  // fluid mass
-  real64 m_totalMass;
 
   // TODO? -> split to struct PressureStats...MassStats:
   // - optional computation of each stats
