@@ -41,9 +41,11 @@ set( fluidFlowSolvers_headers
      SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
      StencilAccessors.hpp
+     SolutionCheckHelpers.hpp
      StencilDataCollection.hpp
      LogLevelsInfo.hpp
      kernels/MinPoreVolumeMaxPorosityKernel.hpp
+     kernels/SolutionCheckKernelsHelpers.hpp
      kernels/StencilWeightsUpdateKernel.hpp
      kernels/HybridFVMHelperKernels.hpp
      kernels/singlePhase/AccumulationKernels.hpp
@@ -158,6 +160,7 @@ set( fluidFlowSolvers_sources
      SinglePhaseProppantBase.cpp
      SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
+     SolutionCheckHelpers.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
      kernels/compositional/AquiferBCKernel.cpp
