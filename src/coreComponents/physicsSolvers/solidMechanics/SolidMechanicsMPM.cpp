@@ -5370,7 +5370,6 @@ void SolidMechanicsMPM::solverProfiling( std::string label )
 // Used in registerDataOnMesh
 void SolidMechanicsMPM::setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const
 {
-  GEOS_LOG_RANK("SolidMechanicsMPM::setParticlesConstitutiveNames");
   subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::NO_WRITE ).
@@ -5385,7 +5384,6 @@ void SolidMechanicsMPM::setParticlesConstitutiveNames( ParticleSubRegionBase & s
 // This appears unused
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
 {
-  GEOS_LOG_RANK("SolidMechanicsMPM::setConstitutiveNamesCallSuper");
   PhysicsSolverBase::setConstitutiveNamesCallSuper( subRegion );
 
   subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).

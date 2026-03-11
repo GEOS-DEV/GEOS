@@ -494,7 +494,6 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
                                                          EdgeManager & edgeManager,
                                                          FaceManager & faceManager )
 {
-  GEOS_LOG_RANK( "Set periodic domain boundary objects" );
   arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
   // unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); // CC: need this for single
   // partition case
