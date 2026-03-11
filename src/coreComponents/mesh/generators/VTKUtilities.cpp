@@ -1537,7 +1537,7 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
-          ++cellCounts[region];
+          ++cellCounts.get_inserted( region );
         }
         for( auto const & count : cellCounts )
         {
@@ -1733,7 +1733,7 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
   stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the triangles
@@ -1828,7 +1828,7 @@ stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const ce
   stdUnorderedMap< localIndex, localIndex > G2L;
   for( iPoint = 0; iPoint < 5; ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify the base
@@ -1902,7 +1902,7 @@ stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell
   stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < cell->GetNumberOfPoints(); ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the bases

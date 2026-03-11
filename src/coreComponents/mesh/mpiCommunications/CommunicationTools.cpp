@@ -713,7 +713,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     for( std::pair< globalIndex, int > const & pair : ghostsFromSecondNeighbor )
     {
       localIndex const lid = objectManager.globalToLocalMap( pair.first );
-      ghostsBySecondNeighbor[ pair.second ].emplace_back( lid );
+      ghostsBySecondNeighbor.get_inserted( pair.second ).emplace_back( lid );
       ghostsToFix.emplace_back( lid );
       ghostRank[ lid ] = pair.second;
     }
