@@ -321,6 +321,14 @@ DECLARE_FIELD( particleReferenceMappedNodes,
                WRITE_AND_READ,
                "ParticleReferenceMappedNodes" );
 
+DECLARE_FIELD( particleReferenceGlobalNodeIndex,
+               "particleReferenceGlobalNodeIndex",
+               array2d< globalIndex >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleReferenceGlobalNodeIndex" );
+
 DECLARE_FIELD( particleReferenceShapeFunctionValues,
                "particleReferenceShapeFunctionValues",
                array2d< real64 >,
@@ -432,6 +440,22 @@ DECLARE_FIELD( particleEstimatedSurfacePosition,
                LEVEL_0,
                WRITE_AND_READ,
                "particleEstimatedSurfacePosition" );
+
+DECLARE_FIELD( particleDamageHessian,
+               "particleDamageHessian",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleDamageHessian" );
+
+DECLARE_FIELD( particleDamageHessianL2Norm,
+               "particleDamageHessianL2Norm",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleDamageHessianL2Norm" );
 }
 
 }

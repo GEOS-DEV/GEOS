@@ -334,6 +334,8 @@ public:
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
     static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
 
+    static constexpr char const * gridHasBinderString() { return "gridHasBinder"; }
+
     static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
 
@@ -625,6 +627,13 @@ public:
   bool markSurfaceAsDamage( int const & surfaceFlag );
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
+
+  void computeDamageHessian( ParticleManager & particleManager );
+
+  void tagBinderCZSurfaces( ParticleManager & particleManager,
+                            NodeManager & nodeManager );
+
+  void czSurfaceFlagUpdate( ParticleManager & particleManager );
 
   void computeDistanceToCrackTip( ParticleManager & particleManager );
 
@@ -1131,6 +1140,10 @@ protected:
   int m_useArtificialViscosity;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
+
+  real64 m_damageHessianSurfaceThreshold;
+  int m_computeCZInterfacesFromDamage;
+  int m_checkForBinder;
 
   // DFG options
   int m_damageFieldPartitioning;
