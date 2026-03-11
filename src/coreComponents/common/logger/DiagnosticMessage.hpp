@@ -140,6 +140,8 @@ struct DiagnosticMsg
   std::string m_file;
   /// the source location line (default is 0)
   integer m_line = 0;
+  /// The log part where the diagnostic occured
+  string m_logPart;
   /// Additional information about the diagnostic in the input file
   std::vector< DiagnosticContext > m_contextsInfo;
   /// the stack trace
@@ -254,6 +256,15 @@ public:
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addCallStackInfo( std::string_view stacktrace );
+
+  /**
+   * @brief Set log part where the disgnostic occured
+   * @param logPart The targetted log part
+   * @return Reference to the current instance for method chaining.
+   */
+  DiagnosticMsgBuilder & setLogPart( std::string_view logPart );
+
+
 
   /**
    * @return Get the DiagnosticMsg

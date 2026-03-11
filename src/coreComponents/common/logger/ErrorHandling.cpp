@@ -196,6 +196,12 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
   return *this;
 }
 
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::setLogPart(  std::string_view logPart  )
+{
+  m_errorMsg.m_logPart = logPart;
+  return *this;
+}
+
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
 {
   std::string str = std::string( ossStackTrace );
@@ -434,8 +440,7 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  loggerMsgReportData.recordDiagnostic( getCurrentLogPart(),
-                                        errMsg );
+  loggerMsgReportData.recordDiagnostic( errMsg );
   writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
@@ -445,8 +450,7 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushCurrentExceptionMessage()
 {
-  loggerMsgReportData.recordDiagnostic( getCurrentLogPart(),
-                                        m_getCurrentExceptionMsg );
+  loggerMsgReportData.recordDiagnostic( m_getCurrentExceptionMsg );
 
   writeToLogStream( m_getCurrentExceptionMsg );
   if( isOutputFileEnabled() )
