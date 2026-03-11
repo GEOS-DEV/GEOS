@@ -159,6 +159,7 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
 
   m_capPresKernelWrappers.clear();
   m_inverseCapPresWrappers.clear();
+  m_inverseTables.clear();
 
   if( numPhases == 2 )
   {
