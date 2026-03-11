@@ -3453,36 +3453,37 @@ public:
           // auto const & pairArray = m_interfaceConstitutivePairs[0];
           localIndex const surfaceRegionIndex = m_interfaceRegionLookup[iconn];
 auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
-
-// Determine mapping from pair ordering to stencil ordering.
-// pairArray[0] was set up with region index pairReg[0], pairArray[1] with pairReg[1].
-// seri[0] and seri[1] are the stencil region indices for the two cells.
-// p[i] maps pair side i to the stencil index (0 or 1) that has the matching region.
-localIndex p[2] = {0, 1}; // default: stencil ordering matches pair ordering
 auto const & pairReg = m_interfacePairRegionIndices[surfaceRegionIndex];
-if( pairReg[0] >= 0 && pairReg[1] >= 0 )
+
+// Determine canonical ordering based on global DOF numbers.
+// Always put the cell with the SMALLER global DOF as local_solver side 0.
+// This guarantees both ranks process the same interface connection identically,
+// since local_solver is NOT symmetric w.r.t. swapping its two sides.
+globalIndex const dof0 = m_dofNumber[seri[0]][sesri[0]][sei[0]];
+globalIndex const dof1 = m_dofNumber[seri[1]][sesri[1]][sei[1]];
+
+// p[i] maps canonical side i to stencil index (0 or 1)
+localIndex p[2] = {0, 1}; // default: stencil cell 0 has smaller DOF
+if( dof0 > dof1 )
 {
-  if( seri[0] == pairReg[1] && seri[1] == pairReg[0] )
-  {
-    // Stencil ordering is reversed relative to the pair ordering
-    p[0] = 1;
-    p[1] = 0;
-  }
+  // Stencil cell 1 has smaller DOF — swap to make it canonical side 0
+  p[0] = 1;
+  p[1] = 0;
 }
 
 // Build local_solver inputs using mapped indices so that
-// index 0 always corresponds to pair side 0 regardless of stencil ordering
+// canonical side 0 always has the smaller global DOF
 
-// uT is defined as flow from cell 0 to cell 1 in the stencil.
+// uT is defined as flow from stencil cell 0 to stencil cell 1.
 // If we swapped the cells, the direction reverses.
 // duT derivatives must also be negated and cell-index-swapped.
-real64 const uT_ls = (p[0] == 0) ? uT : -uT;
 real64 const uT_sign = (p[0] == 0) ? 1.0 : -1.0;
+real64 const uT_ls = uT_sign * uT;
 
 stdVector< real64 > saturations_ls = {saturations[p[0]], saturations[p[1]]};
 stdVector< real64 > pressures_ls = {pressures[p[0]], pressures[p[1]]};
 // transHat sign convention: transHat[0]=+T_0, transHat[1]=-T_1.
-// When stencil is reversed, swap and negate to maintain: ls[0]=+T_pair0, ls[1]=-T_pair1
+// When stencil is reversed, swap and negate to maintain: ls[0]=+T_canon0, ls[1]=-T_canon1
 stdVector< real64 > transHats_ls = {uT_sign * transHats[p[0]], uT_sign * transHats[p[1]]};
 stdVector< real64 > dTransHats_dP_ls = {uT_sign * dTransHats_dP[p[0]], uT_sign * dTransHats_dP[p[1]]};
 stdVector< real64 > gravCoefHats_ls = {gravCoefHats[p[0]], gravCoefHats[p[1]]};
@@ -3493,22 +3494,39 @@ stdVector< real64 > cellCenterDens_ls = {cellCenterDens[p[0]], cellCenterDens[p[
 stdVector< real64 > cellCenterDens_dP_ls = {cellCenterDens_dP[p[0]], cellCenterDens_dP[p[1]],
                                             cellCenterDens_dP[2 + p[0]], cellCenterDens_dP[2 + p[1]]};
 
-// Map sei indices for extracting per-element constitutive data
+// Map sei indices for extracting per-element constitutive data.
+// sei_ls[ke] is the element index for canonical side ke.
 localIndex const sei_ls[2] = {sei[p[0]], sei[p[1]]};
 
+// Match constitutive models from the pair to the canonical ordering.
+// pairArray[0] corresponds to pairReg[0], pairArray[1] to pairReg[1].
+// Canonical side 0 is stencil cell p[0] with region seri[p[0]].
+// We need to find which pair side matches each canonical side's region.
+localIndex cp[2] = {0, 1}; // cp[i] = which pair side goes with canonical side i
+if( pairReg[0] >= 0 && pairReg[1] >= 0 )
+{
+  localIndex const canonReg0 = seri[p[0]]; // region of canonical side 0
+  if( canonReg0 == pairReg[1] )
+  {
+    // canonical side 0's region matches pair side 1
+    cp[0] = 1;
+    cp[1] = 0;
+  }
+}
+
 std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
-  std::get<0>( pairArray[0] ),
-  std::get<0>( pairArray[1] )
+  std::get<0>( pairArray[cp[0]] ),
+  std::get<0>( pairArray[cp[1]] )
 };
 
 std::vector< constitutive::CapillaryPressureBase * > capPressures = {
-  std::get<1>( pairArray[0] ),
-  std::get<1>( pairArray[1] )
+  std::get<1>( pairArray[cp[0]] ),
+  std::get<1>( pairArray[cp[1]] )
 };
 
 std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
-  std::get<2>( pairArray[0] ),
-  std::get<2>( pairArray[1] )
+  std::get<2>( pairArray[cp[0]] ),
+  std::get<2>( pairArray[cp[1]] )
 };
 
           // Extract historical volume fractions, trapped saturations, and mode from TableCapillaryPressureHysteresis models
@@ -3620,7 +3638,7 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
           
           real64 warmStartPc = ( iconn < m_convergedPcInt.size() )
                                ? m_convergedPcInt[iconn] : -1.0;
-          
+
           local_solver( uT_ls, saturations_ls, pressures_ls, JFMultipliers, trappedSats1, trappedSats2, modes, transHats_ls, dTransHats_dP_ls, gravCoefHats_ls, gravCoefs_ls,
             cellCenterDuTdS_ls, cellCenterDens_ls, cellCenterDens_dP_ls, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
             phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2,
@@ -3632,15 +3650,16 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
           }
           
           // Remap local_solver outputs back to stencil ordering for global assembly.
-          // local_solver returns phi[0]=flux(phase0), phi[1]=flux(phase1) (phase-indexed, not cell-indexed).
-          // grad_phi_P[0]=dFlux0/dP_pair0, grad_phi_P[1]=dFlux0/dP_pair1,
-          // grad_phi_P[2]=dFlux1/dP_pair0, grad_phi_P[3]=dFlux1/dP_pair1.
-          // We need to remap the cell indices (pair side -> stencil side).
-          // If ordering was swapped, also negate fluxes since flow direction was reversed.
+          // local_solver returns phi[0]=flux(phase0), phi[1]=flux(phase1) (phase-indexed).
+          // grad_phi_P layout: [0]=dFlux0/dP_canon0, [1]=dFlux0/dP_canon1,
+          //                    [2]=dFlux1/dP_canon0, [3]=dFlux1/dP_canon1.
+          // We need to remap canonical cell indices back to stencil cell indices.
+          // If canonical ordering differs from stencil ordering (p[0]==1), negate fluxes
+          // (direction reversal) and swap cell derivative indices.
 
              if( p[0] == 0 )
              {
-               // No swap needed - stencil ordering matches pair ordering
+               // No swap needed - stencil ordering matches canonical ordering
                fluxVal[0] = phi[0];
                fluxVal[1] = phi[1];
                dFlux_dP[0][0] = grad_phi_P[0];
@@ -3654,9 +3673,9 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
              }
              else
              {
-               // Stencil ordering is reversed.
+               // Stencil ordering is reversed relative to canonical.
                // Negate fluxes (direction reversal) and swap cell derivative indices.
-               // Pair side 0 -> stencil cell 1, pair side 1 -> stencil cell 0
+               // Canon side 0 -> stencil cell 1, canon side 1 -> stencil cell 0
                fluxVal[0] = -phi[0];
                fluxVal[1] = -phi[1];
                // dFlux/dP: swap cell indices and negate
