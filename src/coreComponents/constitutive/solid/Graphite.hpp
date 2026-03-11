@@ -594,28 +594,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // This is a transversely isotropic material for graphite-like crystals having
   // some weak plane with plane-normal-stress- and pressure-dependent elastic properties:
 
-
-    // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
-    if ( planeNormalStress > failureStrength )
-    {
-        real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
-        m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
-    }
-
-    // If strain-softening is enabled, insert damage once max strain is reached.
-    if ( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
-    {
-      m_damage[k][q] = 1.0;
-    }
-
-
-
-
-
-    // strength scale factor, combining plastic softening and damage
-    real64 damageMultiplier = (1.0 - m_damage[k][q]);
-    
-
   // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
   // need to ask him about that
   real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure );
@@ -669,8 +647,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     return;
   }
-    // Enforce damage, no tensile stress on plane
-    if(m_damage[k][q] >= 0.9999999) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
 
   // Decompose stress tensor into pieces.
   real64 sigma1Dense[3][3] = {};
@@ -694,77 +670,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     }
   }
 
-
-    // find in-plane isotropic and deviatoric stress
-    real64 inPlaneIso[6];
-    LvArray::tensorOps::copy< 6 >( inPlaneIso, sigma2 );
-    LvArray::tensorOps::scale< 6 >( inPlaneIso, 0.5 );
-
-    real64 inPlaneDev[6];
-    LvArray::tensorOps::copy< 6 >( inPlaneDev, sigma4 );
-    LvArray::tensorOps::subtract< 6 >( inPlaneDev, inPlaneIso );
-
-    // find distortion stress from in-plane isotropic and plane-normal stress
-    real64 distortion[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >(distortion, inPlaneIso);
-    LvArray::tensorOps::add< 6 >(distortion, sigma1);
-
-    real64 distortionMeanStress = ( distortion[0] + distortion[1] + distortion[2] ) / 3.0;
-
-    real64 distortion_iso[6] = {0};
-    distortion_iso[0] = distortionMeanStress;
-    distortion_iso[1] = distortionMeanStress;
-    distortion_iso[2] = distortionMeanStress;
-
-    real64 distortion_dev[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
-    LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
-
-    // We don't want spherical tension in-plane for damaged material, so here we force that to be zero if it would otherwise
-    // be tensile.  along with the sigma1 scaling above and the deviatoric scaling below this should give a no-strength damaged
-    // material while still having anisotropic strength in compression.
-    if(m_damage[k][q] >= 0.9999999) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
-    {
-        if ( distortionMeanStress > 0 )
-        {
-            LvArray::tensorOps::scale< 6 >(distortion_iso, 0.0);
-        }
-    }
-
-    // Define 3 pressure-dependent shear strengths for different shear modes.
-    real64 inPlaneShearStrength, coupledYieldStrength, totalShearStrength;
-    real64 x1, x2, y1, y2, m1;
-    real64 strainHardeningMultiplier;
-
-    // -------------------------------
-    // "distortion" shear relating sigma normal and in-plane iso"
-    x1 = 0;
-    x2 = m_distortionShearResponseX2;
-    y1 = m_distortionShearResponseY1 * m_strengthScale[k];
-    y2 = m_distortionShearResponseY2 * m_strengthScale[k];
-    m1 = m_distortionShearResponseM1;
-    strainHardeningMultiplier = 1 + (m_distortionStrainHardeningC0 - 1)*smoothStep(m_relaxation[k][q], 0, 1);
-
-    // damage or softening reduces cohesion and reduces slope to failed value.
-    y1 *= damageMultiplier*strainHardeningMultiplier;
-    y2 *= strainHardeningMultiplier;
-    m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
-
-    if(pressure < x1)
-    {
-        totalShearStrength=std::max(0.0,y1-(x1-pressure)*m1);
-        // totalShearStrength=std::max(0.0,y1-(x2-pressure)*m1);
-    }
-    else if(pressure < x2)
-    {
-        totalShearStrength=slopePoint0(pressure,x1,x2,y1,y2,m1);
-    }
-    else
-    {
-        totalShearStrength=y2;
-    }
-
   real64 sigma1[6] = {0};   // axial
   real64 sigma2[6] = {0};   // in-plane normal
   real64 sigma4[6] = {0};   // in-plane total stress
@@ -773,7 +678,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::denseToSymmetric< 3 >( sigma2, sigma2Dense );
   LvArray::tensorOps::denseToSymmetric< 3 >( sigma4, sigma4Dense );
   LvArray::tensorOps::denseToSymmetric< 3 >( sigma5, sigma5Dense );
-
 
   // Trial pressure to compute pressure-dependence of strength
   real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );

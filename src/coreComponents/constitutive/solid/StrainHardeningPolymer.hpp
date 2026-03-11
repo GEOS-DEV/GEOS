@@ -454,7 +454,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                                                                                         // A*f(m_temperature[k]),
                                                                                                                                         // etc.
   m_shearModulus[k] = m_defaultShearModulus *  scale; // This will actually be some function of m_temperature[k]
-  //std::cout<< "bulk: " << m_bulkModulus[k] << " shear: " << m_shearModulus[k] << std::endl;
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k,
                                                          q,
@@ -534,36 +533,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 eigenVectors[3][3] = { };
   LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
-
-    // Find the largest eigenvalues and compare to max allowable failure stretch (which is temperature dependent)
-    
-    // Stretch to failure at current temperature:
-    real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
-    //real64 failureStretch = m_maximumStretch*(1.0 + m_maximumStretchA * ( 1.0 / (1.0 + std::exp(m_maximumStretchB*(m_temperature[k] - m_maximumStretchT0))) - 0.5 ));
-    //std::cout << "failureStretch " << failureStretch << std::endl; //r0
-
-    // Maximum principal stretch:
-    real64 maximumStretch = 0.0;  
-    for( localIndex i = 0; i < 3; ++i )
-    {
-        maximumStretch = std::max( stretch[i], maximumStretch );
-    }
-    if (maximumStretch > failureStretch)
-    {
-        m_damage[k][q] = 1.0;
-    }
-    //std::cout << std::fixed << std::setprecision(5)
-    //          << "eps_true=" << std::log(maximumStretch)
-    //          << " lam_max=" << maximumStretch
-    //          << " fail=" << failureStretch
-    //          << " damage=" << m_damage[k][q]
-    //          << "\n";
-
-    // Return to yield surface requires iterative solution
-    // Implemented fixed points, however a newton solver may be more efficient and applicable
-    real64 tol = 1e-10; // CC: need to experiment with these for the best options
-    int maxEvals = 100; // Same cas above
-
   // Find the largest eigenvalues and compare to max allowable failure stretch (which is temperature dependent)
 
   // Stretch to failure at current temperature:
@@ -575,7 +544,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     maximumStretch = std::max( stretch[i], maximumStretch );
   }
-
 
   if( maximumStretch > failureStretch )
   {
@@ -628,29 +596,11 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // Stretch hardening
     real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
 
-
-    // Compute change in yield strength: yieldStrength = m_initialYield + plasticSoftening + stretchHardening;
-    // Where each of the 3 terms on the right hace parameters modified by temperature with 3 parameters.
-    real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB ); 
-    real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
-    real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB ); 
-    //std::cout << "yield0 " << yield0 << std::endl; //yield strength
-    //std::cout << "strainHardeningSlope " << strainHardeningSlope << std::endl; //Gr
-    //std::cout << "shearSofteningMagnitude " << shearSofteningMagnitude << std::endl; //r0
-    //std::cout << "m_temperature " << m_temperature[k] << std::endl; //T
-    
-    real64 unrotatedTempPlasticStrain[6] = { 0 };
-    real64 plasticStrainIncrement[6] = { 0 };
-    
-    // Fixed-point iteration to find plastic strain and consistent return to updated yield surface
-    for(int iter=0; iter < maxEvals; ++iter)
-
     // Flow stress after temp, hardening, and softening modifications
     m_yieldStrength[k] = yield0 + plasticSoftening + stretchHardening;   // CC: debugging disabling change in yield strength
 
     // check yield function
     if( trialQ > m_yieldStrength[k] || iter > 0 )
-
     {
 
       // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
@@ -693,71 +643,12 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
         LvArray::tensorOps::copy< 6 >( stress, stressTemp );
         return;
       }
-
-      gamma_p = sqrt( gamma_p );
-      
-      // This term starts at value r0 and decays with plastic shear strain to give plastic softening.
-      // Put in a check to prevent roundoff error.
-      real64 gamma_by_r1_to_r2 = std::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
-
-      // Shear Softening:
-      real64 plasticSoftening = shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
-
-      // Stretch hardening
-      //std::cout << "maximumStretch " << maximumStretch << std::endl; //r0
-      real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
-
-      // Flow stress after temp, hardening, and softening modifications
-      m_yieldStrength[k] = yield0 + plasticSoftening + stretchHardening; // CC: debugging disabling change in yield strength
-
-      // check yield function
-      if( trialQ > m_yieldStrength[k] || iter > 0 ){
-
-        // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
-        real64 stressTemp[6] = {0};
-        twoInvariant::stressRecomposition( trialP,
-                                           m_yieldStrength[k],
-                                           deviator,
-                                           stressTemp );
-
-        // Increment plastic strain
-        real64 stressIncrement[6] = {0};
-        LvArray::tensorOps::copy< 6 >(stressIncrement, stressTemp);
-        LvArray::tensorOps::subtract< 6 >(stressIncrement, trialStress);
-
-        // increment plastic strain
-        computePlasticStrainIncrement( k,
-                                       q,
-                                       timeIncrement,           
-                                       strainIncrement,
-                                       stressIncrement,
-                                       plasticStrainIncrement );
-
-        real64 unrotatedNewPlasticStrain[6] = { 0 };
-        LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
-        LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
-
-        if(abs(m_yieldStrength[k] - oldYieldStrength) < tol)
-        {
-          unrotatedNewPlasticStrain[3] *= 0.5;
-          unrotatedNewPlasticStrain[4] *= 0.5;
-          unrotatedNewPlasticStrain[5] *= 0.5;
-          real64 newPlasticStrain[6] = { 0 };
-          LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
-          newPlasticStrain[3] *= 2.0;
-          newPlasticStrain[4] *= 2.0;
-          newPlasticStrain[5] *= 2.0;
-
-          LvArray::tensorOps::copy< 6 >(m_plasticStrain[k][q], newPlasticStrain);
-          LvArray::tensorOps::copy< 6 >(stress, stressTemp);
-          return;
-        }
-        else
-        {
-          oldYieldStrength = m_yieldStrength[k];
-        }
-      } 
-      else 
+      else
+      {
+        oldYieldStrength = m_yieldStrength[k];
+      }
+    }
+    else
     {
       return;
     }
@@ -808,8 +699,6 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
     }
     if( m_shearModulus[k] > 1.0e-12 )
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2.0/3.0) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
-      //MM updated sqrt 2/3 to be 2. /3.
       elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2/3 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }

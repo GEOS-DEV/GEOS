@@ -240,7 +240,7 @@ void StrainHardeningPolymer::postInputInitialization()
   GEOS_THROW_IF( m_shearSofteningShapeParameter1 < 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter2 < 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
-  //GEOS_THROW_IF( m_maximumStretch < 0.0, "Max stretch must be greater than 0", InputError );
+  GEOS_THROW_IF( m_maximumStretch <= 1.0, "Max stretch must be greater than 1", InputError );
 
   // We are using default yield strength to be the temperature-independent value, that will be modified by thermal softening.
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).setApplyDefaultValue( m_defaultYieldStrength );
