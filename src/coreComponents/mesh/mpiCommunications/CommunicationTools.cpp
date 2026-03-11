@@ -1022,11 +1022,15 @@ void CommunicationTools::asyncSendRecv( stdVector< NeighborCommunicator > & neig
                                         parallelDeviceEvents & events )
 {
   GEOS_MARK_FUNCTION;
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
-
+#else
+  GEOS_UNUSED_VAR( onDevice );
+  GEOS_UNUSED_VAR( events );
+#endif
 
   // could swap this to test and make this function call async as well, only launch the sends/recvs for
   // those we've already recv'd sizing for, go back to some usefule compute / launch some other compute, then
@@ -1165,10 +1169,14 @@ void CommunicationTools::finalizeUnpack( ObjectManagerBase & manager,
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( manager, neighbors, icomm, onDevice, events ) );
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
+#else
+  GEOS_UNUSED_VAR( onDevice );
+#endif
 
   MpiWrapper::waitAll( icomm.size(),
                        icomm.mpiSendBufferSizeRequest(),
@@ -1190,10 +1198,14 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op ) );
+#if !defined( GEOS_USE_HIP )
   if( onDevice )
   {
     waitAllDeviceEvents( events );
   }
+#else
+  GEOS_UNUSED_VAR( onDevice );
+#endif
 
   MpiWrapper::waitAll( icomm.size(),
                        icomm.mpiSendBufferSizeRequest(),
