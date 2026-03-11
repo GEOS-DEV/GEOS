@@ -222,12 +222,14 @@
      Group const & faceSetGroup = faceManager.sets();
      ElementRegionManager & elemManager = meshLevel.getElemManager();
      m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
+     m_interfacePairRegionIndices.resize( m_interfaceFaceSetNames.size() );
      // Explicitly initialize all tuple entries to nullptr so that ranks without
      // interface face elements don't leave garbage pointers in the tuples
      for( size_t i = 0; i < m_interfaceConstitutivePairs.size(); ++i )
      {
        m_interfaceConstitutivePairs[i][0] = std::make_tuple( nullptr, nullptr, nullptr );
        m_interfaceConstitutivePairs[i][1] = std::make_tuple( nullptr, nullptr, nullptr );
+       m_interfacePairRegionIndices[i] = {{ -1, -1 }};
      }
  
      // this is the FaceElement Level
@@ -260,7 +262,7 @@
         int subRegionIdx1 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][1];
 
         // Fast validation checks (ordered from cheapest to most expensive)
-        if( regionIdx0 < 0 || regionIdx1 < 0 || 
+        if( regionIdx0 < 0 || regionIdx1 < 0 ||
             subRegionIdx0 < 0 || subRegionIdx1 < 0 )
         {
           return std::make_tuple( nullptr, nullptr );
@@ -271,7 +273,7 @@
           return std::make_tuple( nullptr, nullptr );
         }
         
-        if( static_cast< localIndex >( regionIdx0 ) >= numRegions || 
+        if( static_cast< localIndex >( regionIdx0 ) >= numRegions ||
             static_cast< localIndex >( regionIdx1 ) >= numRegions )
         {
           return std::make_tuple( nullptr, nullptr );
@@ -340,6 +342,8 @@
 CellElementSubRegion * subRegion0 = nullptr;
 CellElementSubRegion * subRegion1 = nullptr;
 bool foundValidFei = false;
+localIndex pairRegionIdx0 = -1;
+localIndex pairRegionIdx1 = -1;
 
 // Single loop to find a valid face element (avoids redundant scanning)
 for( localIndex i = 0; i < faceElementsToCells.size(); ++i )
@@ -357,6 +361,8 @@ for( localIndex i = 0; i < faceElementsToCells.size(); ++i )
     {
       subRegion0 = testSubRegion0;
       subRegion1 = testSubRegion1;
+      pairRegionIdx0 = faceElementsToCells.m_toElementRegion[i][0];
+      pairRegionIdx1 = faceElementsToCells.m_toElementRegion[i][1];
       foundValidFei = true;
       break;
     }
@@ -388,6 +394,7 @@ TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFlui
 
 m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
 m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
+m_interfacePairRegionIndices[surfaceRegionIndex] = {{ pairRegionIdx0, pairRegionIdx1 }};
 
      }
    } );
@@ -671,6 +678,7 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
  
    // Clear the existing mapping between connector indices and interface region indices
    m_interfaceRegionByConnector.clear();
+   m_iconnToGlobalFace.clear();
    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( std::string const &,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & GEOS_UNUSED_PARAM( regionNames ))
@@ -678,6 +686,7 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
      // Access the face manager and retrieve the face set group for the current mesh level
      FaceManager const & faceManager = meshLevel.getFaceManager();
      Group const & faceSetGroup = faceManager.sets();
+     arrayView1d< globalIndex const > const faceLocalToGlobal = faceManager.localToGlobalMap();
  
      // Access the connector indices map (face index → connector index)
      Group & stencilGroup =
@@ -698,8 +707,11 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
          auto it = connectorIndices.find( kf );
          if( it != connectorIndices.end())
          {
+           localIndex const iconn = it->second;
            // Map the connector index to the corresponding surface region index
-           m_interfaceRegionByConnector[it->second] = surfaceRegionIndex;
+           m_interfaceRegionByConnector[iconn] = surfaceRegionIndex;
+           // Map the connector index to the global face index for MPI-invariant warm-start
+           m_iconnToGlobalFace[iconn] = faceLocalToGlobal[kf];
          }
        }
      }
@@ -850,6 +862,28 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
       fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
       {
         typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+        // Build flat warm-start array from MPI-invariant global map.
+        // Each interface connection's warm-start Pc is keyed by global face index in
+        // m_convergedPcIntByGlobalFace, ensuring identical initial guesses regardless of
+        // MPI partitioning.
+        localIndex const numConn = stencilWrapper.size();
+        array1d< real64 > convergedPcInt( numConn );
+        convergedPcInt.setValues< serialPolicy >( -1.0 );
+        for( auto const & entry : m_iconnToGlobalFace )
+        {
+          localIndex const iconn = entry.first;
+          globalIndex const globalFace = entry.second;
+          if( iconn < numConn )
+          {
+            auto pcIt = m_convergedPcIntByGlobalFace.find( globalFace );
+            if( pcIt != m_convergedPcIntByGlobalFace.end() )
+            {
+              convergedPcInt[iconn] = pcIt->second;
+            }
+          }
+        }
+
         immiscibleMultiphaseKernels::
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                                                dofManager.rankOffset(),
@@ -862,11 +896,24 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
                                                                                stencilWrapper,
                                                                                m_interfaceFaceSetNames,
                                                                                m_interfaceConstitutivePairs,
+                                                                               m_interfacePairRegionIndices,
                                                                                m_interfaceRegionByConnector,
                                                                                *firstSubRegion,
                                                                                dt,
                                                                                localMatrix.toViewConstSizes(),
-                                                                               localRhs.toView() );
+                                                                               localRhs.toView(),
+                                                                               convergedPcInt.toView() );
+
+        // Read back updated warm-start values into MPI-invariant global map
+        for( auto const & entry : m_iconnToGlobalFace )
+        {
+          localIndex const iconn = entry.first;
+          globalIndex const globalFace = entry.second;
+          if( iconn < numConn && convergedPcInt[iconn] > 0.0 )
+          {
+            m_convergedPcIntByGlobalFace[globalFace] = convergedPcInt[iconn];
+          }
+        }
       } );
     }
      else

@@ -3019,8 +3019,9 @@ public:
                                        integer const checkPhasePresenceInGravity,
                                        string_array const & interfaceFaceSetNames,
                                        stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
-                                                                          constitutive::CapillaryPressureBase *,
-                                                                          constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
+                                                                           constitutive::CapillaryPressureBase *,
+                                                                           constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
+                                       stdVector< std::array< localIndex, 2 > > const & interfacePairRegionIndices,
                                        arrayView1d< localIndex const > const & interfaceRegionLookup,
                                        arrayView1d< real64 > const & convergedPcInt,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
@@ -3042,6 +3043,7 @@ public:
     // m_relPermWrapper( relPermWrapper ),
     m_interfaceFaceSetNames( interfaceFaceSetNames ),
     m_interfaceConstitutivePairs( interfaceConstitutivePairs ),
+    m_interfacePairRegionIndices( interfacePairRegionIndices ),
     m_interfaceRegionLookup( interfaceRegionLookup ),
     m_convergedPcInt( convergedPcInt )
   {}
@@ -3452,6 +3454,48 @@ public:
           localIndex const surfaceRegionIndex = m_interfaceRegionLookup[iconn];
 auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
 
+// Determine mapping from pair ordering to stencil ordering.
+// pairArray[0] was set up with region index pairReg[0], pairArray[1] with pairReg[1].
+// seri[0] and seri[1] are the stencil region indices for the two cells.
+// p[i] maps pair side i to the stencil index (0 or 1) that has the matching region.
+localIndex p[2] = {0, 1}; // default: stencil ordering matches pair ordering
+auto const & pairReg = m_interfacePairRegionIndices[surfaceRegionIndex];
+if( pairReg[0] >= 0 && pairReg[1] >= 0 )
+{
+  if( seri[0] == pairReg[1] && seri[1] == pairReg[0] )
+  {
+    // Stencil ordering is reversed relative to the pair ordering
+    p[0] = 1;
+    p[1] = 0;
+  }
+}
+
+// Build local_solver inputs using mapped indices so that
+// index 0 always corresponds to pair side 0 regardless of stencil ordering
+
+// uT is defined as flow from cell 0 to cell 1 in the stencil.
+// If we swapped the cells, the direction reverses.
+// duT derivatives must also be negated and cell-index-swapped.
+real64 const uT_ls = (p[0] == 0) ? uT : -uT;
+real64 const uT_sign = (p[0] == 0) ? 1.0 : -1.0;
+
+stdVector< real64 > saturations_ls = {saturations[p[0]], saturations[p[1]]};
+stdVector< real64 > pressures_ls = {pressures[p[0]], pressures[p[1]]};
+// transHat sign convention: transHat[0]=+T_0, transHat[1]=-T_1.
+// When stencil is reversed, swap and negate to maintain: ls[0]=+T_pair0, ls[1]=-T_pair1
+stdVector< real64 > transHats_ls = {uT_sign * transHats[p[0]], uT_sign * transHats[p[1]]};
+stdVector< real64 > dTransHats_dP_ls = {uT_sign * dTransHats_dP[p[0]], uT_sign * dTransHats_dP[p[1]]};
+stdVector< real64 > gravCoefHats_ls = {gravCoefHats[p[0]], gravCoefHats[p[1]]};
+stdVector< real64 > gravCoefs_ls = {gravCoefs[p[0]], gravCoefs[p[1]]};
+stdVector< real64 > cellCenterDuTdS_ls = {uT_sign * cellCenterDuTdS[p[0]], uT_sign * cellCenterDuTdS[p[1]],
+                                          uT_sign * cellCenterDuTdS[2 + p[0]], uT_sign * cellCenterDuTdS[2 + p[1]]};
+stdVector< real64 > cellCenterDens_ls = {cellCenterDens[p[0]], cellCenterDens[p[1]]};
+stdVector< real64 > cellCenterDens_dP_ls = {cellCenterDens_dP[p[0]], cellCenterDens_dP[p[1]],
+                                            cellCenterDens_dP[2 + p[0]], cellCenterDens_dP[2 + p[1]]};
+
+// Map sei indices for extracting per-element constitutive data
+localIndex const sei_ls[2] = {sei[p[0]], sei[p[1]]};
+
 std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
   std::get<0>( pairArray[0] ),
   std::get<0>( pairArray[1] )
@@ -3490,28 +3534,28 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
             {
               // Get the mode for this cell
               auto const & modeArray = capPresHyst->getField< fields::cappres::mode >().reference();
-              if( sei[ke] < static_cast<localIndex>(modeArray.size()) )
+              if( sei_ls[ke] < static_cast<localIndex>(modeArray.size()) )
               {
-                modes[ke] = static_cast<fields::cappres::ModeIndexType>(modeArray[sei[ke]]);
+                modes[ke] = static_cast<fields::cappres::ModeIndexType>(modeArray[sei_ls[ke]]);
               }
               
               // Get historical volume fractions for this cell
               auto const & maxHistArray = capPresHyst->getField< fields::cappres::phaseMaxHistoricalVolFraction >().reference();
               auto const & minHistArray = capPresHyst->getField< fields::cappres::phaseMinHistoricalVolFraction >().reference();
               
-              if( sei[ke] < static_cast<localIndex>(maxHistArray.size(0)) && m_numPhases > 0 )
+              if( sei_ls[ke] < static_cast<localIndex>(maxHistArray.size(0)) && m_numPhases > 0 )
               {
                 for( integer ip = 0; ip < m_numPhases; ++ip )
                 {
                   if( ke == 0 )
                   {
-                    phaseMaxHistoricalVolFraction1[ip] = maxHistArray[sei[ke]][ip];
-                    phaseMinHistoricalVolFraction1[ip] = minHistArray[sei[ke]][ip];
+                    phaseMaxHistoricalVolFraction1[ip] = maxHistArray[sei_ls[ke]][ip];
+                    phaseMinHistoricalVolFraction1[ip] = minHistArray[sei_ls[ke]][ip];
                   }
                   else
                   {
-                    phaseMaxHistoricalVolFraction2[ip] = maxHistArray[sei[ke]][ip];
-                    phaseMinHistoricalVolFraction2[ip] = minHistArray[sei[ke]][ip];
+                    phaseMaxHistoricalVolFraction2[ip] = maxHistArray[sei_ls[ke]][ip];
+                    phaseMinHistoricalVolFraction2[ip] = minHistArray[sei_ls[ke]][ip];
                   }
                 }
               }
@@ -3520,17 +3564,17 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
               // Note: phaseTrappedVolFraction is available in all capillary pressure models (via base class)
               auto const & trappedArray = capPresHyst->getField< fields::cappres::phaseTrappedVolFraction >().reference();
               
-              if( sei[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
+              if( sei_ls[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
               {
                 for( integer ip = 0; ip < m_numPhases; ++ip )
                 {
                   if( ke == 0 )
                   {
-                    trappedSats1_extracted[ip] = trappedArray[sei[ke]][0][ip]; // [element][subregion][phase]
+                    trappedSats1_extracted[ip] = trappedArray[sei_ls[ke]][0][ip]; // [element][subregion][phase]
                   }
                   else
                   {
-                    trappedSats2_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                    trappedSats2_extracted[ip] = trappedArray[sei_ls[ke]][0][ip];
                   }
                 }
               }
@@ -3542,17 +3586,17 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
               // We'll extract them anyway in case they were set (e.g., for consistency)
               auto const & trappedArray = capPressures[ke]->getField< fields::cappres::phaseTrappedVolFraction >().reference();
               
-              if( sei[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
+              if( sei_ls[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
               {
                 for( integer ip = 0; ip < m_numPhases; ++ip )
                 {
                   if( ke == 0 )
                   {
-                    trappedSats1_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                    trappedSats1_extracted[ip] = trappedArray[sei_ls[ke]][0][ip];
                   }
                   else
                   {
-                    trappedSats2_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                    trappedSats2_extracted[ip] = trappedArray[sei_ls[ke]][0][ip];
                   }
                 }
               }
@@ -3577,8 +3621,8 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
           real64 warmStartPc = ( iconn < m_convergedPcInt.size() )
                                ? m_convergedPcInt[iconn] : -1.0;
           
-          local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
-            cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
+          local_solver( uT_ls, saturations_ls, pressures_ls, JFMultipliers, trappedSats1, trappedSats2, modes, transHats_ls, dTransHats_dP_ls, gravCoefHats_ls, gravCoefs_ls,
+            cellCenterDuTdS_ls, cellCenterDens_ls, cellCenterDens_dP_ls, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
             phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2,
             warmStartPc );
 
@@ -3587,17 +3631,44 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
             m_convergedPcInt[iconn] = warmStartPc;
           }
           
+          // Remap local_solver outputs back to stencil ordering for global assembly.
+          // local_solver returns phi[0]=flux(phase0), phi[1]=flux(phase1) (phase-indexed, not cell-indexed).
+          // grad_phi_P[0]=dFlux0/dP_pair0, grad_phi_P[1]=dFlux0/dP_pair1,
+          // grad_phi_P[2]=dFlux1/dP_pair0, grad_phi_P[3]=dFlux1/dP_pair1.
+          // We need to remap the cell indices (pair side -> stencil side).
+          // If ordering was swapped, also negate fluxes since flow direction was reversed.
 
-             fluxVal[0] = phi[0];
-             fluxVal[1] = phi[1];
-             dFlux_dP[0][0] = grad_phi_P[0];
-             dFlux_dP[0][1] = grad_phi_P[1];
-             dFlux_dP[1][0] = grad_phi_P[2];
-             dFlux_dP[1][1] = grad_phi_P[3];
-             dFlux_dS[0][0] = grad_phi_S[0];
-             dFlux_dS[0][1] = grad_phi_S[1];
-             dFlux_dS[1][0] = grad_phi_S[2];
-             dFlux_dS[1][1] = grad_phi_S[3];
+             if( p[0] == 0 )
+             {
+               // No swap needed - stencil ordering matches pair ordering
+               fluxVal[0] = phi[0];
+               fluxVal[1] = phi[1];
+               dFlux_dP[0][0] = grad_phi_P[0];
+               dFlux_dP[0][1] = grad_phi_P[1];
+               dFlux_dP[1][0] = grad_phi_P[2];
+               dFlux_dP[1][1] = grad_phi_P[3];
+               dFlux_dS[0][0] = grad_phi_S[0];
+               dFlux_dS[0][1] = grad_phi_S[1];
+               dFlux_dS[1][0] = grad_phi_S[2];
+               dFlux_dS[1][1] = grad_phi_S[3];
+             }
+             else
+             {
+               // Stencil ordering is reversed.
+               // Negate fluxes (direction reversal) and swap cell derivative indices.
+               // Pair side 0 -> stencil cell 1, pair side 1 -> stencil cell 0
+               fluxVal[0] = -phi[0];
+               fluxVal[1] = -phi[1];
+               // dFlux/dP: swap cell indices and negate
+               dFlux_dP[0][0] = -grad_phi_P[1];  // dFlux0/dP_stencil0 = -dFlux0/dP_pair1
+               dFlux_dP[0][1] = -grad_phi_P[0];  // dFlux0/dP_stencil1 = -dFlux0/dP_pair0
+               dFlux_dP[1][0] = -grad_phi_P[3];  // dFlux1/dP_stencil0 = -dFlux1/dP_pair1
+               dFlux_dP[1][1] = -grad_phi_P[2];  // dFlux1/dP_stencil1 = -dFlux1/dP_pair0
+               dFlux_dS[0][0] = -grad_phi_S[1];
+               dFlux_dS[0][1] = -grad_phi_S[0];
+               dFlux_dS[1][0] = -grad_phi_S[3];
+               dFlux_dS[1][1] = -grad_phi_S[2];
+             }
 
           // Global residual and jacobian update:
           for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -3639,6 +3710,8 @@ protected:
   stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                      constitutive::CapillaryPressureBase *,
                                      constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  const m_interfaceConstitutivePairs;
+  /// Region indices for each side of the interface pair (used for ordering consistency)
+  stdVector< std::array< localIndex, 2 > > const m_interfacePairRegionIndices;
   arrayView1d< localIndex const > const m_interfaceRegionLookup;
 
   /// Per-instance warm-start capillary pressure array (one entry per connection)
@@ -3719,6 +3792,8 @@ public:
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
+   * @param[inout] convergedPcInt warm-start capillary pressure array (one entry per connection),
+   *               populated by the caller using global face indices for MPI invariance
    */
   // template< typename POLICY, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename RELPERMWRAPPER >
   template< typename POLICY, typename STENCILWRAPPER >
@@ -3738,11 +3813,13 @@ public:
                    stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                                       constitutive::CapillaryPressureBase *,
                                                       constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
+                   stdVector< std::array< localIndex, 2 > > const & interfacePairRegionIndices,
                    unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
+                   arrayView1d< real64 > const & localRhs,
+                   arrayView1d< real64 > const & convergedPcInt )
   {
     integer constexpr NUM_EQN = 2;
     integer constexpr NUM_DOF = 2;
@@ -3761,16 +3838,6 @@ public:
       }
     }
 
-    // Per-kernel warm-start capillary pressure storage.
-    // Using a static local to persist across calls (same behavior as the original inline static)
-    // but properly scoped and sized per stencil.
-    static array1d< real64 > s_convergedPcInt;
-    if( s_convergedPcInt.size() < numConn )
-    {
-      s_convergedPcInt.resize( numConn );
-      s_convergedPcInt.setValues< serialPolicy >( -1.0 );
-    }
-
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
@@ -3785,7 +3852,8 @@ public:
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
                        checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs,
-                       interfaceRegionLookup.toViewConst(), s_convergedPcInt.toView(), domainSize );
+                       interfacePairRegionIndices,
+                       interfaceRegionLookup.toViewConst(), convergedPcInt, domainSize );
     kernelType::template launch< POLICY >( numConn, kernel );
   }
 };

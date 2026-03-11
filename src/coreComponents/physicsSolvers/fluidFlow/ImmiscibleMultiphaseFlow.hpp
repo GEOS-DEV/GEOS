@@ -315,8 +315,22 @@ private:
                                      constitutive::CapillaryPressureBase *,
                                      constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  m_interfaceConstitutivePairs;
 
+  /// For each surface region, the element region index for side 0 and side 1 of the interface pair.
+  /// Used to match stencil cell ordering to the constitutive pair ordering.
+  stdVector< std::array< localIndex, 2 > > m_interfacePairRegionIndices;
+
   unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
   unordered_map< localIndex, localIndex >  m_connectorIndicesByInterfaceRegion;
+
+  /// Warm-start capillary pressure at interface connections, keyed by global face index.
+  /// This ensures MPI-invariant warm-start across different partitioning configurations.
+  /// Marked mutable because it is a convergence cache updated during const assembleSystem().
+  mutable std::unordered_map< globalIndex, real64 > m_convergedPcIntByGlobalFace;
+
+  /// Mapping from local connection index (iconn) to global face index for interface connections.
+  /// Built once in initializePostInitialConditionsPreSubGroups and used to populate/read-back
+  /// the warm-start array for the flux kernel.
+  std::unordered_map< localIndex, globalIndex > m_iconnToGlobalFace;
 
 
 private:
