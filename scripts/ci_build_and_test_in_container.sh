@@ -27,59 +27,6 @@ function or_die () {
     fi
 }
 
-function now_utc () {
-    date -u +"%Y-%m-%dT%H:%M:%SZ"
-}
-
-function run_with_heartbeat () {
-    local label=$1
-    shift
-
-    echo "[$(now_utc)] Starting: ${label}"
-    "$@" &
-    local cmd_pid=$!
-    local heartbeat_secs=60
-
-    while kill -0 "${cmd_pid}" 2>/dev/null; do
-        echo "[$(now_utc)] Still running: ${label} (pid=${cmd_pid})"
-        sleep "${heartbeat_secs}"
-    done &
-    local heartbeat_pid=$!
-
-    wait "${cmd_pid}"
-    local status=$?
-
-    kill "${heartbeat_pid}" 2>/dev/null || true
-    wait "${heartbeat_pid}" 2>/dev/null || true
-
-    if [[ ${status} != 0 ]] ; then
-        echo "[$(now_utc)] Failed: ${label} (exit=${status})"
-        exit ${status}
-    fi
-
-    echo "[$(now_utc)] Finished: ${label}"
-}
-
-function print_process_snapshot () {
-    local root_pid=$1
-
-    echo "[$(now_utc)] Process snapshot for root pid=${root_pid}"
-
-    local queue=("${root_pid}")
-    while [[ ${#queue[@]} -gt 0 ]]; do
-        local pid=${queue[0]}
-        queue=("${queue[@]:1}")
-
-        ps -p "${pid}" -o pid=,ppid=,stat=,etime=,%cpu=,%mem=,cmd= || true
-
-        while read -r child_pid; do
-            if [[ -n "${child_pid}" ]]; then
-                queue+=("${child_pid}")
-            fi
-        done < <(pgrep -P "${pid}" || true)
-    done
-}
-
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -353,7 +300,7 @@ else
     echo "GEOSX_TPL_DIR=${GEOSX_TPL_DIR}"
     GEOS_TPL_DIR=${GEOSX_TPL_DIR}
     echo tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
-    run_with_heartbeat "Packaging ${DATA_BASENAME_WE}.tar.gz" tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
+    or_die tar czf ${DATA_EXCHANGE_DIR}/${DATA_BASENAME_WE}.tar.gz --directory=${GEOS_TPL_DIR}/.. --transform "s|^./|${DATA_BASENAME_WE}/|" .
   fi
 fi
 
@@ -363,39 +310,8 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
-  export OMP_NUM_THREADS=1
-  echo "OMP_NUM_THREADS=${OMP_NUM_THREADS}"
-  echo "Coverage build directory: ${GEOS_BUILD_DIR}"
-  echo "Coverage source directory: ${GEOS_SRC_DIR}"
-  echo "Ninja query for coreComponents_coverage:"
-  ninja -t query coreComponents_coverage || true
-  echo "Ninja commands for coreComponents_coverage:"
-  ninja -t commands coreComponents_coverage || true
-  echo "Running coverage target coreComponents_coverage in verbose mode..."
-  run_with_heartbeat "cmake --build coreComponents_coverage" bash -lc 'cmake --build . --verbose --target coreComponents_coverage' &
-  coverage_wrapper_pid=$!
-
-  while kill -0 "${coverage_wrapper_pid}" 2>/dev/null; do
-    print_process_snapshot "${coverage_wrapper_pid}"
-    sleep 60
-  done &
-  coverage_snapshot_pid=$!
-
-  wait "${coverage_wrapper_pid}"
-  coverage_status=$?
-  kill "${coverage_snapshot_pid}" 2>/dev/null || true
-  wait "${coverage_snapshot_pid}" 2>/dev/null || true
-
-  if [[ ${coverage_status} != 0 ]] ; then
-    echo "Coverage target failed with exit status ${coverage_status}"
-    exit ${coverage_status}
-  fi
-
-  echo "Coverage artifacts in ${GEOS_BUILD_DIR}:"
-  ls -lh ${GEOS_BUILD_DIR}/coreComponents_coverage.info* || true
-  echo "Copying cleaned coverage report to ${GEOS_SRC_DIR}/geos_coverage.info.cleaned"
+  or_die cmake --build . --target coreComponents_coverage
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
-  echo "Coverage report copied."
 fi
 
 # Run the unit tests (excluding previously ran checks).
