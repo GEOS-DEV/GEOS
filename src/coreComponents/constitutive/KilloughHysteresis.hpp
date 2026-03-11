@@ -105,23 +105,23 @@ public:
     //tODO (jacques) check if relevant to invert relation with same SCAL value // might be misleading for kr
     HysteresisCurve toWetting() const
     {
-        if(!isWetting())
-            return HysteresisCurve({1.-oppositeBoundPhaseVolFraction,oppositeBoundSCALValue},
-                                   {1.- imbibitionExtremaPhaseVolFraction,imbibitionExtremaSCALValue},
-                                   {1.-drainageExtremaPhaseVolFraction,drainageExtremaSCALValue});
-        else
-            return *this;
+      if( !isWetting())
+        return HysteresisCurve( {1.-oppositeBoundPhaseVolFraction, oppositeBoundSCALValue},
+                                {1.- imbibitionExtremaPhaseVolFraction, imbibitionExtremaSCALValue},
+                                {1.-drainageExtremaPhaseVolFraction, drainageExtremaSCALValue} );
+      else
+        return *this;
     }
 
-      HysteresisCurve toNonWetting() const
-      {
-          if(isWetting())
-              return HysteresisCurve({1.-oppositeBoundPhaseVolFraction,oppositeBoundSCALValue},
-                                     {1.-imbibitionExtremaPhaseVolFraction,imbibitionExtremaSCALValue},
-                                     {1.-drainageExtremaPhaseVolFraction,drainageExtremaSCALValue});
-          else
-              return *this;
-      }
+    HysteresisCurve toNonWetting() const
+    {
+      if( isWetting())
+        return HysteresisCurve( {1.-oppositeBoundPhaseVolFraction, oppositeBoundSCALValue},
+                                {1.-imbibitionExtremaPhaseVolFraction, imbibitionExtremaSCALValue},
+                                {1.-drainageExtremaPhaseVolFraction, drainageExtremaSCALValue} );
+      else
+        return *this;
+    }
 
     bool isWetting() const
     {
@@ -138,9 +138,9 @@ public:
 
   static std::string catalogName() { return "KilloughHysteresis"; }
 
-  static void postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
-                               real64 const &killoughCurvatureParamRelPerm,
-                               real64 const &killoughCurvatureParamPc);
+  static void postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
+                                real64 const & killoughCurvatureParamRelPerm,
+                                real64 const & killoughCurvatureParamPc );
 
   GEOS_HOST_DEVICE
   static void computeLandCoefficient( HysteresisCurve const & hcruve, real64 & landParam );
@@ -167,7 +167,7 @@ public:
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
 
     static constexpr char const * killoughCurvatureParameterRelPermString() { return "killoughCurvatureParameterRelPerm"; }
-      static constexpr char const * killoughCurvatureParameterPcString() { return "killoughCurvatureParameterPc"; }
+    static constexpr char const * killoughCurvatureParameterPcString() { return "killoughCurvatureParameterPc"; }
   };
 
 };

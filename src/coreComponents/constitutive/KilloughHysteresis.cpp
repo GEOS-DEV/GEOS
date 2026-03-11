@@ -28,33 +28,33 @@ namespace constitutive
 {
 
 
-void KilloughHysteresis::postProcessInput(real64 const &jerauldParam_a, real64 const &jerauldParam_b,
-                                          real64 const &killoughCurvatureParamRelPerm,
-                                          real64 const &killoughCurvatureParamPc)
+void KilloughHysteresis::postProcessInput( real64 const & jerauldParam_a, real64 const & jerauldParam_b,
+                                           real64 const & killoughCurvatureParamRelPerm,
+                                           real64 const & killoughCurvatureParamPc )
 {
   GEOS_THROW_IF( jerauldParam_a < 0,
-                  GEOS_FMT( "{}: the parameter {} must be positive",
-                             catalogName(),
-                             viewKeyStruct::jerauldParameterAString() ),
-                  InputError );
+                 GEOS_FMT( "{}: the parameter {} must be positive",
+                           catalogName(),
+                           viewKeyStruct::jerauldParameterAString() ),
+                 InputError );
 
   GEOS_THROW_IF( jerauldParam_b < 0,
-                  GEOS_FMT( "{}: the paramater {} must be postitive",
-                             catalogName(),
-                             viewKeyStruct::jerauldParameterBString() ),
-                  InputError );
+                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                           catalogName(),
+                           viewKeyStruct::jerauldParameterBString() ),
+                 InputError );
 
   GEOS_THROW_IF( killoughCurvatureParamRelPerm < 0,
-                  GEOS_FMT( "{}: the paramater {} must be postitive",
-                             catalogName(),
-                             viewKeyStruct::killoughCurvatureParameterRelPermString() ),
-                  InputError );
+                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                           catalogName(),
+                           viewKeyStruct::killoughCurvatureParameterRelPermString() ),
+                 InputError );
 
   GEOS_THROW_IF( killoughCurvatureParamPc < 0,
-                    GEOS_FMT( "{}: the paramater {} must be postitive",
-                               catalogName(),
-                               viewKeyStruct::killoughCurvatureParameterPcString() ),
-                    InputError );
+                 GEOS_FMT( "{}: the paramater {} must be postitive",
+                           catalogName(),
+                           viewKeyStruct::killoughCurvatureParameterPcString() ),
+                 InputError );
 
 }
 
@@ -75,12 +75,12 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     real64 const Smxi = hcurve.imbibitionExtremaPhaseVolFraction;
     real64 const Swc = Scrd;
     GEOS_THROW_IF(  (Smxi - Smxd) > 0,
-                     GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
-                                "Crossing relative permeability curves.\n",
-                                catalogName(),
-                                Smxi,
-                                Smxd ),
-                     InputError );
+                    GEOS_FMT( "{}: For wetting phase hysteresis, imbibition end-point saturation Smxi( {} ) must be smaller than the drainage saturation end-point Smxd( {} ).\n"
+                              "Crossing relative permeability curves.\n",
+                              catalogName(),
+                              Smxi,
+                              Smxd ),
+                    InputError );
 
     landParam = ( Smxd - Swc ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
@@ -92,12 +92,12 @@ void KilloughHysteresis::computeLandCoefficient( KilloughHysteresis::HysteresisC
     real64 const Scrd = hcurve.drainageExtremaPhaseVolFraction;
     real64 const Scri = hcurve.imbibitionExtremaPhaseVolFraction;
     GEOS_THROW_IF( (Scrd - Scri) > 0,
-                    GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
-                               "Crossing relative permeability curves.\n",
-                               catalogName(),
-                               Scrd,
-                               Scri ),
-                    InputError );
+                   GEOS_FMT( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) must be smaller than the imbibition saturation Scri( {} ).\n"
+                             "Crossing relative permeability curves.\n",
+                             catalogName(),
+                             Scrd,
+                             Scri ),
+                   InputError );
 
     landParam = ( Smx - Scrd ) / LvArray::math::max( KilloughHysteresis::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }

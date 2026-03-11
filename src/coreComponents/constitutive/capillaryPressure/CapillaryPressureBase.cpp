@@ -50,9 +50,9 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
     setSizedFromParent( 0 ).
     setDescription( "Minimum volume fraction value for each phase" );
 
-    registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
-    registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
-    registerField< fields::cappres::phaseTrappedVolFraction >( &m_phaseTrappedVolFrac );
+  registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
+  registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
+  registerField< fields::cappres::phaseTrappedVolFraction >( &m_phaseTrappedVolFrac );
 }
 
 void CapillaryPressureBase::postInputInitialization()
@@ -99,7 +99,7 @@ void CapillaryPressureBase::allocateConstitutiveData( Group & parent, localIndex
   m_phaseTrappedVolFrac.zero();
   m_phaseCapPressure.resize( 0, numPts, NP );
   m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numPts, NP, NP );
-  
+
   ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 

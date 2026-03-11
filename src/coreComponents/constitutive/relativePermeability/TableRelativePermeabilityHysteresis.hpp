@@ -664,10 +664,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.oppositeBoundPhaseVolFraction );
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::WETTING];
     phaseRelPerm[ipWetting] = imbibitionRelPermKernelWrapper.compute( &phaseVolFraction[ipWetting],
-                                                                       &dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
+                                                                      &dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
   else if( !m_phaseHasHysteresis[IPT::WETTING] ||
-      phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
+           phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
     phaseTrappedVolFrac[ipWetting] = LvArray::math::min( phaseVolFraction[ipWetting], m_wettingCurve.oppositeBoundPhaseVolFraction );
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
@@ -706,13 +706,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                                                 m_jerauldParam_b,
                                                                 Scrt );
     phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( Scrt, phaseVolFraction[ipNonWetting] );
-    
+
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::NONWETTING];
     phaseRelPerm[ipNonWetting] = imbibitionRelPermKernelWrapper.compute( &phaseVolFraction[ipNonWetting],
                                                                          &dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
   }
   else if( !m_phaseHasHysteresis[IPT::NONWETTING] ||
-      phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
+           phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // for reporting purposes, compute Sgcrt first
     real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundPhaseVolFraction )
@@ -784,10 +784,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     phaseTrappedVolFrac[ipWetting] = LvArray::math::min( m_wettingCurve.oppositeBoundPhaseVolFraction, phaseVolFraction[ipWetting] );
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::WETTING];
     phaseRelPerm[ipWetting] = imbibitionRelPermKernelWrapper.compute( &phaseVolFraction[ipWetting],
-                                                                       &dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
+                                                                      &dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
   else if( !m_phaseHasHysteresis[IPT::WETTING] ||
-      phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
+           phaseVolFraction[ipWetting] <= phaseMinHistoricalVolFraction[ipWetting] + flowReversalBuffer )
   {
     phaseTrappedVolFrac[ipWetting] = LvArray::math::min( m_wettingCurve.oppositeBoundPhaseVolFraction, phaseVolFraction[ipWetting] );
     computeDrainageRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
@@ -834,13 +834,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                                                 m_jerauldParam_b,
                                                                 Scrt );
     phaseTrappedVolFrac[ipNonWetting] = LvArray::math::min( Scrt, phaseVolFraction[ipNonWetting] );
-    
+
     auto const & imbibitionRelPermKernelWrapper = m_imbibitionRelPermKernelWrappers[IPT::NONWETTING];
     phaseRelPerm[ipNonWetting] = imbibitionRelPermKernelWrapper.compute( &phaseVolFraction[ipNonWetting],
                                                                          &dPhaseRelPerm_dPhaseVolFrac[ipNonWetting][ipNonWetting] );
   }
   else if( !m_phaseHasHysteresis[IPT::NONWETTING] ||
-      phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
+           phaseVolFraction[ipNonWetting] >= phaseMaxHistoricalVolFraction[ipNonWetting] - flowReversalBuffer )
   {
     // 2.a) compute Sgcrt for reporting purposes
     real64 const Shy = ( phaseVolFraction[ipNonWetting] < m_nonWettingCurve.oppositeBoundPhaseVolFraction)

@@ -202,7 +202,7 @@ protected:
 
   virtual void postInputInitialization() override;
 
-  std::tuple<integer, integer> phaseIndex(const arrayView1d<const integer> &phaseOrder);
+  std::tuple< integer, integer > phaseIndex( const arrayView1d< const integer > & phaseOrder );
 
   // phase names read from input
   string_array m_phaseNames;
@@ -222,39 +222,39 @@ protected:
   array3d< real64, cappres::LAYOUT_CAPPRES > m_phaseTrappedVolFrac;
 };
 
-    inline std::tuple< integer, integer > CapillaryPressureBase::phaseIndex( arrayView1d< integer const > const & phaseOrder )
-    {
-        using PT = PhaseType;
-        integer const ipWater = phaseOrder[PT::WATER];
-        integer const ipOil = phaseOrder[PT::OIL];
-        integer const ipGas = phaseOrder[PT::GAS];
+inline std::tuple< integer, integer > CapillaryPressureBase::phaseIndex( arrayView1d< integer const > const & phaseOrder )
+{
+  using PT = PhaseType;
+  integer const ipWater = phaseOrder[PT::WATER];
+  integer const ipOil = phaseOrder[PT::OIL];
+  integer const ipGas = phaseOrder[PT::GAS];
 
-        integer ipWetting = -1, ipNonWetting = -1;
+  integer ipWetting = -1, ipNonWetting = -1;
 
-        if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipGas;
-        }
-        else if( ipWater < 0 )
-        {
-            ipWetting = ipOil;
-            ipNonWetting = ipGas;
-        }
-        else if( ipOil < 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipGas;
-        }
-        else if( ipGas < 0 )
-        {
-            ipWetting = ipWater;
-            ipNonWetting = ipOil;
-        }
+  if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipWater < 0 )
+  {
+    ipWetting = ipOil;
+    ipNonWetting = ipGas;
+  }
+  else if( ipOil < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipGas;
+  }
+  else if( ipGas < 0 )
+  {
+    ipWetting = ipWater;
+    ipNonWetting = ipOil;
+  }
 
-        //maybe a bit too pythonic
-        return std::make_tuple( ipWetting, ipNonWetting );
-    }
+  //maybe a bit too pythonic
+  return std::make_tuple( ipWetting, ipNonWetting );
+}
 
 } // namespace constitutive
 
