@@ -38,6 +38,25 @@ class LogHistory
 {
 public:
 
+  /** 
+   * @brief Records a diagnostic message occurrence in the history.
+   * @param diagMsg The diagnostic message associated
+   */
+  void recordDiagnostic( DiagnosticMsg const & diagMsg );
+
+  /**
+   * @brief Display the diagnostic statistics to the log
+   */
+  void diagnosticStatsReport();
+
+  /**
+   * @return The const historical diagnostic
+   */
+  auto const & getDiagnosticHistory() const
+  { return m_diagnosticHistory; }
+
+private:
+
   struct LogRecord
   {
     /** @brief Identifier for a diagnostic message (source localization). */
@@ -132,25 +151,6 @@ public:
     }
 
   };
-
-  /** * @brief Records a diagnostic message occurrence in the history.
-   * @param logPartName The string log part name.
-   * @param diagMsg The diagnostic message associated
-   */
-  void recordDiagnostic( string_view logPartName, DiagnosticMsg const & diagMsg );
-
-  /**
-   * @brief Display the diagnostic statistics to the log
-   */
-  void diagnosticStatsReport();
-
-  /**
-   * @return The const historical diagnostic
-   */
-  auto const & getDiagnosticHistory() const
-  { return m_diagnosticHistory; }
-
-private:
 
   /// @cond DO_NOT_DOCUMENT
   struct LocationKeyHash

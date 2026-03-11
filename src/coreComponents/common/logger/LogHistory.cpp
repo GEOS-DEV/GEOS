@@ -65,28 +65,33 @@ void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordByt
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  auto filenameSize = m_key.m_filename.size();
-  auto logPartSize = m_value.m_logPart.size();
-
-  auto const serializeField = [&]( void const * data, size_t size )
+  auto const serializePrimitive = [&]( auto const data )
   {
-    buffer_unit_type const * d = reinterpret_cast<buffer_unit_type const *>(data) ;
-    out.insert( out.end(), d, d + size );
+    buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
+    buffer_unit_type const * end = begin + sizeof(data);
+    out.insert( out.end(), begin, end );
   };
-  serializeField( &filenameSize, sizeof(string::size_type));
-  serializeField( m_key.m_filename.data(), m_key.m_filename.size());
-  serializeField( &m_key.m_lineId, sizeof(integer));
-  serializeField( &logPartSize, sizeof(string::size_type));
-  serializeField( m_value.m_logPart.data(), m_value.m_logPart.size());
-  serializeField( &m_value.m_msgType, sizeof(MsgType) );
+
+  auto const serializeString = [&]( string const & data )
+  {
+    serializePrimitive( data.size());
+    auto * begin = data.data();
+    auto * end = begin + data.size();
+    out.insert( out.end(), begin, end );
+  };
+
+  serializeString( m_key.m_filename );
+  serializePrimitive( m_key.m_lineId );
+  serializeString( m_value.m_logPart );
+  serializePrimitive( m_value.m_msgType );
 }
 
-void LogHistory::recordDiagnostic( string_view logPartName, DiagnosticMsg const & msgType )
+void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
 {
   string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
   insertDiagnosticReport( { {string( fileName ), lineCount},
-                            {string( logPartName ), msgType.m_type, 1} } );
+                            {string( msgType.m_logPart ), msgType.m_type, 1} } );
 }
 
 void LogHistory::insertDiagnosticReport( LogRecord logRecord )
@@ -155,7 +160,7 @@ void LogHistory::diagnosticStatsReport()
   stdVector< buffer_unit_type > localLogRecords( 0 );
   integer totalSize = 0;
 
-  //0 - dry run
+  //0 - alloc reserve
   for( auto const & [key, value] : getDiagnosticHistory() )
   {
     LogRecord record( key, value );
@@ -186,7 +191,7 @@ void LogHistory::diagnosticStatsReport()
       while( startGlobalRecord < rankEnd )
       {
         LogRecord unpackRecord;
-        unpackRecord.deserialize( startGlobalRecord,rankEnd );
+        unpackRecord.deserialize( startGlobalRecord, rankEnd );
         history.insertDiagnosticReport( unpackRecord );
       }
     }
