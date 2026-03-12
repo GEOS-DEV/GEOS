@@ -129,16 +129,19 @@ foreach( test ${gtest_geosx_tests} )
   set_tests_properties( ${test_name} PROPERTIES
                         ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>"
                         LABELS "${test_name}" )
-  
-  # Copy DFN-market mesh files from meshTests/dfn_market/
-  foreach( mesh_file ${dfn_market_mesh_files} )
-    add_custom_command(
-        TARGET ${test_name} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
-                $<TARGET_FILE_DIR:${test_name}>
-    )
-  endforeach()
+endforeach()
+
+# ---------------------------------------------------------------------------
+# Copy DFN-market mesh files into the test output directory at configure time.
+# These are static assets committed to the repository, so a one-time copy is
+# sufficient and avoids the race condition that arises with Ninja when
+# multiple POST_BUILD commands from different targets write the same files
+# to the same directory in parallel.
+# ---------------------------------------------------------------------------
+file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
+foreach( mesh_file ${dfn_market_mesh_files} )
+  file( COPY ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
@@ -183,14 +186,6 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                         ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sg_mpi_test_name}>"
                         LABELS "${sg_mpi_test_name}" )
 
-  # Copy all DFN-market mesh files to the MPI test binary directory
-  foreach( mesh_file ${dfn_market_mesh_files} )
-    add_custom_command(
-        TARGET ${sg_mpi_test_name} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
-                $<TARGET_FILE_DIR:${sg_mpi_test_name}>
-    )
-  endforeach()
+  # DFN-market mesh files are already copied at configure time (see above).
 
 endif()

@@ -31,6 +31,17 @@ set( mesh_files
      DFN_5_fractures_tet_binarized.vtu
 )
 
+# ---------------------------------------------------------------------------
+# Copy DFN-market mesh files into the test output directory at configure time.
+# These are static assets; a one-time copy avoids the Ninja race condition
+# that arises when multiple POST_BUILD commands write the same files in parallel.
+# ---------------------------------------------------------------------------
+file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
+foreach( mesh_file ${mesh_files} )
+  file( COPY ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+endforeach()
+
 # testFEMConsistency: serial (single-rank) variant is always built.
 # Additionally, the multi-rank MPI variant (4 ranks) is built on CPU-only MPI builds.
 
@@ -48,15 +59,6 @@ geos_add_test( NAME ${test_name}
 
 set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
 target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
-
-foreach( mesh_file ${mesh_files} )
-  add_custom_command(
-      TARGET ${test_name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-              ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
-              $<TARGET_FILE_DIR:${test_name}>
-  )
-endforeach()
 
 # --- MPI variant (CPU-only MPI builds) ---
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
@@ -77,13 +79,4 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
     target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
-
-    foreach( mesh_file ${mesh_files} )
-      add_custom_command(
-          TARGET ${test_name} POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                  ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
-                  $<TARGET_FILE_DIR:${test_name}>
-      )
-    endforeach()
 endif()
