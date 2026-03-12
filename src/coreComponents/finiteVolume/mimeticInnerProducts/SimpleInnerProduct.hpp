@@ -23,6 +23,9 @@
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include <iostream>
+#include <iomanip>
+
 
 namespace geos
 {
@@ -64,7 +67,18 @@ public:
            real64 const (&elemPerm)[ 3 ],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
-
+    
+  template< localIndex NF >
+  GEOS_HOST_DEVICE
+  static void
+  computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+            ArrayOfArraysView< localIndex const > const & faceToNodes,
+            arraySlice1d< localIndex const > const & elemToFaces,
+            arraySlice1d< real64 const > const & elemCenter,
+            real64 const & elemVolume,
+            real64 const (&elemPerm)[ 3 ],
+            real64 const & lengthTolerance,
+            arraySlice2d< real64 > const & M );
 };
 
 template< localIndex NF >
@@ -194,6 +208,121 @@ SimpleInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   }
 
 }
+
+template< localIndex NF >
+GEOS_HOST_DEVICE
+void
+SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                              ArrayOfArraysView< localIndex const > const & faceToNodes,
+                              arraySlice1d< localIndex const > const & elemToFaces,
+                              arraySlice1d< real64 const > const & elemCenter,
+                              real64 const & elemVolume,
+                              real64 const (&elemPerm)[ 3 ],
+                              real64 const & lengthTolerance,
+                              arraySlice2d< real64 > const & M )
+{
+    real64 const areaTolerance = lengthTolerance * lengthTolerance;
+    // 0) Helper: diagonal inverse of [k1, k2, k3]
+    real64 Kinv[3][3] = {{ 0 }};
+    for( int i =0; i < 3; ++i)
+    {
+        Kinv[i][i] = 1.0 / elemPerm[i];
+    }
+    
+    // 1) Compute C, N, A
+    real64 C[ NF ][ 3 ] = {{ 0 }};
+    real64 N[ NF ][ 3 ] = {{ 0 }};
+    real64 A[ NF ] = { 0.0 };
+    
+    for( localIndex i = 0; i < NF; ++i)
+    {
+        real64 fCenter[3], fNormal[3];
+        real64 area = computationalGeometry::centroid_3DPolygon(
+              faceToNodes[elemToFaces[i]], nodePosition, fCenter, fNormal, areaTolerance );
+        
+        real64 vec_cf[3];
+        LvArray::tensorOps::copy<3>(vec_cf, fCenter);
+        LvArray::tensorOps::subtract<3>(vec_cf, elemCenter);
+        if ( LvArray::tensorOps::AiBi<3>(vec_cf, fNormal) < 0.0 )
+        {
+            LvArray::tensorOps::scale<3>(fNormal, -1.0);
+        }
+        
+        for ( int d = 0; d < 3; ++d)
+        {
+            C[i][d] = vec_cf[d];
+            N[i][d] = fNormal[d] * area;
+        }
+        
+        A[i] = area;
+    }
+    
+    // 2) Compute C K^{-1} C^T / volume
+    real64 CKCt[ NF ][ NF ] = {{0}};
+    real64 work3xNF[ 3 ][ NF ] = {{0}};
+    
+    LvArray::tensorOps::Rij_eq_AikBjk< 3, NF, 3 >( work3xNF, Kinv, C );
+    LvArray::tensorOps::Rij_eq_AikBkj< NF, NF, 3 >( CKCt, C, work3xNF );
+    LvArray::tensorOps::scale< NF, NF >( CKCt, 1.0 / elemVolume );
+    
+    // 3) Q = orth(N / A)
+    real64 q0[ NF ], q1[ NF ], q2[ NF ];
+    real64 Qmat[ NF ][ 3 ];
+    for( localIndex i = 0; i < NF; ++i)
+    {
+        q0[i] = N[i][0] / A[i];
+        q1[i] = N[i][1] / A[i];
+        q2[i] = N[i][2] / A[i];
+    }
+    
+    MimeticInnerProductHelpers::orthonormalize< NF >( q0, q1, q2, Qmat );
+    
+    // 4) U = I - Q Q^T
+    real64 U[ NF ][ NF ] = {{0}};
+    LvArray::tensorOps::addIdentity< NF >( U, -1.0 );
+    LvArray::tensorOps::Rij_add_AikAjk< NF, 3 >( U, Qmat );
+    LvArray::tensorOps::scale< NF, NF >( U, -1.0 );
+    
+    // 5) A^{-1} * U * A^{-1}
+    real64 invA[ NF ];
+    for( localIndex i = 0; i < NF; ++i)
+    {
+        invA[i] = 1.0 / A[i];
+    }
+    
+    // temp = A^{-1} * U
+    real64 temp[ NF ][ NF ];
+    for ( localIndex i = 0; i < NF; ++i )
+    {
+        for ( localIndex j = 0; j < NF; ++j )
+        {
+            temp[i][j] = invA[i] * U[i][j];
+        }
+    }
+    
+    // Usc = A^{-1} * U * A^{-1}
+    real64 Usc[ NF ][ NF ];
+    for ( localIndex i = 0; i < NF; ++i )
+    {
+        for ( localIndex j = 0; j < NF; ++j )
+        {
+            Usc[i][j] = temp[i][j] * invA[j];
+        }
+    }
+    
+    // 6) M = CKCt + (v / t) * Usc
+    real64 tParam = 2.0 * ( elemPerm[0] + elemPerm[1] + elemPerm[2] );
+    real64 scale = elemVolume / tParam;
+    
+    for( localIndex i = 0; i < NF; ++i )
+    {
+        for ( localIndex j = 0; j < NF; ++j)
+        {
+            M[i][j] = CKCt[i][j] + scale * Usc[i][j];
+        }
+    }
+}
+
 
 } // end namespace mimeticInnerProduct
 

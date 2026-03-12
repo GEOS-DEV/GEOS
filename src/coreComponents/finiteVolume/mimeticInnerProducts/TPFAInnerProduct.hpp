@@ -60,7 +60,18 @@ public:
            real64 const (&elemPerm)[ 3 ],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
-
+    
+  template< localIndex NF>
+  GEOS_HOST_DEVICE
+  static void
+  computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+           ArrayOfArraysView< localIndex const > const & faceToNodes,
+           arraySlice1d< localIndex const > const & elemToFaces,
+           arraySlice1d< real64 const > const & elemCenter,
+           real64 const & elemVolume,
+           real64 const (&elemPerm)[ 3 ],
+           real64 const & lengthTolerance,
+           arraySlice2d< real64 > const & M );
 };
 
 template< localIndex NF >
@@ -128,6 +139,68 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
     }
   }
 }
+
+template< localIndex NF >
+GEOS_HOST_DEVICE
+void
+TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                           ArrayOfArraysView< localIndex const > const & faceToNodes,
+                           arraySlice1d< localIndex const > const & elemToFaces,
+                           arraySlice1d< real64 const > const & elemCenter,
+                           real64 const & elemVolume,
+                           real64 const (&elemPerm)[ 3 ],
+                           real64 const & lengthTolerance,
+                           arraySlice2d< real64 > const & M )
+{
+  GEOS_UNUSED_VAR( elemVolume );
+
+  real64 const areaTolerance = lengthTolerance * lengthTolerance;
+  real64 const weightTolerance = 1e-30 * lengthTolerance;
+    
+  // initialize M to zero
+    for( localIndex i = 0; i < NF; ++i )
+    {
+        for ( localIndex j = 0; j < NF; ++j)
+        {
+            M[i][j] = 0.0;
+        }
+    }
+    
+    for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+    {
+        real64 faceCenter[3], faceNormal[3], faceConormal[3], cellToFaceVec[3];
+        
+        // 1) face geometry
+        real64 const faceArea =
+                  computationalGeometry::centroid_3DPolygon( faceToNodes[elemToFaces[ifaceLoc]],
+                                                             nodePosition,
+                                                             faceCenter,
+                                                             faceNormal,
+                                                             areaTolerance );
+        
+        LvArray::tensorOps::copy<3>(cellToFaceVec, faceCenter);
+        LvArray::tensorOps::subtract<3>(cellToFaceVec, elemCenter);
+        
+        if( LvArray::tensorOps::AiBi<3>(cellToFaceVec, faceNormal) < 0.0 )
+        {
+            LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
+        }
+        
+        real64 const c2fDistance = LvArray::tensorOps::normalize<3>( cellToFaceVec );
+        
+        // 2) K * n (TPFA assumes diagonal K)
+        LvArray::tensorOps::hadamardProduct<3>(faceConormal, elemPerm, faceNormal);
+        
+        // 3) compute T_ii
+        real64 Tii = LvArray::tensorOps::AiBi<3>( cellToFaceVec, faceConormal ) * faceArea / c2fDistance;
+        
+        Tii = LvArray::math::max( Tii, weightTolerance );
+        
+        // 4) M = |T|^{-1}
+        M[ifaceLoc][ifaceLoc] = 1.0 / LvArray::math::abs( Tii );
+    }
+}
+
 
 } // end namespace mimeticInnerProduct
 
