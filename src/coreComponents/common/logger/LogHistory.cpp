@@ -53,6 +53,12 @@ LogHistory::LogRecord::LogRecord( Key const & key, Values const & values ):
   m_value( values )
 {}
 
+bool LogHistory::LogRecord::Key::operator==( Key const & rhs ) const
+{
+  return this->m_filename == rhs.m_filename  &&
+         this->m_lineId == rhs.m_lineId;
+}
+
 void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
   deserializeField( m_key.m_filename, logRecordBytes, end );
@@ -91,14 +97,16 @@ void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
   string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
   insertDiagnosticReport( {
-      {
-        string( fileName ),
-        lineCount
+      /*.m_key = */ {
+        /* .m_filename = */ string( fileName ),
+        /* .m_lineId = */ lineCount
       },
-      {
-        string( msgType.m_logPart ),
-        msgType.m_type, 1
-      } } );
+      /*.m_value =*/ {
+        /* .m_logPart = */ string( msgType.m_logPart ),
+        /* .m_msgType = */ msgType.m_type,
+        /* .m_count = */ 1
+      }
+    } );
 }
 
 void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
@@ -114,6 +122,13 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
   }
 }
 
+/**
+ * @brief Gather buffer with different size to rank 0
+ * @tparam T The type of buffer to retrieve
+ * @param bufferToSend The buffer we send to rank 0
+ * @return A pair of : - global allocation (buffers retrieved to rank 0)
+ *                     - The vector containing the different buffer size
+ */
 template< typename T >
 std::pair< stdVector< T >, stdVector< integer > >
 gatherBufferRank0( stdVector< T > const & bufferToSend )

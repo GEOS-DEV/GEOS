@@ -68,6 +68,8 @@ private:
     {
       string m_filename; ///< Source file name
       integer m_lineId;  ///< Line number in the file.
+
+      bool operator==( Key const & lhs ) const;
     } m_key;
 
     /** @brief Content and metadata of the diagnostic message. */
@@ -175,24 +177,13 @@ private:
     }
 
   };
-
-  struct LocationKeyEqual
-  {
-
-    bool operator()( LogRecord::Key const & lhs,
-                     LogRecord::Key const & rhs ) const
-    {
-      return lhs.m_filename == rhs.m_filename  &&
-             lhs.m_lineId == rhs.m_lineId;
-    }
-  };
   /// @endcond
 
   /**
    * @brief Diagnostic history happened during the simulation
    */
   stdUnorderedMap< LogRecord::Key, LogRecord::Values,
-                   LocationKeyHash, LocationKeyEqual > m_diagnosticHistory;
+                   LocationKeyHash > m_diagnosticHistory;
 };
 
 /**
