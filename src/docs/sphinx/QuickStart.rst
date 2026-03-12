@@ -350,7 +350,7 @@ We can do a quick check that the geosx executable is working properly by calling
 
   ./bin/geosx --help
 
-This should print out a brief summary of the available command line arguments:
+This should print out the available command line arguments with their description:
 
 .. code-block:: sh
 
@@ -359,21 +359,26 @@ This should print out a brief summary of the available command line arguments:
 
     Options:
     -?, --help
-    -i, --input,             Input xml filename (required)
-    -r, --restart,           Target restart filename
-    -x, --x-partitions,      Number of partitions in the x-direction
-    -y, --y-partitions,      Number of partitions in the y-direction
-    -z, --z-partitions,      Number of partitions in the z-direction
-    -s, --schema,            Name of the output schema
-    -v, --validate-input,    only do the loading phase, and not actual simulation. Useful to validate 'input'.
-    -b, --use-nonblocking,   Use non-blocking MPI communication
-    -n, --name,              Name of the problem, used for output
-    -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
-    -o, --output,            Directory to put the output files
-    -t, --timers,            String specifying the type of timer output
-    --trace-data-migration,  Trace host-device data migration
-    -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
-    --pause-for,             Pause geosx for a given number of seconds before starting execution
+    -i, --input,                  Input xml filename (required)
+    -r, --restart,                Target restart filename
+    -x, --x-partitions,           Number of partitions in the x-direction
+    -y, --y-partitions,           Number of partitions in the y-direction
+    -z, --z-partitions,           Number of partitions in the z-direction
+    -s, --schema,                 Name of the output schema
+    -v, --validate-input,         Only do the loading phase, and not actual simulation. Useful to validate 'input'.
+    -d, --diagnostic-info-level,  Diagnostic message information level:
+                                    0 = basic information (default),
+                                    1 = errors source-code information,
+                                    2 = warnings & errors source-code information.
+    -b, --use-nonblocking,        Use non-blocking MPI communication
+    -n, --name,                   Name of the problem, used for output
+    -s, --suppress-pinned,        Suppress usage of pinned memory for MPI communication buffers
+    -o, --output,                 Directory to put the output files
+    -t, --timers,                 String specifying the type of timer output
+    --trace-data-migration,       Trace host-device data migration
+    -m, --memory-usage,           Minimum threshold for printing out memory allocations in a member of the data repository.
+    --pause-for,                  Pause geosx for a given number of seconds before starting execution
+    -e, --errors-output,          Output path for the errors file (".yaml" supported)
 
     Rank 0: No XML input file nor schema specified. Exiting...
 
