@@ -958,6 +958,11 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
+    // Ensure the stick/slip maps contain an entry for this mesh even when
+    // the fracture face type map is empty (no fracture elements).
+    this->m_faceTypesToFaceElementsStick.get_inserted( meshName );
+    this->m_faceTypesToFaceElementsSlip.get_inserted( meshName );
+
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -1048,9 +1053,11 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    // Nothing to do when there are no fracture face elements.
+    // When there are no fracture face elements, insert empty lists so that
+    // downstream .at( meshName ) lookups do not throw.
     if( subRegion.size() == 0 )
     {
+      this->m_faceTypesToFaceElements.get_inserted( meshName );
       return;
     }
 
