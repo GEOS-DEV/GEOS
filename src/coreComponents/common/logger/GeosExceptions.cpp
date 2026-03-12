@@ -25,14 +25,14 @@ namespace geos
 
 thread_local std::ostringstream Exception::m_formattingOSS;
 
-void Exception::prepareWhat( DiagnosticMsg & msg ) noexcept
+void Exception::prepareWhat( ErrorLogger const & logger, DiagnosticMsg & msg ) noexcept
 {
   m_formattingOSS.str( "" );
   m_formattingOSS.clear();
 
   ErrorLogger::formatMsgForLog( msg,
                                 m_formattingOSS,
-                                ErrorLogger::global().isSourceInfoEnabled( msg.m_type ) );
+                                logger.isSourceInfoEnabled( msg.m_type ) );
   m_cachedWhat = m_formattingOSS.bad() ? "Exception formatting error!" : m_formattingOSS.str();
 }
 

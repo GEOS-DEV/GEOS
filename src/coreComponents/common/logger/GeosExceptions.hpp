@@ -52,7 +52,7 @@ public:
    * @brief Prepare and cache the formatted exception message
    * @param msg Error message logger for structured error reporting
    */
-  void prepareWhat( DiagnosticMsg & msg ) noexcept;
+  void prepareWhat( ErrorLogger const & logger, DiagnosticMsg & msg ) noexcept;
 
 private:
   /// Formatted exception message for what() method
