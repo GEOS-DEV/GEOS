@@ -635,7 +635,7 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
 
       applyDeltaVolume( subRegion );
 
-      // This should fix NaN density in newly created fracture elements
+      // This should fix NaN density in newly created fracture elements 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy
@@ -1197,7 +1197,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   if(m_computePrescribedStressPath)
   {
     // m_updateStencil is temporary
-    if(m_updateStencil) prepareStencilWeights( domain );
+    //if(m_updateStencil) prepareStencilWeights( domain );
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1209,9 +1209,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       } );
     } );
     // m_updateStencil is temporary
-    if(m_updateStencil) updateStencilWeights( domain );
+    //if(m_updateStencil) updateStencilWeights( domain );
   }
-
+  
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )

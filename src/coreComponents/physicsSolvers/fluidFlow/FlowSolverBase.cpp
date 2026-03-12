@@ -112,7 +112,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
   m_computePrescribedStressPath( 0 ),
-  m_updateStencil( 0 ), 
   m_keepVariablesConstantDuringInitStep( false ),
   m_isFixedStressPoromechanicsUpdate( false ),
   m_isJumpStabilized( false ),
@@ -127,13 +126,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );
-
-  // TODO: temporary. It will be removed after analyzing the impact of computing or not the gemoetric component 
-  // of the transmissibility (aka stencil weights).
-  this->registerWrapper( viewKeyStruct::updateStencilString(), &m_updateStencil ). 
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility)." );  
 
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
@@ -641,7 +633,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOS_MARK_FUNCTION;
 
-
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
@@ -683,7 +674,7 @@ void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegio
     
     newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
   } );
-
+  
 }
 
 

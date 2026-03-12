@@ -100,16 +100,16 @@ Both quantities — the updated aperture and the resulting permeability — affe
 Single-phase flow solver with fracture aperture update
 ------------------------------------------------------------------
 
-The single-phase flow solver definition in the input file remains the same, with the exception of two optional flags. The first, ``computePrescribedStressPath``, enables the computation of the updated fracture aperture using the new ``BartonBandisStressPathDriven`` class. If this constitutive law is not defined in the input file while the flag is set to 1, an error will be raised. Also, if this flag is set to 0, the fracture aperture will not be updated, even if the constitutive law is defined. The second, ``updateStencil``, is a temporary flag to enable the update of the geometric component of the transmissibility. Further analysis is necessary to check the impact of this update in the transmissibility.
+The single-phase flow solver definition in the input file remains the same, with the exception of one optional flag. The flag ``computePrescribedStressPath`` enables the computation of the updated fracture aperture using the new ``BartonBandisStressPathDriven`` class. If this constitutive law is not defined in the input file while the flag is set to 1, an error will be raised. Also, if this flag is set to 0, the fracture aperture will not be updated, even if the constitutive law is defined.
 
 .. literalinclude:: ../../../../../inputFiles/stressPathDrivenGeomechanics/fractureMatrixFlow_edfm_SPD_base.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_STRESS_PATH_DRIVEN -->
   :end-before: <!-- SPHINX_TUT_STRESS_PATH_DRIVEN_END -->
 
-To trigger the fracture aperture computation, the new constitutive class first had to be made visible to the ``SinglePhaseBase`` class. This required a modification to the code architecture. Specifically, the header file of the contact law manager (``HydraulicApertureRelationSelector``) is now included and therefore accessible to all single-phase flow solvers. A new function was then implemented to apply the stress-path-driven Barton–Bandis law to the fracture elements, and it is defined in the ``FlowSolverBase`` class.
+To trigger the fracture aperture computation, the new constitutive class had to be visible to the ``FlowSolverBase`` class. This required a modification to the code architecture, once flow solvers in the current version of GEOS can only manipulate constitutive law classes for permeability and porosity. Since the new class is a contact law, the header file of its manager (``HydraulicApertureRelationSelector``) is now included and therefore accessible to all flow solvers. A new function was then implemented to apply the stress-path driven Barton–Bandis law to the fracture elements, and it is defined in the ``FlowSolverBase`` class.
 
-This new functionality is illustrated in the diagram below. The entry point of the updated code flow is the ``updateState`` function in the ``PhysicsSolverBase`` class. The execution then proceeds to its implementation in the ``SinglePhaseBase`` class, two levels below in the class hierarchy. If the ``computePrescribedStressPath`` flag is enabled, the function defined in the FlowSolverBase class is invoked to compute the updated fracture aperture using the stress-path-driven Barton–Bandis class.
+This new functionality is illustrated in the diagram below. The entry point of the updated code flow is the ``updateState`` function in the ``PhysicsSolverBase`` class. The execution then proceeds to its implementation in the ``SinglePhaseBase`` class, two levels below in the class hierarchy. If the ``computePrescribedStressPath`` flag is enabled, the function defined in the ``FlowSolverBase`` class is invoked to compute the updated fracture aperture using the stress-path-driven Barton–Bandis class.
 
 
 .. figure:: bartonBandisSPDDiagram.png

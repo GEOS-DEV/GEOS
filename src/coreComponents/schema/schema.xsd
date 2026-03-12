@@ -3145,8 +3145,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useDBC => Enable Dissipation-based continuation flux-->
 		<xsd:attribute name="useDBC" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
@@ -3259,8 +3257,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativeTemperatureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar. Warning : Affects SourceFlux rates units.-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -3981,8 +3977,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRelativePressureChangeInTimeStep" type="real64" default="0.2" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Flag indicating whether total mass equation is used-->
@@ -4504,8 +4498,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4573,8 +4565,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
 		<xsd:attribute name="transMultExp" type="real64" default="1" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
@@ -4678,8 +4668,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -4736,8 +4724,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
@@ -5033,8 +5019,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" default="0" />
-		<!--updateStencil => Flag to determine whether or not this simulation updates the stencil weights (aka geometric component of the transmissibility).-->
-		<xsd:attribute name="updateStencil" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
