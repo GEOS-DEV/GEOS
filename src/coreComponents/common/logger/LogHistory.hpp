@@ -69,7 +69,7 @@ private:
       string m_filename; ///< Source file name
       integer m_lineId;  ///< Line number in the file.
 
-      bool operator==( Key const & lhs ) const;
+      bool operator==( Key const & lhs ) const; ///< operator ==
     } m_key;
 
     /** @brief Content and metadata of the diagnostic message. */
