@@ -70,18 +70,19 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 1) select the local perforations based on connectivity to the local reservoir elements
   subRegion.connectPerforationsToMeshElements( mesh, lineBlock, geomTol );
-
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
+  //should we do this check in the well generator? Here we don't have the wellGeneratorDataContext
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
-                 "Invalid mapping perforation-to-element in "<<
-                 InternalWellGenerator::catalogName() << " " << getWellGeneratorName() << "." <<
-                 " This happens when GEOSX cannot match a perforation with a reservoir element." <<
-                 " There are two common reasons for this error:\n" <<
-                 " 1- The most common reason for this error is that a perforation is on a section of " <<
-                 " the well polyline located outside the domain.\n" <<
-                 " 2- This error can also happen if a perforation falls on a mesh face or a mesh vertex." <<
-                 " Please try to move the perforation slightly (to the interior of the perforated cell) to see if it fixes the problem.",
-                 InputError );
+                 GEOS_FMT( "Invalid mapping perforation-to-element in {} {}. This happens when GEOSX cannot match "
+                           "a perforation with a reservoir element. There are two common reasons for this error:\n"
+                           " 1- The most common reason for this error is that a perforation is on a section of "
+                           " the well polyline located outside the domain.\n"
+                           " 2- This error can also happen if a perforation falls on a mesh face or a mesh vertex."
+                           " Please try to move the perforation slightly (to the interior of the perforated cell) "
+                           "to see if it fixes the problem.",
+                           InternalWellGenerator::catalogName(),
+                           getWellGeneratorName() ),
+                 InputError, getDataContext() );
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;

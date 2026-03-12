@@ -203,7 +203,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                GEOS_FMT( "No set are available for the targeted `{}`",
                                          FieldSpecificationBase::viewKeyStruct::objectPathString() ) );
 
-      GEOS_THROW( errorMessageBuilder.str(), InputError );
+      GEOS_THROW( errorMessageBuilder.str(), InputError, getDataContext() );
     }
 
     if( !setTypesMap.empty() && MpiWrapper::commRank() == 0 )
@@ -254,7 +254,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         case  FieldSpecificationBase::SetErrorMode::silent:
           break;
         case  FieldSpecificationBase::SetErrorMode::error:
-          GEOS_THROW( message.str(), InputError );
+          GEOS_THROW( message.str(), InputError, getDataContext() );
           break;
         case  FieldSpecificationBase::SetErrorMode::warning:
           if( m_isSurfaceGenerationCase )
@@ -288,7 +288,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                  GEOS_FMT( "No available field in {}.",
                                            fs.getObjectPath() ) );
 
-      GEOS_THROW( errorMessageBuilder.str(), InputError );
+      GEOS_THROW( errorMessageBuilder.str(), InputError, getDataContext() );
     }
   } );
 }
