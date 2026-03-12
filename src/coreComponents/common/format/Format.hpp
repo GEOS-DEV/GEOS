@@ -151,4 +151,28 @@ concept has_formatter_v = requires ( T& v, std::format_context ctx )
 };
 #endif
 
+namespace geos::format
+{
+
+template< class T >
+inline std::string toStringForFmt( T const & v )
+{
+  if constexpr ( std::is_convertible_v< T, std::string > )
+  {
+    return std::string( v );
+  }
+  else if constexpr ( std::is_convertible_v< T, std::string_view > )
+  {
+    return std::string( std::string_view( v ) );
+  }
+  else
+  {
+    std::ostringstream os;
+    os << v;              // requires operator<<(ostream&, T)
+    return os.str();
+  }
+}
+
+} // namespace geos::format
+
 #endif //GEOS_COMMON_FORMAT_HPP_

@@ -183,6 +183,28 @@
       asm ( "trap;" ); \
     } \
   } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      GEOS_UNUSED_VAR( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ); \
+      constexpr char const * formatString = "***** ERROR\n" \
+                                            "***** LOCATION" LOCATION "\n" \
+                                                                      "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                      "***** THREAD: [%u, %u, %u]\n" \
+                                                                      "***** %s\n" \
+                                                                      "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
+    } \
+  } while( false )
 #endif
 
 /**
@@ -212,7 +234,7 @@
  *            - Mandatory first parameter, the type of the exception to throw
  *            - Optional following parameters, context information on the current error (DataContext)
  */
- #if !defined(GEOS_DEVICE_COMPILE)
+#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -234,7 +256,7 @@
       throw ex; \
     } \
   }while( false )
-  #elif __CUDA_ARCH__
+#elif __CUDA_ARCH__
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -248,6 +270,29 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      ::geos::internal::DeviceNullStream __geosNullStream; \
+      __geosNullStream << MSG; \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** %s\n" \
+                                                                   "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
     } \
   } while( false )
 #endif
@@ -315,6 +360,27 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** WARNING\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** %s\n" \
+                                                                   "***** %s\n\n"; \
+      printf( formatString, \
+              blockIdx.x, blockIdx.y, blockIdx.z, \
+              threadIdx.x, threadIdx.y, threadIdx.z, \
+              STRINGIZE( CAUSE_MESSAGE ), \
+              STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) \
+              ); \
+      asm volatile ( "s_trap 2" ); \
     } \
   } while( false )
 #endif

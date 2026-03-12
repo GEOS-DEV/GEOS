@@ -83,6 +83,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
                          status.m_sepLine, status.m_hasContent );
       tableOutput.flush();
     }
+
   }
 }
 

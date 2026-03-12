@@ -114,11 +114,6 @@ public:
   {
     Base::postInputInitialization();
 
-    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
-                   GEOS_FMT( "The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
-                             this->flowSolver()->getName() ),
-                   InputError, this->flowSolver()->getDataContext() );
-
     GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
                    GEOS_FMT( "The attribute `{}` of solid mechanics solver `{}` must be `{}`",
                              SolidMechanicsLagrangianFEM::viewKeyStruct::timeIntegrationOptionString(),
@@ -151,9 +146,14 @@ public:
   {
     Base::initializePreSubGroups();
 
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
+                             this->flowSolver()->getName() ),
+                   InputError, this->flowSolver()->getDataContext() );
+
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
-                   this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
-                   ": Local stabilization has been temporarily disabled",
+                   GEOS_FMT( "{}: Local stabilization has been temporarily disabled",
+                             this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) ),
                    InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );

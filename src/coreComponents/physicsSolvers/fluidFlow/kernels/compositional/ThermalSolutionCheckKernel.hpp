@@ -75,6 +75,7 @@ public:
                        arrayView1d< real64 const > const localSolution,
                        ElementsReporterCollector const & negPressureIds,
                        ElementsReporterCollector const & negDensityIds,
+                       ElementsReporterCollector const & negTotalDensityIds,
                        integer const temperatureOffset )
     : Base( allowCompDensChopping,
             allowNegativePressure,
@@ -90,7 +91,8 @@ public:
             subRegion,
             localSolution,
             negPressureIds,
-            negDensityIds ),
+            negDensityIds,
+            negTotalDensityIds ),
     m_temperature( temperature ),
     m_temperatureScalingFactor( temperatureScalingFactor ),
     m_temperatureOffset( temperatureOffset )
@@ -168,12 +170,13 @@ public:
                    arrayView1d< real64 const > const localSolution,
                    ElementsReporterCollector const & negPressureIds,
                    ElementsReporterCollector const & negDensityIds,
+                   ElementsReporterCollector const & negTotalDensityIds,
                    integer temperatureOffset )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
-                                pressure, temperature, compDens, pressureScalingFactor, compDensScalingFactor, temperatureScalingFactor,
-                                rankOffset, numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds,
-                                temperatureOffset );
+                                pressure, temperature, compDens, pressureScalingFactor, compDensScalingFactor,
+                                temperatureScalingFactor, rankOffset, numComp, dofKey, subRegion, localSolution,
+                                negPressureIds, negDensityIds, negTotalDensityIds, temperatureOffset );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 

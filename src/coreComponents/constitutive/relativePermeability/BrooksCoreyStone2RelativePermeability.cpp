@@ -101,6 +101,7 @@ void BrooksCoreyStone2RelativePermeability::postInputInitialization()
     {
       return GEOS_FMT( "invalid value at {}[{}]", attribute, ip );
     };
+    GEOS_UNUSED_VAR( errorMsg );
     GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
                           InputError, getDataContext() );
@@ -121,6 +122,7 @@ void BrooksCoreyStone2RelativePermeability::postInputInitialization()
     {
       return GEOS_FMT( "invalid value at {}[{}]", attribute, ip );
     };
+    GEOS_UNUSED_VAR( errorMsg );
     if( m_phaseOrder[PhaseType::WATER] >= 0 )
     {
       GEOS_THROW_IF_LT_MSG( m_waterOilRelPermExponent[ip], 0.0,

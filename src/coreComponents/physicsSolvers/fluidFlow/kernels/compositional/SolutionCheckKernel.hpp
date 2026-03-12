@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
+#include "LvArray/src/math.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
@@ -74,7 +75,8 @@ public:
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
                        ElementsReporterCollector const & negPressureIds,
-                       ElementsReporterCollector const & negDensityIds )
+                       ElementsReporterCollector const & negDensityIds,
+                       ElementsReporterCollector const & negTotalDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -89,7 +91,8 @@ public:
     m_scalingFactor( scalingFactor ),
     m_scalingType( scalingType ),
     m_negPressureIds( negPressureIds ),
-    m_negDensityIds( negDensityIds )
+    m_negDensityIds( negDensityIds ),
+    m_negTotalDensityIds( negTotalDensityIds )
   {}
 
   /**
@@ -104,23 +107,19 @@ public:
     {}
 
     KernelStats( real64 _localMinVal,
-                 real64 _localNegMinPres,
+                 real64 _localMinNegPres,
                  real64 _localMinNegDens,
-                 real64 _localMinNegTotalDens,
-                 integer _localNumNegTotalDens )
+                 real64 _localMinNegTotalDens )
       :
       Base::StackVariables( _localMinVal ),
-      localMinNegPres( _localNegMinPres ),
+      localMinNegPres( _localMinNegPres ),
       localMinNegDens( _localMinNegDens ),
-      localMinNegTotalDens( _localMinNegTotalDens ),
-      localNumNegTotalDens( _localNumNegTotalDens )
+      localMinNegTotalDens( _localMinNegTotalDens )
     { }
 
     real64 localMinNegPres;
     real64 localMinNegDens;
     real64 localMinNegTotalDens;
-
-    localIndex localNumNegTotalDens; // Can only be 0 or 1 in each kernel
   };
 
   /**
@@ -134,8 +133,9 @@ public:
       KernelStats()
     { }
 
-    localIndex localNumNegPres;
-    localIndex localNumNegDens;
+    localIndex localNumNegPres; // 0 or 1
+    localIndex localNumNegDens; // 0 -> num comp
+    localIndex localNumNegTotalDens; // 0 or 1
   };
 
   /**
@@ -158,8 +158,6 @@ public:
     RAJA::ReduceMin< reducePolicy, real64 > minPres( 0.0 );
     RAJA::ReduceMin< reducePolicy, real64 > minDens( 0.0 );
     RAJA::ReduceMin< reducePolicy, real64 > minTotalDens( 0.0 );
-
-    RAJA::ReduceSum< reducePolicy, localIndex > numNegTotalDens( 0 );
 
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -184,14 +182,14 @@ public:
       if( stack.localNumNegDens > 0 )
         kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
 
-      numNegTotalDens += stack.localNumNegTotalDens;
+      if( stack.localNumNegTotalDens > 0 )
+        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegTotalDens } );
     } );
 
     return KernelStats( globalMinVal.get(),
                         minPres.get(),
                         minDens.get(),
-                        minTotalDens.get(),
-                        numNegTotalDens.get() );
+                        minTotalDens.get() );
   }
 
   GEOS_HOST_DEVICE
@@ -237,12 +235,12 @@ public:
     bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
+    if( newPres < 0.0 && !m_allowNegativePressure )
+      stack.localMinVal = 0;
+
     if( newPres <= 0.0 )
     {
-      stack.localNumNegPres = 1;
-
-      if( !m_allowNegativePressure )
-        stack.localMinVal = 0;
+      stack.localNumNegPres += 1;
 
       if( newPres < stack.localMinNegPres )
         stack.localMinNegPres = newPres;
@@ -251,37 +249,46 @@ public:
     // if component density chopping is not allowed, the time step fails if a component density is negative
     // otherwise, we just check that the total density is positive, and negative component densities
     // will be chopped (i.e., set to zero) in ApplySystemSolution)
+    real64 totalDens = 0.0;
     if( !m_allowCompDensChopping )
     {
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
-        if( newDens <= 0.0 )
-        {
-          stack.localNumNegDens = 1;
-          stack.localMinVal = 0;
+        totalDens += newDens;
 
-          if( newDens < stack.localMinNegDens )
-            stack.localMinNegDens = newDens;
-        }
+        // we invalidate timestep if new density is negative, and we report density as too low if negative or equal to zero
+        bool const isNewDensNegative = newDens < 0.0;
+        bool const isNewDensTooLow = newDens <= 0.0;
+        stack.localMinVal = isNewDensNegative ? 0 : stack.localMinVal;
+        stack.localNumNegDens += isNewDensTooLow;
+        stack.localMinNegDens = isNewDensTooLow ?
+                                LvArray::math::min( stack.localMinNegDens, newDens ) :
+                                stack.localMinNegDens;
       }
     }
     else
     {
-      real64 totalDens = 0.0;
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
-        totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
-      }
-      if( totalDens <= 0.0 )
-      {
-        stack.localNumNegTotalDens = 1;
-        stack.localMinVal = 0;
+        totalDens += LvArray::math::max( newDens, 0.0 );
 
-        if( totalDens < stack.localMinNegTotalDens )
-          stack.localMinNegTotalDens = totalDens;
+        // we never invalidate timestep as negatives will be chopped later in ApplySystemSolution(), and we report density as too low if
+        // negative or equal to zero
+        bool const isNewDensTooLow = newDens <= 0.0;
+        stack.localNumNegDens += isNewDensTooLow;
+        stack.localMinNegDens = isNewDensTooLow ?
+                                LvArray::math::min( stack.localMinNegDens, newDens ) :
+                                stack.localMinNegDens;
       }
+    }
+    {
+      bool const isNewTotalDensTooLow = totalDens <= 0.0;
+      stack.localNumNegTotalDens += isNewTotalDensTooLow;
+      stack.localMinNegTotalDens = isNewTotalDensTooLow ?
+                                   LvArray::math::min( stack.localMinNegTotalDens, totalDens ) :
+                                   stack.localMinNegTotalDens;
     }
 
     kernelOp();
@@ -304,6 +311,8 @@ protected:
   ElementsReporterCollector const m_negPressureIds;
 
   ElementsReporterCollector const m_negDensityIds;
+
+  ElementsReporterCollector const m_negTotalDensityIds;
 
 };
 
@@ -341,11 +350,13 @@ public:
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
                    ElementsReporterCollector const & negPressureIds,
-                   ElementsReporterCollector const & negDensityIds )
+                   ElementsReporterCollector const & negDensityIds,
+                   ElementsReporterCollector const & negTotalDensityIds )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds );
+                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds,
+                                negTotalDensityIds );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 

@@ -98,6 +98,8 @@ void toStream( std::ostream & outputStream, string_view content, string_view str
   {
     GEOS_WARNING( GEOS_FMT( "Error while writing to '{}':\n{}", streamName, msgs ) );
   }
+  // TODO: remove after implementing GEOS_ERROR for HIP
+  GEOS_UNUSED_VAR( streamName );
 }
 
 void TableFormatter::toStreamImpl( std::ostream & outputStream, string_view content ) const
@@ -157,7 +159,6 @@ string TableCSVFormatter::headerToString() const
 
 string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
-
   RowsCellInput const rowsValues( tableData.getCellsData() );
   string result;
   size_t total_size = 0;
@@ -828,16 +829,16 @@ void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
         bool const isSeparator = cell.m_cellType == CellType::Separator;
         char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
 
-        if( isLeftBorderCell )
-        {   // left table border
-          isLeftBorderCell=false;
-          tableOutput << tableLayout.getIndentationStr();
-          tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
-        }
-        else
-        {   // left side of a cell that have a neightboor
-          tableOutput << string( nbColumnSpaces, cellSpaceChar );
-        }
+          if( isLeftBorderCell )
+          { // left table border
+            isLeftBorderCell=false;
+            tableOutput << tableLayout.getIndentationStr();
+            tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
+          }
+          else
+          { // left side of a cell that have a neightboor
+            tableOutput << string( nbColumnSpaces, cellSpaceChar );
+          }
 
         // cell content / fill
         formatCell( tableOutput, cell, idxSubLine );
