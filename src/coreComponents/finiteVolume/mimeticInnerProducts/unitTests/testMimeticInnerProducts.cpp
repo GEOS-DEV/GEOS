@@ -63,7 +63,7 @@ void compareTransmissibilityMatrices( arraySlice2d< real64 const > const & trans
 }
 
 void compareInnerProductMatrices( arraySlice2d< real64 const > const & M,
-                                   arraySlice2d< real64 const > const & Mref )
+                                  arraySlice2d< real64 const > const & Mref )
 {
   for( localIndex ifaceLoc = 0; ifaceLoc < M.size( 0 ); ++ifaceLoc )
   {
@@ -567,7 +567,7 @@ void makeCube( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
   // elem-to-faces
   elemToFaces.resize( numFaces );
   for( localIndex i = 0; i < numFaces; ++i )
-    elemToFaces(i) = i;
+    elemToFaces( i ) = i;
 
   // face-to-nodes
   faceToNodes.resize( numFaces );
@@ -577,38 +577,38 @@ void makeCube( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
   // vertices
   nodePosition.resize( numNodes, 3 );
 
-  nodePosition(0,0) = 0; nodePosition(0,1) = 0; nodePosition(0,2) = 0;
-  nodePosition(1,0) = 1; nodePosition(1,1) = 0; nodePosition(1,2) = 0;
-  nodePosition(2,0) = 1; nodePosition(2,1) = 1; nodePosition(2,2) = 0;
-  nodePosition(3,0) = 0; nodePosition(3,1) = 1; nodePosition(3,2) = 0;
-  nodePosition(4,0) = 0; nodePosition(4,1) = 0; nodePosition(4,2) = 1;
-  nodePosition(5,0) = 1; nodePosition(5,1) = 0; nodePosition(5,2) = 1;
-  nodePosition(6,0) = 1; nodePosition(6,1) = 1; nodePosition(6,2) = 1;
-  nodePosition(7,0) = 0; nodePosition(7,1) = 1; nodePosition(7,2) = 1;
+  nodePosition( 0, 0 ) = 0; nodePosition( 0, 1 ) = 0; nodePosition( 0, 2 ) = 0;
+  nodePosition( 1, 0 ) = 1; nodePosition( 1, 1 ) = 0; nodePosition( 1, 2 ) = 0;
+  nodePosition( 2, 0 ) = 1; nodePosition( 2, 1 ) = 1; nodePosition( 2, 2 ) = 0;
+  nodePosition( 3, 0 ) = 0; nodePosition( 3, 1 ) = 1; nodePosition( 3, 2 ) = 0;
+  nodePosition( 4, 0 ) = 0; nodePosition( 4, 1 ) = 0; nodePosition( 4, 2 ) = 1;
+  nodePosition( 5, 0 ) = 1; nodePosition( 5, 1 ) = 0; nodePosition( 5, 2 ) = 1;
+  nodePosition( 6, 0 ) = 1; nodePosition( 6, 1 ) = 1; nodePosition( 6, 2 ) = 1;
+  nodePosition( 7, 0 ) = 0; nodePosition( 7, 1 ) = 1; nodePosition( 7, 2 ) = 1;
 
   // x = 0
-  faceToNodes(0,0) = 0; faceToNodes(0,1) = 3; faceToNodes(0,2) = 7; faceToNodes(0,3) = 4;
+  faceToNodes( 0, 0 ) = 0; faceToNodes( 0, 1 ) = 3; faceToNodes( 0, 2 ) = 7; faceToNodes( 0, 3 ) = 4;
 
   // x = 1
-  faceToNodes(1,0) = 1; faceToNodes(1,1) = 2; faceToNodes(1,2) = 6; faceToNodes(1,3) = 5;
+  faceToNodes( 1, 0 ) = 1; faceToNodes( 1, 1 ) = 2; faceToNodes( 1, 2 ) = 6; faceToNodes( 1, 3 ) = 5;
 
   // y = 0
-  faceToNodes(2,0) = 0; faceToNodes(2,1) = 1; faceToNodes(2,2) = 5; faceToNodes(2,3) = 4;
+  faceToNodes( 2, 0 ) = 0; faceToNodes( 2, 1 ) = 1; faceToNodes( 2, 2 ) = 5; faceToNodes( 2, 3 ) = 4;
 
   // y = 1
-  faceToNodes(3,0) = 3; faceToNodes(3,1) = 2; faceToNodes(3,2) = 6; faceToNodes(3,3) = 7;
+  faceToNodes( 3, 0 ) = 3; faceToNodes( 3, 1 ) = 2; faceToNodes( 3, 2 ) = 6; faceToNodes( 3, 3 ) = 7;
 
   // z = 0
-  faceToNodes(4,0) = 0; faceToNodes(4,1) = 1; faceToNodes(4,2) = 2; faceToNodes(4,3) = 3;
+  faceToNodes( 4, 0 ) = 0; faceToNodes( 4, 1 ) = 1; faceToNodes( 4, 2 ) = 2; faceToNodes( 4, 3 ) = 3;
 
   // z = 1
-  faceToNodes(5,0) = 4; faceToNodes(5,1) = 5; faceToNodes(5,2) = 6; faceToNodes(5,3) = 7;
+  faceToNodes( 5, 0 ) = 4; faceToNodes( 5, 1 ) = 5; faceToNodes( 5, 2 ) = 6; faceToNodes( 5, 3 ) = 7;
 
   // center & volume
   array1d< localIndex > toNodes;
   toNodes.resize( numNodes );
   for( localIndex i = 0; i < numNodes; ++i )
-    toNodes(i) = i;
+    toNodes( i ) = i;
 
   computeVolumeAndCenter( nodePosition,
                           toNodes,
@@ -620,30 +620,30 @@ void makeCube( array2d< real64, nodes::REFERENCE_POSITION_PERM > & nodePosition,
       ipType == InnerProductType::QUASI_TPFA )
   {
     // diagonal
-    transMatrixRef(0,0) = 0.5;
-    transMatrixRef(1,1) = 0.5;
-    transMatrixRef(2,2) = 0.5;
-    transMatrixRef(3,3) = 0.5;
-    transMatrixRef(4,4) = 0.5;
-    transMatrixRef(5,5) = 0.5;
+    transMatrixRef( 0, 0 ) = 0.5;
+    transMatrixRef( 1, 1 ) = 0.5;
+    transMatrixRef( 2, 2 ) = 0.5;
+    transMatrixRef( 3, 3 ) = 0.5;
+    transMatrixRef( 4, 4 ) = 0.5;
+    transMatrixRef( 5, 5 ) = 0.5;
   }
   else if( ipType == InnerProductType::SIMPLE ||
            ipType == InnerProductType::BDVLM )
   {
     // SIMPLE = TPFA + stabilization
-    transMatrixRef(0,0) = 0.333333333333;
-    transMatrixRef(1,1) = 0.333333333333;
-    transMatrixRef(2,2) = 0.333333333333;
-    transMatrixRef(3,3) = 0.333333333333;
-    transMatrixRef(4,4) = 0.333333333333;
-    transMatrixRef(5,5) = 0.333333333333;
+    transMatrixRef( 0, 0 ) = 0.333333333333;
+    transMatrixRef( 1, 1 ) = 0.333333333333;
+    transMatrixRef( 2, 2 ) = 0.333333333333;
+    transMatrixRef( 3, 3 ) = 0.333333333333;
+    transMatrixRef( 4, 4 ) = 0.333333333333;
+    transMatrixRef( 5, 5 ) = 0.333333333333;
 
-    transMatrixRef(0,1) = -0.166666666666;
-    transMatrixRef(1,0) = -0.166666666666;
-    transMatrixRef(2,3) = -0.166666666666;
-    transMatrixRef(3,2) = -0.166666666666;
-    transMatrixRef(4,5) = -0.166666666666;
-    transMatrixRef(5,4) = -0.166666666666;
+    transMatrixRef( 0, 1 ) = -0.166666666666;
+    transMatrixRef( 1, 0 ) = -0.166666666666;
+    transMatrixRef( 2, 3 ) = -0.166666666666;
+    transMatrixRef( 3, 2 ) = -0.166666666666;
+    transMatrixRef( 4, 5 ) = -0.166666666666;
+    transMatrixRef( 5, 4 ) = -0.166666666666;
   }
 }
 
@@ -1158,13 +1158,13 @@ TEST( testMimeticInnerProducts, TPFAM_cube )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   TPFAInnerProduct::computeM< NF >( nodePosition.toViewConst(),
-                                      faceToNodes.toViewConst(),
-                                      elemToFaces.toSliceConst(),
-                                      center,
-                                      1,
-                                      perm,
-                                      lengthTolerance,
-                                      M.toSlice() );
+                                    faceToNodes.toViewConst(),
+                                    elemToFaces.toSliceConst(),
+                                    center,
+                                    1,
+                                    perm,
+                                    lengthTolerance,
+                                    M.toSlice() );
 
   compareInnerProductMatrices( M.toSliceConst(),
                                Mref.toSliceConst() );
@@ -1205,13 +1205,13 @@ TEST( testMimeticInnerProducts, QuasiTPFAM_cube )
   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
   QuasiTPFAInnerProduct::computeM< NF >( nodePosition.toViewConst(),
-                                      faceToNodes.toViewConst(),
-                                      elemToFaces.toSliceConst(),
-                                      center,
-                                      1,
-                                      perm,
-                                      lengthTolerance,
-                                      M.toSlice() );
+                                         faceToNodes.toViewConst(),
+                                         elemToFaces.toSliceConst(),
+                                         center,
+                                         1,
+                                         perm,
+                                         lengthTolerance,
+                                         M.toSlice() );
 
   compareInnerProductMatrices( M.toSliceConst(),
                                Mref.toSliceConst() );
@@ -1307,7 +1307,7 @@ TEST( testMimeticInnerProducts, BdVLMM_cube )
                                      perm,
                                      lengthTolerance,
                                      M.toSlice() );
-    
+
   compareInnerProductMatrices( M.toSliceConst(),
                                Mref.toSliceConst() );
 }

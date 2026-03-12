@@ -62,7 +62,7 @@ public:
            real64 const (&elemPerm)[ 3 ],
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
-    
+
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static void
@@ -105,13 +105,13 @@ template< localIndex NF >
 GEOS_HOST_DEVICE
 void
 QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                                  ArrayOfArraysView< localIndex const > const & faceToNodes,
-                                  arraySlice1d< localIndex const > const & elemToFaces,
-                                  arraySlice1d< real64 const > const & elemCenter,
-                                  real64 const & elemVolume,
-                                  real64 const (&elemPerm)[ 3 ],
-                                  real64 const & lengthTolerance,
-                                  arraySlice2d< real64 > const & M )
+                                 ArrayOfArraysView< localIndex const > const & faceToNodes,
+                                 arraySlice1d< localIndex const > const & elemToFaces,
+                                 arraySlice1d< real64 const > const & elemCenter,
+                                 real64 const & elemVolume,
+                                 real64 const (&elemPerm)[ 3 ],
+                                 real64 const & lengthTolerance,
+                                 arraySlice2d< real64 > const & M )
 {
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
 
@@ -145,12 +145,12 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
         areaTolerance );
 
     real64 cellToFaceVec[3];
-    LvArray::tensorOps::copy<3>( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract<3>( cellToFaceVec, elemCenter );
+    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
+    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
 
-    if( LvArray::tensorOps::AiBi<3>( cellToFaceVec, faceNormal ) < 0.0 )
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
     {
-      LvArray::tensorOps::scale<3>( faceNormal, -1.0 );
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
     }
 
     for( int d = 0; d < 3; ++d )
