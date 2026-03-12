@@ -473,12 +473,7 @@ struct MeshVisitor< FieldLocation::Elem, CONN_LOC, VISIT_GHOSTS >
 
           for( localIndex a = 0; a < connList.size(); ++a )
           {
-            // Skip invalid connectivity indices (e.g. ghost FaceElementSubRegion entries
-            // whose face maps are excluded from MPI packing and remain at default value -1)
-            if( connList[a] >= 0 )
-            {
-              lambda( elemIdx, connList[a], a );
-            }
+            lambda( elemIdx, connList[a], a );
           }
         }
       } );
