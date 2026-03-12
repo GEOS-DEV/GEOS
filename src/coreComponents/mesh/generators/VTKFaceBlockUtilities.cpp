@@ -246,7 +246,7 @@ ArrayOfArrays< localIndex > buildFace2dToElems2d( vtkPolyData * edges,
     vtkIdList * edgePointIds = c->GetPointIds();
     GEOS_ASSERT( edgePointIds->GetNumberOfIds() == 2 );
     std::pair< vtkIdType, vtkIdType > const minMax = std::minmax( edgePointIds->GetId( 0 ), edgePointIds->GetId( 1 ) );
-    face2dIds.get_inserted(minMax) = i;
+    face2dIds.get_inserted( minMax ) = i;
   }
 
   ArrayOfArrays< localIndex > face2dToElems2d( LvArray::integerConversion< localIndex >( edges->GetNumberOfCells() ) );
@@ -618,7 +618,6 @@ void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > mesh,
                             CellBlockManager & cellBlockManager )
 {
-  std::cout << "ba"<< std::endl;
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   vtk::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
   ArrayOfArrays< localIndex > const nodeToEdges = cellBlockManager.getNodeToEdges();
@@ -634,16 +633,13 @@ void importFractureNetwork( string const & faceBlockName,
   edgesExtractor->Update();
   vtkPolyData * edges = edgesExtractor->GetOutput();
   // Reset logging to default
-  std::cout << "bb"<< std::endl;
   vtkLogger::SetStderrVerbosity( vtkLogger::VERBOSITY_INFO );
 
-  std::cout << "bc"<< std::endl;
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
   // Now let's build the elem2dTo* mappings.
   Elem2dTo3dInfo elem2dTo3d = buildElem2dTo3dElemAndFaces( faceMesh, mesh, collocatedNodes, faceToNodes.toViewConst(), elemToFaces );
 
-  std::cout << "bd"<< std::endl;
   ArrayOfArrays< localIndex > face2dToElems2d = buildFace2dToElems2d( edges, faceMesh );
   array1d< localIndex > face2dToEdge = buildFace2dToEdge( vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() ), edges, collocatedNodes, nodeToEdges.toViewConst() );
   ArrayOfArrays< localIndex > const elem2dToFace2d = buildElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
@@ -659,7 +655,6 @@ void importFractureNetwork( string const & faceBlockName,
   faceBlock.set2dFaceToEdge( std::move( face2dToEdge ) );
   faceBlock.set2dFaceTo2dElems( std::move( face2dToElems2d ) );
 
-  std::cout << "be"<< std::endl;
   faceBlock.set2dElemToFaces( std::move( elem2dTo3d.elem2dToFaces ) );
   faceBlock.set2dElemToElems( std::move( elem2dTo3d.elem2dToElem3d ) );
 
@@ -675,7 +670,6 @@ void importFractureNetwork( string const & faceBlockName,
     buildLocalToGlobal( vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() ),
                         vtkIdTypeArray::FastDownCast( mesh->GetCellData()->GetGlobalIds() ) )
     );
-  std::cout << "bf"<< std::endl;
 
   faceBlock.set2dElemsToCollocatedNodesBuckets(
     buildCollocatedNodesBucketsOf2dElemsMap( build2dElemTo2dNodes( faceMesh ),

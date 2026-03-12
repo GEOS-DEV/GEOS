@@ -2029,7 +2029,7 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
           for( int k=0; k<nzbins; k++ )
           {
             binKey.binIndex = i + j * nxbins + k * nxbins * nybins;
-            bins.get_inserted(binKey).reserve( numReserved );
+            bins.get_inserted( binKey ).reserve( numReserved );
           }
         }
       }

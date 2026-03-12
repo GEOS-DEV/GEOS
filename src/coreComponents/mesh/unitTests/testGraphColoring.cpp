@@ -31,8 +31,8 @@ TEST( GraphColoringTest, CountPositiveDistinctColors )
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors ), 6 );
 }
 
-// This TEST is temporarily removed
-// The error is located in getGraphNodeDegree() with an array out of bound 
+// todo This TEST is temporarily removed
+// The error is located in getGraphNodeDegree() with an array out of bound
 // TEST( GraphColoringTest, CartesianDecomposition3D6 )
 // {
 //   idx_t const nx = 3, ny = 4, nz = 3;
@@ -56,8 +56,8 @@ TEST( GraphColoringTest, CartesianDecomposition3D26 )
 }
 
 
-// This TEST is temporarily disabled
-// The error is located in getGraphNodeDegree() with an array out of bound 
+// TODO This TEST is temporarily disabled
+// The error is located in getGraphNodeDegree() with an array out of bound
 // TEST( GraphColoringTest, RandomGraphs )
 // {
 //   size_t const iterations = 10;

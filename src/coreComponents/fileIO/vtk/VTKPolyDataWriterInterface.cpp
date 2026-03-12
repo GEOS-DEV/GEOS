@@ -398,7 +398,7 @@ getSurface( FaceElementSubRegion const & subRegion,
         /// nodeIndexInVTK++).
         /// 2. we increment nodeIndexInVTK to ensure the next new node gets a unique index.
         /// 3. we add this new VTK node index to the connectivity vector (connectivity.push_back).
-        connectivity.push_back( geos2VTKIndexing.get_inserted(nodes[ordering]) = nodeIndexInVTK++ );
+        connectivity.push_back( geos2VTKIndexing.get_inserted( nodes[ordering] ) = nodeIndexInVTK++ );
       }
       else
       {

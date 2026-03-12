@@ -59,8 +59,8 @@ void runColoringTest( GraphColoringBase & graphColoring, const stdVector< camp::
   }
 }
 
-// This TEST is temporarily removed
-// The error is located in getGraphNodeDegree() with an array out of bound 
+// TODO This TEST is temporarily removed
+// The error is located in getGraphNodeDegree() with an array out of bound
 // TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 // {
 // #ifdef GEOS_USE_TRILINOS
