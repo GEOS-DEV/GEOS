@@ -84,6 +84,8 @@ private:
    */
   struct viewKeyStruct
   {
+    /// String for optionnal targeted element set(s)
+    constexpr static char const * setNamesString() { return "setNames"; }
     /// String for the flag deciding the computation of the CFL numbers
     constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
     /// String for the flag deciding the computation of the region statistics
@@ -120,6 +122,9 @@ private:
 
   // mesh statistics aggregator
   std::unique_ptr< StatsAggregator > m_aggregator;
+
+  /// Optionnal targeted element set(s)
+  string_array m_setNames;
 
   /// Flag to decide whether CFL numbers are computed or not
   integer m_computeCFLNumbers;

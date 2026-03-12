@@ -76,6 +76,15 @@ private:
 
   using Base = FieldStatisticsBase< SinglePhaseBase >;
 
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    /// String for optionnal targeted element set(s)
+    constexpr static char const * setNamesString() { return "setNames"; }
+  };
+
   void postInputInitialization() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
@@ -102,6 +111,9 @@ private:
 
   // mesh statistics aggregator
   std::unique_ptr< StatsAggregator > m_aggregator;
+
+  /// Optionnal targeted element set(s)
+  string_array m_setNames;
 
 };
 

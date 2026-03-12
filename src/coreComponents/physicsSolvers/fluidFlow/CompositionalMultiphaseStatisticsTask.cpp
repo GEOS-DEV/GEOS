@@ -39,6 +39,13 @@ StatsTask::StatsTask( string const & name, Group * const parent ):
   m_computeCFLNumbers( 0 ),
   m_computeRegionStatistics( 1 )
 {
+  registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
+    setApplyDefaultValue( "{}" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional targeted mesh element set(s) for which the statistics will be restricted."
+                    "If empty, all mesh regions will be processed."
+                    "Be aware that only the regions that are computed by the solver will be taken into account." );
+
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).

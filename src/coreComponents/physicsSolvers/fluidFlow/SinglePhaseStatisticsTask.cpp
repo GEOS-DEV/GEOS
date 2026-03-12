@@ -33,6 +33,13 @@ namespace singlePhaseStatistics
 StatsTask::StatsTask( const string & name, Group * const parent ):
   Base( name, parent )
 {
+  registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
+    setApplyDefaultValue( "{}" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional targeted mesh element set(s) for which the statistics will be restricted."
+                    "If empty, all mesh regions will be processed."
+                    "Be aware that only the regions that are computed by the solver will be taken into account." );
+
   addLogLevel< logInfo::Statistics >();
 }
 
