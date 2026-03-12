@@ -24,16 +24,16 @@ namespace geos
 {
 
 void internal::EnumErrorMessageToString( size_t index,
-                                         string const & typeName,
+                                         string_view typeName,
                                          std::size_t size )
 {
   GEOS_THROW( "Invalid value " << index << " of type " << typeName<< ". Valid range is 0.." << size - 1,
               InputError );
 }
 
-void internal::EnumErrorMessageFromString( string const & s,
-                                           string const & typeName,
-                                           string const & concat )
+void internal::EnumErrorMessageFromString( string_view s,
+                                           string_view typeName,
+                                           string_view concat )
 {
   GEOS_THROW( "Invalid value '" << s << "' of type " << typeName << ". Valid options are: " << concat,
               InputError );

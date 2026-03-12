@@ -90,16 +90,28 @@ void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
 {
   string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
   integer lineCount = msgType.m_line;
-  insertDiagnosticReport( { {string( fileName ), lineCount},
-                            {string( msgType.m_logPart ), msgType.m_type, 1} } );
+  insertDiagnosticReport( {
+      {
+        string( fileName ),
+        lineCount
+      },
+      {
+        string( msgType.m_logPart ),
+        msgType.m_type, 1
+      } } );
 }
 
-void LogHistory::insertDiagnosticReport( LogRecord logRecord )
+void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
 {
-  auto & entry =  m_diagnosticHistory.get_inserted( {logRecord.m_key} );
-  entry.m_logPart = logRecord.m_value.m_logPart;
-  entry.m_msgType = logRecord.m_value.m_msgType;
-  entry.m_count +=  1;
+  auto it =  m_diagnosticHistory.find( {logRecord.m_key} );
+  if( it == m_diagnosticHistory.end())
+  {
+    m_diagnosticHistory.emplace( logRecord.m_key, logRecord.m_value );
+  }
+  else
+  {
+    it->second.m_count +=  1;
+  }
 }
 
 template< typename T >
@@ -154,59 +166,56 @@ size_t LogHistory::LogRecord::getSerializedSize() const
     sizeOfField( m_value.m_msgType );
 }
 
-void LogHistory::diagnosticStatsReport()
+void LogHistory::gatherRecordsRank0()
 {
   LogHistory & history = ErrorLogger::global().getLoggerReportData();
   stdVector< buffer_unit_type > localLogRecords( 0 );
   integer totalSize = 0;
 
-  //0 - alloc reserve
-  for( auto const & [key, value] : getDiagnosticHistory() )
-  {
-    LogRecord record( key, value );
-    totalSize +=  record.getSerializedSize();
-  }
-  localLogRecords.reserve( totalSize );
-
-  //1 - Packing
-  if( getDiagnosticHistory().size() > 0 )
-  {
-    for( auto const & [key, value] :  getDiagnosticHistory() )
+  { // allocation
+    for( auto const & [key, value] : getDiagnosticHistory() )
     {
       LogRecord record( key, value );
-      record.serialize( localLogRecords );
+      totalSize +=  record.getSerializedSize();
+    }
+    localLogRecords.reserve( totalSize );
+  }
+
+
+  { // Packing
+    if( getDiagnosticHistory().size() > 0 )
+    {
+      for( auto const & [key, value] :  getDiagnosticHistory() )
+      {
+        LogRecord record( key, value );
+        record.serialize( localLogRecords );
+      }
     }
   }
 
   auto [globalLogRecords, recvCounts] = gatherBufferRank0( localLogRecords );
 
-  //2 - Unpacking
-  if( MpiWrapper::commRank() == 0 )
-  {
-    buffer_unit_type const * startGlobalRecord = globalLogRecords.data();
-    for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
+  { // Unpacking
+    if( MpiWrapper::commRank() == 0 )
     {
-      integer byteFromThisRank = recvCounts[idxRank];
-      buffer_unit_type const * rankEnd= startGlobalRecord + byteFromThisRank;
-      while( startGlobalRecord < rankEnd )
+      buffer_unit_type const * startGlobalRecord = globalLogRecords.data();
+      for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
       {
-        LogRecord unpackRecord;
-        unpackRecord.deserialize( startGlobalRecord, rankEnd );
-        history.insertDiagnosticReport( unpackRecord );
+        integer byteFromThisRank = recvCounts[idxRank];
+        buffer_unit_type const * rankEnd= startGlobalRecord + byteFromThisRank;
+        while( startGlobalRecord < rankEnd )
+        {
+          LogRecord unpackRecord;
+          unpackRecord.deserialize( startGlobalRecord, rankEnd );
+          history.insertDiagnosticReport( unpackRecord );
+        }
       }
     }
-  }
-
-  //3 - Display
-  if( MpiWrapper::commRank() == 0 )
-  {
-    TableTextFormatter tableReportFormatter;
-    GEOS_LOG( tableReportFormatter.toString< LogHistory >( *this ));
   }
 }
 
 template<>
-string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCounts ) const
+string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const
 {
   TableLayout tableLayout;
   tableLayout.addColumn( "Types" );
@@ -224,8 +233,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
 
   stdMap< string, CellRow > rowByPart;
 
-  // TODO
-  for( const auto & [key, values] : messageCounts.getDiagnosticHistory())
+  for( const auto & [key, values] : logHistory.getDiagnosticHistory())
   {
     auto logPart = values.m_logPart;
     MsgType msgType = values.m_msgType;

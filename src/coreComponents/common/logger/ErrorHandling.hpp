@@ -168,7 +168,7 @@ public:
  * @brief Sets the current log part.
  * @param currentLogPart The new log part to set.
  */
-  void setCurrentLogPart( string const & currentLogPart )
+  void setCurrentLogPart( string_view currentLogPart )
   { m_currentLogPart = currentLogPart; }
 
 private:

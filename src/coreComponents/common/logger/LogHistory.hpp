@@ -38,16 +38,11 @@ class LogHistory
 {
 public:
 
-  /** 
+  /**
    * @brief Records a diagnostic message occurrence in the history.
    * @param diagMsg The diagnostic message associated
    */
   void recordDiagnostic( DiagnosticMsg const & diagMsg );
-
-  /**
-   * @brief Display the diagnostic statistics to the log
-   */
-  void diagnosticStatsReport();
 
   /**
    * @return The const historical diagnostic
@@ -55,8 +50,17 @@ public:
   auto const & getDiagnosticHistory() const
   { return m_diagnosticHistory; }
 
+  /**
+   * @brief Gather all the records to the rank 0
+   * @note Store all records to an unordered_map, non unique records will increment the LogRecord::m_count
+   */
+  void gatherRecordsRank0();
+
 private:
 
+  /**
+   * @brief Contains the essential information of a DiagnosticMsg and can be serialized.
+   */
   struct LogRecord
   {
     /** @brief Identifier for a diagnostic message (source localization). */
@@ -152,6 +156,12 @@ private:
 
   };
 
+  /**
+   * @brief Insert a LogRepord in the m_diagnosticHistory
+   * @param log The logRecord with all the information
+   */
+  void insertDiagnosticReport( LogRecord const & log );
+
   /// @cond DO_NOT_DOCUMENT
   struct LocationKeyHash
   {
@@ -165,9 +175,7 @@ private:
     }
 
   };
-  /// @endcond
 
-  /// @cond DO_NOT_DOCUMENT
   struct LocationKeyEqual
   {
 
@@ -179,12 +187,6 @@ private:
     }
   };
   /// @endcond
-
-  /**
-   * @brief Insert a LogRepord in the m_diagnosticHistory
-   * @param log The logRecord with all the information
-   */
-  void insertDiagnosticReport( LogRecord log );
 
   /**
    * @brief Diagnostic history happened during the simulation

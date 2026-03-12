@@ -174,7 +174,6 @@ void ProblemManager::problemSetup()
 
   LogPart meshGenerationLog( "Mesh Generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
-
   generateMesh();
   meshGenerationLog.end();
 

@@ -46,7 +46,7 @@ namespace internal
  * @param typeName The enum name
  * @param size The size of the enum
  */
-void EnumErrorMessageToString( size_t index, string const & typeName, std::size_t size );
+void EnumErrorMessageToString( size_t index, string_view typeName, std::size_t size );
 
 /**
  * @brief Raise a throw error in case of bad use of enum::FromString
@@ -54,9 +54,9 @@ void EnumErrorMessageToString( size_t index, string const & typeName, std::size_
  * @param typeName The enum name
  * @param size The string concatenation of the enum
  */
-void EnumErrorMessageFromString( string const & s,
-                                 string const & typeName,
-                                 string const & concat );
+void EnumErrorMessageFromString( string_view s,
+                                 string_view typeName,
+                                 string_view concat );
 
 /**
  * @brief Simple compile-time variadic function that counts its arguments.

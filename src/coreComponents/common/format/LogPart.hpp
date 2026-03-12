@@ -19,7 +19,8 @@
 #ifndef GEOS_COMMON_FORMAT_LOGPART_HPP
 #define GEOS_COMMON_FORMAT_LOGPART_HPP
 
-#include "common/format/EnumStrings.hpp"
+#include "common/format/StringUtilities.hpp"
+#include "common/format/Format.hpp"
 
 namespace geos
 {
