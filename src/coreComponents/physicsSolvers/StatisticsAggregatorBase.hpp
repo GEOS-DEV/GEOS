@@ -192,9 +192,10 @@ protected:
 
   struct DiscretizationGroupPath
   {
-    localIndex meshBody;
-    localIndex meshLevel;
-    string_array regionNames;
+    localIndex m_meshBody;
+    localIndex m_meshLevel;
+    string_array m_regionNames;
+  };
   };
 
   /// @see getOwnerName()
