@@ -127,14 +127,6 @@ public:
   void initStatisticsAggregation( dataRepository::Group & meshBodies,
                                   SolverType & solver );
 
-  /**
-   * @brief Enable the computation of region statistics, initialize data structure to collect them.
-   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
-   * @note Must be called in or after the "registerDataOnMesh" initialization phase
-   * @param registerStatsFunc The functor which register each statistics group whithin the regions hierarchy
-   */
-  void enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc );
-
   void forRegionStatistics( RegionStatsFunc< MeshLevel > const & functor ) const;
 
   void forRegionStatistics( MeshLevel & mesh,
@@ -219,6 +211,14 @@ protected:
 
   /// The current state of the region statistics
   StatsState m_regionStatsState;
+
+  /**
+   * @brief Enable the computation of region statistics, initialize data structure to collect them.
+   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
+   * @note Must be called in or after the "registerDataOnMesh" initialization phase
+   * @param registerStatsFunc The functor which register each statistics group whithin the regions hierarchy
+   */
+  void enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc );
 
   /**
    * @param path the path of the discretization group in the data-repository.
