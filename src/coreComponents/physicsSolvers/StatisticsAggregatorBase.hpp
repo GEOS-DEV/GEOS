@@ -237,18 +237,6 @@ protected:
    * @param path the path of the discretization group in the data-repository.
    * @return MeshLevel& the MeshLevel Group for the given discretisation
    */
-  /**
-   * @brief Enable the computation of region statistics, initialize data structure to collect them.
-   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
-   * @note Must be called in or after the "registerDataOnMesh" initialization phase
-   * @param registerStatsFunc The functor which register each statistics group whithin the regions hierarchy
-   */
-  void enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc );
-
-  /**
-   * @param path the path of the discretization group in the data-repository.
-   * @return MeshLevel& the MeshLevel Group for the given discretisation
-   */
   MeshLevel & getMeshLevel( DiscretizationGroupPath const & path ) const;
 
   /**
