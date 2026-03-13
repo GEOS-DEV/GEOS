@@ -519,38 +519,22 @@ template<> MPI_Datatype getMpiPairType< double, double >()
 } /* namespace internal */
 
 template<>
-void MpiWrapper::gatherString< std::function< void(string_view) > >
-  ( string const & rankStr, std::function< void(string_view) > && func )
+void MpiWrapper::gatherStringOnRank0< std::function< void(string_view) > >
+  ( string_view rankStr, std::function< void(string_view) > && func )
 {
-  integer const ranksCount = MpiWrapper::commSize();
-  integer const currRank = MpiWrapper::commRank();
-  // all other ranks than rank 0 render their output in a string and comunicate its size
-  std::vector< integer > ranksStrsSizes = std::vector( ranksCount, 0 );
-
-  integer const rankStrSize = rankStr.size();
-  MpiWrapper::gather( &rankStrSize, 1, ranksStrsSizes.data(), 1, 0 );
-
-  // we compute the memory layout of the ranks strings
-  std::vector< integer > ranksStrsOffsets = std::vector( ranksCount, 0 );
-  integer ranksStrsTotalSize = 0;
-  for( integer rankId = 0; rankId < ranksCount; ++rankId )
+  std::vector< buffer_unit_type > localbuffer;
+  localbuffer.reserve( rankStr.size());
+  localbuffer.insert( localbuffer.end(), rankStr.begin(), rankStr.end());
+  auto [globalLogRecords, counts, offsets] =
+    MpiWrapper::gatherBufferRank0< std::vector< buffer_unit_type > >( localbuffer );
+  if( MpiWrapper::commRank() == 0 )
   {
-    ranksStrsOffsets[rankId] = ranksStrsTotalSize;
-    ranksStrsTotalSize += ranksStrsSizes[rankId];
-  }
-
-  // finally, we can send all text data to rank 0, then we output it in the output stream.
-  string ranksStrs = string( ranksStrsTotalSize, '\0' );
-  MpiWrapper::gatherv( rankStr.data(), rankStrSize,
-                       ranksStrs.data(), ranksStrsSizes.data(), ranksStrsOffsets.data(),
-                       0, MPI_COMM_GEOS );
-  if( currRank == 0 )
-  {
-    for( integer rankId = 0; rankId < ranksCount; ++rankId )
+    for( integer rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
     {
-      if( ranksStrsSizes[rankId] > 0 )
+      if( counts[rankId] > 0 )
       {
-        func( string_view( ranksStrs.data() + ranksStrsOffsets[rankId], ranksStrsSizes[rankId] ) );
+        func( string( globalLogRecords.begin() + offsets[rankId],
+                      globalLogRecords.begin() + offsets[rankId]+ counts[rankId] ) );
       }
     }
   }

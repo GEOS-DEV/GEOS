@@ -332,9 +332,78 @@ public:
    */
   static int nodeCommSize();
 
+  /**
+   * @brief Structure holding the result from all the gather operation
+   * @tparam CONTAINER The container type holding the data.
+   */
+  template< typename CONTAINER >
+  struct GatherResult
+  {
+    CONTAINER data;                 // Collected data
+    stdVector< integer > counts;      // Number of elements per row
+    stdVector< integer > offsets;     // Starting index for each row in 'data'
+  };
+
+/**
+ * @brief Gather buffers of varying sizes from all ranks to rank 0.
+ * @tparam CONTAINER The container type holding the data.
+ * @tparam VALUE_T The trivially copyable underlying data type (deduced automatically).
+ * @param localBuffer The local buffer to be gathered on rank 0.
+ * @return A struct containing:
+ * - 'data': all the gathered data on rank 0
+ * - 'counts': number of elements for each rank
+ * - 'offsets': starting index for each rank in 'data'
+ */
+  template<
+    typename CONTAINER,
+    typename VALUE_T = typename CONTAINER::value_type,
+    typename = std::enable_if_t<
+      std::is_trivially_copyable_v< VALUE_T > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().data()), VALUE_T * > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().size()), std::size_t >
+      >
+    >
+  static GatherResult< CONTAINER >
+  gatherBufferRank0( CONTAINER const & localBuffer )
+  {
+  integer const numRanks = MpiWrapper::commSize();
+  integer const numValues = static_cast< integer >(localBuffer.size());
+
+  GatherResult< CONTAINER > gatherResult;
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    gatherResult.counts.resize( numRanks );
+    gatherResult.offsets.resize( numRanks );
+  }
+
+
+  MpiWrapper::gather( &numValues, 1, gatherResult.counts.data(), 1, 0 );
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    integer totalSize = 0;
+    for( integer i = 0; i < numRanks; ++i )
+    {
+      gatherResult.offsets[i] = totalSize;
+      totalSize += gatherResult.counts[i];
+    }
+    gatherResult.data.resize( totalSize );
+  }
+
+  MpiWrapper::gatherv( localBuffer.data(),
+                       numValues,
+                       gatherResult.data.data(),
+                       gatherResult.counts.data(),
+                       gatherResult.offsets.data(),
+                       0 );
+
+  return gatherResult;
+}
+
   template< typename FUNC >
-  static void gatherString( string const & str,
-                            FUNC && func );
+  static void gatherStringOnRank0( string const & str,
+                                   FUNC && func );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allgather.

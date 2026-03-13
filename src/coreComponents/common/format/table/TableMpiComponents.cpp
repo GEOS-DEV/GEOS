@@ -160,7 +160,7 @@ void TableTextMpiOutput::gatherAndSortRowsAcrossRanks ( TableData & reconstructe
 
   for( string & row : rowsAsString )
   {
-    MpiWrapper::gatherString( row, std::function< void(string_view) >( [&]( string_view str ){
+    MpiWrapper::gatherStringOnRank0( row, std::function< void(string_view) >( [&]( string_view str ){
       status.m_hasContent = true;
       reconstructTableData( str, reconstructedTableData );
     } ));
@@ -209,7 +209,7 @@ void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   stdVector< string > strsAccrossRanks;
 
-  MpiWrapper::gatherString( rankStr, std::function< void(string_view) >( [&]( string_view str ){
+  MpiWrapper::gatherStringOnRank0( rankStr, std::function< void(string_view) >( [&]( string_view str ){
     status.m_hasContent = true;
     strsAccrossRanks.emplace_back( str );
   } ));;
