@@ -40,10 +40,11 @@
   <Geometry>
 
     <!-- This Box should select 5 x 5 elements around the perforation -->
+    <!-- ( Perforated cell center is at [530, 500, 6008] ) -->
     <Box
       name="injectorSurrounding"
-      xMin="{ 485.0, 400.0, 6589.0 }"
-      xMax="{ 525.0, 600.0, 6621.0 }" />
+      xMin="{ 470.0, 400.0, 6584.0 }"
+      xMax="{ 590.0, 600.0, 6632.0 }" />
 
   </Geometry>
   <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY_END --> 
