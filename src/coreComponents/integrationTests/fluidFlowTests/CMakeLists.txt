@@ -103,6 +103,7 @@ endforeach()
 
 # --- Serial variant (always built) ---
 set( test "testMixedDimSinglePhaseFlow.cpp" )
+set( test "testFixedDimensionalHydrostaticEquilibrium.cpp" )
 get_filename_component( test_name ${test} NAME_WE )
 
 blt_add_executable( NAME ${test_name}
