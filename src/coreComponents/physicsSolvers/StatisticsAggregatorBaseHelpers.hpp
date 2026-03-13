@@ -48,7 +48,8 @@ template< typename Impl >
 StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
                                                   bool const statsOutputEnabled ):
   m_ownerDataContext( ownerDataContext ),
-  m_statsOutputEnabled( statsOutputEnabled )
+  m_statsOutputEnabled( statsOutputEnabled ),
+  m_isRestrictedToSets( false )
 {}
 
 template< typename Impl >
@@ -127,6 +128,24 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
 
   m_regionStatsState.m_isEnabled = true;
   m_regionStatsState.m_isDirty = true;
+}
+
+template< typename Impl >
+void
+StatsAggregatorBase< Impl >::restrictToSets( string_array const & /*setNames*/ )
+{
+  for( auto const & path : m_discretizationsPaths )
+  {
+    if( MpiWrapper::commRank()==0 )
+    {
+      GEOS_LOG( "=======================================" );
+      MeshLevel const & mesh = getMeshLevel( path );
+      mesh.printDataHierarchy( 2 );
+      GEOS_LOG( "=======================================" );
+    }
+  }
+
+  m_isRestrictedToSets = MpiWrapper::max( m_sets.size()) > 0;
 }
 
 template< typename Impl >

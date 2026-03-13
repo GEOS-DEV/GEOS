@@ -118,6 +118,9 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
   if( m_computeCFLNumbers )
     m_aggregator->enableCFLStatistics();
 
+  if( m_setNames.size() > 0 )
+    m_aggregator->restrictToSets( m_setNames );
+
   m_aggregator->forRegionStatistics( [&] ( MeshLevel & mesh, RegionStatistics & )
   {
     prepareLogTableLayouts( mesh.getName() );

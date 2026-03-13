@@ -84,6 +84,9 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
 
   m_aggregator->enableRegionStatisticsAggregation();
 
+  if( m_setNames.size() > 0 )
+    m_aggregator->restrictToSets( m_setNames );
+
   m_aggregator->forRegionStatistics( [&] ( MeshLevel & mesh, RegionStatistics & )
   {
     prepareLogTableLayouts( mesh.getName() );

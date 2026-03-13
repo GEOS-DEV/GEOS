@@ -127,6 +127,8 @@ public:
   void initStatisticsAggregation( dataRepository::Group & meshBodies,
                                   SolverType & solver );
 
+  void restrictToSets( string_array const & setNames );
+
   void forRegionStatistics( RegionStatsFunc< MeshLevel > const & functor ) const;
 
   void forRegionStatistics( MeshLevel & mesh,
@@ -196,12 +198,22 @@ protected:
     localIndex m_meshLevel;
     string_array m_regionNames;
   };
+
+  struct SelectedSet {
+    SortedArrayView< localIndex const > m_set;
+    string m_name;
   };
 
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
 
   bool const m_statsOutputEnabled;
+
+  /// if true, the statistics are computed for given sets of elements (see restrictToSets()).
+  bool m_isRestrictedToSets;
+
+  /// optional list of sets
+  array1d< SelectedSet > m_sets;
 
   dataRepository::Group * m_meshBodies = nullptr;
 
