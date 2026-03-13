@@ -40,10 +40,12 @@ StatsTask::StatsTask( string const & name, Group * const parent ):
   m_computeRegionStatistics( 1 )
 {
   registerWrapper( viewKeyStruct::setNamesString(), &m_setNames ).
-    setApplyDefaultValue( "{}" ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Optional targeted mesh element set(s) for which the statistics will be restricted."
-                    "If empty, all mesh regions will be processed."
+    setSizedFromParent( 0 ).
+    setDescription( "Optional targeted mesh element set(s) for which the statistics will be restricted. "
+                    "A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh. "
+                    "If empty, all mesh regions will be processed. "
                     "Be aware that only the regions that are computed by the solver will be taken into account." );
 
   registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
