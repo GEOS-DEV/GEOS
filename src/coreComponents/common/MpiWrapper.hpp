@@ -785,6 +785,76 @@ public:
   static void max( Span< T const > src, Span< T > dst, MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
+   * @brief Structure holding the result of a gather operation from all MPI ranks to rank 0.
+   * @tparam CONTAINER The container type holding the data. Must provide `data()`, `size()`, and `value_type`.
+   */
+  template< typename CONTAINER >
+  struct GatherResult
+  {
+    CONTAINER data;                   // Collected data accross all rank
+    stdVector< integer > counts;      // Number of elements per rank
+    stdVector< integer > offsets;     // Starting index for each rank in 'data'
+  };
+
+/**
+ * @brief Gather buffers of varying sizes from all ranks to rank 0.
+ * @tparam CONTAINER The container type holding the data.
+ * Must provide `data()`, `size()`, and a trivially copyable `value_type`.
+ * @tparam VALUE_T The trivially copyable underlying data type (deduced automatically).
+ * @param localBuffer The local buffer to be gathered on rank 0.
+ * @return A struct containing:
+ * - 'data': all the gathered data on rank 0
+ * - 'counts': number of elements for each rank
+ * - 'offsets': starting index for each rank in 'data'
+ */
+  template<
+    typename CONTAINER,
+    typename VALUE_T = typename CONTAINER::value_type,
+    typename = std::enable_if_t<
+      std::is_trivially_copyable_v< VALUE_T > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().data()), VALUE_T * > &&
+      std::is_same_v< decltype(std::declval< CONTAINER >().size()), std::size_t >
+      >
+    >
+  static GatherResult< CONTAINER >
+  gatherBufferRank0( CONTAINER const & localBuffer )
+  {
+    integer const numRanks = MpiWrapper::commSize();
+    integer const numValues = static_cast< integer >(localBuffer.size());
+
+    GatherResult< CONTAINER > gatherResult;
+
+    if( MpiWrapper::commRank() == 0 )
+    {
+      gatherResult.counts.resize( numRanks );
+      gatherResult.offsets.resize( numRanks );
+    }
+
+
+    MpiWrapper::gather( &numValues, 1, gatherResult.counts.data(), 1, 0 );
+
+    if( MpiWrapper::commRank() == 0 )
+    {
+      integer totalSize = 0;
+      for( integer i = 0; i < numRanks; ++i )
+      {
+        gatherResult.offsets[i] = totalSize;
+        totalSize += gatherResult.counts[i];
+      }
+      gatherResult.data.resize( totalSize );
+    }
+
+    MpiWrapper::gatherv( localBuffer.data(),
+                         numValues,
+                         gatherResult.data.data(),
+                         gatherResult.counts.data(),
+                         gatherResult.offsets.data(),
+                         0 );
+
+    return gatherResult;
+  }
+
+  /**
    * @brief Convenience function for a MPI_Allreduce using a max-pair operation.
    * @param[in] value the value to send into the reduction.
    * @param[out] dst The resulting values.

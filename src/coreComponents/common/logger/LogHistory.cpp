@@ -122,55 +122,7 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
   }
 }
 
-/**
- * @brief Gather buffer with different size to rank 0
- * @tparam T The type of buffer to retrieve
- * @param bufferToSend The buffer we send to rank 0
- * @return A pair of : - global allocation (buffers retrieved to rank 0)
- *                     - The vector containing the different buffer size
- */
-template< typename T >
-std::pair< stdVector< T >, stdVector< integer > >
-gatherBufferRank0( stdVector< T > const & bufferToSend )
-{
-  integer const numRanks = MpiWrapper::commSize();
-  integer const numValues = bufferToSend.size();
 
-  // Allows to know how much data each rank will send
-  stdVector< integer > recvCounts;
-  // Displacments vector for global alloc
-  stdVector< integer > displs;
-  stdVector< T > globalAllocations;
-
-  if( MpiWrapper::commRank() == 0 )
-  {
-    recvCounts.resize( numRanks );
-    displs.resize( numRanks );
-  }
-
-
-  MpiWrapper::gather( &numValues, 1, recvCounts.data(), 1, 0 );
-
-  if( MpiWrapper::commRank() == 0 )
-  {
-    integer totalSize = 0;
-    for( integer i = 0; i < numRanks; ++i )
-    {
-      displs[i] = totalSize;
-      totalSize += recvCounts[i];
-    }
-    globalAllocations.resize( totalSize );
-  }
-
-  MpiWrapper::gatherv( bufferToSend.data(),
-                       numValues,
-                       globalAllocations.data(),
-                       recvCounts.data(),
-                       displs.data(),
-                       0 );
-
-  return {globalAllocations, recvCounts};
-}
 
 size_t LogHistory::LogRecord::getSerializedSize() const
 {
@@ -208,7 +160,8 @@ void LogHistory::gatherRecordsRank0()
     }
   }
 
-  auto [globalLogRecords, recvCounts] = gatherBufferRank0( localLogRecords );
+  auto [globalLogRecords, counts, offsets] =
+    MpiWrapper::gatherBufferRank0< stdVector< buffer_unit_type > >( localLogRecords );
 
   { // Unpacking
     if( MpiWrapper::commRank() == 0 )
@@ -216,7 +169,7 @@ void LogHistory::gatherRecordsRank0()
       buffer_unit_type const * startGlobalRecord = globalLogRecords.data();
       for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
       {
-        integer byteFromThisRank = recvCounts[idxRank];
+        integer byteFromThisRank = counts[idxRank];
         buffer_unit_type const * rankEnd= startGlobalRecord + byteFromThisRank;
         while( startGlobalRecord < rankEnd )
         {
