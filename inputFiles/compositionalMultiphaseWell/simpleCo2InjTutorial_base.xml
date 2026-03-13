@@ -198,6 +198,19 @@
       objectPath="ElementRegions/wellRegion/wellRegionUniqueSubRegion"
       fieldName="pressure" />
     
+    <CompositionalMultiphaseStatistics 
+      name="domainFlowStats"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="2"
+      writeCSV="1"/>
+    
+    <CompositionalMultiphaseStatistics 
+      name="injectorSurroundingFlowStats"
+      flowSolverName="compositionalMultiphaseFlow"
+      logLevel="2"
+      writeCSV="1"
+      setNames="{injectorSurrounding}"/>
+
   </Tasks>
   <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
   <Functions>
