@@ -1550,7 +1550,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // Pc curves to invert, so the compositions from the elevation tables are preserved.
       if( !singlePhaseInitialisation && m_hasCapPressure )
       {
-        // Initialise porosity and permeability for capillary pressure computaion
+        // Initialise porosity and permeability for capillary pressure computation
         // This needs to happen before calling updateCapPressureModel
         CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
         if( cellElemSubRegion != nullptr )
