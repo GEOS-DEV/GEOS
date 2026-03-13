@@ -73,23 +73,36 @@ void VTKWellGenerator::fillPolylineDataStructure( )
                    GEOS_FMT( "Error! Your VTK file {} doesn't contain any well",
                              m_filePath ), this->getDataContext());
 
-    GEOS_LOG_RANK_0_IF( polyData->GetLines()->GetNumberOfCells() > 1,
-                        GEOS_FMT( "{}: Warning! Your VTK file {} contains multiple wells. Only the first one will be read",
-                                  this->getName(), m_filePath ));
-
     // load edges
-    // polyData->GetLines()->InitTraversal();
-    // vtkNew< vtkIdList > idList;
-    // polyData->GetLines()->GetNextCell( idList );
-
-    // vtkNew< vtkIdList > idList2;
-    // polyData->GetLines()->GetCell( 0, idList2 );
-
-    //newer version of vtk prefer local thread-safe iterator
-    //TODO deal with multiple lines and add a for loop to handle them instead of accessing line 0
     vtkNew< vtkIdList > cellPts;
-    auto iter = ::vtk::TakeSmartPointer( polyData->GetLines()->NewIterator());
+    auto iter = ::vtk::TakeSmartPointer( polyData->GetLines()->NewIterator() );
     iter->GetCellAtId( 0, cellPts );
+
+    const globalIndex numCells = polyData->GetLines()->GetNumberOfCells();
+
+    if( numCells > 1 && cellPts->GetNumberOfIds() == 2 )
+    {
+      // The well is stored as individual Line segments (2 pts each) rather than a single PolyLine.
+      // Rebuild the full ordered point list by iterating all cells.
+      GEOS_LOG_RANK_0( GEOS_FMT( "{}: VTK file {} contains {} individual Line segments. Concatenating into a single polyline.",
+                                  this->getName(), m_filePath, numCells ) );
+      vtkNew< vtkIdList > segPts;
+      cellPts->Reset();
+      vtkNew< vtkIdList > firstCell;
+      iter->GetCellAtId( 0, firstCell );
+      cellPts->InsertNextId( firstCell->GetId( 0 ) );
+      for( vtkIdType cellId = 0; cellId < numCells; ++cellId )
+      {
+        iter->GetCellAtId( cellId, segPts );
+        cellPts->InsertNextId( segPts->GetId( 1 ) );
+      }
+    }
+    else
+    {
+      GEOS_LOG_RANK_0_IF( numCells > 1,
+                          GEOS_FMT( "{}: Warning! Your VTK file {} contains {} PolyLine cells. Only the first one will be read.",
+                                    this->getName(), m_filePath, numCells ) );
+    }
 
     const globalIndex nbSegments = cellPts->GetNumberOfIds() - 1;
     m_segmentToPolyNodeMap.resizeDimension< 0 >( nbSegments );
