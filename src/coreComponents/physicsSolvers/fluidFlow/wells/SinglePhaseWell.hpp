@@ -297,7 +297,8 @@ public:
                                    DomainPartition & domain,
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion )override;virtual void outputSingleWellDebug( real64 const time,
+                                   WellElementSubRegion & subRegion )override;
+  virtual void outputSingleWellDebug( real64 const time,
                                       real64 const dt,
                                       integer current_newton_iteration,
                                       MeshLevel & mesh,

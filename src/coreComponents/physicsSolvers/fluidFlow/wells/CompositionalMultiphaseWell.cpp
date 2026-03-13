@@ -52,7 +52,8 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellWHPConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/PipeFlowTableFunction.hpp"
+#include "physicsSolvers/fluidFlow/wells/ProdPipeFlowTableFunction.hpp"
+#include "physicsSolvers/fluidFlow/wells/InjPipeFlowTableFunction.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
@@ -274,7 +275,11 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
     makeDirsForPath( m_ratesOutputDir );
     GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
     std::ofstream outputFile( fileName );
-    outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+    outputFile << "Time [s],dt[s],BHP [Pa]";
+
+    if( hasMinimumWHPConstraint() )
+      outputFile << ",WHP [Pa]";
+    outputFile << ",Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
@@ -724,15 +729,38 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
   arrayView1d< real64 const > const & temp = subRegion.getField< well::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< well::globalCompFraction >();
+#if 0
+  array2d< real64 > xcomp( 2, m_numComponents );
+  arrayView2d< real64, compflow::USD_COMP >    compFrac1 = subRegion.getField< well::globalCompFraction >();
 
+  compFrac1[0][0] = 0.565253; compFrac1[0][1] = 0.19773; compFrac1[0][2] = 0.225733; compFrac1[0][3] = 0.0107744; compFrac1[0][4] = 0.000509843;
+  compFrac1[1][0] = 0.590029; compFrac1[1][1] = 0.205601; compFrac1[1][2] = 0.194712; compFrac1[1][3] = 0.0092061; compFrac1[1][4]   = 0.000452149;
+
+
+  arrayView1d< real64 >   p = subRegion.getField< well::pressure >();
+  arrayView1d< real64 >   T = subRegion.getField< well::temperature >();
+
+  p[0] = 31209727.218176923692226; p[1] = 31311724.592292115092278;
+  T[0] = 391.779; T[1] = 391.779;
+#endif
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-
+  fluid.initializeState();  // tjb
+  std::cout << "Well " << getName() << " updating fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = " << compFrac    << std::endl;
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+#if 0
+    thermalCompositionalMultiphaseBaseKernels::
+      FluidUpdateKernel::
+      launch< ExecPolicy >( subRegion.size(),
+                            fluidWrapper,
+                            p,
+                            T,
+                            compFrac1 );
+#endif
     thermalCompositionalMultiphaseBaseKernels::
       FluidUpdateKernel::
       launch< ExecPolicy >( subRegion.size(),
@@ -812,6 +840,8 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
       flashTemperature = getRegionAverageTemperature();
     }
   }
+  fluidSeparator.initializeState();  // tjb
+  std::cout << "Well " << getName() << " updating separator fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = " << compFrac    << std::endl;
 
   constitutive::constitutiveUpdatePassThru( fluidSeparator, [&] ( auto & castedFluidSeparator )
   {
@@ -960,6 +990,7 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
     }
 
     WellConstraintBase * constraint = getCurrentConstraint();
+    std::cout << "Constraint ptr in well control is " << constraint->getName() << std::endl;
     if( constraint != nullptr )
     {
       constraint->setBHP ( getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
@@ -981,7 +1012,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
 
-
+  std::cout << "Initializing well " << getName() << " at time " << time_n << std::endl;
   // TODO: change the way we access the flowSolver here
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -2393,6 +2424,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     if( outputFile.is_open())
     {
       // print all zeros in the rates file
+      if( hasMinimumWHPConstraint() )
+        outputFile << ",0.0";
       outputFile << ",0.0,0.0,0.0";
       for( integer ip = 0; ip < numPhase; ++ip )
       {
@@ -2420,22 +2453,27 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
   real64 const & currentBHP =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+  real64 const & currentWHP =
+    getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentWHPString() );
   arrayView1d< real64 const > const & currentPhaseVolRate =
     getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
   real64 const & currentTotalVolRate =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
 
+  integer const hasWHP =  hasMinimumWHPConstraint();
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [&numPhase,
                               &numComp,
                               &useSurfaceCond,
                               &currentBHP,
+                              &currentWHP,
                               connRate,
                               &currentTotalVolRate,
                               currentPhaseVolRate,
                               &compRate,
                               &iwelemRef,
                               &wellControlsName,
+                              &hasWHP,
                               &massUnit,
                               &outputFile] ( localIndex const )
   {
@@ -2453,6 +2491,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     if( outputFile.is_open())
     {
       outputFile << "," << currentBHP;
+      if( hasWHP )
+        outputFile << "," << currentWHP;
       outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
       for( integer ip = 0; ip < numPhase; ++ip )
       {
@@ -2502,7 +2542,7 @@ bool CompositionalMultiphaseWell::solveWHPConstraint( real64 const & time_n,
 
   // Get the flow table function
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( whpConstraint->getFlowTableName());
+  const ProdPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< ProdPipeFlowTableFunction const >( whpConstraint->getFlowTableName());
   //m_flowTable.writeTable();
   integer flowTableSolveState;
 
@@ -2801,8 +2841,9 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
   integer num_timestep_cuts  =0;
   if( m_writeSegDebug > 1 )
   {
-    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-    auto solver_names = getParent().getSubGroupsNames();
+    // CompositionalMultiphaseBase const & flowSolver = .getParent().getParent().getGroup< CompositionalMultiphaseBase >(
+    // getFlowSolverName() );
+    // auto solver_names = getParent().getSubGroupsNames();
 //integer n = solver_names.size();
 // Bit of a hack, cases with > 3 solvers we need to find the base solver for wells
 // Assume that solver definition order follows coupledreswell, res, and then well
@@ -2849,8 +2890,8 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
                           fields::flow::dPhaseVolumeFraction,
                           fields::flow::globalCompDensity,
                           fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
-      string const flowSolverName = flowSolver.getName();
-      CompFlowAccessors compFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+      CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getFlowSolverName() );
 
       using MultiFluidAccessors =
         StencilMaterialAccessors< MultiFluidBase,
@@ -2863,14 +2904,14 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
                                   fields::multifluid::dPhaseViscosity,
                                   fields::multifluid::phaseCompFraction,
                                   fields::multifluid::dPhaseCompFraction >;
-      MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+      MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getFlowSolverName() );
 
       using RelPermAccessors =
         StencilMaterialAccessors< RelativePermeabilityBase,
                                   fields::relperm::phaseRelPerm,
                                   fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
 
-      RelPermAccessors relPermAccessors( mesh.getElemManager(), flowSolver.getName() );
+      RelPermAccessors relPermAccessors( mesh.getElemManager(), getFlowSolverName() );
 
 
       string const srn = subRegion.getName();

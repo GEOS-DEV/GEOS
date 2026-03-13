@@ -14,10 +14,10 @@
  */
 
 /**
- * @file PipeFlowTableFunction.cpp
+ * @file ProdPipeFlowTableFunction.cpp
  */
 
-#include "PipeFlowTableFunction.hpp"
+#include "ProdPipeFlowTableFunction.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/MultivariableNonuniformTableFunctionKernels.hpp"
 #include "common/DataTypes.hpp"
@@ -30,8 +30,8 @@ namespace geos
 
 using namespace dataRepository;
 
-PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
-                                              Group * const parent ):
+ProdPipeFlowTableFunction::ProdPipeFlowTableFunction( const string & name,
+                                                      Group * const parent ):
   MultivariableNonuniformTableFunction( name, parent ),
   m_tableFunction( nullptr )
 {
@@ -89,7 +89,7 @@ PipeFlowTableFunction::PipeFlowTableFunction( const string & name,
 
 }
 
-void PipeFlowTableFunction::postInputInitialization()
+void ProdPipeFlowTableFunction::postInputInitialization()
 {
   // Validate independent table values are not decreasing
   auto checkNotDecreasing = []( const auto & arr, const std::string & name )
@@ -129,7 +129,7 @@ void PipeFlowTableFunction::postInputInitialization()
   initializeFunction();
 }
 
-void PipeFlowTableFunction::initializeFunction()
+void ProdPipeFlowTableFunction::initializeFunction()
 {
   localIndex constexpr nDims = 5;
   localIndex constexpr nOps = 1;
@@ -209,7 +209,7 @@ void PipeFlowTableFunction::initializeFunction()
   writeTable();
 }
 integer
-PipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, integer & b1 ) const
+ProdPipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, integer & b1 ) const
 {
   integer nRate = m_rate.size();
   integer stat=0;
@@ -243,7 +243,7 @@ PipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, intege
   return stat;
 }
 real64
-PipeFlowTableFunction::calculatedPdQ( array1d< real64 > const & phaseRates, real64 const & whp, real64 & ql0, real64 & ql1, real64 & bhp0, real64 & bhp1 ) const
+ProdPipeFlowTableFunction::calculatedPdQ( array1d< real64 > const & phaseRates, real64 const & whp, real64 & ql0, real64 & ql1, real64 & bhp0, real64 & bhp1 ) const
 {
   // Calculate ratios that are assumed fixed for table lookup
   real64 lrate = -( phaseRates[0] + phaseRates[2] );
@@ -275,7 +275,7 @@ PipeFlowTableFunction::calculatedPdQ( array1d< real64 > const & phaseRates, real
   real64 dP_dQ = ( bhp1 - bhp0 ) / ( m_rate[b1] - m_rate[b0] );
   return dP_dQ;
 }
-void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const
+void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const
 {
 
   MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
@@ -344,14 +344,15 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
   }
   if( solveStat == 0 )
   {
-    std::cout << "PipeFlowTableFunction::calculateBHP input coords = " << table_coordsr << std::endl;
+    std::cout << "ProdPipeFlowTableFunction::calculateBHP input coords = " << table_coordsr << std::endl;
 
     array1d< real64 > table_bhp( 1 );
     kernel.compute( table_coordsr, table_bhp, table_derv );
     real64 bhpbt = table_bhp[0];
-    // std::cout << " PipeFlowTableFunction::calculateBHP initial bhp = " << bhp << " bhp calc " << table_bhp[0] << " " << table_coordsr
+    // std::cout << " ProdPipeFlowTableFunction::calculateBHP initial bhp = " << bhp << " bhp calc " << table_bhp[0] << " " << table_coordsr
     // <<std::endl;
-    std::cout << "PipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << table_derv[0][3]<< std::endl;
+    std::cout << "ProdPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << table_derv[0][3]<<
+      std::endl;
     bhp=bhpbt;
   }
   else
@@ -360,7 +361,7 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
     real64 derivatives[5]{};
     table_bhp[0] = kernelWrapper.compute( table_coords, derivatives );
     bhp = table_bhp[0];
-    std::cout << "PipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << derivatives[1] <<
+    std::cout << "ProdPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << derivatives[1] <<
       std::endl;
   }
   if( whp >m_whp[m_whp.size()-1] )
@@ -372,7 +373,7 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
 
 }
 
-void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
+void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
 {
 
   MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
@@ -428,7 +429,7 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
     gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
   }
 #endif
-  std::cout << wellName << " PipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq << " wct " << wct << " gor " << gor << std::endl;
+  std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq << " wct " << wct << " gor " << gor << std::endl;
 #if 1
   array1d< real64 > table_coords( 5 );
   real64 derivatives[5]{};
@@ -441,7 +442,7 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
 
   table_coords[3]=whp;    // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
-  std::cout << " PipeFlowTableFunction::calculateWHP initial whp = " << whp << " bhp calc " << table_bhp[0] << " " << table_coords <<std::endl;
+  std::cout << " ProdPipeFlowTableFunction::calculateWHP initial whp = " << whp << " bhp calc " << table_bhp[0] << " " << table_coords <<std::endl;
 
   integer nWHP = m_whp.size();
   for( integer i=0; i<nWHP; i++ )
@@ -471,9 +472,9 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
 
     if( std::isnan( whp0 ) )
     {
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
     }
-    std::cout << wellName << " PipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
+    std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
       " liq = " << liq*m_sign  << std::endl;
     solveStat=2;
   }
@@ -495,7 +496,7 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
       //bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
       //whpN = m_whp[0] + ( bhp - bhp0 )*table_derv[0][3];
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
         " gor = " << gor << std::endl;
       whp=whpN;
       solveStat=0;
@@ -521,15 +522,15 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
 
     if( foundBracket ==0 )
     {
-      throw; std::runtime_error( "PipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
+      throw; std::runtime_error( "ProdPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
     }
     else
     {
       solveStat=1;
       whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
       whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
         " gor = " << gor << std::endl;
       solveStat=1;
     }
@@ -556,9 +557,9 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
 
     if( std::isnan( whp0 ) )
     {
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP bhpN " << bhpN << " bhp0 " << bhp0 << " bhp " << bhp << std::endl;
     }
-    std::cout << wellName << " PipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
+    std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at high whp = " << whp << " " << bhp<< " " <<m_whp[nWHP-1] << " " << m_whp[nWHP-2] << " " << bhpN <<" " << bhp0 <<
       " liq = " << liq*m_sign  << std::endl;
 
   }
@@ -574,7 +575,7 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
       table_coords[1]=m_whp[1];
       bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
         " gor = " << gor << std::endl;
       whp=whpN;
       return;
@@ -597,21 +598,21 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
 
     if( foundBracket ==0 )
     {
-      throw; std::runtime_error( "PipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
+      throw; std::runtime_error( "ProdPipeFlowTableFunction::calculateWHP failed to find bracketing whp values" );
     }
     else
     {
       whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
       whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " PipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
+      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
         " gor = " << gor << std::endl;
     }
   }
 #endif
   return;
 
-  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 << " wct = " << wct << " gor = " << gor << std::endl;
+  std::cout << "ProdPipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 << " wct = " << wct << " gor = " << gor << std::endl;
 
   // array1d< real64 > table_bhp( 1 );
 
@@ -636,15 +637,15 @@ void PipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 c
     whp0 =whpn;
     whpn = table_coords[1];
     bhpn = kernelWrapper.compute( table_coords, derivatives );
-    std::cout << " PipeFlowTableFunction::calculateWHP iter = " << iter << " bhp " << bhpn << " whp = " << whpn <<  " derive " << dpdwhp<< " residual = " << bhpn - bhp0 << std::endl;
+    std::cout << " ProdPipeFlowTableFunction::calculateWHP iter = " << iter << " bhp " << bhpn << " whp = " << whpn <<  " derive " << dpdwhp<< " residual = " << bhpn - bhp0 << std::endl;
 
     ++iter;
   }
   whp0 = table_coords[1];
-  std::cout << "PipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn << " wct = " << wct << " gor = " << gor << std::endl;
+  std::cout << "ProdPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn << " wct = " << wct << " gor = " << gor << std::endl;
 }
 
-void PipeFlowTableFunction::writeTable() const
+void ProdPipeFlowTableFunction::writeTable() const
 {
 
   std::ofstream of;
@@ -695,6 +696,6 @@ void PipeFlowTableFunction::writeTable() const
 
 }
 
-REGISTER_CATALOG_ENTRY( FunctionBase, PipeFlowTableFunction, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FunctionBase, ProdPipeFlowTableFunction, string const &, Group * const )
 
 } // end of namespace geos

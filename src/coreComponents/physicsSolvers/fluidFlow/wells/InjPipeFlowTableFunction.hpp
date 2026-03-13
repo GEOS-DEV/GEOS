@@ -14,11 +14,11 @@
  */
 
 /**
- * @file PipeFlowTableFunction.hpp
+ * @file InjPipeFlowTableFunction.hpp
  */
 
-#ifndef GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
-#define GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
+#ifndef GEOS_FUNCTIONS_INJPIPEFLOWTABLEFUNCTION_HPP_
+#define GEOS_FUNCTIONS_INJPIPEFLOWTABLEFUNCTION_HPP_
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableNonuniformTableFunction.hpp"
 
@@ -29,12 +29,12 @@ namespace geos
 {
 
 /**
- * @class PipeFlowTableFunction
+ * @class InjPipeFlowTableFunction
  *
  * An interface class for pipeflow table function (function with multiple inputs and outputs) with uniform discretization
  */
 
-class PipeFlowTableFunction : public MultivariableNonuniformTableFunction
+class InjPipeFlowTableFunction : public MultivariableNonuniformTableFunction
 {
 public:
 
@@ -43,14 +43,14 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  PipeFlowTableFunction( const string & name,
-                         Group * const parent );
+  InjPipeFlowTableFunction( const string & name,
+                            Group * const parent );
 
   /**
    * @brief The catalog name interface
-   * @return name of the PipeFlowTableFunction in the FunctionBase catalog
+   * @return name of the InjPipeFlowTableFunction in the FunctionBase catalog
    */
-  static string catalogName() { return "PipeFlowTableFunction"; }
+  static string catalogName() { return "InjPipeFlowTableFunction"; }
 
   /**
    * @name Getters / Setters
@@ -154,7 +154,7 @@ public:
     static constexpr char const *bottomHolePressureArray() { return "bottomHolePressure"; }
   }
   /// ViewKey struct for the Perforation class
-  viewKeysPipeFlowTableFunction;
+  viewKeysInjPipeFlowTableFunction;
 
   void calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const;
 
@@ -210,4 +210,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* GEOS_FUNCTIONS_PipeFlowTableFunction_HPP_ */
+#endif /* GEOS_FUNCTIONS_INJPIPEFLOWTABLEFUNCTION_HPP_ */

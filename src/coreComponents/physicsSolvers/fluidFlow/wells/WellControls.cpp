@@ -20,7 +20,8 @@
 #include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
 #include "WellConstants.hpp"
-#include "PipeFlowTableFunction.hpp"
+#include "ProdPipeFlowTableFunction.hpp"
+#include "InjPipeFlowTableFunction.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mesh/PerforationFields.hpp"
@@ -260,7 +261,7 @@ void WellControls::createMaxLiquidConstraintForWHP()
   m_maxLiquidConstraintForWHP =  &liquidConstraint;
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  const ProdPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< ProdPipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
   string_array ratePhases = m_flowTable.getRatePhases();
   m_maxLiquidConstraintForWHP->setPhaseNames( ratePhases );
   m_maxLiquidConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
@@ -275,7 +276,7 @@ void WellControls::createMaxVolumeInjConstraintForWHP()
   m_maxVolumeConstraintForWHP =  &volumeConstraint;
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
   string_array ratePhases = m_flowTable.getRatePhases();
   // tjb switch to defining all phases  ???
   //m_maxVolumeConstraintForWHP->setPhaseNames( ratePhases );
