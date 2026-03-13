@@ -31,10 +31,10 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values( "two_phases",
                      "three_phases" ),
   []( ::testing::TestParamInfo< std::string > const & paramInfo )
-  {
-    return paramInfo.param;   // use case name as the test suffix
-  }
-);
+{
+  return paramInfo.param;     // use case name as the test suffix
+}
+  );
 
 int main( int argc, char * * argv )
 {
