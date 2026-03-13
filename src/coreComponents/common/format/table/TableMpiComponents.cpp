@@ -88,7 +88,7 @@ stdVector< TableData::CellData > TableTextMpiOutput::reconstructRow( string_view
   {
     cell =std::string( stringutilities::trimSpaces( rowContent.substr( start, end )));
     reconstructedRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
-    rowContent =rowContent.substr( end + 1, rowContent.size());
+    rowContent.remove_prefix( end + 1 );
   }
   return reconstructedRow;
 }
@@ -102,7 +102,7 @@ void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gathere
                          rowsSizeAcrossAllRank );
   integer const maxRowAcrossAllRanks = *std::max_element( rowsSizeAcrossAllRank.begin(),
                                                           rowsSizeAcrossAllRank.end());
-  rowsAsString.resize( maxRowAcrossAllRanks, "" );
+  rowsAsString.resize( maxRowAcrossAllRanks );
 
   for( string & row : rowsAsString )
   {
