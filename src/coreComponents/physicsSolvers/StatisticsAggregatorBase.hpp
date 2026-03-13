@@ -220,6 +220,10 @@ protected:
   /// The current state of the region statistics
   StatsState m_regionStatsState;
 
+  /**
+   * @param path the path of the discretization group in the data-repository.
+   * @return MeshLevel& the MeshLevel Group for the given discretisation
+   */
   MeshLevel & getMeshLevel( DiscretizationGroupPath const & path ) const;
 
   /**
