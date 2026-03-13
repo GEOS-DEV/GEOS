@@ -308,13 +308,19 @@ protected:
                           string_view separatorLine,
                           bool hasData ) const;
 
+  /**
+   * @brief Outputs the formatted table line to the output stream.
+   * @param tableLayout The layout of the table
+   * @param rows The data rows in a grid layout
+   * @param row Represent a row of the Table (header or values) to output
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param idxRow the row index to output
+   */
   void outputLine( PreparedTableLayout const & tableLayout,
                    CellLayoutRows const & rows,
                    CellLayoutRow const & row,
                    std::ostream & tableOutput,
                    size_t const idxRow ) const;
-
-
 
 private:
 

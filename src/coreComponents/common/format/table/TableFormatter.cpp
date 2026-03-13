@@ -315,14 +315,14 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
       stdVector< TableLayout::CellLayout >( nbVisibleColumns,
-                                            TableLayout::CellLayout( CellType::MergeNext ) ),   // cells
+                                            TableLayout::CellLayout( CellType::MergeNext ) ),  // cells
       titleInput.getHeight(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
       stdVector< TableLayout::CellLayout >( nbVisibleColumns,
-                                            TableLayout::CellLayout( CellType::Separator ) ),   // cells
+                                            TableLayout::CellLayout( CellType::Separator ) ),  // cells
       1, // sublinesCount
     };
   }

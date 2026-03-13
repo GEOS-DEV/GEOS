@@ -402,7 +402,7 @@ public:
 }
 
   template< typename FUNC >
-  static void gatherStringOnRank0( string const & str,
+  static void gatherStringOnRank0( string_view str,
                                    FUNC && func );
 
   /**

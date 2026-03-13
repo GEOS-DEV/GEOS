@@ -166,7 +166,7 @@ public:
         return;
       }
 
-      StackVariables stack{};
+      StackVariables stack;
       kernelComponent.setup( ei, stack );
       kernelComponent.compute( ei, stack );
 
