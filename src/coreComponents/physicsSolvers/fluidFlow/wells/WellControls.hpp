@@ -901,7 +901,8 @@ public:
    */
   void createMinBHPConstraintForWHP();
   void createMaxLiquidConstraintForWHP();
-
+  void createMaxBHPConstraintForWHP();
+  void createMaxVolumeInjConstraintForWHP();
 
   /**
    * @brief Getters for constraints
@@ -963,7 +964,7 @@ public:
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
                                    WellElementSubRegion & subRegion ) = 0;
- virtual void outputSingleWellDebug( real64 const time,
+  virtual void outputSingleWellDebug( real64 const time,
                                       real64 const dt,
                                       integer current_newton_iteration,
                                       MeshLevel & mesh,
@@ -1055,10 +1056,13 @@ protected:
   MinimumBHPConstraint *  m_minBHPConstraint;
   MaximumBHPConstraint * m_maxBHPConstraint;
   MinimumWHPConstraint *  m_minWHPConstraint;
+  MaximumWHPConstraint * m_maxWHPConstraint;
 
   // BHP constraint used when WHP constraint is active
   MinimumBHPConstraint *     m_minBHPConstraintForWHP;
   ProductionConstraint< LiquidRateConstraint > *  m_maxLiquidConstraintForWHP;
+  MaximumBHPConstraint * m_maxBHPConstraintForWHP;
+  InjectionConstraint< VolumeRateConstraint > * m_maxVolumeConstraintForWHP;
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;
