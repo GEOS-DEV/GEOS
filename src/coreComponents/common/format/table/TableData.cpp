@@ -18,7 +18,6 @@
  */
 
 #include "TableData.hpp"
-#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 
 namespace geos
@@ -167,7 +166,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
     std::set< real64 >::const_iterator columnIt = m_columnValues.begin();
     for( auto const & [columnValue, cellValue] : rowMap )
     {
-      // if s1 column value(s) is/are missing, insert empty entry(ies)
+      // if a column value(s) is/are missing, insert empty entry(ies)
       while( columnValue > *( columnIt++ ) && columnIt != m_columnValues.end() )
       {
         currentRowValues.push_back( {CellType::Value, ""} );

@@ -306,7 +306,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
 namespace tabledatasorting
 {
 /**
- * @brief Compare two number string by  in ascending numerical order.
+ * @brief Compare two string number string by  in ascending numerical order.
  * @param a The string to compare
  * @param b The string to compare
  * @return True if a is greater than b
