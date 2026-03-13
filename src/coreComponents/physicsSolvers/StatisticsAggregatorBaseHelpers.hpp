@@ -78,9 +78,9 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
     // remembering the path of this discretization
     MeshBody const & body = m_meshBodies->getGroup< MeshBody >( meshBodyName );
     DiscretizationGroupPath const path {
-      body.getIndexInParent(),
-      mesh.getIndexInParent(),
-      regionNames,
+      /* .m_meshBody = */ body.getIndexInParent(),
+      /* .m_meshLevel = */ mesh.getIndexInParent(),
+      /* .m_regionNames = */ regionNames,
     };
     m_discretizationsPaths.push_back( path );
   } );
@@ -104,9 +104,9 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
     StatsGroupType & meshRegionsStats = registerStatsFunc( statisticsGroup,
                                                            ViewKeys::regionsStatisticsString() );
 
-    for( size_t i = 0; i < path.regionNames.size(); ++i )
+    for( size_t i = 0; i < path.m_regionNames.size(); ++i )
     {
-      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.regionNames[i] );
+      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[i] );
       StatsGroupType & regionStats = registerStatsFunc( meshRegionsStats,
                                                         region.getName() );
 
@@ -257,8 +257,8 @@ template< typename Impl >
 MeshLevel &
 StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationGroupPath const & path ) const
 {
-  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.meshBody );
-  MeshLevel & mesh = body.getMeshLevel( path.meshLevel );
+  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.m_meshBody );
+  MeshLevel & mesh = body.getMeshLevel( path.m_meshLevel );
   return mesh;
 }
 
