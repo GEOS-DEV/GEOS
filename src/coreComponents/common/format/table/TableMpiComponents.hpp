@@ -112,7 +112,7 @@ private:
    * @param dataCellsLayout The target CellLayoutRows to convert
    * @param rowsAsString The result vector of the convertion
    */
-  void convertDataCellRowsToString( CellLayoutRows const & dataCellsLayout,
+  void convertRowsToString( CellLayoutRows const & dataCellsLayout,
                                     stdVector< string > & rowsAsString ) const;
 
   /**
@@ -120,8 +120,7 @@ private:
    * @param str The serialized row string to parse.
    * @param reconstructedTableData The TableData being reconstructed
    */
-  void reconstructTableData( string_view str,
-                             TableData & reconstructedTableData ) const;
+  stdVector< TableData::CellData > reconstructRow( string_view str ) const;
 
   /**
    * @brief Gather serialized rows across all ranks, Reconstruct a TableData,
@@ -130,7 +129,7 @@ private:
    * @param rowsAsString Serialized rows by the current rank.
    * @param status Updated with content availability.
    */
-  void gatherAndSortRowsAcrossRanks ( TableData & reconstructedTableData,
+  void gatherAndSortTableDataAcrossRanks ( TableData & reconstructedTableData,
                                       stdVector< string > & rowsAsString,
                                       TableTextMpiOutput::Status & status ) const;
   /**
@@ -152,7 +151,7 @@ private:
    * @param tableLayout The layout of the table
    * @param status The TableMpi status for the current rank
    */
-  void gatherAndOutputInRankOrder( std::ostream & tableOutput,
+  void gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
                                    CellLayoutRows const & dataCellsLayout,
                                    PreparedTableLayout const & tableLayout,
                                    TableTextMpiOutput::Status & status )const;

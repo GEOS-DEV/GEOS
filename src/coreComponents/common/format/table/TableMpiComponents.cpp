@@ -35,58 +35,6 @@ TableTextMpiOutput::TableTextMpiOutput( TableLayout const & tableLayout,
   m_mpiLayout( mpiLayout )
 {}
 
-template<>
-void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
-                                                TableData const & tableData ) const
-{
-  TableTextMpiOutput::Status status {
-    // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
-    MpiWrapper::commRank() == 0,
-    // m_isContributing (some ranks does not have any output to produce)
-    !tableData.getCellsData().empty(),
-    // m_hasContent
-    false,
-    // m_sepLine
-    ""
-  };
-
-  CellLayoutRows headerCellsLayout;
-  CellLayoutRows dataCellsLayout;
-  CellLayoutRows errorCellsLayout;
-  size_t tableTotalWidth = 0;
-
-  {
-    ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
-      stretchColumnsByRanks( columnsWidth, status );
-    };
-    initalizeTableGrids( m_tableLayout, tableData,
-                         headerCellsLayout, dataCellsLayout, errorCellsLayout,
-                         tableTotalWidth, columnWidthModifier );
-    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
-  }
-
-  if( m_sortingFunctor )
-  {
-    gatherSortAndOutput( tableOutput, dataCellsLayout, status );
-  }
-  else
-  {
-    if( status.m_isMasterRank )
-    {
-      outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
-      tableOutput.flush();
-    }
-    gatherAndOutputInRankOrder( tableOutput, dataCellsLayout, m_tableLayout, status );
-    if( status.m_isMasterRank )
-    {
-      outputTableFooter( tableOutput, m_tableLayout, errorCellsLayout,
-                         status.m_sepLine, status.m_hasContent );
-      tableOutput.flush();
-    }
-
-  }
-}
-
 void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
                                                 TableTextMpiOutput::Status const & status ) const
 {
@@ -109,89 +57,86 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-void TableTextMpiOutput::convertDataCellRowsToString( CellLayoutRows const & dataCellsLayout,
-                                                      stdVector< string > & rowsConvertedInString ) const
+void TableTextMpiOutput::convertRowsToString( CellLayoutRows const & rows,
+                                              stdVector< string > & rowsConvertedInString ) const
 {
   std::ostringstream rowStringStream;
   size_t rowIndex = 0;
 
-  for( CellLayoutRow const & row : dataCellsLayout )
+  for( CellLayoutRow const & row : rows )
   {
-    outputLine( m_tableLayout, dataCellsLayout, row, rowStringStream, rowIndex );
+    outputLine( m_tableLayout, rows, row, rowStringStream, rowIndex );
     rowIndex++;
     rowsConvertedInString.emplace_back( rowStringStream.str());
     rowStringStream.str( "" );
   }
 }
 
-void TableTextMpiOutput::reconstructTableData( string_view str,
-                                               TableData & reconstructedTableData ) const
+stdVector< TableData::CellData > TableTextMpiOutput::reconstructRow( string_view str ) const
 {
   if( str.size() < 1 )
-    return;
+    return stdVector< TableData::CellData >{};
 
-  string row( str.substr( 1 ));
+  string_view rowContent( str.substr( 1 )); // skip leading '|'
   string cell;
   stdVector< TableData::CellData > reconstructedRow;
 
   std::string::size_type start = 0;
   std::string::size_type end = 0;
 
-  while( (end = row.find( m_verticalLine, start )) != string::npos )
+  while( (end = rowContent.find( m_verticalLine, start )) != string_view::npos )
   {
-    cell =std::string( stringutilities::trimSpaces( row.substr( start, end )));
+    cell =std::string( stringutilities::trimSpaces( rowContent.substr( start, end )));
     reconstructedRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
-    row =row.substr( end + 1, row.size());
+    rowContent =rowContent.substr( end + 1, rowContent.size());
   }
-  reconstructedTableData.addRow( reconstructedRow );
+  return reconstructedRow;
 }
 
-void TableTextMpiOutput::gatherAndSortRowsAcrossRanks ( TableData & reconstructedTableData,
-                                                        stdVector< string > & rowsAsString,
-                                                        TableTextMpiOutput::Status & status ) const
+void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
+                                                             stdVector< string > & rowsAsString,
+                                                             TableTextMpiOutput::Status & status ) const
 {
-  array1d< int > rowsSizeAcrossAllRank( MpiWrapper::commSize());
-  MpiWrapper::allGather( LvArray::integerConversion< int >( rowsAsString.size()),
+  array1d< integer > rowsSizeAcrossAllRank( MpiWrapper::commSize());
+  MpiWrapper::allGather( LvArray::integerConversion< integer >( rowsAsString.size()),
                          rowsSizeAcrossAllRank );
-  int const maxRowAcrossAllRanks = *std::max_element( rowsSizeAcrossAllRank.begin(),
-                                                      rowsSizeAcrossAllRank.end());
+  integer const maxRowAcrossAllRanks = *std::max_element( rowsSizeAcrossAllRank.begin(),
+                                                          rowsSizeAcrossAllRank.end());
   rowsAsString.resize( maxRowAcrossAllRanks, "" );
-
 
   for( string & row : rowsAsString )
   {
     MpiWrapper::gatherStringOnRank0( row, std::function< void(string_view) >( [&]( string_view str ){
       status.m_hasContent = true;
-      reconstructTableData( str, reconstructedTableData );
+      gatheredTableData.addRow( reconstructRow( str ));
     } ));
   }
 
-  std::sort( reconstructedTableData.getCellsData().begin(),
-             reconstructedTableData.getCellsData().end(),
+  std::sort( gatheredTableData.getCellsData().begin(),
+             gatheredTableData.getCellsData().end(),
              *m_sortingFunctor );
 }
 
-
 void TableTextMpiOutput::gatherSortAndOutput( std::ostream & tableOutput,
-                                              CellLayoutRows const & dataCellsLayout,
+                                              CellLayoutRows const & rows,
                                               TableTextMpiOutput::Status & status ) const
 {
   stdVector< string > rowsAsString;
-  convertDataCellRowsToString( dataCellsLayout, rowsAsString );
+  convertRowsToString( rows, rowsAsString );
 
-  TableData reconstructedTableData;
-  gatherAndSortRowsAcrossRanks ( reconstructedTableData, rowsAsString, status );
+  TableData gatheredTableData;
+  gatherAndSortTableDataAcrossRanks( gatheredTableData, rowsAsString, status );
 
   if( status.m_isMasterRank && status.m_hasContent )
   {
-    tableOutput << toString( reconstructedTableData );
+    tableOutput << toString( gatheredTableData );
   }
 }
 
-void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
-                                                     CellLayoutRows const & dataCellsLayout,
-                                                     PreparedTableLayout const & tableLayout,
-                                                     TableTextMpiOutput::Status & status ) const
+void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
+                                                              CellLayoutRows const & rows,
+                                                              PreparedTableLayout const & tableLayout,
+                                                              TableTextMpiOutput::Status & status ) const
 {
   // master rank does the output directly to the output, other ranks will have to send it through a string.
   std::ostringstream localStringStream;
@@ -204,7 +149,7 @@ void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
       string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, status.m_sepLine.size() - 2 );
       rankOutput << tableLayout.getIndentationStr() << m_verticalLine << rankSepLine << m_verticalLine << '\n';
     }
-    outputTableData( rankOutput, tableLayout, dataCellsLayout );
+    outputTableData( rankOutput, tableLayout, rows );
   }
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   stdVector< string > strsAccrossRanks;
@@ -212,12 +157,64 @@ void TableTextMpiOutput::gatherAndOutputInRankOrder( std::ostream & tableOutput,
   MpiWrapper::gatherStringOnRank0( rankStr, std::function< void(string_view) >( [&]( string_view str ){
     status.m_hasContent = true;
     strsAccrossRanks.emplace_back( str );
-  } ));;
+  } ));
 
   if( status.m_isMasterRank && status.m_hasContent )
   {
-    for( auto const & str : strsAccrossRanks )
+    for( string_view str : strsAccrossRanks )
       tableOutput << str;
+  }
+}
+
+template<>
+void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
+                                                TableData const & tableData ) const
+{
+  TableTextMpiOutput::Status status {
+    // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
+    MpiWrapper::commRank() == 0,
+    // m_isContributing (some ranks does not have any output to produce)
+    !tableData.getCellsData().empty(),
+    // m_hasContent
+    false,
+    // m_sepLine
+    ""
+  };
+
+  CellLayoutRows headerCellsLayout;
+  CellLayoutRows dataRows;
+  CellLayoutRows errorRows;
+  size_t tableTotalWidth = 0;
+
+  {
+    ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
+      stretchColumnsByRanks( columnsWidth, status );
+    };
+    initalizeTableGrids( m_tableLayout, tableData,
+                         headerCellsLayout, dataRows, errorRows,
+                         tableTotalWidth, columnWidthModifier );
+    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
+  }
+
+  if( m_sortingFunctor )
+  {
+    gatherSortAndOutput( tableOutput, dataRows, status );
+  }
+  else
+  {
+    if( status.m_isMasterRank )
+    {
+      outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
+      tableOutput.flush();
+    }
+    gatherAndOutputTableDataInRankOrder( tableOutput, dataRows, m_tableLayout, status );
+    if( status.m_isMasterRank )
+    {
+      outputTableFooter( tableOutput, m_tableLayout, errorRows,
+                         status.m_sepLine, status.m_hasContent );
+      tableOutput.flush();
+    }
+
   }
 }
 
