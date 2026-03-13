@@ -293,7 +293,9 @@ jobs:
     needs:
       - is_not_draft_pull_request
     uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
     with:
       BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
       CMAKE_BUILD_TYPE: Debug
@@ -302,7 +304,6 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: streak2
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
