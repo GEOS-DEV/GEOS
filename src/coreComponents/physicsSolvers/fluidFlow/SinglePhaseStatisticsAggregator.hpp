@@ -23,30 +23,42 @@
  *         |-> cartesianMesh : MeshBody
  *             |-> meshLevels : Group
  *                 |-> Level0 : MeshLevel
+ *                 |   |-> ElementRegions : ElementRegionManager
+ *                 |   |   |-> elementRegionsGroup : Group
+ *                 |   |       |-> Channel : CellElementRegion
+ *                 |   |       |   |-> elementSubRegions : Group
+ *                 |   |       |       |-> cb-0_0_0 : CellElementSubRegion
+ *                 |   |       |       |   | * pressure : Wrapper< real64 array >
+ *                 |   |       |       |   | * temperature : Wrapper< real64 array >
+ *                 |   |       |       |   |-> sets : Group
+ *                 |   |       |       |   |   | * all : Wrapper< index array >
+ *                 |   |       |       |   |   | * myBox : Wrapper< index array >
+ *                 |   |       |       |   |   [...] (other element sets)
+ *                 |   |       |       |   |
+ *                 |   |       |       |   [...] (other fields)
+ *                 |   |       |       |
+ *                 |   |       |       |-> cb-0_0_1 : CellElementSubRegion
+ *                 |   |       |       |   | * pressure : Wrapper< real64 array >
+ *                 |   |       |       |   | * temperature : Wrapper< real64 array >
+ *                 |   |       |       |   |-> sets : Group
+ *                 |   |       |       |   |   | * all : Wrapper< index array >
+ *                 |   |       |       |   |   | * myBox : Wrapper< index array >
+ *                 |   |       |       |   |   [...] (other element sets)
+ *                 |   |       |       |   |
+ *                 |   |       |       |   [...] (other fields)
+ *                 |   |       |       |
+ *                 |   |       |       [...] (other sub-regions)
+ *                 |   |       |
+ *                 |   |       |-> Barrier : CellElementRegion
+ *                 |   |           |-> cb-1_0_0 : CellElementSubRegion
+ *                 |   |           |-> cb-1_0_1 : CellElementSubRegion
+ *                 |   |           [...] (other sub-regions)
+ *                 |   |
  *                 |   |-> nodeManager : NodeManager
  *                 |   |   |-> sets : Group
  *                 |   |       | * all : Wrapper< index array >
- *                 |   |       | * xneg : Wrapper< index array >
+ *                 |   |       | * myBox : Wrapper< index array >
  *                 |   |       [...] (other element sets)
- *                 |   |
- *                 |   |-> ElementRegions : ElementRegionManager
- *                 |   |   |-> Channel : CellElementRegion
- *                 |   |   |   |-> cb-0_0_0 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   |-> cb-0_0_1 : CellElementSubRegion
- *                 |   |   |   |   | * pressure : Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : Wrapper< real64 array >
- *                 |   |   |   |   [...] (other fields)
- *                 |   |   |   |
- *                 |   |   |   [...] (other sub-regions)
- *                 |   |   |
- *                 |   |   |-> Barrier : CellElementRegion
- *                 |   |       |-> cb-1_0_0 : CellElementSubRegion
- *                 |   |       |-> cb-1_0_1 : CellElementSubRegion
- *                 |   |       [...] (other sub-regions)
  *                 |   |
  *                 |   [...] (other element managers)
  *          ____   |   |
