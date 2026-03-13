@@ -67,6 +67,23 @@ foreach(test ${gtest_geosx_tests})
                      
 endforeach()
 
+# testFixedDimensionalHydrostaticEquilibrium: serial (single-rank) variant is always built.
+
+# --- Serial variant (always built) ---
+set( test "testFixedDimensionalHydrostaticEquilibrium.cpp" )
+get_filename_component( test_name ${test} NAME_WE )
+
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test}
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
+
+set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
 # For some reason, BLT is not setting CUDA language for these source files
 if ( ENABLE_CUDA )
   set_source_files_properties( ${gtest_geosx_tests} PROPERTIES LANGUAGE CUDA )

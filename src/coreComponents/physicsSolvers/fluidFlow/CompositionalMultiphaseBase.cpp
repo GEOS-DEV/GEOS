@@ -1470,12 +1470,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           phaseIndexOrdering[0] = ipWater;
           phaseIndexOrdering[1] = ipOil;
         }
-        if( ipOil < 0 )
+        else if( ipOil < 0 )
         {
           phaseIndexOrdering[0] = ipWater;
           phaseIndexOrdering[1] = ipGas;
         }
-        if( ipWater < 0 )
+        else if( ipWater < 0 )
         {
           phaseIndexOrdering[0] = ipOil;
           phaseIndexOrdering[1] = ipGas;
@@ -1546,60 +1546,43 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       // For multiphase initialisation, after the computation of the pressure and composition, we invert
       // the capillary pressure curves to calculate new saturations.
-      if( !singlePhaseInitialisation )
+      // This is only meaningful when a capillary pressure model is available; without one, there are no
+      // Pc curves to invert, so the compositions from the elevation tables are preserved.
+      if( !singlePhaseInitialisation && m_hasCapPressure )
       {
-        if( m_hasCapPressure )
+        // Initialise porosity and permeability for capillary pressure computaion
+        // This needs to happen before calling updateCapPressureModel
+        CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
+        if( cellElemSubRegion != nullptr )
         {
-          // Initialise porosity and permeability for capillary pressure computaion
-          // This needs to happen before calling updateCapPressureModel
-          CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
-          if( cellElemSubRegion != nullptr )
-          {
-            updatePorosityAndPermeability( *cellElemSubRegion );
-          }
-
-          // initialized porosity
-          string const solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
-          CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-          // initialized permeability
-          string const permeabilityName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
-          PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permeabilityName );
-
-          string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
-          CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
-
-          arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-          arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
-          capPressure.initializeRockState( porosity, permeability );
-          updateCapPressureModel( subRegion );
-
-          constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
-          {
-            using CapPressureType = TYPEOFREF( castCapPressure );
-            using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< CapPressureType >;
-
-            isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
-                                                                                               numPhases,
-                                                                                               targetSet,
-                                                                                               castCapPressure,
-                                                                                               phaseOrder,
-                                                                                               elemCenter,
-                                                                                               elevationIndexTable.createKernelWrapper(),
-                                                                                               pressureValues,
-                                                                                               phaseDens,
-                                                                                               phaseCompFrac,
-                                                                                               compFrac );
-          } );
+          updatePorosityAndPermeability( *cellElemSubRegion );
         }
-        else
+
+        // initialized porosity
+        string const solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+        CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+        // initialized permeability
+        string const permeabilityName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permeabilityName );
+
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+        arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+        arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+        capPressure.initializeRockState( porosity, permeability );
+        updateCapPressureModel( subRegion );
+
+        constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
         {
-          using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< constitutive::NoOpCapillaryPressure >;
-          constitutive::NoOpCapillaryPressure noOpCapillaryPressure( numPhases, phaseOrder );
+          using CapPressureType = TYPEOFREF( castCapPressure );
+          using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< CapPressureType >;
+
           isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
                                                                                              numPhases,
                                                                                              targetSet,
-                                                                                             noOpCapillaryPressure,
+                                                                                             castCapPressure,
                                                                                              phaseOrder,
                                                                                              elemCenter,
                                                                                              elevationIndexTable.createKernelWrapper(),
@@ -1607,7 +1590,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                                              phaseDens,
                                                                                              phaseCompFrac,
                                                                                              compFrac );
-        }
+        } );
       }
     } );
   } );
