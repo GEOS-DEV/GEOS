@@ -23,6 +23,7 @@
 
 #include "FieldSpecificationBase.hpp"
 #include "mesh/FaceManager.hpp"
+#include "mesh/NodeManager.hpp"
 
 namespace geos
 {
@@ -71,6 +72,7 @@ public:
    * @param blockLocalDofNumber Array of block local DOF numbers for the displacement.
    * @param dofRankOffset The rank offset for the DOF.
    * @param faceManager Reference to the face manager (Tractions are applied on faces)
+   * @param nodePositions The reference position of all nodes (used for proper FEM integration on faces)
    * @param targetSet The set of faces to apply the BC to.
    * @param localRhs The RHS of the system to add contributions to.
    */
@@ -78,6 +80,7 @@ public:
                arrayView1d< globalIndex const > const blockLocalDofNumber,
                globalIndex const dofRankOffset,
                FaceManager const & faceManager,
+               arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePositions,
                SortedArrayView< localIndex const > const & targetSet,
                arrayView1d< real64 > const & localRhs ) const;
 

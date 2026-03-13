@@ -73,9 +73,8 @@ void CompositionalMultiphaseStatistics::postInputInitialization()
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
-                          catalogName(), getDataContext() ),
-                InputError );
+    GEOS_THROW( "The option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
+                InputError, getDataContext() );
   }
 }
 

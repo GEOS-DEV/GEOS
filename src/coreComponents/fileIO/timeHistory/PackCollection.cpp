@@ -141,7 +141,9 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   auto asOMB = []( Group const * grp ) -> ObjectManagerBase const *
   {
     ObjectManagerBase const * omb = dynamicCast< ObjectManagerBase const * >( grp );
-    GEOS_ERROR_IF( omb == nullptr, "Group " << grp->getName() << " could not be converted to an ObjectManagerBase during the `PackCollection` process." );
+    GEOS_ERROR_IF( omb == nullptr,
+                   GEOS_FMT( "Group {} could not be converted to an ObjectManagerBase during the `PackCollection` process.",
+                             grp->getName() ) );
     return omb;
   };
 

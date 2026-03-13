@@ -40,7 +40,8 @@ CommID::CommID( CommID && src ):
 
 CommID::~CommID()
 {
-  GEOS_ERROR_IF( m_freeIDs.count( m_id ) > 0, "Attempting to release commID that is already free: " << m_id );
+  GEOS_ERROR_IF( m_freeIDs.count( m_id ) > 0,
+                 GEOS_FMT( "Attempting to release commID that is already free: {}", m_id ) );
 
   m_freeIDs.insert( m_id );
   m_id = -1;

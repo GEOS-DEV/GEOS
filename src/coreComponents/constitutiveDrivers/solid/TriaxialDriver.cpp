@@ -151,11 +151,11 @@ void TriaxialDriver::postInputInitialization()
   // may overwrite it.
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
-                 getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
+                 "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
                  InputError, getDataContext() );
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
-                 getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
+                 "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
                  InputError, getDataContext() );
 }
 
@@ -538,7 +538,9 @@ void TriaxialDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 
@@ -566,9 +568,12 @@ void TriaxialDriver::compareWithBaseline()
       if( col < ITER ) // only compare "real" data columns
       {
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                           << " (row " << row+10 << " with header)"
-                                                                                           << " and column " << col+1, geos::RuntimeError );
+        GEOS_THROW_IF( error > m_baselineTol,
+                       GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                                 row + 1,
+                                 row + 10,
+                                 col + 1 ),
+                       geos::RuntimeError );
       }
     }
   }

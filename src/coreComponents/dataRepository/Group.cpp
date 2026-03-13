@@ -34,7 +34,8 @@ Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
-  GEOS_ERROR_IF( parent == nullptr, "Should not be null (for Group named " << name << ")." );
+  GEOS_ERROR_IF( parent == nullptr,
+                 GEOS_FMT( "Should not be null (for Group named {}).", name ) );
   m_parent = parent;
 }
 
@@ -77,7 +78,7 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.',
+                 GEOS_FMT( "Wrapper '{}' doesn't exist in Group.", name ),
                  getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
@@ -247,11 +248,10 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
+                     GEOS_FMT( "XML Node at '{}' contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
-                               getDataContext(), targetNode.path(), attributeName,
-                               dumpInputOptions() ),
+                               targetNode.path(), attributeName, dumpInputOptions() ),
                      InputError, getDataContext() );
     }
   }
@@ -360,7 +360,8 @@ string Group::dumpWrappersNames() const
 
 void Group::deregisterGroup( string const & name )
 {
-  GEOS_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasGroup( name ),
+                 GEOS_FMT( "Group '{}' doesn't exist.", name ) );
   m_subGroups.erase( name );
   m_conduitNode.remove( name );
 }
@@ -445,7 +446,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getDataContext() << "." );
+      GEOS_ERROR( GEOS_FMT( "Wrapper {} not found in Group {}.", wrapperName, getDataContext() ) );
     }
   }
 
@@ -693,8 +694,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
       }
     }
     GEOS_THROW_IF( !foundTarget,
-                   "Could not find the specified path start.\n"<<
-                   "Specified path is " << path,
+                   GEOS_FMT( "Could not find the specified path start.\nSpecified path is {}", path ),
                    geos::DomainError );
   }
 

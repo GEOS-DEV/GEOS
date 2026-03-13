@@ -87,8 +87,9 @@ setMGRStrategy()
   {
     if( isThermal() )
     {
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}/{}",
-                            this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+      GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for thermal {}/{}",
+                            this->getCatalogName(), this->flowSolver()->getCatalogName()),
+                  getDataContext());
     }
     else
     {
@@ -126,8 +127,9 @@ setMGRStrategy()
 
   if( dynamic_cast< CompositionalMultiphaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName() ) );
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for {}/{}",
+                          this->getCatalogName(), this->flowSolver()->getCatalogName() ),
+                getDataContext() );
   }
   else
   {
@@ -151,17 +153,17 @@ initializePreSubGroups()
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 GEOS_FMT( "The input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 
   bool const isThermalFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::isThermalString() );
   bool const isThermalWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::isThermalString() );
   GEOS_THROW_IF( isThermalFlow != isThermalWell,
-                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
-                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 GEOS_FMT( "The input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
+                           Base::reservoirSolver()->getName(), Base::wellSolver()->getName() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 }
 
@@ -289,9 +291,8 @@ assembleCouplingTerms( real64 const time_n,
   using namespace compositionalMultiphaseUtilities;
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
-                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
-                           this->getCatalogName(), this->getName() ),
-                 geos::RuntimeError );
+                 "The well transmissibility has not been computed yet",
+                 geos::RuntimeError, Base::getDataContext());
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
   if( Base::wellSolver()->useTotalMassEquation() )
