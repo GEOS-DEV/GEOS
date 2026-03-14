@@ -117,6 +117,7 @@ public:
                               ReactiveSinglePhaseFluidAccessors const & reactiveSinglePhaseFluidAccessors,
                               PermeabilityAccessors const & permeabilityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
+                              real64 const & solventDensity,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -135,7 +136,8 @@ public:
     m_primarySpeciesMobileAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesMobileAggregateConcentration {} ) ),
     m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get(
                                                             fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
-    m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags )
+    m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags ),
+    m_solventDensity( solventDensity )
   {}
 
   /**
@@ -194,17 +196,17 @@ public:
 
       for( integer is = 0; is < numSpecies; ++is )
       {
-        real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is];
-        speciesFlux[is] = aggregateConc_i / dens_up * fluxVal * mobility_up;
+        real64 const aggregateConcMolarity_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is] * m_solventDensity;
+        speciesFlux[is] = aggregateConcMolarity_i / dens_up * fluxVal * mobility_up;
 
-        dSpeciesFlux_dP[is] = aggregateConc_i / dens_up * dFlux_dP * mobility_up
-                              + aggregateConc_i / dens_up * fluxVal * dMobility_dP_up
-                              - aggregateConc_i * fluxVal * mobility_up * dDens_dP_up / (dens_up * dens_up);
+        dSpeciesFlux_dP[is] = aggregateConcMolarity_i / dens_up * dFlux_dP * mobility_up
+                              + aggregateConcMolarity_i / dens_up * fluxVal * dMobility_dP_up
+                              - aggregateConcMolarity_i * fluxVal * mobility_up * dDens_dP_up / (dens_up * dens_up);
 
         for( integer js = 0; js < numSpecies; ++js )
         {
-          real64 const dAggregateConc_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js];
-          dSpeciesFlux_dLogConc[is][js] += dAggregateConc_i_dLogConc_j / dens_up * fluxVal * mobility_up;
+          real64 const dAggregateConcMolarity_i_dLogConc_j = m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc[seri][sesri][sei][0][is][js] * m_solventDensity;
+          dSpeciesFlux_dLogConc[is][js] += dAggregateConcMolarity_i_dLogConc_j / dens_up * fluxVal * mobility_up;
         }
       }
 
@@ -266,6 +268,9 @@ protected:
 
   /// Array of flags to indicate mobile primary species
   arrayView1d< integer const > const m_mobilePrimarySpeciesFlags;
+
+  /// Solvent density [kg/m³] used to convert molality [mol/kg] to molarity [mol/m³]
+  real64 const m_solventDensity;
 
 };
 
@@ -344,6 +349,7 @@ public:
                            reactiveFluidAccessors,
                            permeabilityAccessors,
                            mobilePrimarySpeciesFlags,
+                           reactiveFluid.solventDensity(),
                            dt,
                            localMatrix,
                            localRhs );

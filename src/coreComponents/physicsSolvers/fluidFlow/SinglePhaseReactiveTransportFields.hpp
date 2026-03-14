@@ -41,7 +41,7 @@ DECLARE_FIELD( logPrimarySpeciesConcentration,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Natural log of primary species concentration (molarity)" );
+               "Natural log of primary species concentration (molality)" );
 
 DECLARE_FIELD( logPrimarySpeciesConcentration_n,
                "logPrimarySpeciesConcentration_n",
@@ -49,7 +49,7 @@ DECLARE_FIELD( logPrimarySpeciesConcentration_n,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Natural log of primary species concentration (molarity) at the previous converged time step" );
+               "Natural log of primary species concentration (molality) at the previous converged time step" );
 
 DECLARE_FIELD( bcLogPrimarySpeciesConcentration,
                "bcLogPrimarySpeciesConcentration",
@@ -57,7 +57,7 @@ DECLARE_FIELD( bcLogPrimarySpeciesConcentration,
                0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Boundary condition for natural log of primary species concentration (molarity)" );
+               "Boundary condition for natural log of primary species concentration (molality)" );
 
 DECLARE_FIELD( primarySpeciesAggregateMole,
                "primarySpeciesAggregateMole",

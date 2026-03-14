@@ -31,6 +31,9 @@ namespace reactivefluid
 {
 
 using namespace hpcReact::bulkGeneric;
+using namespace hpcReact::geochemistry;
+using namespace hpcReact::ChainGeneric;
+using namespace hpcReact::MoMasBenchmark;
 
 template< typename BASE >
 ReactiveSinglePhaseFluid< BASE >::
@@ -69,6 +72,7 @@ deliverClone( string const & name, Group * const parent ) const
   newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
   newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
   newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
+  newConstitutiveRelation.m_solventDensity = m_solventDensity;
 
   return clone;
 }
@@ -84,36 +88,42 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numPrimarySpecies = 9;
       m_numSecondarySpecies = 16;
       m_numKineticReactions = 5;
+      m_solventDensity = ultramaficSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::carbonate:
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 10;
       m_numKineticReactions = 1;
+      m_solventDensity = carbonateSystem.getSolventDensity();
       break;
 
     case ChemicalSystemType::carbonateAllEquilibrium:
       m_numPrimarySpecies = 7;
       m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
+      m_solventDensity = carbonateSystemAllEquilibrium.getSolventDensity();
       break;
 
     case ChemicalSystemType::chainSerialAllKinetic:
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;
       m_numKineticReactions = 3;
+      m_solventDensity = serialAllKineticParams.getSolventDensity();
       break;
 
     case ChemicalSystemType::momasMedium:
       m_numPrimarySpecies = 5;
       m_numSecondarySpecies = 9;
       m_numKineticReactions = 1;
+      m_solventDensity = mediumCaseParams.getSolventDensity();
       break;
 
     default:
       m_numPrimarySpecies = 5;
       m_numSecondarySpecies = 7;
       m_numKineticReactions = 0;
+      m_solventDensity = easyCaseParams.getSolventDensity();
       break;
   }
 }
