@@ -115,13 +115,8 @@ TPFAInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION_
                                                      faceNormal,
                                                      areaTolerance );
 
-        LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-        LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
-
-        if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-        {
-          LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-        }
+        MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+        MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
         real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 
@@ -158,13 +153,7 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
   real64 const weightTolerance = 1e-30 * lengthTolerance;
 
   // initialize M to zero
-  for( localIndex i = 0; i < NF; ++i )
-  {
-    for( localIndex j = 0; j < NF; ++j )
-    {
-      M[i][j] = 0.0;
-    }
-  }
+  LvArray::tensorOps::fill< NF, NF >( M, 0.0 );
 
   for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
@@ -178,13 +167,8 @@ TPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                  faceNormal,
                                                  areaTolerance );
 
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
-
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-    }
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
 

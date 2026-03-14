@@ -49,6 +49,38 @@ struct MimeticInnerProductHelpers
   }
 
   /**
+   * @brief Compute the vector from cell center to facet center.
+   * @param[out] cellToFacetVec output vector
+   * @param[in] facetCenter facet center coordinate
+   * @param[in] cellCenter cell center coordinate
+   */
+  GEOS_HOST_DEVICE
+  static
+  void computeCellToFacetVector( real64 (& cellToFacetVec)[ 3 ],
+                                 real64 const (& facetCenter)[ 3 ],
+                                 arraySlice1d< real64 const > const & cellCenter )
+  {
+    LvArray::tensorOps::copy< 3 >( cellToFacetVec, facetCenter );
+    LvArray::tensorOps::subtract< 3 >( cellToFacetVec, cellCenter );
+  }
+
+  /**
+   * @brief Ensure the facet normal points outward from the cell.
+   * @param[in] cellToFacetVec vector from cell center to face center
+   * @param[in,out] faceNormal face normal (may be flipped)
+   */
+  GEOS_HOST_DEVICE
+  static
+  void orientNormalOutward( real64 const (& cellToFacetVec)[ 3 ],
+                            real64 (& faceNormal)[ 3 ] )
+  {
+    if( LvArray::tensorOps::AiBi< 3 >( cellToFacetVec, faceNormal ) < 0.0 )
+    {
+      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
+    }
+  }
+
+  /**
    * @brief Orthonormalize a set of three vectors
    * @tparam NF number of faces in the element
    * @param[in,out] q0 first vector

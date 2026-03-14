@@ -21,6 +21,7 @@
 #define GEOS_FINITEVOLUME_MIMETICINNERPRODUCTS_QUASITPFAINNERPRODUCT_HPP_
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
+#include "finiteVolume/mimeticInnerProducts/MimeticInnerProductHelpers.hpp"
 
 namespace geos
 {
@@ -145,13 +146,8 @@ QuasiTPFAInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POS
         areaTolerance );
 
     real64 cellToFaceVec[3];
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
-
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
-    }
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     for( int d = 0; d < 3; ++d )
     {

@@ -124,17 +124,12 @@ BdVLMInnerProduct::compute( arrayView2d< real64 const, nodes::REFERENCE_POSITION
                                                  faceNormal,
                                                  areaTolerance );
 
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     cellToFaceMat[ ifaceLoc ][0] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 0 ];
     cellToFaceMat[ ifaceLoc ][1] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 1 ];
     cellToFaceMat[ ifaceLoc ][2] = faceAreaMat[ ifaceLoc ][ ifaceLoc ] * cellToFaceVec[ 2 ];
-
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1 );
-    }
 
     // the two-point transmissibility is computed to computed here because it is needed
     // in the implementation of the transmissibility multiplier (see below)
@@ -244,7 +239,7 @@ BdVLMInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
   real64 work_numFacesByDim[ NF ][ 3 ] = {{ 0 }};
   real64 work_dimByNumFaces[ 3 ][ NF ] = {{ 0 }};
   real64 work_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
-  real64 tmp_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
+  // real64 tmp_numFacesByNumFaces[ NF ][ NF ] = {{ 0 }};
 
   // 0) assemble full coefficient tensor from principal axis/components
   MimeticInnerProductHelpers::makeFullTensor( elemPerm, permMat );
@@ -263,19 +258,13 @@ BdVLMInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITIO
 
     faceArea[ ifaceLoc ] = faceAreaMat[ ifaceLoc ][ ifaceLoc ];
 
-    LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
-    LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter );
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     // R row: A_f * (x_f - x_c)
     cellToFaceMat[ ifaceLoc ][ 0 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 0 ];
     cellToFaceMat[ ifaceLoc ][ 1 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 1 ];
     cellToFaceMat[ ifaceLoc ][ 2 ] = faceArea[ ifaceLoc ] * cellToFaceVec[ 2 ];
-
-    // orient normal outward
-    if( LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceNormal ) < 0.0 )
-    {
-      LvArray::tensorOps::scale< 3 >( faceNormal, -1.0 );
-    }
 
     // normalsMat row
     normalsMat[ ifaceLoc ][ 0 ] = faceNormal[ 0 ];
