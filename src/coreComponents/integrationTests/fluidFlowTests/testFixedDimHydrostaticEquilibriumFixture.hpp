@@ -12,7 +12,7 @@
  */
 
 /**
- * @file testFixedDimensionalHydrostaticEquilibriumFixture.hpp
+ * @file testFixedDimHydrostaticEquilibriumFixture.hpp
  *
  * Shared test fixture and TEST_P body for compositional multiphase flow
  * on fixed-dimensional (InternalMesh) meshes initialized with hydrostatic

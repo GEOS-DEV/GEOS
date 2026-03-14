@@ -14,14 +14,14 @@
  */
 
 /**
- * @file testFixedDimensionalHydrostaticEquilibrium.cpp
+ * @file testFixedDimHydrostaticEquilibrium.cpp
  *
  * Serial (single-rank) integration test for fixed-dimensional meshes
  * initialized with hydrostatic equilibrium.
  * Covers two-phase and three-phase immiscible cases.
  */
 
-#include "integrationTests/fluidFlowTests/testFixedDimensionalHydrostaticEquilibriumFixture.hpp"
+#include "integrationTests/fluidFlowTests/testFixedDimHydrostaticEquilibriumFixture.hpp"
 
 CommandLineOptions g_commandLineOptions;
 
