@@ -1450,6 +1450,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
       arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
+      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > phaseCompFracView = phaseCompFrac.toViewConst();
 
       array1d< real64 > elevationBoundaries( numPhases );
       array1d< integer > phaseIndexOrdering( numPhases );
@@ -1506,8 +1507,10 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                            numPointsInTable,
                                                            elevationIndexTableWrapper,
                                                            pressureValuesView,
+                                                           phaseCompFracView,
                                                            tempTableWrapper,
                                                            compFracTableWrappersViewConst,
+                                                           singlePhaseInitialisation,
                                                            elevationsView,
                                                            phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
@@ -1533,9 +1536,24 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
         pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
-        for( integer ic = 0; ic < numComps; ++ic )
+        // For multiphase initialisation (no cap pressure), use the per-phase composition
+        // from the hydrostatic table indexed by the dominant phase in each zone.
+        // For single-phase, fall back to the user elevation tables.
+        if( !singlePhaseInitialisation )
         {
-          compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+          for( integer ic = 0; ic < numComps; ++ic )
+          {
+            real64 const f0 = phaseCompFracView[en][0][phaseIndex][ic];
+            real64 const f1 = phaseCompFracView[en+1][0][phaseIndex][ic];
+            compFrac[k][ic] = (1.0-ea)*f0 + ea*f1;
+          }
+        }
+        else
+        {
+          for( integer ic = 0; ic < numComps; ++ic )
+          {
+            compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+          }
         }
         minPressure.min( pres[k] );
       } );
