@@ -1466,6 +1466,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
       arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
+      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > phaseCompFracView = phaseCompFrac.toViewConst();
 
       array1d< real64 > elevationBoundaries( numPhases );
       array1d< integer > phaseIndexOrdering( numPhases );
@@ -1522,8 +1523,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                            numPointsInTable,
                                                            elevationIndexTableWrapper,
                                                            pressureValuesView,
+                                                           phaseCompFracView,
                                                            tempTableWrapper,
-                                                           compFracTableWrappersViewConst,
                                                            elevationsView,
                                                            phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
@@ -1551,7 +1552,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         temp[k] = tempTableWrapper.compute( &elevation );
         for( integer ic = 0; ic < numComps; ++ic )
         {
-          compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+          real64 const f0 = phaseCompFracView[en][0][phaseIndex][ic];
+          real64 const f1 = phaseCompFracView[en+1][0][phaseIndex][ic];
+          compFrac[k][ic] = (1.0-ea)*f0 + ea*f1;
         }
         minPressure.min( pres[k] );
       } );
@@ -1566,7 +1569,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // Pc curves to invert, so the compositions from the elevation tables are preserved.
       if( !singlePhaseInitialisation && m_hasCapPressure )
       {
-        // Initialise porosity and permeability for capillary pressure computaion
+        // Initialise porosity and permeability for capillary pressure computation
         // This needs to happen before calling updateCapPressureModel
         CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
         if( cellElemSubRegion != nullptr )

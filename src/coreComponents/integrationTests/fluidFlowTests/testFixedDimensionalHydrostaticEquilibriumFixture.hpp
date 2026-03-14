@@ -305,7 +305,7 @@ TEST_P( FixedDimensionalHydrostaticEquilibriumTest, Run )
         {
           for( integer ic = 0; ic < numComp; ++ic )
           {
-            real64 const accumulation = std::fabs( compAmount[k][ic] - compAmount_n[k][ic] );
+            real64 const accumulation = compAmount[k][ic] - compAmount_n[k][ic];
             EXPECT_NEAR( accumulation, 0.0, accumulation_tolerance )
               << "Case " << caseName
               << ": non-zero accumulation term at element " << k
