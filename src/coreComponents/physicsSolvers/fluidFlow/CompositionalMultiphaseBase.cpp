@@ -1509,8 +1509,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                            pressureValuesView,
                                                            phaseCompFracView,
                                                            tempTableWrapper,
-                                                           compFracTableWrappersViewConst,
-                                                           singlePhaseInitialisation,
                                                            elevationsView,
                                                            phaseIndexView] GEOS_HOST_DEVICE ( localIndex const i )
       {
@@ -1536,24 +1534,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
         pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
-        // For multiphase initialisation (no cap pressure), use the per-phase composition
-        // from the hydrostatic table indexed by the dominant phase in each zone.
-        // For single-phase, fall back to the user elevation tables.
-        if( !singlePhaseInitialisation )
+        for( integer ic = 0; ic < numComps; ++ic )
         {
-          for( integer ic = 0; ic < numComps; ++ic )
-          {
-            real64 const f0 = phaseCompFracView[en][0][phaseIndex][ic];
-            real64 const f1 = phaseCompFracView[en+1][0][phaseIndex][ic];
-            compFrac[k][ic] = (1.0-ea)*f0 + ea*f1;
-          }
-        }
-        else
-        {
-          for( integer ic = 0; ic < numComps; ++ic )
-          {
-            compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
-          }
+          real64 const f0 = phaseCompFracView[en][0][phaseIndex][ic];
+          real64 const f1 = phaseCompFracView[en+1][0][phaseIndex][ic];
+          compFrac[k][ic] = (1.0-ea)*f0 + ea*f1;
         }
         minPressure.min( pres[k] );
       } );
