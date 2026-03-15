@@ -19,43 +19,4 @@
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluxComputeKernelBase.hpp"
 
-#include "mesh/utilities/MeshMapUtilities.hpp"
-
-namespace geos
-{
-using namespace fields;
-
-namespace isothermalCompositionalMultiphaseFVMKernels
-{
-
-/******************************** FluxComputeKernelBase ********************************/
-
-FluxComputeKernelBase::FluxComputeKernelBase( integer const numPhases,
-                                              globalIndex const rankOffset,
-                                              DofNumberAccessor const & dofNumberAccessor,
-                                              CompFlowAccessors const & compFlowAccessors,
-                                              MultiFluidAccessors const & multiFluidAccessors,
-                                              real64 const dt,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs,
-                                              BitFlags< KernelFlags > kernelFlags )
-  : m_numPhases( numPhases ),
-  m_rankOffset( rankOffset ),
-  m_dt( dt ),
-  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-  m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
-  m_gravCoef( compFlowAccessors.get( flow::gravityCoefficient {} ) ),
-  m_pres( compFlowAccessors.get( flow::pressure {} ) ),
-  m_phaseVolFrac( compFlowAccessors.get( flow::phaseVolumeFraction {} ) ),
-  m_dPhaseVolFrac( compFlowAccessors.get( flow::dPhaseVolumeFraction {} ) ),
-  m_dCompFrac_dCompDens( compFlowAccessors.get( flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
-  m_phaseCompFrac( multiFluidAccessors.get( multifluid::phaseCompFraction {} ) ),
-  m_dPhaseCompFrac( multiFluidAccessors.get( multifluid::dPhaseCompFraction {} ) ),
-  m_localMatrix( localMatrix ),
-  m_localRhs( localRhs ),
-  m_kernelFlags( kernelFlags )
-{}
-
-} // namespace isothermalCompositionalMultiphaseFVMKernels
-
-} // namespace geos
+// Template definitions are provided in FluxComputeKernelBase.hpp.

@@ -167,7 +167,7 @@ struct ControlEquationHelper
            arrayView1d< real64 const > const & dCurrentTotalVolRate,
            real64 const & massDensity,
            globalIndex const dofNumber,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           DefaultGlobalMatrixView const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 
 };
@@ -213,7 +213,7 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens,
           bool & controlHasSwitched,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -247,7 +247,7 @@ struct VolumeBalanceKernel
           arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac,
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemVolume,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -835,7 +835,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::MultiFluidBase const & fluid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              DefaultGlobalMatrixView const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
@@ -1246,7 +1246,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens_n;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  DefaultGlobalMatrixView const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -1282,7 +1282,7 @@ public:
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     geos::internal::kernelLaunchSelectorCompThermSwitch( numComps, 0, [&]( auto NC, auto IS_THERMAL )
@@ -1350,7 +1350,7 @@ public:
                            string const wellDofKey,
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           DefaultGlobalMatrixView const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
     :
@@ -1814,7 +1814,7 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dWellElemCompFrac_dCompDens;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  DefaultGlobalMatrixView const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -1859,7 +1859,7 @@ public:
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )

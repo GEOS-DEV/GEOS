@@ -875,7 +875,7 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
   GEOS_MARK_FUNCTION;
   GEOS_LAI_ASSERT( ready() );
 
-  CRSMatrix< real64, globalIndex > tempMat;
+  DefaultGlobalMatrix tempMat;
 
   tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
   CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
@@ -1127,7 +1127,7 @@ void HypreMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMat
   } );
 }
 
-void HypreMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+void HypreMatrix::extract( DefaultGlobalMatrixView const & localMat ) const
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );

@@ -107,10 +107,10 @@ private:
   std::vector< std::unique_ptr< MsrsbLevelBuilder< LAI > > > m_builders;
 
   /// Sub-problem prolongators in extracted (local) form
-  std::vector< CRSMatrix< real64, globalIndex > > m_prolongationBlocks;
+  std::vector< DefaultGlobalMatrix > m_prolongationBlocks;
 
   /// Temporary storage for combined prolongation operator (stored to avoid recreating the structure)
-  CRSMatrix< real64, globalIndex > m_localProlongation;
+  DefaultGlobalMatrix m_localProlongation;
 };
 
 } // namespace multiscale

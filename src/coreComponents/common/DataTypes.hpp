@@ -304,9 +304,15 @@ using SparsityPatternView = LvArray::SparsityPatternView< COL_INDEX, INDEX_TYPE 
 template< typename T, typename COL_INDEX=globalIndex, typename INDEX_TYPE=localIndex >
 using CRSMatrix = LvArray::CRSMatrix< T, COL_INDEX, INDEX_TYPE, LvArray::ChaiBuffer >;
 
+/// Default matrix type used for global system assembly and extraction.
+using DefaultGlobalMatrix = CRSMatrix< real64, globalIndex >;
+
 /// Alias for CRS Matrix View.
 template< typename T, typename COL_INDEX=globalIndex, typename INDEX_TYPE=localIndex >
 using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, INDEX_TYPE const, LvArray::ChaiBuffer >;
+
+/// Default matrix view used for global system assembly kernels and solvers.
+using DefaultGlobalMatrixView = CRSMatrixView< real64, globalIndex const >;
 
 ///@}
 

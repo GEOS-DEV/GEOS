@@ -71,6 +71,7 @@ struct AquiferBCKernel
     }
   }
 
+  template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   launch( BoundaryStencil const & stencil,
           globalIndex const rankOffset,
@@ -85,7 +86,7 @@ struct AquiferBCKernel
           ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
           real64 const & timeAtBeginningOfStep,
           real64 const & dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
     using Order = BoundaryStencil::Order;
@@ -136,10 +137,10 @@ struct AquiferBCKernel
         GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
-        localMatrix.addToRow< parallelDeviceAtomic >( localRow,
-                                                      &dofNumber[er][esr][ei],
-                                                      &localFluxJacobian,
-                                                      1 );
+        localMatrix.template addToRow< parallelDeviceAtomic >( localRow,
+                                                               &dofNumber[er][esr][ei],
+                                                               &localFluxJacobian,
+                                                               1 );
       }
     } );
   }

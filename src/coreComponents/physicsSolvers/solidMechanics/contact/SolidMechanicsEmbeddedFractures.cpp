@@ -230,7 +230,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 
 void SolidMechanicsEmbeddedFractures::setSparsityPattern( DomainPartition & domain,
                                                           DofManager & dofManager,
-                                                          CRSMatrix< real64, globalIndex > & localMatrix,
+                                                          DefaultGlobalMatrix & localMatrix,
                                                           SparsityPattern< globalIndex > & pattern )
 {
   if( m_useStaticCondensation )
@@ -271,7 +271,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                       real64 const dt,
                                                       DomainPartition & domain,
                                                       DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -702,7 +702,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    CRSMatrix< real64, globalIndex >  voidMatrix;
+    DefaultGlobalMatrix  voidMatrix;
     array1d< real64 > voidRhs;
 
     solidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,

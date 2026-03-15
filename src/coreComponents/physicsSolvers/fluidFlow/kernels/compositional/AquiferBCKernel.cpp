@@ -111,7 +111,7 @@ AquiferBCKernel::
   }
 }
 
-template< integer NC >
+template< integer NC, typename MATRIX_VIEW >
 void
 AquiferBCKernel::
   launch( integer const numPhases,
@@ -137,7 +137,7 @@ AquiferBCKernel::
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
           real64 const timeAtBeginningOfStep,
           real64 const dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
 
@@ -218,10 +218,10 @@ AquiferBCKernel::
       for( integer ic = 0; ic < NC; ++ic )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
-        localMatrix.addToRow< parallelDeviceAtomic >( localRow + ic,
-                                                      dofColIndices,
-                                                      localFluxJacobian[ic],
-                                                      NDOF );
+        localMatrix.template addToRow< parallelDeviceAtomic >( localRow + ic,
+                                                               dofColIndices,
+                                                               localFluxJacobian[ic],
+                                                               NDOF );
       }
     }
   } );
@@ -230,7 +230,7 @@ AquiferBCKernel::
 #define INST_AquiferBCKernel( NC ) \
   template \
   void AquiferBCKernel:: \
-    launch< NC >( integer const numPhases, \
+    launch< NC, DefaultGlobalMatrixView >( integer const numPhases, \
                   integer const ipWater, \
                   bool const allowAllPhasesIntoAquifer, \
                   integer const useTotalMassEquation, \
@@ -253,7 +253,7 @@ AquiferBCKernel::
                   ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac, \
                   real64 const timeAtBeginningOfStep, \
                   real64 const dt, \
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                  DefaultGlobalMatrixView const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 
 INST_AquiferBCKernel( 1 );

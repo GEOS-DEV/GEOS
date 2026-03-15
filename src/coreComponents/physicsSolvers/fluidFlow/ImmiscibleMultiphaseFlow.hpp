@@ -86,7 +86,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -112,7 +112,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
@@ -148,7 +148,7 @@ public:
    */
   void assembleAccumulationTerm( DomainPartition & domain,
                                  DofManager const & dofManager,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                  arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -164,7 +164,7 @@ public:
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -180,14 +180,14 @@ public:
                          real64 const dt,
                          DofManager const & dofManager,
                          DomainPartition & domain,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs ) const;
 
   void applySourceFluxBC( real64 const time,
                           real64 const dt,
                           DofManager const & dofManager,
                           DomainPartition & domain,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
   /**
    * @brief function to set the next time step size

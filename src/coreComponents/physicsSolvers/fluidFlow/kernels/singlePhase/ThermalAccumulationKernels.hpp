@@ -34,13 +34,15 @@ namespace thermalSinglePhaseBaseKernels
  * @class AccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< typename SUBREGION_TYPE, integer NUM_DOF >
-class AccumulationKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
+template< typename SUBREGION_TYPE,
+          integer NUM_DOF,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class AccumulationKernel : public singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF, MATRIX_VIEW >
 {
 
 public:
 
-  using Base = singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
+  using Base = singlePhaseBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF, MATRIX_VIEW >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_rankOffset;
@@ -66,7 +68,7 @@ public:
   AccumulationKernel( globalIndex const rankOffset,
                       string const dofKey,
                       SUBREGION_TYPE const & subRegion,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      MATRIX_VIEW const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, localMatrix, localRhs ),
     m_energy( subRegion.template getField< fields::flow::energy >() ),
@@ -136,12 +138,13 @@ protected:
  * @class SurfaceElementAccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
  */
-class SurfaceElementAccumulationKernel : public AccumulationKernel< SurfaceElementSubRegion, 2 >
+template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class SurfaceElementAccumulationKernel : public AccumulationKernel< SurfaceElementSubRegion, 2, MATRIX_VIEW >
 {
 
 public:
 
-  using Base = AccumulationKernel< SurfaceElementSubRegion, 2 >;
+  using Base = AccumulationKernel< SurfaceElementSubRegion, 2, MATRIX_VIEW >;
 
   /**
    * @brief Constructor
@@ -156,7 +159,7 @@ public:
   SurfaceElementAccumulationKernel( globalIndex const rankOffset,
                                     string const dofKey,
                                     SurfaceElementSubRegion const & subRegion,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    MATRIX_VIEW const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, localMatrix, localRhs ),
     m_creationMass( subRegion.getField< fields::flow::massCreated >() )
@@ -170,7 +173,7 @@ public:
    */
   GEOS_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
-                            Base::StackVariables & stack ) const
+                            typename Base::StackVariables & stack ) const
   {
     Base::computeAccumulation( ei, stack );
     if( Base::m_mass_n[ei] > 1.1 * m_creationMass[ei] )
@@ -203,24 +206,26 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename SUBREGION_TYPE >
+  template< typename POLICY,
+            typename SUBREGION_TYPE,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
                    SUBREGION_TYPE const & subRegion,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     if constexpr ( std::is_base_of_v< CellElementSubRegion, SUBREGION_TYPE > )
     {
       integer constexpr NUM_DOF = 2;
-      AccumulationKernel< CellElementSubRegion, NUM_DOF > kernel( rankOffset, dofKey, subRegion, localMatrix, localRhs );
-      AccumulationKernel< CellElementSubRegion, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< CellElementSubRegion, NUM_DOF, MATRIX_VIEW > kernel( rankOffset, dofKey, subRegion, localMatrix, localRhs );
+      AccumulationKernel< CellElementSubRegion, NUM_DOF, MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     }
     else if constexpr ( std::is_base_of_v< SurfaceElementSubRegion, SUBREGION_TYPE > )
     {
-      SurfaceElementAccumulationKernel kernel( rankOffset, dofKey, subRegion, localMatrix, localRhs );
-      SurfaceElementAccumulationKernel::launch< POLICY >( subRegion.size(), kernel );
+      SurfaceElementAccumulationKernel< MATRIX_VIEW > kernel( rankOffset, dofKey, subRegion, localMatrix, localRhs );
+      SurfaceElementAccumulationKernel< MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     }
     else
     {

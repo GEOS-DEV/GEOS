@@ -220,7 +220,9 @@ public:
  * @tparam IP the type of inner product
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_FACE, typename IP >
+template< integer NUM_FACE,
+          typename IP,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class ElementBasedAssemblyKernel
 {
 public:
@@ -275,7 +277,7 @@ public:
                               constitutive::PermeabilityBase const & permeability,
                               SortedArrayView< localIndex const > const & regionFilter,
                               real64 const & dt,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :
     m_rankOffset( rankOffset ),
@@ -516,16 +518,16 @@ public:
         m_localRhs[stack.cellCenteredEqnRowIndex] + stack.divMassFluxes;
 
       // jacobian -- derivative wrt elem centered vars
-      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,
-                                                                  &stack.elemDofColIndices[0],
-                                                                  &stack.dDivMassFluxes_dElemVars[0],
-                                                                  NUM_FACE+1 );
+      m_localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,
+                                                                           &stack.elemDofColIndices[0],
+                                                                           &stack.dDivMassFluxes_dElemVars[0],
+                                                                           NUM_FACE+1 );
 
       // jacobian -- derivatives wrt face centered vars
-      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,
-                                                                  &stack.faceDofColIndices[0],
-                                                                  &stack.dDivMassFluxes_dFaceVars[0],
-                                                                  NUM_FACE );
+      m_localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( stack.cellCenteredEqnRowIndex,
+                                                                           &stack.faceDofColIndices[0],
+                                                                           &stack.dDivMassFluxes_dFaceVars[0],
+                                                                           NUM_FACE );
 
     }
 
@@ -543,16 +545,16 @@ public:
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
 
         // jacobian -- derivative wrt local cell centered pressure
-        m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
-                                                        &dofColIndexElemPres,
-                                                        &stack.dmassFlux_dPres[iFaceLoc],
-                                                        1 );
+        m_localMatrix.template addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
+                                                                 &dofColIndexElemPres,
+                                                                 &stack.dmassFlux_dPres[iFaceLoc],
+                                                                 1 );
 
         // jacobian -- derivatives wrt face pressure terms
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
-                                                                            &stack.faceDofColIndices[0],
-                                                                            stack.dmassFlux_dFacePres[iFaceLoc],
-                                                                            NUM_FACE );
+        m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
+                                                                                     &stack.faceDofColIndices[0],
+                                                                                     stack.dmassFlux_dFacePres[iFaceLoc],
+                                                                                     NUM_FACE );
       }
     }
   }
@@ -630,7 +632,7 @@ protected:
   ElementViewConst< arrayView2d< real64 const > > const m_dMob;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -662,7 +664,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    localIndex const er,
@@ -680,7 +682,7 @@ public:
                    constitutive::PermeabilityBase const & permeability,
                    SortedArrayView< localIndex const > const & regionFilter,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     mimeticInnerProductDispatch( mimeticInnerProductBase,
@@ -694,14 +696,13 @@ public:
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
 
-        using kernelType = ElementBasedAssemblyKernel< NUM_FACES, IP >;
+        using kernelType = ElementBasedAssemblyKernel< NUM_FACES, IP, MATRIX_VIEW >;
         typename kernelType::FlowAccessors flowAccessors( elemManager, solverName );
 
-        ElementBasedAssemblyKernel< NUM_FACES, IP >
-        kernel( rankOffset, er, esr, lengthTolerance, faceDofKey, nodeManager, faceManager,
-                subRegion, dofNumberAccessor, flowAccessors, fluid, permeability,
-                regionFilter, dt, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
+        kernelType kernel( rankOffset, er, esr, lengthTolerance, faceDofKey, nodeManager, faceManager,
+                           subRegion, dofNumberAccessor, flowAccessors, fluid, permeability,
+                           regionFilter, dt, localMatrix, localRhs );
+        kernelType::template launch< POLICY >( subRegion.size(), kernel );
       } );
     } );
   }

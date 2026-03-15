@@ -42,8 +42,18 @@ namespace thermalSinglePhaseReactiveFVMKernels
  * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER, typename BASE_FLUID_TYPE >
-class DirichletFluxComputeKernel : public singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, FLUIDWRAPPER, BASE_FLUID_TYPE >
+template< integer NUM_SPECIES,
+          integer NUM_EQN,
+          integer NUM_DOF,
+          typename FLUIDWRAPPER,
+          typename BASE_FLUID_TYPE,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class DirichletFluxComputeKernel : public singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES,
+                                                                                                       NUM_EQN,
+                                                                                                       NUM_DOF,
+                                                                                                       FLUIDWRAPPER,
+                                                                                                       BASE_FLUID_TYPE,
+                                                                                                       MATRIX_VIEW >
 {
 public:
 
@@ -58,11 +68,11 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
+  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
+  using SinglePhaseFlowAccessors = typename AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = typename AbstractBase::SinglePhaseFluidAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -76,7 +86,7 @@ public:
   using AbstractBase::m_dDens;
   using AbstractBase::m_dMob;
 
-  using Base = singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, FLUIDWRAPPER, BASE_FLUID_TYPE >;
+  using Base = singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, FLUIDWRAPPER, BASE_FLUID_TYPE, MATRIX_VIEW >;
   using Base::numSpecies;
   using Base::numDof;
   using Base::numEqn;
@@ -138,7 +148,7 @@ public:
                               ThermalConductivityAccessors const & thermalConductivityAccessors,
                               arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                               real64 const & dt,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
 
     : Base( rankOffset,
@@ -285,7 +295,7 @@ public:
       RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies - 1],
                        stack.localFlux[numEqn - numSpecies - 1] );
 
-      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+      AbstractBase::m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
         ( localRow + numEqn - numSpecies - 1,
         stack.dofColIndices,
         stack.localFluxJacobian[numEqn - numSpecies - 1],
@@ -336,7 +346,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numSpecies,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,
@@ -348,7 +358,7 @@ public:
                    BoundaryStencilWrapper const & stencilWrapper,
                    constitutive::reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & reactiveFluid,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     constitutiveUpdatePassThru( reactiveFluid, [&]( auto & fluid )
@@ -362,7 +372,12 @@ public:
         integer constexpr NUM_DOF = 2+NS();
         integer constexpr NUM_EQN = 2+NS();
 
-        using kernelType = DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper, constitutive::ThermalCompressibleSinglePhaseFluid >;
+        using kernelType = DirichletFluxComputeKernel< NUM_SPECIES,
+                                                       NUM_EQN,
+                                                       NUM_DOF,
+                                                       typename FluidType::KernelWrapper,
+                                                       constitutive::ThermalCompressibleSinglePhaseFluid,
+                                                       MATRIX_VIEW >;
 
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
           elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );

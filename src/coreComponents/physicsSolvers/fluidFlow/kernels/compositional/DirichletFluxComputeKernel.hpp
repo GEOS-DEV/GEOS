@@ -50,10 +50,14 @@ namespace isothermalCompositionalMultiphaseFVMKernels
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
+template< integer NUM_COMP,
+          integer NUM_DOF,
+          typename FLUIDWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
                                                              NUM_DOF,
-                                                             BoundaryStencilWrapper >
+                                                             BoundaryStencilWrapper,
+                                                             MATRIX_VIEW >
 {
 public:
 
@@ -66,12 +70,12 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using CompFlowAccessors = typename AbstractBase::CompFlowAccessors;
+  using MultiFluidAccessors = typename AbstractBase::MultiFluidAccessors;
+  using CapPressureAccessors = typename AbstractBase::CapPressureAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -87,7 +91,7 @@ public:
   using AbstractBase::m_localRhs;
   using AbstractBase::m_kernelFlags;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, BoundaryStencilWrapper >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, BoundaryStencilWrapper, MATRIX_VIEW >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -130,7 +134,7 @@ public:
                               CapPressureAccessors const & capPressureAccessors,
                               PermeabilityAccessors const & permeabilityAccessors,
                               real64 const dt,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< KernelFlags > kernelFlags )
     : Base( numPhases,
@@ -453,7 +457,7 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + ic], stack.localFlux[ic] );
-        AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+        AbstractBase::m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
           ( localRow + ic,
           stack.dofColIndices,
           stack.localFluxJacobian[ic],
@@ -504,7 +508,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -517,7 +521,7 @@ public:
                    BoundaryStencilWrapper const & stencilWrapper,
                    constitutive::MultiFluidBase & fluidBase,
                    real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     constitutive::constitutiveComponentUpdatePassThru( fluidBase, numComps, [&]( auto & fluid, auto NC )
@@ -532,7 +536,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper >;
+      using kernelType = DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, typename FluidType::KernelWrapper, MATRIX_VIEW >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );

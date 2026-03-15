@@ -308,7 +308,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
   SinglePhaseWell & wellSolver = *solver.wellSolver();
   SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.reservoirSolver() );
 
-  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
+  DefaultGlobalMatrix const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
@@ -326,7 +326,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
 
   // create the numerical jacobian
   jacobian.move( hostMemorySpace );
-  CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
+  DefaultGlobalMatrix jacobianFD( jacobian );
   jacobianFD.zero();
 
   string const & resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
@@ -607,7 +607,7 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
-                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           [&] ( DefaultGlobalMatrixView const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
       solver->assembleCouplingTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -621,7 +621,7 @@ protected:
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
     testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
-                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           [&] ( DefaultGlobalMatrixView const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -635,7 +635,7 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
-                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           [&] ( DefaultGlobalMatrixView const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assemblePressureRelations( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -650,7 +650,7 @@ protected:
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
     testNumericalJacobian( *solver, domain, perturb, tol, true, __func__,
-                           [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           [&] ( DefaultGlobalMatrixView const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
       solver->wellSolver()->assembleAccumulationTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -707,7 +707,7 @@ TEST_F( SinglePhaseReservoirSolverInternalWellTest, jacobianNumericalCheck_Flux 
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
   testNumericalJacobian( *solver, domain, perturb, tol, false, __func__,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assembleFluxTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );

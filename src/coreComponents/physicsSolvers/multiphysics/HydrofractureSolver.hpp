@@ -104,7 +104,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void implicitStepSetup( real64 const & time_n,
@@ -115,7 +115,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64 setNextDt( real64 const & currentTime,
@@ -135,11 +135,11 @@ public:
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix );
+                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix );
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
   {
@@ -214,7 +214,7 @@ protected:
 
   void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                    DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
+                                   DefaultGlobalMatrix & localMatrix );
 
   virtual void setMGRStrategy() override;
 
@@ -231,7 +231,7 @@ private:
                                 real64 dt,
                                 DomainPartition & domain,
                                 DofManager const & dofManager,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                 arrayView1d< real64 > const & localRhs ) const;
   /**
    * @brief Initialize fields on the newly created elements of the fracture.

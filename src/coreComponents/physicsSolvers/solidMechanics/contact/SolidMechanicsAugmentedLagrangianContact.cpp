@@ -244,7 +244,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
 
 void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & domain,
                                                             DofManager & dofManager,
-                                                            CRSMatrix< real64, globalIndex > & localMatrix,
+                                                            DefaultGlobalMatrix & localMatrix,
                                                             ParallelVector & rhs,
                                                             ParallelVector & solution,
                                                             bool const setSparsity )
@@ -289,7 +289,7 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
 
 void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartition & domain,
                                                                    DofManager & dofManager,
-                                                                   CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                   DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                                                    SparsityPattern< globalIndex > & pattern )
 {
   // Set the sparsity pattern without the Abu and Aub blocks.
@@ -428,7 +428,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                                real64 const dt,
                                                                DomainPartition & domain,
                                                                DofManager const & dofManager,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs )
 {
 
@@ -457,7 +457,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                 real64 const dt,
                                                                 DomainPartition & domain,
                                                                 DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
 
@@ -639,7 +639,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution( DomainPartition & domain,
                                                                                           real64 const & dt,
                                                                                           DofManager const & dofManager,
-                                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                           arrayView1d< real64 > const & localRhs )
 {
 
@@ -946,7 +946,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
     string const & fractureRegionName = getUniqueFractureRegionName();
 
-    CRSMatrix< real64, globalIndex > const voidMatrix;
+    DefaultGlobalMatrix const voidMatrix;
     array1d< real64 > const voidRhs;
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,

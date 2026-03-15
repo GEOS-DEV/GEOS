@@ -296,8 +296,8 @@ static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args 
     return nullptr;
   }
 
-  std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > wrapedCallback =
-    LvArray::python::PythonFunction< CRSMatrix< real64, globalIndex >, array1d< real64 > > { callback };
+  std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > wrapedCallback =
+    LvArray::python::PythonFunction< DefaultGlobalMatrix, array1d< real64 > > { callback };
 
   if( self->group->registerCallback( &wrapedCallback, typeid( wrapedCallback ) ) )
   {

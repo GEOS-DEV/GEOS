@@ -40,8 +40,11 @@ namespace stabilizedCompositionalMultiphaseFVMKernels
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_COMP,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:
 
@@ -54,12 +57,12 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
-  using CapPressureAccessors = AbstractBase::CapPressureAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using CompFlowAccessors = typename AbstractBase::CompFlowAccessors;
+  using MultiFluidAccessors = typename AbstractBase::MultiFluidAccessors;
+  using CapPressureAccessors = typename AbstractBase::CapPressureAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
 
   using StabCompFlowAccessors =
     StencilAccessors< fields::flow::macroElementIndex,
@@ -85,7 +88,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_pres;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -130,7 +133,7 @@ public:
                      PermeabilityAccessors const & permeabilityAccessors,
                      RelPermAccessors const & relPermAccessors,
                      real64 const & dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
                      BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
     : Base( numPhases,
@@ -322,7 +325,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -333,7 +338,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -346,7 +351,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KERNEL_TYPE = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      using KERNEL_TYPE = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );

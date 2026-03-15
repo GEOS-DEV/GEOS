@@ -113,7 +113,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
@@ -121,7 +121,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -136,7 +136,7 @@ public:
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                    arrayView1d< real64 > const & localRhs ) const;
 
   virtual void
@@ -244,7 +244,7 @@ public:
    */
   void assembleLocalTerms( DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -260,7 +260,7 @@ public:
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
@@ -275,7 +275,7 @@ public:
   assembleStabilizedFluxTerms( real64 const dt,
                                DomainPartition const & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**@}*/
@@ -351,7 +351,7 @@ public:
                          real64 const dt,
                          DofManager const & dofManager,
                          DomainPartition & domain,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -367,7 +367,7 @@ public:
                           real64 const dt,
                           DofManager const & dofManager,
                           DomainPartition & domain,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -383,7 +383,7 @@ public:
                                real64 const dt,
                                DofManager const & dofManager,
                                DomainPartition & domain,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
@@ -401,7 +401,7 @@ public:
                                             real64 const dt,
                                             DofManager const & dofManager,
                                             DomainPartition & domain,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
 
 
@@ -603,7 +603,7 @@ void CompositionalMultiphaseBase::applyFieldValue( real64 const & time_n,
 template< typename SUBREGION_TYPE >
 void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                               SUBREGION_TYPE const & subRegion,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs ) const
 {
   constitutive::MultiFluidBase const & fluid =

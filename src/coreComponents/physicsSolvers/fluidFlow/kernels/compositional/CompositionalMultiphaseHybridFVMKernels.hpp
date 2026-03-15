@@ -330,7 +330,7 @@ struct AssemblerKernelHelper
    * @param[inout] localMatrix the Jacobian matrix
    * @param[inout] localRhs the residual
    */
-  template< integer NF, integer NC, integer NP >
+  template< integer NF, integer NC, integer NP, typename MATRIX_VIEW >
   GEOS_HOST_DEVICE
   static void
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -361,7 +361,7 @@ struct AssemblerKernelHelper
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
                           real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
                           real64 const & dt,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          MATRIX_VIEW const & localMatrix,
                           arrayView1d< real64 > const & localRhs );
 
   /**
@@ -445,7 +445,7 @@ struct AssemblerKernelHelper
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
-  template< integer NF, integer NC >
+  template< integer NF, integer NC, typename MATRIX_VIEW >
   GEOS_HOST_DEVICE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -458,7 +458,7 @@ struct AssemblerKernelHelper
                            real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                            real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
                            real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
 };
@@ -513,7 +513,7 @@ struct AssemblerKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< integer NF, integer NC, integer NP >
+  template< integer NF, integer NC, integer NP, typename MATRIX_VIEW >
   GEOS_HOST_DEVICE
   static void
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -546,7 +546,7 @@ struct AssemblerKernel
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
            arraySlice2d< real64 const > const & transMatrixGrav,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           MATRIX_VIEW const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 };
 
@@ -614,7 +614,7 @@ struct DirichletFluxKernel
    * @param[inout] localMatrix the local matrix
    * @param[inout] localRhs the local RHS vector
    */
-  template< integer NF, integer NC, integer NP, typename IP_TYPE >
+  template< integer NF, integer NC, integer NP, typename IP_TYPE, typename MATRIX_VIEW >
   static void
   launch( integer const numPhases,
           localIndex const er,
@@ -642,7 +642,7 @@ struct DirichletFluxKernel
           CompFlowAccessors const & compFlowAccessors,
           MultiFluidAccessors const & multiFluidAccessors,
           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -711,7 +711,7 @@ struct FluxKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< integer NF, integer NC, integer NP, typename IP_TYPE >
+  template< integer NF, integer NC, integer NP, typename IP_TYPE, typename MATRIX_VIEW >
   static void
   launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
@@ -743,7 +743,7 @@ struct FluxKernel
           real64 const lengthTolerance,
           real64 const dt,
           integer const useTotalMassEquation,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };

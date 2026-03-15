@@ -99,7 +99,7 @@ ControlEquationHelper::
            real64 const & currentVolRate,
            arrayView1d< real64 const > const & dCurrentTotalVolRate,
            globalIndex const dofNumber,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           DefaultGlobalMatrixView const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
   using ROFFSET_WJ = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
@@ -165,7 +165,7 @@ ControlEquationHelper::
                           arrayView1d< localIndex const > const & nextWellElemIndex,  \
                           arrayView1d< real64 const > const & connRate,  \
                           real64 const & dt,  \
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,  \
+                          DefaultGlobalMatrixView const & localMatrix,  \
                           arrayView1d< real64 > const & localRhs )
 
 INST_FluxKernel( 0 );
@@ -180,7 +180,7 @@ FluxKernel::
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
           real64 const & dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   // loop over the well elements to compute the fluxes between elements
@@ -276,7 +276,7 @@ FluxKernel::
                           arrayView1d< real64 const > const & wellElemPressure, \
                           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity, \
                           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity, \
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                          DefaultGlobalMatrixView const & localMatrix, \
                           arrayView1d< real64 > const & localRhs )
 
 INST_PressureRelationKernel( 0 );
@@ -297,7 +297,7 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   using Deriv = constitutive::singlefluid::DerivativeOffset;
@@ -421,7 +421,7 @@ AccumulationKernel::
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   using Deriv = constitutive::singlefluid::DerivativeOffset;

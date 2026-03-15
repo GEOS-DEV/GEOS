@@ -58,7 +58,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void
@@ -66,7 +66,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
 //END_SPHINX_INCLUDE_SOLVERINTERFACE

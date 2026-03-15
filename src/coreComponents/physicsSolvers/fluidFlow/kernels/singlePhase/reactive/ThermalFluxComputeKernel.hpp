@@ -41,8 +41,18 @@ namespace thermalSinglePhaseReactiveFVMKernels
  * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename BASE_FLUID_TYPE >
-class FluxComputeKernel : public singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, BASE_FLUID_TYPE >
+template< integer NUM_SPECIES,
+          integer NUM_EQN,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename BASE_FLUID_TYPE,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES,
+                                                                                    NUM_EQN,
+                                                                                    NUM_DOF,
+                                                                                    STENCILWRAPPER,
+                                                                                    BASE_FLUID_TYPE,
+                                                                                    MATRIX_VIEW >
 {
 public:
 
@@ -55,11 +65,11 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using SinglePhaseFlowAccessors = typename AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = typename AbstractBase::SinglePhaseFluidAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -70,7 +80,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, BASE_FLUID_TYPE >;
+  using Base = singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, BASE_FLUID_TYPE, MATRIX_VIEW >;
   using ReactiveSinglePhaseFlowAccessors = typename Base::ReactiveSinglePhaseFlowAccessors;
   using ReactiveSinglePhaseFluidAccessors = typename Base::ReactiveSinglePhaseFluidAccessors;
   using DiffusionAccessors = typename Base::DiffusionAccessors;
@@ -141,7 +151,7 @@ public:
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                      real64 const & dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
@@ -532,10 +542,10 @@ public:
       // Different from the one in compositional multi-phase flow, which has a volume balance eqn.
       RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies - 1], stack.localFlux[i * numEqn + numEqn - numSpecies - 1] );
 
-      AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn - numSpecies - 1,
-                                                                                        stack.dofColIndices.data(),
-                                                                                        stack.localFluxJacobian[i * numEqn + numEqn - numSpecies - 1].dataIfContiguous(),
-                                                                                        stack.stencilSize * numDof );
+      AbstractBase::m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + numEqn - numSpecies - 1,
+                                                                                                 stack.dofColIndices.data(),
+                                                                                                 stack.localFluxJacobian[i * numEqn + numEqn - numSpecies - 1].dataIfContiguous(),
+                                                                                                 stack.stencilSize * numDof );
 
     } );
   }
@@ -583,7 +593,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
@@ -594,7 +606,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numSpecies, [&]( auto NS )
@@ -607,7 +619,12 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, constitutive::ThermalCompressibleSinglePhaseFluid >;
+      using KernelType = FluxComputeKernel< NUM_SPECIES,
+                                            NUM_EQN,
+                                            NUM_DOF,
+                                            STENCILWRAPPER,
+                                            constitutive::ThermalCompressibleSinglePhaseFluid,
+                                            MATRIX_VIEW >;
       typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
       typename KernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );

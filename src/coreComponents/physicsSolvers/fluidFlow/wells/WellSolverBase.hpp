@@ -174,7 +174,7 @@ public:
                                         real64 const GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                         DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                         arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
 
 
@@ -193,7 +193,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -209,7 +209,7 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain,
                                   DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
@@ -223,7 +223,7 @@ public:
                                           real64 const & dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
@@ -239,7 +239,7 @@ public:
                                           real64 const & dt,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**

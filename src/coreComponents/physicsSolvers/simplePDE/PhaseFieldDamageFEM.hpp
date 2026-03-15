@@ -84,13 +84,13 @@ public:
   virtual void assembleSystem( real64 const time, real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   virtual void applyBoundaryConditions( real64 const time, real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64 calculateResidualNorm( real64 const & time_n,
@@ -124,12 +124,12 @@ public:
   void applyDirichletBCImplicit( real64 const time,
                                  DofManager const & dofManager,
                                  DomainPartition & domain,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                  arrayView1d< real64 > const & localRhs );
 
   void applyIrreversibilityConstraint( DofManager const & dofManager,
                                        DomainPartition & domain,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                        arrayView1d< real64 > const & localRhs );
 
   virtual void saveSequentialIterationState( DomainPartition & domain ) override;

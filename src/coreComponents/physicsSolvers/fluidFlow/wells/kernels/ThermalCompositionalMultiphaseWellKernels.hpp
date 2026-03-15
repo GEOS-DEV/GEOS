@@ -481,7 +481,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               MultiFluidBase const & fluid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              DefaultGlobalMatrixView const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
     : Base( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
@@ -642,7 +642,7 @@ public:
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -719,7 +719,7 @@ public:
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
                            MultiFluidBase const & fluid,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           DefaultGlobalMatrixView const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
     : Base( dt
@@ -1092,7 +1092,7 @@ public:
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )

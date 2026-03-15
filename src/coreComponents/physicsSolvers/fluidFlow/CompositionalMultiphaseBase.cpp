@@ -1688,7 +1688,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                   real64 const dt,
                                                   DomainPartition & domain,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1719,7 +1719,7 @@ void CompositionalMultiphaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM
 
 void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
                                                       DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1749,7 +1749,7 @@ void CompositionalMultiphaseBase::applyBoundaryConditions( real64 const time_n,
                                                            real64 const dt,
                                                            DomainPartition & domain,
                                                            DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1789,7 +1789,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                      real64 const dt,
                                                      DofManager const & dofManager,
                                                      DomainPartition & domain,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -2113,7 +2113,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
                                                     real64 const dt,
                                                     DofManager const & dofManager,
                                                     DomainPartition & domain,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -2330,7 +2330,7 @@ void CompositionalMultiphaseBase::keepVariablesConstantDuringInitStep( real64 co
                                                                        real64 const dt,
                                                                        DofManager const & dofManager,
                                                                        DomainPartition & domain,
-                                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

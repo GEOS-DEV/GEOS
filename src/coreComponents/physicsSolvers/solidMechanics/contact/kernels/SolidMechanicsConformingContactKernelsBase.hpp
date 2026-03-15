@@ -37,7 +37,7 @@ namespace solidMechanicsConformingContactKernels
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class ConformingContactKernelsBase :
   public finiteElement::InterfaceKernelBase< CONSTITUTIVE_TYPE,
                                              FE_TYPE,

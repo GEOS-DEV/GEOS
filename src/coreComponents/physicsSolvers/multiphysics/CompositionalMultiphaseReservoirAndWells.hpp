@@ -83,7 +83,7 @@ public:
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
   integer isThermal() { return flowSolver()->isThermal(); }
   integer useSimpleAccumulation() const { return flowSolver()->useSimpleAccumulation(); }
@@ -96,14 +96,14 @@ public:
                               real64 const dt,
                               DomainPartition const & domain,
                               DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper );
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
                                    SUBREGION_TYPE const & subRegion,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
   {
     flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );

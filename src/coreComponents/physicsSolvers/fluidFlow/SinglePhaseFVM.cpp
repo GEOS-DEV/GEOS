@@ -101,7 +101,7 @@ void SinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
 template< typename BASE >
 void SinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
                                           DofManager & dofManager,
-                                          CRSMatrix< real64, globalIndex > & localMatrix,
+                                          DefaultGlobalMatrix & localMatrix,
                                           ParallelVector & rhs,
                                           ParallelVector & solution,
                                           bool const setSparsity )
@@ -317,7 +317,7 @@ template<>
 void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -373,7 +373,7 @@ template< >
 void SinglePhaseFVM< SinglePhaseBase >::assembleStabilizedFluxTerms( real64 const dt,
                                                                      DomainPartition const & domain,
                                                                      DofManager const & dofManager,
-                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -413,7 +413,7 @@ template<>
 void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const dt,
                                                                    DomainPartition const & domain,
                                                                    DofManager const & dofManager,
-                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -467,7 +467,7 @@ template< >
 void SinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( real64 const dt,
                                                                              DomainPartition const & domain,
                                                                              DofManager const & dofManager,
-                                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
@@ -479,7 +479,7 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
                                                     real64 const dt,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,
                                                     string const & jumpDofKey )
 {
@@ -567,7 +567,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
                                                          real64 const dt,
                                                          DomainPartition const & domain,
                                                          DofManager const & dofManager,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
                                                          CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
@@ -656,7 +656,7 @@ SinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -687,7 +687,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
                                                    real64 const dt,
                                                    DofManager const & dofManager,
                                                    DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -887,7 +887,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEO
                                                                 real64 const GEOS_UNUSED_PARAM( dt ),
                                                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                                CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 {
   // Aquifer does not make sense for proppant flow in fractures
@@ -898,7 +898,7 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
                                        real64 const dt,
                                        DomainPartition & domain,
                                        DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

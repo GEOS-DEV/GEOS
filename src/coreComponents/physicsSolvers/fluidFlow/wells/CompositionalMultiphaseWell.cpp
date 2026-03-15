@@ -1169,7 +1169,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const & time,
                                                      real64 const & dt,
                                                      DomainPartition & domain,
                                                      DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1234,7 +1234,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
                                                              real64 const & dt,
                                                              DomainPartition & domain,
                                                              DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1962,7 +1962,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( real64 const & time
                                                              real64 const & GEOS_UNUSED_PARAM( dt ),
                                                              DomainPartition const & domain,
                                                              DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;

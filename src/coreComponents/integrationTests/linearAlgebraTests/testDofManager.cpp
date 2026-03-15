@@ -586,12 +586,12 @@ void DofManagerSparsityTest< LAI >::test( stdVector< FieldDesc > fields,
     // Create a sparsity pattern via DofManager
     SparsityPattern< globalIndex > localPattern;
     dofManager.setSparsityPattern( localPattern );
-    CRSMatrix< real64, globalIndex > localMatrix;
+    DefaultGlobalMatrix localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
     pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   }
 
-  CRSMatrix< real64, globalIndex > localPatternExpected( numLocalDof,
+  DefaultGlobalMatrix localPatternExpected( numLocalDof,
                                                          dofManager.numGlobalDofs(),
                                                          27 * numCompTotal );
   Matrix patternExpected;
@@ -876,7 +876,7 @@ void DofManagerRestrictorTest< LAI >::test( stdVector< FieldDesc > fields,
   {
     SparsityPattern< globalIndex > localPattern;
     dofManager.setSparsityPattern( localPattern );
-    CRSMatrix< real64, globalIndex > localMatrix;
+    DefaultGlobalMatrix localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
     A.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
     A.set( 1.0 );
@@ -928,7 +928,7 @@ void DofManagerRestrictorTest< LAI >::test( stdVector< FieldDesc > fields,
   {
     SparsityPattern< globalIndex > localPattern;
     dofManager.setSparsityPattern( localPattern );
-    CRSMatrix< real64, globalIndex > localMatrix;
+    DefaultGlobalMatrix localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
     B.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
     B.set( 1.0 );

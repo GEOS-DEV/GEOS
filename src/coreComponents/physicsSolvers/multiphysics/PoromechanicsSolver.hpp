@@ -267,7 +267,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override
   {
     GEOS_MARK_FUNCTION;
@@ -305,7 +305,7 @@ public:
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   virtual bool checkSequentialConvergence( integer const cycleNumber,
@@ -492,7 +492,7 @@ protected:
                          DofManager const & dofManager,
                          string_array const & regionNames,
                          string const & materialNamesString,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params )

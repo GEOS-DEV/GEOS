@@ -94,7 +94,8 @@ struct AquiferBCKernel
              real64 ( &localFlux )[NC],
              real64 ( &localFluxJacobian )[NC][NC+1] );
 
-  template< integer NC >
+  template< integer NC,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   launch( integer const numPhases,
           integer const ipWater,
@@ -119,7 +120,7 @@ struct AquiferBCKernel
           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
           real64 const timeAtBeginningOfStep,
           real64 const dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };

@@ -152,7 +152,7 @@ public:
                          real64 const dt,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs )
   { GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
 
@@ -203,7 +203,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override
   {
     /// Fully-coupled assembly.
@@ -309,7 +309,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )

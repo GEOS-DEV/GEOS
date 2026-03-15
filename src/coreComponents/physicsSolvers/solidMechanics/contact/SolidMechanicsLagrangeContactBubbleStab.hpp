@@ -68,14 +68,14 @@ public:
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
+               DefaultGlobalMatrix & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true ) override final;
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void
@@ -93,7 +93,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -113,13 +113,13 @@ public:
   void assembleContact( real64 const dt,
                         DomainPartition & domain,
                         DofManager const & dofManager,
-                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
 
   void assembleStabilization( real64 const dt,
                               DomainPartition & domain,
                               DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
   real64 calculateContactResidualNorm( DomainPartition const & domain,

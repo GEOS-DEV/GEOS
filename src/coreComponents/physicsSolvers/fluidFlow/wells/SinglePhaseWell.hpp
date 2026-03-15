@@ -184,7 +184,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -200,7 +200,7 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain,
                                   DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                   arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -213,7 +213,7 @@ public:
   virtual void assembleAccumulationTerms( real64 const & time_n,
                                           real64 const & dt, DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -225,7 +225,7 @@ public:
    */
   void assembleVolumeBalanceTerms( DomainPartition const & domain,
                                    DofManager const & dofManager,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                    arrayView1d< real64 > const & localRhs );
 
   /**
@@ -241,7 +241,7 @@ public:
                                           real64 const & dt,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /*
@@ -255,7 +255,7 @@ public:
   void shutDownWell( real64 const time_n,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs );
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {

@@ -190,8 +190,8 @@ void compareMatrices( MATRIX const & matrix1,
   ASSERT_EQ( matrix1.numLocalRows(), matrix2.numLocalRows() );
   ASSERT_EQ( matrix1.numLocalCols(), matrix2.numLocalCols() );
 
-  CRSMatrix< real64, globalIndex > const mat1 = matrix1.extract();
-  CRSMatrix< real64, globalIndex > const mat2 = matrix2.extract();
+  DefaultGlobalMatrix const mat1 = matrix1.extract();
+  DefaultGlobalMatrix const mat2 = matrix2.extract();
 
   compareLocalMatrices( mat1.toViewConst(), mat2.toViewConst(), relTol, absTol, matrix1.ilower() );
 }

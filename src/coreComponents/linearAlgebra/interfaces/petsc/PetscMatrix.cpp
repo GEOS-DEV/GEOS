@@ -770,7 +770,7 @@ void PetscMatrix::separateComponentFilter( PetscMatrix & dst,
 {
   GEOS_LAI_ASSERT( ready() );
 
-  CRSMatrix< real64, globalIndex > tempMat;
+  DefaultGlobalMatrix tempMat;
   tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
   CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
 
@@ -1034,7 +1034,7 @@ void PetscMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMat
   }
 }
 
-void PetscMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+void PetscMatrix::extract( DefaultGlobalMatrixView const & localMat ) const
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );

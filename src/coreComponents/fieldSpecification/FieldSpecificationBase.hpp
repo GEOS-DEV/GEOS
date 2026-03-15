@@ -206,13 +206,14 @@ public:
    *
    * @note This function is rarely used directly. More often it is called by other ApplyBoundaryCondition functions.
    */
-  template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
+  template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void applyBoundaryConditionToSystemKernel( SortedArrayView< localIndex const > const & targetSet,
                                              real64 const time,
                                              dataRepository::Group const & dataGroup,
                                              arrayView1d< globalIndex const > const & dofMap,
                                              globalIndex const dofRankOffset,
-                                             CRSMatrixView< real64, globalIndex const > const & matrix,
+                                             MATRIX_VIEW const & matrix,
                                              arrayView1d< real64 > const & rhs,
                                              ArrayView< T const, NDIM, USD > const & fieldView ) const;
 
@@ -235,14 +236,15 @@ public:
    * This function applies the boundary condition to a linear system of equations. This function is
    * typically called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename POLICY >
+  template< typename FIELD_OP, typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                        real64 const time,
                                        dataRepository::Group const & dataGroup,
                                        string const & fieldName,
                                        string const & dofMapName,
                                        globalIndex const dofRankOffset,
-                                       CRSMatrixView< real64, globalIndex const > const & matrix,
+                                       MATRIX_VIEW const & matrix,
                                        arrayView1d< real64 > const & rhs ) const;
 
   /**
@@ -267,14 +269,15 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
                                   dataRepository::Group const & dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  MATRIX_VIEW const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
@@ -301,7 +304,8 @@ public:
    * typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
-  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
@@ -309,7 +313,7 @@ public:
                                   dataRepository::Group const & dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  MATRIX_VIEW const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const;
 
@@ -342,7 +346,8 @@ public:
    * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead call computeRhsContribution directly, and
    * apply these rhs contributions "manually" according to the equation layout used in the solver
    */
-  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void
   computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
                           real64 const time,
@@ -350,7 +355,7 @@ public:
                           dataRepository::Group const & dataGroup,
                           arrayView1d< globalIndex const > const & dofMap,
                           globalIndex const dofRankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          MATRIX_VIEW const & matrix,
                           arrayView1d< globalIndex > const & dof,
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const;
@@ -366,10 +371,11 @@ public:
    *
    * This function zeroes the rows of the matrix that correspond to boundary conditions.
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   void zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                            arrayView1d< globalIndex const > const & dofMap,
-                                           CRSMatrixView< real64, globalIndex const > const & matrix ) const;
+                                           MATRIX_VIEW const & matrix ) const;
 
   /**
    * @brief View keys
@@ -693,13 +699,13 @@ void FieldSpecificationBase::applyFieldValue( SortedArrayView< localIndex const 
   }, wrapper );
 }
 
-template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
+template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD, typename MATRIX_VIEW >
 void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayView< localIndex const > const & targetSet,
                                                                    real64 const time,
                                                                    dataRepository::Group const & dataGroup,
                                                                    arrayView1d< globalIndex const > const & dofMap,
                                                                    globalIndex const dofRankOffset,
-                                                                   CRSMatrixView< real64, globalIndex const > const & matrix,
+                                                                   MATRIX_VIEW const & matrix,
                                                                    arrayView1d< real64 > const & rhs,
                                                                    ArrayView< T const, NDIM, USD > const & fieldView ) const
 {
@@ -713,14 +719,14 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
   } );
 }
 
-template< typename FIELD_OP, typename POLICY >
+template< typename FIELD_OP, typename POLICY, typename MATRIX_VIEW >
 void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
                                                              real64 const time,
                                                              dataRepository::Group const & dataGroup,
                                                              string const & fieldName,
                                                              string const & dofMapName,
                                                              globalIndex const dofRankOffset,
-                                                             CRSMatrixView< real64, globalIndex const > const & matrix,
+                                                             MATRIX_VIEW const & matrix,
                                                              arrayView1d< real64 > const & rhs ) const
 {
   dataRepository::WrapperBase const & wrapper = dataGroup.getWrapperBase( fieldName );
@@ -743,7 +749,7 @@ void FieldSpecificationBase::applyBoundaryConditionToSystem( SortedArrayView< lo
   }, wrapper );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA, typename MATRIX_VIEW >
 void
 FieldSpecificationBase::
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -751,7 +757,7 @@ FieldSpecificationBase::
                                   dataRepository::Group const & dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  MATRIX_VIEW const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
@@ -766,7 +772,7 @@ FieldSpecificationBase::
                                                              std::forward< LAMBDA >( lambda ) );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA, typename MATRIX_VIEW >
 void
 FieldSpecificationBase::
   applyBoundaryConditionToSystem( SortedArrayView< localIndex const > const & targetSet,
@@ -775,7 +781,7 @@ FieldSpecificationBase::
                                   dataRepository::Group const & dataGroup,
                                   arrayView1d< globalIndex const > const & dofMap,
                                   globalIndex const dofRankOffset,
-                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  MATRIX_VIEW const & matrix,
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
@@ -799,7 +805,7 @@ FieldSpecificationBase::
   FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+template< typename FIELD_OP, typename POLICY, typename LAMBDA, typename MATRIX_VIEW >
 void
 FieldSpecificationBase::
   computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
@@ -808,7 +814,7 @@ FieldSpecificationBase::
                           dataRepository::Group const & dataGroup,
                           arrayView1d< globalIndex const > const & dofMap,
                           globalIndex const dofRankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          MATRIX_VIEW const & matrix,
                           arrayView1d< globalIndex > const & dof,
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const
@@ -868,10 +874,10 @@ FieldSpecificationBase::
 }
 
 
-template< typename POLICY >
+template< typename POLICY, typename MATRIX_VIEW >
 void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
                                                                  arrayView1d< globalIndex const > const & dofMap,
-                                                                 CRSMatrixView< real64, globalIndex const > const & matrix ) const
+                                                                 MATRIX_VIEW const & matrix ) const
 
 {
   integer const component = ( getComponent() >=0 ) ? getComponent() : 0;

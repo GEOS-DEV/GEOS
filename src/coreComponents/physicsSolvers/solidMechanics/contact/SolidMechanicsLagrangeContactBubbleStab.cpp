@@ -262,7 +262,7 @@ void SolidMechanicsLagrangeContactBubbleStab::postInputInitialization()
 
 void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & domain,
                                                            DofManager & dofManager,
-                                                           CRSMatrix< real64, globalIndex > & localMatrix,
+                                                           DefaultGlobalMatrix & localMatrix,
                                                            ParallelVector & rhs,
                                                            ParallelVector & solution,
                                                            bool const setSparsity )
@@ -285,7 +285,7 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
 
 void SolidMechanicsLagrangeContactBubbleStab::setSparsityPattern( DomainPartition & domain,
                                                                   DofManager & dofManager,
-                                                                  CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                  DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                                                   SparsityPattern< globalIndex > & pattern )
 {
   // Set the sparsity pattern without the Abu and Aub blocks.
@@ -374,7 +374,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,
                                                               real64 const dt,
                                                               DomainPartition & domain,
                                                               DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -394,7 +394,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,
 void SolidMechanicsLagrangeContactBubbleStab::assembleStabilization( real64 const dt,
                                                                      DomainPartition & domain,
                                                                      DofManager const & dofManager,
-                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs )
 {
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
@@ -440,7 +440,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleStabilization( real64 cons
 void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
                                                                DomainPartition & domain,
                                                                DofManager const & dofManager,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
@@ -629,7 +629,7 @@ void SolidMechanicsLagrangeContactBubbleStab::applySystemSolution( DofManager co
 
     string const & fractureRegionName = this->getUniqueFractureRegionName();
 
-    CRSMatrix< real64, globalIndex > const voidMatrix;
+    DefaultGlobalMatrix const voidMatrix;
     array1d< real64 > const voidRhs;
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,

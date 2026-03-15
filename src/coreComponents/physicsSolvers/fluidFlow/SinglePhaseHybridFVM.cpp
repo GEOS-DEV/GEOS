@@ -219,7 +219,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM(
 void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
                                               DomainPartition const & domain,
                                               DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -286,7 +286,7 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const dt,
 void SinglePhaseHybridFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                         DomainPartition const & domain,
                                                         DofManager const & dofManager,
-                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                         arrayView1d< real64 > const & localRhs )
 {
   // pressure stabilization not implemented
@@ -299,7 +299,7 @@ void SinglePhaseHybridFVM::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs,
                                                   string const & jumpDofKey )
 {
@@ -316,7 +316,7 @@ void SinglePhaseHybridFVM::applyBoundaryConditions( real64 const time_n,
                                                     real64 const dt,
                                                     DomainPartition & domain,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -341,7 +341,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                  real64 const dt,
                                                  DofManager const & dofManager,
                                                  DomainPartition & domain,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -433,7 +433,7 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
                                            real64 const dt,
                                            DomainPartition & domain,
                                            DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                            arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

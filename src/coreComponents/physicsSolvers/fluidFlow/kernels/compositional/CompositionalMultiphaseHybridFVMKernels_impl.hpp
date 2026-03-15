@@ -606,7 +606,7 @@ AssemblerKernelHelper::
   }
 }
 
-template< integer NF, integer NC, integer NP >
+template< integer NF, integer NC, integer NP, typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
 void
@@ -639,7 +639,7 @@ AssemblerKernelHelper::
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
                           real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
                           real64 const & dt,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          MATRIX_VIEW const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
   using namespace compositionalMultiphaseUtilities;
@@ -838,7 +838,7 @@ AssemblerKernelHelper::
       }
     }
 
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+    localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                               compactElemDofs,
                                                               compactElemDerivs,
                                                               compactIdx );
@@ -856,7 +856,7 @@ AssemblerKernelHelper::
         }
       }
 
-      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+      localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                                 &dofColIndicesFaceVars[0],
                                                                 compactFaceDerivs,
                                                                 numNonBoundaryFaces );
@@ -1005,7 +1005,7 @@ AssemblerKernelHelper::
   }
 }
 
-template< integer NF, integer NC >
+template< integer NF, integer NC, typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
 void
@@ -1020,7 +1020,7 @@ AssemblerKernelHelper::
                            real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                            real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
                            real64 const (&dOneSidedVolFlux_dCompDens)[ NF ][ NC ],
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
 {
   integer constexpr NDOF = NC+1;
@@ -1078,13 +1078,13 @@ AssemblerKernelHelper::
     RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnLocalRowIndex], flux );
 
     // jacobian -- derivatives wrt elem-centered terms
-    localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
+    localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
                                                                       &dofColIndicesElemVars[0],
                                                                       &dFlux_dElemVars[0],
                                                                       NDOF );
 
     // jacobian -- derivatives wrt face pressure terms
-    localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
+    localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
                                                                       &dofColIndicesFaceVars[0],
                                                                       &dFlux_dFaceVars[0],
                                                                       NF );
@@ -1093,7 +1093,7 @@ AssemblerKernelHelper::
 
 /******************************** AssemblerKernel ********************************/
 
-template< integer NF, integer NC, integer NP >
+template< integer NF, integer NC, integer NP, typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
 void
@@ -1128,7 +1128,7 @@ AssemblerKernel::
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
            arraySlice2d< real64 const > const & transMatrixGrav,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           MATRIX_VIEW const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
   // one sided flux
@@ -1226,7 +1226,7 @@ AssemblerKernel::
 
 /******************************** FluxKernel ********************************/
 
-template< integer NF, integer NC, integer NP, typename IP_TYPE >
+template< integer NF, integer NC, integer NP, typename IP_TYPE, typename MATRIX_VIEW >
 void
 FluxKernel::
   launch( localIndex er, localIndex esr,
@@ -1259,7 +1259,7 @@ FluxKernel::
           real64 const lengthTolerance,
           real64 const dt,
           integer const useTotalMassEquation,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   // get the cell-centered DOF numbers and ghost rank for the assembly
@@ -1360,7 +1360,7 @@ FluxKernel::
 
 /******************************** DirichletFluxKernel ********************************/
 
-template< integer NF, integer NC, integer NP, typename IP_TYPE >
+template< integer NF, integer NC, integer NP, typename IP_TYPE, typename MATRIX_VIEW >
 void
 DirichletFluxKernel::
   launch( integer const numPhases,
@@ -1389,7 +1389,7 @@ DirichletFluxKernel::
           CompFlowAccessors const & compFlowAccessors,
           MultiFluidAccessors const & multiFluidAccessors,
           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( faceTemp );
@@ -1630,7 +1630,7 @@ DirichletFluxKernel::
         dofColIndices[jc+1] = elemDof + jc + 1;
       }
 
-      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
+      localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
                                                                         dofColIndices,
                                                                         localFluxJacobian[ic],
                                                                         NC+1 );
@@ -1654,7 +1654,7 @@ DirichletFluxKernel::
           }
         }
 
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
+        localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
                                                                           &faceDof,
                                                                           &facePressureJacobian,
                                                                           1 );

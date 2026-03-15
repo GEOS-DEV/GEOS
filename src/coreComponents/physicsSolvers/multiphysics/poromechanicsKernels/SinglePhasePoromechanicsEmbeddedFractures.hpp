@@ -86,7 +86,7 @@ public:
                                 PermeabilityAccessors const & permeabilityAccessors,
                                 FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
                                 real64 const & dt,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                DefaultGlobalMatrixView const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
@@ -267,7 +267,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_DOF = 4; // pressure + jumps

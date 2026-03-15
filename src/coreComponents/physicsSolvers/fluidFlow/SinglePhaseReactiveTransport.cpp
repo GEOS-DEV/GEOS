@@ -362,7 +362,7 @@ void SinglePhaseReactiveTransport::assembleSystem( real64 const GEOS_UNUSED_PARA
                                                    real64 const dt,
                                                    DomainPartition & domain,
                                                    DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -382,7 +382,7 @@ void SinglePhaseReactiveTransport::assembleSystem( real64 const GEOS_UNUSED_PARA
 void SinglePhaseReactiveTransport::assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( real64 const dt,
                                                                                               DomainPartition & domain,
                                                                                               DofManager const & dofManager,
-                                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                               arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -441,7 +441,7 @@ void SinglePhaseReactiveTransport::assembleAccumulationTermsInMassBalanceAndSpec
 void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
                                                       DomainPartition const & domain,
                                                       DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs )
 {
   array1d< integer > mobilePrimarySpeciesFlags;
@@ -858,7 +858,7 @@ void SinglePhaseReactiveTransport::applyBoundaryConditions( real64 const time_n,
                                                             real64 const dt,
                                                             DomainPartition & domain,
                                                             DofManager const & dofManager,
-                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -877,7 +877,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
                                                       real64 const dt,
                                                       DomainPartition & domain,
                                                       DofManager const & dofManager,
-                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                       arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1040,7 +1040,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
                                                      real64 const dt,
                                                      DomainPartition & domain,
                                                      DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1426,7 +1426,7 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
                                                          real64 const dt,
                                                          DofManager const & dofManager,
                                                          DomainPartition & domain,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1576,7 +1576,7 @@ void SinglePhaseReactiveTransport::assembleEDFMFluxTerms( real64 const GEOS_UNUS
                                                           real64 const GEOS_UNUSED_PARAM( dt ),
                                                           DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                           DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                          CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                          PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                           arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
                                                           string const & GEOS_UNUSED_PARAM( jumpDofKey ) )
 {}
@@ -1585,14 +1585,14 @@ void SinglePhaseReactiveTransport::applyAquiferBC( real64 const GEOS_UNUSED_PARA
                                                    real64 const GEOS_UNUSED_PARAM( dt ),
                                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                   CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                   PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                    arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 {}
 
 void SinglePhaseReactiveTransport::assembleStabilizedFluxTerms( real64 const GEOS_UNUSED_PARAM( dt ),
                                                                 DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                                CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {}
 

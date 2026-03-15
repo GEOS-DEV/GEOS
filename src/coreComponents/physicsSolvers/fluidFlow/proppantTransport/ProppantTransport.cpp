@@ -485,7 +485,7 @@ void ProppantTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -506,7 +506,7 @@ void ProppantTransport::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
 void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                                    DomainPartition const & domain,
                                                    DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -565,7 +565,7 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
 void ProppantTransport::assembleFluxTerms( real64 const dt,
                                            DomainPartition const & domain,
                                            DofManager const & dofManager,
-                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -643,7 +643,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                  real64 const dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;

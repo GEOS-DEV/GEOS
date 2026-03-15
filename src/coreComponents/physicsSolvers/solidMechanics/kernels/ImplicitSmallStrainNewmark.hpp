@@ -44,7 +44,7 @@ namespace solidMechanicsLagrangianFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class ImplicitSmallStrainNewmark : public ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE,
                                                                           CONSTITUTIVE_TYPE,
                                                                           FE_TYPE,
@@ -209,7 +209,7 @@ protected:
 using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitSmallStrainNewmark,
                                                              arrayView1d< globalIndex const > const &,
                                                              globalIndex,
-                                                             CRSMatrixView< real64, globalIndex const > const,
+                                                             DefaultGlobalMatrixView const,
                                                              arrayView1d< real64 > const,
                                                              real64 const,
                                                              real64 const (&)[3],

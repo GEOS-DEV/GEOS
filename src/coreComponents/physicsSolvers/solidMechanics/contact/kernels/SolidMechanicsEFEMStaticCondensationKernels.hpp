@@ -41,7 +41,7 @@ namespace solidMechanicsEFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class EFEMStaticCondensation :
   public EFEMKernelsBase< SUBREGION_TYPE,
                           CONSTITUTIVE_TYPE,
@@ -245,7 +245,7 @@ using EFEMStaticCondensationFactory = finiteElement::KernelFactory< EFEMStaticCo
                                                                     EmbeddedSurfaceSubRegion &,
                                                                     arrayView1d< globalIndex const > const,
                                                                     globalIndex const,
-                                                                    CRSMatrixView< real64, globalIndex const > const,
+                                                                    DefaultGlobalMatrixView const,
                                                                     arrayView1d< real64 > const,
                                                                     real64 const,
                                                                     real64 const (&) [3] >;

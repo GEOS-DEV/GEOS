@@ -40,7 +40,7 @@ void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
                             globalIndex const dofIndex,
                             real64 const eps,
-                            CRSMatrixView< real64, globalIndex const > const & jacobian )
+                            DefaultGlobalMatrixView const & jacobian )
 {
   forAll< parallelDevicePolicy<> >( residual.size(), [=] GEOS_HOST_DEVICE ( localIndex const row )
   {

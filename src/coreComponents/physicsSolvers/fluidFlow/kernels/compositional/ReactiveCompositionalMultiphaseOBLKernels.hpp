@@ -297,7 +297,10 @@ public:
  * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
  * @brief Compute accumulation term for an element
  */
-template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
+template< integer NUM_PHASES,
+          integer NUM_COMPS,
+          bool ENABLE_ENERGY,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class ElementBasedAssemblyKernel
 {
 public:
@@ -338,7 +341,7 @@ public:
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt * secondsToDaysMult ),
@@ -468,10 +471,10 @@ public:
     {
       stack.localJacobian[i][0] *= pascalToBarMult;
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
-      m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
-                                              stack.dofIndices,
-                                              stack.localJacobian[i],
-                                              numDofs );
+      m_localMatrix.template addToRow< serialAtomic >( stack.localRow + i,
+                                                       stack.dofIndices,
+                                                       stack.localJacobian[i],
+                                                       numDofs );
     }
   }
 
@@ -532,7 +535,7 @@ protected:
   // outputs
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -558,7 +561,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch(
     integer const numPhases,
@@ -568,7 +572,7 @@ public:
     globalIndex const rankOffset,
     string const dofKey,
     ElementSubRegionBase const & subRegion,
-    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    MATRIX_VIEW const & localMatrix,
     arrayView1d< real64 > const & localRhs )
   {
     internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
@@ -577,9 +581,9 @@ public:
       integer constexpr NUM_PHASES = NP();
       integer constexpr NUM_COMPS = NC();
 
-      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
+      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, MATRIX_VIEW >
       kernel( dt, rankOffset, dofKey, subRegion, localMatrix, localRhs );
-      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
+      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     } );
 
   }
@@ -600,6 +604,7 @@ public:
  *        and therefore overall performance can significantly improve
  *
  */
+template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class FluxComputeKernelBase
 {
 public:
@@ -664,7 +669,7 @@ public:
                          PermeabilityAccessors const & permeabilityAccessors,
                          real64 const & dt,
                          real64 const & transMultExp,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt * secondsToDaysMult ),
@@ -720,7 +725,7 @@ protected:
   // Residual and jacobian
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 };
@@ -733,10 +738,38 @@ protected:
  * @tparam STENCILWRAPPER wrapper for element stencils
  * @brief Compute flux term for an element
  */
-template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY, typename STENCILWRAPPER >
-class FluxComputeKernel : public FluxComputeKernelBase
+template< integer NUM_PHASES,
+          integer NUM_COMPS,
+          bool ENABLE_ENERGY,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public FluxComputeKernelBase< MATRIX_VIEW >
 {
 public:
+  using Base = FluxComputeKernelBase< MATRIX_VIEW >;
+  using DofNumberAccessor = typename Base::DofNumberAccessor;
+  using CompFlowAccessors = typename Base::CompFlowAccessors;
+  using PermeabilityAccessors = typename Base::PermeabilityAccessors;
+
+  using Base::pascalToBarMult;
+  using Base::transUnitMult;
+  using Base::transDUnitMult;
+  using Base::m_rankOffset;
+  using Base::m_dt;
+  using Base::m_transMultExp;
+  using Base::m_dofNumber;
+  using Base::m_permeability;
+  using Base::m_dPerm_dPres;
+  using Base::m_referencePorosity;
+  using Base::m_rockThermalConductivity;
+  using Base::m_ghostRank;
+  using Base::m_gravCoef;
+  using Base::m_pres;
+  using Base::m_OBLOperatorValues;
+  using Base::m_OBLOperatorDerivatives;
+  using Base::m_localMatrix;
+  using Base::m_localRhs;
+
 
   /// Compile time value for the number of phases
   static constexpr integer numPhases = NUM_PHASES;
@@ -799,16 +832,16 @@ public:
                      PermeabilityAccessors const & permeabilityAccessors,
                      real64 const & dt,
                      real64 const & transMultExp,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
-    : FluxComputeKernelBase( rankOffset,
-                             dofNumberAccessor,
-                             compFlowAccessors,
-                             permeabilityAccessors,
-                             dt,
-                             transMultExp,
-                             localMatrix,
-                             localRhs ),
+    : Base( rankOffset,
+            dofNumberAccessor,
+            compFlowAccessors,
+            permeabilityAccessors,
+            dt,
+            transMultExp,
+            localMatrix,
+            localRhs ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -1119,7 +1152,7 @@ public:
         for( integer id = 0; id < numDofs; ++id )
         {
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + id], stack.localFlux[id] );
-          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + id,
             stack.dofColIndices.data(),
             stack.localFluxJacobian[id].dataIfContiguous(),
@@ -1193,7 +1226,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numPhases,
                    integer const numComps,
@@ -1205,7 +1240,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
@@ -1218,7 +1253,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KERNEL_TYPE = FluxComputeKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER >;
+      using KERNEL_TYPE = FluxComputeKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER, MATRIX_VIEW >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 

@@ -149,7 +149,7 @@ ControlEquationHelper::
            arrayView1d< real64 const > const & dCurrentTotalVolRate,
            real64 const & massDensity,
            globalIndex const dofNumber,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           DefaultGlobalMatrixView const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
 
@@ -313,7 +313,7 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens,
           bool & controlHasSwitched,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
@@ -468,7 +468,7 @@ PressureRelationKernel::
                               arrayView1d< real64 const > const & wellElemTotalMassDens, \
                               arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens, \
                               bool & controlHasSwitched, \
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+                              DefaultGlobalMatrixView const & localMatrix, \
                               arrayView1d< real64 > const & localRhs )
 
 INST_PressureRelationKernel( 1, 0 );

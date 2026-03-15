@@ -167,7 +167,7 @@ struct AccumulationKernel
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,
           real64 const maxProppantConcentration,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 };
 
@@ -274,7 +274,7 @@ struct FluxKernel
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
   static void

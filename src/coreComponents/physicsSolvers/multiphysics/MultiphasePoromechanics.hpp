@@ -86,7 +86,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override
   { Base::assembleSystem( time, dt, domain, dofManager, localMatrix, localRhs ); }
 
@@ -94,7 +94,7 @@ public:
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**@}*/

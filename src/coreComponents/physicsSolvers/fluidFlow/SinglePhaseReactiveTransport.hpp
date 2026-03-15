@@ -110,7 +110,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
@@ -118,7 +118,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -190,7 +190,7 @@ public:
   void assembleAccumulationTermsInMassBalanceAndSpeciesAmountEqs( real64 const dt,
                                                                   DomainPartition & domain,
                                                                   DofManager const & dofManager,
-                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs ) const;
 
   /**
@@ -205,7 +205,7 @@ public:
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -222,7 +222,7 @@ public:
                      real64 const dt,
                      DomainPartition & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const override;
 
   /**
@@ -239,7 +239,7 @@ public:
                     real64 const dt,
                     DomainPartition & domain,
                     DofManager const & dofManager,
-                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                     arrayView1d< real64 > const & localRhs ) const override;
 
   /**
@@ -264,7 +264,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
@@ -272,7 +272,7 @@ public:
                          real64 const dt,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          string const & jumpDofKey ) override final;
 
@@ -280,7 +280,7 @@ public:
   assembleStabilizedFluxTerms( real64 const dt,
                                DomainPartition const & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   struct viewKeyStruct : SinglePhaseBase::viewKeyStruct
@@ -329,7 +329,7 @@ private:
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                              arrayView1d< real64 > const & localRhs );
 
 };

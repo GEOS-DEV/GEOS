@@ -239,7 +239,7 @@ void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
 void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                     DomainPartition const & domain,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -405,7 +405,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                               DomainPartition const & domain,
                                                               DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1112,7 +1112,7 @@ void CompositionalMultiphaseFVM::applyBoundaryConditions( real64 time_n,
                                                           real64 dt,
                                                           DomainPartition & domain,
                                                           DofManager const & dofManager,
-                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1258,7 +1258,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
                                                        real64 const dt,
                                                        DofManager const & dofManager,
                                                        DomainPartition & domain,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1399,7 +1399,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                  real64 const dt,
                                                  DofManager const & dofManager,
                                                  DomainPartition & domain,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1493,7 +1493,7 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
                                                              real64 const dt,
                                                              DomainPartition const & domain,
                                                              DofManager const & dofManager,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs,
                                                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {

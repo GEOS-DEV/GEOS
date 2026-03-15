@@ -799,7 +799,7 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                       arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -829,7 +829,7 @@ void SinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
 
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -852,7 +852,7 @@ void SinglePhaseBase::applyBoundaryConditions( real64 time_n,
                                                real64 dt,
                                                DomainPartition & domain,
                                                DofManager const & dofManager,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -885,7 +885,7 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
                                 integer const idof,
                                 string const fieldKey,
                                 string const boundaryFieldKey,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -944,7 +944,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -973,7 +973,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                          real64 const dt,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                          arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -1167,7 +1167,7 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
                                                            real64 const dt,
                                                            DofManager const & dofManager,
                                                            DomainPartition & domain,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

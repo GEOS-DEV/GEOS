@@ -124,7 +124,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition c
 
 void SinglePhasePoromechanicsEmbeddedFractures::setSparsityPattern( DomainPartition & domain,
                                                                     DofManager & dofManager,
-                                                                    CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                    DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                                                     SparsityPattern< globalIndex > & pattern )
 {
   // Set the sparsity pattern without the Kwu and Kuw blocks.
@@ -385,7 +385,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::assembleSystem( real64 const tim
                                                                 real64 const dt,
                                                                 DomainPartition & domain,
                                                                 DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
 

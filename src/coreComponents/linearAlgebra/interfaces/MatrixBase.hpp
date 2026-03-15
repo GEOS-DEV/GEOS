@@ -866,18 +866,18 @@ protected:
    * @brief Extract local part of the matrix using previously allocated storage and structure.
    * @param localMat view into the local matrix to populate
    */
-  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const = 0;
+  virtual void extract( DefaultGlobalMatrixView const & localMat ) const = 0;
 
   /**
    * @brief Extract local part of the matrix
    * @return the local matrix
    */
-  CRSMatrix< real64, globalIndex > extract() const
+  DefaultGlobalMatrix extract() const
   {
     array1d< localIndex > rowLengths( numLocalRows() );
     getRowLengths( rowLengths.toView() );
     rowLengths.move( LvArray::MemorySpace::host );
-    CRSMatrix< real64, globalIndex > localMat;
+    DefaultGlobalMatrix localMat;
     localMat.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows(), numGlobalCols(), rowLengths.data() );
     extract( localMat.toView() );
     return localMat;

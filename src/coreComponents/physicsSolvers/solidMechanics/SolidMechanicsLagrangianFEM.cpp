@@ -695,7 +695,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time,
                                                                DofManager const & dofManager,
                                                                DomainPartition & domain,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1032,7 +1032,7 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOS_UNUSED
 
 void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                DofManager & dofManager,
-                                               CRSMatrix< real64, globalIndex > & localMatrix,
+                                               DefaultGlobalMatrix & localMatrix,
                                                ParallelVector & rhs,
                                                ParallelVector & solution,
                                                bool const setSparsity )
@@ -1049,7 +1049,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
 void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
                                                       DofManager & dofManager,
-                                                      CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                      DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                                       SparsityPattern< globalIndex > & pattern )
 {
   pattern.resize( dofManager.numLocalDofs(),
@@ -1123,7 +1123,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                   real64 const dt,
                                                   DomainPartition & domain,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1229,7 +1229,7 @@ SolidMechanicsLagrangianFEM::
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1440,7 +1440,7 @@ void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition &
 
 void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dofManager,
                                                           DomainPartition & domain,
-                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;

@@ -157,7 +157,7 @@ void testNumericalJacobian( SinglePhaseFVM<> & solver,
                             real64 const relTol,
                             LAMBDA assembleFunction )
 {
-  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
+  DefaultGlobalMatrix const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
 
   // assemble the analytical residual
@@ -174,7 +174,7 @@ void testNumericalJacobian( SinglePhaseFVM<> & solver,
 
   // create the numerical jacobian
   jacobian.move( hostMemorySpace );
-  CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
+  DefaultGlobalMatrix jacobianFD( jacobian );
   jacobianFD.zero();
 
   // fill jacobian FD
@@ -255,7 +255,7 @@ TEST_F( ThermalSinglePhaseFlowTest, jacobianNumericalCheck_flux )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     // The first input parameter denotes t_n, which is unused. Just input something here.
@@ -272,7 +272,7 @@ TEST_F( ThermalSinglePhaseFlowTest, jacobianNumericalCheck_accumulationBalance )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->assembleAccumulationTerms( domain, solver->getDofManager(), localMatrix, localRhs );

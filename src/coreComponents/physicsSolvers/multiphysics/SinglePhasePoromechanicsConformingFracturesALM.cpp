@@ -50,7 +50,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupCouplin
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::setupSystem( DomainPartition & domain,
                                                                                  DofManager & dofManager,
-                                                                                 CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                 DefaultGlobalMatrix & localMatrix,
                                                                                  ParallelVector & rhs,
                                                                                  ParallelVector & solution,
                                                                                  bool const setSparsity )
@@ -69,7 +69,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleSyst
                                                                                     real64 const dt,
                                                                                     DomainPartition & domain,
                                                                                     DofManager const & dofManager,
-                                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                     arrayView1d< real64 > const & localRhs )
 {
 
@@ -85,7 +85,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleElem
                                                                                                        real64 const dt,
                                                                                                        DomainPartition & domain,
                                                                                                        DofManager const & dofManager,
-                                                                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -101,7 +101,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::assembleCoup
                                                                                            real64 const dt,
                                                                                            DomainPartition const & domain,
                                                                                            DofManager const & dofManager,
-                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -122,7 +122,7 @@ template< typename FLOW_SOLVER >
 void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
 setUpDflux_dApertureMatrix( DomainPartition & domain,
                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                            CRSMatrix< real64, globalIndex > & localMatrix )
+                            DefaultGlobalMatrix & localMatrix )
 {
   GEOS_UNUSED_VAR( domain, localMatrix );
   GEOS_ERROR( "SinglePhasePoromechanicsConformingFracturesALM does not support FullyImplicit coupling type." );
@@ -159,7 +159,7 @@ assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                             MeshLevel const & mesh,
                                             arrayView1d< string const > const & regionNames,
                                             DofManager const & dofManager,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                             arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -173,7 +173,7 @@ void SinglePhasePoromechanicsConformingFracturesALM< FLOW_SOLVER >::
 assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                     arrayView1d< string const > const & regionNames,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_MARK_FUNCTION;

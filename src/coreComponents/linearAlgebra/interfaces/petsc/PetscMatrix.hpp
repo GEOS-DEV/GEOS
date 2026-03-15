@@ -299,7 +299,7 @@ public:
 
   virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
 
-  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
+  virtual void extract( DefaultGlobalMatrixView const & localMat ) const override;
 
   virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const override;
 

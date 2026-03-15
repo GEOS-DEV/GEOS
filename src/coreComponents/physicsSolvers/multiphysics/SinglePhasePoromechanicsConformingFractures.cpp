@@ -54,7 +54,7 @@ void SinglePhasePoromechanicsConformingFractures< FLOW_SOLVER >::
 assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                     string_array const & regionNames,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_MARK_FUNCTION;
@@ -231,7 +231,7 @@ assembleSystem( real64 const time_n,
                 real64 const dt,
                 DomainPartition & domain,
                 DofManager const & dofManager,
-                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;

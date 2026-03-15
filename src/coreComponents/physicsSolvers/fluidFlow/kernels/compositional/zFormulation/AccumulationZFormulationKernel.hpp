@@ -48,7 +48,9 @@ static constexpr real64 minCompFracForDivision = 0;
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
-template< integer NUM_COMP, integer NUM_DOF >
+template< integer NUM_COMP,
+          integer NUM_DOF,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class AccumulationZFormulationKernel
 {
 public:
@@ -79,7 +81,7 @@ public:
                                   ElementSubRegionBase const & subRegion,
                                   constitutive::MultiFluidBase const & fluid,
                                   constitutive::CoupledSolidBase const & solid,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  MATRIX_VIEW const & localMatrix,
                                   arrayView1d< real64 > const & localRhs,
                                   BitFlags< KernelFlags > const KernelFlags )
     : m_numPhases( numPhases ),
@@ -273,10 +275,10 @@ public:
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
-      m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
-                                              stack.dofIndices,
-                                              stack.localJacobian[i],
-                                              numDof );
+      m_localMatrix.template addToRow< serialAtomic >( stack.localRow + i,
+                                                       stack.dofIndices,
+                                                       stack.localJacobian[i],
+                                                       numDof );
     }
   }
 
@@ -349,7 +351,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > m_compAmount_n;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -376,7 +378,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -386,7 +388,7 @@ public:
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
@@ -394,9 +396,9 @@ public:
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
 
-      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
-                                                                  fluid, solid, localMatrix, localRhs, kernelFlags );
-      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW > kernel( numPhases, rankOffset, dofKey, subRegion,
+                                                                               fluid, solid, localMatrix, localRhs, kernelFlags );
+      AccumulationZFormulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

@@ -143,7 +143,7 @@ public:
             typename ... PARAMS >
   void assemblyLaunch( DomainPartition & domain,
                        DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                        arrayView1d< real64 > const & localRhs,
                        PARAMS && ... params );
 

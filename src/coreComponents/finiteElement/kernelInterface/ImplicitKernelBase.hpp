@@ -48,7 +48,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class ImplicitKernelBase : public KernelBase< SUBREGION_TYPE,
                                               CONSTITUTIVE_TYPE,
                                               FE_TYPE,

@@ -54,7 +54,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void
@@ -66,7 +66,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   /**
@@ -115,7 +115,7 @@ private:
                          DofManager const & dofManager,
                          string_array const & regionNames,
                          string const & materialNamesString,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const & dt );
 
@@ -128,7 +128,7 @@ real64 SinglePhasePoromechanicsEmbeddedFractures::assemblyLaunch( MeshLevel & me
                                                                   DofManager const & dofManager,
                                                                   string_array const & regionNames,
                                                                   string const & materialNamesString,
-                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs,
                                                                   real64 const & dt )
 {

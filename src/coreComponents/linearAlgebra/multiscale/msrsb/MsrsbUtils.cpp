@@ -381,7 +381,7 @@ buildProlongationSparsity( DofManager const & fineDofManager,
   return pattern;
 }
 
-CRSMatrix< real64, globalIndex >
+DefaultGlobalMatrix
 buildTentativeProlongation( DofManager const & fineDofManager,
                             DofManager const & coarseDofManager,
                             string const & fieldName,
@@ -391,7 +391,7 @@ buildTentativeProlongation( DofManager const & fineDofManager,
   GEOS_MARK_FUNCTION;
 
   // Construct the tentative prolongation, consuming the sparsity pattern
-  CRSMatrix< real64, globalIndex > localMatrix;
+  DefaultGlobalMatrix localMatrix;
   {
     SparsityPattern< globalIndex > localPattern =
       buildProlongationSparsity( fineDofManager, coarseDofManager, fieldName, supports );
@@ -557,7 +557,7 @@ findLayeredSupportBoundary( ArrayOfSetsView< localIndex const > const & connecti
   return boundaryIndicator;
 }
 
-CRSMatrix< real64, globalIndex >
+DefaultGlobalMatrix
 dropEntries( CRSMatrixView< real64 const, globalIndex const > const & mat,
              real64 const relTol )
 {
@@ -582,7 +582,7 @@ dropEntries( CRSMatrixView< real64 const, globalIndex const > const & mat,
     rowTols[i] = absTol;
   } );
 
-  CRSMatrix< real64, globalIndex > result;
+  DefaultGlobalMatrix result;
   result.resizeFromRowCapacities< parallelHostPolicy >( rowCounts.size(), mat.numColumns(), rowCounts.data() );
 
   forAll< parallelHostPolicy >( mat.numRows(), [mat,

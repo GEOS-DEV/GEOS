@@ -67,7 +67,8 @@ enum class KernelFlags
  * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of components/dofs).
  */
-class FluxComputeKernelBase
+template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernelBaseT
 {
 public:
 
@@ -122,15 +123,31 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[in] kernelFlags flags packed all together
    */
-  FluxComputeKernelBase( integer const numPhases,
-                         globalIndex const rankOffset,
-                         DofNumberAccessor const & dofNumberAccessor,
-                         CompFlowAccessors const & compFlowAccessors,
-                         MultiFluidAccessors const & multiFluidAccessors,
-                         real64 const dt,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs,
-                         BitFlags< KernelFlags > kernelFlags );
+  FluxComputeKernelBaseT( integer const numPhases,
+                          globalIndex const rankOffset,
+                          DofNumberAccessor const & dofNumberAccessor,
+                          CompFlowAccessors const & compFlowAccessors,
+                          MultiFluidAccessors const & multiFluidAccessors,
+                          real64 const dt,
+                          MATRIX_VIEW const & localMatrix,
+                          arrayView1d< real64 > const & localRhs,
+                          BitFlags< KernelFlags > kernelFlags )
+    : m_numPhases( numPhases ),
+    m_rankOffset( rankOffset ),
+    m_dt( dt ),
+    m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+    m_ghostRank( compFlowAccessors.get( fields::ghostRank {} ) ),
+    m_gravCoef( compFlowAccessors.get( fields::flow::gravityCoefficient {} ) ),
+    m_pres( compFlowAccessors.get( fields::flow::pressure {} ) ),
+    m_phaseVolFrac( compFlowAccessors.get( fields::flow::phaseVolumeFraction {} ) ),
+    m_dPhaseVolFrac( compFlowAccessors.get( fields::flow::dPhaseVolumeFraction {} ) ),
+    m_dCompFrac_dCompDens( compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+    m_phaseCompFrac( multiFluidAccessors.get( fields::multifluid::phaseCompFraction {} ) ),
+    m_dPhaseCompFrac( multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction {} ) ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs ),
+    m_kernelFlags( kernelFlags )
+  {}
 
 protected:
 
@@ -169,12 +186,14 @@ protected:
   // Residual and jacobian
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
   BitFlags< KernelFlags > const m_kernelFlags;
 };
+
+using FluxComputeKernelBase = FluxComputeKernelBaseT< DefaultGlobalMatrixView >;
 
 namespace helpers
 {

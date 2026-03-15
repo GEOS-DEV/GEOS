@@ -329,7 +329,7 @@ void MsrsbLevelBuilder< LAI >::initializeCoarseLevel( LevelBuilderBase< LAI > & 
                              m_interiorDof );
 
   // Convert the partitioning into an actual DoF-based local matrix
-  CRSMatrix< real64, globalIndex > const localProlongation =
+  DefaultGlobalMatrix const localProlongation =
     msrsb::buildTentativeProlongation( fine.dofManager(),
                                        m_dofManager,
                                        m_params.multiscale.fieldName,
@@ -574,7 +574,7 @@ void MsrsbLevelBuilder< LAI >::writeProlongationForDebug() const
 {
   GEOS_MARK_FUNCTION;
 
-  CRSMatrix< real64, globalIndex > const prolongation = m_prolongation.extract();
+  DefaultGlobalMatrix const prolongation = m_prolongation.extract();
   MeshObjectManager & manager = m_location == FieldLocation::Node
                               ? m_mesh.fineMesh()->nodeManager()
                               : m_mesh.fineMesh()->cellManager();

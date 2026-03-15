@@ -37,9 +37,12 @@ namespace thermalCompositionalMultiphaseFVMKernels
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of diffusion/dispersion flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+template< integer NUM_COMP,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class DiffusionDispersionFluxComputeKernel :
-  public isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+  public isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:
 
@@ -52,15 +55,15 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using CompFlowAccessors = AbstractBase::CompFlowAccessors;
-  using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
+  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using CompFlowAccessors = typename AbstractBase::CompFlowAccessors;
+  using MultiFluidAccessors = typename AbstractBase::MultiFluidAccessors;
   using AbstractBase::m_dt;
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dPhaseVolFrac;
 
-  using Base = typename isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = typename isothermalCompositionalMultiphaseFVMKernels::DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
   using DiffusionAccessors = typename Base::DiffusionAccessors;
   using DispersionAccessors = typename Base::DispersionAccessors;
   using PorosityAccessors = typename Base::PorosityAccessors;
@@ -100,7 +103,7 @@ public:
                                         DispersionAccessors const & dispersionAccessors,
                                         PorosityAccessors const & porosityAccessors,
                                         real64 const dt,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        MATRIX_VIEW const & localMatrix,
                                         arrayView1d< real64 > const & localRhs,
                                         BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
     : Base( numPhases,
@@ -296,7 +299,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY, typename STENCILWRAPPER, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -307,7 +310,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -320,7 +323,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      using kernelType = DiffusionDispersionFluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::DiffusionAccessors diffusionAccessors( elemManager, solverName );

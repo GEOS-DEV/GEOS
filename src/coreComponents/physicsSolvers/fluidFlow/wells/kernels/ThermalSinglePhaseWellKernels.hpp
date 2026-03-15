@@ -81,7 +81,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              DefaultGlobalMatrixView const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :    Base( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
     m_isProducer( isProducer ),
@@ -210,7 +210,7 @@ public:
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal = 1;
@@ -277,7 +277,7 @@ public:
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
                            constitutive::SingleFluidBase const & fluid,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           DefaultGlobalMatrixView const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : Base( dt
             , rankOffset
@@ -473,7 +473,7 @@ public:
     WellControls const & wellControls,
     WellElementSubRegion const & subRegion,
     constitutive::SingleFluidBase const & fluid,
-    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    DefaultGlobalMatrixView const & localMatrix,
     arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal=1;

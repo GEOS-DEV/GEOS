@@ -47,7 +47,7 @@ void FaceElementFluxKernel::
           ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           R1Tensor const & gravityVector,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;

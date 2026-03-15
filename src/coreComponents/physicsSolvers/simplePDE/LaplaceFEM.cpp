@@ -89,7 +89,7 @@ LaplaceFEM::LaplaceFEM( const string & name,
  */
 void LaplaceFEM::setSparsityPattern( DomainPartition & domain,
                                      DofManager & dofManager,
-                                     CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                     DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                      SparsityPattern< globalIndex > & pattern )
 {
   pattern.resize( dofManager.numLocalDofs(),
@@ -138,7 +138,7 @@ void LaplaceFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const dt,
                                  DomainPartition & domain,
                                  DofManager const & dofManager,
-                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

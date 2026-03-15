@@ -215,7 +215,7 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
 void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
                                                         DofManager & dofManager,
-                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                        DefaultGlobalMatrix & localMatrix,
                                                         SparsityPattern< globalIndex > & pattern )
 {
   // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
@@ -628,7 +628,7 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
                                                     real64 const dt,
                                                     DomainPartition & domain,
                                                     DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -658,7 +658,7 @@ void SolidMechanicsLagrangeContact::assembleSystem( real64 const time,
 
 void SolidMechanicsLagrangeContact::assembleContact( DomainPartition & domain,
                                                      DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                      arrayView1d< real64 > const & localRhs )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -678,7 +678,7 @@ void SolidMechanicsLagrangeContact::
   assembleForceResidualPressureContribution( MeshLevel const & mesh,
                                              string_array const & regionNames,
                                              DofManager const & dofManager,
-                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1333,7 +1333,7 @@ void SolidMechanicsLagrangeContact::
   assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                               string_array const & regionNames,
                                               DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                               arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1447,7 +1447,7 @@ void SolidMechanicsLagrangeContact::
   assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
                                                                 string_array const & regionNames,
                                                                 DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1713,7 +1713,7 @@ void SolidMechanicsLagrangeContact::
 void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mesh,
                                                            NumericalMethodsManager const & numericalMethodManager,
                                                            DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;

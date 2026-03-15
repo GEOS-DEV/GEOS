@@ -550,11 +550,12 @@ struct FieldSpecificationEqual : public FieldSpecificationOp< OpEqual >
    * negate the rhs vector upon assembly. Thus, it sets the value to negative of the desired
    * update for the field. For a linear problem, this may lead to unexpected results.
    */
+  template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
   GEOS_HOST_DEVICE
   static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
-                     CRSMatrixView< real64, globalIndex const > const & matrix,
+                     MATRIX_VIEW const & matrix,
                      real64 & rhs,
                      real64 const bcValue,
                      real64 const fieldValue )
@@ -640,11 +641,12 @@ struct FieldSpecificationAdd : public FieldSpecificationOp< OpAdd >
    * @param[in] fieldValue unused.
    *
    */
+  template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
   GEOS_HOST_DEVICE
   static inline void
   SpecifyFieldValue( globalIndex const dof,
                      globalIndex const dofRankOffset,
-                     CRSMatrixView< real64, globalIndex const > const & matrix,
+                     MATRIX_VIEW const & matrix,
                      real64 & rhs,
                      real64 const bcValue,
                      real64 const fieldValue )

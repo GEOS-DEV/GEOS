@@ -120,7 +120,7 @@ public:
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
+               DefaultGlobalMatrix & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true ) override;
@@ -133,7 +133,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -153,21 +153,21 @@ public:
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
   assembleStabilizedFluxTerms( real64 const dt,
                                DomainPartition const & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
   virtual void
   assembleEDFMFluxTerms( real64 const time_n,
                          real64 const dt,
                          DomainPartition const & domain,
                          DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          string const & jumpDofKey ) override final;
 
@@ -176,7 +176,7 @@ public:
                               real64 const dt,
                               DomainPartition const & domain,
                               DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
@@ -187,7 +187,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void initializePreSubGroups() override;
@@ -207,7 +207,7 @@ private:
                              real64 const dt,
                              DofManager const & faceSet,
                              DomainPartition & domain,
-                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                              arrayView1d< real64 > const & localRhs );
 
   // no data needed here, see SinglePhaseBase

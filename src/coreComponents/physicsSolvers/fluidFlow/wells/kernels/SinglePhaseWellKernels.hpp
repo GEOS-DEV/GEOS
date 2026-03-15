@@ -146,7 +146,7 @@ struct ControlEquationHelper
            real64 const & currentVolRate,
            arrayView1d< real64 const > const & dCurrentVolRate,
            globalIndex const dofNumber,
-           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+           DefaultGlobalMatrixView const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 
 };
@@ -169,7 +169,7 @@ struct FluxKernel
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
           real64 const & dt,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -198,7 +198,7 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -295,7 +295,7 @@ struct AccumulationKernel
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          DefaultGlobalMatrixView const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -338,7 +338,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              DefaultGlobalMatrixView const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
@@ -446,7 +446,7 @@ protected:
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_wellElemDensity_n;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  DefaultGlobalMatrixView const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -474,7 +474,7 @@ public:
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal=0;
@@ -576,7 +576,7 @@ public:
                            string const wellDofKey,
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           DefaultGlobalMatrixView const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt ),
@@ -713,7 +713,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > const m_wellElemCompFrac;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  DefaultGlobalMatrixView const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -747,7 +747,7 @@ public:
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer isThermal=0;

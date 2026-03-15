@@ -36,12 +36,14 @@ namespace thermalCompositionalMultiphaseBaseKernels
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
  */
-template< localIndex NUM_COMP, localIndex NUM_DOF >
-class AccumulationKernel : public isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >
+template< localIndex NUM_COMP,
+          localIndex NUM_DOF,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class AccumulationKernel : public isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >
 {
 public:
 
-  using Base = isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF >;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -79,7 +81,7 @@ public:
                       ElementSubRegionBase const & subRegion,
                       constitutive::MultiFluidBase const & fluid,
                       constitutive::CoupledSolidBase const & solid,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      MATRIX_VIEW const & localMatrix,
                       arrayView1d< real64 > const & localRhs,
                       BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs, kernelFlags ),
@@ -306,7 +308,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
@@ -316,7 +318,7 @@ public:
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -325,9 +327,9 @@ public:
       localIndex constexpr NUM_COMP = NC();
       localIndex constexpr NUM_DOF = NC()+2;
 
-      AccumulationKernel< NUM_COMP, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
-                                                      fluid, solid, localMatrix, localRhs, kernelFlags );
-      AccumulationKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW > kernel( numPhases, rankOffset, dofKey, subRegion,
+                                                                   fluid, solid, localMatrix, localRhs, kernelFlags );
+      AccumulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

@@ -35,10 +35,34 @@ namespace singlePhaseFVMKernels
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public FluxComputeKernelBase
+template< integer NUM_EQN,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public FluxComputeKernelBaseT< MATRIX_VIEW >
 {
 public:
+  using AbstractBase = FluxComputeKernelBaseT< MATRIX_VIEW >;
+
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using SinglePhaseFlowAccessors = typename AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = typename AbstractBase::SinglePhaseFluidAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
+
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dt;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_permeability;
+  using AbstractBase::m_dPerm_dPres;
+  using AbstractBase::m_ghostRank;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
+  using AbstractBase::m_mob;
+  using AbstractBase::m_dMob;
+  using AbstractBase::m_dens;
+  using AbstractBase::m_dDens;
+  using AbstractBase::m_localMatrix;
+  using AbstractBase::m_localRhs;
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = NUM_DOF;
@@ -74,16 +98,16 @@ public:
                      SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
                      PermeabilityAccessors const & permeabilityAccessors,
                      real64 const & dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
-    : FluxComputeKernelBase( rankOffset,
-                             dofNumberAccessor,
-                             singlePhaseFlowAccessors,
-                             singlePhaseFluidAccessors,
-                             permeabilityAccessors,
-                             dt,
-                             localMatrix,
-                             localRhs ),
+    : AbstractBase( rankOffset,
+                    dofNumberAccessor,
+                    singlePhaseFlowAccessors,
+                    singlePhaseFluidAccessors,
+                    permeabilityAccessors,
+                    dt,
+                    localMatrix,
+                    localRhs ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -276,10 +300,10 @@ public:
         GEOS_ASSERT_GT( m_localMatrix.numRows(), localRow );
 
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow], stack.localFlux[i * numEqn] );
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                            stack.dofColIndices.data(),
-                                                                            stack.localFluxJacobian[i * numEqn].dataIfContiguous(),
-                                                                            stack.stencilSize * numDof );
+        m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+                                                                                     stack.dofColIndices.data(),
+                                                                                     stack.localFluxJacobian[i * numEqn].dataIfContiguous(),
+                                                                                     stack.stencilSize * numDof );
 
         // call the lambda to assemble additional terms, such as thermal terms
         kernelOp( i, localRow );
@@ -346,7 +370,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & dofKey,
@@ -354,7 +380,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_EQN = 1;
@@ -364,7 +390,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );

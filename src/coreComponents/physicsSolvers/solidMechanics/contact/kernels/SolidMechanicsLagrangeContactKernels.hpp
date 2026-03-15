@@ -34,7 +34,7 @@ namespace solidMechanicsLagrangeContactKernels
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class LagrangeContact :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                                                                FE_TYPE,
@@ -427,7 +427,7 @@ using LagrangeContactFactory = finiteElement::InterfaceKernelFactory< LagrangeCo
                                                                       arrayView1d< globalIndex const > const,
                                                                       arrayView1d< globalIndex const > const,
                                                                       globalIndex const,
-                                                                      CRSMatrixView< real64, globalIndex const > const,
+                                                                      DefaultGlobalMatrixView const,
                                                                       arrayView1d< real64 > const,
                                                                       real64 const,
                                                                       arrayView1d< localIndex const > const,

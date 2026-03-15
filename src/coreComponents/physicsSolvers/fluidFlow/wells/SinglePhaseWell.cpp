@@ -516,7 +516,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
 void SinglePhaseWell::shutDownWell( real64 const time_n,
                                     DomainPartition const & domain,
                                     DofManager const & dofManager,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -593,7 +593,7 @@ void SinglePhaseWell::assembleSystem( real64 const time,
                                       real64 const dt,
                                       DomainPartition & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                       arrayView1d< real64 > const & localRhs )
 {
   string const wellDofKey = dofManager.getKey( wellElementDofName());
@@ -619,7 +619,7 @@ void SinglePhaseWell::assembleFluxTerms( real64 const & time_n,
                                          real64 const & dt,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                          arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -680,7 +680,7 @@ void SinglePhaseWell::assemblePressureRelations( real64 const & time_n,
                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                  DomainPartition const & domain,
                                                  DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -765,7 +765,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
                                                  real64 const & dt,
                                                  DomainPartition & domain,
                                                  DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -821,7 +821,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
 
 void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                                   DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                  CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                  PhysicsSolverBase::MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                   arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   // not implemented for single phase flow

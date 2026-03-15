@@ -59,7 +59,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
@@ -80,7 +80,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -104,31 +104,31 @@ public:
 
   void assembleContact( DomainPartition & domain,
                         DofManager const & dofManager,
-                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
 
   void assembleForceResidualDerivativeWrtTraction( MeshLevel const & mesh,
                                                    string_array const & regionNames,
                                                    DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
   void assembleTractionResidualDerivativeWrtDisplacementAndTraction( MeshLevel const & mesh,
                                                                      string_array const & regionNames,
                                                                      DofManager const & dofManager,
-                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                      arrayView1d< real64 > const & localRhs );
 
   void assembleForceResidualPressureContribution( MeshLevel const & mesh,
                                                   string_array const & regionNames,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs );
 
   void assembleStabilization( MeshLevel const & mesh,
                               NumericalMethodsManager const & numericalMethodManager,
                               DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;

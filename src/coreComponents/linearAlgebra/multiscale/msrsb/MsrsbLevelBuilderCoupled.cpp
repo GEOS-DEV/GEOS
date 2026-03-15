@@ -250,7 +250,7 @@ bool MsrsbLevelBuilderCoupled< LAI >::updateProlongation( Matrix const & fineMat
     }
 
     bool const updateBlock = m_builders[blockId]->updateProlongation( fineBlock );
-    CRSMatrixView< real64, globalIndex const > const block = m_prolongationBlocks[blockId].toViewConstSizes();
+    DefaultGlobalMatrixView const block = m_prolongationBlocks[blockId].toViewConstSizes();
 
     if( updateBlock )
     {

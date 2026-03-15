@@ -283,7 +283,7 @@ assembleCouplingTerms( real64 const time_n,
                        real64 const dt,
                        DomainPartition const & domain,
                        DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );
@@ -405,7 +405,7 @@ assembleHydrofracFluxTerms( real64 const time_n,
                             real64 const dt,
                             DomainPartition const & domain,
                             DofManager const & dofManager,
-                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                            PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                             arrayView1d< real64 > const & localRhs,
                             CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {

@@ -41,7 +41,9 @@ using namespace constitutive;
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NC, integer IS_THERMAL >
+template< integer NC,
+          integer IS_THERMAL,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class IsothermalCompositionalMultiPhaseFluxKernel
 {
 public:
@@ -92,7 +94,7 @@ public:
                                                MultiFluidBase const & fluid,
 
                                                arrayView1d< real64 > const & localRhs,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               MATRIX_VIEW const & localMatrix,
                                                bool const & detectCrossflow,
                                                integer & numCrossFlowPerforations,
                                                BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
@@ -216,10 +218,10 @@ public:
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
-          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices.data(),
-                                                                              localPerfJacobian[i].dataIfContiguous(),
-                                                                              2 * resNumDOF );
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                       dofColIndices.data(),
+                                                                                       localPerfJacobian[i].dataIfContiguous(),
+                                                                                       2 * resNumDOF );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
         }
       }
@@ -272,7 +274,7 @@ protected:
 
   // RHS and Jacobian
   arrayView1d< real64 > const m_localRhs;
-  CRSMatrixView< real64, globalIndex const >  m_localMatrix;
+  MATRIX_VIEW  m_localMatrix;
 
   bool const m_detectCrossflow;
   integer & m_numCrossFlowPerforations;
@@ -299,7 +301,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numComps,
                    real64 const dt,
@@ -313,14 +316,14 @@ public:
                    bool const & detectCrossflow,
                    integer & numCrossFlowPerforations,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix
+                   MATRIX_VIEW const & localMatrix
                    )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
-      using kernelType = IsothermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 0 >;
+      using kernelType = IsothermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 0, MATRIX_VIEW >;
       kernelType kernel( dt, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
                          fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
@@ -335,11 +338,13 @@ public:
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NC, integer IS_THERMAL >
-class ThermalCompositionalMultiPhaseFluxKernel : public IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL >
+template< integer NC,
+          integer IS_THERMAL,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class ThermalCompositionalMultiPhaseFluxKernel : public IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL, MATRIX_VIEW >
 {
 public:
-  using Base = IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL >;
+  using Base = IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL, MATRIX_VIEW >;
   /// Compile time value for the number of components
   static constexpr integer numComp = NC;
   static constexpr integer resNumDOF  = NC+1+IS_THERMAL;
@@ -391,7 +396,7 @@ public:
                                             PerforationData const * const perforationData,
                                             MultiFluidBase const & fluid,
                                             arrayView1d< real64 > const & localRhs,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            MATRIX_VIEW const & localMatrix,
                                             bool const & detectCrossflow,
                                             integer & numCrossFlowPerforations,
                                             BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
@@ -542,7 +547,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numComps,
                    integer const isProducer,
@@ -557,14 +563,14 @@ public:
                    bool const & detectCrossflow,
                    integer & numCrossFlowPerforations,
                    arrayView1d< real64 > const & localRhs,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix
+                   MATRIX_VIEW const & localMatrix
                    )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
-      using kernelType = ThermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 1 >;
+      using kernelType = ThermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 1, MATRIX_VIEW >;
       kernelType kernel( dt, isProducer, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
                          fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );

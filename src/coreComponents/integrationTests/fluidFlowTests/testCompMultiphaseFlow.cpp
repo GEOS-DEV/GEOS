@@ -160,7 +160,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
                             real64 const relTol,
                             LAMBDA assembleFunction )
 {
-  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
+  DefaultGlobalMatrix const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
 
   // assemble the analytical residual
@@ -177,7 +177,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 
   // create the numerical jacobian
   jacobian.move( hostMemorySpace );
-  CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
+  DefaultGlobalMatrix jacobianFD( jacobian );
   jacobianFD.zero();
 
   // fill jacobian FD
@@ -276,7 +276,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->assembleFluxTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -297,7 +297,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulationVolu
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->assembleAccumulationAndVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );

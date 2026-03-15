@@ -51,10 +51,45 @@ namespace isothermalCompositionalMultiphaseFVMKernels
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public FluxComputeKernelBase
+template< integer NUM_COMP,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public FluxComputeKernelBaseT< MATRIX_VIEW >
 {
 public:
+  using AbstractBase = FluxComputeKernelBaseT< MATRIX_VIEW >;
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename AbstractBase::template ElementViewConst< VIEWTYPE >;
+
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using CompFlowAccessors = typename AbstractBase::CompFlowAccessors;
+  using MultiFluidAccessors = typename AbstractBase::MultiFluidAccessors;
+  using CapPressureAccessors = typename AbstractBase::CapPressureAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
+
+  using AbstractBase::m_numPhases;
+  using AbstractBase::m_rankOffset;
+  using AbstractBase::m_dt;
+  using AbstractBase::m_dofNumber;
+  using AbstractBase::m_ghostRank;
+  using AbstractBase::m_gravCoef;
+  using AbstractBase::m_pres;
+  using AbstractBase::m_phaseVolFrac;
+  using AbstractBase::m_dPhaseVolFrac;
+  using AbstractBase::m_dCompFrac_dCompDens;
+  using AbstractBase::m_phaseCompFrac;
+  using AbstractBase::m_dPhaseCompFrac;
+  using AbstractBase::m_localMatrix;
+  using AbstractBase::m_localRhs;
+  using AbstractBase::m_kernelFlags;
 
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
@@ -101,18 +136,18 @@ public:
                      CapPressureAccessors const & capPressureAccessors,
                      PermeabilityAccessors const & permeabilityAccessors,
                      real64 const dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
                      BitFlags< KernelFlags > kernelFlags )
-    : FluxComputeKernelBase( numPhases,
-                             rankOffset,
-                             dofNumberAccessor,
-                             compFlowAccessors,
-                             multiFluidAccessors,
-                             dt,
-                             localMatrix,
-                             localRhs,
-                             kernelFlags ),
+    : FluxComputeKernelBaseT< MATRIX_VIEW >( numPhases,
+                                             rankOffset,
+                                             dofNumberAccessor,
+                                             compFlowAccessors,
+                                             multiFluidAccessors,
+                                             dt,
+                                             localMatrix,
+                                             localRhs,
+                                             kernelFlags ),
     m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
     m_phaseMob( compFlowAccessors.get( fields::flow::phaseMobility {} ) ),
@@ -451,7 +486,7 @@ public:
         {
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic],
                            stack.localFlux[i * numEqn + ic] );
-          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
             stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
@@ -541,7 +576,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY, typename STENCILWRAPPER, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -552,7 +587,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
@@ -564,7 +599,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );

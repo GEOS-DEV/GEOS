@@ -84,7 +84,7 @@ void computeIdentity( MPI_Comm comm,
   localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
   localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
 
-  CRSMatrix< real64, globalIndex > matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 1 );
+  DefaultGlobalMatrix matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 1 );
   CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 
   globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
@@ -130,7 +130,7 @@ void compute2DLaplaceOperator( MPI_Comm comm,
   localIndex const localRowSize = LvArray::integerConversion< localIndex >( N / nproc );
   localIndex const rowResidual = LvArray::integerConversion< localIndex >( N % nproc );
 
-  CRSMatrix< real64, globalIndex > matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 5 );
+  DefaultGlobalMatrix matrix( rank == 0 ? localRowSize + rowResidual : localRowSize, N, 5 );
   CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 
   globalIndex const ilower = rank * localRowSize + ( rank == 0 ? 0 : rowResidual );
@@ -416,7 +416,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
 
   sparsity.compress();
 
-  CRSMatrix< real64, globalIndex > matrix;
+  DefaultGlobalMatrix matrix;
   matrix.assimilate< parallelDevicePolicy<> >( std::move( sparsity ) );
   CRSMatrixView< real64, globalIndex > matrixView = matrix.toView();
 

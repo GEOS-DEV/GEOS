@@ -215,7 +215,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
     }
   }
 
-  template< typename POLICY, typename HYDRAULICAPERTURE_WRAPPER >
+  template< typename POLICY,
+            typename HYDRAULICAPERTURE_WRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
@@ -231,7 +233,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens,
           CRSMatrixView< real64 const, localIndex const > const dFluxResidual_dNormalJump,
-          CRSMatrixView< real64, globalIndex const > const & localMatrix )
+          MATRIX_VIEW const & localMatrix )
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex ei )
     {
@@ -260,10 +262,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
       if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
       {
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                          nodeDOF,
-                                                                          dRdU.data(),
-                                                                          2 * numNodesPerFace * 3 );
+        localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                                    nodeDOF,
+                                                                                    dRdU.data(),
+                                                                                    2 * numNodesPerFace * 3 );
       }
 //
       if( useQuasiNewton == 0 ) // when Quasi Newton is not enabled - add flux derivatives
@@ -287,10 +289,10 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
           if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
           {
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                              nodeDOF,
-                                                                              dRdU.data(),
-                                                                              2 * numNodesPerFace * 3 );
+            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
+                                                                                        nodeDOF,
+                                                                                        dRdU.data(),
+                                                                                        2 * numNodesPerFace * 3 );
           }
         }
       }

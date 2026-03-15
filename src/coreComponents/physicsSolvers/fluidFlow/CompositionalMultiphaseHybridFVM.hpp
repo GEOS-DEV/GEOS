@@ -96,7 +96,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -131,14 +131,14 @@ public:
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
                      DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
   assembleStabilizedFluxTerms( real64 const dt,
                                DomainPartition const & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
@@ -149,7 +149,7 @@ public:
                   real64 const dt,
                   DofManager const & dofManager,
                   DomainPartition & domain,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void
@@ -182,7 +182,7 @@ public:
                         real64 const dt,
                         DofManager const & dofManager,
                         DomainPartition & domain,
-                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
 
 protected:

@@ -108,7 +108,7 @@ public:
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
+               DefaultGlobalMatrix & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
                bool setSparsity = true ) override;
@@ -116,7 +116,7 @@ public:
   virtual void
   setSparsityPattern( DomainPartition & domain,
                       DofManager & dofManager,
-                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      DefaultGlobalMatrix & localMatrix,
                       SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
@@ -127,7 +127,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void solveLinearSystem( DofManager const & dofManager,
@@ -152,7 +152,7 @@ public:
                                         real64 const dt,
                                         DomainPartition & domain,
                                         DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                         arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -178,7 +178,7 @@ public:
                          DofManager const & dofManager,
                          string_array const & regionNames,
                          string const & materialNamesString,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs,
                          real64 const dt,
                          PARAMS && ... params );
@@ -201,7 +201,7 @@ public:
   void applyDisplacementBCImplicit( real64 const time,
                                     DofManager const & dofManager,
                                     DomainPartition & domain,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                     arrayView1d< real64 > const & localRhs );
 
   void applyTractionBC( real64 const time,
@@ -216,7 +216,7 @@ public:
 
   void applyContactConstraint( DofManager const & dofManager,
                                DomainPartition & domain,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs );
 
   virtual real64
@@ -339,7 +339,7 @@ real64 SolidMechanicsLagrangianFEM::assemblyLaunch( MeshLevel & mesh,
                                                     DofManager const & dofManager,
                                                     string_array const & regionNames,
                                                     string const & materialNamesString,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                     arrayView1d< real64 > const & localRhs,
                                                     real64 const dt,
                                                     PARAMS && ... params )

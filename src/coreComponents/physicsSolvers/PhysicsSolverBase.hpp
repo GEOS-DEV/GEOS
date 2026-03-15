@@ -52,6 +52,10 @@ class PhysicsSolverBase : public ExecutableGroup
 {
 public:
 
+  using MATRIX = DefaultGlobalMatrix;
+  using MATRIX_VIEW = DefaultGlobalMatrixView;
+  using CONST_MATRIX_VIEW = CRSMatrixView< real64 const, globalIndex const >;
+
   /**
    * @brief Type of the stat output
    */
@@ -192,13 +196,13 @@ public:
    * @brief Getter for local matrix
    * @return a reference to linear system matrix of this solver
    */
-  CRSMatrix< real64, globalIndex > & getLocalMatrix() { return m_localMatrix; }
+  MATRIX & getLocalMatrix() { return m_localMatrix; }
 
   /**
    * @brief Getter for local matrix
    * @return a reference to linear system matrix of this solver
    */
-  CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+  CONST_MATRIX_VIEW getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
   /**
    * @defgroup Solver Interface Functions
@@ -308,7 +312,7 @@ public:
               integer const newtonIter,
               DomainPartition & domain,
               DofManager const & dofManager,
-              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              MATRIX_VIEW const & localMatrix,
               ParallelVector & rhs,
               ParallelVector & solution,
               real64 const scaleFactor,
@@ -338,7 +342,7 @@ public:
                                          integer const newtonIter,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         MATRIX_VIEW const & localMatrix,
                                          ParallelVector & rhs,
                                          ParallelVector & solution,
                                          real64 const scaleFactor,
@@ -405,7 +409,7 @@ public:
   virtual void
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
+               MATRIX & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true );
@@ -420,7 +424,7 @@ public:
   virtual void
   setSparsityPattern( DomainPartition & domain,
                       DofManager & dofManager,
-                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      MATRIX & localMatrix,
                       SparsityPattern< globalIndex > & pattern );
 
   /**
@@ -454,7 +458,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs );
 
   /**
@@ -474,7 +478,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
   /**
@@ -1150,7 +1154,7 @@ protected:
   integer m_usePhysicsScaling;
 
   /// Local system matrix and rhs
-  CRSMatrix< real64, globalIndex > m_localMatrix;
+  MATRIX m_localMatrix;
 
   /// Custom linear solver for the "native" solver type
   std::unique_ptr< LinearSolverBase< LAInterface > > m_linearSolver;
@@ -1180,7 +1184,7 @@ protected:
   Timestamp m_systemSetupTimestamp;
 
   /// Callback function for assembly step
-  std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
+  std::function< void( MATRIX, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
   stdMap< std::string, std::chrono::system_clock::duration > m_timers;

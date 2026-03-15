@@ -66,7 +66,7 @@ SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechan
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( DomainPartition & domain,
                                                                              DofManager & dofManager,
-                                                                             CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                             DefaultGlobalMatrix & localMatrix,
                                                                              ParallelVector & rhs,
                                                                              ParallelVector & solution,
                                                                              bool const setSparsity )
@@ -170,7 +170,7 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
                                                                                                               real64 const dt,
                                                                                                               DomainPartition & domain,
                                                                                                               DofManager const & dofManager,
-                                                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                                              PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                                               arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -187,7 +187,7 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementB
                                                                                            real64 const dt,
                                                                                            DomainPartition & domain,
                                                                                            DofManager const & dofManager,
-                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );

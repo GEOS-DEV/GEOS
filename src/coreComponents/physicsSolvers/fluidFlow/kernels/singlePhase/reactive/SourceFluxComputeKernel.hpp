@@ -42,7 +42,10 @@ namespace singlePhaseReactiveBaseKernels
  * @class SourceFluxComputeKernel
  * @brief Define the interface for the assembly kernel in charge of source flux
  */
-template< integer NUM_DOF, integer NUM_SPECIES, typename BASE_FLUID_TYPE >
+template< integer NUM_DOF,
+          integer NUM_SPECIES,
+          typename BASE_FLUID_TYPE,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class SourceFluxComputeKernel
 {
 
@@ -65,7 +68,7 @@ public:
                            arrayView1d< real64 const > const rhsContributionArrayView,
                            real64 const sizeScalingFactor,
                            constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd )
     :
@@ -248,7 +251,7 @@ protected:
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const m_dDensity;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -278,7 +281,9 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    * @param[inout] massProd the total mass produced
    */
-  template< typename POLICY, typename BASE_FLUID_TYPE >
+  template< typename POLICY,
+            typename BASE_FLUID_TYPE,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numSpecies,
                    globalIndex const rankOffset,
@@ -288,7 +293,7 @@ public:
                    arrayView1d< real64 const > const rhsContributionArrayView,
                    real64 const sizeScalingFactor,
                    constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd )
   {
@@ -297,9 +302,9 @@ public:
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 1+NS();
 
-      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE > kernel( rankOffset, dofNumber, elemGhostRank, rhsContributionArrayView, sizeScalingFactor, fluid, localMatrix, localRhs,
-                                                                               massProd );
-      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE >::template launch< POLICY >( targetSet, kernel );
+      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW > kernel( rankOffset, dofNumber, elemGhostRank, rhsContributionArrayView, sizeScalingFactor, fluid, localMatrix, localRhs,
+                                                                                             massProd );
+      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW >::template launch< POLICY >( targetSet, kernel );
     } );
   }
 };

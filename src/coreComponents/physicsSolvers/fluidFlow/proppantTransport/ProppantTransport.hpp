@@ -119,7 +119,7 @@ public:
                   real64 const dt,
                   DomainPartition & domain,
                   DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
@@ -127,7 +127,7 @@ public:
                            real64 const dt,
                            DomainPartition & domain,
                            DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
@@ -163,7 +163,7 @@ public:
   void assembleAccumulationTerms( real64 const dt,
                                   DomainPartition const & domain,
                                   DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                   arrayView1d< real64 > const & localRhs );
 
   /**
@@ -176,7 +176,7 @@ public:
   void assembleFluxTerms( real64 const dt,
                           DomainPartition const & domain,
                           DofManager const & dofManager,
-                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                           arrayView1d< real64 > const & localRhs );
 
   /**@}*/

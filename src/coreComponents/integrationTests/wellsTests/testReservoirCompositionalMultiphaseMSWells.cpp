@@ -208,7 +208,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
 
   localIndex const NC = flowSolver.numFluidComponents();
 
-  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
+  DefaultGlobalMatrix const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
@@ -226,7 +226,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells<> & solver,
 
   // create the numerical jacobian
   jacobian.move( hostMemorySpace );
-  CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
+  DefaultGlobalMatrix jacobianFD( jacobian );
   jacobianFD.zero();
 
   string const resDofKey  = dofManager.getKey( wellSolver.resElementDofName() );
@@ -507,7 +507,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
   DomainPartition & domain = *state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->assembleCouplingTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -525,7 +525,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -542,7 +542,7 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
   testNumericalJacobian( *solver, domain, perturb, tol,
-                         [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         [&] ( DefaultGlobalMatrixView const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assemblePressureRelations( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );

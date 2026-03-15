@@ -55,7 +55,7 @@ namespace geos
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = CRSMatrixView< real64, globalIndex const > >
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class LaplaceFEMKernel :
   public finiteElement::ImplicitKernelBase< SUBREGION_TYPE,
                                             CONSTITUTIVE_TYPE,
@@ -256,7 +256,7 @@ protected:
 using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
                                                               arrayView1d< globalIndex const > const,
                                                               globalIndex const,
-                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              DefaultGlobalMatrixView const,
                                                               arrayView1d< real64 > const,
                                                               real64 const,
                                                               string const >;

@@ -611,7 +611,7 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
 {
   GEOS_LAI_ASSERT( ready() );
 
-  CRSMatrix< real64, globalIndex > tempMat;
+  DefaultGlobalMatrix tempMat;
   tempMat.resize( numLocalRows(), numGlobalCols(), ( maxRowLengthLocal() + dofsPerNode - 1 ) / dofsPerNode );
 
   globalIndex const firstLocalRow = ilower();
@@ -944,7 +944,7 @@ void EpetraMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMa
   } );
 }
 
-void EpetraMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+void EpetraMatrix::extract( DefaultGlobalMatrixView const & localMat ) const
 {
   GEOS_LAI_ASSERT( ready() );
   GEOS_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );

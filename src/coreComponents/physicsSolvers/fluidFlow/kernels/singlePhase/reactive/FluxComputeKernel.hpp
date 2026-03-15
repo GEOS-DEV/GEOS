@@ -45,8 +45,13 @@ namespace singlePhaseReactiveFVMKernels
  * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename BASE_FLUID_TYPE >
-class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
+template< integer NUM_SPECIES,
+          integer NUM_EQN,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename BASE_FLUID_TYPE,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:
 
@@ -65,11 +70,11 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBase;
-  using DofNumberAccessor = AbstractBase::DofNumberAccessor;
-  using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
-  using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
-  using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
+  using AbstractBase = singlePhaseFVMKernels::FluxComputeKernelBaseT< MATRIX_VIEW >;
+  using DofNumberAccessor = typename AbstractBase::DofNumberAccessor;
+  using SinglePhaseFlowAccessors = typename AbstractBase::SinglePhaseFlowAccessors;
+  using SinglePhaseFluidAccessors = typename AbstractBase::SinglePhaseFluidAccessors;
+  using PermeabilityAccessors = typename AbstractBase::PermeabilityAccessors;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_rankOffset;
@@ -79,7 +84,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -139,7 +144,7 @@ public:
                      integer const & hasDiffusion,
                      arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                      real64 const & dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
@@ -436,7 +441,7 @@ public:
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies + is],
                          stack.localFlux[i * numEqn + numEqn - numSpecies + is] );
-        AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+        AbstractBase::m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
           ( localRow + numEqn - numSpecies + is,
           stack.dofColIndices.data(),
           stack.localFluxJacobian[i * numEqn + numEqn - numSpecies + is].dataIfContiguous(),
@@ -525,7 +530,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,
@@ -536,7 +543,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numSpecies, [&]( auto NS )
@@ -549,7 +556,12 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using KernelType = FluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, STENCILWRAPPER, constitutive::CompressibleSinglePhaseFluid >;
+      using KernelType = FluxComputeKernel< NUM_SPECIES,
+                                            NUM_EQN,
+                                            NUM_DOF,
+                                            STENCILWRAPPER,
+                                            constitutive::CompressibleSinglePhaseFluid,
+                                            MATRIX_VIEW >;
       typename KernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
       typename KernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
       typename KernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );

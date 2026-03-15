@@ -522,7 +522,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
                                                real64 const dt,
                                                DomainPartition & domain,
                                                DofManager const & dofManager,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -544,7 +544,7 @@ void ImmiscibleMultiphaseFlow::assembleSystem( real64 const GEOS_UNUSED_PARAM( t
 
 void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domain,
                                                          DofManager const & dofManager,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -584,7 +584,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -643,7 +643,7 @@ void ImmiscibleMultiphaseFlow::applyBoundaryConditions( real64 const time_n,
                                                         real64 const dt,
                                                         DomainPartition & domain,
                                                         DofManager const & dofManager,
-                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -788,7 +788,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
                                                  real64 const dt,
                                                  DofManager const & dofManager,
                                                  DomainPartition & domain,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                  arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -889,7 +889,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
                                                   real64 const dt,
                                                   DofManager const & dofManager,
                                                   DomainPartition & domain,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

@@ -37,7 +37,8 @@ namespace coupledReservoirAndSinglePhaseWellKernels
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer IS_THERMAL >
+template< integer IS_THERMAL,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class IsothermalSinglePhaseFluxKernel
 {
 public:
@@ -82,7 +83,7 @@ public:
                                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                                    WellElementSubRegion const & subRegion,
                                    PerforationData const * const perforationData,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   MATRIX_VIEW const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt ),
@@ -175,10 +176,10 @@ public:
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
-          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices.data(),
-                                                                              localPerfJacobian[i].dataIfContiguous(),
-                                                                              2* resNumDOF );
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                                       dofColIndices.data(),
+                                                                                       localPerfJacobian[i].dataIfContiguous(),
+                                                                                       2* resNumDOF );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
         }
       }
@@ -228,7 +229,7 @@ protected:
   arrayView1d< localIndex const > const m_resElementIndex;
 
   // RHS and Jacobian
-  CRSMatrixView< real64, globalIndex const >  m_localMatrix;
+  MATRIX_VIEW  m_localMatrix;
   arrayView1d< real64 > const m_localRhs;
 
 };
@@ -253,7 +254,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( real64 const dt,
                    globalIndex const rankOffset,
@@ -262,11 +264,11 @@ public:
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                    WellElementSubRegion const & subRegion,
                    PerforationData const * const perforationData,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs
                    )
   {
-    using kernelType = IsothermalSinglePhaseFluxKernel< 0 >;
+    using kernelType = IsothermalSinglePhaseFluxKernel< 0, MATRIX_VIEW >;
     kernelType kernel( dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
                        localRhs );
     kernelType::template launch< POLICY >( perforationData->size(), kernel );
@@ -279,11 +281,12 @@ public:
  * @tparam IS_THERMAL flag to include temperature derivatives and energy balance
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer IS_THERMAL >
-class ThermalSinglePhaseFluxKernel : public IsothermalSinglePhaseFluxKernel< IS_THERMAL >
+template< integer IS_THERMAL,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class ThermalSinglePhaseFluxKernel : public IsothermalSinglePhaseFluxKernel< IS_THERMAL, MATRIX_VIEW >
 {
 public:
-  using Base = IsothermalSinglePhaseFluxKernel< IS_THERMAL >;
+  using Base = IsothermalSinglePhaseFluxKernel< IS_THERMAL, MATRIX_VIEW >;
   // Reservoir degrees of freedom
   static constexpr integer resNumDOF  =  1+IS_THERMAL;
 
@@ -331,7 +334,7 @@ public:
                                 ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                                 WellElementSubRegion const & subRegion,
                                 PerforationData const * const perforationData,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                MATRIX_VIEW const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
     : Base( dt,
             rankOffset,
@@ -468,7 +471,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const isProducer,
                    real64 const dt,
@@ -477,10 +481,10 @@ public:
                    ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const resDofNumber,
                    WellElementSubRegion const & subRegion,
                    PerforationData const * const perforationData,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    using kernelType = ThermalSinglePhaseFluxKernel< 1 >;
+    using kernelType = ThermalSinglePhaseFluxKernel< 1, MATRIX_VIEW >;
     kernelType kernel( isProducer, dt, rankOffset, wellDofKey, resDofNumber, subRegion, perforationData, localMatrix,
                        localRhs );
     kernelType::template launch< POLICY >( perforationData->size(), kernel );

@@ -247,9 +247,9 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
 
 bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & funcType )
 {
-  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > ) ) )
+  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > ) ) )
   {
-    m_assemblyCallback = *reinterpret_cast< std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > * >( func );
+    m_assemblyCallback = *reinterpret_cast< std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > * >( func );
     return true;
   }
 
@@ -616,7 +616,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
                                     integer const newtonIter,
                                     DomainPartition & domain,
                                     DofManager const & dofManager,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                    MATRIX_VIEW const & localMatrix,
                                     ParallelVector & rhs,
                                     ParallelVector & solution,
                                     real64 const scaleFactor,
@@ -696,7 +696,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
                                                               integer const newtonIter,
                                                               DomainPartition & domain,
                                                               DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              MATRIX_VIEW const & localMatrix,
                                                               ParallelVector & rhs,
                                                               ParallelVector & solution,
                                                               real64 const scaleFactor,
@@ -1195,7 +1195,7 @@ void PhysicsSolverBase::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( do
 
 void PhysicsSolverBase::setupSystem( DomainPartition & domain,
                                      DofManager & dofManager,
-                                     CRSMatrix< real64, globalIndex > & localMatrix,
+                                     DefaultGlobalMatrix & localMatrix,
                                      ParallelVector & rhs,
                                      ParallelVector & solution,
                                      bool const setSparsity )
@@ -1224,7 +1224,7 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 
 void PhysicsSolverBase::setSparsityPattern( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                             DofManager & dofManager,
-                                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                            DefaultGlobalMatrix & GEOS_UNUSED_PARAM( localMatrix ),
                                             SparsityPattern< globalIndex > & pattern )
 {
   dofManager.setSparsityPattern( pattern );
@@ -1253,7 +1253,7 @@ void PhysicsSolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                         real64 const GEOS_UNUSED_PARAM( dt ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                         DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                         arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::Assemble called!. Should be overridden." );
@@ -1263,7 +1263,7 @@ void PhysicsSolverBase::applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM(
                                                  real64 const GEOS_UNUSED_PARAM( dt ),
                                                  DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                                 MATRIX_VIEW const & GEOS_UNUSED_PARAM( localMatrix ),
                                                  arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) )
 {
   GEOS_ERROR( "PhysicsSolverBase::applyBoundaryConditions called!. Should be overridden." );

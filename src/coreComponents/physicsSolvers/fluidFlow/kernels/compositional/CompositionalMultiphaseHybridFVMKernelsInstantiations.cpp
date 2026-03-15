@@ -80,7 +80,7 @@ namespace compositionalMultiphaseHybridFVMKernels
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors, \
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors, \
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber, \
-  CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+  DefaultGlobalMatrixView const & localMatrix, \
   arrayView1d< real64 > const & localRhs
 
 #define GEOS_FLUX_LAUNCH_PARAMS \
@@ -114,7 +114,7 @@ namespace compositionalMultiphaseHybridFVMKernels
   real64 const lengthTolerance, \
   real64 const dt, \
   integer const useTotalMassEquation, \
-  CRSMatrixView< real64, globalIndex const > const & localMatrix, \
+  DefaultGlobalMatrixView const & localMatrix, \
   arrayView1d< real64 > const & localRhs
 
 // -----------------------------------------------------------------------------

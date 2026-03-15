@@ -96,7 +96,7 @@ public:
                      PermeabilityAccessors const & permeabilityAccessors,
                      FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
                      real64 const dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     DefaultGlobalMatrixView const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
                      BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
                      CRSMatrixView< real64, localIndex const > const & dR_dAper )
@@ -376,7 +376,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {

@@ -34,13 +34,21 @@ namespace thermalSinglePhaseReactiveBaseKernels
  * @class AccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< typename SUBREGION_TYPE, integer NUM_DOF, integer NUM_SPECIES, typename BASE_FLUID_TYPE >
-class AccumulationKernel : public singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE >
+template< typename SUBREGION_TYPE,
+          integer NUM_DOF,
+          integer NUM_SPECIES,
+          typename BASE_FLUID_TYPE,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class AccumulationKernel : public singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE,
+                                                                                       NUM_DOF,
+                                                                                       NUM_SPECIES,
+                                                                                       BASE_FLUID_TYPE,
+                                                                                       MATRIX_VIEW >
 {
 
 public:
 
-  using Base = singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE >;
+  using Base = singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW >;
   using Base::numDof;
   using Base::numEqn;
   using Base::numSpecies;
@@ -72,7 +80,7 @@ public:
                       constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
                       constitutive::CoupledSolidBase const & solid,
                       real64 const & dt,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      MATRIX_VIEW const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
     : Base( rankOffset, dofKey, subRegion, fluid, solid, dt, localMatrix, localRhs ),
     m_energy( subRegion.template getField< fields::flow::energy >() ),
@@ -229,7 +237,10 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename SUBREGION_TYPE, typename BASE_FLUID_TYPE >
+  template< typename POLICY,
+            typename SUBREGION_TYPE,
+            typename BASE_FLUID_TYPE,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numSpecies,
                    real64 const dt,
@@ -238,7 +249,7 @@ public:
                    SUBREGION_TYPE const & subRegion,
                    constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE > const & fluid,
                    constitutive::CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     singlePhaseReactiveBaseKernels::
@@ -246,8 +257,8 @@ public:
     {
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 2+NS();
-      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE > kernel( rankOffset, dofKey, subRegion, fluid, solid, dt, localMatrix, localRhs );
-      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE >::template launch< POLICY >( subRegion.size(), kernel );
+      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW > kernel( rankOffset, dofKey, subRegion, fluid, solid, dt, localMatrix, localRhs );
+      AccumulationKernel< SUBREGION_TYPE, NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 };

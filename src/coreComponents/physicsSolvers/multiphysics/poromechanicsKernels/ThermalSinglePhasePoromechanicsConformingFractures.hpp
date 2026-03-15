@@ -98,7 +98,7 @@ public:
                                 FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
                                 ThermalConductivityAccessors const & thermalConductivityAccessors,
                                 real64 const & dt,
-                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                DefaultGlobalMatrixView const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 CRSMatrixView< real64, localIndex const > const & dR_dAper )
     : Base( rankOffset,
@@ -349,7 +349,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   DefaultGlobalMatrixView const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {

@@ -491,7 +491,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setSparsityPattern( DomainPartition & domain,
                                                                       DofManager & dofManager,
-                                                                      CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                      DefaultGlobalMatrix & localMatrix,
                                                                       SparsityPattern< globalIndex > & pattern )
 {
   SparsityPattern< globalIndex > patternOriginal;
@@ -660,7 +660,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::assembleSystem( real64 const t
                                                                   real64 const dt,
                                                                   DomainPartition & domain,
                                                                   DofManager const & dofManager,
-                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -729,7 +729,7 @@ assembleFluidLeakSource( real64 const time,
                          real64 const dt,
                          DomainPartition & domain,
                          DofManager const & dofManager,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                          arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -800,7 +800,7 @@ assembleFluidLeakSource( real64 const time,
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
 assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                             arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -903,7 +903,7 @@ assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::
 assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix )
+                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1058,7 +1058,7 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::setNextDt( real64 const & cu
 template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setUpDflux_dApertureMatrix( DomainPartition & domain,
                                                                               DofManager const & dofManager,
-                                                                              CRSMatrix< real64, globalIndex > & localMatrix )
+                                                                              DefaultGlobalMatrix & localMatrix )
 {
   std::unique_ptr< CRSMatrix< real64, localIndex > > &
   derivativeFluxResidual_dAperture = this->getRefDerivativeFluxResidual_dAperture();

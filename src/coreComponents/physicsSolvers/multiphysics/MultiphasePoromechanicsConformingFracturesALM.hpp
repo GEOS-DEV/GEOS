@@ -87,7 +87,7 @@ public:
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            DefaultGlobalMatrix & localMatrix,
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override final;
@@ -96,7 +96,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override final;
 
   virtual void updateState( DomainPartition & domain ) override final;
@@ -129,27 +129,27 @@ private:
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs );
 
   virtual void assembleCouplingTerms( real64 const time_n,
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override final;
 
   void assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                                    MeshLevel const & mesh,
                                                    arrayView1d< string const > const & regionNames,
                                                    DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                            arrayView1d< string const > const & regionNames,
                                                            DofManager const & dofManager,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs );
 
   /**

@@ -374,7 +374,7 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_U
 void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                           DomainPartition const & domain,
                                                           DofManager const & dofManager,
-                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                           arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
@@ -497,7 +497,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const dt,
                                                                     DomainPartition const & domain,
                                                                     DofManager const & dofManager,
-                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                    PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                     arrayView1d< real64 > const & localRhs ) const
 {
   // stab not implemented
@@ -638,7 +638,7 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
                                                                 real64 const dt,
                                                                 DomainPartition & domain,
                                                                 DofManager const & dofManager,
-                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -653,7 +653,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                                              real64 const dt,
                                                              DofManager const & dofManager,
                                                              DomainPartition & domain,
-                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
@@ -1021,7 +1021,7 @@ void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
                                                        real64 const dt,
                                                        DofManager const & dofManager,
                                                        DomainPartition & domain,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;

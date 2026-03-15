@@ -57,7 +57,8 @@ using namespace constitutive;
  * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of dofs).
  */
-class FluxComputeKernelBase
+template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernelBaseT
 {
 public:
 
@@ -112,19 +113,19 @@ public:
    * @param[inout] hasCapPressure flag to indicate whether problem includes capillarity
    * @param[inout] useTotalMassEquation flag to indicate whether to use the total mass formulation
    */
-  FluxComputeKernelBase( integer const numPhases,
-                         globalIndex const rankOffset,
-                         DofNumberAccessor const & dofNumberAccessor,
-                         ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
-                         MultiphaseFluidAccessors const & fluidAccessors,
-                         CapPressureAccessors const & capPressureAccessors,
-                         PermeabilityAccessors const & permeabilityAccessors,
-                         real64 const & dt,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs,
-                         integer const hasCapPressure,
-                         integer const useTotalMassEquation,
-                         integer const checkPhasePresenceInGravity )
+  FluxComputeKernelBaseT( integer const numPhases,
+                          globalIndex const rankOffset,
+                          DofNumberAccessor const & dofNumberAccessor,
+                          ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
+                          MultiphaseFluidAccessors const & fluidAccessors,
+                          CapPressureAccessors const & capPressureAccessors,
+                          PermeabilityAccessors const & permeabilityAccessors,
+                          real64 const & dt,
+                          MATRIX_VIEW const & localMatrix,
+                          arrayView1d< real64 > const & localRhs,
+                          integer const hasCapPressure,
+                          integer const useTotalMassEquation,
+                          integer const checkPhasePresenceInGravity )
     : m_numPhases ( numPhases ),
     m_rankOffset( rankOffset ),
     m_dt( dt ),
@@ -190,7 +191,7 @@ protected:
   // Residual and jacobian
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -200,6 +201,8 @@ protected:
   integer const m_checkPhasePresenceInGravity;
 };
 
+using FluxComputeKernelBase = FluxComputeKernelBaseT< DefaultGlobalMatrixView >;
+
 /***************************************** */
 
 /**
@@ -208,10 +211,43 @@ protected:
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public FluxComputeKernelBase
+template< integer NUM_EQN,
+          integer NUM_DOF,
+          typename STENCILWRAPPER,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernel : public FluxComputeKernelBaseT< MATRIX_VIEW >
 {
 public:
+  using Base = FluxComputeKernelBaseT< MATRIX_VIEW >;
+
+  using typename Base::CapPressureAccessors;
+  using typename Base::Deriv;
+  using typename Base::DofNumberAccessor;
+  using typename Base::ImmiscibleMultiphaseFlowAccessors;
+  using typename Base::MultiphaseFluidAccessors;
+  using typename Base::PermeabilityAccessors;
+
+  using Base::m_checkPhasePresenceInGravity;
+  using Base::m_dens;
+  using Base::m_dDens_dPres;
+  using Base::m_dMob;
+  using Base::m_dofNumber;
+  using Base::m_dPerm_dPres;
+  using Base::m_dPhaseCapPressure_dPhaseVolFrac;
+  using Base::m_dt;
+  using Base::m_ghostRank;
+  using Base::m_gravCoef;
+  using Base::m_hasCapPressure;
+  using Base::m_localMatrix;
+  using Base::m_localRhs;
+  using Base::m_mob;
+  using Base::m_numPhases;
+  using Base::m_permeability;
+  using Base::m_phaseCapPressure;
+  using Base::m_phaseVolFrac;
+  using Base::m_pres;
+  using Base::m_rankOffset;
+  using Base::m_useTotalMassEquation;
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = NUM_DOF;
@@ -253,24 +289,24 @@ public:
                      CapPressureAccessors const & capPressureAccessors,
                      PermeabilityAccessors const & permeabilityAccessors,
                      real64 const & dt,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
                      integer const hasCapPressure,
                      integer const useTotalMassEquation,
                      integer const checkPhasePresenceInGravity )
-    : FluxComputeKernelBase( numPhases,
-                             rankOffset,
-                             dofNumberAccessor,
-                             multiPhaseFlowAccessors,
-                             fluidAccessors,
-                             capPressureAccessors,
-                             permeabilityAccessors,
-                             dt,
-                             localMatrix,
-                             localRhs,
-                             hasCapPressure,
-                             useTotalMassEquation,
-                             checkPhasePresenceInGravity ),
+    : Base( numPhases,
+            rankOffset,
+            dofNumberAccessor,
+            multiPhaseFlowAccessors,
+            fluidAccessors,
+            capPressureAccessors,
+            permeabilityAccessors,
+            dt,
+            localMatrix,
+            localRhs,
+            hasCapPressure,
+            useTotalMassEquation,
+            checkPhasePresenceInGravity ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
@@ -680,7 +716,7 @@ public:
         {
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic],
                            stack.localFlux[i * numEqn + ic] );
-          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
+          m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
             stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
@@ -754,7 +790,9 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER >
+  template< typename POLICY,
+            typename STENCILWRAPPER,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
@@ -766,7 +804,7 @@ public:
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
                    real64 const & dt,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_EQN = 2;
@@ -776,7 +814,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -813,7 +851,9 @@ enum class KernelFlags
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
 
-template< integer NUM_EQN, integer NUM_DOF >
+template< integer NUM_EQN,
+          integer NUM_DOF,
+          typename MATRIX_VIEW = DefaultGlobalMatrixView >
 class AccumulationKernel
 {
 public:
@@ -845,7 +885,7 @@ public:
                       ElementSubRegionBase const & subRegion,
                       constitutive::TwoPhaseImmiscibleFluid const & fluid,
                       constitutive::CoupledSolidBase const & solid,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      MATRIX_VIEW const & localMatrix,
                       arrayView1d< real64 > const & localRhs,
                       BitFlags< KernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
@@ -981,10 +1021,10 @@ public:
     for( integer i = 0; i < numRows; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
-      m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
-                                              stack.dofIndices,
-                                              stack.localJacobian[i],
-                                              numDof );
+      m_localMatrix.template addToRow< serialAtomic >( stack.localRow + i,
+                                                        stack.dofIndices,
+                                                        stack.localJacobian[i],
+                                                        numDof );
     }
   }
 
@@ -1046,7 +1086,7 @@ protected:
   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > m_phaseMass_n;
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -1073,7 +1113,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY,
+            typename MATRIX_VIEW = DefaultGlobalMatrixView >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
@@ -1082,7 +1123,7 @@ public:
                    ElementSubRegionBase const & subRegion,
                    constitutive::TwoPhaseImmiscibleFluid const & fluid,
                    constitutive::CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
 
@@ -1095,9 +1136,10 @@ public:
       if( useTotalMassEquation )
         kernelFlags.set( KernelFlags::TotalMassEquation );
 
-      AccumulationKernel< NUM_EQN, NUM_DOF > kernel( numPhases, rankOffset, dofKey, subRegion,
-                                                     fluid, solid, localMatrix, localRhs, kernelFlags );
-      AccumulationKernel< NUM_EQN, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+      using KernelType = AccumulationKernel< NUM_EQN, NUM_DOF, MATRIX_VIEW >;
+      KernelType kernel( numPhases, rankOffset, dofKey, subRegion,
+                         fluid, solid, localMatrix, localRhs, kernelFlags );
+      KernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

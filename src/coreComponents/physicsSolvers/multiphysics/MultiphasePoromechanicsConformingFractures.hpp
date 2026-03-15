@@ -78,7 +78,7 @@ public:
                        real64 const dt,
                        DomainPartition & domain,
                        DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                        arrayView1d< real64 > const & localRhs ) override;
 
 protected:
@@ -88,7 +88,7 @@ protected:
   virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
-                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override;
 
   virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }

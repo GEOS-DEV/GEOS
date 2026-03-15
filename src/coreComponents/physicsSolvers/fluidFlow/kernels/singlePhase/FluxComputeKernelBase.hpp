@@ -47,7 +47,8 @@ namespace singlePhaseFVMKernels
  * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of dofs).
  */
-class FluxComputeKernelBase
+template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+class FluxComputeKernelBaseT
 {
 public:
 
@@ -105,14 +106,14 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FluxComputeKernelBase( globalIndex const rankOffset,
-                         DofNumberAccessor const & dofNumberAccessor,
-                         SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
-                         SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                         PermeabilityAccessors const & permeabilityAccessors,
-                         real64 const & dt,
-                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                         arrayView1d< real64 > const & localRhs )
+  FluxComputeKernelBaseT( globalIndex const rankOffset,
+                          DofNumberAccessor const & dofNumberAccessor,
+                          SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                          SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
+                          PermeabilityAccessors const & permeabilityAccessors,
+                          real64 const & dt,
+                          MATRIX_VIEW const & localMatrix,
+                          arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
@@ -164,10 +165,12 @@ protected:
   // Residual and jacobian
 
   /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 };
+
+using FluxComputeKernelBase = FluxComputeKernelBaseT< DefaultGlobalMatrixView >;
 
 } // namespace singlePhaseFVMKernels
 

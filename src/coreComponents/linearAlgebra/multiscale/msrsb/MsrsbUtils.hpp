@@ -114,7 +114,7 @@ buildProlongationSparsity( DofManager const & fineDofManager,
  * @param initPart non-overlapping partition of fine points that defines the initial interpolation
  * @return local part of the prolongation operator
  */
-CRSMatrix< real64, globalIndex >
+DefaultGlobalMatrix
 buildTentativeProlongation( DofManager const & fineDofManager,
                             DofManager const & coarseDofManager,
                             string const & fieldName,
@@ -193,7 +193,7 @@ makeRestriction( LinearSolverParameters::Multiscale const & params,
  * @param relTol relative tolerance parameter
  * @return the new matrix with remaining entries and compressed sparsity pattern
  */
-CRSMatrix< real64, globalIndex >
+DefaultGlobalMatrix
 dropEntries( CRSMatrixView< real64 const, globalIndex const > const & mat,
              real64 relTol );
 
@@ -226,7 +226,7 @@ computeRAP( LinearSolverParameters::Multiscale const & params,
 
   if( params.droptol > 0.0 )
   {
-    CRSMatrix< real64, globalIndex > mat = coarseMatrix.extract();
+    DefaultGlobalMatrix mat = coarseMatrix.extract();
     mat = dropEntries( mat.toViewConst(), params.droptol );
     coarseMatrix.create( mat.toViewConst(), coarseMatrix.numLocalCols(), coarseMatrix.comm() );
   }

@@ -58,14 +58,14 @@ public:
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            DefaultGlobalMatrix & localMatrix,
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override final;
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void implicitStepSetup( real64 const & time_n,
@@ -80,20 +80,20 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
   void assembleContact( real64 const time,
                         real64 const dt,
                         DomainPartition & domain,
                         DofManager const & dofManager,
-                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
 
   void assembleForceResidualPressureContribution( DomainPartition & domain,
                                                   real64 const & dt,
                                                   DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs );
 
   virtual real64 calculateResidualNorm( real64 const & time_n,

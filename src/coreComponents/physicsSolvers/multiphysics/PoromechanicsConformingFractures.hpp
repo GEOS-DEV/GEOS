@@ -63,7 +63,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   DefaultGlobalMatrix & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
     // start with the flow solver sparsity pattern (it could be reservoir + wells)
@@ -102,7 +102,7 @@ public:
                                real64 const dt,
                                DomainPartition & domain,
                                DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override
   {
 
@@ -340,7 +340,7 @@ protected:
    */
   void setUpDflux_dApertureMatrix( DomainPartition & domain,
                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                   CRSMatrix< real64, globalIndex > & localMatrix )
+                                   DefaultGlobalMatrix & localMatrix )
   {
     integer const numComp = numFluidComponents();
 
@@ -410,7 +410,7 @@ protected:
                                           real64 const dt,
                                           DomainPartition & domain,
                                           DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
   {
     GEOS_UNUSED_VAR( time_n, dt );
@@ -438,7 +438,7 @@ protected:
                                       real64 const dt,
                                       DomainPartition const & domain,
                                       DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override
   {
     GEOS_UNUSED_VAR( time_n, dt );
@@ -456,7 +456,7 @@ protected:
   void assembleForceResidualDerivativeWrtPressure( MeshLevel const & mesh,
                                                    string_array const & regionNames,
                                                    DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs )
   {
     GEOS_MARK_FUNCTION;
@@ -561,7 +561,7 @@ protected:
   virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                                    string_array const & regionNames,
                                                                    DofManager const & dofManager,
-                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                   PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) = 0;
 
   virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
