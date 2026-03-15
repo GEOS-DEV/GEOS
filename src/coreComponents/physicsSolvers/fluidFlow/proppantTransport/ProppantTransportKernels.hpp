@@ -149,6 +149,7 @@ struct AccumulationKernel
            arraySlice1d< real64 > const & localAccum,
            arraySlice2d< real64 > const & localAccumJacobian );
 
+  template< typename MATRIX_VIEW >
   static void
   launch( localIndex const size,
           localIndex const NC,
@@ -167,7 +168,7 @@ struct AccumulationKernel
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,
           real64 const maxProppantConcentration,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 };
 
@@ -238,6 +239,7 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementView = typename ElementRegionManager::ElementView< VIEWTYPE >;
 
+  template< typename MATRIX_VIEW >
   static void
   launch( SurfaceElementStencilWrapper const & stencilWrapper,
           localIndex const numDofPerCell,
@@ -274,7 +276,7 @@ struct FluxKernel
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
   static void

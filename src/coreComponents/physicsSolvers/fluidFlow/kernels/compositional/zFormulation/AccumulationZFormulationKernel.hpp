@@ -50,7 +50,7 @@ static constexpr real64 minCompFracForDivision = 0;
  */
 template< integer NUM_COMP,
           integer NUM_DOF,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class AccumulationZFormulationKernel
 {
 public:

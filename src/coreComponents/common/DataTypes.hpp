@@ -314,6 +314,9 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, INDEX_TYPE const, Lv
 /// Default matrix view used for global system assembly kernels and solvers.
 using DefaultGlobalMatrixView = CRSMatrixView< real64, globalIndex const >;
 
+/// Default const matrix view used for read-only access to assembled system.
+using DefaultGlobalConstMatrixView = CRSMatrixView< real64 const, globalIndex const >;
+
 ///@}
 
 //END_SPHINX_INCLUDE_00

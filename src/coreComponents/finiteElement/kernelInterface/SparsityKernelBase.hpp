@@ -185,10 +185,13 @@ private:
  * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel.
  *   Most likely derives from SparsityKernelBase.
  */
+template< template< typename ... > class KERNEL_TEMPLATE >
+class SparsityKernelFactory;
+
 template< template< typename,
                     typename,
                     typename > class KERNEL_TEMPLATE >
-class SparsityKernelFactory
+class SparsityKernelFactory< KERNEL_TEMPLATE >
 {
 public:
 
@@ -257,6 +260,83 @@ private:
   SparsityPattern< globalIndex > & m_inputSparsityPattern;
 };
 
+template< template< typename,
+                    typename,
+                    typename,
+                    typename,
+                    typename ... > class KERNEL_TEMPLATE >
+class SparsityKernelFactory< KERNEL_TEMPLATE >
+{
+public:
+
+  /**
+   * @brief Constructor.
+   * @param inputDofNumber An array containing the input degree of freedom numbers.
+   * @param rankOffset The global rank offset.
+   * @param inputSparsityPattern The local sparsity pattern.
+   */
+  SparsityKernelFactory( arrayView1d< globalIndex const > const & inputDofNumber,
+                         globalIndex const rankOffset,
+                         SparsityPattern< globalIndex > & inputSparsityPattern ):
+    m_inputDofNumber( inputDofNumber ),
+    m_rankOffset( rankOffset ),
+    m_inputSparsityPattern( inputSparsityPattern )
+  {}
+
+  /**
+   * @brief Return a new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   * @tparam SUBREGION_TYPE The type of of @p elementSubRegion.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The sub region on which to generate the sparsity.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new instance of @c SparsityKernelBase specialized for @c KERNEL_TEMPLATE.
+   */
+  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  auto createKernel( NodeManager const & nodeManager,
+                     EdgeManager const & edgeManager,
+                     FaceManager const & faceManager,
+                     localIndex const targetRegionIndex,
+                     SUBREGION_TYPE const & elementSubRegion,
+                     FE_TYPE const & finiteElementSpace,
+                     CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    using Kernel = KERNEL_TEMPLATE< SUBREGION_TYPE,
+                                    CONSTITUTIVE_TYPE,
+                                    FE_TYPE,
+                                    DefaultGlobalMatrixView >;
+
+    return SparsityKernelBase< SUBREGION_TYPE,
+                               CONSTITUTIVE_TYPE,
+                               FE_TYPE,
+                               Kernel::numDofPerTestSupportPoint,
+                               Kernel::numDofPerTrialSupportPoint >( nodeManager,
+                                                                     edgeManager,
+                                                                     faceManager,
+                                                                     targetRegionIndex,
+                                                                     elementSubRegion,
+                                                                     finiteElementSpace,
+                                                                     inputConstitutiveType,
+                                                                     m_inputDofNumber,
+                                                                     m_rankOffset,
+                                                                     0.0, //dt but not needed
+                                                                     m_inputSparsityPattern );
+  }
+
+private:
+  /// The input degree of freedom numbers.
+  arrayView1d< globalIndex const > const & m_inputDofNumber;
+  /// The global rank offset.
+  globalIndex const m_rankOffset;
+  /// The local sparsity pattern.
+  SparsityPattern< globalIndex > & m_inputSparsityPattern;
+};
+
 //*****************************************************************************
 //*****************************************************************************
 //*****************************************************************************
@@ -284,7 +364,8 @@ private:
 template< typename REGION_TYPE,
           template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
-                    typename FE_TYPE > class KERNEL_TEMPLATE >
+                    typename FE_TYPE,
+                    typename ... > class KERNEL_TEMPLATE >
 static
 real64 fillSparsity( MeshLevel & mesh,
                      string_array const & targetRegions,

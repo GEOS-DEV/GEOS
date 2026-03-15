@@ -30,8 +30,8 @@ namespace geos
 namespace singlePhasePoromechanicsConformingFracturesKernels
 {
 
-template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+template< integer NUM_EQN, integer NUM_DOF, typename MATRIX_VIEW >
+class ConnectorBasedAssemblyKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper, MATRIX_VIEW >
 {
 public:
 
@@ -66,7 +66,7 @@ public:
   using AbstractBase::m_dDens;
 
 
-  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper, MATRIX_VIEW >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -85,7 +85,7 @@ public:
                                 PermeabilityAccessors const & permeabilityAccessors,
                                 FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
                                 real64 const & dt,
-                                DefaultGlobalMatrixView const & localMatrix,
+                                MATRIX_VIEW const & localMatrix,
                                 arrayView1d< real64 > const & localRhs,
                                 CRSMatrixView< real64, localIndex const > const & dR_dAper )
     : Base( rankOffset,
@@ -290,7 +290,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & dofKey,
@@ -298,7 +298,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const & dt,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
@@ -309,7 +309,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     flowDofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF, MATRIX_VIEW >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::SinglePhaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );

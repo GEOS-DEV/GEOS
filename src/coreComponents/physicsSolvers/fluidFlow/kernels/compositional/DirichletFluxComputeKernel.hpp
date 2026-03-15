@@ -53,7 +53,7 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 template< integer NUM_COMP,
           integer NUM_DOF,
           typename FLUIDWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_COMP,
                                                              NUM_DOF,
                                                              BoundaryStencilWrapper,

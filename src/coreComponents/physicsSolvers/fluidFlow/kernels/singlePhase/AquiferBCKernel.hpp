@@ -71,7 +71,7 @@ struct AquiferBCKernel
     }
   }
 
-  template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+  template< typename MATRIX_VIEW >
   static void
   launch( BoundaryStencil const & stencil,
           globalIndex const rankOffset,

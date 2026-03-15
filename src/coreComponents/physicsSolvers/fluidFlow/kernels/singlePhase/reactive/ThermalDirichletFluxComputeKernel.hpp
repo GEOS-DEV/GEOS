@@ -47,7 +47,7 @@ template< integer NUM_SPECIES,
           integer NUM_DOF,
           typename FLUIDWRAPPER,
           typename BASE_FLUID_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES,
                                                                                                        NUM_EQN,
                                                                                                        NUM_DOF,
@@ -346,7 +346,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename MATRIX_VIEW = DefaultGlobalMatrixView >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numSpecies,
                    arrayView1d< integer const > const mobilePrimarySpeciesFlags,

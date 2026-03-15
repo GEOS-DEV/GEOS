@@ -30,6 +30,7 @@ namespace singlePhaseProppantFluxKernels
 using namespace singlePhaseFluxKernelsHelper;
 
 
+template< typename MATRIX_VIEW >
 void FaceElementFluxKernel::
   launch( SurfaceElementStencilWrapper const & stencilWrapper,
           real64 const dt,
@@ -47,7 +48,7 @@ void FaceElementFluxKernel::
           ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           R1Tensor const & gravityVector,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
@@ -128,7 +129,7 @@ void FaceElementFluxKernel::
           GEOS_ASSERT_GT( localMatrix.numRows(), localRow );
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+          localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
                                                                             dofColIndices.data(),
                                                                             localFluxJacobian[i].dataIfContiguous(),
                                                                             stencilSize );
@@ -139,6 +140,27 @@ void FaceElementFluxKernel::
   } );
 
 }
+
+template void
+FaceElementFluxKernel::
+  launch< DefaultGlobalMatrixView >( SurfaceElementStencilWrapper const & stencilWrapper,
+          real64 const dt,
+          globalIndex const rankOffset,
+          FaceElementFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & pressureDofNumber,
+          FaceElementFluxKernel::ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          FaceElementFluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
+          FaceElementFluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          FaceElementFluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+          FaceElementFluxKernel::ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
+          FaceElementFluxKernel::ElementViewConst< arrayView1d< real64 const > > const & mob,
+          FaceElementFluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dMob,
+          FaceElementFluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          FaceElementFluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+          FaceElementFluxKernel::ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
+          FaceElementFluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
+          R1Tensor const & gravityVector,
+          DefaultGlobalMatrixView const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 
 template< localIndex MAX_NUM_CONNECTIONS >

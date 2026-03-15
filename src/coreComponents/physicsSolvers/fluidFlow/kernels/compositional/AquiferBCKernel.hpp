@@ -95,7 +95,7 @@ struct AquiferBCKernel
              real64 ( &localFluxJacobian )[NC][NC+1] );
 
   template< integer NC,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   launch( integer const numPhases,
           integer const ipWater,

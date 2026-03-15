@@ -29,6 +29,8 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TypeDispatch.hpp"
 
+#include <type_traits>
+
 /**
  * @brief This macro allows solvers to select a subset of FE_TYPES on which the dispatch is done. If none are selected, by default all the
  * FE_TYPES apply.
@@ -45,6 +47,61 @@ namespace geos
  */
 namespace finiteElement
 {
+
+namespace internal
+{
+
+template< template< typename, typename, typename, typename, typename ... > class KERNEL_TYPE,
+          typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
+          typename ... TYPES >
+struct FirstMatrixViewOrDefault
+{
+  using type = DefaultGlobalMatrixView;
+};
+
+template< template< typename, typename, typename, typename, typename ... > class KERNEL_TYPE,
+          typename SUBREGION_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
+          typename TYPE0,
+          typename ... TYPES >
+struct FirstMatrixViewOrDefault< KERNEL_TYPE,
+                                 SUBREGION_TYPE,
+                                 CONSTITUTIVE_TYPE,
+                                 FE_TYPE,
+                                 TYPE0,
+                                 TYPES ... >
+{
+private:
+  using Type0 = std::remove_cv_t< std::remove_reference_t< TYPE0 > >;
+  static constexpr bool isConstructible = std::is_constructible_v<
+    KERNEL_TYPE< SUBREGION_TYPE,
+                 CONSTITUTIVE_TYPE,
+                 FE_TYPE,
+                 Type0 >,
+    NodeManager &,
+    EdgeManager const &,
+    FaceManager const &,
+    localIndex const,
+    SUBREGION_TYPE const &,
+    FE_TYPE const &,
+    CONSTITUTIVE_TYPE &,
+    TYPE0,
+    TYPES ... >;
+
+public:
+  using type = std::conditional_t< isConstructible,
+                                   Type0,
+                                   typename FirstMatrixViewOrDefault< KERNEL_TYPE,
+                                                                      SUBREGION_TYPE,
+                                                                      CONSTITUTIVE_TYPE,
+                                                                      FE_TYPE,
+                                                                      TYPES ... >::type >;
+};
+
+}
 
 /**
  * @class KernelBase
@@ -275,11 +332,15 @@ protected:
  * @tparam KERNEL_TYPE The template class to construct, should implement the KernelBase interface.
  * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
  */
+template< template< typename ... > class KERNEL_TYPE,
+          typename ... ARGS >
+class KernelFactory;
+
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
           typename ... ARGS >
-class KernelFactory
+class KernelFactory< KERNEL_TYPE, ARGS ... >
 {
 public:
 
@@ -306,7 +367,7 @@ public:
    * @return A new kernel constructed with the given arguments and @c ARGS.
    */
   template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-  KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > createKernel(
+  auto createKernel(
     NodeManager & nodeManager,
     EdgeManager const & edgeManager,
     FaceManager const & faceManager,
@@ -315,6 +376,8 @@ public:
     FE_TYPE const & finiteElementSpace,
     CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
+    using Kernel = KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >;
+
     camp::tuple< NodeManager &,
                  EdgeManager const &,
                  FaceManager const &,
@@ -330,7 +393,81 @@ public:
                                                       inputConstitutiveType };
 
     auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
-    return camp::make_from_tuple< KERNEL_TYPE< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > >( allArgs );
+    return camp::make_from_tuple< Kernel >( allArgs );
+  }
+
+private:
+  /// The arguments to append to the standard kernel constructor arguments.
+  camp::tuple< ARGS ... > m_args;
+};
+
+template< template< typename SUBREGION_TYPE,
+                    typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE,
+                    typename MATRIX_VIEW,
+                    typename ... > class KERNEL_TYPE,
+          typename ... ARGS >
+class KernelFactory< KERNEL_TYPE, ARGS ... >
+{
+public:
+
+  /**
+   * @brief Initialize the factory.
+   * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+   */
+  KernelFactory( ARGS ... args ):
+    m_args( args ... )
+  {}
+
+  /**
+   * @brief Create a new kernel with the given standard arguments.
+   * @tparam SUBREGION_TYPE The type of @p elementSubRegion.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The subregion to execute on.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new kernel constructed with the given arguments and @c ARGS.
+   */
+  template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  auto createKernel(
+    NodeManager & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    localIndex const targetRegionIndex,
+    SUBREGION_TYPE const & elementSubRegion,
+    FE_TYPE const & finiteElementSpace,
+    CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    using Kernel = KERNEL_TYPE< SUBREGION_TYPE,
+                                CONSTITUTIVE_TYPE,
+                                FE_TYPE,
+                                typename internal::FirstMatrixViewOrDefault< KERNEL_TYPE,
+                                                                             SUBREGION_TYPE,
+                                                                             CONSTITUTIVE_TYPE,
+                                                                             FE_TYPE,
+                                                                             ARGS ... >::type >;
+
+    camp::tuple< NodeManager &,
+                 EdgeManager const &,
+                 FaceManager const &,
+                 localIndex const,
+                 SUBREGION_TYPE const &,
+                 FE_TYPE const &,
+                 CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
+                                                      edgeManager,
+                                                      faceManager,
+                                                      targetRegionIndex,
+                                                      elementSubRegion,
+                                                      finiteElementSpace,
+                                                      inputConstitutiveType };
+
+    auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
+    return camp::make_from_tuple< Kernel >( allArgs );
   }
 
 private:

@@ -38,7 +38,7 @@ namespace coupledReservoirAndSinglePhaseWellKernels
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer IS_THERMAL,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class IsothermalSinglePhaseFluxKernel
 {
 public:
@@ -255,7 +255,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( real64 const dt,
                    globalIndex const rankOffset,
@@ -282,7 +282,7 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer IS_THERMAL,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ThermalSinglePhaseFluxKernel : public IsothermalSinglePhaseFluxKernel< IS_THERMAL, MATRIX_VIEW >
 {
 public:
@@ -472,7 +472,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const isProducer,
                    real64 const dt,

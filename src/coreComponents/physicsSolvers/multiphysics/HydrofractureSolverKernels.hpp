@@ -217,7 +217,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
   template< typename POLICY,
             typename HYDRAULICAPERTURE_WRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,

@@ -300,7 +300,7 @@ public:
 template< integer NUM_PHASES,
           integer NUM_COMPS,
           bool ENABLE_ENERGY,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ElementBasedAssemblyKernel
 {
 public:
@@ -562,7 +562,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch(
     integer const numPhases,
@@ -604,7 +604,7 @@ public:
  *        and therefore overall performance can significantly improve
  *
  */
-template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+template< typename MATRIX_VIEW >
 class FluxComputeKernelBase
 {
 public:
@@ -742,7 +742,7 @@ template< integer NUM_PHASES,
           integer NUM_COMPS,
           bool ENABLE_ENERGY,
           typename STENCILWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public FluxComputeKernelBase< MATRIX_VIEW >
 {
 public:
@@ -1228,7 +1228,7 @@ public:
    */
   template< typename POLICY,
             typename STENCILWRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numPhases,
                    integer const numComps,

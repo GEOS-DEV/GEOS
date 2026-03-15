@@ -67,7 +67,7 @@ enum class KernelFlags
  * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of components/dofs).
  */
-template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+template< typename MATRIX_VIEW >
 class FluxComputeKernelBaseT
 {
 public:

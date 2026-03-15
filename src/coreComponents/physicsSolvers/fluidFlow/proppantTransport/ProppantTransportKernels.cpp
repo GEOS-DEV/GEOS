@@ -79,6 +79,7 @@ AccumulationKernel::
   }
 }
 
+template< typename MATRIX_VIEW >
 void
 AccumulationKernel::
   launch( localIndex const size,
@@ -98,7 +99,7 @@ AccumulationKernel::
           arrayView1d< real64 const > const & proppantLiftFlux,
           real64 const dt,
           real64 const maxProppantConcentration,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -146,7 +147,7 @@ AccumulationKernel::
       for( localIndex idof = 0; idof < nDofs; ++idof )
       {
         localRhs[localRow + idof] += localAccum[idof];
-        localMatrix.addToRow< serialAtomic >( localRow + idof,
+        localMatrix.template addToRow< serialAtomic >( localRow + idof,
                                               localAccumDOF.data(),
                                               localAccumJacobian[idof].dataIfContiguous(),
                                               nDofs );
@@ -154,6 +155,28 @@ AccumulationKernel::
     }
   } );
 }
+
+template void
+AccumulationKernel::
+  launch< DefaultGlobalMatrixView >( localIndex const size,
+          localIndex const numComps,
+          localIndex const nDofs,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & dofNumber,
+          arrayView1d< integer const > const & elemGhostRank,
+          arrayView1d< real64 const > const & proppantConc_n,
+          arrayView1d< real64 const > const & proppantConc,
+          arrayView2d< real64 const > const & componentDens_n,
+          arrayView3d< real64 const > const & componentDens,
+          arrayView3d< real64 const > const & dCompDens_dPres,
+          arrayView4d< real64 const > const & dCompDens_dCompConc,
+          arrayView1d< real64 const > const & volume,
+          arrayView1d< real64 const > const & proppantPackVolFrac,
+          arrayView1d< real64 const > const & proppantLiftFlux,
+          real64 const dt,
+          real64 const maxProppantConcentration,
+          DefaultGlobalMatrixView const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
@@ -732,6 +755,7 @@ FluxKernel::
 }
 
 
+template< typename MATRIX_VIEW >
 void FluxKernel::
   launch( SurfaceElementStencilWrapper const & stencilWrapper,
           localIndex const numDofPerCell,
@@ -768,7 +792,7 @@ void FluxKernel::
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & aperture,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
@@ -866,7 +890,7 @@ void FluxKernel::
           for( localIndex idof = 0; idof < numDofPerCell; ++idof )
           {
             RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + idof], localFlux[i * numDofPerCell + idof] );
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + idof,
+            localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + idof,
                                                                               dofColIndices.data(),
                                                                               localFluxJacobian[i * numDofPerCell + idof].dataIfContiguous(),
                                                                               stencilSize * numDofPerCell );
@@ -876,6 +900,46 @@ void FluxKernel::
     }
   } );
 }
+
+template void
+FluxKernel::
+  launch< DefaultGlobalMatrixView >( SurfaceElementStencilWrapper const & stencilWrapper,
+          localIndex const numDofPerCell,
+          real64 const dt,
+          globalIndex const rankOffset,
+          integer const updateProppantPacking,
+          R1Tensor const & unitGravityVector,
+          FluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          FluxKernel::ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & pres,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & proppantConc,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & componentDens,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dComponentDens_dPres,
+          FluxKernel::ElementViewConst< arrayView4d< real64 const > > const & dComponentDens_dComponentConc,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & gravDepth,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dDens_dProppantConc,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dDens_dComponentConc,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & visc,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dVisc,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dVisc_dProppantConc,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dVisc_dComponentConc,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & fluidDensity,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dFluidDens_dPres,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & dFluidDens_dComponentConc,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & settlingFactor,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dPres,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dSettlingFactor_dProppantConc,
+          FluxKernel::ElementViewConst< arrayView2d< real64 const > > const & dSettlingFactor_dComponentConc,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & collisionFactor,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & dCollisionFactor_dProppantConc,
+          FluxKernel::ElementViewConst< arrayView1d< integer const > > const & isProppantMobile,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          FluxKernel::ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
+          FluxKernel::ElementViewConst< arrayView1d< real64 const > > const & aperture,
+          DefaultGlobalMatrixView const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 
 template< localIndex MAX_NUM_FLUX_ELEMS >

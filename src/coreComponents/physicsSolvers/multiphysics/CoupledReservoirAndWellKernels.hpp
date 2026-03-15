@@ -43,7 +43,7 @@ using namespace constitutive;
  */
 template< integer NC,
           integer IS_THERMAL,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class IsothermalCompositionalMultiPhaseFluxKernel
 {
 public:
@@ -302,7 +302,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    real64 const dt,
@@ -340,7 +340,7 @@ public:
  */
 template< integer NC,
           integer IS_THERMAL,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ThermalCompositionalMultiPhaseFluxKernel : public IsothermalCompositionalMultiPhaseFluxKernel< NC, IS_THERMAL, MATRIX_VIEW >
 {
 public:
@@ -548,7 +548,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const isProducer,

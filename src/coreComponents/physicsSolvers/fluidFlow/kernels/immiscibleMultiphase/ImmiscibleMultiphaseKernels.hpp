@@ -57,7 +57,7 @@ using namespace constitutive;
  * @brief Base class for FluxComputeKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of dofs).
  */
-template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+template< typename MATRIX_VIEW >
 class FluxComputeKernelBaseT
 {
 public:
@@ -214,7 +214,7 @@ using FluxComputeKernelBase = FluxComputeKernelBaseT< DefaultGlobalMatrixView >;
 template< integer NUM_EQN,
           integer NUM_DOF,
           typename STENCILWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public FluxComputeKernelBaseT< MATRIX_VIEW >
 {
 public:
@@ -792,7 +792,7 @@ public:
    */
   template< typename POLICY,
             typename STENCILWRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
@@ -853,7 +853,7 @@ enum class KernelFlags
 
 template< integer NUM_EQN,
           integer NUM_DOF,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class AccumulationKernel
 {
 public:
@@ -1114,7 +1114,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,

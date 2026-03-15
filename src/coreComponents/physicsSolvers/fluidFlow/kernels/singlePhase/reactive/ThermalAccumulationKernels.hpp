@@ -38,7 +38,7 @@ template< typename SUBREGION_TYPE,
           integer NUM_DOF,
           integer NUM_SPECIES,
           typename BASE_FLUID_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class AccumulationKernel : public singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE,
                                                                                        NUM_DOF,
                                                                                        NUM_SPECIES,
@@ -240,7 +240,7 @@ public:
   template< typename POLICY,
             typename SUBREGION_TYPE,
             typename BASE_FLUID_TYPE,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numSpecies,
                    real64 const dt,

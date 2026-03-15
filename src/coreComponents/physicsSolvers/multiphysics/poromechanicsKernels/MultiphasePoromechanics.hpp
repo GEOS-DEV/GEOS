@@ -48,7 +48,7 @@ namespace poromechanicsKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class MultiphasePoromechanics :
   public PoromechanicsBase< SUBREGION_TYPE,
                             CONSTITUTIVE_TYPE,

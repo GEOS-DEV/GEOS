@@ -128,7 +128,7 @@ ControlEquationHelper::
   }
 }
 
-template< integer NC, integer IS_THERMAL >
+template< integer NC, integer IS_THERMAL, typename MATRIX_VIEW >
 GEOS_HOST_DEVICE
 inline
 void
@@ -149,7 +149,7 @@ ControlEquationHelper::
            arrayView1d< real64 const > const & dCurrentTotalVolRate,
            real64 const & massDensity,
            globalIndex const dofNumber,
-           DefaultGlobalMatrixView const & localMatrix,
+           MATRIX_VIEW const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
 
@@ -232,7 +232,7 @@ ControlEquationHelper::
   }
   localRhs[eqnRowIndex] += controlEqn;
 
-  localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+  localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
                                                             dofColIndices,
                                                             dControlEqn,
                                                             COFFSET_WJ::nDer );
@@ -295,7 +295,7 @@ PressureRelationKernel::
   }
 }
 
-template< integer NC, integer IS_THERMAL >
+template< integer NC, integer IS_THERMAL, typename MATRIX_VIEW >
 void
 PressureRelationKernel::
   launch( localIndex const size,
@@ -313,7 +313,7 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens,
           bool & controlHasSwitched,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
   using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
@@ -439,7 +439,7 @@ PressureRelationKernel::
       }
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
+        localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
                                                                           dofColIndices,
                                                                           localPresRelJacobian,
                                                                           2 * (NC+1+IS_THERMAL) );
@@ -453,7 +453,7 @@ PressureRelationKernel::
 #define INST_PressureRelationKernel( NC, IS_THERMAL ) \
   template \
   void PressureRelationKernel:: \
-    launch< NC, IS_THERMAL >( localIndex const size, \
+    launch< NC, IS_THERMAL, DefaultGlobalMatrixView >( localIndex const size, \
                               globalIndex const rankOffset, \
                               bool const isLocallyOwned, \
                               localIndex const iwelemControl, \

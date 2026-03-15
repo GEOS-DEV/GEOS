@@ -42,7 +42,7 @@ namespace thermalSinglePhaseFVMKernels
 template< integer NUM_EQN,
           integer NUM_DOF,
           typename FLUIDWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN,
                                                                                                NUM_DOF,
                                                                                                FLUIDWRAPPER,
@@ -330,7 +330,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename MATRIX_VIEW = DefaultGlobalMatrixView >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & dofKey,

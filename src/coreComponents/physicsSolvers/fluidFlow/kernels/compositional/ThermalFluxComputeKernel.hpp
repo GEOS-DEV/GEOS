@@ -44,7 +44,7 @@ namespace thermalCompositionalMultiphaseFVMKernels
 template< integer NUM_COMP,
           integer NUM_DOF,
           typename STENCILWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:

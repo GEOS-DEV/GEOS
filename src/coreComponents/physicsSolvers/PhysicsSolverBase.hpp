@@ -54,7 +54,7 @@ public:
 
   using MATRIX = DefaultGlobalMatrix;
   using MATRIX_VIEW = DefaultGlobalMatrixView;
-  using CONST_MATRIX_VIEW = CRSMatrixView< real64 const, globalIndex const >;
+  using CONST_MATRIX_VIEW = DefaultGlobalConstMatrixView;
 
   /**
    * @brief Type of the stat output

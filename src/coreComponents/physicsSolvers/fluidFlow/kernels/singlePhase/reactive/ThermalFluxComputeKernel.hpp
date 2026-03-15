@@ -46,7 +46,7 @@ template< integer NUM_SPECIES,
           integer NUM_DOF,
           typename STENCILWRAPPER,
           typename BASE_FLUID_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public singlePhaseReactiveFVMKernels::FluxComputeKernel< NUM_SPECIES,
                                                                                     NUM_EQN,
                                                                                     NUM_DOF,
@@ -595,7 +595,7 @@ public:
    */
   template< typename POLICY,
             typename STENCILWRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numSpecies,
                    integer const hasDiffusion,

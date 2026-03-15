@@ -222,7 +222,7 @@ public:
  */
 template< integer NUM_FACE,
           typename IP,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ElementBasedAssemblyKernel
 {
 public:
@@ -664,7 +664,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename MATRIX_VIEW = DefaultGlobalMatrixView >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    localIndex const er,

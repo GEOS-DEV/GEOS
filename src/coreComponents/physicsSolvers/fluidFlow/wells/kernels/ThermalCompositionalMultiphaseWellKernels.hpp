@@ -433,11 +433,11 @@ public:
  * @tparam IS_THERMAL thermal flag
  * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
  */
-template< localIndex NUM_COMP >
-class ElementBasedAssemblyKernel : public compositionalMultiphaseWellKernels::ElementBasedAssemblyKernel< NUM_COMP, 1 >
+template< localIndex NUM_COMP, typename MATRIX_VIEW >
+class ElementBasedAssemblyKernel : public compositionalMultiphaseWellKernels::ElementBasedAssemblyKernel< NUM_COMP, 1, MATRIX_VIEW >
 {
 public:
-  using Base = compositionalMultiphaseWellKernels::ElementBasedAssemblyKernel< NUM_COMP, 1 >;
+  using Base = compositionalMultiphaseWellKernels::ElementBasedAssemblyKernel< NUM_COMP, 1, MATRIX_VIEW >;
   using Base::m_dCompFrac_dCompDens;
   using Base::m_dofNumber;
   using Base::m_dPhaseCompFrac;
@@ -481,7 +481,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               MultiFluidBase const & fluid,
-                              DefaultGlobalMatrixView const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
     : Base( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
@@ -632,7 +632,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
@@ -642,7 +642,7 @@ public:
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::
@@ -650,10 +650,10 @@ public:
     {
       localIndex constexpr NUM_COMP = NC();
 
-      ElementBasedAssemblyKernel< NUM_COMP >
+      ElementBasedAssemblyKernel< NUM_COMP, MATRIX_VIEW >
       kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
-      ElementBasedAssemblyKernel< NUM_COMP >::template
-      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP > >( subRegion.size(), kernel );
+      ElementBasedAssemblyKernel< NUM_COMP, MATRIX_VIEW >::template
+      launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, MATRIX_VIEW > >( subRegion.size(), kernel );
     } );
   }
 };
@@ -665,12 +665,12 @@ public:
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NC >
-class FaceBasedAssemblyKernel : public compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, 1 >
+template< integer NC, typename MATRIX_VIEW >
+class FaceBasedAssemblyKernel : public compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, 1, MATRIX_VIEW >
 {
 public:
   static constexpr integer IS_THERMAL = 1;
-  using Base  = compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, IS_THERMAL >;
+  using Base  = compositionalMultiphaseWellKernels::FaceBasedAssemblyKernel< NC, IS_THERMAL, MATRIX_VIEW >;
 
   // Well jacobian column and row indicies
   using WJ_COFFSET = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
@@ -719,7 +719,7 @@ public:
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
                            MultiFluidBase const & fluid,
-                           DefaultGlobalMatrixView const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
                            BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags )
     : Base( dt
@@ -1082,7 +1082,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    real64 const dt,
@@ -1092,14 +1092,14 @@ public:
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
-      using kernelType = FaceBasedAssemblyKernel< NUM_COMP >;
+      using kernelType = FaceBasedAssemblyKernel< NUM_COMP, MATRIX_VIEW >;
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       kernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );

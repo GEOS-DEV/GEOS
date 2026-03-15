@@ -132,7 +132,7 @@ struct ControlEquationHelper
                  real64 const & currentVolRate,
                  WellControls::Control & newControl );
 
-  template< integer IS_THERMAL >
+  template< integer IS_THERMAL, typename MATRIX_VIEW >
   GEOS_HOST_DEVICE
   inline
   static
@@ -146,7 +146,7 @@ struct ControlEquationHelper
            real64 const & currentVolRate,
            arrayView1d< real64 const > const & dCurrentVolRate,
            globalIndex const dofNumber,
-           DefaultGlobalMatrixView const & localMatrix,
+           MATRIX_VIEW const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 
 };
@@ -161,7 +161,7 @@ struct FluxKernel
   using COFFSET = singlePhaseWellKernels::ColOffset;
   using TAG = singlePhaseWellKernels::ElemTag;
 
-  template< integer IS_THERMAL >
+  template< integer IS_THERMAL, typename MATRIX_VIEW >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
@@ -169,7 +169,7 @@ struct FluxKernel
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
           real64 const & dt,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -184,7 +184,7 @@ struct PressureRelationKernel
   using COFFSET = singlePhaseWellKernels::ColOffset;
   using TAG = singlePhaseWellKernels::ElemTag;
 
-  template< integer IS_THERMAL >
+  template< integer IS_THERMAL, typename MATRIX_VIEW >
   static localIndex
   launch( localIndex const size,
           globalIndex const rankOffset,
@@ -198,7 +198,7 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemPressure,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -286,6 +286,7 @@ struct AccumulationKernel
   using ROFFSET = singlePhaseWellKernels::RowOffset;
   using COFFSET = singlePhaseWellKernels::ColOffset;
 
+  template< typename MATRIX_VIEW >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
@@ -295,7 +296,7 @@ struct AccumulationKernel
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
           arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 };
@@ -307,7 +308,7 @@ struct AccumulationKernel
  * @tparam IS_THERMAL flag to activate thermal dependencies and energy balance
  * @brief Define the interface for the assembly kernel in charge of accumulation
  */
-template< integer IS_THERMAL >
+template< integer IS_THERMAL, typename MATRIX_VIEW >
 class ElementBasedAssemblyKernel
 {
 public:
@@ -338,7 +339,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
-                              DefaultGlobalMatrixView const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
@@ -384,14 +385,14 @@ public:
     real64 const localAccumDP = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dP];
 
     // add contribution to global residual and jacobian (no need for atomics here)
-    m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumDP, 1 );
+    m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &presDofColIndex, &localAccumDP, 1 );
     m_localRhs[eqnRowIndex] += localAccum;
 
     if constexpr ( IS_THERMAL )
     {
       real64 const localAccumDT = m_wellElemVolume[iwelem] * m_dWellElemDensity[iwelem][0][FLUID_PROP_COFFSET::dT];
       globalIndex const tempDofColIndex = m_dofNumber[iwelem] + WJ_COFFSET::dT;
-      m_localMatrix.addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localAccumDT, 1 );
+      m_localMatrix.template addToRow< serialAtomic >( eqnRowIndex, &tempDofColIndex, &localAccumDT, 1 );
       kernelOp( presDofColIndex, tempDofColIndex );
     }
 
@@ -446,7 +447,7 @@ protected:
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const m_wellElemDensity_n;
 
   /// View on the local CRS matrix
-  DefaultGlobalMatrixView const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -468,21 +469,21 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal=0;
 
-    ElementBasedAssemblyKernel< isThermal >
+    ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW >
     kernel( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
-    ElementBasedAssemblyKernel< isThermal >::template
-    launch< POLICY, ElementBasedAssemblyKernel< isThermal > >( subRegion.size(), kernel );
+    ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW >::template
+    launch< POLICY, ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW > >( subRegion.size(), kernel );
   }
 };
 
@@ -538,7 +539,7 @@ struct PresTempInitializationKernel
  */
 
 
-template< integer IS_THERMAL >
+template< integer IS_THERMAL, typename MATRIX_VIEW >
 class FaceBasedAssemblyKernel
 {
 public:
@@ -576,7 +577,7 @@ public:
                            string const wellDofKey,
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
-                           DefaultGlobalMatrixView const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     :
     m_dt( dt ),
@@ -632,7 +633,7 @@ public:
 
       if( oneSidedEqnRowIndex >= 0 && oneSidedEqnRowIndex < m_localMatrix.numRows() )
       {
-        m_localMatrix.addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndex,
+        m_localMatrix.template addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndex,
                                                         &oneSidedDofColIndex_dRate,
                                                         &oneSidedLocalFluxJacobian_dRate,
                                                         1 );
@@ -663,7 +664,7 @@ public:
       {
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
-          m_localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
+          m_localMatrix.template addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
                                                           &dofColIndex_dRate,
                                                           &localFluxJacobian_dRate[i],
                                                           1 );
@@ -713,7 +714,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > const m_wellElemCompFrac;
 
   /// View on the local CRS matrix
-  DefaultGlobalMatrixView const m_localMatrix;
+  MATRIX_VIEW const m_localMatrix;
   /// View on the local RHS
   arrayView1d< real64 > const m_localRhs;
 
@@ -740,14 +741,14 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( real64 const dt,
                    globalIndex const rankOffset,
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer isThermal=0;
@@ -756,7 +757,7 @@ public:
 
       integer constexpr istherm = IS_THERMAL();
 
-      using kernelType = FaceBasedAssemblyKernel< istherm >;
+      using kernelType = FaceBasedAssemblyKernel< istherm, MATRIX_VIEW >;
       kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, localMatrix, localRhs );
       kernelType::template launch< POLICY >( subRegion.size(), kernel );
     } );

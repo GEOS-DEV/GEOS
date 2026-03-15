@@ -44,7 +44,7 @@ namespace singlePhaseBaseKernels
  */
 template< typename SUBREGION_TYPE,
           integer NUM_DOF,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class AccumulationKernel
 {
 
@@ -234,7 +234,7 @@ protected:
  * @class SurfaceElementAccumulationKernel
  * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
  */
-template< typename MATRIX_VIEW = DefaultGlobalMatrixView >
+template< typename MATRIX_VIEW >
 class SurfaceElementAccumulationKernel : public AccumulationKernel< SurfaceElementSubRegion, 1, MATRIX_VIEW >
 {
 
@@ -304,7 +304,7 @@ public:
    */
   template< typename POLICY,
             typename SUBREGION_TYPE,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const dofKey,

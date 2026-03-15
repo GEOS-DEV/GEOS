@@ -34,7 +34,7 @@ namespace solidMechanicsLagrangeContactKernels
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class LagrangeContact :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                                                                FE_TYPE,

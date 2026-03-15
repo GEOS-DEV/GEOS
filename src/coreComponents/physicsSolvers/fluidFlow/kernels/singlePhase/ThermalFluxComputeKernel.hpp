@@ -41,7 +41,7 @@ namespace thermalSinglePhaseFVMKernels
 template< integer NUM_EQN,
           integer NUM_DOF,
           typename STENCILWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:
@@ -444,7 +444,7 @@ public:
    */
   template< typename POLICY,
             typename STENCILWRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & dofKey,

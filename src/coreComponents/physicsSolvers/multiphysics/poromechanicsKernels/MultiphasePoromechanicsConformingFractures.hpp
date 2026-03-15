@@ -29,8 +29,8 @@ namespace geos
 namespace multiphasePoromechanicsConformingFracturesKernels
 {
 
-template< integer NUM_EQN, integer NUM_DOF >
-class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+template< integer NUM_EQN, integer NUM_DOF, typename MATRIX_VIEW >
+class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper, MATRIX_VIEW >
 {
 public:
 
@@ -57,7 +57,7 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper, MATRIX_VIEW >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -96,7 +96,7 @@ public:
                      PermeabilityAccessors const & permeabilityAccessors,
                      FracturePermeabilityAccessors const & fracturePermeabilityAccessors,
                      real64 const dt,
-                     DefaultGlobalMatrixView const & localMatrix,
+                     MATRIX_VIEW const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
                      BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
                      CRSMatrixView< real64, localIndex const > const & dR_dAper )
@@ -365,7 +365,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,
@@ -376,7 +376,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const dt,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
@@ -389,7 +389,7 @@ public:
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
       dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF >;
+      using kernelType = FluxComputeKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >;
       typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );

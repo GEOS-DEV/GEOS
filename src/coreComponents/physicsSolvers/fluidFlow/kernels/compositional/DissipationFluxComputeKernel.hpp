@@ -47,7 +47,7 @@ static constexpr real64 multiplierDirectionalCoef = 1000;
 template< integer NUM_COMP,
           integer NUM_DOF,
           typename STENCILWRAPPER,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class FluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER, MATRIX_VIEW >
 {
 public:
@@ -348,7 +348,7 @@ public:
    */
   template< typename POLICY,
             typename STENCILWRAPPER,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numComps,
                    integer const numPhases,

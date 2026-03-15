@@ -35,7 +35,7 @@ namespace solidMechanicsALMKernels
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ALM :
   public solidMechanicsConformingContactKernels::ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                                                                FE_TYPE,

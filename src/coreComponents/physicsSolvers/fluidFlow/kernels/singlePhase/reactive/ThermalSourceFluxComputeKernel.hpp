@@ -37,7 +37,7 @@ namespace thermalSinglePhaseReactiveBaseKernels
 template< integer NUM_DOF,
           integer NUM_SPECIES,
           typename BASE_FLUID_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class SourceFluxComputeKernel : public singlePhaseReactiveBaseKernels::SourceFluxComputeKernel< NUM_DOF,
                                                                                                  NUM_SPECIES,
                                                                                                  BASE_FLUID_TYPE,
@@ -188,7 +188,7 @@ public:
    */
   template< typename POLICY,
             typename BASE_FLUID_TYPE,
-            typename MATRIX_VIEW = DefaultGlobalMatrixView >
+            typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const numSpecies,
                    globalIndex const rankOffset,

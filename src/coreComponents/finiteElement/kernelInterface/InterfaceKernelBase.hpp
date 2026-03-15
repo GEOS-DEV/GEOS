@@ -39,6 +39,56 @@ namespace geos
 namespace finiteElement
 {
 
+namespace internal
+{
+
+template< template< typename, typename, typename, typename ... > class KERNEL_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
+          typename ... TYPES >
+struct FirstInterfaceMatrixViewOrDefault
+{
+  using type = DefaultGlobalMatrixView;
+};
+
+template< template< typename, typename, typename, typename ... > class KERNEL_TYPE,
+          typename CONSTITUTIVE_TYPE,
+          typename FE_TYPE,
+          typename TYPE0,
+          typename ... TYPES >
+struct FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
+                                          CONSTITUTIVE_TYPE,
+                                          FE_TYPE,
+                                          TYPE0,
+                                          TYPES ... >
+{
+private:
+  using Type0 = std::remove_cv_t< std::remove_reference_t< TYPE0 > >;
+  static constexpr bool isConstructible = std::is_constructible_v<
+    KERNEL_TYPE< CONSTITUTIVE_TYPE,
+                 FE_TYPE,
+                 Type0 >,
+    NodeManager &,
+    EdgeManager const &,
+    FaceManager const &,
+    localIndex const,
+    FaceElementSubRegion &,
+    FE_TYPE const &,
+    CONSTITUTIVE_TYPE &,
+    TYPE0,
+    TYPES ... >;
+
+public:
+  using type = std::conditional_t< isConstructible,
+                                   Type0,
+                                   typename FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
+                                                                                CONSTITUTIVE_TYPE,
+                                                                                FE_TYPE,
+                                                                                TYPES ... >::type >;
+};
+
+}
+
 /**
  * @class InterfaceKernelBase
  * @brief Define the base class for interface finite element kernels.
@@ -122,10 +172,14 @@ public:
  * @tparam KERNEL_TYPE The template class to construct, should implement the InterfaceKernelBase interface.
  * @tparam ARGS The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
  */
+template< template< typename ... > class KERNEL_TYPE,
+          typename ... ARGS >
+class InterfaceKernelFactory;
+
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
           typename ... ARGS >
-class InterfaceKernelFactory
+class InterfaceKernelFactory< KERNEL_TYPE, ARGS ... >
 {
 public:
 
@@ -151,7 +205,7 @@ public:
    * @return A new kernel constructed with the given arguments and @c ARGS.
    */
   template< typename CONSTITUTIVE_TYPE, typename FE_TYPE >
-  KERNEL_TYPE< CONSTITUTIVE_TYPE, FE_TYPE > createKernel(
+  auto createKernel(
     NodeManager & nodeManager,
     EdgeManager const & edgeManager,
     FaceManager const & faceManager,
@@ -160,6 +214,8 @@ public:
     FE_TYPE const & finiteElementSpace,
     CONSTITUTIVE_TYPE & inputConstitutiveType )
   {
+    using Kernel = KERNEL_TYPE< CONSTITUTIVE_TYPE, FE_TYPE >;
+
     camp::tuple< NodeManager &,
                  EdgeManager const &,
                  FaceManager const &,
@@ -175,7 +231,78 @@ public:
                                                       inputConstitutiveType };
 
     auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
-    return camp::make_from_tuple< KERNEL_TYPE< CONSTITUTIVE_TYPE, FE_TYPE > >( allArgs );
+    return camp::make_from_tuple< Kernel >( allArgs );
+
+  }
+
+private:
+  /// The arguments to append to the standard kernel constructor arguments.
+  camp::tuple< ARGS ... > m_args;
+};
+
+template< template< typename CONSTITUTIVE_TYPE,
+                    typename FE_TYPE,
+                    typename MATRIX_VIEW,
+                    typename ... > class KERNEL_TYPE,
+          typename ... ARGS >
+class InterfaceKernelFactory< KERNEL_TYPE, ARGS ... >
+{
+public:
+
+  /**
+   * @brief Initialize the factory.
+   * @param args The arguments used to construct a @p KERNEL_TYPE in addition to the standard arguments.
+   */
+  InterfaceKernelFactory( ARGS ... args ):
+    m_args( args ... )
+  {}
+
+  /**
+   * @brief Create a new kernel with the given standard arguments.
+   * @tparam CONSTITUTIVE_TYPE The type of @p inputConstitutiveType.
+   * @tparam FE_TYPE The type of @p finiteElementSpace.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param targetRegionIndex The target region index.
+   * @param elementSubRegion The subregion to execute on.
+   * @param finiteElementSpace The finite element space.
+   * @param inputConstitutiveType The constitutive relation.
+   * @return A new kernel constructed with the given arguments and @c ARGS.
+   */
+  template< typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+  auto createKernel(
+    NodeManager & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    localIndex const targetRegionIndex,
+    FaceElementSubRegion & elementSubRegion,
+    FE_TYPE const & finiteElementSpace,
+    CONSTITUTIVE_TYPE & inputConstitutiveType )
+  {
+    using Kernel = KERNEL_TYPE< CONSTITUTIVE_TYPE,
+                                FE_TYPE,
+                                typename internal::FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
+                                                                                        CONSTITUTIVE_TYPE,
+                                                                                        FE_TYPE,
+                                                                                        ARGS ... >::type >;
+
+    camp::tuple< NodeManager &,
+                 EdgeManager const &,
+                 FaceManager const &,
+                 localIndex const,
+                 FaceElementSubRegion &,
+                 FE_TYPE const &,
+                 CONSTITUTIVE_TYPE & > standardArgs { nodeManager,
+                                                      edgeManager,
+                                                      faceManager,
+                                                      targetRegionIndex,
+                                                      elementSubRegion,
+                                                      finiteElementSpace,
+                                                      inputConstitutiveType };
+
+    auto allArgs = camp::tuple_cat_pair( standardArgs, m_args );
+    return camp::make_from_tuple< Kernel >( allArgs );
 
   }
 

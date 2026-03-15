@@ -45,8 +45,8 @@ namespace thermalSinglePhaseWellKernels
  * @tparam IS_THERMAL thermal switch
  * @brief Define the interface for the assembly kernel in charge of accumulation and energy balance
  */
-template< integer IS_THERMAL >
-class ElementBasedAssemblyKernel : public singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL >
+template< integer IS_THERMAL, typename MATRIX_VIEW >
+class ElementBasedAssemblyKernel : public singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL, MATRIX_VIEW >
 {
 public:
 
@@ -55,7 +55,7 @@ public:
   using WJ_COFFSET = singlePhaseWellKernels::ColOffset_WellJac< IS_THERMAL >;
   using WJ_ROFFSET = singlePhaseWellKernels::RowOffset_WellJac< IS_THERMAL >;
 
-  using Base = singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL >;
+  using Base = singlePhaseWellKernels::ElementBasedAssemblyKernel< IS_THERMAL, MATRIX_VIEW >;
   using Base::m_rankOffset;
   using Base::m_dofNumber;
   using Base::m_elemGhostRank;
@@ -81,7 +81,7 @@ public:
                               string const dofKey,
                               WellElementSubRegion const & subRegion,
                               constitutive::SingleFluidBase const & fluid,
-                              DefaultGlobalMatrixView const & localMatrix,
+                              MATRIX_VIEW const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :    Base( rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs ),
     m_isProducer( isProducer ),
@@ -203,21 +203,21 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( integer const isProducer,
                    globalIndex const rankOffset,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal = 1;
-    ElementBasedAssemblyKernel< isThermal >
+    ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW >
     kernel( isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs );
-    ElementBasedAssemblyKernel< isThermal >::template
-    launch< POLICY, ElementBasedAssemblyKernel< isThermal > >( subRegion.size(), kernel );
+    ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW >::template
+    launch< POLICY, ElementBasedAssemblyKernel< isThermal, MATRIX_VIEW > >( subRegion.size(), kernel );
 
   }
 };
@@ -229,12 +229,12 @@ public:
  * @tparam IS_THERMAL flag to include temperature dependencies and energy balance
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer IS_THERMAL >
-class FaceBasedAssemblyKernel : public singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL >
+template< integer IS_THERMAL, typename MATRIX_VIEW >
+class FaceBasedAssemblyKernel : public singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL, MATRIX_VIEW >
 {
 public:
 
-  using Base  = singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL >;
+  using Base  = singlePhaseWellKernels::FaceBasedAssemblyKernel< IS_THERMAL, MATRIX_VIEW >;
 
   // Well jacobian column and row indicies
 
@@ -277,7 +277,7 @@ public:
                            WellControls const & wellControls,
                            WellElementSubRegion const & subRegion,
                            constitutive::SingleFluidBase const & fluid,
-                           DefaultGlobalMatrixView const & localMatrix,
+                           MATRIX_VIEW const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : Base( dt
             , rankOffset
@@ -464,7 +464,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch(
     real64 const dt,
@@ -473,11 +473,11 @@ public:
     WellControls const & wellControls,
     WellElementSubRegion const & subRegion,
     constitutive::SingleFluidBase const & fluid,
-    DefaultGlobalMatrixView const & localMatrix,
+    MATRIX_VIEW const & localMatrix,
     arrayView1d< real64 > const & localRhs )
   {
     integer constexpr isThermal=1;
-    using kernelType = FaceBasedAssemblyKernel< isThermal >;
+    using kernelType = FaceBasedAssemblyKernel< isThermal, MATRIX_VIEW >;
     kernelType kernel( dt, rankOffset, dofKey, wellControls, subRegion, fluid, localMatrix, localRhs );
     kernelType::template launch< POLICY >( subRegion.size(), kernel );
   }

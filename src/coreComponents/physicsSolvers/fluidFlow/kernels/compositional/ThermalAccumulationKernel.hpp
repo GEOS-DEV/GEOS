@@ -38,7 +38,7 @@ namespace thermalCompositionalMultiphaseBaseKernels
  */
 template< localIndex NUM_COMP,
           localIndex NUM_DOF,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class AccumulationKernel : public isothermalCompositionalMultiphaseBaseKernels::AccumulationKernel< NUM_COMP, NUM_DOF, MATRIX_VIEW >
 {
 public:

@@ -31,7 +31,7 @@ namespace thermoPoromechanicsEFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class ThermalSinglePhasePoromechanicsEFEM :
   public poromechanicsEFEMKernels::SinglePhasePoromechanicsEFEM< SUBREGION_TYPE,
                                                                  CONSTITUTIVE_TYPE,

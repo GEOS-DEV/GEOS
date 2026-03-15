@@ -49,6 +49,7 @@ struct FaceElementFluxKernel
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
    * @tparam SurfaceElementStencilWrapper The type of the stencil that is being used.
+   * @tparam MATRIX_VIEW The type of the matrix view (default: DefaultGlobalMatrixView).
    * @param[in] stencil The stencil object.
    * @param[in] dt The timestep for the integration step.
    * @param[in] dofNumber The dofNumbers for each element
@@ -65,6 +66,7 @@ struct FaceElementFluxKernel
    * @param[out] localMatrix The linear system matrix
    * @param[out] localRhs The linear system residual
    */
+  template< typename MATRIX_VIEW >
   static void
   launch( SurfaceElementStencilWrapper const & stencilWrapper,
           real64 const dt,
@@ -82,7 +84,7 @@ struct FaceElementFluxKernel
           ElementViewConst< arrayView4d< real64 const > > const & dPerm_dDispJump,
           ElementViewConst< arrayView3d< real64 const > > const & permeabilityMultiplier,
           R1Tensor const & gravityVector,
-          DefaultGlobalMatrixView const & localMatrix,
+          MATRIX_VIEW const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
 

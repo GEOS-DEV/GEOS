@@ -28,8 +28,8 @@ namespace geos
 namespace thermalSinglePhasePoromechanicsEmbeddedFracturesKernels
 {
 
-template< integer NUM_EQN, integer NUM_DOF >
-class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >
+template< integer NUM_EQN, integer NUM_DOF, typename MATRIX_VIEW >
+class ConnectorBasedAssemblyKernel : public singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF, MATRIX_VIEW >
 {
 public:
 
@@ -58,7 +58,7 @@ public:
   using SinglePhaseFVMAbstractBase::m_dens;
   using SinglePhaseFVMAbstractBase::m_dDens;
 
-  using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using SinglePhaseFVMBase = singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper, MATRIX_VIEW >;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;
   using SinglePhaseFVMBase::maxNumConns;
@@ -66,7 +66,7 @@ public:
   using SinglePhaseFVMBase::m_stencilWrapper;
   using SinglePhaseFVMBase::m_ghostRank;
 
-  using Base = singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+  using Base = singlePhasePoromechanicsEmbeddedFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF, MATRIX_VIEW >;
   using Base::m_dispJumpDofNumber;
   using Base::numDof;
   using Base::m_seri;
@@ -97,7 +97,7 @@ public:
                                 FracturePermeabilityAccessors const & edfmPermeabilityAccessors,
                                 ThermalConductivityAccessors const & thermalConductivityAccessors,
                                 real64 const & dt,
-                                DefaultGlobalMatrixView const & localMatrix,
+                                MATRIX_VIEW const & localMatrix,
                                 arrayView1d< real64 > const & localRhs )
     : Base( rankOffset,
             stencilWrapper,
@@ -373,7 +373,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY >
+  template< typename POLICY, typename MATRIX_VIEW >
   static void
   createAndLaunch( globalIndex const rankOffset,
                    string const & pressureDofKey,
@@ -382,7 +382,7 @@ public:
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
                    real64 const & dt,
-                   DefaultGlobalMatrixView const & localMatrix,
+                   MATRIX_VIEW const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
     integer constexpr NUM_DOF = 5;   // pressure + temperature + jumps
@@ -397,7 +397,7 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dispJumpDofKey );
     dispJumpDofNumberAccessor.setName( solverName + "/accessors/" + dispJumpDofKey );
 
-    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
+    using kernelType = ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF, MATRIX_VIEW >;
     typename kernelType::SinglePhaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::ThermalSinglePhaseFlowAccessors thermalFlowAccessors( elemManager, solverName );
 
