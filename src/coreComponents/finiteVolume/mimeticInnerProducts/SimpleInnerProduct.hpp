@@ -270,32 +270,32 @@ SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
   // 4) M = CKCt + (v / t) * A^{-1} * ( I - Q Q^T ) * A^{-1}
   real64 invA[NF];
-  for (localIndex i = 0; i < NF; ++i)
+  for( localIndex i = 0; i < NF; ++i )
   {
-    invA[i] = real64(1) / A[i];
+    invA[i] = real64( 1 ) / A[i];
   }
-  
+
   // scale = elemVolume / tParam, where tParam = 2 * trace(K)
-  real64 const tParam = real64(2) * (elemPerm[0] + elemPerm[1] + elemPerm[2]);
+  real64 const tParam = real64( 2 ) * (elemPerm[0] + elemPerm[1] + elemPerm[2]);
   real64 const scale  = elemVolume / tParam;
-  
-  for (localIndex i = 0; i < NF; ++i)
+
+  for( localIndex i = 0; i < NF; ++i )
   {
     real64 const invAiScaled = scale * invA[i];
 
     real64 const qi0 = Qmat[i][0];
     real64 const qi1 = Qmat[i][1];
     real64 const qi2 = Qmat[i][2];
-  
-    for (localIndex j = i; j < NF; ++j)
+
+    for( localIndex j = i; j < NF; ++j )
     {
       // qdot = (Q Q^T)_{ij} = sum_k Qik * Qjk, with k in [0,2]
       real64 const qdot = qi0*Qmat[j][0] + qi1*Qmat[j][1] + qi2*Qmat[j][2];
-  
-      real64 const u = (i == j ? real64(1) : real64(0)) - qdot;
-  
+
+      real64 const u = (i == j ? real64( 1 ) : real64( 0 )) - qdot;
+
       real64 const mij = CKCt[i][j] + (invAiScaled * invA[j]) * u;
-  
+
       M[i][j] = mij;
       M[j][i] = mij; // symmetry fill
     }

@@ -57,7 +57,7 @@ struct MimeticInnerProductHelpers
   GEOS_HOST_DEVICE
   static
   void computeCellToFacetVector( real64 (& cellToFacetVec)[ 3 ],
-                                 real64 const (& facetCenter)[ 3 ],
+                                 real64 const (&facetCenter)[ 3 ],
                                  arraySlice1d< real64 const > const & cellCenter )
   {
     LvArray::tensorOps::copy< 3 >( cellToFacetVec, facetCenter );
@@ -71,7 +71,7 @@ struct MimeticInnerProductHelpers
    */
   GEOS_HOST_DEVICE
   static
-  void orientNormalOutward( real64 const (& cellToFacetVec)[ 3 ],
+  void orientNormalOutward( real64 const (&cellToFacetVec)[ 3 ],
                             real64 (& faceNormal)[ 3 ] )
   {
     if( LvArray::tensorOps::AiBi< 3 >( cellToFacetVec, faceNormal ) < 0.0 )
