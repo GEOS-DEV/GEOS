@@ -231,18 +231,18 @@ SimpleInnerProduct::computeM( arrayView2d< real64 const, nodes::REFERENCE_POSITI
 
   for( localIndex i = 0; i < NF; ++i )
   {
-    real64 fCenter[3], fNormal[3];
+    real64 faceCenter[3], faceNormal[3];
     real64 area = computationalGeometry::centroid_3DPolygon(
-      faceToNodes[elemToFaces[i]], nodePosition, fCenter, fNormal, areaTolerance );
+      faceToNodes[elemToFaces[i]], nodePosition, faceCenter, faceNormal, areaTolerance );
 
-    real64 vec_cf[3];
-    MimeticInnerProductHelpers::computeCellToFacetVector( vec_cf, fCenter, elemCenter );
-    MimeticInnerProductHelpers::orientNormalOutward( vec_cf, fNormal );
+    real64 cellToFaceVec[3];
+    MimeticInnerProductHelpers::computeCellToFacetVector( cellToFaceVec, faceCenter, elemCenter );
+    MimeticInnerProductHelpers::orientNormalOutward( cellToFaceVec, faceNormal );
 
     for( int d = 0; d < 3; ++d )
     {
-      C[i][d] = vec_cf[d];
-      N[i][d] = fNormal[d] * area;
+      C[i][d] = cellToFaceVec[d];
+      N[i][d] = faceNormal[d] * area;
     }
 
     A[i] = area;
