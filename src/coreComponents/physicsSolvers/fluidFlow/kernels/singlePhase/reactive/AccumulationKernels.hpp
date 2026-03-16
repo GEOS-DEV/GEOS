@@ -161,8 +161,8 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
-    // Residual[is] += (primarySpeciesAggregateConcentration[is] * stack.poreVolume - primarySpeciesAggregateMole_n[is])
-    //                 - dt * m_volume * primarySpeciesKineticRate[is] // To Check: what's the unit of the kinetic rate
+    // Residual[is] += (primarySpeciesAggregateConcentration[is] * solventDensity * stack.poreVolume - primarySpeciesAggregateMole_n[is])
+    //                 - dt * m_volume * primarySpeciesKineticRate[is] * solventDensity
 
     Base::computeAccumulation( ei, stack );
 
