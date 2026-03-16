@@ -22,7 +22,6 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
-#include "common/StdContainerWrappers.hpp"
 #include "common/TypesHelpers.hpp"
 
 #include <numeric>
@@ -339,7 +338,7 @@ public:
   template< typename CONTAINER >
   struct GatherResult
   {
-    CONTAINER data;                 // Collected data
+    CONTAINER data;                   // Collected data
     stdVector< integer > counts;      // Number of elements per row
     stdVector< integer > offsets;     // Starting index for each row in 'data'
   };
@@ -366,41 +365,47 @@ public:
   static GatherResult< CONTAINER >
   gatherBufferRank0( CONTAINER const & localBuffer )
   {
-  integer const numRanks = MpiWrapper::commSize();
-  integer const numValues = static_cast< integer >(localBuffer.size());
+    integer const numRanks = MpiWrapper::commSize();
+    integer const numValues = static_cast< integer >(localBuffer.size());
 
-  GatherResult< CONTAINER > gatherResult;
+    GatherResult< CONTAINER > gatherResult;
 
-  if( MpiWrapper::commRank() == 0 )
-  {
-    gatherResult.counts.resize( numRanks );
-    gatherResult.offsets.resize( numRanks );
-  }
-
-
-  MpiWrapper::gather( &numValues, 1, gatherResult.counts.data(), 1, 0 );
-
-  if( MpiWrapper::commRank() == 0 )
-  {
-    integer totalSize = 0;
-    for( integer i = 0; i < numRanks; ++i )
+    if( MpiWrapper::commRank() == 0 )
     {
-      gatherResult.offsets[i] = totalSize;
-      totalSize += gatherResult.counts[i];
+      gatherResult.counts.resize( numRanks );
+      gatherResult.offsets.resize( numRanks );
     }
-    gatherResult.data.resize( totalSize );
+
+
+    MpiWrapper::gather( &numValues, 1, gatherResult.counts.data(), 1, 0 );
+
+    if( MpiWrapper::commRank() == 0 )
+    {
+      integer totalSize = 0;
+      for( integer i = 0; i < numRanks; ++i )
+      {
+        gatherResult.offsets[i] = totalSize;
+        totalSize += gatherResult.counts[i];
+      }
+      gatherResult.data.resize( totalSize );
+    }
+
+    MpiWrapper::gatherv( localBuffer.data(),
+                         numValues,
+                         gatherResult.data.data(),
+                         gatherResult.counts.data(),
+                         gatherResult.offsets.data(),
+                         0 );
+
+    return gatherResult;
   }
 
-  MpiWrapper::gatherv( localBuffer.data(),
-                       numValues,
-                       gatherResult.data.data(),
-                       gatherResult.counts.data(),
-                       gatherResult.offsets.data(),
-                       0 );
-
-  return gatherResult;
-}
-
+  /**
+   * @brief Gather srting from all ranks to rank 0
+   * @tparam FUNC Callable type invoked as void(string_view) for each non-empty rank string.
+   * @param str The local string to send from the calling rank.
+   * @param func Callback invoked on rank 0 for each non-empty received string.
+   */
   template< typename FUNC >
   static void gatherStringOnRank0( string_view str,
                                    FUNC && func );

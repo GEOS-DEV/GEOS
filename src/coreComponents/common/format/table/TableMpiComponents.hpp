@@ -22,7 +22,6 @@
 #define GEOS_COMMON_FORMAT_TABLE_TABLEMPICOMPONENTS_HPP
 
 #include "TableFormatter.hpp"
-#include "common/format/table/TableData.hpp"
 
 namespace geos
 {
@@ -48,6 +47,7 @@ class TableTextMpiOutput : public TableTextFormatter
 public:
   /// base class
   using Base = TableTextFormatter;
+  /// Callable comparison function object used for std::sort for a TableData
   using SortingFunc = std::function< bool (stdVector< TableData::CellData >, stdVector< TableData::CellData >) >;
   /**
    * @brief Construct a default Table Formatter without layout specification (to only insert data in it,
@@ -75,6 +75,10 @@ public:
   template< typename DATASOURCE >
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const;
 
+  /**
+   * @brief Set the Sorting Func object
+   * @param func The callable comparison function object
+   */
   void setSortingFunc( SortingFunc && func )
   { m_sortingFunctor = std::make_unique< SortingFunc >( std::move( func )); }
 
@@ -108,65 +112,52 @@ private:
 
 
   /**
-   * @brief Convert each row to a string and stored as a single entry;
-   * @param dataCellsLayout The target CellLayoutRows to convert
-   * @param rowsAsString The result vector of the convertion
+   * @brief Parse each row of a CellLayoutRows into its string representation.
+   * @param cellLayoutRows The target CellLayoutRows to parse
+   * @param rowsAsString The result vector of strings
    */
-  void convertRowsToString( CellLayoutRows const & dataCellsLayout,
-                                    stdVector< string > & rowsAsString ) const;
+  void parseCellLayoutRows( CellLayoutRows const & cellLayoutRows,
+                            stdVector< string > & rowsAsString ) const;
 
   /**
-   * @brief Parse a serialized row string and append the resulting row to a TableData.
-   * @param str The serialized row string to parse.
-   * @param reconstructedTableData The TableData being reconstructed
+   * @brief Parse a string row to a TablaData cells.
+   * @param rowString The string row string to parse.
+   * @return The parsed row as a vector of CellData.
    */
-  stdVector< TableData::CellData > reconstructRow( string_view str ) const;
+  stdVector< TableData::CellData > parseStringRow( string_view rowString ) const;
 
   /**
-   * @brief Gather serialized rows across all ranks, Reconstruct a TableData,
+   * @brief Gather string rows across all ranks, construct a TableData,
    *        and sort the TableData by the desired sorting functor
-   * @param reconstructedTableData The table data being reconstructed and sorted.
-   * @param rowsAsString Serialized rows by the current rank.
-   * @param status Updated with content availability.
+   * @param gatheredTableData The output TableData object populated with gathered cells.
+   * @param rowsAsString Serialized rows string provided by the current rank.
+   * @param status Updated to indicate if any content was actually gathered.
    */
-  void gatherAndSortTableDataAcrossRanks ( TableData & reconstructedTableData,
-                                      stdVector< string > & rowsAsString,
-                                      TableTextMpiOutput::Status & status ) const;
+  void gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
+                                           stdVector< string > & rowsAsString,
+                                           TableTextMpiOutput::Status & status ) const;
   /**
-   * @brief Serializes data cell rows, gathers and sorts them across all MPI ranks,
+   * @brief Parse CellLayoutRows, gathers and sorts them across all MPI ranks,
    *        and outputs the result to rank 0.
-   * @param tableOutput The output stream to display the table
-   * @param dataCellsLayout The layout for the data cells
+   * @param tableOutput The output stream where the formatted table is written.
+   * @param cellLayoutRows The layout for the data cells
    * @param status The TableMpi status for the current rank
    */
   void gatherSortAndOutput( std::ostream & tableOutput,
-                            CellLayoutRows const & dataCellsLayout,
+                            CellLayoutRows const & cellLayoutRows,
                             TableTextMpiOutput::Status & status )const;
 
   /**
-   * @brief Serializes data cell rows, gathers them across all MPI ranks,
-   *        and outputs the result to rank 0.
+   * @brief Gather data cell rows across all MPI ranks and output them to rank 0 in rank order.
    * @param tableOutput The output stream to display the resulting table
    * @param dataCellsLayout  The layout for the data cells
    * @param tableLayout The layout of the table
    * @param status The TableMpi status for the current rank
    */
   void gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
-                                   CellLayoutRows const & dataCellsLayout,
-                                   PreparedTableLayout const & tableLayout,
-                                   TableTextMpiOutput::Status & status )const;
-  /**
-   * @brief Select the output method and display the result to rank 0;
-   * @param tableOutput The output stream to display the resulting table
-   * @param tableLayout  The layout of the table
-   * @param dataCellsLayout The layout for the data cells
-   * @param status The TableMpi status for the current rank
-   */
-  void gatherAndOutputTableDataRank0( std::ostream & tableOutput,
-                                      PreparedTableLayout const & tableLayout,
-                                      CellLayoutRows const & dataCellsLayout,
-                                      Status & status ) const;
-
+                                            CellLayoutRows const & dataCellsLayout,
+                                            PreparedTableLayout const & tableLayout,
+                                            TableTextMpiOutput::Status & status )const;
 };
 
 }
