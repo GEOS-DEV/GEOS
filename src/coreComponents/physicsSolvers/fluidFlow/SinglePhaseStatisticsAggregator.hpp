@@ -20,14 +20,14 @@
  * Problem : ProblemManager
  * |-> domain : DomainPartition
  *     |-> MeshBodies : Group
- *         |-> cartesianMesh : MeshBody
+ *         |-> "cartesianMesh" : MeshBody
  *             |-> meshLevels : Group
  *                 |-> Level0 : MeshLevel
  *                 |   |-> ElementRegions : ElementRegionManager
  *                 |   |   |-> elementRegionsGroup : Group
- *                 |   |       |-> Channel : CellElementRegion
+ *                 |   |       |-> "Channel" : CellElementRegion
  *                 |   |       |   |-> elementSubRegions : Group
- *                 |   |       |       |-> cb-0_0_0 : CellElementSubRegion
+ *                 |   |       |       |-> "cb-0_0_0" : CellElementSubRegion
  *                 |   |       |       |   | * pressure : Wrapper< real64 array >
  *                 |   |       |       |   | * temperature : Wrapper< real64 array >
  *                 |   |       |       |   |-> sets : Group
@@ -37,7 +37,7 @@
  *                 |   |       |       |   |
  *                 |   |       |       |   [...] (other fields)
  *                 |   |       |       |
- *                 |   |       |       |-> cb-0_0_1 : CellElementSubRegion
+ *                 |   |       |       |-> "cb-0_0_1" : CellElementSubRegion
  *                 |   |       |       |   | * pressure : Wrapper< real64 array >
  *                 |   |       |       |   | * temperature : Wrapper< real64 array >
  *                 |   |       |       |   |-> sets : Group
@@ -49,31 +49,34 @@
  *                 |   |       |       |
  *                 |   |       |       [...] (other sub-regions)
  *                 |   |       |
- *                 |   |       |-> Barrier : CellElementRegion
- *                 |   |           |-> cb-1_0_0 : CellElementSubRegion
- *                 |   |           |-> cb-1_0_1 : CellElementSubRegion
+ *                 |   |       |-> "Barrier" : CellElementRegion
+ *                 |   |           |-> "cb-1_0_0" : CellElementSubRegion
+ *                 |   |           |-> "cb-1_0_1" : CellElementSubRegion
  *                 |   |           [...] (other sub-regions)
  *                 |   |
  *                 |   |-> nodeManager : NodeManager
  *                 |   |   |-> sets : Group
  *                 |   |       | * all : Wrapper< index array >
- *                 |   |       | * myBox : Wrapper< index array >
+ *                 |   |       | * "myBox" : Wrapper< index array >
  *                 |   |       [...] (other element sets)
  *                 |   |
  *                 |   [...] (other element managers)
  *          ____   |   |
  *          |      |   |-> statistics : Group (storage for all stats)
- *          |      |       |-> flowStats : Group (storage for this instance stats)
- *          |      |       |   |-> regionsStatistics : RegionStatistics (aggregate)
- *          |      |       |       |-> Channel : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |       |   |-> cb-0_0_0 : RegionStatistics (compute read-back)
- *  stats   |      |       |       |   |-> cb-0_0_1 : RegionStatistics (compute read-back)
- *  data -> |      |       |       |   [...] (other sub-regions stats)
+ *          |      |       |-> "flowStats" : Group (storage for this instance stats)
+ *          |      |       |   |-> regionsStatistics : RegionStatistics (mesh-level aggregate)
+ *          |      |       |       |-> all / "myBox" : RegionStatistics (selected set aggregate)
+ *          |      |       |       |   |-> "Channel" : RegionStatistics (region aggregate, mpi reduced)
+ *          |      |       |       |   |   |-> "cb-0_0_0" : RegionStatistics (sub-region compute read-back)
+ *  stats   |      |       |       |   |   |-> "cb-0_0_1" : RegionStatistics (sub-region compute read-back)
+ *  data -> |      |       |       |   |   [...] (other sub-regions stats)
+ *          |      |       |       |   |
+ *          |      |       |       |   |-> "Barrier" : RegionStatistics (region aggregate, mpi reduced)
+ *          |      |       |       |       |-> cb-1_0_0 : RegionStatistics (sub-region compute read-back)
+ *          |      |       |       |       |-> cb-1_0_1 : RegionStatistics (sub-region compute read-back)
+ *          |      |       |       |       [...] (other sub-regions stats)
  *          |      |       |       |
- *          |      |       |       |-> Barrier : RegionStatistics (aggregate, mpi reduced)
- *          |      |       |           |-> cb-1_0_0 : RegionStatistics (compute read-back)
- *          |      |       |           |-> cb-1_0_1 : RegionStatistics (compute read-back)
- *          |      |       |           [...] (other sub-regions stats)
+ *          |      |       |       [...] (other set aggregates)
  *          |      |       |
  *          |___   |       [...] (other stats storages)
  *                 |
