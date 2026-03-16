@@ -14,7 +14,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseStatisticsAg/gregator.hpp
+ * @file StatisticsAggregatorBase.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_STATISTICSAGGREGATOR_HPP_
@@ -39,7 +39,7 @@ class RegionStatisticsBase : public dataRepository::Group
 {
 public:
 
-  /// Time of statistics computation
+  /// Time of statistics computation (std::numeric_limits< double >::lowest() if not initialized)
   real64 m_time;
 
   /**
@@ -47,6 +47,8 @@ public:
    * @param targetName name of the data-repository object that is targeted by the statistics
    *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
+   * @param statsOutputEnabled If true, the stats are saved in the output HDF5
+   *                           (through dataRepository::RestartFlags, but not functional for this output for now).
    */
   RegionStatisticsBase( string const & targetName,
                         dataRepository::Group * const parent,
@@ -92,7 +94,9 @@ public:
                                                 StatsGroupType & ) >;
 
   /**
-   * @brief TODO Document
+   * @brief A functor that can be used to register a statistics Group instance. Parameters:
+   *        - dataRepository::Group &, the parent Group,
+   *        - string const &, name of the statistics target (i.e. region name).
    */
   using RegionStatsRegisterFunc = std::function< StatsGroupType & ( dataRepository::Group &,
                                                                     string const & ) >;
@@ -174,11 +178,10 @@ public:
   StatsGroupType & getRegionsStatistics( MeshLevel & mesh ) const;
 
   /**
-   * @brief TODO
+   * @return a specific statistics Group instance.
+   * @param mesh The desired mesh-level
+   * @param regionName The name of the desired region
    * @throw InputError if no statistics data is found for the given region name.
-   * @param mesh TODO
-   * @param regionNname TODO
-   * @return TODO
    */
   StatsGroupType & getRegionStatistics( MeshLevel & mesh, string_view regionName ) const;
 
