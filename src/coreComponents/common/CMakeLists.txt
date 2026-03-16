@@ -39,10 +39,13 @@ set( common_headers
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     logger/DiagnosticMessage.hpp
+     logger/GeosExceptions.hpp
      logger/GeosExceptions.hpp
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
+     logger/LogHistory.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -72,6 +75,7 @@ endif( )
 # Specify all sources
 #
 set( common_sources
+     format/EnumStrings.cpp
      format/table/TableData.cpp
      format/table/TableFormatter.cpp
      format/table/TableLayout.cpp
@@ -82,6 +86,7 @@ set( common_sources
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp
+     logger/LogHistory.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp

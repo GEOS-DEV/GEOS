@@ -333,6 +333,14 @@ void setupEnvironment( int argc, char * argv[] )
 void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
+
+  ErrorLogger::global().getLoggerReportData().gatherRecordsRank0();
+  if( MpiWrapper::commRank() == 0 )
+  {
+    TableTextFormatter tableReportFormatter;
+    GEOS_LOG( tableReportFormatter.toString< LogHistory >( ErrorLogger::global().getLoggerReportData() ));
+  }
+
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();

@@ -43,17 +43,6 @@ namespace geos
 namespace internal
 {
 
-
-
-/**
- * Default allocator type for std::vector.
- * This can be specialized if a different allocator is needed.
- * Required to avoid recursive evaluation in StdVectorWrapper.
- * @tparam T Type of elements in the vector.
- */
-template< typename T >
-using DefaultAllocator = std::allocator< T >;
-
 /**
  * Wrapper for std::vector that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
@@ -63,7 +52,7 @@ using DefaultAllocator = std::allocator< T >;
  * If false, uses operator[] for unchecked access.
  */
 template< typename T,
-          typename Allocator  = DefaultAllocator< T >,
+          typename Allocator  = std::allocator< T >,
           bool USE_BOUNDS_CHECKING = false >
 class StdVectorWrapper : public std::vector< T, Allocator >
 {
