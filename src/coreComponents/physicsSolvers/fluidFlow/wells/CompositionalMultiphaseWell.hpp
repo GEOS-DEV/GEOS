@@ -390,14 +390,23 @@ protected:
 
 
 
-  virtual bool solveWHPConstraint( real64 const & time_n,
-                                   real64 const & dt,
-                                   integer const cycleNumber,
-                                   integer const coupledIterationNumber,
-                                   DomainPartition & domain,
-                                   MeshLevel & mesh,
-                                   ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion )override;
+  virtual bool solveMinWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
+
+  virtual bool solveMaxWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
 private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

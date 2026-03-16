@@ -137,7 +137,7 @@ void ProdPipeFlowTableFunction::initializeFunction()
   FunctionManager * functionManager = &FunctionManager::getInstance();
   // Create nonuniform version of uniformly spaced table
   m_tableFunction = &(dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( MultivariableNonuniformTableFunction::catalogName(), getTableName()  ) ));
-  m_tableFunction0 = &dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b" ) );
+  m_tableFunction0 = &dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b"+getTableName() ) );
 
   // find max number if independent vars
   int maxVar = std::max( m_rate.size(), m_whp.size());

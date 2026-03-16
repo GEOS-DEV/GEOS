@@ -769,6 +769,15 @@ public:
     return static_cast< bool >(m_minWHPConstraint);
   }
 
+  /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMaximumWHPConstraint() const
+  {
+    return static_cast< bool >(m_maxWHPConstraint);
+  }
+
   ///@}
 
 
@@ -915,9 +924,14 @@ public:
   //  WHP constraint getters
   MinimumWHPConstraint * getMinWHPConstraint() { return m_minWHPConstraint; };
   MinimumWHPConstraint * getMinWHPConstraint() const { return m_minWHPConstraint; };
+  MaximumWHPConstraint * getMaxWHPConstraint() { return m_maxWHPConstraint; };
+  MaximumWHPConstraint * getMaxWHPConstraint() const { return m_maxWHPConstraint; };
 
   ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
   MinimumBHPConstraint * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+
+  InjectionConstraint< VolumeRateConstraint > * getMaxVolumeConstraintForWHP() { return m_maxVolumeConstraintForWHP; };
+  MaximumBHPConstraint * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * >  getProdRateConstraints() { return m_productionRateConstraintList; };
@@ -956,14 +970,23 @@ public:
                              WellElementSubRegion & subRegion,
                              DofManager const & dofManager );
 
-  virtual bool solveWHPConstraint( real64 const & time_n,
-                                   real64 const & dt,
-                                   integer const cycleNumber,
-                                   integer const coupledIterationNumber,
-                                   DomainPartition & domain,
-                                   MeshLevel & mesh,
-                                   ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion ) = 0;
+  virtual bool solveMinWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion ) = 0;
+
+  virtual bool solveMaxWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion ) = 0;
   virtual void outputSingleWellDebug( real64 const time,
                                       real64 const dt,
                                       integer current_newton_iteration,

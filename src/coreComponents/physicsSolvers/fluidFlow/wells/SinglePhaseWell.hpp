@@ -290,14 +290,23 @@ public:
 
   };
 
-  virtual bool solveWHPConstraint( real64 const & time_n,
-                                   real64 const & dt,
-                                   integer const cycleNumber,
-                                   integer const coupledIterationNumber,
-                                   DomainPartition & domain,
-                                   MeshLevel & mesh,
-                                   ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion )override;
+  virtual bool solveMinWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
+
+  virtual bool solveMaxWHPConstraint( real64 const & time_n,
+                                      real64 const & dt,
+                                      integer const cycleNumber,
+                                      integer const coupledIterationNumber,
+                                      DomainPartition & domain,
+                                      MeshLevel & mesh,
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )override;
   virtual void outputSingleWellDebug( real64 const time,
                                       real64 const dt,
                                       integer current_newton_iteration,

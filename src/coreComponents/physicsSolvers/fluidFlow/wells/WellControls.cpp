@@ -277,7 +277,7 @@ void WellControls::createMaxVolumeInjConstraintForWHP()
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
   const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
-  string_array ratePhases = m_flowTable.getRatePhases();
+  // tjb string_array ratePhases = m_flowTable.getRates();
   // tjb switch to defining all phases  ???
   //m_maxVolumeConstraintForWHP->setPhaseNames( ratePhases );
   //m_maxVolumeConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
@@ -836,11 +836,46 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   else
   {
     constraintList = getInjRateConstraints();
-    // Solve maximum bhp constraint first;
-    constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+    if( hasMaximumWHPConstraint()  )
+    {
+      MaximumBHPConstraint * maxBHPForWHP =  getMaximumBHPConstraintForWHP();
+      if( maxBHPForWHP != nullptr && maxBHPForWHP->isConstraintActive())
+      {
+        std::cout << "we not active " << subRegion.getName() << " Constraint " << maxBHPForWHP->getName() << " active " << maxBHPForWHP->isConstraintActive() <<
+          " value " << maxBHPForWHP->getConstraintValue( time_n ) << std::endl;
+        constraintList.insert( constraintList.begin(), maxBHPForWHP );
+
+      }
+      else
+      {
+        InjectionConstraint< VolumeRateConstraint > * maxVolForWHP =  getMaxVolumeConstraintForWHP();
+        if( maxVolForWHP != nullptr && maxVolForWHP->isConstraintActive())
+        {
+          std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxVolForWHP->getName() << " active " << maxVolForWHP->isConstraintActive() <<
+            " value " << maxVolForWHP->getConstraintValue( time_n ) << std::endl;
+          constraintList.insert( constraintList.begin(), maxVolForWHP );
+
+        }
+        else
+        {
+          // Solve minimum bhp constraint first
+          if( getMinBHPConstraint()->isConstraintActive() )
+          {
+            std::cout << "we  not active " << subRegion.getName() << " Constraint add minbp " << std::endl;
+            constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+          }
+        }
+      }
+    }
+    else
+    {
+      // Solve maximum bhp constraint first;
+      constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+    }
   }
 
-  // Get current constraint
+
+// Get current constraint
   WellConstraintBase *  limitingConstraint = nullptr;
   for( auto & constraint : constraintList )
   {
@@ -853,7 +888,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                          limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
     }
   }
-  // Check current against other constraints
+// Check current against other constraints
   std::cout << "Current constraint for well " << subRegion.getName() << " is " << limitingConstraint->getName() << std::endl;
   constraintList.erase( std::remove( constraintList.begin(), constraintList.end(), limitingConstraint ), constraintList.end());
   std::vector< int > constraintChecked( constraintList.size(), 0 );
@@ -925,18 +960,26 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   else
   {
     constraintList = getInjRateConstraints();
-    // remove the limiting constraint from the list if present
+    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
     {
-      if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
-      {   // remove from list and add BHP constraint
-          //auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
-          //if( it != constraintList.end() )
-          //{
-          //  constraintList.erase( it );
-          //}
-        constraintList.push_back( getMaxBHPConstraint() );
+      {   // set BHP constraint to be first constraint evaluated
+        if( getMaxBHPConstraint()->isConstraintActive() )
+        {
+          constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+        }
       }
     }
+    // Solve minimum bhp constraint first
+    if( false && getMinBHPConstraint()->isConstraintActive() )
+    {
+      // this is related to WHP option which introduces a new BHP constraint
+      limitingConstraint = getMinBHPConstraint();
+    }
+    else if( limitingConstraint == nullptr )
+    {
+      limitingConstraint = constraintList[0];
+    }
+
   }
   if( isoThermalEstimatorEnabled() )
   {
@@ -1026,16 +1069,38 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                      " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " << limitingConstraint->phaseVolumeRates() << " " <<
                      limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
 
-  if( hasMinimumWHPConstraint() )
+  if( hasMinimumWHPConstraint()     )
   {
-    bool whpLimiting= solveWHPConstraint ( time_n,
-                                           dt,
-                                           cycleNumber,
-                                           coupledIterationNumber,
-                                           domain,
-                                           mesh,
-                                           elemManager,
-                                           subRegion );
+    bool whpLimiting= solveMinWHPConstraint ( time_n,
+                                              dt,
+                                              cycleNumber,
+                                              coupledIterationNumber,
+                                              domain,
+                                              mesh,
+                                              elemManager,
+                                              subRegion );
+
+    if( whpLimiting )
+    {
+      // WHP option can use different constraint as limiting constraint, so need to update the rates for the current limiting constraint
+      limitingConstraint= getCurrentConstraint();
+
+      GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                         " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " << limitingConstraint->phaseVolumeRates() << " " <<
+                         limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+
+    }
+  }
+  else if( hasMaximumWHPConstraint() )
+  {
+    bool whpLimiting= solveMaxWHPConstraint ( time_n,
+                                              dt,
+                                              cycleNumber,
+                                              coupledIterationNumber,
+                                              domain,
+                                              mesh,
+                                              elemManager,
+                                              subRegion );
 
     if( whpLimiting )
     {

@@ -50,42 +50,20 @@ InjPipeFlowTableFunction::InjPipeFlowTableFunction( const string & name,
     setSizedFromParent( 0 ).
     setDescription( "Array of rates" );
 
-  registerWrapper( viewKeyStruct::waterFractionType(), &m_waterFractionType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Type of water fraction  entered in the wfr array. Valid entires are ..." );
-
-  registerWrapper( viewKeyStruct::waterFractionArray(), &m_wfr ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Array of water fractions " );
-
-  registerWrapper( viewKeyStruct::gasFractionType(), &m_gasFractionType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Type of gas fraction  entered in the wfr array. Valid entires are ..." );
-
-  registerWrapper( viewKeyStruct::gasFractionArray(), &m_gfr ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Array of gas fractions " );
 
   registerWrapper( viewKeyStruct::wellHeadPressureArray(), &m_whp ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Array of well head pressures " );
 
-  registerWrapper( viewKeyStruct::gasLiftArray(), &m_gasLift ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Array of well gas lift rates " );
+
 
   registerWrapper( viewKeyStruct::bottomHolePressureArray(), &m_bhp ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Array of bottom hole pressures representing the dependent variable for the table function.\n"
-                    "The quantities must be entered such that the rate index increases first, followed by whp, waterFraction, and finally gasFraction.\n"
-                    " For example  bhp[1]= f(rate[1],whp[1],,waterFraction[1],gasFraction[1]) , bhp[2]= f(rate[2],whp[1],waterFraction[1],gasFraction[1])" );
+                    "The quantities must be entered such that the rate index increases first, followed by whp.\n"
+                    " For example  bhp[1]= f(rate[1],whp[1]) , bhp[2]= f(rate[2],whp[1])" );
 
 }
 
@@ -102,57 +80,32 @@ void InjPipeFlowTableFunction::postInputInitialization()
       }
     }
   };
-  std::cout << " rate " << m_rate.size() << " whp " << m_whp.size() << " wfr " << m_wfr.size() << " gfr " << m_gfr.size() <<std::endl;
+  std::cout << " rate " << m_rate.size() << " whp " << m_whp.size()  <<std::endl;
   checkNotDecreasing( m_rate, getRateType());
-  checkNotDecreasing( m_whp, "wellHeadPressure" );
-  checkNotDecreasing( m_wfr, getWaterFractionType());
-  checkNotDecreasing( m_gfr, getGasFractionType());
-  checkNotDecreasing( m_gasLift, getGasFractionType());
-  // fluid model phase naming convention associated with rate type
-  if( m_rateType == "liq" )
-  {
-    m_ratePhases.resize( 2 );
-    m_ratePhases[0] = "oil";
-    m_ratePhases[1] = "water";
-  }
-  else if( m_rateType == "oil" )
-  {
-    m_ratePhases.resize( 1 );
-    m_ratePhases[0] = "oil";
-  }
-  else if( m_rateType == "gas" )
-  {
-    m_ratePhases.resize( 1 );
-    m_ratePhases[0] = "gas";
-  }
+
 
   initializeFunction();
 }
 
 void InjPipeFlowTableFunction::initializeFunction()
 {
-  localIndex constexpr nDims = 5;
+  localIndex constexpr nDims = 2;
   localIndex constexpr nOps = 1;
 
   FunctionManager * functionManager = &FunctionManager::getInstance();
   // Create nonuniform version of uniformly spaced table
   m_tableFunction = &(dynamicCast< MultivariableNonuniformTableFunction & >( *functionManager->createChild( MultivariableNonuniformTableFunction::catalogName(), getTableName()  ) ));
-  m_tableFunction0 = &dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b" ) );
+  m_tableFunction0 = &dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_b"+getTableName() ) );
 
   // find max number if independent vars
   int maxVar = std::max( m_rate.size(), m_whp.size());
-  maxVar = std::max( maxVar, m_wfr.size());
-  maxVar = std::max( maxVar, m_gfr.size());
-  maxVar = std::max( maxVar, m_gasLift.size());
   // Copy inputs into formats needed by table function
 
   integer_array axisPoints( nDims );
 
   axisPoints[0] = m_rate.size();
   axisPoints[1] = m_whp.size();
-  axisPoints[2] = m_wfr.size();
-  axisPoints[3] = m_gfr.size();
-  axisPoints[4] = m_gasLift.size();
+
 
   integer_array axisPointsr( nDims );
   for( int i=0; i<nDims; i++ )
@@ -167,34 +120,14 @@ void InjPipeFlowTableFunction::initializeFunction()
   for( int i=0; i< m_rate.size(); i++ )
   {
     axisCoordinates[0][i] = m_rate[i];
-    axisCoord( 4, i )  = m_rate[i];
+    axisCoord( 1, i )  = m_rate[i];
   }
   axisCoordinates[1].resize( m_whp.size());
   for( int i=0; i<m_whp.size(); i++ )
   {
     axisCoordinates[1][i] = m_whp[i];
-    axisCoord( 3, i )  = m_whp[i];
+    axisCoord( 0, i )  = m_whp[i];
   }
-  axisCoordinates[2].resize( m_wfr.size());
-  for( int i=0; i<m_wfr.size(); i++ )
-  {
-    axisCoordinates[2][i] = m_wfr[i];
-    axisCoord( 2, i )  = m_wfr[i];
-  }
-  axisCoordinates[3].resize( m_gfr.size());
-  for( int i=0; i<m_gfr.size(); i++ )
-  {
-    axisCoordinates[3][i] = m_gfr[i];
-    axisCoord( 1, i )  = m_gfr[i];
-  }
-  axisCoordinates[4].resize( m_gasLift.size());
-  for( int i=0; i< m_gasLift.size(); i++ )
-  {
-    axisCoordinates[4][i] = m_gasLift[i];
-    axisCoord( 0, i )  = m_gasLift[i];
-  }
-
-
 
   setTableCoordinates( nDims, nOps, axisCoord, axisPointsr );
   setTableValues( m_bhp );
@@ -243,39 +176,30 @@ InjPipeFlowTableFunction::getRateBracket( real64 const & rate, integer & b0, int
   return stat;
 }
 real64
-InjPipeFlowTableFunction::calculatedPdQ( array1d< real64 > const & phaseRates, real64 const & whp, real64 & ql0, real64 & ql1, real64 & bhp0, real64 & bhp1 ) const
+InjPipeFlowTableFunction::calculatedPdQ( real64 const & volRate, real64 const & whp, real64 & ql0, real64 & ql1, real64 & bhp0, real64 & bhp1 ) const
 {
+  // what is the phase index
   // Calculate ratios that are assumed fixed for table lookup
-  real64 lrate = -( phaseRates[0] + phaseRates[2] );
-  real64 wfr = -phaseRates[2]/lrate;
-  real64 gor = 0;
+  real64 lrate = -volRate;
 
-  if( !isZero( phaseRates[0] ))
-    gor =  phaseRates[1]/( phaseRates[0] );
 
   integer b0, b1;
   integer bStat = getRateBracket( lrate, b0, b1 );
   GEOS_UNUSED_VAR( bStat );
   // Get bhp at lower bracket rates
   ql0 = -m_rate[b0];
-  phaseRates[0] = ql0*(1-wfr);
-  phaseRates[1] = phaseRates[0]*gor;
-  phaseRates[2] = ql0* wfr;
   integer solveStat=1;
-  calculateBHP( phaseRates, whp, bhp0, solveStat );
+  calculateBHP( ql0, whp, bhp0, solveStat );
 
   // Get bhp at upper bracket rates
   ql1 = -m_rate[b1];
-  phaseRates[0] = ql1*(1-wfr);
-  phaseRates[1] = phaseRates[0]*gor;
-  phaseRates[2] = ql1* wfr;
   solveStat=1;
-  calculateBHP( phaseRates, whp, bhp1, solveStat );
+  calculateBHP( ql1, whp, bhp1, solveStat );
 
   real64 dP_dQ = ( bhp1 - bhp0 ) / ( m_rate[b1] - m_rate[b0] );
   return dP_dQ;
 }
-void InjPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const
+void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 const & whp, real64 & bhp, integer & solveStat ) const
 {
 
   MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
@@ -289,58 +213,29 @@ void InjPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRate
   TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
   // Assume success
   // liq(oil)=0 vap = 1 wat = 2
-  real64 const gasLift=0.0;
+
   real64 const m_sign=-1.0;
-  real64 liq = (phaseRates[0] + phaseRates[2]);
+  real64 liq = volRate;
   //for( int i = 0; i < phaseRates.size(); ++i )
   //{
   //  totalVolumeRate += phaseRates[i];
 //  }
 
-  std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
+  std::cout << bhp << " " << volRate << " " << whp << std::endl;
 
-  real64 wct = 0;
-  if( phaseRates[0]*m_sign > 0 )
-  {
-    wct = phaseRates[2]/(phaseRates[0]+phaseRates[2]);
-  }
-#if 0
-  if( wct < m_wfr[0] )
-  {
-    wct = m_wfr[0] + 0.00000001;
-  }
-  else if( wct > m_wfr[ m_wfr.size() -1 ] )
-  {
-    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
-  }
-#endif
-  real64 gor = 0;
-  if( phaseRates[1]*m_sign  > 0 )
-    gor =  phaseRates[1]/(phaseRates[0] );
-#if 0
-  if( gor < m_gfr[0] )
-  {
-    gor = m_gfr[0]+   0.00000001;
-  }
-  else if( gor > m_gfr[ m_gfr.size() -1 ] )
-  {
-    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
-  }
-#endif
+
   //gor = m_gfr[0];
-  array1d< real64 > table_coords( 5 );
+  array1d< real64 > table_coords( 2 );
 
-  array2d< real64 > table_derv( 1, 5 );
+  array2d< real64 > table_derv( 1, 25 );
   table_coords[0]=liq*m_sign; // gas oil ratio
   table_coords[1]=whp;  // well head pressure
-  table_coords[2]=wct;  // water cut
-  table_coords[3]=gor; // well head pressure
-  table_coords[4]=gasLift; // gas lift rate
-  array1d< real64 > table_coordsr( 5 );
 
-  for( integer i=0; i<5; i++ )
+  array1d< real64 > table_coordsr( 2 );
+
+  for( integer i=0; i<2; i++ )
   {
-    table_coordsr[5-i-1]=table_coords[i];
+    table_coordsr[2-i-1]=table_coords[i];
   }
   if( solveStat == 0 )
   {
@@ -351,17 +246,17 @@ void InjPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRate
     real64 bhpbt = table_bhp[0];
     // std::cout << " InjPipeFlowTableFunction::calculateBHP initial bhp = " << bhp << " bhp calc " << table_bhp[0] << " " << table_coordsr
     // <<std::endl;
-    std::cout << "InjPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << table_derv[0][3]<<
+    std::cout << "InjPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp <<   " " << table_derv[0][3]<<
       std::endl;
     bhp=bhpbt;
   }
   else
   {
     array1d< real64 > table_bhp( 1 );
-    real64 derivatives[5]{};
+    real64 derivatives[2]{};
     table_bhp[0] = kernelWrapper.compute( table_coords, derivatives );
     bhp = table_bhp[0];
-    std::cout << "InjPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << derivatives[1] <<
+    std::cout << "InjPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " " << derivatives[1] <<
       std::endl;
   }
   if( whp >m_whp[m_whp.size()-1] )
@@ -429,7 +324,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
   }
 #endif
-  std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq << " wct " << wct << " gor " << gor << std::endl;
+  std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq <<   std::endl;
 #if 1
   array1d< real64 > table_coords( 5 );
   real64 derivatives[5]{};
@@ -496,8 +391,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
       //bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
       //whpN = m_whp[0] + ( bhp - bhp0 )*table_derv[0][3];
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
+      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN  << std::endl;
       whp=whpN;
       solveStat=0;
       return;
@@ -530,8 +424,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
       whp  = whp0 + ( bhp - bhp0 )*( whpN - whp0  )/( bhpN - bhp0 );
       whp  = whp0 + ( bhp - bhp0  )*( whpN - whp0  )/( bhpN - bhp0 );
       std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing " << whpN << " " << whp0 << " " << bhpN << " " << bhp0 << std::endl;
-      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
+      std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP found bracketing whp = " << whp0 << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN <<  std::endl;
       solveStat=1;
     }
   }
@@ -642,7 +535,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     ++iter;
   }
   whp0 = table_coords[1];
-  std::cout << "InjPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn << " wct = " << wct << " gor = " << gor << std::endl;
+  std::cout << "InjPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn <<  std::endl;
 }
 
 void InjPipeFlowTableFunction::writeTable() const
@@ -664,33 +557,26 @@ void InjPipeFlowTableFunction::writeTable() const
 
   TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
 
-  of << "rate,wellHeadPressure,waterFraction,gasFraction,bottomHolePressure" << std::endl;
+  of << "rate,wellHeadPressure,bottomHolePressure" << std::endl;
   //array1d< real64 > table_coords( 5 );
-  real64 table_coords[5]{};
-  real64 derivatives[5]{};
-  table_coords[4] = 0.0; //gas lift
-  for( integer i=0; i < m_gfr.size(); ++i )
-  {
-    table_coords[3]=m_gfr[i];   // well head pressure
-    // gas oil ratio
-    for( real64 j=m_wfr[0]; j < m_wfr[m_wfr.size()-1]; j=j+0.01 )
-    {
-      table_coords[2]=j;   // water cut
-      for( real64 k=m_whp[0]; k < m_whp[m_whp.size()-1]; k=k+10e5 )
-      {
-        table_coords[1]=k;
-        for( integer l=0; l < m_rate.size(); ++l )
-        {
-          table_coords[0]=m_rate[l]; // liquid rate
+  real64 table_coords[2]{};
+  real64 derivatives[2]{};
 
-          // array2d< real64 > derivs( 1, 5 );
-          //kernel.compute( table_coords, table_bhp, derivs );
-          real64 table_bhp = kernelWrapper.compute( table_coords, derivatives );
-          of << table_coords[0] << "," << table_coords[1] << "," << table_coords[2] << "," << table_coords[3] << "," << table_bhp << std::endl;
-        }
-      }
+
+  for( real64 k=m_whp[0]; k < m_whp[m_whp.size()-1]; k=k+10e5 )
+  {
+    table_coords[1]=k;
+    for( integer l=0; l < m_rate.size(); ++l )
+    {
+      table_coords[0]=m_rate[l];     // liquid rate
+
+      // array2d< real64 > derivs( 1, 5 );
+      //kernel.compute( table_coords, table_bhp, derivs );
+      real64 table_bhp = kernelWrapper.compute( table_coords, derivatives );
+      of << table_coords[0] << "," << table_coords[1]    << "," << table_bhp << std::endl;
     }
   }
+
   of.close();
 
 

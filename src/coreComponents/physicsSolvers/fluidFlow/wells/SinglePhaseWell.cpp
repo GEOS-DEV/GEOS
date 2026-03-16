@@ -1326,14 +1326,14 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   } );
 }
 
-bool SinglePhaseWell::solveWHPConstraint( real64 const & time_n,
-                                          real64 const & dt,
-                                          integer const cycleNumber,
-                                          integer const coupledIterationNumber,
-                                          DomainPartition & domain,
-                                          MeshLevel & mesh,
-                                          ElementRegionManager & elemManager,
-                                          WellElementSubRegion & subRegion )
+bool SinglePhaseWell::solveMaxWHPConstraint( real64 const & time_n,
+                                             real64 const & dt,
+                                             integer const cycleNumber,
+                                             integer const coupledIterationNumber,
+                                             DomainPartition & domain,
+                                             MeshLevel & mesh,
+                                             ElementRegionManager & elemManager,
+                                             WellElementSubRegion & subRegion )
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
@@ -1345,11 +1345,33 @@ bool SinglePhaseWell::solveWHPConstraint( real64 const & time_n,
   GEOS_UNUSED_VAR( subRegion );
 
 
-  GEOS_ERROR( "SinglePhaseWell::solveWHPConstraint(WHP constraint option not implemented for SinglePhaseWell." );
+  GEOS_ERROR( "SinglePhaseWell::solveMaxWHPConstraint(Maximum WHP constraint option not implemented for SinglePhaseWell." );
   return false;
 
 }
+bool SinglePhaseWell::solveMinWHPConstraint( real64 const & time_n,
+                                             real64 const & dt,
+                                             integer const cycleNumber,
+                                             integer const coupledIterationNumber,
+                                             DomainPartition & domain,
+                                             MeshLevel & mesh,
+                                             ElementRegionManager & elemManager,
+                                             WellElementSubRegion & subRegion )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( cycleNumber );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( elemManager );
+  GEOS_UNUSED_VAR( subRegion );
 
+
+  GEOS_ERROR( "SinglePhaseWell::solveMinWHPConstraint(Minimum WHP constraint option not implemented for SinglePhaseWell." );
+  return false;
+
+}
 void SinglePhaseWell::outputSingleWellDebug( real64 const time,
                                              real64 const dt,
                                              integer current_newton_iteration,
