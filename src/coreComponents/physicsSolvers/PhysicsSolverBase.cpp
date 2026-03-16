@@ -374,25 +374,27 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
                                                   stdVector< real64 > const & subStepDts ) const
 {
-  LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
-  logpart.addEndDescription( "- Cycle ", cycleNumber );
-  logpart.addEndDescription( "- N substeps ", numOfSubSteps );
-
-  std::stringstream logMessage;
-  for( integer i = 0; i < numOfSubSteps; ++i )
   {
-    if( i > 0 )
+    LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+    logpart.addEndDescription( "- Cycle ", cycleNumber );
+    logpart.addEndDescription( "- N substeps ", numOfSubSteps );
+
+    std::stringstream logMessage;
+    for( integer i = 0; i < numOfSubSteps; ++i )
     {
-      logMessage << ", ";
+      if( i > 0 )
+      {
+        logMessage << ", ";
+      }
+      logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
     }
-    logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
+
+    if( logMessage.rdbuf()->in_avail() == 0 )
+      logMessage << "/";
+
+    logpart.addEndDescription( "- substep dts ", logMessage.str() );
+    logpart.end();
   }
-
-  if( logMessage.rdbuf()->in_avail() == 0 )
-    logMessage << "/";
-
-  logpart.addEndDescription( "- substep dts ", logMessage.str() );
-  logpart.end();
 
   if( isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel()))
     getIterationStats().outputStatistics();
