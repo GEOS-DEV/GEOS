@@ -33,6 +33,12 @@
 #include "mesh/DomainPartition.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" //should not be here -- testing only design flaw
+#include "constitutive/permeability/SlipDependentPermeability.hpp"
+#include "constitutive/permeability/WillisRichardsPermeability.hpp"
+#include "constitutive/permeability/ParallelPlatesPermeability.hpp"
+
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
@@ -102,6 +108,35 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
                                                         newHydraulicAperture[k] );
     }
   } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture,
+                                                           arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
+                                                           arrayView2d< real64 const > const & dispJump,
+                                                           arrayView2d< real64 const > const & fracTraction)
+{
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
+      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
+      real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fracTraction[k] );
+      porousWrapper.updateStateFromPressureApertureJumpAndTraction( k, q,
+                                                        pressure[k],
+                                                        oldHydraulicAperture[k],
+                                                        newHydraulicAperture[k],
+                                                        dHydraulicAperture_dNormalJump[k],
+                                                        jump,
+                                                        traction
+                                                       );
+    }
+  } );
+
 }
 
 FlowSolverBase::FlowSolverBase( string const & name,
@@ -632,13 +667,34 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
 
+  arrayView2d< real64 const > const dispJump           = subRegion.getField< fields::contact::dispJump >();
+  arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
+
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );
 
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    // if( m_isFixedStressPoromechanicsUpdate )
+    // {
+    //   arrayView1d< real64 const > const & pressure_n = subRegion.getField< flow::pressure_n >();
+    //   arrayView1d< real64 const > const & pressure_k = subRegion.getField< flow::pressure_k >();
+    //   arrayView1d< real64 const > const & temperature_n = subRegion.getField< flow::temperature_n >();
+    //   arrayView1d< real64 const > const & temperature_k = subRegion.getField< flow::temperature_k >();
+    //   updatePorosityAndPermeabilityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
+    // }
+    // else
+      if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ParallelPlatesPermeability >)  {
+        updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+      }
+      else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::SlipDependentPermeability > || 
+        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > ) 
+      {
+        updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction(porousWrapper, 
+          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, oldHydraulicAperture/*dHydraulicAperture_dNormalJump dummy*/, 
+          dispJump, fractureTraction);
+      }
 
   } );
 }
