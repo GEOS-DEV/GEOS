@@ -121,6 +121,16 @@
       phaseRelPermExponent="{ 3, 3 }"
       phaseRelPermMaxValue="{ 0.4, 0.9 }"/>
 
+    <TableCapillaryPressure
+      name="cappres00"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="pcgw00" />
+
+    <TableCapillaryPressure
+      name="cappres01"
+      phaseNames="{ gas, water }"
+      wettingNonWettingCapPressureTableName="pcgw01" />
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -201,6 +211,16 @@
       name="initTempTable"
       coordinates="{ 0.0, 100.0 }"
       values="{ 368.15, 368.15 }" />
+
+    <TableFunction
+      name="pcgw00"
+      coordinates="{ 0.12, 0.95 }"
+      values="{ 0.0, 0.0 }" />
+
+    <TableFunction
+      name="pcgw01"
+      coordinates="{ 0.12, 0.95 }"
+      values="{ 2.0e5, 0.0 }" />
 
   </Functions>
 

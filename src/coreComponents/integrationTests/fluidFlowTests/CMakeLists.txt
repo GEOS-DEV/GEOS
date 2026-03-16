@@ -69,10 +69,10 @@ foreach(test ${gtest_geosx_tests})
 
 endforeach()
 
-# testFixedDimensionalHydrostaticEquilibrium: serial (single-rank) variant is always built.
+# testFixedDimHydrostaticEquilibrium: serial (single-rank) variant is always built.
 
 # --- Serial variant (always built) ---
-set( test "testFixedDimensionalHydrostaticEquilibrium.cpp" )
+set( test "testFixedDimHydrostaticEquilibrium.cpp" )
 get_filename_component( test_name ${test} NAME_WE )
 
 blt_add_executable( NAME ${test_name}
