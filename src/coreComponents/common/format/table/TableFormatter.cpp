@@ -844,7 +844,7 @@ void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
         formatCell( tableOutput, cell, idxSubLine );
 
         if( !isRightBorderCell )
-        {   // right side of a cell that have a neightboor
+        { // right side of a cell that have a neightboor
           bool const isNextSeparator = row.cells[idxColumn + 1].m_cellType == CellType::Separator;
           bool const upMerged = idxRow > 0 && rows[idxRow - 1].cells[idxColumn].m_cellType == CellType::MergeNext;
           bool const downMerged = idxRow < nbRows - 1 && rows[idxRow + 1].cells[idxColumn].m_cellType == CellType::MergeNext;
@@ -853,7 +853,7 @@ void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
                            m_horizontalLine : m_verticalLine );
         }
         else
-        {   // right table border
+        { // right table border
           tableOutput << string( nbBorderSpaces, cellSpaceChar ) << m_verticalLine << "\n";
         }
       }

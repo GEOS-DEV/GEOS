@@ -57,8 +57,8 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-void TableTextMpiOutput::convertRowsToString( CellLayoutRows const & rows,
-                                              stdVector< string > & rowsConvertedInString ) const
+void TableTextMpiOutput::parseCellLayoutRows( CellLayoutRows const & rows,
+                                              stdVector< string > & rowsAsString ) const
 {
   std::ostringstream rowStringStream;
   size_t rowIndex = 0;
@@ -67,30 +67,31 @@ void TableTextMpiOutput::convertRowsToString( CellLayoutRows const & rows,
   {
     outputLine( m_tableLayout, rows, row, rowStringStream, rowIndex );
     rowIndex++;
-    rowsConvertedInString.emplace_back( rowStringStream.str());
+    rowsAsString.emplace_back( rowStringStream.str());
     rowStringStream.str( "" );
   }
 }
 
-stdVector< TableData::CellData > TableTextMpiOutput::reconstructRow( string_view str ) const
+stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view rowString ) const
 {
-  if( str.size() < 1 )
+  if( rowString.empty() )
     return stdVector< TableData::CellData >{};
 
-  string_view rowContent( str.substr( 1 )); // skip leading '|'
+  if( rowString.front() == '|' )
+    rowString.remove_prefix( 1 );
+  string_view rowContent =rowString;
   string cell;
-  stdVector< TableData::CellData > reconstructedRow;
+  stdVector< TableData::CellData > dataRow;
 
-  std::string::size_type start = 0;
   std::string::size_type end = 0;
 
-  while( (end = rowContent.find( m_verticalLine, start )) != string_view::npos )
+  while( (end = rowContent.find( m_verticalLine )) != string_view::npos )
   {
-    cell =std::string( stringutilities::trimSpaces( rowContent.substr( start, end )));
-    reconstructedRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
+    cell =std::string( stringutilities::trimSpaces( rowContent.substr( 0, end )));
+    dataRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
     rowContent.remove_prefix( end + 1 );
   }
-  return reconstructedRow;
+  return dataRow;
 }
 
 void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
@@ -108,7 +109,7 @@ void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gathere
   {
     MpiWrapper::gatherStringOnRank0( row, std::function< void(string_view) >( [&]( string_view str ){
       status.m_hasContent = true;
-      gatheredTableData.addRow( reconstructRow( str ));
+      gatheredTableData.addRow( parseStringRow( str ));
     } ));
   }
 
@@ -122,7 +123,7 @@ void TableTextMpiOutput::gatherSortAndOutput( std::ostream & tableOutput,
                                               TableTextMpiOutput::Status & status ) const
 {
   stdVector< string > rowsAsString;
-  convertRowsToString( rows, rowsAsString );
+  parseCellLayoutRows( rows, rowsAsString );
 
   TableData gatheredTableData;
   gatherAndSortTableDataAcrossRanks( gatheredTableData, rowsAsString, status );
@@ -146,7 +147,8 @@ void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tab
   {
     if( m_mpiLayout.m_separatorBetweenRanks )
     {
-      string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, status.m_sepLine.size() - 2 );
+      size_t const sepWidth = status.m_sepLine.size() > 2 ? status.m_sepLine.size() - 2 : 0;
+      string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, sepWidth );
       rankOutput << tableLayout.getIndentationStr() << m_verticalLine << rankSepLine << m_verticalLine << '\n';
     }
     outputTableData( rankOutput, tableLayout, rows );
@@ -154,10 +156,10 @@ void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tab
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   stdVector< string > strsAccrossRanks;
 
-  MpiWrapper::gatherStringOnRank0( rankStr, std::function< void(string_view) >( [&]( string_view str ){
+  MpiWrapper::gatherStringOnRank0( rankStr, [&]( string_view str ){
     status.m_hasContent = true;
     strsAccrossRanks.emplace_back( str );
-  } ));
+  } );
 
   if( status.m_isMasterRank && status.m_hasContent )
   {
