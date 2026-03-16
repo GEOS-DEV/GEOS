@@ -70,34 +70,32 @@ void LogPart::formatDescriptions( LogPart::Description & description,
   stdVector< string > & formattedLines = formattedDescription.m_lines;
   size_t const borderSpaceWidth = m_nbBorderChar * 2 + m_borderMargin * 2;
 
-  size_t const formattingCharSize = borderSpaceWidth;
+  size_t const decorationWidth = borderSpaceWidth;
   size_t & maxNameSize = formattedDescription.m_maxNameWidth;
   size_t & maxValueSize = formattedDescription.m_maxValueWidth;
 
   formattedLines.reserve( description.m_names.size() * 2 );
 
-  /// clamp
-  m_width = std::min( m_maxWidth, std::max( m_minWidth, m_width ));
-
+  m_width = std::clamp( m_width, m_minWidth, m_maxWidth );
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
-    auto const & nonFormattedNames =  description.m_names[idxName];
-    auto const & nonFormattedValues =  description.m_values[idxName];
+    auto const & rawName =  description.m_names[idxName];
+    auto const & rawValues =  description.m_values[idxName];
 
     // Format name with no values associated
-    if( nonFormattedValues.empty())
+    if( rawValues.empty())
     {
-      size_t maxLineLength = m_width - borderSpaceWidth;
-      auto wrappedNames = stringutilities::wrapTextToMaxLength( nonFormattedNames, maxLineLength );
+      size_t availableWidth = m_width - borderSpaceWidth;
+      auto wrappedNames = stringutilities::wrapTextToMaxLength( rawName, availableWidth );
 
       for( auto & name : wrappedNames )
       {
         auto const currMaxNameSize = std::max( name.size(), maxNameSize );
-        if( currMaxNameSize + formattingCharSize < m_width )
+        if( currMaxNameSize + decorationWidth < m_width )
         {
           // append space at the end of name if needed
           name.reserve( m_width - borderSpaceWidth );
-          name.append( std::string( m_width - currMaxNameSize - formattingCharSize, ' ' ));
+          name.append( std::string( m_width - currMaxNameSize - decorationWidth, ' ' ));
         }
         formattedLines.push_back( name );
       }
@@ -105,25 +103,25 @@ void LogPart::formatDescriptions( LogPart::Description & description,
     }
 
     // Format name with values assiociated
-    size_t maxLineLength = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
-    auto wrappedValues = stringutilities::wrapTextToMaxLength( nonFormattedValues, maxLineLength );
+    size_t availableWidthForValues = m_width - maxNameSize - decorationWidth - m_delimiter.size();
+    auto wrappedValues = stringutilities::wrapTextToMaxLength( rawValues, availableWidthForValues );
 
     // format name
-    stdVector< string > formatNames {nonFormattedNames};
+    stdVector< string > formatNames {rawName};
     for( size_t idxSubName = 0; idxSubName < formatNames.size(); idxSubName++ )
     {
-      size_t const spaces = idxSubName < wrappedValues.size() ?
-                            maxNameSize  - formatNames[idxSubName].size() :
-                            m_width - formatNames[idxSubName].size() - formattingCharSize;
+      size_t const paddingNeeded = idxSubName < wrappedValues.size() ?
+                                   maxNameSize  - formatNames[idxSubName].size() :
+                                   m_width - formatNames[idxSubName].size() - decorationWidth;
       // append space at the end of name if needed
-      formatNames[idxSubName].reserve( formatNames[idxSubName].size() + spaces );
-      formatNames[idxSubName].append( spaces, ' ' );
+      formatNames[idxSubName].reserve( formatNames[idxSubName].size() + paddingNeeded );
+      formatNames[idxSubName].append( paddingNeeded, ' ' );
     }
 
     size_t const lineCount = std::max( formatNames.size(), wrappedValues.size());
 
     // format values
-    size_t const minValueSizeRequired = m_width - maxNameSize - formattingCharSize - m_delimiter.size();
+    size_t const minValueSizeRequired = m_width - maxNameSize - decorationWidth - m_delimiter.size();
     for( auto & wrappedValue : wrappedValues )
     {
       wrappedValue.reserve( minValueSizeRequired );
