@@ -30,8 +30,6 @@
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "mesh/CellElementRegionSelector.hpp"
-#include "dataRepository/BufferOps.hpp"
-#include "dataRepository/BufferOps_inline.hpp"
 
 
 namespace geos
