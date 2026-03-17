@@ -676,15 +676,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    // if( m_isFixedStressPoromechanicsUpdate )
-    // {
-    //   arrayView1d< real64 const > const & pressure_n = subRegion.getField< flow::pressure_n >();
-    //   arrayView1d< real64 const > const & pressure_k = subRegion.getField< flow::pressure_k >();
-    //   arrayView1d< real64 const > const & temperature_n = subRegion.getField< flow::temperature_n >();
-    //   arrayView1d< real64 const > const & temperature_k = subRegion.getField< flow::temperature_k >();
-    //   updatePorosityAndPermeabilityFixedStress( porousWrapper, subRegion, pressure, pressure_k, pressure_n, temperature, temperature_k, temperature_n );
-    // }
-    // else
+   
       if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ParallelPlatesPermeability >)  {
         updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
       }
@@ -692,8 +684,16 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
         std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > ) 
       {
         updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction(porousWrapper, 
-          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, oldHydraulicAperture/*dHydraulicAperture_dNormalJump dummy*/, 
+          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, oldHydraulicAperture/*dHydraulicAperture_dNormalJump dummy entry*/, 
           dispJump, fractureTraction);
+      }
+      else {
+        GEOS_ERROR( GEOS_FMT("{} permeability model is not yet supported. {}, {} and {} are supported.", 
+                    TYPEOFREF(castedPorousSolid)::PermType::catalogName(),
+                    constitutive::ParallelPlatesPermeability::catalogName(), 
+                    constitutive::SlipDependentPermeability::catalogName(), 
+                    constitutive::WillisRichardsPermeability::catalogName()
+                  ), getDataContext()  );
       }
 
   } );
