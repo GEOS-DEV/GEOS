@@ -107,6 +107,10 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
         subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       } );
 
+      FaceManager & faceManager = mesh.getFaceManager();
+      faceManager.getField< contact::totalBubbleDisplacement >().zero();
+      faceManager.getField< contact::incrementalBubbleDisplacement >().zero();
+
     }
 
     // Option 2: enable / disable inelastic behavior
