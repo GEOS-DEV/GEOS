@@ -306,7 +306,6 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                       subRegionStats.m_componentMass.toView() );
 }
 
-
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {

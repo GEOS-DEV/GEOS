@@ -199,7 +199,6 @@ protected:
     localIndex m_meshLevel;
     string_array m_regionNames;
   };
-  };
 
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;

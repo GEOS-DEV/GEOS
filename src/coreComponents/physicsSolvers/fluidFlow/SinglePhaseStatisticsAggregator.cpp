@@ -130,7 +130,6 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                                     subRegionStats.m_totalMass );
 }
 
-
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {
