@@ -40,7 +40,7 @@ public:
 
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using the inner product of Beirao da Veiga, Lipnikov,
-   *Manzini (page 113)
+   * Manzini (page 113)
    * @param[in] nodePosition the position of the nodes
    * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
