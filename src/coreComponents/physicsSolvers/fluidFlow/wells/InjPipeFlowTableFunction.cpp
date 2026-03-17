@@ -214,7 +214,7 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
   // Assume success
   // liq(oil)=0 vap = 1 wat = 2
 
-  real64 const m_sign=-1.0;
+  real64 const m_sign=1.0;
   real64 liq = volRate;
   //for( int i = 0; i < phaseRates.size(); ++i )
   //{
@@ -268,10 +268,10 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
 
 }
 
-void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
+void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real64 const & bhp, real64 const & totalVolumeRate, real64 & whp, integer & solveStat ) const
 {
 
-  MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
+  MultivariableNonuniformTableFunctionStaticKernel< 2, 1 > kernel( getAxisCoordinates(),
                                                                    getAxisPoints(),
                                                                    getAxisSteps(),
                                                                    getAxisStepInvs(),
@@ -286,68 +286,38 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
   //{
   //  totalVolumeRate += phaseRates[i];
 //  }
-  real64 const gasLift=0.0;
-  std::cout << bhp << " " << phaseRates << " " << whp  << std::endl;
-  real64 const m_sign=-1.0;
-  real64 liq = (phaseRates[0] + phaseRates[2]);
+
+  std::cout << bhp << " " << totalVolumeRate << " " << whp  << std::endl;
+  real64 const m_sign=1.0;
+  real64 liq = totalVolumeRate;
   //for( int i = 0; i < phaseRates.size(); ++i )
   //{
   //  totalVolumeRate += phaseRates[i];
 //  }
-  std::cout << bhp << " " << phaseRates << " " << whp  << std::endl;
+  std::cout << bhp << " " << totalVolumeRate << " " << whp  << std::endl;
 
-  real64 wct = 0;
-  if( phaseRates[0]*m_sign > 0 )
-  {
-    wct = phaseRates[2]/(phaseRates[0]+phaseRates[2]);
-  }
-#if 0
-  if( wct < m_wfr[0] )
-  {
-    wct = m_wfr[0] + 0.00000001;
-  }
-  else if( wct > m_wfr[ m_wfr.size() -1 ] )
-  {
-    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
-  }
-#endif
-  real64 gor = 0;
-  if( phaseRates[1]*m_sign  > 0 )
-    gor =  phaseRates[1]/(phaseRates[0] );
-#if 0
-  if( gor <  m_gfr[0] )
-  {
-    gor = m_gfr[0]+   0.00000001;
-  }
-  else if( gor > m_gfr[ m_gfr.size() -1 ] )
-  {
-    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
-  }
-#endif
+
   std::cout << wellName << " InjPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq <<   std::endl;
 #if 1
-  array1d< real64 > table_coords( 5 );
-  real64 derivatives[5]{};
+  array1d< real64 > table_coords( 2 );
+  real64 derivatives[2]{};
   array1d< real64 > table_bhp( 1 );
-  array2d< real64 > table_derv( 1, 5 );
-  table_coords[4]=liq*m_sign; // gas oil ratio
-  table_coords[2]=wct;  // water cut
-  table_coords[1]=gor; // well head pressure
-  table_coords[0]=gasLift; // gas lift rat
+  array2d< real64 > table_derv( 1, 2 );
+  table_coords[1]=liq*m_sign; // gas oil rat
 
-  table_coords[3]=whp;    // well head pressure
+  table_coords[0]=whp;    // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
   std::cout << " InjPipeFlowTableFunction::calculateWHP initial whp = " << whp << " bhp calc " << table_bhp[0] << " " << table_coords <<std::endl;
 
   integer nWHP = m_whp.size();
   for( integer i=0; i<nWHP; i++ )
   {
-    table_coords[3]=m_whp[i];    // well head pressure
+    table_coords[0]=m_whp[i];    // well head pressure
     kernel.compute( table_coords, table_bhp, table_derv );
-    std::cout << table_coords[3] << " " << table_bhp[0] << std::endl;
+    std::cout << table_coords[0] << " " << table_bhp[0] << std::endl;
   }
   integer foundBracket= 0;
-  table_coords[3]=m_whp[nWHP-1];  // well head pressure
+  table_coords[0]=m_whp[nWHP-1];  // well head pressure
   kernel.compute( table_coords, table_bhp, table_derv );
   double bhpN = table_bhp[0];
   //double bhpN = kernelWrapper.compute( table_coords, derivatives );
@@ -355,14 +325,14 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
   if( bhpN < bhp )
   {
     solveStat=2;
-    table_coords[3]=m_whp[nWHP-2];
+    table_coords[0]=m_whp[nWHP-2];
     kernel.compute( table_coords, table_bhp, table_derv );
     bhp0 = table_bhp[0];
     double dwhp_dp = ( m_whp[nWHP-1] - m_whp[nWHP-2] )/( bhpN - bhp0 );
     //bhp0 = kernelWrapper.compute( table_coords, derivatives );
     whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*dwhp_dp;
     //whp0 = m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][3];
-    std::cout << table_derv << " " << dwhp_dp << " " <<  m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][3]<<std::endl;
+    std::cout << table_derv << " " << dwhp_dp << " " <<  m_whp[nWHP-1] + ( bhp - bhpN )*table_derv[0][0]<<std::endl;
     whp=whp0;
 
     if( std::isnan( whp0 ) )
@@ -376,7 +346,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
   else
   {
     // check low end
-    table_coords[3]=m_whp[0];  // well head pressure
+    table_coords[0]=m_whp[0];  // well head pressure
     kernel.compute( table_coords, table_bhp, table_derv );
     bhp0 = table_bhp[0];
     //bhp0 = kernelWrapper.compute( table_coords, derivatives );
@@ -385,7 +355,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     if( bhp <  bhp0 )
     {
       solveStat=0;
-      table_coords[3]=m_whp[1];
+      table_coords[0]=m_whp[1];
       kernel.compute( table_coords, table_bhp, table_derv );
       bhpN = table_bhp[0];
       //bhpN = kernelWrapper.compute( table_coords, derivatives );
@@ -399,7 +369,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
     // search for bracketing whp
     for( integer i=1; i<nWHP; ++i )
     {
-      table_coords[3]=m_whp[i]; // well head pressure
+      table_coords[0]=m_whp[i]; // well head pressure
       kernel.compute( table_coords, table_bhp, table_derv );
       bhpN = table_bhp[0];
       //bhpN = kernelWrapper.compute( table_coords, derivatives );
@@ -505,7 +475,7 @@ void InjPipeFlowTableFunction::calculateWHP( const std::string & wellName, real6
 #endif
   return;
 
-  std::cout << "InjPipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 << " wct = " << wct << " gor = " << gor << std::endl;
+  std::cout << "InjPipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 <<  std::endl;
 
   // array1d< real64 > table_bhp( 1 );
 
@@ -547,7 +517,7 @@ void InjPipeFlowTableFunction::writeTable() const
 
 
 
-  MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
+  MultivariableNonuniformTableFunctionStaticKernel< 2, 1 > kernel( getAxisCoordinates(),
                                                                    getAxisPoints(),
                                                                    getAxisSteps(),
                                                                    getAxisStepInvs(),

@@ -930,7 +930,7 @@ public:
   ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
   MinimumBHPConstraint * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
 
-  InjectionConstraint< VolumeRateConstraint > * getMaxVolumeConstraintForWHP() { return m_maxVolumeConstraintForWHP; };
+  InjectionConstraint< PhaseVolumeRateConstraint > * getMaxPhaseVolumeConstraintForWHP() { return m_maxPhaseVolumeConstraintForWHP; };
   MaximumBHPConstraint * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
 
   // Lists of rate constraints
@@ -1085,7 +1085,7 @@ protected:
   MinimumBHPConstraint *     m_minBHPConstraintForWHP;
   ProductionConstraint< LiquidRateConstraint > *  m_maxLiquidConstraintForWHP;
   MaximumBHPConstraint * m_maxBHPConstraintForWHP;
-  InjectionConstraint< VolumeRateConstraint > * m_maxVolumeConstraintForWHP;
+  InjectionConstraint< PhaseVolumeRateConstraint > * m_maxPhaseVolumeConstraintForWHP;
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;

@@ -69,11 +69,7 @@ public:
    */
   const string & getRateType() const { return m_rateType; }
 
-  /**
-   * @brief Get phases associated with rate type
-   * @return array of phases
-   */
-  const string_array & getRats() const { return m_rates; }
+
 
   /**
    * @brief Get rates table coordinates
@@ -133,7 +129,7 @@ public:
 
   void calculateBHP( real64 const & volRate, real64 const & whp, real64 & bhp, integer & solveStat ) const;
 
-  void calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
+  void calculateWHP( const std::string & wellName, real64 const & bhp, real64 const & totalVolumeRate, real64 & whp, integer & solveStat ) const;
 
   void writeTable() const;
 

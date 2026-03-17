@@ -116,6 +116,18 @@ public:
    */
   real64 getInjectionTemperature() const { return m_injectionTemperature; }
 
+  /**
+   * @brief Set composition of the injection stream
+   * @param[in] injectionStream a global component fraction vector
+   */
+  void setInjectionStream( arrayView1d< real64 const > const & injectionStream ) { m_injectionStream = injectionStream; }
+
+  /**
+   * @brief Set temperature of the injection stream
+   * @param[in] temperature the temperature of the injection stream
+   */
+  void setInjectionTemperature( real64 temperature ) { m_injectionTemperature = temperature; }
+
 protected:
 
   virtual void postInputInitialization() override;

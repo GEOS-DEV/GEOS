@@ -271,18 +271,34 @@ void WellControls::createMaxLiquidConstraintForWHP()
 
 void WellControls::createMaxVolumeInjConstraintForWHP()
 {
-  // Create constraint and set local pointer
-  InjectionConstraint< VolumeRateConstraint > & volumeConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( m_minWHPConstraint->getName()+"VolumeInjectionConstraint" );
-  m_maxVolumeConstraintForWHP =  &volumeConstraint;
+
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
-  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
-  // tjb string_array ratePhases = m_flowTable.getRates();
-  // tjb switch to defining all phases  ???
-  //m_maxVolumeConstraintForWHP->setPhaseNames( ratePhases );
-  //m_maxVolumeConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
-  // WHP estimator solve will set status
-  m_maxVolumeConstraintForWHP->setConstraintActive( false );
+  const InjPipeFlowTableFunction & m_flowTable =  functionManager.getGroup< InjPipeFlowTableFunction const >( m_maxWHPConstraint->getFlowTableName());
+  std::string const & rateType = m_flowTable.getRateType();
+  // Create constraint and set local pointer
+  InjectionConstraint< PhaseVolumeRateConstraint > & volumeConstraint =
+    registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( m_maxWHPConstraint->getName()+std::string( "VolumeInjectionConstraint" ) );
+  m_maxPhaseVolumeConstraintForWHP =  &volumeConstraint;
+
+  bool foundMatchingConstraint = false;
+  forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >
+                >( [&]( auto & constraint )
+  {
+    std::cout << "check phase for whp constraint " << constraint.getName() << " rate type " << constraint.getPhaseName() << std::endl;
+    if( constraint.isConstraintActive() && constraint.getPhaseName() ==  rateType )
+    {
+      foundMatchingConstraint = true;
+      m_maxPhaseVolumeConstraintForWHP->setPhaseName( rateType );
+      m_maxPhaseVolumeConstraintForWHP->setPhaseIndex( constraint.getPhaseIndex() );
+      m_maxPhaseVolumeConstraintForWHP->setInjectionStream( constraint.getInjectionStream() );
+      m_maxPhaseVolumeConstraintForWHP->setInjectionTemperature( constraint.getInjectionTemperature() );
+    }
+  } );
+  GEOS_THROW_IF( !foundMatchingConstraint, "No active injection phase volume constraint with matching phase found for max WHP constraint " << getMaxWHPConstraint()->getName(),
+                 InputError, getDataContext() );
+
+  m_maxPhaseVolumeConstraintForWHP->setConstraintActive( false );
 }
 
 void WellControls::expandObjectCatalogs()
@@ -848,7 +864,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       }
       else
       {
-        InjectionConstraint< VolumeRateConstraint > * maxVolForWHP =  getMaxVolumeConstraintForWHP();
+        InjectionConstraint< PhaseVolumeRateConstraint > * maxVolForWHP =  getMaxPhaseVolumeConstraintForWHP();
         if( maxVolForWHP != nullptr && maxVolForWHP->isConstraintActive())
         {
           std::cout << "we  not active " << subRegion.getName() << " Constraint " << maxVolForWHP->getName() << " active " << maxVolForWHP->isConstraintActive() <<
@@ -858,11 +874,11 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         }
         else
         {
-          // Solve minimum bhp constraint first
-          if( getMinBHPConstraint()->isConstraintActive() )
+          // Solve maximum bhp constraint first
+          if( getMaxBHPConstraint()->isConstraintActive() )
           {
-            std::cout << "we  not active " << subRegion.getName() << " Constraint add minbp " << std::endl;
-            constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+            std::cout << "we  not active " << subRegion.getName() << " Constraint add maxbp " << std::endl;
+            constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
           }
         }
       }

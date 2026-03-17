@@ -126,11 +126,22 @@ public:
   const string & getPhaseName() const { return m_phaseName; }
 
   /**
+   * @brief Set the target phase name
+   * @param[in] phaseName the target phase name
+   */
+  void setPhaseName( const string & phaseName ) { m_phaseName = phaseName; }
+
+  /**
    * @brief Get the target phase index
    * @return the target phase index
    */
   const localIndex & getPhaseIndex() const { return m_phaseIndex; }
 
+  /**
+   * @brief Set the target phase index
+   * @param[in] phaseIndex the target phase index
+   */
+  void setPhaseIndex( const localIndex & phaseIndex ) { m_phaseIndex = phaseIndex; }
   ///@}
 
   struct viewKeyStruct
