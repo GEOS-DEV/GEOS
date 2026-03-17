@@ -32,7 +32,7 @@ LogPart::LogPart( string_view logpartName, bool enableOutput )
 
   m_enableOutput = enableOutput;
 
-  ErrorLogger::global().setCurrentLogPart( std::string(logpartName) );
+  ErrorLogger::global().setCurrentLogPart( std::string( logpartName ) );
 
 }
 

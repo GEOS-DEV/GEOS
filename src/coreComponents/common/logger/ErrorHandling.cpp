@@ -196,7 +196,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
   return *this;
 }
 
-DiagnosticMsgBuilder & DiagnosticMsgBuilder::setLogPart(  std::string_view logPart  )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::setLogPart( std::string_view logPart )
 {
   m_errorMsg.m_logPart = logPart;
   return *this;

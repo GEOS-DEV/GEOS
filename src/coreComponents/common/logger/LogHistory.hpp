@@ -72,7 +72,7 @@ private:
       /// @cond DO_NOT_DOCUMENT
       bool operator==( Key const & lhs ) const;
       /// @endcond DO_NOT_DOCUMENT
-      
+
     } m_key;
 
     /** @brief Content and metadata of the diagnostic message. */
