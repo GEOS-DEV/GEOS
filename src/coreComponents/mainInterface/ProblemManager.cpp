@@ -179,7 +179,7 @@ void ProblemManager::problemSetup()
     meshGenerationLog.end();
   }
 
-//  initialize_postMeshGeneration();
+  // initialize_postMeshGeneration();
   {
     LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
     numericalMethodLog.begin();
@@ -190,6 +190,7 @@ void ProblemManager::problemSetup()
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
+
   {
     LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
     importFieldsLog.begin();

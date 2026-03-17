@@ -32,7 +32,7 @@ LogPart::LogPart( string_view logpartName, bool enableOutput )
 
   m_enableOutput = enableOutput;
 
-  ErrorLogger::global().setCurrentLogPart( std::string(logpartName) );
+  ErrorLogger::global().setCurrentLogPart( std::string( logpartName ) );
 
 }
 
@@ -194,6 +194,7 @@ void LogPart::begin( std::ostream & os )
   if( !m_enableOutput )
     return;
 
+  ErrorLogger::global().setCurrentLogPart( m_formattedStartDescription.m_title );
 
   if( !m_startDescription.m_names.empty())
   {
