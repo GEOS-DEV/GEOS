@@ -762,9 +762,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
                                       GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       // Compute the slip
-      real64 const deltaDisp[2] = { deltaDispJump[kfe][1],
-                                    deltaDispJump[kfe][2] };
-      slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( deltaDisp );
+      real64 const shearDisp[2] = { dispJump[kfe][1],
+                                    dispJump[kfe][2] };
+      slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( shearDisp );
 
       // Compute current Tau and limit Tau
       real64 const tau[2] = { traction[kfe][1],
