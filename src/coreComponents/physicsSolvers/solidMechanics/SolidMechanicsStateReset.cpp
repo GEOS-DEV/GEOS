@@ -108,8 +108,11 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
       } );
 
       FaceManager & faceManager = mesh.getFaceManager();
-      faceManager.getField< contact::totalBubbleDisplacement >().zero();
-      faceManager.getField< contact::incrementalBubbleDisplacement >().zero();
+      if( faceManager.hasField< contact::totalBubbleDisplacement >() )
+      {
+        faceManager.getField< contact::totalBubbleDisplacement >().zero();
+        faceManager.getField< contact::incrementalBubbleDisplacement >().zero();
+      }
 
     }
 
