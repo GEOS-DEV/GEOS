@@ -1193,19 +1193,56 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     }
     else if( m_isExplicitChemomechanicsUpdate )
     {
+      set< string > chemomechanicsRegions;
+      set< string > mechanicsRegions;
+      ElementRegionManager const & elementRegionManager = mesh.getElemManager();
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                         [&]
+                                                                           ( localIndex const regionIndex, auto & elementSubRegion )
+      {
+        if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+        {
+          chemomechanicsRegions.insert( regionNames[regionIndex] );
+        }
+        else
+        {
+          mechanicsRegions.insert( regionNames[regionIndex] );
+        }
+      } );
 
-      // first pass for coupled poromechanics regions
-      real64 const chemomechanicsMaxForce= assemblyLaunch< SolidMechanicsExplicitChemoMechanicsKernelsDispatchTypeList,
-                                                           solidMechanicsLagrangianFEMKernels::ExplicitChemoMechanicsFactory >( mesh,
-                                                                                                                                dofManager,
-                                                                                                                                regionNames,
-                                                                                                                                FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                                                                                                localMatrix,
-                                                                                                                                localRhs,
-                                                                                                                                dt );
+      string_array chemomechanicsRegionNames;
+      chemomechanicsRegionNames.reserve( chemomechanicsRegions.size() );
+      for( auto const & region : chemomechanicsRegions )
+      {
+        chemomechanicsRegionNames.emplace_back( region );
+      }
+      string_array mechanicsRegionNames;
+      mechanicsRegionNames.reserve( mechanicsRegions.size() );
+      for( auto const & region : mechanicsRegions )
+      {
+        mechanicsRegionNames.emplace_back( region );
+      }
 
+      // first pass for coupled chemomechanics regions
+      real64 const chemomechanicsMaxForce = assemblyLaunch< SolidMechanicsExplicitChemoMechanicsKernelsDispatchTypeList,
+                                                            solidMechanicsLagrangianFEMKernels::ExplicitChemoMechanicsFactory >( mesh,
+                                                                                                                                 dofManager,
+                                                                                                                                 chemomechanicsRegionNames,
+                                                                                                                                 FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                                                                 localMatrix,
+                                                                                                                                 localRhs,
+                                                                                                                                 dt );
+      // second pass for pure mechanics regions
+      real64 const mechanicsMaxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
+                                                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                                                 dofManager,
+                                                                                                                 mechanicsRegionNames,
+                                                                                                                 viewKeyStruct::solidMaterialNamesString(),
+                                                                                                                 localMatrix,
+                                                                                                                 localRhs,
+                                                                                                                 dt );
 
-      m_maxForce = chemomechanicsMaxForce;
+      m_maxForce = LvArray::math::max( chemomechanicsMaxForce, mechanicsMaxForce );
     }
     else
     {
