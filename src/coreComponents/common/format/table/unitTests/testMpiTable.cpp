@@ -205,7 +205,7 @@ TEST( testMpiTables, testSortingMethod )
     formatter.toStream( oss, data );
     if( rankId == 0 )
     {
-      std::cout << "ma boula """<< oss.str()<<std::endl;
+      std::cout << "ma boula " ""<< oss.str()<<std::endl;
       EXPECT_STREQ( testCase.m_expectedResult.data(),
                     oss.str().data() );
     }

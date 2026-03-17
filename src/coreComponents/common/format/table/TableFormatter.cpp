@@ -813,7 +813,7 @@ void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
 {
   size_t const nbRows = rows.size();
   size_t const nbColumns = !rows.empty() ? rows.front().cells.size() : 0;
-  
+
   size_t const nbBorderSpaces = tableLayout.getBorderMargin();
   size_t const nbColumnSpaces = ( tableLayout.getColumnMargin() - 1 ) / 2;
   for( size_t idxSubLine = 0; idxSubLine < row.sublinesCount; idxSubLine++ )
@@ -829,16 +829,16 @@ void TableTextFormatter::outputLine( PreparedTableLayout const & tableLayout,
         bool const isSeparator = cell.m_cellType == CellType::Separator;
         char const cellSpaceChar = isSeparator ? m_horizontalLine : ' ';
 
-          if( isLeftBorderCell )
-          { // left table border
-            isLeftBorderCell=false;
-            tableOutput << tableLayout.getIndentationStr();
-            tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
-          }
-          else
-          { // left side of a cell that have a neightboor
-            tableOutput << string( nbColumnSpaces, cellSpaceChar );
-          }
+        if( isLeftBorderCell )
+        {   // left table border
+          isLeftBorderCell=false;
+          tableOutput << tableLayout.getIndentationStr();
+          tableOutput << m_verticalLine << string( nbBorderSpaces, cellSpaceChar );
+        }
+        else
+        {   // left side of a cell that have a neightboor
+          tableOutput << string( nbColumnSpaces, cellSpaceChar );
+        }
 
         // cell content / fill
         formatCell( tableOutput, cell, idxSubLine );

@@ -183,40 +183,40 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
 
 bool tabledatasorting::positiveNumberStringComp( string_view s1, string_view s2 )
 {
-    auto split = [](string_view s, string & intPart, string & decPart)
+  auto split = []( string_view s, string & intPart, string & decPart )
+  {
+    size_t dotPos = s.find( '.' );
+    if( dotPos == string::npos )
     {
-        size_t dotPos = s.find('.');
-        if(dotPos == string::npos)
-        {
-            intPart = s;
-            decPart = "";
-        }
-        else
-        {
-            intPart = s.substr(0, dotPos);
-            decPart = s.substr(dotPos + 1);
-        }
-    };
-
-    string s1Int, s1Dec, s2Int, s2Dec;
-    split(s1, s1Int, s1Dec);
-    split(s2, s2Int, s2Dec);
-
-    if(s1Int.length() != s2Int.length())
-        return s1Int.length() < s2Int.length();
-
-    if(s1Int != s2Int)
-        return s1Int < s2Int;
-      
-    size_t minLen = std::min(s1Dec.length(), s2Dec.length());
-    for(size_t i = 0; i < minLen; ++i)
-    {
-        if(s1Dec[i] != s2Dec[i])
-            return s1Dec[i] < s2Dec[i];
+      intPart = s;
+      decPart = "";
     }
+    else
+    {
+      intPart = s.substr( 0, dotPos );
+      decPart = s.substr( dotPos + 1 );
+    }
+  };
 
-  
-    return false;
+  string s1Int, s1Dec, s2Int, s2Dec;
+  split( s1, s1Int, s1Dec );
+  split( s2, s2Int, s2Dec );
+
+  if( s1Int.length() != s2Int.length())
+    return s1Int.length() < s2Int.length();
+
+  if( s1Int != s2Int )
+    return s1Int < s2Int;
+
+  size_t minLen = std::min( s1Dec.length(), s2Dec.length());
+  for( size_t i = 0; i < minLen; ++i )
+  {
+    if( s1Dec[i] != s2Dec[i] )
+      return s1Dec[i] < s2Dec[i];
+  }
+
+
+  return false;
 }
 
 }
