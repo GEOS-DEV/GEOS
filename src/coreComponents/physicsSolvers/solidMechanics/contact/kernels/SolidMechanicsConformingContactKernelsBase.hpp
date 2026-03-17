@@ -270,9 +270,10 @@ struct ComputeRotationMatricesKernel
 {
 
   /**
-   * @brief Launch the kernel function to comute rotation matrices
+   * @brief Launch the kernel function to compute rotation matrices
    * @tparam POLICY the type of policy used in the kernel launch
    * @param[in] size the size of the subregion
+   * @param[in] ghostRank the ghost rank of each element
    * @param[in] faceNormal the array of array containing the face to nodes map
    * @param[in] elemsToFaces the array of array containing the element to faces map
    * @param[out] rotationMatrix the array containing the rotation matrices
@@ -280,6 +281,7 @@ struct ComputeRotationMatricesKernel
   template< typename POLICY >
   static void
   launch( localIndex const size,
+          arrayView1d< integer const > const & ghostRank,
           arrayView2d< real64 const > const & faceNormal,
           arrayView2d< localIndex const > const & elemsToFaces,
           arrayView3d< real64 > const & rotationMatrix,
@@ -290,6 +292,10 @@ struct ComputeRotationMatricesKernel
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      if( ghostRank[k] >= 0 )
+      {
+        return;
+      }
 
       localIndex const f0 = elemsToFaces[k][0];
       localIndex const f1 = elemsToFaces[k][1];

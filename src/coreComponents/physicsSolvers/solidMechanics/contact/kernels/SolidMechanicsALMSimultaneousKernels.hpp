@@ -415,6 +415,7 @@ struct ComputeTractionSimultaneousKernel
    * @brief Launch the kernel function to comute traction
    * @tparam POLICY the type of policy used in the kernel launch
    * @param[in] size the size of the subregion
+   * @param[in] ghostRank the ghost rank of each element
    * @param[in] penalty the array containing the tangential penalty matrix
    * @param[in] traction the array containing the current traction
    * @param[in] dispJump the array containing the displacement jump
@@ -424,6 +425,7 @@ struct ComputeTractionSimultaneousKernel
   template< typename POLICY >
   static void
   launch( localIndex const size,
+          arrayView1d< integer const > const & ghostRank,
           arrayView2d< real64 const > const & penalty,
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
@@ -433,6 +435,10 @@ struct ComputeTractionSimultaneousKernel
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
+      if( ghostRank[kfe] >= 0 )
+      {
+        return;
+      }
       tractionNew[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
       tractionNew[kfe][1] = traction[kfe][1] + ( penalty[kfe][2] * deltaDispJump[kfe][1]+
                                                  penalty[kfe][4] * deltaDispJump[kfe][2] );

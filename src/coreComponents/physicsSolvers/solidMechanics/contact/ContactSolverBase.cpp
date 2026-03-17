@@ -234,7 +234,8 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
     FieldIdentifiers fieldsToBeSync;
 
     fieldsToBeSync.addElementFields( { contact::fractureState::key(),
-                                       contact::traction::key() },
+                                       contact::traction::key(),
+                                       contact::iterativePenalty::key() },
                                      { getUniqueFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

@@ -102,6 +102,7 @@ struct UpdateStateKernel
    * @tparam POLICY the type of policy used in the kernel launch
    * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
    * @param[in] size the size of the subregion
+   * @param[in] ghostRank the ghost rank of each element
    * @param[in] oldDispJump the array containing the old displacement jump (previous time step)
    * @param[in] dispJump the array containing the displacement jump
    * @param[in] penalty the array containing the penalty coefficients
@@ -114,6 +115,7 @@ struct UpdateStateKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          arrayView1d< integer const > const & ghostRank,
           arrayView2d< real64 const > const & oldDispJump,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 > const & penalty,
@@ -125,6 +127,10 @@ struct UpdateStateKernel
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      if( ghostRank[k] >= 0 )
+      {
+        return;
+      }
 
       real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 

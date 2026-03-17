@@ -401,6 +401,7 @@ struct ComputeTractionKernel
    * @tparam POLICY the type of policy used in the kernel launch
    * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
    * @param[in] size the size of the subregion
+   * @param[in] ghostRank the ghost rank of each element
    * @param[in] penalty the array containing the tangential penalty matrix
    * @param[in] traction the array containing the current traction
    * @param[in] dispJump the array containing the displacement jump
@@ -411,6 +412,7 @@ struct ComputeTractionKernel
   static void
   launch( localIndex const size,
           CONTACT_WRAPPER const & contactWrapper,
+          arrayView1d< integer const > const & ghostRank,
           arrayView2d< real64 const > const & penalty,
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
@@ -420,6 +422,10 @@ struct ComputeTractionKernel
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      if( ghostRank[k] >= 0 )
+      {
+        return;
+      }
 
       contactWrapper.updateTractionOnly( dispJump[k], deltaDispJump[k],
                                          penalty[k], traction[k], tractionNew[k] );

@@ -318,11 +318,11 @@ void SolidMechanicsLagrangeContactBubbleStab::setSparsityPattern( DomainPartitio
 
 void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPartition & domain ) const
 {
+  // Compute rotation matrices (owned only)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
-
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -342,26 +342,59 @@ void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPar
     arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
     arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
 
-    // Compute rotation matrices
-    solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                                             faceNormal,
-                                                                                                             elemsToFaces,
-                                                                                                             rotationMatrix,
-                                                                                                             unitNormal,
-                                                                                                             unitTangent1,
-                                                                                                             unitTangent2 );
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [ = ]
-                                      GEOS_HOST_DEVICE ( localIndex const k )
+    solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::launch< parallelDevicePolicy<> >(
+      subRegion.size(),
+      ghostRank,
+      faceNormal,
+      elemsToFaces,
+      rotationMatrix,
+      unitNormal,
+      unitTangent1,
+      unitTangent2 );
+  } );
+
+  // Synchronize rotation matrices to ghost elements
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { contact::rotationMatrix::key() },
+                                     { getUniqueFractureRegionName() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+
+  // Initialize bubble displacement
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+    arrayView2d< real64 > const incrBubbleDisp =
+      faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+    // Initialize face fields directly
+    forAll< parallelDevicePolicy<> >( faceManager.size(),
+                                      [ = ] GEOS_HOST_DEVICE ( localIndex const kf )
     {
-      localIndex const kf0 = elemsToFaces[k][0];
-      localIndex const kf1 = elemsToFaces[k][1];
-      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf0], 0.0 );
-      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf1], 0.0 );
+      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf], 0.0 );
     } );
   } );
 }
+
 
 void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & time_n,
                                                                  real64 const & dt,
@@ -505,8 +538,14 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepComplete( real64 const
       arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 > const oldDispJump    = subRegion.getField< contact::oldDispJump >();
 
+      arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
+        if( ghostRank[kfe] >= 0 )
+        {
+          return;
+        }
         LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
         LvArray::tensorOps::fill< 3 >( deltaTraction[kfe], 0.0 );
         LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
