@@ -6,9 +6,17 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3963 (2026-02-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3963-15420-6d2cfd2.tar.gz>
+PR #3970 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
 =====================
-Resolves a segmentation fault on macOS (ARM64)
+Corrected traction boundary conditions
+
+PR #3970 (2026-02-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3970-15479-074f42a.tar.gz>
+=====================
+Bypass well residual calculation for closed wells
+
+PR #3940 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
+=====================
+Fix fracture state update for ALM solver
 
 PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
 =====================

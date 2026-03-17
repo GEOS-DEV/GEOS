@@ -102,14 +102,14 @@ void EquilibriumInitialCondition::postInputInitialization()
   if( !m_componentFractionVsElevationTableNames.empty() )
   {
     GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() <= 1,
-                   getCatalogName() << " " << getDataContext() <<
-                   ": at least two component names must be specified in " << viewKeyStruct::componentNamesString(),
+                   GEOS_FMT( "At least two component names must be specified in {}",
+                             viewKeyStruct::componentNamesString() ),
                    InputError, getDataContext() );
     GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() != m_componentNames.size(),
-                   getCatalogName() << " " << getDataContext() << ": mismatch between the size of " <<
-                   viewKeyStruct::componentNamesString() <<
-                   " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
-                   InputError );
+                   GEOS_FMT( "Mismatch between the size of {} and {}",
+                             viewKeyStruct::componentNamesString(),
+                             viewKeyStruct::componentFractionVsElevationTableNamesString() ),
+                   InputError, getDataContext() );
 
     integer const numberOfComponents = static_cast< integer >(m_componentNames.size());
 
@@ -117,17 +117,19 @@ void EquilibriumInitialCondition::postInputInitialization()
     {
       integer const numberOfContacts = static_cast< integer >(m_phaseContacts.size());
       GEOS_THROW_IF( m_initPhaseName.empty() && numberOfContacts == 0,
-                     getCatalogName() << " " << getDataContext()
-                                      << ": for a multiphase simulation either the initial phase name must be provided using "
-                                      << viewKeyStruct::initPhaseNameString() << " or the phase contact elevations number be provided using "
-                                      << viewKeyStruct::phaseContactsString(),
-                     InputError );
+                     GEOS_FMT( ": for a multiphase simulation either the initial phase name must be provided using {} "
+                               "or the phase contact elevations number be provided using {}",
+                               viewKeyStruct::initPhaseNameString(),
+                               viewKeyStruct::phaseContactsString() ),
+                     InputError, getDataContext() );
 
       if( !m_initPhaseName.empty() && 0 < numberOfContacts )
       {
-        GEOS_WARNING( getCatalogName() << " " << getDataContext()
-                                       << ": both " << viewKeyStruct::initPhaseNameString() << " and " << viewKeyStruct::phaseContactsString()
-                                       << " have been specified. The phase contacts will be ignored and single phase initialisation performed" );
+        GEOS_WARNING( GEOS_FMT( "both {} and {} have been specified. The phase contacts will be ignored and "
+                                "single phase initialisation performed",
+                                viewKeyStruct::initPhaseNameString(),
+                                viewKeyStruct::phaseContactsString() ),
+                      getDataContext() );
       }
 
       // Contacts if provided must be non-decreasing
@@ -136,9 +138,8 @@ void EquilibriumInitialCondition::postInputInitialization()
         for( integer i = 1; i < numberOfContacts; i++ )
         {
           GEOS_THROW_IF( m_phaseContacts[i] - m_phaseContacts[i-1] < -LvArray::NumericLimits< real64 >::epsilon,
-                         getCatalogName() << " " << getDataContext()
-                                          << ": The phase contacts must be increasing",
-                         InputError );
+                         "The phase contacts must be increasing",
+                         InputError, getDataContext() );
         }
       }
     }
@@ -147,21 +148,21 @@ void EquilibriumInitialCondition::postInputInitialization()
     for( integer ic = 0; ic < numberOfComponents; ++ic )
     {
       GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
-                     getCatalogName() << " " << getDataContext() <<
-                     ": the component fraction vs elevation table name is missing for component " << ic,
+                     GEOS_FMT( "The component fraction vs elevation table name is missing for component {}", ic ),
                      InputError, getDataContext() );
 
       GEOS_THROW_IF( !m_componentFractionVsElevationTableNames[ic].empty() &&
                      !functionManager.hasGroup( m_componentFractionVsElevationTableNames[ic] ),
-                     getCatalogName() << " " << getDataContext() << ": the component fraction vs elevation table " <<
-                     m_componentFractionVsElevationTableNames[ic] << " could not be found"  << " for component " << ic,
+                     GEOS_FMT( "The component fraction vs elevation table {} could not be found for component {}",
+                               m_componentFractionVsElevationTableNames[ic],
+                               ic ),
                      InputError, getDataContext() );
 
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       GEOS_THROW_IF( compFracTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": the interpolation method for the component fraction vs elevation table " <<
-                     compFracTable.getName() << " should be TableFunction::InterpolationType::Linear",
+                     GEOS_FMT( "The interpolation method for the component fraction vs elevation table {} "
+                               "should be TableFunction::InterpolationType::Linear",
+                               compFracTable.getName() ),
                      InputError, getDataContext() );
 
     }
@@ -171,15 +172,15 @@ void EquilibriumInitialCondition::postInputInitialization()
   {
 
     GEOS_THROW_IF( !functionManager.hasGroup( m_temperatureVsElevationTableName ),
-                   getCatalogName() << " " << getDataContext() << ": the temperature vs elevation table " <<
-                   m_temperatureVsElevationTableName << " could not be found",
+                   GEOS_FMT( "The temperature vs elevation table {} could not be found",
+                             m_temperatureVsElevationTableName ),
                    InputError, getDataContext() );
 
     TableFunction const & tempTable = functionManager.getGroup< TableFunction >( m_temperatureVsElevationTableName );
     GEOS_THROW_IF( tempTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   getCatalogName() << " " << getDataContext() <<
-                   ": The interpolation method for the temperature vs elevation table " << tempTable.getName() <<
-                   " should be TableFunction::InterpolationType::Linear",
+                   GEOS_FMT( "The interpolation method for the temperature vs elevation table {} "
+                             "should be TableFunction::InterpolationType::Linear",
+                             tempTable.getName() ),
                    InputError, getDataContext() );
   }
 }
@@ -198,17 +199,15 @@ void EquilibriumInitialCondition::initializePreSubGroups()
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       arrayView1d< real64 const > compFracValues = compFracTable.getValues();
       GEOS_THROW_IF( compFracValues.size() <= 1,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": the component fraction vs elevation table " << compFracTable.getName() <<
-                     " must contain at least two values",
+                     GEOS_FMT( "The component fraction vs elevation table {} must contain at least two values",
+                               compFracTable.getName() ),
                      InputError, getDataContext() );
 
       tableSizes[ic] = compFracValues.size();
       if( ic >= 1 )
       {
         GEOS_THROW_IF( tableSizes[ic] != tableSizes[ic-1],
-                       getCatalogName() << " " << getDataContext() <<
-                       ": all the component fraction vs elevation tables must contain the same number of values",
+                       "All the component fraction vs elevation tables must contain the same number of values",
                        InputError, getDataContext() );
       }
     }
@@ -229,16 +228,14 @@ void EquilibriumInitialCondition::initializePreSubGroups()
         if( ic >= 1 )
         {
           GEOS_THROW_IF( !isZero( elevation[ic][i] - elevation[ic-1][i] ),
-                         getCatalogName() << " " << getDataContext() <<
-                         ": the elevation values must be the same in all the component vs elevation tables",
+                         "The elevation values must be the same in all the component vs elevation tables",
                          InputError, getDataContext() );
         }
 
         if( ic == m_componentNames.size() - 1 )
         {
           GEOS_THROW_IF( !isZero( sumCompFrac[i] - 1 ),
-                         getCatalogName() << " " << getDataContext() <<
-                         ": at a given elevation, the component fraction sum must be equal to one",
+                         "At a given elevation, the component fraction sum must be equal to one",
                          InputError, getDataContext() );
         }
       }

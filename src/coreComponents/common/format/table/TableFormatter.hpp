@@ -86,7 +86,7 @@ protected:
 };
 
 /**
- * @brief class for CSV formatting
+ * @brief Class to format data in a formatted CSV format
  */
 class TableCSVFormatter final : public TableFormatter
 {
@@ -189,9 +189,10 @@ string TableCSVFormatter::toString< TableData >( TableData const & tableData ) c
 
 
 /**
- * @brief class for log formatting
+ * @brief Class to format data in a formatted text format
+ * (for log output typically, expecting fixed character size).
  */
-class TableTextFormatter final : public TableFormatter
+class TableTextFormatter : public TableFormatter
 {
 public:
 
@@ -243,13 +244,15 @@ public:
   void toStream( std::ostream & outputStream, DATASOURCE const & tableData ) const
   { toStreamImpl( outputStream, toString( tableData ) ); }
 
-private:
+protected:
 
   /// symbol for separator construction
   static constexpr char m_verticalLine = '|';
   /// for the extremity of a row
   static constexpr char m_horizontalLine = '-';
 
+  /// A functor which allow to customize the columns width after their computation.
+  using ColumnWidthModifier = std::function< void ( stdVector< size_t > & ) >;
 
   /**
    * @brief Initializes the table layout with the given table data and prepares necessary layouts for headers and data cells.
@@ -258,30 +261,54 @@ private:
    * @param headerCellsLayout A reference to a `CellLayoutRows` where the header cells will be populated.
    * @param dataCellsLayout A reference to a `CellLayoutRows` where the data cells will be populated.
    * @param errorCellsLayout A reference to a `CellLayoutRows` where the error cells will be populated.
-   * @param separatorLine A string that will be used as the table separator line
+   * @param tableTotalWidth A string that will be used as the table separator line
+   * @param columnWidthModifier A functor which allow to customize the columns width after their computation.
    */
   void initalizeTableGrids( PreparedTableLayout const & tableLayout,
                             TableData const & tableData,
                             CellLayoutRows & dataCellsLayout,
                             CellLayoutRows & headerCellsLayout,
                             CellLayoutRows & errorCellsLayout,
-                            size_t & tableTotalWidth ) const;
+                            size_t & tableTotalWidth,
+                            ColumnWidthModifier columnWidthModifier ) const;
 
   /**
-   * @brief Outputs the formatted table to the provided output stream.
-   * @param tableLayout The layout of the table
+   * @brief Outputs the top part of the formatted table to the provided output stream.
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
-   * @param headerCellsLayout The layout of the header rows
-   * @param dataCellsLayout The layout of the data rows
-   * @param errorCellsLayout The layout of the error rows
-   * @param separatorLine The string to be used as the table separator line
+   * @param tableLayout The layout of the table
+   * @param headerCellsLayout The header rows in a grid layout
+   * @param separatorLine A string that will be used as the table separator line
    */
-  void outputTable( PreparedTableLayout const & tableLayout,
-                    std::ostream & tableOutput,
-                    CellLayoutRows const & headerCellsLayout,
-                    CellLayoutRows const & dataCellsLayout,
-                    CellLayoutRows & errorCellsLayout,
-                    size_t tableTotalWidth ) const;
+  void outputTableHeader( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          CellLayoutRows const & headerCellsLayout,
+                          string_view separatorLine ) const;
+
+  /**
+   * @brief Outputs the data part of the formatted table to the provided output stream.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param tableLayout The layout of the table
+   * @param dataCellsLayout The data rows in a grid layout
+   */
+  void outputTableData( std::ostream & tableOutput,
+                        PreparedTableLayout const & tableLayout,
+                        CellLayoutRows const & dataCellsLayout ) const;
+
+  /**
+   * @brief Outputs the bottom part of the formatted table to the provided output stream.
+   * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
+   * @param tableLayout The layout of the table
+   * @param separatorLine A string that will be used as the table separator line
+   * @param errorCellsLayout The layout of the error rows
+   * @param hasData Indicates whether there is data in the table TableData.
+   */
+  void outputTableFooter( std::ostream & tableOutput,
+                          PreparedTableLayout const & tableLayout,
+                          CellLayoutRows & errorCellsLayout,
+                          string_view separatorLine,
+                          bool hasData ) const;
+
+private:
 
   /**
    * @brief Outputs the formatted table lines to the output stream.
@@ -312,7 +339,7 @@ private:
    */
   void populateTitleCellsLayout( PreparedTableLayout const & tableLayout,
                                  CellLayoutRows & headerCellsLayout,
-                                 size_t const nbVisibleColumn ) const;
+                                 size_t nbVisibleColumn ) const;
 
   /**
    * @brief Populate a grid of CellLayout with all visible columns of the given table layout.
@@ -402,6 +429,7 @@ private:
   void formatCell( std::ostream & tableOutput,
                    TableLayout::CellLayout const & cell,
                    size_t idxLine ) const;
+
 };
 
 /**

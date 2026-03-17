@@ -77,7 +77,7 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
     }
     default:
     {
-      GEOS_ERROR( "Unsupported linear solver type: " << parameters.solverType );
+      GEOS_ERROR( GEOS_FMT( "Unsupported linear solver type: {}", parameters.solverType ) );
     }
   }
   return {};
