@@ -1539,7 +1539,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
-    tmpSpace.move( LvArray::MemorySpace::host );
+    tmpSpace_v.move( LvArray::MemorySpace::host );
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
 
     // Search for bubble element on each CellElementSubRegion and
@@ -1561,9 +1561,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const perms_v = perms.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
-      // Move faceIdList to device so that the SortedArrayView can be safely
-      // accessed inside the GPU kernel (faceIdList was populated on the host).
-      faceIdList.move( parallelDeviceMemorySpace );
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),

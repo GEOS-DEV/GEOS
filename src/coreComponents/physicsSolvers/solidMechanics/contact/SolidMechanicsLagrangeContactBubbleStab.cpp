@@ -1061,6 +1061,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
       return;
     }
 
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1076,7 +1078,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
@@ -1165,7 +1167,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
-    tmpSpace.move( LvArray::MemorySpace::host );
+    tmpSpace_v.move( LvArray::MemorySpace::host );
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
 
     // Search for bubble element on each CellElementSubRegion and
