@@ -162,8 +162,7 @@
         .setCodeLocation( __FILE__, __LINE__ ) \
         .setCause( __causemsgsoss.str() ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
-        .setLogPart( GEOS_GLOBAL_LOGGER.getCurrentLogPart()); \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
@@ -251,7 +250,6 @@
                                      .setCause( __causemsgsoss.str() ) \
                                      .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
                                      .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
-                                     .setLogPart( GEOS_GLOBAL_LOGGER.getCurrentLogPart()) \
                                      .getDiagnosticMsg(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
       ex.prepareWhat( exceptionMsg ); \
@@ -345,7 +343,6 @@
                                           .setCause( __causemsgsoss.str() ) \
                                           .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
                                           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
-                                          .setLogPart( GEOS_GLOBAL_LOGGER.getCurrentLogPart()) \
                                           .getDiagnosticMsg() ); \
     } \
   }while( false )
