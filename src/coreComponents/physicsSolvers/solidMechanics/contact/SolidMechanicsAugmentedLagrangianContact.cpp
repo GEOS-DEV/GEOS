@@ -40,6 +40,8 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#include <iostream>
+
 namespace geos
 {
 
@@ -1522,10 +1524,12 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     SortedArray< localIndex > faceIdList;
 
     arrayView1d< localIndex > const tmpSpace_v = tmpSpace.toView();
+    std::cout << "breakpoint 1.00" << std::endl;
     // Store indexes of faces in the temporany array.
     {
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
+      std::cout << "breakpoint 1.10" << std::endl;
       forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
       {
 
@@ -1533,14 +1537,19 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         tmpSpace_v[2*kfe] = kf0, tmpSpace_v[2*kfe+1] = kf1;
 
       } );
+      std::cout << "breakpoint 1.11" << std::endl;
     }
 
     // Sort indexes to enable efficient searching using binary search.
+    std::cout << "breakpoint 1.20" << std::endl;
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    std::cout << "breakpoint 1.21" << std::endl;
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
     tmpSpace_v.move( LvArray::MemorySpace::host );
+    std::cout << "breakpoint 1.22" << std::endl;
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
+    std::cout << "breakpoint 1.23" << std::endl;
 
     // Search for bubble element on each CellElementSubRegion and
     // store element indexes, global and local face indexes.
@@ -1563,6 +1572,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
+      std::cout << "breakpoint 2.10" << std::endl;
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
@@ -1585,49 +1595,61 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
           }
         }
       } );
+      std::cout << "breakpoint 2.11" << std::endl;
 
       // Sort perms according to keys to ensure that bubble elements are adjacent
       // and occupy the first positions of the list.
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
+      std::cout << "breakpoint 2.20" << std::endl;
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, perms_v );
+      std::cout << "breakpoint 2.21" << std::endl;
 
       array1d< localIndex > bubbleElemsList;
       bubbleElemsList.resize( nBubElems );
 
       arrayView1d< localIndex > const bubbleElemsList_v = bubbleElemsList.toView();
 
+      std::cout << "breakpoint 2.30" << std::endl;
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         keys_v[k] = vals_v[perms_v[k]];
       } );
+      std::cout << "breakpoint 2.31" << std::endl;
 
+      std::cout << "breakpoint 2.40" << std::endl;
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
+      std::cout << "breakpoint 2.41" << std::endl;
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array1d< localIndex > & bubbleCellsStorage =
         cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
       bubbleCellsStorage.resize( nBubElems );
       arrayView1d< localIndex > const bubbleCellsStorage_v = bubbleCellsStorage.toView();
+      std::cout << "breakpoint 2.50" << std::endl;
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
       } );
+      std::cout << "breakpoint 2.51" << std::endl;
 
+      std::cout << "breakpoint 2.60" << std::endl;
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         keys_v[k] = localFaceIds_v[perms_v[k]];
       } );
+      std::cout << "breakpoint 2.61" << std::endl;
 
       array2d< localIndex > faceElemsList;
       faceElemsList.resize( nBubElems, 2 );
 
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
+      std::cout << "breakpoint 2.70" << std::endl;
       forAll< parallelDevicePolicy<> >( nBubElems,
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const k )
@@ -1636,17 +1658,20 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
+      std::cout << "breakpoint 2.71" << std::endl;
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array2d< localIndex > & faceElemsStorage =
         cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );
       faceElemsStorage.resize( nBubElems, 2 );
       arrayView2d< localIndex > const faceElemsStorage_v = faceElemsStorage.toView();
+      std::cout << "breakpoint 2.80" << std::endl;
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
         faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
       } );
+      std::cout << "breakpoint 2.81" << std::endl;
 
     } );
 
