@@ -64,6 +64,19 @@ public:
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
+  /**
+   * @brief Compute the mimetic inner product matrix M in a given element using the quasi TPFA inner product.
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] lengthTolerance the tolerance used in the trans calculations
+   * @param[inout] M the output inner product matrix
+   *
+   * @details Reference: K-A Lie, An Introduction to Reservoir Simulation Using MATLAB/GNU Octave (2019)
+   */
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static void

@@ -40,7 +40,7 @@ public:
 
   /**
    * @brief In a given element, recompute the transmissibility matrix in a cell using the inner product of Beirao da Veiga, Lipnikov,
-   * Manzini (page 113)
+   *Manzini (page 113)
    * @param[in] nodePosition the position of the nodes
    * @param[in] transMultiplier the transmissibility multipliers at the mesh faces
    * @param[in] faceToNodes the map from the face to their nodes
@@ -66,6 +66,20 @@ public:
            real64 const & lengthTolerance,
            arraySlice2d< real64 > const & transMatrix );
 
+  /**
+   * @brief Compute the mimetic inner product matrix M in a given element using the inner product of Beirao da Veiga, Lipnikov, Manzini
+   *(page 89)
+   * @param[in] nodePosition the position of the nodes
+   * @param[in] faceToNodes the map from the face to their nodes
+   * @param[in] elemToFaces the maps from the one-sided face to the corresponding face
+   * @param[in] elemCenter the center of the element
+   * @param[in] elemVolume the volume of the element
+   * @param[in] elemPerm the permeability in the element
+   * @param[in] lengthTolerance the tolerance used in the trans calculations
+   * @param[inout] M the output inner product matrix
+   *
+   * @details Reference: Beirao da Veiga, Lipnikov, Manzini, "The mimetic finite-difference method for elliptic problems"
+   */
   template< localIndex NF >
   GEOS_HOST_DEVICE
   static void
