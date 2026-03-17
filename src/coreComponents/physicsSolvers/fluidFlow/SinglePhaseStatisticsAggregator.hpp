@@ -176,7 +176,6 @@ public:
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
-   * @param meshBodies The Group containing the MeshBody objects
    */
   void enableRegionStatisticsAggregation();
 
