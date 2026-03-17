@@ -35,9 +35,10 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" //should not be here -- testing only design flaw
+#include "constitutive/permeability/ExponentialDecayPermeability.hpp"
+#include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
 #include "constitutive/permeability/WillisRichardsPermeability.hpp"
-#include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
@@ -681,7 +682,8 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
         updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
       }
       else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::SlipDependentPermeability > || 
-        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > ) 
+        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > || 
+        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ExponentialDecayPermeability > ) 
       {
         updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction(porousWrapper, 
           subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, oldHydraulicAperture/*dHydraulicAperture_dNormalJump dummy entry*/, 
@@ -692,7 +694,8 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
                     TYPEOFREF(castedPorousSolid)::PermType::catalogName(),
                     constitutive::ParallelPlatesPermeability::catalogName(), 
                     constitutive::SlipDependentPermeability::catalogName(), 
-                    constitutive::WillisRichardsPermeability::catalogName()
+                    constitutive::WillisRichardsPermeability::catalogName(), 
+                    constitutive::ExponentialDecayPermeability::catalogName()
                   ), getDataContext()  );
       }
 
