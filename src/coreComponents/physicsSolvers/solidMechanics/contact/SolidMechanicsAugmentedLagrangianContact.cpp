@@ -72,20 +72,40 @@ inline void checkDeviceErrorsAndSync( char const * const msg, char const * const
 {
 #if defined( GEOS_USE_CUDA )
   cudaError_t const launchErr = cudaGetLastError();
-  GEOS_ERROR_IF( launchErr != cudaSuccess,
-                 GEOS_FMT( "CUDA launch error after {} at {}:{}: {}", msg, file, line, cudaGetErrorString( launchErr ) ) );
+  if( launchErr != cudaSuccess )
+  {
+    std::cout << "CUDA launch error after " << msg
+              << " at " << file << ":" << line
+              << ": " << cudaGetErrorString( launchErr ) << std::endl;
+    throw std::runtime_error( "CUDA launch error" );
+  }
 
   cudaError_t const syncErr = cudaDeviceSynchronize();
-  GEOS_ERROR_IF( syncErr != cudaSuccess,
-                 GEOS_FMT( "CUDA sync error after {} at {}:{}: {}", msg, file, line, cudaGetErrorString( syncErr ) ) );
+  if( syncErr != cudaSuccess )
+  {
+    std::cout << "CUDA sync error after " << msg
+              << " at " << file << ":" << line
+              << ": " << cudaGetErrorString( syncErr ) << std::endl;
+    throw std::runtime_error( "CUDA sync error" );
+  }
 #elif defined( GEOS_USE_HIP )
   hipError_t const launchErr = hipGetLastError();
-  GEOS_ERROR_IF( launchErr != hipSuccess,
-                 GEOS_FMT( "HIP launch error after {} at {}:{}: {}", msg, file, line, hipGetErrorString( launchErr ) ) );
+  if( launchErr != hipSuccess )
+  {
+    std::cout << "HIP launch error after " << msg
+              << " at " << file << ":" << line
+              << ": " << hipGetErrorString( launchErr ) << std::endl;
+    throw std::runtime_error( "HIP launch error" );
+  }
 
   hipError_t const syncErr = hipDeviceSynchronize();
-  GEOS_ERROR_IF( syncErr != hipSuccess,
-                 GEOS_FMT( "HIP sync error after {} at {}:{}: {}", msg, file, line, hipGetErrorString( syncErr ) ) );
+  if( syncErr != hipSuccess )
+  {
+    std::cout << "HIP sync error after " << msg
+              << " at " << file << ":" << line
+              << ": " << hipGetErrorString( syncErr ) << std::endl;
+    throw std::runtime_error( "HIP sync error" );
+  }
 #else
   GEOS_UNUSED_VAR( msg, file, line );
 #endif
