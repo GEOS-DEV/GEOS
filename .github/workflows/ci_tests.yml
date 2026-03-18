@@ -20,8 +20,7 @@ jobs:
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
     # if: ${{ always() }}
-    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
-    # to ensure maximum support of google cloud's sdk.
+    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions.
     runs-on: ubuntu-22.04
     outputs:
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
@@ -162,13 +161,11 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -178,7 +175,6 @@ jobs:
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -200,7 +196,6 @@ jobs:
           #  ENABLE_HYPRE: ON
           #  ENABLE_TRILINOS: OFF
           #  GEOS_ENABLE_BOUNDS_CHECK: OFF
-          #  GCP_BUCKET: geosx/Sherlock-CPU
           #  HOST_CONFIG: /spack-generated.cmake
 #         #   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
           #  BUILD_SHARED_LIBS: ON
@@ -216,7 +211,6 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
@@ -239,7 +233,6 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
-      GCP_BUCKET: geosx/integratedTests
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
@@ -275,7 +268,6 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
-      GCP_BUCKET: geosx/ubuntu22.04-gcc11
       RUNS_ON: streak2
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
@@ -369,15 +361,12 @@ jobs:
           #  ENABLE_HYPRE: ON
           #  ENABLE_TRILINOS: OFF
           #  GEOS_ENABLE_BOUNDS_CHECK: OFF
-          #  GCP_BUCKET: geosx/Sherlock-GPU
           #  RUNS_ON: streak2
           #  NPROC: 8
           #  DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
           #  DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
           #  DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
           #  HOST_CONFIG: /spack-generated.cmake
-
-          # Below this line, jobs that deploy to Google Cloud.
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -391,7 +380,6 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}

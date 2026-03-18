@@ -66,8 +66,6 @@ Usage: $0
       Internal mountpoint where the geos repository will be available. 
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
-  --sccache-credentials credentials.json
-      Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
   -h | --help
@@ -79,7 +77,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -98,6 +96,7 @@ ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
+SCCACHE_BIN=""
 
 eval set -- ${args}
 while :
@@ -136,7 +135,6 @@ do
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
-    --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
     -h | --help)             usage;                      shift;;
@@ -176,22 +174,16 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
-  # The credential json file is available at the root of the geos repository.
-  # We hereafter create the config file that points to it.
-  # We use this file since it's managed by the 'google-github-actions/auth' actions.
-  or_die mkdir -p ${HOME}/.config/sccache
-  or_die cat <<EOT >> ${HOME}/.config/sccache/config
-[cache.gcs]
-rw_mode = "READ_WRITE"
-cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
-bucket = "geos-dev"
-key_prefix = "sccache"
-EOT
+if [[ -n "${SCCACHE_BUCKET:-}" ]]; then
+  SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
-  # To use `sccache`, it's enough to tell `cmake` to launch the compilation using `sccache`.
-  # The path to the `sccache` executable is available through the SCCACHE environment variable.
-  SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
+  if [[ -z "${SCCACHE_BIN}" ]]; then
+    echo "sccache was requested, but no sccache binary is available in the container."
+    exit 1
+  fi
+
+  # R2 is configured via the S3-compatible sccache environment variables passed through the workflow.
+  SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   case "$(hostname -f 2>/dev/null || hostname)" in
     *.llnl.gov|streak2*|streak*)
@@ -202,7 +194,7 @@ EOT
   esac
 
   echo "sccache initial state"
-  ${SCCACHE} --show-stats
+  ${SCCACHE_BIN} --show-stats
 fi
 
 if [ -z "${NPROC}" ]; then
@@ -304,9 +296,9 @@ else
   fi
 fi
 
-if [[ ! -z "${SCCACHE_CREDS}" ]]; then
+if [[ -n "${SCCACHE_BIN}" ]]; then
   echo "sccache post-build state"
-  or_die ${SCCACHE} --show-adv-stats
+  or_die ${SCCACHE_BIN} --show-adv-stats
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
