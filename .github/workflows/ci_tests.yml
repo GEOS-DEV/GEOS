@@ -40,7 +40,6 @@ jobs:
           fi
         fi
 
-
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
