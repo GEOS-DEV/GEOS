@@ -77,7 +77,6 @@ int main( int argc, char *argv[] )
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
     ErrorLogger::global().flushCurrentExceptionMessage();
-    basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
   }
@@ -88,7 +87,6 @@ int main( int argc, char *argv[] )
                                            ::geos::logger::internal::g_rank )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .getDiagnosticMsg());
-    basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
   }
