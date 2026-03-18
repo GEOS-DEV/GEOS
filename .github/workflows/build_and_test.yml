@@ -137,10 +137,6 @@ jobs:
 
         echo "use_sccache=${use_sccache}" >> "$GITHUB_OUTPUT"
 
-    - name: Set up sccache
-      if: ${{ steps.sccache_config.outputs.use_sccache == 'true' }}
-      uses: mozilla-actions/sccache-action@v0.0.9
-
     - name: Print environment
       run: printenv
 
@@ -197,8 +193,6 @@ jobs:
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
         if [[ "${{ steps.sccache_config.outputs.use_sccache }}" == "true" ]]; then
-          docker_args+=(--volume=${SCCACHE_PATH}:/usr/local/bin/sccache:ro)
-          docker_args+=(-e SCCACHE=/usr/local/bin/sccache)
           docker_args+=(-e SCCACHE_BUCKET)
           docker_args+=(-e AWS_ACCESS_KEY_ID)
           docker_args+=(-e AWS_SECRET_ACCESS_KEY)
@@ -383,4 +377,4 @@ jobs:
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         SCCACHE_S3_USE_SSL: "true"
         SCCACHE_REGION: auto
-      run: sccache --show-stats || true
+      run: command -v sccache >/dev/null && sccache --show-stats || true
