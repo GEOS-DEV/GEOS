@@ -76,7 +76,9 @@ void LogPart::formatDescriptions( LogPart::Description & description,
 
   formattedLines.reserve( description.m_names.size() * 2 );
 
-  m_width = std::clamp( m_width, m_minWidth, m_maxWidth );
+  /// clamp
+  m_width = std::min( m_maxWidth, std::max( m_minWidth, m_width ));
+
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
     auto const & rawName =  description.m_names[idxName];
