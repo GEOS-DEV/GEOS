@@ -42,6 +42,12 @@
 
 #include <iostream>
 
+#if defined( GEOS_USE_CUDA )
+#include <cuda_runtime.h>
+#elif defined( GEOS_USE_HIP )
+#include <hip/hip_runtime.h>
+#endif
+
 namespace
 {
 
@@ -61,6 +67,31 @@ struct FunctionBreakpointTrace
 
   char const * m_functionName;
 };
+
+inline void checkDeviceErrorsAndSync( char const * const msg, char const * const file, int const line )
+{
+#if defined( GEOS_USE_CUDA )
+  cudaError_t const launchErr = cudaGetLastError();
+  GEOS_ERROR_IF( launchErr != cudaSuccess,
+                 GEOS_FMT( "CUDA launch error after {} at {}:{}: {}", msg, file, line, cudaGetErrorString( launchErr ) ) );
+
+  cudaError_t const syncErr = cudaDeviceSynchronize();
+  GEOS_ERROR_IF( syncErr != cudaSuccess,
+                 GEOS_FMT( "CUDA sync error after {} at {}:{}: {}", msg, file, line, cudaGetErrorString( syncErr ) ) );
+#elif defined( GEOS_USE_HIP )
+  hipError_t const launchErr = hipGetLastError();
+  GEOS_ERROR_IF( launchErr != hipSuccess,
+                 GEOS_FMT( "HIP launch error after {} at {}:{}: {}", msg, file, line, hipGetErrorString( launchErr ) ) );
+
+  hipError_t const syncErr = hipDeviceSynchronize();
+  GEOS_ERROR_IF( syncErr != hipSuccess,
+                 GEOS_FMT( "HIP sync error after {} at {}:{}: {}", msg, file, line, hipGetErrorString( syncErr ) ) );
+#else
+  GEOS_UNUSED_VAR( msg, file, line );
+#endif
+}
+
+#define GEOS_SMALC_CHECK_DEVICE_ERRORS( msg ) checkDeviceErrorsAndSync( msg, __FILE__, __LINE__ )
 
 }
 
@@ -307,17 +338,20 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
     // Recompute face geometry (normals and areas)
     faceManager.computeGeometry( nodeManager );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "FaceManager::computeGeometry" );
 
     // Recompute element geometry for volume elements (centers and volumes)
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "CellElementSubRegion::calculateElementGeometricQuantities" );
     } );
 
     // Recompute element geometry for face elements (uses updated face areas)
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "FaceElementSubRegion::calculateElementGeometricQuantities" );
 
       // Reorder kf1 nodes to match kf0 for conforming contact kernels.
       // flipFaceMap and fixNeighboringFacesNormals are already called by
@@ -325,21 +359,27 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
       if( subRegion.size() > 0 )
       {
         subRegion.fixNeighboringFacesNormals( faceManager, elemManager );
+        GEOS_SMALC_CHECK_DEVICE_ERRORS( "FaceElementSubRegion::fixNeighboringFacesNormals" );
         subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+        GEOS_SMALC_CHECK_DEVICE_ERRORS( "FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0" );
       }
     } );
   } );
 
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
+  GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList" );
 
   // Create the lists of interface elements that have same type and same fracture state.
   updateStickSlipList( domain );
+  GEOS_SMALC_CHECK_DEVICE_ERRORS( "updateStickSlipList" );
 
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
+  GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList" );
 
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  GEOS_SMALC_CHECK_DEVICE_ERRORS( "PhysicsSolverBase::setupSystem" );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
@@ -1418,6 +1458,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         }
 
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "updateStickSlipList classify fracture states" );
 
       localIndex nStick = static_cast< localIndex >(nStick_r.get());
       localIndex nSlip = static_cast< localIndex >(nSlip_r.get());
@@ -1427,6 +1468,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "updateStickSlipList sort_pairs" );
 
       stickList.resize( nStick );
       slipList.resize( nSlip );
@@ -1438,12 +1480,14 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       {
         stickList_v[kfe] = vals_v[kfe];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "updateStickSlipList fill stickList" );
 
       forAll< parallelDevicePolicy<> >( nSlip, [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
       {
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "updateStickSlipList fill slipList" );
 
       m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
       m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
@@ -1513,6 +1557,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
         GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
       }
     } );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList classify face types" );
 
     localIndex nQuad = static_cast< localIndex >(nQuad_r.get());
     localIndex nTri = static_cast< localIndex >(nTri_r.get());
@@ -1522,6 +1567,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
     RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList sort_pairs" );
 
     quadList.resize( nQuad );
     triList.resize( nTri );
@@ -1532,11 +1578,13 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     {
       triList_v[kfe] = vals_v[kfe];
     } );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList fill triList" );
 
     forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList fill quadList" );
 
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
@@ -1579,10 +1627,12 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         tmpSpace_v[2*kfe] = kf0, tmpSpace_v[2*kfe+1] = kf1;
 
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList collect fracture face ids" );
     }
 
     // Sort indexes to enable efficient searching using binary search.
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList stable_sort face ids" );
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
     tmpSpace_v.move( LvArray::MemorySpace::host );
@@ -1631,6 +1681,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
           }
         }
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList mark bubble candidates" );
 
       // Sort perms according to keys to ensure that bubble elements are adjacent
       // and occupy the first positions of the list.
@@ -1638,6 +1689,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
       RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, perms_v );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList sort bubble candidates" );
 
       array1d< localIndex > bubbleElemsList;
       bubbleElemsList.resize( nBubElems );
@@ -1648,11 +1700,13 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       {
         keys_v[k] = vals_v[perms_v[k]];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList permute bubble element ids" );
 
       forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList fill bubbleElemsList" );
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array1d< localIndex > & bubbleCellsStorage =
@@ -1663,11 +1717,13 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       {
         bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList copy bubble cells storage" );
 
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
         keys_v[k] = localFaceIds_v[perms_v[k]];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList permute local face ids" );
 
       array2d< localIndex > faceElemsList;
       faceElemsList.resize( nBubElems, 2 );
@@ -1682,6 +1738,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList fill faceElemsList" );
 
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array2d< localIndex > & faceElemsStorage =
@@ -1693,6 +1750,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
         faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "createBubbleCellList copy faceElems storage" );
 
     } );
 
