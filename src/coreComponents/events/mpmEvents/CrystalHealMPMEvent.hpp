@@ -53,6 +53,7 @@ public:
     static constexpr char const * targetRegionString() { return "targetRegion"; }
     static constexpr char const * healTypeString() { return "healType"; }
     static constexpr char const * markedParticlesToHealString() { return "markedParticlesToHeal"; }
+    static constexpr char const * strengthKnockdownString() { return "strengthKnockdown"; }
 
     dataRepository::ViewKey targetRegion = { targetRegionString() };
   } CrystalHealMPMEventViewKeys;
@@ -61,6 +62,7 @@ public:
   string getTargetRegion() const { return m_targetRegion; }
   int getHealType() const { return m_healType; }
   int getMarkedParticlesToHeal() const { return m_markedParticlesToHeal; }
+  real64 getStrengthKnockdown() const { return m_strengthKnockdown; }
 
   void setMarkedParticlesToHeal( int markedParticlesToHeal ) { m_markedParticlesToHeal = markedParticlesToHeal; }
 
@@ -71,6 +73,7 @@ protected:
   string m_targetRegion;
   int m_healType;
   int m_markedParticlesToHeal;
+  real64 m_strengthKnockdown;
 };
 
 } /* namespace geos */

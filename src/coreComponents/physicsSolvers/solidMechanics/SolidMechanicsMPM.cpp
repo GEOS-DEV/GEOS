@@ -6195,6 +6195,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         CrystalHealMPMEvent & crystalHeal = dynamicCast< CrystalHealMPMEvent & >( event );
 
         int healType = crystalHeal.getHealType();
+        real64 strengthKnockdown = crystalHeal.getStrengthKnockdown();
         particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
         {
           if( region.getName() == crystalHeal.getTargetRegion() || crystalHeal.getTargetRegion() == "all" )
@@ -6207,6 +6208,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
               arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
               arrayView1d< int > const particleCrystalHealFlag = targetSubRegion.getField< fields::mpm::particleCrystalHealFlag >();
+              arrayView1d< real64 > const particleStrengthScale = targetSubRegion.getParticleStrengthScale();
 
               SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
               string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -6309,6 +6311,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                     if( particleCrystalHealFlag[p] == 1 )
                     {
                       particleDamage[p] = 0.0;
+                      particleStrengthScale[p] *= (1.0 - strengthKnockdown);
                     }
                   } );
                   event.setIsComplete( 1 );
@@ -6578,6 +6581,11 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             czTemperature[g] = m_domainTemperature;
           } );
         });
+      }
+
+      if( event.getCatalogName() == "UpdateSurfaces" )
+      {
+        m_computeCZInterfacesFromDamage = 1;
       }
     }
   } );
@@ -8672,6 +8680,14 @@ void SolidMechanicsMPM::tagBinderCZSurfaces( ParticleManager & particleManager,
   GEOS_MARK_FUNCTION;
 
   arrayView1d< int > const gridHasBinder = nodeManager.getReference< array1d< int> >( viewKeyStruct::gridHasBinderString() );
+
+  // // Might need to use neighbor list to check if cohesive zone particles is near another that has binder
+  // ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleSurfaceFlagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleSurfaceFlag" );
+  // ParticleManager::ParticleViewAccessor< arrayView1d< int const > > particleCZTagAccessor = particleManager.constructArrayViewAccessor< int, 1 >( "particleCZTag" );
+
+  // // Get views of accessors
+  // ParticleManager::ParticleViewConst< arrayView1d< int const > > const particleSurfaceFlagView = particleSurfaceFlagAccessor.toNestedViewConst();
+  // ParticleManager::ParticleViewConst< arrayView1d< int const > > const particleCZTagView = particleCZTagAccessor.toNestedViewConst();
 
   // Map to grid
   localIndex subRegionIndex = 0;
@@ -12482,7 +12498,7 @@ void SolidMechanicsMPM::particleToGrid_minimalAtomics( real64 const time_n,
 
       // Use sorted indices to sort the shape functions and shape function gradients
       real64 sortedShapeFunctionValues[64] = {};
-      real64 sortedShapeFunctionGradientValues[64][3] = { {0.0} };
+      real64 sortedShapeFunctionGradientValues[64][3] = { {} };
       // printf("Sorted:\n");
       for( localIndex i = 0; i < 64; ++i )
       {
@@ -16867,19 +16883,15 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
 
           for( int i  = 0; i < 3; ++i )
           {
-            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
-            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialBasis[i] );
             if( !isZero(norm) )
             {
-              LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+              LvArray::tensorOps::scale< 3 >( materialBasis[i], 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
             }
             else
             {
               zeroMagnitudeMaterialDirection = true;
             }
-            materialBasis[0][i] = materialDirection[0];
-            materialBasis[1][i] = materialDirection[1];
-            materialBasis[2][i] = materialDirection[2];
           }
           LvArray::tensorOps::copy< 3, 3 >( particleMaterialDirection[p], materialBasis );
         }
@@ -16917,7 +16929,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::scaledCopy< 3, 3 >( dF, particleDeformationGradient[p], dt );
 
           // Update quantities
-          real64 temp[3]= { 0.0 };
+          real64 temp[3]= {};
 
           // Particle surface normal
           LvArray::tensorOps::copy< 3 >( temp, particleSurfaceNormal[p] );

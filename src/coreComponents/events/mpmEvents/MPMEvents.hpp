@@ -36,4 +36,5 @@
 #include "events/mpmEvents/TemperatureProfileMPMEvent.hpp"
 #include "events/mpmEvents/CohesiveZoneMPMEvent.hpp"
 #include "events/mpmEvents/TransformParticlesMPMEvent.hpp"
+#include "events/mpmEvents/UpdateSurfacesMPMEvent.hpp"
 #endif /* GEOSX_MPMEVENTS_HPP_ */

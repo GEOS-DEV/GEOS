@@ -28,7 +28,8 @@ CrystalHealMPMEvent::CrystalHealMPMEvent( const string & name,
   MPMEventBase( name, parent ),
   m_targetRegion( "mat1" ),
   m_healType( 0 ),
-  m_markedParticlesToHeal( 0 )
+  m_markedParticlesToHeal( 0 ),
+  m_strengthKnockdown( 0.0 )
 {
   registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -42,6 +43,11 @@ CrystalHealMPMEvent::CrystalHealMPMEvent( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( m_markedParticlesToHeal ).
     setDescription( "Flag whether identification of particles to heal has been performed" );
+
+  registerWrapper( viewKeyStruct::strengthKnockdownString(), &m_strengthKnockdown ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_strengthKnockdown ).
+    setDescription( "Knockdown factor to apply to fully damaged material after healing" );
 }
 
 CrystalHealMPMEvent::~CrystalHealMPMEvent()

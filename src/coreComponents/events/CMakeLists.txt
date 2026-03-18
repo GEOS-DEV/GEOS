@@ -49,6 +49,7 @@ set( events_headers
      mpmEvents/ResetDeformationGradientMPMEvent.hpp
      mpmEvents/TemperatureProfileMPMEvent.hpp
      mpmEvents/TransformParticlesMPMEvent.hpp
+     mpmEvents/UpdateSurfacesMPMEvent.hpp
    )
 
 #
@@ -82,6 +83,7 @@ set( events_sources
      mpmEvents/ResetDeformationGradientMPMEvent.cpp
      mpmEvents/TemperatureProfileMPMEvent.cpp
      mpmEvents/TransformParticlesMPMEvent.cpp
+     mpmEvents/UpdateSurfacesMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} functions )

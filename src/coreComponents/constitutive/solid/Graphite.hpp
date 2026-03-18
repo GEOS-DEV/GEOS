@@ -572,10 +572,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // make sure material direction is normalized.
   // Check updates to material direction are correct, this model only utilizes the x basis to denote the anisotropic c-axis of the crystal
-  real64 materialDirection[3] = {m_materialDirection[k][0][0],
-                                 m_materialDirection[k][1][0],
-                                 m_materialDirection[k][2][0]};
-  // LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
+  real64 materialDirection[3] = {};
+  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Unrotate material direction
