@@ -28,13 +28,11 @@ jobs:
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
 
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          draft_status=$( curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}" | jq -r '.draft')
+          draft_status="${{ github.event.pull_request.draft }}"
 
           echo "Draft status of PR is ${draft_status}."
           if [[ "${draft_status}" == "true" ]]; then
@@ -67,9 +65,11 @@ jobs:
     steps:
     - name: If this is a PR, Check that it is assigned
       run: |
+        set -euo pipefail
+
         if [[ ${{github.event_name}} != 'pull_request' ]]; then exit 0 ; fi
-        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-        NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')
+        pr_json='${{ toJson(github.event.pull_request) }}'
+        NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${pr_json}")
         echo "There are ${NUM_ASSIGNEES} assignees on this PR."
         if [[ $NUM_ASSIGNEES == 0 ]]; then exit 1 ; fi
 
