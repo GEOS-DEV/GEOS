@@ -108,6 +108,16 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
         subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       } );
 
+
+      elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     ElementSubRegionBase & subRegion )
+      {
+        subRegion.getField< contact::dispJump >().zero(); //MAYBE NOT IF Fault Failing from zero !
+        subRegion.getField< contact::slip >().zero();
+      } );
+
+
       FaceManager & faceManager = mesh.getFaceManager();
       if( faceManager.hasField< contact::totalBubbleDisplacement >() )
       {
