@@ -237,8 +237,8 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
                                                     wellRegion.getWellGeneratorName()),
       {
-        "Rank", "Perforation", "Well element", "Coordinates",
-        "Cell region", "Cell sub-region", "Cell ID"
+        "Perforation", "Well element", "Coordinates",
+        "Cell region", "Cell sub-region", "Cell ID", "Rank"
       } );
 
     PerforationData const * wellSubRegionPerforationData= wellSubRegion.getPerforationData();
@@ -265,8 +265,8 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
-        localPerfoData.addRow( rankId, globalIperf[iperfLocal], localWellElemIndices, localCoords,
-                               region.getName(), subRegion.getName(), cellId );
+        localPerfoData.addRow( globalIperf[iperfLocal], localWellElemIndices, localCoords,
+                               region.getName(), subRegion.getName(), cellId, rankId );
       }
     }
 
