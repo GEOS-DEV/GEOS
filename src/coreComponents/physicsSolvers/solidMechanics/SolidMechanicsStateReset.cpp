@@ -20,6 +20,7 @@
 #include "SolidMechanicsStateReset.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" //should not be here -- testing only design flaw
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/DomainPartition.hpp"
