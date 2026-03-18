@@ -31,7 +31,7 @@ TEST( GraphColoringTest, CountPositiveDistinctColors )
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors ), 6 );
 }
 
-// todo This TEST is temporarily removed
+// TODO This TEST is temporarily removed
 // The error is located in getGraphNodeDegree() with an array out of bound
 // TEST( GraphColoringTest, CartesianDecomposition3D6 )
 // {
