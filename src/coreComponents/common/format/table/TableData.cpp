@@ -59,7 +59,27 @@ TableData & TableData::operator=( TableData const & other )
 
 bool TableData::operator<( TableData const & other ) const
 {
-  return m_rows < other.m_rows;
+  if( other.getCellsData().size()!= getCellsData().size())
+    return false;
+
+  for( size_t i = 0; i < getCellsData().size(); i++ )
+  {
+    if( getCellsData()[i].data()->value > other.getCellsData()[i].data()->value )
+      return false;
+  }
+  return true;
+}
+
+bool TableData::operator==( TableData const & comparingTable ) const
+{
+  if( comparingTable.getCellsData().size()!= getCellsData().size())
+    return false;
+  for( size_t i = 0; i < getCellsData().size(); i++ )
+  {
+    if( getCellsData()[i].data()->value  != comparingTable.getCellsData()[i].data()->value )
+      return false;
+  }
+  return true;
 }
 
 

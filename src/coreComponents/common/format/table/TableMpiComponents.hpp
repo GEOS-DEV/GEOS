@@ -110,15 +110,6 @@ private:
   void stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
                               Status const & status ) const;
 
-
-  /**
-   * @brief Parse each row of a CellLayoutRows into its string representation.
-   * @param cellLayoutRows The target CellLayoutRows to parse
-   * @param rowsAsString The result vector of strings
-   */
-  void cellRowsToStrings( CellLayoutRows const & cellLayoutRows,
-                            stdVector< string > & rowsAsString ) const;
-
   /**
    * @brief Parse a string row to a TablaData cells.
    * @param rowString The string row string to parse.
@@ -126,26 +117,6 @@ private:
    */
   stdVector< TableData::CellData > parseStringRow( string_view rowString ) const;
 
-  /**
-   * @brief Gather string rows across all ranks, construct a TableData,
-   *        and sort the TableData by the desired sorting functor
-   * @param gatheredTableData The output TableData object populated with gathered cells.
-   * @param rowsAsString Serialized rows string provided by the current rank.
-   * @param status Updated to indicate if any content was actually gathered.
-   */
-  void gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
-                                           stdVector< string > & rowsAsString,
-                                           TableTextMpiFormatter::Status & status ) const;
-  /**
-   * @brief Parse CellLayoutRows, gathers and sorts them across all MPI ranks,
-   *        and outputs the result to rank 0.
-   * @param tableOutput The output stream where the formatted table is written.
-   * @param cellLayoutRows The layout for the data cells
-   * @param status The TableMpi status for the current rank
-   */
-  void gatherSortAndOutput( std::ostream & tableOutput,
-                            CellLayoutRows const & cellLayoutRows,
-                            TableTextMpiFormatter::Status & status )const;
 
   /**
    * @brief Gather data cell rows across all MPI ranks and output them to rank 0 in rank order.

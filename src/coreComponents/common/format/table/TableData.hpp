@@ -24,6 +24,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "TableTypes.hpp"
+#include <cstddef>
 
 namespace geos
 {
@@ -55,6 +56,13 @@ public:
   bool operator<( TableData const & other ) const;
 
   /**
+   * @brief Comparison operator for data rows
+   * @param comparingTable The tableData values to compare
+   * @return The comparison result
+   */
+  bool operator==( TableData const & comparingTable ) const;
+
+  /**
    * @brief Representing a data in TableData
    */
   struct CellData
@@ -63,20 +71,7 @@ public:
     CellType type;
     /// The cell value
     string value;
-
-    /// @cond DO_NOT_DOCUMENT
-    bool operator==( CellData const & other ) const
-    {
-      return value == other.value;
-    }
-
-    bool operator<( CellData const & other ) const
-    {
-      return value < other.value;
-    }
-    ///@endcond
   };
-
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
 
@@ -130,14 +125,6 @@ public:
   { return m_rows; }
 
   /**
-   * @brief Comparison operator for data rows
-   * @param comparingTable The tableData values to compare
-   * @return The comparison result
-   */
-  inline bool operator==( TableData const & comparingTable ) const
-  { return getCellsData() == comparingTable.getCellsData(); }
-
-  /**
    * @brief Get all error messages
    * @return The list of error messages
    */
@@ -148,8 +135,16 @@ public:
    * @brief Get all error messages
    * @return The list of error messages
    */
+
   TableErrorListing & getErrorsList()
   { return *m_errors; }
+  
+  /**
+   * @brief Gather all the TableData rows to the rank 0
+   * @param func The callable comparison function object to sort TableData rows, by default none
+   */
+  template< typename SortingFunc = std::nullptr_t >
+  void gatherRowsRank0( SortingFunc && func );
 
 private:
   /// @brief vector containing all rows with cell values
