@@ -55,7 +55,11 @@ void HypreInterface::initialize()
   HYPRE_Initialize();
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   HYPRE_SetExecutionPolicy( HYPRE_EXEC_DEVICE );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
   HYPRE_SetSpGemmUseVendor( 0 );
+#else
+  HYPRE_SetSpGemmUseVendor( 1 );
+#endif
   HYPRE_DeviceInitialize();
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );

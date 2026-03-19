@@ -221,7 +221,7 @@ public:
   static Wrapper & cast( WrapperBase & wrapper )
   {
     GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+                   GEOS_FMT( "Invalid downcast to Wrapper< {} >", LvArray::system::demangleType< T >() ) );
     return static_cast< Wrapper< T > & >( wrapper );
   }
 
@@ -234,7 +234,7 @@ public:
   static Wrapper< T > const & cast( WrapperBase const & wrapper )
   {
     GEOS_ERROR_IF( wrapper.getTypeId() != typeid( T ),
-                   "Invalid downcast to Wrapper< " << LvArray::system::demangleType< T >() << " >" );
+                   GEOS_FMT( "Invalid downcast to Wrapper< {} >", LvArray::system::demangleType< T >() ) );
     return static_cast< Wrapper< T > const & >( wrapper );
   }
 

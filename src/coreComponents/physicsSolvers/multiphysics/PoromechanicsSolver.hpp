@@ -114,18 +114,12 @@ public:
   {
     Base::postInputInitialization();
 
-    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
-                             this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
-                   InputError );
-
     GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
-                   GEOS_FMT( "{} {}: The attribute `{}` of solid mechanics solver `{}` must be `{}`",
-                             this->getCatalogName(), this->getName(),
+                   GEOS_FMT( "The attribute `{}` of solid mechanics solver `{}` must be `{}`",
                              SolidMechanicsLagrangianFEM::viewKeyStruct::timeIntegrationOptionString(),
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
-                   InputError );
+                   InputError, this->solidMechanicsSolver()->getDataContext() );
 
     setMGRStrategy();
   }
@@ -152,9 +146,14 @@ public:
   {
     Base::initializePreSubGroups();
 
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
+                             this->flowSolver()->getName() ),
+                   InputError, this->flowSolver()->getDataContext() );
+
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
-                   this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
-                   ": Local stabilization has been temporarily disabled",
+                   GEOS_FMT( "{}: Local stabilization has been temporarily disabled",
+                             this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) ),
                    InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -475,15 +474,14 @@ protected:
       GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                                 poromechanicsTargetRegionNames[i] )
                      == solidMechanicsTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
-                               this->solidMechanicsSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region {} must be a target region of {}",
+                               poromechanicsTargetRegionNames[i], this->solidMechanicsSolver()->getName() ),
+                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext());
       GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                      == flowTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "Region `{}` must be a target region of `{}`",
+                               poromechanicsTargetRegionNames[i], this->flowSolver()->getCatalogName() ),
+                     InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
     }
   }
 
