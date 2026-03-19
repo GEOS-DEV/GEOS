@@ -57,7 +57,7 @@ void TableTextMpiFormatter::stretchColumnsByRanks( stdVector< size_t > & columns
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-stdVector< TableData::CellData > TableTextMpiFormatter::parseStringRow( string_view rowString ) const
+stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view rowString ) const
 {
   if( rowString.empty() )
     return stdVector< TableData::CellData >{};
@@ -79,10 +79,10 @@ stdVector< TableData::CellData > TableTextMpiFormatter::parseStringRow( string_v
   return dataRow;
 }
 
-void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
-                                                                 CellLayoutRows const & rows,
-                                                                 PreparedTableLayout const & tableLayout,
-                                                                 TableTextMpiFormatter::Status & status ) const
+void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
+                                                              CellLayoutRows const & rows,
+                                                              PreparedTableLayout const & tableLayout,
+                                                              TableTextMpiOutput::Status & status ) const
 {
   // master rank does the output directly to the output, other ranks will have to send it through a string.
   std::ostringstream localStringStream;
@@ -123,30 +123,32 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
     // m_isContributing (some ranks does not have any output to produce)
     !tableData.getCellsData().empty(),
     // m_hasContent
-    false,
+                             false,
     // m_sepLine
     ""
   };
 
   if( m_sortingFunctor )
   {
-    tableData.gatherRowsRank0( m_sortingFunctor );
+    tableData.serialize( X );
+    gatherTableDataOnRank0( tableData, X );
+
     if( status.m_isMasterRank )
     {
-      toString( tableData );
+      tableData.sort( m_sortingFunctor );
+      TableTextFormatter::toStream( tableOutput, tableData );
     }
   }
   else
-  {
+  { // this version is faster (MPI cooperation) but can only be ordered by rank id
     CellLayoutRows headerCellsLayout;
     CellLayoutRows dataRows;
     CellLayoutRows errorRows;
     size_t tableTotalWidth = 0;
-
-    {
+    { // compute layout
       ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
-        stretchColumnsByRanks( columnsWidth, status );
-      };
+          stretchColumnsByRanks( columnsWidth, status );
+        };
       initalizeTableGrids( m_tableLayout, tableData,
                            headerCellsLayout, dataRows, errorRows,
                            tableTotalWidth, columnWidthModifier );
@@ -165,7 +167,6 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
                          status.m_sepLine, status.m_hasContent );
       tableOutput.flush();
     }
-
   }
 }
 
