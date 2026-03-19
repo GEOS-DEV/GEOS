@@ -1,6 +1,6 @@
 /*
  * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2.1- only
+ * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
