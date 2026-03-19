@@ -14,19 +14,10 @@
 
 /**
  * @file Graphite.hpp
- * @brief Simple damage model for modeling material failure in brittle materials.
+ * @brief Simple damage model transversely isotropic graphitic materials
  *
- * This damage model is intended for use with damage-field partitioning (DFG) within the
- * MPM solver, but can also be used without DFG by any solver. It is only appropriate for
- * schemes implementing explicit time integration. The model is really a hybrid plasticity/
- * damage model in the sense that we assume damaged material behaves like granular material
- * and hence follows a modified Mohr-Coulomb law. The modifications are that at low pressures,
- * the shape of the yield surface is modified to resemble a maximum principal stress criterion,
- * and at high pressures the shape converges on the von Mises yield surface. The damage
- * parameter results in softening of the deviatoric response i.e. causes the yield surface to
- * contract. Furthermore, damage is used to scale back tensile pressure: p = (1 - d) * pTrial.
- * pTrial is calculatd as pTrial = -k * log(J), where the Jacobian J of the material motion is
- * integrated and tracked by this model.
+ * Model for graphitic materials with a weak plan and transverse anisotropy.  Includes
+ * pressure dependent TI elasticity, strength, and damage models.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_GRAPHITE_HPP_
@@ -573,8 +564,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // make sure material direction is normalized.
   // Check updates to material direction are correct, this model only utilizes the x basis to denote the anisotropic c-axis of the crystal
   real64 materialDirection[3] = {m_materialDirection[k][0][0],
-                                 m_materialDirection[k][1][0],
-                                 m_materialDirection[k][2][0]};
+                                 m_materialDirection[k][0][1],
+                                 m_materialDirection[k][0][2]};
   // LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
@@ -596,16 +587,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
   // need to ask him about that
-  real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure );
-  real64 Ep = m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure );
-  real64 Gzp  = m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure );
-  real64 nuzp = m_defaultPoissonRatioAxialTransverse;
-  real64 nup = m_defaultPoissonRatioTransverse;
+  real64 Ez = LvArray::math::max( 0.001*m_defaultYoungModulusAxial, m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure ) );
+  real64 Ep = LvArray::math::max( 0.001*m_defaultYoungModulusTransverse, m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure ) );
+  real64 Gzp  = LvArray::math::max( 0.001*m_defaultShearModulusAxialTransverse, m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure ) );
+  real64 nuzp = LvArray::math::min( 0.4999, m_defaultPoissonRatioAxialTransverse );
+  real64 nup = LvArray::math::min( 0.4999, m_defaultPoissonRatioTransverse );
 
   // Update effective elastic properties
-  m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
+  m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));  // prevent negative k or division by 0
   m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+  
+  // TODO: make elastic properties safe to avoid floating point errors.
   m_wavespeed[k][0] = LvArray::math::sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
+
 
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ":\n"

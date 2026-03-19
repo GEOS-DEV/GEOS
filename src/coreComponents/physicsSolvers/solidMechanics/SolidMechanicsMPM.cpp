@@ -13298,24 +13298,30 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
               break;
           }
 
-          // Normalize the effective surface normal
-          if( planeStrain == 1 )
-          {
-            nAB[2] = 0.0;
-          }
+          // Make sure the surface normal is a well-defined unit vector, consistent with plane strain assumption.
           real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
-
-          if( norm > 1e-20 )
-          {
-            LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
-          }
-          else
+          bool recomputeNormal = false;
+          if( norm < 1e-20 )
           {
             // If normals are randomly defined as in the case of a fully damaged region, just default to normal A
             // since the two fields should not be separable
             LvArray::tensorOps::copy< 3 >( nAB, nA );
-            nAB[2] = 0.0;
+            recomputeNormal = true;
           }
+          if( planeStrain == 1)
+          {
+            // Enforce plane strain
+            nAB[2] = 0.0;
+            recomputeNormal = true;
+          }
+          if (recomputeNormal)
+          {
+            norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
+          }
+
+          // Normalize the effective surface normal
+          LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
+
 
           // For debugging logistic regression
           LvArray::tensorOps::copy< 3 >( gridSurfaceNormal[g][A], nAB );
