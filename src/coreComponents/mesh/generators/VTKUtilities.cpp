@@ -435,8 +435,8 @@ VTKLegacyDatasetType getVTKLegacyDatasetType( vtkSmartPointer< vtkDataSetReader 
   }
   else
   {
-    GEOS_ERROR( "Unsupported legacy VTK dataset format.\nLegacy supported formats are: " <<
-                EnumStrings< VTKLegacyDatasetType >::concat( ", " ) << '.' );
+    GEOS_ERROR( GEOS_FMT( "Unsupported legacy VTK dataset format.\nLegacy supported formats are: {}.",
+                          EnumStrings< VTKLegacyDatasetType >::concat( ", " ) ) );
   }
   return {};
 }
@@ -486,8 +486,9 @@ loadMesh( Path const & filePath,
         vtkCompositeDataSet * compositeDataSet = reader->GetOutput();
         if( !compositeDataSet->IsA( "vtkMultiBlockDataSet" ) )
         {
-          GEOS_ERROR( "Unsupported vtk multi-block format in file \"" << filePath << "\".\n" <<
-                      generalMeshErrorAdvice );
+          GEOS_ERROR( GEOS_FMT( "Unsupported vtk multi-block format in file \"{}\".\n{}",
+                                filePath,
+                                generalMeshErrorAdvice ) );
         }
         vtkMultiBlockDataSet * multiBlockDataSet = vtkMultiBlockDataSet::SafeDownCast( compositeDataSet );
 
@@ -506,8 +507,10 @@ loadMesh( Path const & filePath,
             }
           }
         }
-        GEOS_ERROR( "Could not find mesh \"" << blockName << "\" in multi-block vtk file \"" << filePath << "\".\n" <<
-                    generalMeshErrorAdvice );
+        GEOS_ERROR( GEOS_FMT( "Could not find mesh \"{}\" in multi-block vtk file \"{}\".\n{}",
+                              blockName,
+                              filePath,
+                              generalMeshErrorAdvice ) );
         return {};
       }
       else
@@ -547,7 +550,9 @@ loadMesh( Path const & filePath,
     case VTKMeshExtension::pvtp: return parallelRead( vtkSmartPointer< vtkXMLPPolyDataReader >::New() );
     default:
     {
-      GEOS_ERROR( extension << " is not a recognized extension for VTKMesh. Please use ." << EnumStrings< VTKMeshExtension >::concat( ", ." ) );
+      GEOS_ERROR( GEOS_FMT( "{} is not a recognized extension for VTKMesh. Please use .{}",
+                            extension,
+                            EnumStrings< VTKMeshExtension >::concat( ", ." ) ) );
       break;
     }
   }
@@ -754,8 +759,9 @@ scatterByBlock( vtkDataSet & mesh )
   // Verify rank 0 has the complete mesh for redistribution
   if( rank == 0 && localCells != totalCells )
   {
-    GEOS_ERROR( "Rank 0 must have the complete mesh. "
-                << "Rank 0 has " << localCells << " cells but total is " << totalCells );
+    GEOS_ERROR( GEOS_FMT( "Rank 0 must have the complete mesh. Rank 0 has {} cells but total is {}",
+                          localCells,
+                          totalCells ) );
   }
 
   // Scatter cells by contiguous blocks
@@ -774,8 +780,11 @@ scatterByBlock( vtkDataSet & mesh )
 
       // Validate cell range
       GEOS_ERROR_IF( rankStart< 0 || rankEnd > totalCells,
-                     "Invalid cell range for rank " << r << ": [" << rankStart
-                                                    << ", " << rankEnd << ") with total cells " << totalCells );
+                     GEOS_FMT( "Invalid cell range for rank {}: [{}, {}) with total cells {}",
+                               r,
+                               rankStart,
+                               rankEnd,
+                               totalCells ) );
 
       if( rankEnd > rankStart )
       {
@@ -815,8 +824,9 @@ scatterByBlock( vtkDataSet & mesh )
   vtkIdType finalTotalCells = MpiWrapper::allReduce( finalLocalCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
 
   GEOS_ERROR_IF( finalTotalCells != totalCells,
-                 "Block redistribution lost cells: started with " << totalCells
-                                                                  << ", ended with " << finalTotalCells );
+                 GEOS_FMT( "Block redistribution lost cells: started with {}, ended with {}",
+                           totalCells,
+                           finalTotalCells ) );
 
   return result;
 }
@@ -1278,7 +1288,8 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   localIndex const numCells = LvArray::integerConversion< localIndex >( input.getMainMesh()->GetNumberOfCells() );
   int const numProcs = MpiWrapper::commSize( comm );
   int const numPartA = numProcs / numPartZ;
-  GEOS_ERROR_IF_NE_MSG( numProcs % numPartZ, 0, "Number of ranks must evenly divide the number of z-partitions" );
+  int const numProcsRemainder = numProcs % numPartZ;
+  GEOS_ERROR_IF_NE_MSG( numProcsRemainder, 0, "Number of ranks must evenly divide the number of z-partitions" );
 
   // Compute conversion from cell z-index to partition z-index
   std::array< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );
@@ -1379,8 +1390,11 @@ redistributeByKdTree( vtkDataSet & mesh )
 
   if( globalOutputCells != globalInputCells )
   {
-    GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
-                                                    << " elements! Falling back to block redistribution." );
+    if( MpiWrapper::commRank() == 0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "VTK KdTree redistribution lost {} elements! Falling back to block redistribution.",
+                              globalInputCells - globalOutputCells ) );
+    }
     return scatterByBlock( mesh );
   }
 
@@ -1444,17 +1458,19 @@ vtkSmartPointer< vtkDataSet > manageGlobalIds( vtkSmartPointer< vtkDataSet > mes
     vtkIdTypeArray const * const globalCellId = vtkIdTypeArray::FastDownCast( output->GetCellData()->GetGlobalIds() );
     vtkIdTypeArray const * const globalPointId = vtkIdTypeArray::FastDownCast( output->GetPointData()->GetGlobalIds() );
     GEOS_ERROR_IF( globalCellId->GetNumberOfComponents() != 1 && globalCellId->GetNumberOfTuples() != output->GetNumberOfCells(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n" <<
-                   generalMeshErrorAdvice );
+                   GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
+                             generalMeshErrorAdvice ) );
     GEOS_ERROR_IF( globalPointId->GetNumberOfComponents() != 1 && globalPointId->GetNumberOfTuples() != output->GetNumberOfPoints(),
-                   "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n" <<
-                   generalMeshErrorAdvice );
+                   GEOS_FMT( "Global cell IDs are invalid. Check the array or enable automatic generation (useGlobalId < 0).\n{}",
+                             generalMeshErrorAdvice ) );
 
     GEOS_LOG_RANK_0( "Using global Ids defined in VTK mesh" );
   }
   else
   {
-    GEOS_ERROR_IF( isFractured, "Automatic generation of global IDs for fractured meshes is disabled. Please split with  mesh_doctor. \n" << generalMeshErrorAdvice );
+    GEOS_ERROR_IF( isFractured,
+                   GEOS_FMT( "Automatic generation of global IDs for fractured meshes is disabled. Please split with  mesh_doctor. \n{}",
+                             generalMeshErrorAdvice ) );
 
     GEOS_LOG_RANK_0( "Generating global Ids from VTK mesh" );
     output = generateGlobalIDs( mesh );
@@ -1816,7 +1832,7 @@ geos::ElementType buildGeosxPolyhedronType( vtkCell * const cell )
     case 11: return geos::ElementType::Prism11;
     default:
     {
-      GEOS_ERROR( "Prism with " << numQuads << " sides is not supported.\n" << generalMeshErrorAdvice );
+      GEOS_ERROR( GEOS_FMT( "Prism with {} sides is not supported.\n{}", numQuads, generalMeshErrorAdvice ) );
       return{};
     }
   }
@@ -1846,8 +1862,9 @@ ElementType convertVtkToGeosxElementType( vtkCell *cell )
     case VTK_POLYHEDRON:       return buildGeosxPolyhedronType( cell );
     default:
     {
-      GEOS_ERROR( cell->GetCellType() << " is not a recognized cell type to be used with the VTKMeshGenerator.\n" <<
-                  generalMeshErrorAdvice );
+      GEOS_ERROR( GEOS_FMT( "{} is not a recognized cell type to be used with the VTKMeshGenerator.\n{}",
+                            cell->GetCellType(),
+                            generalMeshErrorAdvice ) );
       return {};
     }
   }
@@ -1920,7 +1937,7 @@ splitCellsByType( vtkDataSet & mesh )
       }
       default:
       {
-        GEOS_ERROR( "Invalid element dimension: " << getElementDim( type ) );
+        GEOS_ERROR( GEOS_FMT( "Invalid element dimension: {}", getElementDim( type ) ) );
       }
     }
   }
@@ -2171,7 +2188,7 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid wedge.\n" << generalMeshErrorAdvice );
+  GEOS_ERROR_IF( iFace == numFaces, GEOS_FMT( "Invalid wedge.\n{}", generalMeshErrorAdvice ) );
 
   // Get global pointIds for the first triangle
   for( localIndex i = 0; i < 3; ++i )
@@ -2266,7 +2283,7 @@ stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const ce
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid pyramid.\n" << generalMeshErrorAdvice );
+  GEOS_ERROR_IF( iFace == numFaces, GEOS_FMT( "Invalid pyramid.\n{}", generalMeshErrorAdvice ) );
 
   // Get global pointIds for the base
   vtkCell * cellFace = cell->GetFace( iFace );
@@ -2340,7 +2357,7 @@ stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell
     }
   }
 
-  GEOS_ERROR_IF( iFace == numFaces, "Invalid prism.\n" << generalMeshErrorAdvice );
+  GEOS_ERROR_IF( iFace == numFaces, GEOS_FMT( "Invalid prism.\n{}", generalMeshErrorAdvice ) );
 
   // Get global pointIds for the first base
   vtkCell *cellFace = cell->GetFace( iFace );
@@ -2451,7 +2468,7 @@ stdVector< int > getVtkToGeosxNodeOrdering( ElementType const elemType )
     case ElementType::Prism6:        return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     default:
     {
-      GEOS_ERROR( "Cannot get vtk to geos node ordering based on geos element type " << elemType );
+      GEOS_ERROR( GEOS_FMT( "Cannot get vtk to geos node ordering based on geos element type {}", elemType ) );
       break;
     }
   }
@@ -2475,7 +2492,8 @@ stdVector< int > getVtkToGeosxNodeOrdering( VTKCellType const vtkType )
     case VTK_HEXAGONAL_PRISM:  return getVtkToGeosxNodeOrdering( ElementType::Prism6 );
     default:
     {
-      GEOS_ERROR( "Cannot get vtk to geos node ordering based on vtk cell type " << vtkType );
+      GEOS_ERROR( GEOS_FMT( "Cannot get vtk to geos node ordering based on vtk cell type {}",
+                            static_cast< int >( vtkType ) ) );
       break;
     }
   }
@@ -2585,7 +2603,7 @@ void importMaterialField( stdVector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp() / view.size( 1 );
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                          "Mismatch in number of components for field " << vtkArray->GetName() );
+                          GEOS_FMT( "Mismatch in number of components for field {}", vtkArray->GetName() ) );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
@@ -2621,7 +2639,7 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( vtkArray->GetNumberOfComponents() );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOS_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                          "Mismatch in number of components for field " << vtkArray->GetName() );
+                          GEOS_FMT( "Mismatch in number of components for field {}", vtkArray->GetName() ) );
 
     vtkArrayDispatch::DispatchByValueType< vtkArrayDispatch::Reals >::Execute( vtkArray, [&]( auto const * srcArray )
     {
