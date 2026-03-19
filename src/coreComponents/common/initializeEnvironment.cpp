@@ -19,7 +19,6 @@
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
-#include "common/MemoryInfos.hpp"
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
@@ -192,10 +191,9 @@ void setupMPI( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void finalizeMPI()
+void finalizeMPI( bool inError )
 {
-  MpiWrapper::commFree( MPI_COMM_GEOS );
-  MpiWrapper::finalize();
+  MpiWrapper::finalize( inError );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -330,13 +328,12 @@ void setupEnvironment( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void cleanupEnvironment()
+void cleanupEnvironment( bool inError )
 {
-  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();
-  finalizeMPI();
+  finalizeMPI( inError );
 }
 
 } // namespace geos

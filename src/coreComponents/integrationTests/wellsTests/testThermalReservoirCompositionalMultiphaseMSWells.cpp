@@ -810,7 +810,7 @@ int main( int argc, char * * argv )
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int const result = RUN_ALL_TESTS();
-  geos::basicCleanup();
+  geos::basicCleanup( false );
   removeFile( "co2flash.txt" );
   removeFile( "pvtliquid.txt" );
   removeFile( "pvtgas.txt" );

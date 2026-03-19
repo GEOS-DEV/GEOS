@@ -136,7 +136,7 @@ void setupMPI( int argc, char * argv[] );
 /**
  * @brief Finalize MPI.
  */
-void finalizeMPI();
+void finalizeMPI( bool inError );
 
 /**
  * @brief Setup CUDA
@@ -153,8 +153,9 @@ void setupEnvironment( int argc, char * argv[] );
 
 /**
  * @brief Cleanup/finalize the environment.
+ * @param inError indicate if an exception occured
  */
-void cleanupEnvironment();
+void cleanupEnvironment( bool inError );
 
 #if defined( GEOS_USE_CALIPER )
 

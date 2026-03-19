@@ -128,6 +128,6 @@ int main( int ac, char * av[] )
   ::testing::InitGoogleTest( &ac, av );
   geos::basicSetup( ac, av );
   int const result = RUN_ALL_TESTS();
-  geos::basicCleanup();
+  geos::basicCleanup( false );
   return result;
 }

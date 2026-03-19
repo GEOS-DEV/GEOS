@@ -694,6 +694,6 @@ int main( int argc, char * * argv )
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv );
   int result = RUN_ALL_TESTS();
-  geos::basicCleanup();
+  geos::basicCleanup( false );
   return result;
 }

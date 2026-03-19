@@ -163,7 +163,7 @@ int main( int argc, char * *argv )
 
   // Finalize MPI
   MpiWrapper::commFree( MPI_COMM_GEOS );
-  MpiWrapper::finalize();
+  MpiWrapper::finalize( false );
 
   return result;
 }

@@ -18,6 +18,7 @@
  */
 
 #include "MpiWrapper.hpp"
+#include "LvArray/src/system.hpp"
 #include <unistd.h>
 
 #if defined(__clang__)
@@ -152,11 +153,19 @@ void internal::ManagedResources::finalize()
   m_mpiTypes.clear();
 }
 
-void MpiWrapper::finalize()
+void MpiWrapper::finalize( bool inError )
 {
 #ifdef GEOS_USE_MPI
-  internal::getManagedResources().finalize();
-  MPI_CHECK_ERROR( MPI_Finalize() );
+  if( !inError )
+  {
+    MpiWrapper::commFree( MPI_COMM_GEOS );
+    internal::getManagedResources().finalize();
+    MPI_CHECK_ERROR( MPI_Finalize() );
+  }
+  else
+  {
+    LvArray::system::callErrorHandler();
+  }
 #endif
 }
 
