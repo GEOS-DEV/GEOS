@@ -49,6 +49,7 @@ typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > Compress
 typedef CompressibleSolid< PressurePorosity, PressurePermeability > CompressibleRockPressurePerm;
 typedef CompressibleSolid< PressurePorosity, ExponentialDecayPermeability > FaultED;
 typedef CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > FractureRock;
+typedef CompressibleSolid< PressurePorosity, BartonBandisPermeability > FractureRockBB;
 typedef CompressibleSolid< PressurePorosity, SlipDependentPermeability > Fault;
 typedef CompressibleSolid< PressurePorosity, WillisRichardsPermeability > FaultWR;
 
@@ -56,6 +57,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockPressurePerm, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRock, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRockBB, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultED, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Fault, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultWR, string const &, Group * const )

@@ -96,15 +96,45 @@ void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_T
                                                            arrayView1d< real64 const > const & newHydraulicAperture,
                                                            arrayView2d< real64 const > const & normalVector)
 {
+  //const int i = int(subRegion.size()/2); // AQUI
+  //GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " aperture " << newHydraulicAperture[i] <<" i = "<<i<<" updatePorosityAndPermeabilityFromPressureAndAperture");// AQUI
+     
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
+       porousWrapper.updateStateFromPressureAndAperture( k, q,
+                                                        pressure[k],
+                                                        oldHydraulicAperture[k],
+                                                        newHydraulicAperture[k] );
+    }
+  } );
+}
+
+template< typename POROUSWRAPPER_TYPE >
+void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_TYPE porousWrapper,
+                                                           SurfaceElementSubRegion & subRegion,
+                                                           arrayView1d< real64 const > const & pressure,
+                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                           arrayView1d< real64 > const & newHydraulicAperture,
+                                                           arrayView2d< real64 const > const & normalVector)
+{
+  //const int i = int(subRegion.size()/2); // AQUI
+  //GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " current aperture " << newHydraulicAperture[i] <<" i = "<<i<<" updatePorosityAndPermeabilityFromPressureApertureAndNormal");// AQUI
+     
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
+  {
+    array1d < real64 > normal(3);
+    normal[0] = normalVector[k][0];
+    normal[1] = normalVector[k][1];
+    normal[2] = normalVector[k][2];
+    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
+    {
        porousWrapper.updateStateFromPressureApertureAndNormal( k, q,
-                                                               pressure[k],
-                                                               oldHydraulicAperture[k],
-                                                               newHydraulicAperture[k],
-                                                               normalVector[k] );
+                                                        pressure[k],
+                                                        oldHydraulicAperture[k],
+                                                        newHydraulicAperture[k],
+                                                        normal );
     }
   } );
 }
@@ -128,8 +158,8 @@ FlowSolverBase::FlowSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::computesPrescribedStressPathString(), &m_computePrescribedStressPath ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );  
-
+    setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );
+    
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
@@ -566,11 +596,13 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, string
 
     // in some initializeState versions it uses newPorosity, so let's run updatePorosityAndPermeability to compute something
     saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
+    GEOS_LOG_RANK_0( "FlowSolverBase::initializePorosityAndPermeability Cell/Surface 1" ); // AQUI
     updatePorosityAndPermeability( subRegion );
     porousSolid.initializeState();
 
     // run final update
     saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
+    GEOS_LOG_RANK_0( "FlowSolverBase::initializePorosityAndPermeability Cell/Surface 2" ); // AQUI
     updatePorosityAndPermeability( subRegion );
 
     // Save the computed porosity into the old porosity
@@ -620,6 +652,7 @@ void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
+  GEOS_LOG_RANK_0( "FlowSolverBase::updatePorosityAndPermeability CellElementSubRegion" ); // AQUI
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
   arrayView1d< real64 const > const & temperature = subRegion.getField< flow::temperature >();
@@ -649,6 +682,8 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOS_MARK_FUNCTION;
 
+  GEOS_LOG_RANK_0( "AQUI FlowSolverBase::updatePorosityAndPermeability SurfaceElementSubRegion" ); // AQUI
+
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
   arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
@@ -660,7 +695,9 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+
+    //updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    updatePorosityAndPermeabilityFromPressureApertureAndNormal( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, normalVector );
 
   } );
 }
@@ -669,8 +706,8 @@ void FlowSolverBase::updateHydarulicAperture( SurfaceElementSubRegion & subRegio
 {
   GEOS_MARK_FUNCTION;
   
-  arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 > const & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
+  /*arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 > & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >(); // fluidFlow/FlowSolverBaseFields.hpp
   arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
   
   string const & hydraulicApertureRelationName = 
@@ -689,17 +726,13 @@ void FlowSolverBase::updateHydarulicAperture( SurfaceElementSubRegion & subRegio
     normal[2] = normalVector[k][2];
     
     newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
-
-    sumAperture += newHydraulicAperture[k];
+    
   } );
-
-  real64 const averageAperture = sumAperture / subRegion.size();
-
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [&newHydraulicAperture, averageAperture] GEOS_DEVICE ( localIndex const k )
-  {
-    newHydraulicAperture[k] = averageAperture;
-  } );
+  const int i = int(subRegion.size()/2); 
+  GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " aperture " << newHydraulicAperture[i] <<" i = "<<i);
+  */
 }
+
 
 void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
                                                              stdMap< string, localIndex > const & equilNameToEquilId,

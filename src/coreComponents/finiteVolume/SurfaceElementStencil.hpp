@@ -333,7 +333,7 @@ SurfaceElementStencilWrapper::
       localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
       localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
       localIndex const ei1  =  m_elementIndices[iconn][k[1]];
-      
+      //                                         m_permeability
       real64 const t0 = m_weights[iconn][k[0]] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][k[1]] * coefficient[er1][esr1][ei1][0][0];
 
@@ -341,10 +341,10 @@ SurfaceElementStencilWrapper::
       real64 const arithmeticWeight = 0.25 * (t0+t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
-      
+      // stack.transmissibility
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
-      
+      //                                          m_dPerm_dPres
       real64 const dt0 = m_weights[iconn][k[0]] * dCoeff_dVar[er0][esr0][ei0][0][0];
       real64 const dt1 = m_weights[iconn][k[1]] * dCoeff_dVar[er1][esr1][ei1][0][0];
 
@@ -355,7 +355,7 @@ SurfaceElementStencilWrapper::
       real64 dArithmetic[2];
       dArithmetic[0] = 0.25 * dt0;
       dArithmetic[1] = 0.25 * dt1;
-      
+      // stack.dTrans_dPres
       dWeight_dVar[connectionIndex][0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
       dWeight_dVar[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
 

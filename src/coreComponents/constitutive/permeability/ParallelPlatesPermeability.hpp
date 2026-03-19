@@ -60,7 +60,7 @@ public:
       permeability[dim]        = perm;
       dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture * dHydraulicAperture_dNormalJump;
       dPerm_dDispJump[dim][1]  = 0.0;
-      dPerm_dDispJump[dim][2]  = 0.0;    
+      dPerm_dDispJump[dim][2]  = 0.0;
     }
   }
 
