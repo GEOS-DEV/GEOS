@@ -61,7 +61,7 @@ void LogPart::setMaxWidth( size_t const & maxWidth )
 
 double clamp( double v, double min, double max )
 {
-  return std::min( max, std::max( min, v ));
+  return LvArray::math::min( max, LvArray::math::max( min, v ));
 }
 
 void LogPart::formatDescriptions( LogPart::Description & description,
@@ -76,8 +76,7 @@ void LogPart::formatDescriptions( LogPart::Description & description,
 
   formattedLines.reserve( description.m_names.size() * 2 );
 
-  /// clamp
-  m_width = std::min( m_maxWidth, std::max( m_minWidth, m_width ));
+  m_width = clamp( m_maxWidth, m_minWidth, m_width );
 
   for( size_t idxName = 0; idxName < description.m_names.size(); idxName++ )
   {
