@@ -60,7 +60,7 @@ public:
       permeability[dim]        = perm;
       dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture * dHydraulicAperture_dNormalJump;
       dPerm_dDispJump[dim][1]  = 0.0;
-      dPerm_dDispJump[dim][2]  = 0.0;
+      dPerm_dDispJump[dim][2]  = 0.0;    
     }
   }
 
@@ -78,6 +78,7 @@ public:
              dHydraulicAperture_dNormalJump,
              m_permeability[k][0],
              m_dPerm_dDispJump[k][0] );
+         
   }
 
   GEOS_HOST_DEVICE

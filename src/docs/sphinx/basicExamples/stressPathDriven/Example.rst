@@ -53,6 +53,17 @@ The hexahedral mesh is generated internally and consists of 11 cells aligned alo
    Visualization of the first simulation step. 
 
 ------------------------------
+Initial Conditions
+------------------------------
+
+This example needs the following input values to work properly:
+
+- Surface Element Region's default aperture and Stress-path driven reference aperture must be the same.
+- Initial pressure in the rock and fracture must be the same.
+- Stress-path driven reference pressure must equal the initial pressure.
+
+
+------------------------------
 Constitutive law
 ------------------------------
 

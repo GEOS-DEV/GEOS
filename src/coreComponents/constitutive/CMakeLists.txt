@@ -154,6 +154,7 @@ set( constitutive_headers
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityFields.hpp
      permeability/PressurePermeability.hpp
+     permeability/BartonBandisPermeability.hpp
      permeability/ProppantPermeability.hpp
      permeability/SlipDependentPermeability.hpp
      permeability/WillisRichardsPermeability.hpp
@@ -304,6 +305,7 @@ set( constitutive_sources
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
      permeability/PressurePermeability.cpp
+     permeability/BartonBandisPermeability.cpp
      permeability/ProppantPermeability.cpp
      permeability/SlipDependentPermeability.cpp
      permeability/WillisRichardsPermeability.cpp
