@@ -334,13 +334,17 @@ public:
   /**
    * @brief Structure holding the result from all the gather operation
    * @tparam CONTAINER The container type holding the data.
+   * The underlying storage in CONTAINER must be contiguous
    */
   template< typename CONTAINER >
   struct GatherResult
   {
-    CONTAINER data;                   // Collected data
-    stdVector< integer > counts;      // Number of elements per row
-    stdVector< integer > offsets;     // Starting index for each row in 'data'
+    // Collected data who must be trivially copyable
+    CONTAINER data;
+    // Number of elements per row
+    stdVector< integer > counts;
+    // Starting index for each row in 'data'
+    stdVector< integer > offsets;
   };
 
 /**
@@ -366,7 +370,7 @@ public:
   gatherBufferRank0( CONTAINER const & localBuffer )
   {
     integer const numRanks = MpiWrapper::commSize();
-    integer const numValues = static_cast< integer >(localBuffer.size());
+    integer const numLocalValues  = static_cast< integer >(localBuffer.size());
 
     GatherResult< CONTAINER > gatherResult;
 
@@ -377,7 +381,7 @@ public:
     }
 
 
-    MpiWrapper::gather( &numValues, 1, gatherResult.counts.data(), 1, 0 );
+    MpiWrapper::gather( &numLocalValues , 1, gatherResult.counts.data(), 1, 0 );
 
     if( MpiWrapper::commRank() == 0 )
     {
@@ -391,7 +395,7 @@ public:
     }
 
     MpiWrapper::gatherv( localBuffer.data(),
-                         numValues,
+                         numLocalValues ,
                          gatherResult.data.data(),
                          gatherResult.counts.data(),
                          gatherResult.offsets.data(),

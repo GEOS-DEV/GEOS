@@ -24,19 +24,19 @@
 namespace geos
 {
 
-TableTextMpiOutput::TableTextMpiOutput( TableMpiLayout mpiLayout ):
+TableTextMpiFormatter::TableTextMpiFormatter( TableMpiLayout mpiLayout ):
   TableTextFormatter(),
   m_mpiLayout( mpiLayout )
 {}
 
-TableTextMpiOutput::TableTextMpiOutput( TableLayout const & tableLayout,
-                                        TableMpiLayout mpiLayout ):
+TableTextMpiFormatter::TableTextMpiFormatter( TableLayout const & tableLayout,
+                                              TableMpiLayout mpiLayout ):
   TableTextFormatter( tableLayout ),
   m_mpiLayout( mpiLayout )
 {}
 
-void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
-                                                TableTextMpiOutput::Status const & status ) const
+void TableTextMpiFormatter::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
+                                                   TableTextMpiFormatter::Status const & status ) const
 {
   { // we ensure we have the correct amount of columns on all ranks (for correct MPI reduction operation)
     size_t const rankColumnsCount = columnsWidth.size();
@@ -57,8 +57,8 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-void TableTextMpiOutput::parseCellLayoutRows( CellLayoutRows const & rows,
-                                              stdVector< string > & rowsAsString ) const
+void TableTextMpiFormatter::cellRowsToStrings( CellLayoutRows const & rows,
+                                               stdVector< string > & rowsAsString ) const
 {
   std::ostringstream rowStringStream;
   size_t rowIndex = 0;
@@ -72,7 +72,7 @@ void TableTextMpiOutput::parseCellLayoutRows( CellLayoutRows const & rows,
   }
 }
 
-stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view rowString ) const
+stdVector< TableData::CellData > TableTextMpiFormatter::parseStringRow( string_view rowString ) const
 {
   if( rowString.empty() )
     return stdVector< TableData::CellData >{};
@@ -94,9 +94,9 @@ stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view
   return dataRow;
 }
 
-void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
-                                                             stdVector< string > & rowsAsString,
-                                                             TableTextMpiOutput::Status & status ) const
+void TableTextMpiFormatter::gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
+                                                                stdVector< string > & rowsAsString,
+                                                                TableTextMpiFormatter::Status & status ) const
 {
   array1d< integer > rowsSizeAcrossAllRank( MpiWrapper::commSize());
   MpiWrapper::allGather( LvArray::integerConversion< integer >( rowsAsString.size()),
@@ -118,12 +118,12 @@ void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gathere
              *m_sortingFunctor );
 }
 
-void TableTextMpiOutput::gatherSortAndOutput( std::ostream & tableOutput,
-                                              CellLayoutRows const & rows,
-                                              TableTextMpiOutput::Status & status ) const
+void TableTextMpiFormatter::gatherSortAndOutput( std::ostream & tableOutput,
+                                                 CellLayoutRows const & rows,
+                                                 TableTextMpiFormatter::Status & status ) const
 {
   stdVector< string > rowsAsString;
-  parseCellLayoutRows( rows, rowsAsString );
+  cellRowsToStrings( rows, rowsAsString );
 
   TableData gatheredTableData;
   gatherAndSortTableDataAcrossRanks( gatheredTableData, rowsAsString, status );
@@ -134,10 +134,10 @@ void TableTextMpiOutput::gatherSortAndOutput( std::ostream & tableOutput,
   }
 }
 
-void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
-                                                              CellLayoutRows const & rows,
-                                                              PreparedTableLayout const & tableLayout,
-                                                              TableTextMpiOutput::Status & status ) const
+void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
+                                                                 CellLayoutRows const & rows,
+                                                                 PreparedTableLayout const & tableLayout,
+                                                                 TableTextMpiFormatter::Status & status ) const
 {
   // master rank does the output directly to the output, other ranks will have to send it through a string.
   std::ostringstream localStringStream;
@@ -169,10 +169,10 @@ void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tab
 }
 
 template<>
-void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
-                                                TableData const & tableData ) const
+void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
+                                                   TableData const & tableData ) const
 {
-  TableTextMpiOutput::Status status {
+  TableTextMpiFormatter::Status status {
     // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
     MpiWrapper::commRank() == 0,
     // m_isContributing (some ranks does not have any output to produce)
@@ -183,7 +183,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
     ""
   };
 
-  CellLayoutRows headerCellsLayout;
+  CellLayoutRows headerRows;
   CellLayoutRows dataRows;
   CellLayoutRows errorRows;
   size_t tableTotalWidth = 0;
@@ -193,7 +193,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
       stretchColumnsByRanks( columnsWidth, status );
     };
     initalizeTableGrids( m_tableLayout, tableData,
-                         headerCellsLayout, dataRows, errorRows,
+                         headerRows, dataRows, errorRows,
                          tableTotalWidth, columnWidthModifier );
     status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
   }
@@ -206,7 +206,7 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
   {
     if( status.m_isMasterRank )
     {
-      outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
+      outputTableHeader( tableOutput, m_tableLayout, headerRows, status.m_sepLine );
       tableOutput.flush();
     }
     gatherAndOutputTableDataInRankOrder( tableOutput, dataRows, m_tableLayout, status );

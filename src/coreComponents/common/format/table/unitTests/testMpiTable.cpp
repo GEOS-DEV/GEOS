@@ -127,7 +127,7 @@ TEST( testMpiTables, testDifferentRankData )
         }
       }
 
-      TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+      TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
       std::ostringstream oss;
       formatter.toStream( oss, data );
       if( rankId == 0 )
@@ -195,7 +195,7 @@ TEST( testMpiTables, testSortingMethod )
       }
     }
 
-    TableTextMpiOutput formatter = TableTextMpiOutput( layout, mpiLayout );
+    TableTextMpiFormatter formatter = TableTextMpiFormatter( layout, mpiLayout );
     formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
                                   std::vector< TableData::CellData > const & row2 ) {
       return tabledatasorting::positiveNumberStringComp( row1[0].value, row2[0].value );

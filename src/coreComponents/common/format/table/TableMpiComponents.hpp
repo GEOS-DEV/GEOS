@@ -42,7 +42,7 @@ struct TableMpiLayout
  * @brief class to format data in a formatted text format, allowing contributions from multiple
  *        MPI ranks.
  */
-class TableTextMpiOutput : public TableTextFormatter
+class TableTextMpiFormatter : public TableTextFormatter
 {
 public:
   /// base class
@@ -54,14 +54,14 @@ public:
    * without any column / title). Feature is not tested.
    * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
-  TableTextMpiOutput( TableMpiLayout mpiLayout = TableMpiLayout() );
+  TableTextMpiFormatter( TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
    * @brief Construct a new TableTextMpiOutput from a tableLayout
    * @param tableLayout Contain all tableColumnData names and optionnaly the table title
    * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
-  TableTextMpiOutput( TableLayout const & tableLayout,
+  TableTextMpiFormatter( TableLayout const & tableLayout,
                       TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
@@ -116,7 +116,7 @@ private:
    * @param cellLayoutRows The target CellLayoutRows to parse
    * @param rowsAsString The result vector of strings
    */
-  void parseCellLayoutRows( CellLayoutRows const & cellLayoutRows,
+  void cellRowsToStrings( CellLayoutRows const & cellLayoutRows,
                             stdVector< string > & rowsAsString ) const;
 
   /**
@@ -135,7 +135,7 @@ private:
    */
   void gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
                                            stdVector< string > & rowsAsString,
-                                           TableTextMpiOutput::Status & status ) const;
+                                           TableTextMpiFormatter::Status & status ) const;
   /**
    * @brief Parse CellLayoutRows, gathers and sorts them across all MPI ranks,
    *        and outputs the result to rank 0.
@@ -145,7 +145,7 @@ private:
    */
   void gatherSortAndOutput( std::ostream & tableOutput,
                             CellLayoutRows const & cellLayoutRows,
-                            TableTextMpiOutput::Status & status )const;
+                            TableTextMpiFormatter::Status & status )const;
 
   /**
    * @brief Gather data cell rows across all MPI ranks and output them to rank 0 in rank order.
@@ -157,7 +157,7 @@ private:
   void gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
                                             CellLayoutRows const & dataCellsLayout,
                                             PreparedTableLayout const & tableLayout,
-                                            TableTextMpiOutput::Status & status )const;
+                                            TableTextMpiFormatter::Status & status )const;
 };
 
 }

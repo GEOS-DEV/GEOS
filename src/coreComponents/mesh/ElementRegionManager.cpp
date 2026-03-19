@@ -21,6 +21,7 @@
 #include "common/DataLayouts.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -232,8 +233,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
     WellElementSubRegion const &
-    wellSubRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
-                      .getGroup< WellElementSubRegion >( wellRegion.getSubRegionName() );
+    wellSubRegion = wellRegion.getSubRegion< WellElementSubRegion >( wellRegion.getSubRegionName() );
     TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
                                                     wellRegion.getWellGeneratorName()),
       {
@@ -261,17 +261,17 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
           meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
         ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
-        integer const localWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
-        localPerfoData.addRow( globalIperf[iperfLocal], localWellElemIndices, localCoords,
+        localPerfoData.addRow( globalIperf[iperfLocal], globalWellElemIndices, localCoords,
                                region.getName(), subRegion.getName(), cellId, rankId );
       }
     }
 
     TableMpiLayout mpiLayout;
-    TableTextMpiOutput formatter = TableTextMpiOutput( layoutPerforation, mpiLayout );
+    TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
 
     formatter.setSortingFunc(
       []( std::vector< TableData::CellData > const & row1,
