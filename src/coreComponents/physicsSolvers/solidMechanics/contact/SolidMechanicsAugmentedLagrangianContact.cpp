@@ -896,6 +896,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
   [[maybe_unused]] FunctionBreakpointTrace functionBreakpointTrace( __func__ );
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
+  GEOS_SMALC_CHECK_DEVICE_ERRORS( "SolidMechanicsLagrangianFEM::implicitStepComplete" );
 
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
   {
@@ -932,6 +933,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
         oldFractureState[kfe] = fractureState[kfe];
 
       } );
+      GEOS_SMALC_CHECK_DEVICE_ERRORS( "SolidMechanicsAugmentedLagrangianContact::implicitStepComplete fracture update" );
     } );
   } );
 

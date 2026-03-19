@@ -235,6 +235,9 @@ void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
 void FaceManager::computeGeometry( NodeManager const & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  m_faceArea.move( LvArray::MemorySpace::host );
+  m_faceCenter.move( LvArray::MemorySpace::host );
+  m_faceNormal.move( LvArray::MemorySpace::host );  
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
