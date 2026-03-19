@@ -57,21 +57,6 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-void TableTextMpiOutput::parseCellLayoutRows( CellLayoutRows const & rows,
-                                              stdVector< string > & rowsAsString ) const
-{
-  std::ostringstream rowStringStream;
-  size_t rowIndex = 0;
-
-  for( CellLayoutRow const & row : rows )
-  {
-    outputLine( m_tableLayout, rows, row, rowStringStream, rowIndex );
-    rowIndex++;
-    rowsAsString.emplace_back( rowStringStream.str());
-    rowStringStream.str( "" );
-  }
-}
-
 stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view rowString ) const
 {
   if( rowString.empty() )
@@ -92,46 +77,6 @@ stdVector< TableData::CellData > TableTextMpiOutput::parseStringRow( string_view
     rowContent.remove_prefix( end + 1 );
   }
   return dataRow;
-}
-
-void TableTextMpiOutput::gatherAndSortTableDataAcrossRanks ( TableData & gatheredTableData,
-                                                             stdVector< string > & rowsAsString,
-                                                             TableTextMpiOutput::Status & status ) const
-{
-  array1d< integer > rowsSizeAcrossAllRank( MpiWrapper::commSize());
-  MpiWrapper::allGather( LvArray::integerConversion< integer >( rowsAsString.size()),
-                         rowsSizeAcrossAllRank );
-  integer const maxRowAcrossAllRanks = *std::max_element( rowsSizeAcrossAllRank.begin(),
-                                                          rowsSizeAcrossAllRank.end());
-  rowsAsString.resize( maxRowAcrossAllRanks );
-
-  for( string & row : rowsAsString )
-  {
-    MpiWrapper::gatherStringOnRank0( row, std::function< void(string_view) >( [&]( string_view str ){
-      status.m_hasContent = true;
-      gatheredTableData.addRow( parseStringRow( str ));
-    } ));
-  }
-
-  std::sort( gatheredTableData.getCellsData().begin(),
-             gatheredTableData.getCellsData().end(),
-             *m_sortingFunctor );
-}
-
-void TableTextMpiOutput::gatherSortAndOutput( std::ostream & tableOutput,
-                                              CellLayoutRows const & rows,
-                                              TableTextMpiOutput::Status & status ) const
-{
-  stdVector< string > rowsAsString;
-  parseCellLayoutRows( rows, rowsAsString );
-
-  TableData gatheredTableData;
-  gatherAndSortTableDataAcrossRanks( gatheredTableData, rowsAsString, status );
-
-  if( status.m_isMasterRank && status.m_hasContent )
-  {
-    tableOutput << toString( gatheredTableData );
-  }
 }
 
 void TableTextMpiOutput::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
@@ -183,27 +128,31 @@ void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
     ""
   };
 
-  CellLayoutRows headerCellsLayout;
-  CellLayoutRows dataRows;
-  CellLayoutRows errorRows;
-  size_t tableTotalWidth = 0;
-
-  {
-    ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
-      stretchColumnsByRanks( columnsWidth, status );
-    };
-    initalizeTableGrids( m_tableLayout, tableData,
-                         headerCellsLayout, dataRows, errorRows,
-                         tableTotalWidth, columnWidthModifier );
-    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
-  }
-
   if( m_sortingFunctor )
   {
-    gatherSortAndOutput( tableOutput, dataRows, status );
+    tableData.gatherRowsRank0( m_sortingFunctor );
+    if( status.m_isMasterRank )
+    {
+      toString( tableData );
+    }
   }
   else
   {
+    CellLayoutRows headerCellsLayout;
+    CellLayoutRows dataRows;
+    CellLayoutRows errorRows;
+    size_t tableTotalWidth = 0;
+
+    {
+      ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
+        stretchColumnsByRanks( columnsWidth, status );
+      };
+      initalizeTableGrids( m_tableLayout, tableData,
+                           headerCellsLayout, dataRows, errorRows,
+                           tableTotalWidth, columnWidthModifier );
+      status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
+    }
+
     if( status.m_isMasterRank )
     {
       outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
