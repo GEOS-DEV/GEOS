@@ -1260,25 +1260,34 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                             condConv_v );
       } );
 
-      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum[5] =
-      { RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
-        RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
-        RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
-        RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ),
-        RAJA::ReduceSum< parallelDeviceReduce, localIndex >( 0 ) };
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_DEVICE ( localIndex const kfe )
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum0( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum1( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum2( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum3( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSum4( 0 );
+      forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                        [ghostRank, condConv_v, localSum0, localSum1, localSum2, localSum3, localSum4]
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
         if( ghostRank[kfe] < 0 )
         {
-          localSum[condConv_v[kfe]] += 1;
+          switch( condConv_v[kfe] )
+          {
+            case 0: localSum0 += 1; break;
+            case 1: localSum1 += 1; break;
+            case 2: localSum2 += 1; break;
+            case 3: localSum3 += 1; break;
+            case 4: localSum4 += 1; break;
+            default: break;
+          }
         }
       } );
 
-      localIndex const localConvCond[5] = { static_cast< localIndex >( localSum[0].get()),
-                                            static_cast< localIndex >( localSum[1].get()),
-                                            static_cast< localIndex >( localSum[2].get()),
-                                            static_cast< localIndex >( localSum[3].get()),
-                                            static_cast< localIndex >( localSum[4].get()) };
+      localIndex const localConvCond[5] = { static_cast< localIndex >( localSum0.get()),
+                                            static_cast< localIndex >( localSum1.get()),
+                                            static_cast< localIndex >( localSum2.get()),
+                                            static_cast< localIndex >( localSum3.get()),
+                                            static_cast< localIndex >( localSum4.get()) };
 
       int const rank     = MpiWrapper::commRank( MPI_COMM_GEOS );
       int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
@@ -1339,7 +1348,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_DEVICE ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                          [traction, traction_new_v] GEOS_DEVICE ( localIndex const kfe )
         {
           LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
         } );
@@ -1558,7 +1568,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [ = ] GEOS_DEVICE ( localIndex const kfe )
+                                      [this, elemsToFaces, faceToNodeMap, keys_v, vals_v, nTri_r, nQuad_r]
+                                      GEOS_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1596,13 +1607,13 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     arrayView1d< localIndex > const quadList_v = quadList.toView();
     arrayView1d< localIndex > const triList_v = triList.toView();
 
-    forAll< parallelDevicePolicy<> >( nTri, [ = ] GEOS_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( nTri, [triList_v, vals_v] GEOS_DEVICE ( localIndex const kfe )
     {
       triList_v[kfe] = vals_v[kfe];
     } );
     GEOS_SMALC_CHECK_DEVICE_ERRORS( "createFaceTypeList fill triList" );
 
-    forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_DEVICE ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( nQuad, [quadList_v, vals_v, nTri] GEOS_DEVICE ( localIndex const kfe )
     {
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
