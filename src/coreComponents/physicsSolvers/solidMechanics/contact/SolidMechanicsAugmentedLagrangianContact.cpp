@@ -51,12 +51,15 @@ namespace geos
 
 
 /// Helper functions for createBubbleCellList / createFaceTypeList / updateStickSlipList.
+/// Isolated into free functions so that RAJA serial sort templates are never
+/// instantiated in the same nvcc context as device lambdas.
 namespace
 {
 
 void sortAndInsertFaceIds( arrayView1d< localIndex > const & tmpSpace_v,
                            SortedArray< localIndex > & faceIdList )
 {
+  tmpSpace_v.move( LvArray::MemorySpace::host );
   RAJA::stable_sort< serialPolicy >( tmpSpace_v );
   faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end() );
 }
@@ -64,6 +67,8 @@ void sortAndInsertFaceIds( arrayView1d< localIndex > const & tmpSpace_v,
 void sortKeyPermPairsOnHost( arrayView1d< localIndex > const & keys_v,
                              arrayView1d< localIndex > const & perms_v )
 {
+  keys_v.move( LvArray::MemorySpace::host );
+  perms_v.move( LvArray::MemorySpace::host );
   RAJA::sort_pairs< serialPolicy >( keys_v, perms_v );
 }
 
@@ -117,6 +122,13 @@ inline void printCudaStatus( char const * functionName, int const line, char con
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
+
+// Workaround for nvcc bug: forDiscretizationOnMeshTargets lambdas receive
+// string_array const & (= std::vector<std::string>) as a parameter.  When the
+// lambda body also contains device kernel launches, nvcc erroneously tries to
+// generate a device-compatible destructor for std::vector<std::string> even
+// though it is a reference parameter whose lifetime is not managed by the lambda.
+GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
 
 SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianContact( const string & name,
                                                                                     Group * const parent ):
@@ -503,9 +515,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
       if( m_simultaneous )
       {
         GEOS_PRINT_CUDA_LAUNCH( "implicitStepSetup.initializeSimultaneousPenalty" );
-        forAll< serialPolicy >( subRegion.size(),
+        forAll< parallelDevicePolicy<> >( subRegion.size(),
                                           [=]
-                                          GEOS_HOST ( localIndex const k )
+                                          GEOS_DEVICE ( localIndex const k )
         {
           if( fractureState[k] == contact::FractureState::Stick )
           {
@@ -524,9 +536,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
       }
 
       GEOS_PRINT_CUDA_LAUNCH( "implicitStepSetup.resetIncrementalBubbleState" );
-      forAll< serialPolicy >( subRegion.size(),
+      forAll< parallelDevicePolicy<> >( subRegion.size(),
                                         [ = ]
-                                        GEOS_HOST ( localIndex const k )
+                                        GEOS_DEVICE ( localIndex const k )
       {
         LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
         localIndex const kf0 = elemsToFaces[k][0];
@@ -883,9 +895,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
       arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
       arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
 
-      forAll< serialPolicy >( subRegion.size(),
+      forAll< parallelDevicePolicy<> >( subRegion.size(),
                                         [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
         // Compute the slip
         real64 const deltaDisp[2] = { deltaDispJump[kfe][1],
@@ -1313,7 +1325,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, []( localIndex const,
                                                                                   FaceElementSubRegion & subRegion )
       {
 
@@ -1355,8 +1367,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               fractureState );
         } );
 
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ]
-                                          GEOS_HOST_DEVICE ( localIndex const kfe )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [ dispJumpUpdPenalty, dispJump, deltaDispJump ]
+                                          GEOS_DEVICE ( localIndex const kfe )
         {
           dispJumpUpdPenalty[kfe][0] = dispJump[kfe][0];
           dispJumpUpdPenalty[kfe][1] = deltaDispJump[kfe][1];
@@ -1406,15 +1418,15 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       array1d< localIndex > vals( subRegion.size());
       array1d< localIndex > stickList;
       array1d< localIndex > slipList;
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nStick_r( 0 );
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nSlip_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nStick_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nSlip_r( 0 );
 
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.classifyStickSlip" );
-      forAll< serialPolicy >( faceElementList.size(),
+      forAll< parallelDevicePolicy<> >( faceElementList.size(),
                                         [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
 
         localIndex const faceIndex = faceElementList[kfe];
@@ -1454,16 +1466,16 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       arrayView1d< localIndex > const slipList_v = slipList.toView();
 
       GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.copyStickList" );
-      forAll< serialPolicy >( nStick, [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( nStick, [ = ]
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
         stickList_v[kfe] = vals_v[kfe];
       } );
       GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.copyStickList" );
 
       GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.copySlipList" );
-      forAll< serialPolicy >( nSlip, [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( nSlip, [ = ]
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
@@ -1505,17 +1517,17 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
     array1d< localIndex > triList;
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nTri_r( 0 );
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nQuad_r( 0 );
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nInvalid_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nTri_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nQuad_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nInvalid_r( 0 );
 
     arrayView1d< localIndex > const keys_v = keys.toView();
     arrayView1d< localIndex > const vals_v = vals.toView();
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.classifyFaceTypes" );
-    forAll< serialPolicy >( subRegion.size(),
-                                      [ = ] GEOS_HOST ( localIndex const kfe )
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [ = ] GEOS_DEVICE ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1556,14 +1568,14 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       arrayView1d< localIndex > const triList_v = triList.toView();
 
       GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyTriList" );
-      forAll< serialPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( nTri, [ = ] GEOS_DEVICE ( localIndex const kfe )
       {
         triList_v[kfe] = vals_v[kfe];
       } );
       GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyTriList" );
 
       GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyQuadList" );
-      forAll< serialPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_DEVICE ( localIndex const kfe )
       {
         quadList_v[kfe] = vals_v[nTri+kfe];
       } );
@@ -1603,7 +1615,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
       GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.collectFractureFaces" );
-      forAll< serialPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_DEVICE ( localIndex const kfe )
       {
 
         localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
@@ -1629,7 +1641,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView2d< localIndex const > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
 
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nBubElems_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nBubElems_r( 0 );
 
       localIndex const n_max = cellElementSubRegion.size() * elemsToFaces.size( 1 );
       array1d< localIndex > keys( n_max );
@@ -1643,9 +1655,9 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
 
       GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.classifyBubbleCells" );
-      forAll< serialPolicy >( cellElementSubRegion.size(),
+      forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
                                         [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+                                        GEOS_DEVICE ( localIndex const kfe )
       {
         for( int i=0; i < elemsToFaces.size( 1 ); ++i )
         {
@@ -1681,12 +1693,12 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView1d< localIndex > const bubbleElemsList_v = bubbleElemsList.toView();
 
-      forAll< serialPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_DEVICE ( localIndex const k )
       {
         keys_v[k] = vals_v[perms_v[k]];
       } );
 
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_DEVICE ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
@@ -1696,12 +1708,12 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
       bubbleCellsStorage.resize( nBubElems );
       arrayView1d< localIndex > const bubbleCellsStorage_v = bubbleCellsStorage.toView();
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_DEVICE ( localIndex const k )
       {
         bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
       } );
 
-      forAll< serialPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_DEVICE ( localIndex const k )
       {
         keys_v[k] = localFaceIds_v[perms_v[k]];
       } );
@@ -1711,9 +1723,9 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
-      forAll< serialPolicy >( nBubElems,
+      forAll< parallelDevicePolicy<> >( nBubElems,
                                         [ = ]
-                                        GEOS_HOST ( localIndex const k )
+                                        GEOS_DEVICE ( localIndex const k )
       {
         localIndex const kfe =  bubbleElemsList_v[k];
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
@@ -1725,7 +1737,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );
       faceElemsStorage.resize( nBubElems, 2 );
       arrayView2d< localIndex > const faceElemsStorage_v = faceElemsStorage.toView();
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_DEVICE ( localIndex const k )
       {
         faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
         faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
@@ -2348,6 +2360,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                          true );
   } );
 }
+
+GEOS_NV_HOST_DEVICE_DIAG_DEFAULT
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsAugmentedLagrangianContact, string const &, Group * const )
 } /* namespace geos */
