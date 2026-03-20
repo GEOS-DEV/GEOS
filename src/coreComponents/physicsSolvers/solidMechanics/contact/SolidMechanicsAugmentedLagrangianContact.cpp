@@ -1426,9 +1426,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       // elements of the same type are adjacent in the vals list.
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
-      GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.sortStickSlip" );
-      RAJA::sort_pairs< serialPolicy >( keys_v, vals_v );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.sortStickSlip" );
+      sortKeyPermPairsOnHost( keys_v, vals_v );
 
       stickList.resize( nStick );
       slipList.resize( nSlip );
@@ -1530,9 +1528,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // elements of the same type are adjacent in the vals list.
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.sortFaceTypes" );
-      RAJA::sort_pairs< serialPolicy >( keys_v, vals_v );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.sortFaceTypes" );
+    sortKeyPermPairsOnHost( keys_v, vals_v );
 
     quadList.resize( nQuad );
     triList.resize( nTri );
@@ -1557,6 +1553,32 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 }
+
+/// Helper functions for createBubbleCellList.
+/// Isolated into free functions so that RAJA serial sorts are never compiled
+/// in the same nvcc instantiation context as __host__ __device__ lambdas
+/// (which would cause nvcc to try to make std::vector<std::string> destructors
+/// device-callable).
+namespace
+{
+
+void sortAndInsertFaceIds( arrayView1d< localIndex > const & tmpSpace_v,
+                           SortedArray< localIndex > & faceIdList )
+{
+  tmpSpace_v.move( LvArray::MemorySpace::host );
+  RAJA::stable_sort< serialPolicy >( tmpSpace_v );
+  faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end() );
+}
+
+void sortKeyPermPairsOnHost( arrayView1d< localIndex > const & keys_v,
+                             arrayView1d< localIndex > const & perms_v )
+{
+  keys_v.move( LvArray::MemorySpace::host );
+  perms_v.move( LvArray::MemorySpace::host );
+  RAJA::sort_pairs< serialPolicy >( keys_v, perms_v );
+}
+
+} // anonymous namespace
 
 void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainPartition & domain ) const
 {
@@ -1596,17 +1618,17 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     }
 
     // Sort indexes to enable efficient searching using binary search.
-    GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.sortFractureFaces" );
-    RAJA::stable_sort< serialPolicy >( tmpSpace_v );
-    GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.sortFractureFaces" );
-    // Move data back to host: after the device sort the buffer lives on the GPU,
-    // but SortedArray::insert is a host-only operation that dereferences the iterators.
-    tmpSpace_v.move( LvArray::MemorySpace::host );
-    faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
+    // The sort is in a separate free function to prevent nvcc from seeing
+    // std::sort templates in the same scope as __host__ __device__ lambdas.
+    // Data is moved to host BEFORE sorting (the device kernel above wrote it on GPU).
+    sortAndInsertFaceIds( tmpSpace_v, faceIdList );
+    SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
     // Search for bubble element on each CellElementSubRegion and
     // store element indexes, global and local face indexes.
-    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const, CellElementSubRegion & cellElementSubRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [faceIdList_v]( localIndex const,
+                                                                              CellElementSubRegion & cellElementSubRegion )
     {
 
       arrayView2d< localIndex const > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
@@ -1623,7 +1645,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const perms_v = perms.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
-      SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
       GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.classifyBubbleCells" );
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
@@ -1655,9 +1676,9 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
-      GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.sortBubbleCells" );
-      RAJA::sort_pairs< serialPolicy >( keys_v, perms_v );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.sortBubbleCells" );
+      // Sort is in a separate free function — see comment above sortAndInsertFaceIds.
+      // Data is moved to host BEFORE sorting (the device kernel above wrote it on GPU).
+      sortKeyPermPairsOnHost( keys_v, perms_v );
 
       array1d< localIndex > bubbleElemsList;
       bubbleElemsList.resize( nBubElems );
