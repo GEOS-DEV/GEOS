@@ -1682,8 +1682,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
- - Output PVT table to log
-Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will still be generated.-->
+ - Output the loaded/computed table data in the log-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--values => Values for 1D tables-->
 		<xsd:attribute name="values" type="real64_array" default="{0}" />

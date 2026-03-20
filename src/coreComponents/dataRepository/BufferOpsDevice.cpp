@@ -167,8 +167,8 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
   if( DO_PACKING )
   {
     T * devBuffer = reinterpret_cast< T * >( buffer );
-    // Diagnostic path: avoid a short-lived RAJA resource whose event is waited on later.
-    forAll< parallelDevicePolicy< > >( numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    parallelDeviceStream stream;
+    events.emplace_back( forAll< parallelDevicePolicy< > >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&] GEOS_DEVICE ( T const & value )
@@ -176,7 +176,7 @@ PackDataByIndexDevice ( buffer_unit_type * & buffer,
         *threadBuffer = value;
         ++threadBuffer;
       } );
-    } );
+    } ) );
 
     buffer += packedSize;
   }
@@ -220,10 +220,10 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   localIndex sliceSize = var.size() / var.size( 0 );
   localIndex unpackSize = numIndices * sliceSize * sizeof( T );
   T const * devBuffer = reinterpret_cast< T const * >( buffer );
+  parallelDeviceStream stream;
   if( op == MPI_SUM )
   {
-    // Diagnostic path: avoid a short-lived RAJA resource whose event is waited on later.
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
@@ -231,11 +231,11 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
         value += *threadBuffer;
         ++threadBuffer;
       } );
-    } );
+    } ) );
   }
   else if( op == MPI_REPLACE )
   {
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOS_DEVICE ( T & value )
@@ -243,11 +243,11 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
         value = *threadBuffer;
         ++threadBuffer;
       } );
-    } );
+    } ) );
   }
   else if( op == MPI_MAX )
   {
-    forAll< parallelDevicePolicy<> >( numIndices, [=] GEOS_DEVICE ( localIndex const ii )
+    events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOS_DEVICE ( localIndex const ii )
     {
       T const * threadBuffer = &devBuffer[ ii * sliceSize ];
       int count = 0;
@@ -277,7 +277,7 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
           ++threadBuffer;
         } );
       }
-    } );
+    } ) );
   }
   else
   {
