@@ -241,6 +241,8 @@ TEST_P( ConsistencyTest, Run )
     state.applyInitialConditions();
     state.run();
 
+    std::cout<<"Finished running test. Now verifying results..."<<std::endl;
+
     // Verification using bulk stress and geometric normal
     ProblemManager & pm = state.getProblemManager();
     auto & fractureRegion = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager().template getRegion< SurfaceElementRegion >( "Fracture" );

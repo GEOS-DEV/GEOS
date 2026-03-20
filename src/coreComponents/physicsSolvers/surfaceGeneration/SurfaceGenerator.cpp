@@ -39,8 +39,13 @@
 
 #include <algorithm>
 #include <deque>
+#include <stdio.h>
 #include <sstream>
 #include <unordered_map>
+
+#if defined( GEOS_USE_CUDA )
+#include <cuda_runtime.h>
+#endif
 
 namespace geos
 {
@@ -48,6 +53,45 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
+
+namespace internal
+{
+
+inline void printCudaStatus( char const * functionName, int const line, char const * label )
+{
+#if defined( GEOS_USE_CUDA )
+  cudaError_t const launchErr = cudaGetLastError();
+  cudaError_t const syncErr = cudaDeviceSynchronize();
+  if( launchErr != cudaSuccess || syncErr != cudaSuccess )
+  {
+    printf( "\n[CUDA ERROR] %s:%d", functionName, line );
+    if( label != nullptr && label[0] != '\0' )
+    {
+      printf( " %s", label );
+    }
+    printf( "\n" );
+
+    if( launchErr != cudaSuccess )
+    {
+      printf( "  launch: %s\n", cudaGetErrorString( launchErr ) );
+    }
+
+    if( syncErr != cudaSuccess )
+    {
+      printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
+    }
+  }
+#else
+  GEOS_UNUSED_VAR( functionName );
+  GEOS_UNUSED_VAR( line );
+  GEOS_UNUSED_VAR( label );
+#endif
+}
+
+}
+
+#define GEOS_SURFACEGENERATOR_CUDA_STATUS( label ) \
+  ::geos::internal::printCudaStatus( __func__, __LINE__, label )
 
 /// Return the other edge of a face given one edge.
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
@@ -485,6 +529,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                             numTileColors,
                                             0,
                                             time_n + dt );
+    GEOS_SURFACEGENERATOR_CUDA_STATUS( "after separationDriver" );
 
     rval += localRval;
 
@@ -570,7 +615,20 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
   } );
 
+  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end solverStep" );
   return rval;
+}
+
+bool SurfaceGenerator::execute( real64 const time_n,
+                                real64 const dt,
+                                integer const cycleNumber,
+                                integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                DomainPartition & domain )
+{
+  solverStep( time_n, dt, cycleNumber, domain );
+  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end execute" );
+  return false;
 }
 
 int SurfaceGenerator::separationDriver( DomainPartition & domain,
@@ -817,6 +875,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                                      rval ) );
   }
 
+  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end separationDriver" );
   return rval;
 }
 
