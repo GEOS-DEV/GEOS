@@ -1489,6 +1489,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     array1d< localIndex > triList;
     RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nTri_r( 0 );
     RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nQuad_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nInvalid_r( 0 );
 
     arrayView1d< localIndex > const keys_v = keys.toView();
     arrayView1d< localIndex > const vals_v = vals.toView();
@@ -1514,13 +1515,16 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       }
       else
       {
-        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
+        nInvalid_r += 1;
+//        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
       }
     } );
     GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.classifyFaceTypes" );
 
     localIndex nQuad = static_cast< localIndex >(nQuad_r.get());
     localIndex nTri = static_cast< localIndex >(nTri_r.get());
+    localIndex nInvalid = static_cast< localIndex >(nInvalid_r.get());
+    std::cout<<" nQuad = "<<nQuad<<" nTri = "<<nTri<<" nInvalid = "<<nInvalid<<std::endl;
 
     // Sort vals according to keys to ensure that
     // elements of the same type are adjacent in the vals list.

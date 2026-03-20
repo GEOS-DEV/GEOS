@@ -755,12 +755,13 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     ModifiedObjectLists receivedObjects;
 
-
+    GEOS_SURFACEGENERATOR_CUDA_STATUS( "separationDriver.beforeSynchronizeTopologyChange" );
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
+    GEOS_SURFACEGENERATOR_CUDA_STATUS( "separationDriver.afterSynchronizeTopologyChange" );
 
     synchronizeTipSets( faceManager,
                         edgeManager,
