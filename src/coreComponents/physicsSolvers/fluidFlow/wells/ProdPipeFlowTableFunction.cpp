@@ -692,8 +692,249 @@ void ProdPipeFlowTableFunction::writeTable() const
     }
   }
   of.close();
+#if 0
+  std::vector< double > tim, orate, wrate, grate, bhp, whp, fnum, lnum;
+  std::vector< std::string > efx;
+  //efx.push_back( "/Users/byer3/geos_models/whp/compo/ecl/ix/P1_stats.txt" );
+  efx.push_back( "/Users/byer3/geos_models/BlackOilTest/eclipse/ix_fixed_qo/P1_stats.txt" );
+  for( size_t fn=0; fn< efx.size(); fn++ )
+  {
+    std::string filename = efx[fn];
+    std::cout << "Attempting to open file: " << filename << std::endl;
+    std::ifstream infile( filename );
+    integer nData = 0;
+    if( infile.is_open())
+    {
+      std::cout << "File opened successfully" << std::endl;
+      double ti, val1, val2, val3, val4, val5;
+
+      while( infile >> ti>> val1 >> val2 >> val3 >> val4 >> val5 )
+      {
+        tim.push_back( ti );
+        bhp.push_back( val1 );
+        whp.push_back( val2 );
+        orate.push_back( val3 );
+        wrate.push_back( val4 );
+        grate.push_back( val5 );
+        nData++;
+      }
+      infile.close();
+    }
+
+    std::vector< real64 > bhpc, whpc;
+    bhpc.resize( nData );
+    whpc.resize( nData );
+    std::string ofn="P1_bhp_whp_comparison.csv";
+    std::ofstream ofile( ofn );
+    ofile << "time,bhp,whp,orate,wrate,grate, bhp_calc,whp_calc,bhpSolveStat,whpSolveStat" << std::endl;
+    array1d< real64 > phaseRates;
+    phaseRates.resize( 3 );
+    for( integer i=0; i<  nData; ++i )
+    {
+      real64 trate=orate[i]+wrate[i]+grate[i];
+      if( isZero( trate ))
+        continue;
+      integer solveStatBHP=1;
+      phaseRates[0] = orate[i];
+      phaseRates[1] = wrate[i];
+      phaseRates[2] = grate[i];
+      calculateBHP( phaseRates, whp[i], bhpc[i], solveStatBHP );
+      integer solveStatWHP=0;
+      calculateWHP( "test", bhp[i], phaseRates, whpc[i], solveStatWHP );
+
+      ofile << tim[i] << "," << bhp[i] << "," << whp[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] << "," << bhpc[i] << "," << whpc[i] << ","  << solveStatBHP << "," <<  solveStatWHP <<
+        std::endl;
+    }
+    ofile.close();
+  }
+#endif
+#if 0
+  // Read data from file into separate vectors
+  std::vector< double > tim, orate, wrate, grate, bhp, whp, fnum, lnum;
+  std::vector< std::string > fnss;
+  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P1.txt" );
+  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P2.txt" );
+  fnss.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/whp/black_oil_producer/bmodlrc/WELL.SOLVER_rates/P3.txt" );
+  std::vector< std::string > fns;
+
+  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P1_IX.txt" );
+  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P2_IX.txt" );
+  fns.push_back( "/Users/byer3/GEOS-DEV-1105/whpe1104/inputFiles/compositionalMultiphaseWell/P3_IX.txt" );
+
+  std::vector< std::string > ofns;
+  ofns.push_back( "p1" );
+  ofns.push_back( "p2" );
+  ofns.push_back( "p3" );
+  for( size_t fn=0; fn< fnss.size(); fn++ )
+  {
+    std::string filename = fnss[fn];
+    std::cout << "Attempting to open file: " << filename << std::endl;
+    std::ifstream infile( filename );
+    if( infile.is_open())
+    {
+      std::cout << "File opened successfully" << std::endl;
+      double ti, val1, val2, val3, val4, val5, val6, val7, val8, val9, val10, val11;
+      integer rowCount = 0;
+      while( infile >> ti>> val1 >> val2 >> val3 >> val4 >> val5 >> val6 >> val7 >> val8 >> val9 >> val10>> val11 )
+      {
+        tim.push_back( ti );
+        orate.push_back( -val6 );
+        wrate.push_back( -val8 );
+        grate.push_back( -val7 );
+        bhp.push_back( val2 );
+        whp.push_back( val3 );
+        fnum.push_back( fn +0.5 );
+        lnum.push_back( rowCount );
+        rowCount++;
 
 
+      }
+      infile.close();
+    }
+
+    filename = fns[fn];
+    std::cout << "Attempting to open file: " << filename << std::endl;
+    std::ifstream infile1( filename );
+
+
+    double bar_to_pa = 1e5;
+    double m3d_to_sm3s = 1/86400.0;
+    double yrs_to_secs = 31536000.0;
+    if( infile1.is_open())
+    {
+      std::cout << "File opened successfully" << std::endl;
+      double ti, val1, val2, val3, val4, val5;
+      int rowCount = 0;
+      while( infile1 >> ti>> val1 >> val2 >> val3 >> val4 >> val5 )
+      {
+        tim.push_back( ti*yrs_to_secs );
+        orate.push_back( val1*m3d_to_sm3s );
+        wrate.push_back( val2*m3d_to_sm3s );
+        grate.push_back( val3*m3d_to_sm3s );
+        bhp.push_back( val4*bar_to_pa );
+        whp.push_back( val5*bar_to_pa );
+        fnum.push_back( fn );
+        lnum.push_back( rowCount );
+        rowCount++;
+
+      }
+      infile1.close();
+
+      std::cout << "Read " << orate.size() << " rows of data from " << filename << std::endl;
+      if( orate.size() == 0 )
+      {
+        std::cout << "No data was read - file might be empty or have formatting issues" << std::endl;
+      }
+    }
+    else
+    {
+      std::cout << "Could not open file: " << filename << std::endl;
+      std::cout << "Please check if the file exists and is accessible" << std::endl;
+    }
+
+    integer solveStat;
+    real64 bhpc;
+    {
+
+      //integer nData = orate.size();
+      array1d< real64 > phaseRates;
+      phaseRates.resize( 3 );
+      integer nRate = m_rate.size();
+      integer nWHP = m_whp.size();
+      std::ofstream ofs;
+      filename = ofns[fn]+"_ix_whpt_stable.csv";
+      ofs.open( filename );
+      ofs << "index ,time,ifnd ,dPdQ , stable , m_rate, bhp, whp,orate , wrate , grate , m_rate_next , fnum , lnum " << std::endl;
+      integer nentry = tim.size();
+      for( integer i=2; i<  nentry; ++i )
+      {
+        if( isZero( std::abs( orate[i] ) + wrate[i] ))
+          continue;
+        filename = ofns[fn]+"_ix_whpt_" + std::to_string( i ) + ".csv";
+        of.open( filename );
+        of <<   " i , wc , ql ,qls, bhp,whp " << std::endl;
+
+        integer ifnd=-1;
+        real64 wct = (wrate[i])/( orate[i] + wrate[i] + 0.0000001 );
+        phaseRates[0] = -orate[i];
+        phaseRates[1] = -grate[i];
+        phaseRates[2] = -wrate[i];
+        real64 gor = phaseRates[1]/(phaseRates[0]+0.000000001);
+        // find liquid rate bracketing
+
+        std::vector< real64 > bhps;
+        ifnd=-1;
+
+        for( integer j=0; j<nRate-1; j++ )
+        {
+          if( m_rate[j] <= (orate[i]+wrate[i]) && (orate[i]+wrate[i]) <= m_rate[j+1] )
+          {
+            ifnd=j;
+          }
+
+          phaseRates[0] = m_rate[j]*(1-wct)* -1.0;
+          phaseRates[1] = phaseRates[0]*gor;
+          phaseRates[2] = m_rate[j]*(wct)* -1.0;
+          solveStat=0;
+          calculateBHP( phaseRates, whp[i], bhpc, solveStat );
+          bhps.push_back( bhpc );
+          of << i <<  ", " << tim[i] << "," << wct << ", " << m_rate[j] << ", " << (orate[i]+wrate[i]) << ","<< bhpc << "," << whp[i] << "," << fnum[i] <<  "," << lnum[i] << std::endl;
+        }
+        of.close();
+        if( ifnd > -1 )
+        {
+          real64 dpdq = (bhps[ifnd+1]-bhps[ifnd])/(m_rate[ifnd+1]-m_rate[ifnd]);
+          bool cstat = (dpdq < 0.0);
+          if( whp[i] > m_whp[nWHP-1] )
+          {
+            cstat = false;
+          }
+
+          fnum.push_back( fn );
+
+          ofs << i << ","<<tim[i]   <<","<<ifnd << "," << dpdq << "," << cstat << "," << m_rate[ifnd] << "," << bhp[i] << "," << whp[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] <<
+            "," << m_rate[ifnd+1] << "," << fnum[i] << "," << lnum[i] <<  std::endl;
+        }
+        else
+        {
+          ofs << i <<","<<ifnd << "," << "FALSE" << std::endl;
+        }
+
+      }
+      ofs.close();
+
+    }
+    filename = ofns[fn]+"_ix_whp.csv";
+    of.open( filename );
+    of <<   " time, orate , wrate , grate , bhp ,bhpt, bhpc ,whp , whpc , solveStatWHP , solveStatBHP ,wellnum" << std::endl;
+    integer nData = orate.size();
+    array1d< real64 > phaseRates;
+    phaseRates.resize( 3 );
+    integer solveStatWHP;
+    integer solveStatBHP;
+    real64 bhpt;
+    for( integer i=1; i<  nData; ++i )
+    {
+      if( isZero( -orate[i] ))
+        continue;
+      phaseRates[0] = -orate[i];
+      phaseRates[1] = -grate[i];
+      phaseRates[2] = -wrate[i];
+      real64 whpc= whp[i];
+      solveStatWHP=0;
+      calculateWHP( "test", bhp[i], phaseRates, whpc, solveStatWHP );
+      solveStatBHP=0;
+      calculateBHP( phaseRates, whp[i], bhpc, solveStatBHP );
+      solveStatBHP=1;
+      calculateBHP( phaseRates, whp[i], bhpt, solveStatBHP );
+      std::cout << " Data " << i << " orate " << orate[i] << " wrate " << wrate[i] << " grate " << grate[i] << " bhp " << bhp[i] << " bhpc " << bhpc << " whp " << whp[i] << " whpc " << whpc <<
+        std::endl;
+      of << tim[i] << "," << orate[i] << "," << wrate[i] << "," << grate[i] << "," << bhp[i] << "," << bhpt << "," << bhpc << "," << whp[i] << "," << whpc << ", " << solveStatWHP << ", " <<
+        solveStatBHP << "," << fnum[i] << std::endl;
+    }
+    of.close();
+  }
+#endif
 }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, ProdPipeFlowTableFunction, string const &, Group * const )

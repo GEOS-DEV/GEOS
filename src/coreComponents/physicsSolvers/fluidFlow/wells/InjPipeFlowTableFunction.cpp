@@ -202,7 +202,7 @@ InjPipeFlowTableFunction::calculatedPdQ( real64 const & volRate, real64 const & 
 void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 const & whp, real64 & bhp, integer & solveStat ) const
 {
 
-  MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
+  MultivariableNonuniformTableFunctionStaticKernel< 2, 1 > kernel( getAxisCoordinates(),
                                                                    getAxisPoints(),
                                                                    getAxisSteps(),
                                                                    getAxisStepInvs(),
@@ -227,7 +227,7 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
   //gor = m_gfr[0];
   array1d< real64 > table_coords( 2 );
 
-  array2d< real64 > table_derv( 1, 25 );
+  array2d< real64 > table_derv( 1, 2 );
   table_coords[0]=liq*m_sign; // gas oil ratio
   table_coords[1]=whp;  // well head pressure
 
@@ -246,8 +246,7 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
     real64 bhpbt = table_bhp[0];
     // std::cout << " InjPipeFlowTableFunction::calculateBHP initial bhp = " << bhp << " bhp calc " << table_bhp[0] << " " << table_coordsr
     // <<std::endl;
-    std::cout << "InjPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp <<   " " << table_derv[0][3]<<
-      std::endl;
+    std::cout << "InjPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp <<  std::endl;
     bhp=bhpbt;
   }
   else
@@ -256,8 +255,7 @@ void InjPipeFlowTableFunction::calculateBHP( real64 const & volRate, real64 cons
     real64 derivatives[2]{};
     table_bhp[0] = kernelWrapper.compute( table_coords, derivatives );
     bhp = table_bhp[0];
-    std::cout << "InjPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " " << derivatives[1] <<
-      std::endl;
+    std::cout << "InjPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp <<  std::endl;
   }
   if( whp >m_whp[m_whp.size()-1] )
     solveStat=2;
@@ -549,6 +547,51 @@ void InjPipeFlowTableFunction::writeTable() const
 
   of.close();
 
+  std::vector< double > tim, wwir, wgir, bhp, whp, fnum, lnum;
+  std::vector< std::string > efx;
+  efx.push_back( "/Users/byer3/geos_models/whp/compo/ecl/ix/I3_stats.txt" );
+  for( size_t fn=0; fn< efx.size(); fn++ )
+  {
+    std::string filename = efx[fn];
+    std::cout << "Attempting to open file: " << filename << std::endl;
+    std::ifstream infile( filename );
+    integer nData = 0;
+    if( infile.is_open())
+    {
+      std::cout << "File opened successfully" << std::endl;
+      double ti, val1, val2, val3, val4;
+
+      while( infile >> ti>> val1 >> val2 >> val3 >> val4 )
+      {
+        tim.push_back( ti );
+        bhp.push_back( val1 );
+        whp.push_back( val2 );
+        wwir.push_back( val3 );
+        wgir.push_back( val4 );
+        nData++;
+      }
+      infile.close();
+    }
+
+    real64 bhpcp, bhpct, whpc;
+    std::string ofn="I3_bhp_whp_comparison.csv";
+    std::ofstream ofile( ofn );
+    ofile << "bhp,whp,wgir, bhp_calct,bhp_calcp,whp_calc,bhpSolveStat,whpSolveStat" << std::endl;
+    for( integer i=0; i<  nData; ++i )
+    {
+      if( isZero( wgir[i] ))
+        continue;
+      integer solveStatBHP=0;
+      calculateBHP( wgir[i], whp[i], bhpct, solveStatBHP );
+      solveStatBHP=1;
+      calculateBHP( wgir[i], whp[i], bhpcp, solveStatBHP );
+      integer solveStatWHP=0;
+      calculateWHP( "test", bhp[i], wgir[i], whpc, solveStatWHP );
+
+      ofile << bhp[i] << "," << whp[i] << "," << wgir[i] << "," << bhpcp << "," << bhpct << ","<< whpc  << ","  << solveStatBHP << "," <<  solveStatWHP << std::endl;
+    }
+    ofile.close();
+  }
 
 }
 

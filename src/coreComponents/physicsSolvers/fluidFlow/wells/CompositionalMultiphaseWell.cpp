@@ -77,7 +77,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
   :
   WellControls( name, parent ),
-  m_useMass( false ),
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
@@ -85,10 +84,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
-  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use mass formulation instead of molar" );
 
   this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
     setApplyDefaultValue( 1 ).
@@ -514,6 +509,8 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   {
     real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
     currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
+    //   std::cout << "tjbwellbhp " << pres[iwelemRef] << " " << totalMassDens[iwelemRef] << " "
+    //         << wellElemGravCoef[iwelemRef] << " " << refGravCoef << " " << diffGravCoef << " " << currentBHP << std::endl;
   } );
 
 
@@ -750,7 +747,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 #endif
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  fluid.initializeState();  // tjb
+  //fluid.initializeState();  // tjb
   std::cout << "Well " << getName() << " updating fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = " << compFrac    << std::endl;
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {

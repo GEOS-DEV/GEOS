@@ -31,12 +31,40 @@
 #include "functions/FunctionManager.hpp"
 namespace geos
 {
+void printlmat( std::string loc, CRSMatrixView< real64, globalIndex const > const & localMatrix, arrayView1d< real64 > const & localRhs )
+{
+  std::cout << "Local matrix at " << loc << ":" << std::endl;
+  // Print matrix information using proper CRS matrix access methods
+  std::cout << "LocalMatrix info:" << std::endl;
+  std::cout << "Number of rows: " << localMatrix.numRows() << std::endl;
+  std::cout << "Number of columns: " << localMatrix.numColumns() << std::endl;
+  // Print first few rows of the matrix
+  for( localIndex row = 0; row < std::min( localIndex( 5 ), localMatrix.numRows() ); ++row )
+  {
+    std::cout << "Row " << row << " (nnz=" << localMatrix.numNonZeros( row ) << "): ";
+    if( localMatrix.numNonZeros( row ) > 0 )
+    {
+      auto entries = localMatrix.getEntries( row );
+      auto columns = localMatrix.getColumns( row );
+      for( localIndex j = 0; j < std::min( localIndex( 5 ), localMatrix.numNonZeros( row ) ); ++j )
+      {
+        std::cout << "[" << columns[j] << "]=" << entries[j] << " ";
+      }
+      if( localMatrix.numNonZeros( row ) > 5 )
+      {
+        std::cout << " .. ";
+      }
+    }
 
+    std::cout << localRhs[row] << std::endl;
+  }
+}
 using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
+  m_useMass( 0 ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -53,6 +81,10 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.5 ),
   m_currentConstraint( nullptr ),
+  m_minBHPConstraint( nullptr ),
+  m_maxBHPConstraint( nullptr ),
+  m_minWHPConstraint( nullptr ),
+  m_maxWHPConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
   m_wellOpen( false ),
   m_statusTable( nullptr ),
@@ -235,7 +267,7 @@ Group * WellControls::createChild( string const & childKey, string const & child
 void WellControls::createMinBHPConstraintForWHP()
 {
   // Create constraint and set local pointer
-  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+"MinimumBHPConstraint" );
+  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+std::string( "MinimumBHPConstraint" ));
   m_minBHPConstraintForWHP =    &bhpConstraint;
   // Set properties from the original minBHP constraint
   m_minBHPConstraintForWHP->setReferenceElevation( m_minBHPConstraint->getReferenceElevation() );
@@ -246,7 +278,7 @@ void WellControls::createMinBHPConstraintForWHP()
 void WellControls::createMaxBHPConstraintForWHP()
 {
   // Create constraint and set local pointer
-  MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( m_maxWHPConstraint->getName()+"MaximumBHPConstraint" );
+  MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( m_maxWHPConstraint->getName()+std::string( "MaximumBHPConstraint" ) );
   m_maxBHPConstraintForWHP =    &bhpConstraint;
   // Set properties from the original maxBHP constraint
   m_maxBHPConstraintForWHP->setReferenceElevation( m_maxBHPConstraint->getReferenceElevation() );
@@ -257,7 +289,8 @@ void WellControls::createMaxBHPConstraintForWHP()
 void WellControls::createMaxLiquidConstraintForWHP()
 {
   // Create constraint and set local pointer
-  ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( m_minWHPConstraint->getName()+"LiquidProductionConstraint" );
+  ProductionConstraint< LiquidRateConstraint > & liquidConstraint =
+    registerGroup< ProductionConstraint< LiquidRateConstraint > >( m_minWHPConstraint->getName()+std::string( "LiquidProductionConstraint" ));
   m_maxLiquidConstraintForWHP =  &liquidConstraint;
   // Set properties from VFP table
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -1220,12 +1253,14 @@ WellControls::assembleSystem( real64 const & time_n,
 {
   GEOS_UNUSED_VAR( cycleNumber );
   assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
+  //printlmat( "Well subregion matrix after accumulation", localMatrix ,localRhs);
   assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
+  //printlmat( "Well subregion matrix after constraint terms", localMatrix ,localRhs);
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  //printlmat( "Well subregion matrix after pressure relations", localMatrix ,localRhs);
   computeWellPerforationRates( time_n, dt, elemManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  //printlmat( "Well subregion matrix after flux terms", localMatrix ,localRhs);
 
 }
 } //namespace geos
