@@ -1427,7 +1427,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.sortStickSlip" );
-      RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
+      RAJA::sort_pairs< serialPolicy >( keys_v, vals_v );
       GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.sortStickSlip" );
 
       stickList.resize( nStick );
@@ -1530,48 +1530,12 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // elements of the same type are adjacent in the vals list.
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
+    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.sortFaceTypes" );
+      RAJA::sort_pairs< serialPolicy >( keys_v, vals_v );
+      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.sortFaceTypes" );
+
     quadList.resize( nQuad );
     triList.resize( nTri );
-    bool usedHostSortFallback = false;
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.sortFaceTypes" );
-    try
-    {
-      RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.sortFaceTypes" );
-    }
-    catch( std::exception const & e )
-    {
-      usedHostSortFallback = true;
-      printf( "\n[sort_pairs exception] createFaceTypeList.sortFaceTypes: %s\n", e.what() );
-    }
-
-    if( usedHostSortFallback )
-    {
-      localIndex triCount = 0;
-      localIndex quadCount = 0;
-      for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
-      {
-        localIndex const kf0 = elemsToFaces[kfe][0];
-        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
-        if( numNodesPerFace == 3 )
-        {
-          triList[triCount] = kfe;
-          ++triCount;
-        }
-        else if( numNodesPerFace == 4 )
-        {
-          quadList[quadCount] = kfe;
-          ++quadCount;
-        }
-      }
-
-      GEOS_ERROR_IF_NE_MSG( triCount, nTri,
-                            GEOS_FMT( "Host fallback tri count mismatch: expected {}, got {}", nTri, triCount ) );
-      GEOS_ERROR_IF_NE_MSG( quadCount, nQuad,
-                            GEOS_FMT( "Host fallback quad count mismatch: expected {}, got {}", nQuad, quadCount ) );
-    }
-    else
-    {
       arrayView1d< localIndex > const quadList_v = quadList.toView();
       arrayView1d< localIndex > const triList_v = triList.toView();
 
@@ -1588,7 +1552,6 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
         quadList_v[kfe] = vals_v[nTri+kfe];
       } );
       GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyQuadList" );
-    }
 
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
@@ -1634,7 +1597,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
     // Sort indexes to enable efficient searching using binary search.
     GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.sortFractureFaces" );
-    RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    RAJA::stable_sort< serialPolicy >( tmpSpace_v );
     GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.sortFractureFaces" );
     // Move data back to host: after the device sort the buffer lives on the GPU,
     // but SortedArray::insert is a host-only operation that dereferences the iterators.
@@ -1693,7 +1656,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
       GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.sortBubbleCells" );
-      RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, perms_v );
+      RAJA::sort_pairs< serialPolicy >( keys_v, perms_v );
       GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.sortBubbleCells" );
 
       array1d< localIndex > bubbleElemsList;
