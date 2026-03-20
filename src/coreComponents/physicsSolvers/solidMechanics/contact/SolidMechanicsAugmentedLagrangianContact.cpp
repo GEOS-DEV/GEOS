@@ -1530,28 +1530,66 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // elements of the same type are adjacent in the vals list.
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.sortFaceTypes" );
-    RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
-    GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.sortFaceTypes" );
-
     quadList.resize( nQuad );
     triList.resize( nTri );
-    arrayView1d< localIndex > const quadList_v = quadList.toView();
-    arrayView1d< localIndex > const triList_v = triList.toView();
-
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyTriList" );
-    forAll< parallelDevicePolicy<> >( nTri, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+    bool usedHostSortFallback = false;
+    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.sortFaceTypes" );
+    try
     {
-      triList_v[kfe] = vals_v[kfe];
-    } );
-    GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyTriList" );
-
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyQuadList" );
-    forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+      RAJA::sort_pairs< parallelDevicePolicy<> >( keys_v, vals_v );
+      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.sortFaceTypes" );
+    }
+    catch( std::exception const & e )
     {
-      quadList_v[kfe] = vals_v[nTri+kfe];
-    } );
-    GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyQuadList" );
+      usedHostSortFallback = true;
+      printf( "\n[sort_pairs exception] createFaceTypeList.sortFaceTypes: %s\n", e.what() );
+    }
+
+    if( usedHostSortFallback )
+    {
+      keys.move( hostMemorySpace );
+      vals.move( hostMemorySpace );
+
+      localIndex triCount = 0;
+      localIndex quadCount = 0;
+      for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
+      {
+        if( keys[kfe] == 0 )
+        {
+          triList[triCount] = vals[kfe];
+          ++triCount;
+        }
+        else if( keys[kfe] == 1 )
+        {
+          quadList[quadCount] = vals[kfe];
+          ++quadCount;
+        }
+      }
+
+      GEOS_ERROR_IF_NE_MSG( triCount, nTri,
+                            GEOS_FMT( "Host fallback tri count mismatch: expected {}, got {}", nTri, triCount ) );
+      GEOS_ERROR_IF_NE_MSG( quadCount, nQuad,
+                            GEOS_FMT( "Host fallback quad count mismatch: expected {}, got {}", nQuad, quadCount ) );
+    }
+    else
+    {
+      arrayView1d< localIndex > const quadList_v = quadList.toView();
+      arrayView1d< localIndex > const triList_v = triList.toView();
+
+      GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyTriList" );
+      forAll< parallelDevicePolicy<> >( nTri, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        triList_v[kfe] = vals_v[kfe];
+      } );
+      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyTriList" );
+
+      GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyQuadList" );
+      forAll< parallelDevicePolicy<> >( nQuad, [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+      {
+        quadList_v[kfe] = vals_v[nTri+kfe];
+      } );
+      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyQuadList" );
+    }
 
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
