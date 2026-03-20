@@ -132,41 +132,49 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
 
   if( true )
   {
-    stdVector< buffer_unit_type > buff =  tableData.serialize();
-    if( buff.empty())
-    {
-      return;
-    }
-    { // Unpacking
-      buffer_unit_type const * startBuff = buff.data();
-      size_t totalSize = 0;
-      bufferOps::Unpack( startBuff, totalSize );
-      buffer_unit_type const * endRowsBuff = startBuff + totalSize - sizeof(size_t);
-      while( startBuff < endRowsBuff )
+    stdVector< buffer_unit_type > localTableData( 0 );
+    tableData.serialize( localTableData );
+
+    auto [globalLogRecords, counts, offsets] =
+      gatherTableDataOnRank0( tableData, X );
+
+    { //Deserialisation
+      if( !localTableData.empty())
       {
-        size_t byteFromThisRow = 0;
-        bufferOps::Unpack( startBuff, byteFromThisRow );
-        buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
-        stdVector< TableData::CellData > row;
-        while( startBuff < endRowBuff )
+        for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
         {
-          size_t cellSize = 0;
-          bufferOps::Unpack( startBuff, cellSize );
+          buffer_unit_type const * startBuff = localTableData.data();
+          integer byteFromThisRank = counts[idxRank];
+          buffer_unit_type const * endBuff= startBuff + byteFromThisRank;
 
-          size_t cellFirstArgSize = 0;
-          bufferOps::Unpack( startBuff, cellFirstArgSize);
-          CellType cellType;
-          bufferOps::Unpack( startBuff, cellType );
+          TableData::deserializeField( startBuff, startBuff, endBuff );
+          buffer_unit_type const * endRowsBuff = startBuff + byteFromThisRank - sizeof(size_t);
+          while( startBuff < endRowsBuff )
+          {
+            size_t byteFromThisRow = 0;
+            TableData::deserializeField( startBuff, byteFromThisRow, endBuff );
+            buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
+            stdVector< TableData::CellData > row;
+            while( startBuff < endRowBuff )
+            {
+              size_t cellSize = 0;
+              TableData::deserializeField( startBuff, cellSize, endBuff );
 
-          string cellValue;
-          bufferOps::Unpack( startBuff, cellValue );
-          row.push_back( {cellType, cellValue} );
+              size_t cellFirstArgSize = 0;
+              TableData::deserializeField( startBuff, cellFirstArgSize, endBuff );
+              CellType cellType;
+              TableData::deserializeField( startBuff, cellType, endBuff );
+
+              string cellValue;
+              TableData::deserializeField( startBuff, cellValue, endBuff );
+              row.push_back( {cellType, cellValue} );
+            }
+          }
         }
-
       }
-
     }
-    // gatherTableDataOnRank0( tableData, X );
+
+
 
     if( status.m_isMasterRank )
     {

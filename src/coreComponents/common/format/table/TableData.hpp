@@ -20,6 +20,7 @@
 #ifndef GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 #define GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 
+#include "common/StdContainerWrappers.hpp"
 #include "common/Units.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
@@ -72,12 +73,74 @@ public:
     /// The cell value
     string value;
 
-    size_t serializeTo( buffer_unit_type * buffer ) const;
+    size_t getSerializedSize() const;
+
+    void serialize( stdVector< buffer_unit_type > & out ) const;
   };
+
+  /**
+   * @tparam T The trivial type
+   * @return Returns the size occupied by a trivial type in memory.
+   */
+  template< typename T >
+  static unsigned long sizeOfField( T )
+  { return sizeof(T); }
+
+  /**
+   * @brief Returns the size of a string (header size + content).
+   * @param str The target string
+   * @return Size in bytes.
+   */
+  static unsigned long sizeOfField( string_view str )
+  { return sizeof(string::size_type) + str.size(); }
+
+  template< typename T >
+  static void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
+  {
+    buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
+    buffer_unit_type const * end = begin + sizeof(data);
+    out.insert( out.end(), begin, end );
+  };
+
+  static void serializeString ( string const & data, stdVector< buffer_unit_type > & out )
+  {
+    serializePrimitive( data.size(), out );
+    auto * begin = data.data();
+    auto * end = begin + data.size();
+    out.insert( out.end(), begin, end );
+  };
+
+  template< typename T >
+  static void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+  {
+    static_assert( std::is_trivially_copyable_v< T > );
+    if( ptr + sizeof(T)> end ) throw std::runtime_error( "Buffer truncated" );
+    memcpy( &data, ptr, sizeof(T) );
+    ptr += sizeof(T);
+  }
+
+  /** @brief Reads a string value from the buffer and advances the pointer.
+   * @param data Destination variable.
+   * @param ptr Current read pointer (advanced by sizeof(string)).
+   * @param end Safety: maximum buffer limit.
+   */
+  static void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+  {
+    string::size_type strSize = 0;
+    deserializeField( strSize, ptr, end );
+    if( std::distance( ptr, end ) < (long) strSize )
+    {
+      throw std::runtime_error( "Buffer truncated reading string" );
+    }
+    str.assign( ptr, ptr + strSize );
+    ptr += str.size();
+  }
+
+
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
 
-  stdVector< buffer_unit_type > serialize() const;
+  void serialize( stdVector< buffer_unit_type > localTableData ) const;
 
   /**
    * @brief Add a row to the table.

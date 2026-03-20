@@ -84,30 +84,22 @@ bool TableData::operator==( TableData const & comparingTable ) const
   return true;
 }
 
-size_t TableData::CellData::serializeTo( buffer_unit_type * buffer ) const
+void TableData::CellData::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  buffer_unit_type * dummy = nullptr;
-  size_t sizeOftype = bufferOps::Pack< false >( dummy, type );
-  string::size_type sizeOfString = bufferOps::Pack< false >( dummy, value );
-
-  if( buffer )
-  {
-    auto it = buffer;
-    bufferOps::Pack< true >( buffer, sizeOftype );
-    bufferOps::Pack< true >( buffer, type );
-    bufferOps::Pack< true >( buffer, value );
-    return buffer - it;
-  }
-  else
-  {
-    return sizeof(size_t) + sizeOftype  + sizeOfString;
-  }
+  serializePrimitive( type, out );
+  serializeString( value, out );
 }
 
-stdVector< buffer_unit_type > TableData::serialize() const
+
+size_t TableData::CellData::getSerializedSize() const
+{
+  return sizeOfField( type ) + sizeOfField( value );
+}
+
+void TableData::serialize( stdVector< buffer_unit_type > localTableData ) const
 {
   if( m_rows.empty())
-    return {};
+    return;
 
   size_t totalSize = 0;
 
@@ -118,34 +110,29 @@ stdVector< buffer_unit_type > TableData::serialize() const
     size_t rowSize = 0;
     for( auto & cell : row )
     {
-      rowSize += sizeof(size_t) + cell.serializeTo( nullptr );
+      rowSize += sizeof(size_t) + cell.getSerializedSize();
     }
     totalSize += sizeof(size_t) + rowSize;
   }
 
-  stdVector< buffer_unit_type > rowsPacked;
-  rowsPacked.resize( totalSize );
-  buffer_unit_type * itRowsPacked = rowsPacked.data();
-  bufferOps::Pack< true >( itRowsPacked, totalSize );
+  localTableData.resize( totalSize );
+  serializePrimitive( totalSize, localTableData );
   for( auto & row : m_rows )
   {
     size_t rowSize = 0;
     // pack row size;
     for( auto const & cell : row )
-      rowSize += sizeof(size_t) + cell.serializeTo( nullptr );
-    bufferOps::Pack< true >( itRowsPacked, rowSize );
+      rowSize += sizeof(size_t) + cell.getSerializedSize();
+    serializePrimitive( rowSize, localTableData );
 
     // pack cells
     for( auto const & cell : row )
     {
-      size_t cellSize =  cell.serializeTo( nullptr );
-      bufferOps::Pack< true >( itRowsPacked, cellSize );
-      cell.serializeTo( itRowsPacked );
-      itRowsPacked += cellSize;
+      size_t cellSize =  cell.getSerializedSize();
+      serializePrimitive( cellSize, localTableData );
+      cell.serialize( localTableData );
     }
   }
-
-  return rowsPacked;
 }
 
 
