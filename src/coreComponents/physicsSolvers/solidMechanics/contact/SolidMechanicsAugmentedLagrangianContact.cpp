@@ -1547,21 +1547,20 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
 
     if( usedHostSortFallback )
     {
-      keys.move( hostMemorySpace );
-      vals.move( hostMemorySpace );
-
       localIndex triCount = 0;
       localIndex quadCount = 0;
       for( localIndex kfe = 0; kfe < subRegion.size(); ++kfe )
       {
-        if( keys[kfe] == 0 )
+        localIndex const kf0 = elemsToFaces[kfe][0];
+        localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+        if( numNodesPerFace == 3 )
         {
-          triList[triCount] = vals[kfe];
+          triList[triCount] = kfe;
           ++triCount;
         }
-        else if( keys[kfe] == 1 )
+        else if( numNodesPerFace == 4 )
         {
-          quadList[quadCount] = vals[kfe];
+          quadList[quadCount] = kfe;
           ++quadCount;
         }
       }
