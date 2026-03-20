@@ -37,6 +37,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fileIO/Outputs/ArchiveInputDeck.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
 #include "functions/FunctionManager.hpp"
@@ -220,6 +221,8 @@ void ProblemManager::parseCommandLineInput()
     string const absPath = getAbsolutePath( xmlFile );
     GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
   }
+
+  archiveInputDeck::archiveInputDeck( opts.inputFileNames, outputDirectory );
 
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
