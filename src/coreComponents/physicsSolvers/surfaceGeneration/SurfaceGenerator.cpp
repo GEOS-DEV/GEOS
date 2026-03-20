@@ -81,6 +81,15 @@ inline void printCudaStatus( char const * functionName, int const line, char con
       printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
     }
   }
+  else
+  {
+    printf( "\n[CUDA] %s:%d", functionName, line );
+    if( label != nullptr && label[0] != '\0' )
+    {
+      printf( " %s", label );
+    }
+    printf( "\n" );
+  }
 #else
   GEOS_UNUSED_VAR( functionName );
   GEOS_UNUSED_VAR( line );
