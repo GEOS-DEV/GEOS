@@ -71,9 +71,13 @@ public:
     CellType type;
     /// The cell value
     string value;
+
+    size_t serializeTo( buffer_unit_type * buffer ) const;
   };
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
+
+  stdVector< buffer_unit_type > serialize() const;
 
   /**
    * @brief Add a row to the table.
@@ -138,7 +142,7 @@ public:
 
   TableErrorListing & getErrorsList()
   { return *m_errors; }
-  
+
   /**
    * @brief Gather all the TableData rows to the rank 0
    * @param func The callable comparison function object to sort TableData rows, by default none

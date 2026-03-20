@@ -18,7 +18,9 @@
  */
 
 #include "TableData.hpp"
+#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
+#include "dataRepository/BufferOps.hpp"
 
 namespace geos
 {
@@ -80,6 +82,70 @@ bool TableData::operator==( TableData const & comparingTable ) const
       return false;
   }
   return true;
+}
+
+size_t TableData::CellData::serializeTo( buffer_unit_type * buffer ) const
+{
+  buffer_unit_type * dummy = nullptr;
+  size_t sizeOftype = bufferOps::Pack< false >( dummy, type );
+  string::size_type sizeOfString = bufferOps::Pack< false >( dummy, value );
+
+  if( buffer )
+  {
+    auto it = buffer;
+    bufferOps::Pack< true >( buffer, sizeOftype );
+    bufferOps::Pack< true >( buffer, type );
+    bufferOps::Pack< true >( buffer, value );
+    return buffer - it;
+  }
+  else
+  {
+    return sizeof(size_t) + sizeOftype  + sizeOfString;
+  }
+}
+
+stdVector< buffer_unit_type > TableData::serialize() const
+{
+  if( m_rows.empty())
+    return {};
+
+  size_t totalSize = 0;
+
+  // pre-calculate total size
+  totalSize += sizeof(size_t);
+  for( auto & row : m_rows )
+  {
+    size_t rowSize = 0;
+    for( auto & cell : row )
+    {
+      rowSize += sizeof(size_t) + cell.serializeTo( nullptr );
+    }
+    totalSize += sizeof(size_t) + rowSize;
+  }
+
+  stdVector< buffer_unit_type > rowsPacked;
+  rowsPacked.resize( totalSize );
+  buffer_unit_type * itRowsPacked = rowsPacked.data();
+  bufferOps::Pack< true >( itRowsPacked, totalSize );
+  for( auto & row : m_rows )
+  {
+    size_t rowSize = 0;
+    // pack row size;
+    for( auto const & cell : row )
+      rowSize += sizeof(size_t) + cell.serializeTo( nullptr );
+    bufferOps::Pack< true >( itRowsPacked, rowSize );
+
+    // pack cells
+    for( auto const & cell : row )
+    {
+      size_t cellSize =  cell.serializeTo( nullptr );
+      bufferOps::Pack< true >( itRowsPacked, cellSize );
+      cell.serializeTo( itRowsPacked );
+      itRowsPacked += cellSize;
+    }
+  }
+
+  return rowsPacked;
 }
 
 
