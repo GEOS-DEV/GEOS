@@ -235,14 +235,18 @@ void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
 void FaceManager::computeGeometry( NodeManager const & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  arrayView1d< real64 > const faceArea = m_faceArea.toView();
+  arrayView2d< real64 > const faceCenter = m_faceCenter.toView();
+  arrayView2d< real64 > const faceNormal = m_faceNormal.toView();
+  ArrayOfArraysView< localIndex const > const toNodes = m_toNodesRelation.toViewConst();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
   {
-    m_faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( m_toNodesRelation[ faceIndex ],
+    faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( toNodes[ faceIndex ],
                                                                          X,
-                                                                         m_faceCenter[ faceIndex ],
-                                                                         m_faceNormal[ faceIndex ] );
+                                                                         faceCenter[ faceIndex ],
+                                                                         faceNormal[ faceIndex ] );
 
   } );
 }
