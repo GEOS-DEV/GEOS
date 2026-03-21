@@ -591,7 +591,27 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localMatrix,
                                                localRhs );
 
+//  LvArray::print<parallelDevicePolicy< > >( localMatrix );
+
+  printf( "************************Printing localRhs0 for debugging:\n" );
+  forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+  {
+    printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+  } );
+  std::cout << "************************ Finished printing localRhs0.************************" << std::endl;
+
+
   assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
+
+
+  printf( "************************Printing localRhs1 for debugging:\n" );
+  forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+  {
+    printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+  } );
+  std::cout << "************************ Finished printing localRhs1.************************" << std::endl;
+
+
 
   // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
   if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
@@ -645,15 +665,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                         dt,
                                                                         faceElementList );
 
-        real64 maxTraction = finiteElement::
-                               interfaceBasedKernelApplication
-                             < parallelDevicePolicy< >,
-                               CoulombFriction >( mesh,
-                                                  fractureRegionName,
-                                                  faceElementList,
-                                                  subRegionFE,
-                                                  viewKeyStruct::frictionLawNameString(),
-                                                  kernelFactory );
+        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >,CoulombFriction >( mesh,
+                                                                                                                        fractureRegionName,
+                                                                                                                        faceElementList,
+                                                                                                                        subRegionFE,
+                                                                                                                        viewKeyStruct::frictionLawNameString(),
+                                                                                                                        kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -683,6 +700,14 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
       }
 
     } );
+
+
+    printf( "************************Printing localRhs in assembleContact0 for debugging:\n" );
+    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    {
+      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    } );
+    std::cout << "************************ Finished printing localRhs in assembleContact0.************************" << std::endl;
 
     forFiniteElementOnSlipFractureSubRegions( meshName, [&] ( string const &,
                                                               finiteElement::FiniteElementBase const & subRegionFE,
@@ -738,6 +763,14 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
   } );
 
+    printf( "************************Printing localRhs in assembleContact1 for debugging:\n" );
+    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    {
+      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    } );
+    std::cout << "************************ Finished printing localRhs in assembleContact1.************************" << std::endl;
+
+
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -763,19 +796,24 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                              dt,
                                                                              gravityVectorData );
 
-    real64 maxTraction = finiteElement::
-                           regionBasedKernelApplication
-                         < parallelDevicePolicy< >,
-                           ElasticIsotropic,
-                           CellElementSubRegion >( mesh,
-                                                   regionNames,
-                                                   getDiscretizationName(),
-                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                   kernelFactory );
+    real64 maxTraction = finiteElement::regionBasedKernelApplication< parallelDevicePolicy< >, ElasticIsotropic, CellElementSubRegion >( mesh,
+                                                                                                                                         regionNames,
+                                                                                                                                         getDiscretizationName(),
+                                                                                                                                         SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                                                                                         kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
 
+    printf( "************************Printing localRhs in assembleContact2 for debugging:\n" );
+    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    {
+      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    } );
+    std::cout << "************************ Finished printing localRhs in assembleContact2.************************" << std::endl;
+
+
   } );
+  
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution( DomainPartition & domain,

@@ -241,7 +241,7 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
   ArrayOfArraysView< localIndex const > const toNodes = m_toNodesRelation.toViewConst();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const faceIndex )
   {
     faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( toNodes[ faceIndex ],
                                                                          X,
