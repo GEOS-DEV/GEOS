@@ -403,7 +403,8 @@ TEST_P( ConsistencyTest, Run )
 
           ElementRegionBase & region = elemManager.getRegion( er );
           ElementSubRegionBase & cellSubRegion = region.getSubRegion( esr );
-          auto const & avgStress = cellSubRegion.getField< fields::solidMechanics::averageStress >();
+          arrayView2d< real64 const, cells::RANK2_TENSOR_USD > const avgStress = cellSubRegion.getField< fields::solidMechanics::averageStress >();
+          avgStress.move( LvArray::MemorySpace::host );
 
           real64 sig_xx = avgStress( c, 0 );
           real64 sig_yy = avgStress( c, 1 );
@@ -411,6 +412,11 @@ TEST_P( ConsistencyTest, Run )
           real64 sig_yz = avgStress( c, 3 );
           real64 sig_xz = avgStress( c, 4 );
           real64 sig_xy = avgStress( c, 5 );
+
+          std::cout<<"Fracture element " << k << " face " << faceIdx << " adjacent to cell " << c
+                   << " with stress (sig_xx=" << sig_xx << ", sig_yy=" << sig_yy << ", sig_zz=" << sig_zz
+                   << ", sig_yz=" << sig_yz << ", sig_xz=" << sig_xz << ", sig_xy=" << sig_xy
+                   << ") and normal (" << nx << ", " << ny << ", " << nz << ")"<<std::endl;
 
           // Compute t_sim = sigma * n
           real64 ts_x = sig_xx * nx + sig_xy * ny + sig_xz * nz;
