@@ -2405,7 +2405,20 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
         real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
+                                                          faceRotationMatrix,
+                                                          elemsToFaces,
+                                                          faceToElemRegion,
+                                                          faceToElemSubRegion,
+                                                          faceToElemIndex,
+                                                          traction,
+                                                          dispJump,
+                                                          iterativePenalty,
+                                                          totalBubbleDisplacement,
+                                                          hasCoulombParams,
+                                                          cohesion,
+                                                          frictionCoefficient,
+                                                          avgElementStressView=avgElementStress.toNestedViewConst()] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2429,7 +2442,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               localIndex const ei = faceToElemIndex( faceIndex, 0 );
 
               // Skip if no valid stress data available
-              if( avgElementStress[er].empty() || avgElementStress[er][esr].empty() )
+              if( avgElementStressView[er].empty() || avgElementStressView[er][esr].empty() )
               {
                 continue;
               }
@@ -2438,7 +2451,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // If the maximun principal stress is tensile, issue an error. Principal stresses are
               // sorted in ascending order
               real64 principalStresses[3];
-              LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStress[er][esr][ei] );
+              LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStressView[er][esr][ei] );
               GEOS_ERROR_IF( principalStresses[2] > 0.0,
                              GEOS_FMT(
                                "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {} "
@@ -2446,12 +2459,12 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
 
               // Accumulate stress for averaging (for warning message)
-              LvArray::tensorOps::add< 6 >( avgSigma, avgElementStress[er][esr][ei] );
+              LvArray::tensorOps::add< 6 >( avgSigma, avgElementStressView[er][esr][ei] );
 
-              printf( "aveElementStress[%d][%d][%d] = [%e, %e, %e, %e, %e, %e]\n", er, esr, ei, avgElementStress[er][esr][ei][0], avgElementStress[er][esr][ei][1], avgElementStress[er][esr][ei][2], avgElementStress[er][esr][ei][3], avgElementStress[er][esr][ei][4], avgElementStress[er][esr][ei][5] );
+              printf( "aveElementStress[%d][%d][%d] = [%e, %e, %e, %e, %e, %e]\n", er, esr, ei, avgElementStressView[er][esr][ei][0], avgElementStressView[er][esr][ei][1], avgElementStressView[er][esr][ei][2], avgElementStressView[er][esr][ei][3], avgElementStressView[er][esr][ei][4], avgElementStressView[er][esr][ei][5] );
 
               // Compute and accumulate traction in global coordinates: t = sigma * n
-              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStress[er][esr][ei], n );
+              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStressView[er][esr][ei], n );
 
               ++numValidCells;
             }
