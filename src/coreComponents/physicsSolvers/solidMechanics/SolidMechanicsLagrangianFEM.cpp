@@ -1008,6 +1008,14 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
 
       } );
 
+      std::cout<<" SolidMechanicsLagrangianFEM::implicitStepComplete: avgStress for subRegion "<<subRegion.getName()<<std::endl;
+      std::cout<<" avgStress size: "<<avgStress.size( 0 )<<" x "<<avgStress.size( 1 )<<std::endl;
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+      {
+        printf( "avgStress(%d): %e %e %e %e %e %e\n", i, avgStress( i, 0 ), avgStress( i, 1 ), avgStress( i, 2 ), avgStress( i, 3 ), avgStress( i, 4 ), avgStress( i, 5 ) );
+      } );
+      std::cout<<" End SolidMechanicsLagrangianFEM::implicitStepComplete: avgStress for subRegion "<<subRegion.getName()<<std::endl;
+
       constitutiveRelation.saveConvergedState();
 
     } );

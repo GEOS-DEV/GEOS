@@ -452,6 +452,33 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 
+
+  // ****************************************************************************************************************************
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
+    } );
+  } );
+  // ****************************************************************************************************************************
+
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -571,6 +598,32 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          domain.getNeighbors(),
                                                          true );
   } );
+
+    // ****************************************************************************************************************************
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
+    } );
+  } );
+  // ****************************************************************************************************************************
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -593,23 +646,23 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
 //  LvArray::print<parallelDevicePolicy< > >( localMatrix );
 
-  printf( "************************Printing localRhs0 for debugging:\n" );
-  forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-  {
-    printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  } );
-  std::cout << "************************ Finished printing localRhs0.************************" << std::endl;
+  // printf( "************************Printing localRhs0 for debugging:\n" );
+  // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+  // {
+  //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+  // } );
+  // std::cout << "************************ Finished printing localRhs0.************************" << std::endl;
 
 
   assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
 
 
-  printf( "************************Printing localRhs1 for debugging:\n" );
-  forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-  {
-    printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  } );
-  std::cout << "************************ Finished printing localRhs1.************************" << std::endl;
+  // printf( "************************Printing localRhs1 for debugging:\n" );
+  // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+  // {
+  //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+  // } );
+  // std::cout << "************************ Finished printing localRhs1.************************" << std::endl;
 
 
 
@@ -648,6 +701,31 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     string const & fractureRegionName = getUniqueFractureRegionName();
+
+  // ****************************************************************************************************************************
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
+    } );
+  } );
+  // ****************************************************************************************************************************
 
     forFiniteElementOnStickFractureSubRegions( meshName, [&] ( string const &,
                                                                finiteElement::FiniteElementBase const & subRegionFE,
@@ -701,13 +779,37 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
     } );
 
-
-    printf( "************************Printing localRhs in assembleContact0 for debugging:\n" );
-    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+  // ****************************************************************************************************************************
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
     } );
-    std::cout << "************************ Finished printing localRhs in assembleContact0.************************" << std::endl;
+  } );
+  // ****************************************************************************************************************************
+  
+    // printf( "************************Printing localRhs in assembleContact0 for debugging:\n" );
+    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    // {
+    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    // } );
+    // std::cout << "************************ Finished printing localRhs in assembleContact0.************************" << std::endl;
 
     forFiniteElementOnSlipFractureSubRegions( meshName, [&] ( string const &,
                                                               finiteElement::FiniteElementBase const & subRegionFE,
@@ -763,12 +865,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
   } );
 
-    printf( "************************Printing localRhs in assembleContact1 for debugging:\n" );
-    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-    {
-      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-    } );
-    std::cout << "************************ Finished printing localRhs in assembleContact1.************************" << std::endl;
+    // printf( "************************Printing localRhs in assembleContact1 for debugging:\n" );
+    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    // {
+    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    // } );
+    // std::cout << "************************ Finished printing localRhs in assembleContact1.************************" << std::endl;
 
 
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
@@ -804,12 +906,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
     GEOS_UNUSED_VAR( maxTraction );
 
-    printf( "************************Printing localRhs in assembleContact2 for debugging:\n" );
-    forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-    {
-      printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-    } );
-    std::cout << "************************ Finished printing localRhs in assembleContact2.************************" << std::endl;
+    // printf( "************************Printing localRhs in assembleContact2 for debugging:\n" );
+    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
+    // {
+    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
+    // } );
+    // std::cout << "************************ Finished printing localRhs in assembleContact2.************************" << std::endl;
 
 
   } );
@@ -1072,13 +1174,13 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                     dt,
                                                     domain );
 
-  forAll< serialPolicy >( localSolution.size(),
-                          [ = ]
-                         ( localIndex const i )
-  {
-    printf( "localSolution[%d] = %e\n", i, localSolution[i] );
-  } );
-  std::cout << "Finished printing local solution." << std::endl;
+  // forAll< serialPolicy >( localSolution.size(),
+  //                         [ = ]
+  //                        ( localIndex const i )
+  // {
+  //   printf( "localSolution[%d] = %e\n", i, localSolution[i] );
+  // } );
+  // std::cout << "Finished printing local solution." << std::endl;
 
   dofManager.addVectorToField( localSolution,
                                contact::totalBubbleDisplacement::key(),
@@ -1137,6 +1239,31 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     CRSMatrix< real64, globalIndex > const voidMatrix;
     array1d< real64 > const voidRhs;
 
+
+
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
+    } );
+  } );
+
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,
                                                           finiteElement::FiniteElementBase const & subRegionFE,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -1161,6 +1288,30 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
     } );
   } );
+
+  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  {
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+
+      localIndex numElements = subRegion.size();
+      forAll< parallelDevicePolicy<> >( 1,
+                                        [ = ]
+                                        GEOS_DEVICE ( localIndex const  )
+      {
+        for( localIndex kfe=0; kfe<numElements; ++kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
+          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
+        }
+      });
+    } );
+  } );
+
 
   // Synchronize displacement jump after computation
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -2215,9 +2366,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     arrayView2d< real64 > totalBubbleDisplacement = faceManager.getField< contact::totalBubbleDisplacement >();
 
     // Get stress accessor
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const avgElementStress =
-      elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
-                                         arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const 
+    avgElementStress = elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
+                                                          arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -2230,6 +2381,19 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >().toViewConst();
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+        localIndex const numElements = subRegion.size();
+        forAll< parallelDevicePolicy<> >( 1, [ = ] GEOS_DEVICE ( localIndex const  )
+        {
+          for( localIndex kfe=0; kfe<numElements; ++kfe )
+          {
+            printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          }
+        });
+
+
+      
+
+
         // Get friction law parameters for Coulomb check
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
@@ -2241,7 +2405,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
         real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=, &avgElementStress] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2283,6 +2447,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStress[er][esr][ei] );
+
+              printf( "aveElementStress[%d][%d][%d] = [%e, %e, %e, %e, %e, %e]\n", er, esr, ei, avgElementStress[er][esr][ei][0], avgElementStress[er][esr][ei][1], avgElementStress[er][esr][ei][2], avgElementStress[er][esr][ei][3], avgElementStress[er][esr][ei][4], avgElementStress[er][esr][ei][5] );
 
               // Compute and accumulate traction in global coordinates: t = sigma * n
               LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStress[er][esr][ei], n );
@@ -2393,6 +2559,22 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             }
           }
         } );
+
+
+        printf( " initializeTractionFromAdjacentCellStress1 \n" );
+        printf( "host \n" );
+        forAll< serialPolicy >( numElements, [ = ] ( localIndex const kfe )
+        {
+          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+        });
+        printf( "device \n" );
+        forAll< parallelDevicePolicy<> >( 1, [ = ] GEOS_DEVICE ( localIndex const  )
+        {
+          for( localIndex kfe=0; kfe<numElements; ++kfe )
+          {
+            printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
+          }
+        });
       }
     } );
   } );

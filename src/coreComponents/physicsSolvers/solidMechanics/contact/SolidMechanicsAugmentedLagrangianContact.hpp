@@ -215,7 +215,7 @@ public:
    */
   void createBubbleCellList( DomainPartition & domain ) const;
 
-private:
+//private:
 
   /**
    * @brief Validate that tetrahedral meshes use high-order quadrature rules

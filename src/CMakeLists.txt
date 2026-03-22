@@ -103,8 +103,8 @@ install( DIRECTORY ${PROJECT_BINARY_DIR}/include DESTINATION . )
 ################################
 # Generate version information
 ################################
-include( cmake/GeosxVersion.cmake )
-message( STATUS "Configuring GEOSX version ${GEOS_VERSION_FULL}" )
+# include( cmake/GeosxVersion.cmake )
+# message( STATUS "Configuring GEOSX version ${GEOS_VERSION_FULL}" )
 
 
 ################################

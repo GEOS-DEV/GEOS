@@ -1,10 +1,10 @@
-# This script generates version info for GEOSX from VERSION file and git.
+# This script generates version info for GEOSX from VERSION file and optionally git.
 # At config time, it sets various version variables and generates a build
 # target named 'generate_version', that the code must set a dependency on.
 # The target invokes this script again at build time, where it generates a
 # version header with the most up-to-date version info. Thus any change to
 # VERSION file or git state (in particular, branch name or HEAD commit sha)
-# will trigger a partial rebuild (anything that includes version header).
+# can trigger a partial rebuild (anything that includes version header).
 #
 # This self-referential approach inspired in part by:
 # https://github.com/andrew-hardin/cmake-git-version-tracking
@@ -13,6 +13,12 @@
 # therefore the script uses SOURCE_DIR as the CMake root path.
 if( NOT DEFINED CMAKE_SCRIPT_MODE_FILE )
   set( SOURCE_DIR ${CMAKE_SOURCE_DIR} )
+endif()
+
+# Option to enable/disable querying git for version metadata.
+# Default ON preserves existing behavior unless explicitly disabled.
+if( NOT DEFINED GEOSX_USE_GIT_VERSION_INFO )
+  set( GEOSX_USE_GIT_VERSION_INFO ON )
 endif()
 
 # Get GEOSX version from a file
@@ -24,13 +30,13 @@ endif()
 #   -- GEOS_VERSION_MAJOR
 #   -- GEOS_VERSION_MINOR
 #   -- GEOS_VERSION_PATCH
-macro(geosx_get_file_version)
-  file ( STRINGS "${SOURCE_DIR}/VERSION" GEOS_VERSION_FULL )
+macro( geosx_get_file_version )
+  file( STRINGS "${SOURCE_DIR}/VERSION" GEOS_VERSION_FULL )
   string( REGEX REPLACE "VERSION_ID = v" "" GEOS_VERSION_FULL "${GEOS_VERSION_FULL}" )
   string( REPLACE "." ";" GEOS_VERSION_LIST ${GEOS_VERSION_FULL} )
-  list( GET GEOS_VERSION_LIST  0 GEOS_VERSION_MAJOR )
-  list( GET GEOS_VERSION_LIST  1 GEOS_VERSION_MINOR )
-  list( GET GEOS_VERSION_LIST  2 GEOS_VERSION_PATCH )
+  list( GET GEOS_VERSION_LIST 0 GEOS_VERSION_MAJOR )
+  list( GET GEOS_VERSION_LIST 1 GEOS_VERSION_MINOR )
+  list( GET GEOS_VERSION_LIST 2 GEOS_VERSION_PATCH )
 endmacro()
 
 # Get GEOSX development version from git
@@ -38,12 +44,18 @@ endmacro()
 #   -- SOURCE_DIR
 #   -- GIT_FOUND
 #   -- GIT_EXECUTABLE (only when GIT_FOUND=TRUE )
-# Outputs (if GIT_FOUND=TRUE and inside git repo):
+#   -- GEOSX_USE_GIT_VERSION_INFO
+# Outputs (if enabled, GIT_FOUND=TRUE, and inside git repo):
 #   -- GEOS_GIT_BRANCH
 #   -- GEOS_GIT_HASH
 #   -- GEOS_GIT_TAG
-macro(geosx_get_git_version)
-  if( GIT_FOUND )
+macro( geosx_get_git_version )
+  # Default empty values when git info is disabled or unavailable.
+  set( GEOS_GIT_BRANCH "" )
+  set( GEOS_GIT_HASH   "" )
+  set( GEOS_GIT_TAG    "" )
+
+  if( GIT_FOUND AND GEOSX_USE_GIT_VERSION_INFO )
     # Use BLT Git macros for convenience
     include( ${SOURCE_DIR}/cmake/blt/cmake/BLTGitMacros.cmake )
     blt_is_git_repo( OUTPUT_STATE is_git_repo
@@ -96,6 +108,7 @@ if( NOT DEFINED CMAKE_SCRIPT_MODE_FILE )
                      -D SOURCE_DIR=${SOURCE_DIR}
                      -D GIT_FOUND=${GIT_FOUND}
                      -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
+                     -D GEOSX_USE_GIT_VERSION_INFO=${GEOSX_USE_GIT_VERSION_INFO}
                      -P "${CMAKE_CURRENT_LIST_FILE}"
                      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ver_tmp_file} ${ver_out_file} )
 endif()
