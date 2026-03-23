@@ -7,22 +7,23 @@ Chiumenti Damage Model
 Overview, Summary
 ========================
 The Chiumenti model is a brittle damage formulation designed for materials such as ceramics, 
-where failure is governed by tensile cracking rather than ductile plasticity. The model builds on a 
-hyperelastic constitutive response, introduces damage evolution based on the maximum principal stress, and has 
-been applied for applications including fracture response verification 
-for self contact and dynamic crack propagation :cite:t:`DFG`.
+where failure is governed by tensile cracking rather than ductile plasticity :cite:p:`DFG`. The model builds 
+on a hyperelastic constitutive response, typically implemented as a compressible neo-Hookean 
+trial stress, and introduces damage evolution based on the maximum principal stress. Damage is 
+incremented when the maximum tensile stress exceeds a user-defined failure strength and reduces 
+tensile principal stresses accordingly.
 
-This implementation captures the essential features of the Rankine-type damage model 
-described by :cite:t:`CerveraAndChiumenti`, including tension-driven damage, scalar damage 
-evolution, and fracture-energy regularization to control mesh-dependent softening. While the 
-underlying physics is the same—damage accumulates as the maximum principal tensile stress 
-exceeds a threshold and reduces the material stiffness—the present model is a simplified,
-explicit solver–friendly form. In particular, it does not explicitly implement the full 
-effective stress framework, the internal stress-like variable for the loading surface, the 
-Kuhn–Tucker conditions for loading/unloading, or the consistent tangent operator. Despite 
-these simplifications, the model reproduces the core Rankine damage behavior and the 
-energy-based control of strain softening, providing a practical approximation suitable 
-for finite element simulations.
+The model implements Rankine-type fracture behavior with linear strain-softening, where the 
+softening rate is tied to the Mode I fracture energy and a characteristic length, providing 
+mesh-independent results. Optional extensions include a time-to-failure model to predict fracture 
+propagation speed and stochastic variations of particle strength via a Weibull distribution to 
+represent material heterogeneity.
+
+This implementation captures the essential features described by :cite:t:`CerveraAndChiumenti`, 
+including tension-driven damage, scalar damage evolution, and fracture-energy regularization. 
+While it does not explicitly implement the full effective stress framework, Kuhn–Tucker conditions, or 
+the consistent tangent operator, the simplified, solver-friendly formulation reproduces the core 
+Rankine damage behavior, allowing verification of fracture response and energy dissipation in finite element simulations.
 
 Key features of the model include:
 
@@ -93,6 +94,8 @@ Perform spectral decomposition of the stress tensor to compute principal stresse
 .. math::
 
    \boldsymbol{\sigma} = \sum_{i=1}^{3} \sigma_i \, \mathbf{n}_i \otimes \mathbf{n}_i
+
+
 
 Damage Criterion
 ------------------------
