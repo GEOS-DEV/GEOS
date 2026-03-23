@@ -126,7 +126,9 @@ bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/so
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Graphite.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/VonMisesJ.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/CeramicDamage.bib",
-                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Chiumenti.bib"]
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Chiumenti.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Hyperelastic.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/HyperelasticMMS.bib"                   ]
 
 print("BIBFILES:", bibtex_bibfiles)
 
