@@ -68,6 +68,207 @@ The following table summarizes the available input parameters for the linear sol
 
 .. include:: /docs/sphinx/datastructure/LinearSolverParameters.rst
 
+************************
+HYPRE through hypredrive
+************************
+
+When GEOS is built with both ``HYPRE`` and ``HYPREDRV`` support, the standard HYPRE-based
+linear solver path can delegate iterative solves to `hypredrive <https://github.com/LLNL/hypredrive>`__.
+This provides a YAML-driven way to configure HYPRE solvers and preconditioners while keeping
+GEOS backward compatible with the existing ``LinearSolverParameters`` input block.
+
+At runtime, GEOS still owns the assembled linear system objects and passes the following data
+to hypreDrive in library mode:
+
+* the HYPRE matrix,
+* the right-hand side and solution vectors,
+* the degree-of-freedom map when it is available.
+
+The hypredrive input only controls solver and preconditioner configuration. Matrix assembly,
+vector ownership, and all higher-level GEOS solver logic remain unchanged.
+
+Build requirements
+==================
+
+This feature is optional. It is available only when GEOS is configured with:
+
+* ``ENABLE_HYPRE=ON``,
+* ``ENABLE_HYPREDRV=ON``,
+* ``HYPREDRV_DIR`` pointing to a hypredrive installation or package configuration directory.
+
+If GEOS is built without hypredrive support, setting ``hypredriveInputFile`` in the XML input
+is an error.
+
+When enabled, hypredrive owns HYPRE runtime initialization and finalization. No additional user
+input is required for this.
+
+Two configuration modes
+=======================
+
+GEOS can use hypredrive in two different ways.
+
+1. **Authoritative YAML file**: the user supplies a hypredrive YAML file through
+   ``LinearSolverParameters/hypredriveInputFile``.
+2. **Generated fallback YAML**: if no file is supplied, GEOS translates the supported
+   ``LinearSolverParameters`` options into an in-memory hypredrive YAML document.
+
+In both cases, the switch is transparent to the calling physics solver.
+
+Authoritative YAML file
+=======================
+
+The most flexible workflow is to provide an explicit hypredrive YAML file:
+
+.. code-block:: xml
+
+  <SinglePhasePoromechanics
+    name="PoroelasticitySolver"
+    solidSolverName="LinearElasticitySolver"
+    flowSolverName="SinglePhaseFlowSolver"
+    targetRegions="{ Domain }">
+    <LinearSolverParameters
+      solverType="gmres"
+      preconditionerType="mgr"
+      logLevel="2"
+      hypredriveInputFile="inputFiles/linearSolvers/flow-mgr.yml"/>
+  </SinglePhasePoromechanics>
+
+When ``hypredriveInputFile`` is provided, the file is **authoritative**:
+
+* GEOS passes the file path to hypredrive as-is.
+* GEOS does **not** merge, patch, or override the YAML ``solver`` or ``preconditioner`` blocks.
+* GEOS only injects the runtime matrix, vectors, and dof map.
+
+This mode is recommended when:
+
+* the desired hypredrive configuration uses options that are not exposed through GEOS XML,
+* the user wants exact control of solver and preconditioner YAML,
+* the user wants to reproduce a standalone hypredrive configuration inside GEOS.
+
+For readability it is still a good idea to keep the XML ``solverType`` and
+``preconditionerType`` consistent with the supplied YAML file, but the YAML file is the source
+of truth for hypreDrive solver options.
+
+Generated YAML from GEOS input
+==============================
+
+If ``hypredriveInputFile`` is left empty, GEOS attempts to generate an equivalent hypreDrive
+input from the existing ``LinearSolverParameters`` values. This preserves the familiar GEOS XML
+workflow while letting hypreDrive manage the actual HYPRE solver objects.
+
+The generated path currently supports the following iterative solver types:
+
+* ``cg`` (translated to hypreDrive ``pcg``),
+* ``gmres``,
+* ``fgmres``,
+* ``bicgstab``.
+
+The generated path currently supports the following preconditioners:
+
+* ``none``,
+* ``amg``,
+* ``mgr``,
+* ``iluk``,
+* ``ilut``.
+
+For generated AMG YAML, GEOS translates GEOS smoother and coarse-grid options to the canonical
+hypreDrive names. Important examples are:
+
+* ``fgs`` -> ``forward-hl1gs``,
+* ``bgs`` -> ``backward-hl1gs``,
+* ``l1jacobi`` -> ``l1-jacobi``,
+* ``sgs`` -> ``hsgs``,
+* ``l1sgs`` -> ``l1-hsgs``,
+* ``direct`` coarse solve -> ``ge``.
+
+For example, a generated AMG configuration passed to hypreDrive has the form:
+
+.. code-block:: yaml
+
+  solver:
+    gmres:
+      max_iter: 300
+      relative_tol: 1.0e-8
+      krylov_dim: 200
+  preconditioner:
+    amg:
+      tolerance: 0.0
+      max_iter: 1
+      relaxation:
+        down_type: forward-hl1gs
+        up_type: forward-hl1gs
+        coarse_type: ge
+
+If GEOS cannot represent the requested configuration as valid hypreDrive YAML, it automatically
+falls back to the legacy GEOS HYPRE setup path. This keeps existing inputs working even when
+they use options that are not yet translated to hypreDrive.
+
+Common cases that currently stay on the legacy HYPRE path are:
+
+* unsupported generated solver or preconditioner combinations,
+* ``krylovAdaptiveTol`` enabled,
+* AMG options that are not translated by the generated YAML builder.
+
+When exact control is required, prefer the authoritative YAML-file mode.
+
+Generated MGR YAML and symbolic dof labels
+==========================================
+
+The generated hypreDrive MGR path mirrors the MGR strategies already implemented in GEOS.
+In addition to the ``solver`` and ``preconditioner`` sections, GEOS emits a
+``linear_system.dof_labels`` block so that MGR levels can refer to symbolic names instead of raw
+integer component ids.
+
+The labels are derived from the GEOS degree-of-freedom manager:
+
+* field names are taken in registration order,
+* names are sanitized to YAML-friendly tokens,
+* each component is suffixed with its component index.
+
+For a displacement-pressure system, the generated YAML may look like:
+
+.. code-block:: yaml
+
+  linear_system:
+    dof_labels:
+      u_0: 0
+      u_1: 1
+      u_2: 2
+      p: 3
+  preconditioner:
+    mgr:
+      level:
+        0:
+          f_dofs: [u_0, u_1, u_2]
+
+This makes the generated MGR configuration much easier to inspect and compare with standalone
+hypreDrive YAML files.
+
+Logging, debugging, and fallback control
+========================================
+
+The linear-solver ``logLevel`` can be used to inspect what GEOS is passing to hypreDrive:
+
+* if ``logLevel < 1``, no additional hypreDrive input is printed,
+* if ``logLevel >= 1`` and ``hypredriveInputFile`` is set, GEOS logs a delimited YAML block with a comment identifying the authoritative file and, when readable from GEOS, the authoritative YAML contents,
+* if ``logLevel >= 1`` and GEOS generates the YAML itself, GEOS logs the full generated YAML in the same delimited format,
+* GEOS emits this hypreDrive input dump once per hypreDrive-using solver during startup, after solver initialization has finalized the effective configuration and before the ``Import fields`` log section,
+* for those solvers, GEOS suppresses the usual GEOS linear-solver parameter table and logs only the hypreDrive YAML block,
+* the hypreDrive YAML does not repeat on later setups.
+
+This is especially useful when validating a new solver recipe or comparing the generated GEOS
+configuration with a standalone hypreDrive input file.
+
+For regression studies and side-by-side comparisons, hypreDrive can be disabled at runtime by
+setting the environment variable:
+
+.. code-block:: bash
+
+  export GEOS_HYPREDRV_FORCE_LEGACY=1
+
+When this variable is set, GEOS bypasses hypreDrive and uses the legacy HYPRE implementation even
+if GEOS was built with hypreDrive support.
+
 ***************************
 Preconditioner descriptions
 ***************************

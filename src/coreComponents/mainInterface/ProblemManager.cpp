@@ -40,6 +40,7 @@
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
 #include "functions/FunctionManager.hpp"
+#include "linearAlgebra/DofManager.hpp"
 #include "mesh/ExternalDataSourceManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
@@ -49,17 +50,105 @@
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 #include "schema/schemaUtilities.hpp"
 
 // System includes
+#include <algorithm>
 #include <vector>
 #include <regex>
+#include <sstream>
 
 namespace geos
 {
 
 using namespace dataRepository;
 using namespace constitutive;
+
+#ifdef GEOS_USE_HYPREDRV
+namespace
+{
+
+std::string formatDelimitedHypreDriveYamlBlock( std::string const & title,
+                                                std::string const & yaml )
+{
+  size_t const innerWidth = std::max< size_t >( title.size() + 2, 83 );
+  size_t const totalWidth = innerWidth + 4;
+  size_t const padding = innerWidth > title.size() ? innerWidth - title.size() : 0;
+  size_t const leftPadding = padding / 2;
+  size_t const rightPadding = padding - leftPadding;
+
+  std::ostringstream output;
+  std::string const border( totalWidth, '-' );
+  output << border << '\n';
+  output << "| "
+         << std::string( leftPadding, ' ' )
+         << title
+         << std::string( rightPadding, ' ' )
+         << " |\n";
+  output << border << '\n';
+  output << yaml;
+  if( yaml.empty() || yaml.back() != '\n' )
+  {
+    output << '\n';
+  }
+  output << border << '\n';
+  return output.str();
+}
+
+void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
+                          DomainPartition & domain )
+{
+  Group const & meshBodies = domain.getMeshBodies();
+
+  physicsSolverManager.forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
+  {
+    solver.generateMeshTargetsFromTargetRegions( meshBodies );
+  } );
+
+  physicsSolverManager.forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
+  {
+    LinearSolverParameters const & params = solver.getLinearSolverParameters();
+    if( params.logLevel < 1 || !solver.deferLinearSolverParametersPrint() )
+    {
+      return;
+    }
+
+    hypre::hypreDrive::InputArgsParseTarget target;
+    if( !params.hypredriveInputFile.empty() )
+    {
+      if( !hypre::hypreDrive::buildInputArgsParseTarget( params, target ) )
+      {
+        return;
+      }
+    }
+    else
+    {
+      DofManager previewDofManager( GEOS_FMT( "{}_hypreDrivePreview", solver.getName() ) );
+      previewDofManager.setDomain( domain );
+      solver.setupDofs( domain, previewDofManager );
+      stdVector< string > const fieldNames = previewDofManager.fieldNames();
+      array1d< integer > const numComponentsPerField = previewDofManager.numComponentsPerField();
+
+      if( !hypre::hypreDrive::buildInputArgsParseTarget( params,
+                                                         fieldNames,
+                                                         numComponentsPerField.toViewConst(),
+                                                         target ) )
+      {
+        return;
+      }
+    }
+
+    GEOS_LOG_RANK_0( formatDelimitedHypreDriveYamlBlock( GEOS_FMT( "{}: hypreDrive input (YAML)", solver.getName() ),
+                                                         hypre::hypreDrive::formatInputArgsParseTargetYaml( target ) ) );
+    hypre::hypreDrive::markInputArgsParseTargetLogged( target );
+  } );
+}
+
+}
+#endif
 
 ProblemManager::ProblemManager( conduit::Node & root ):
   Group( keys::ProblemManager, root ),
@@ -186,6 +275,10 @@ void ProblemManager::problemSetup()
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
+
+#ifdef GEOS_USE_HYPREDRV
+  logHypreDriveInputs( *m_physicsSolverManager, getDomainPartition() );
+#endif
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();

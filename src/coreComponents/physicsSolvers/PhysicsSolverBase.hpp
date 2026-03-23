@@ -787,6 +787,12 @@ public:
   void setSystemSetupTimestamp( Timestamp timestamp );
 
   /**
+   * @brief Whether the standard GEOS linear-solver table should be suppressed
+   *        because hypreDrive YAML logging is used instead.
+   */
+  bool deferLinearSolverParametersPrint() const;
+
+  /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
    * @return the value of the gravity vector
    *

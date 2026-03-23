@@ -52,7 +52,7 @@ public:
   /// Postprocessing of input
   virtual void postInputInitialization() override;
 
-  void print();
+  void print() const;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
@@ -69,6 +69,8 @@ public:
     static constexpr char const * solverTypeString() { return "solverType"; }
     /// Preconditioner type key
     static constexpr char const * preconditionerTypeString() { return "preconditionerType"; }
+    /// Authoritative hypreDrive YAML file key
+    static constexpr char const * hypredriveInputFileString() { return "hypredriveInputFile"; }
     /// stop if error key
     static constexpr char const * stopIfErrorString() { return "stopIfError"; }
 

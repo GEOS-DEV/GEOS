@@ -150,6 +150,23 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
 
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::mgr &&
+      linParams.mgr.strategy == LinearSolverParameters::MGR::StrategyType::invalid )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: standalone solid mechanics does not define an MGR strategy; "
+                            "switching preconditionerType from `{}` to `{}`",
+                            getName(),
+                            linParams.preconditionerType,
+                            LinearSolverParameters::PreconditionerType::amg ) );
+
+    linParams.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+    if( linParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
+    {
+      linParams.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+    }
+  }
+
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
 }
 

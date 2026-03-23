@@ -1,6 +1,7 @@
 set( serial_tests
      testLinearSolverParametersEnums.cpp
-     testComponentMask.cpp )
+     testComponentMask.cpp
+     testHypreDrive.cpp )
 
 set( parallel_tests
      testMatrices.cpp

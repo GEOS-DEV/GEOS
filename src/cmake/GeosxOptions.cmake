@@ -56,8 +56,11 @@ option( ENABLE_TOTALVIEW_OUTPUT "Enables Totalview custom view" OFF )
 option( ENABLE_SUPERLU_DIST "Enables SUPERLU_DIST" ON )
 option( ENABLE_TRILINOS "Enables TRILINOS" ON )
 option( ENABLE_HYPRE "Enables HYPRE" ON )
+option( ENABLE_HYPREDRV "Enables HYPREDRV" OFF )
 option( ENABLE_PETSC "Enables PETSC" OFF )
 option( ENABLE_SUITESPARSE "Enables SUITESPARSE" ON )
+
+set( HYPREDRV_DIR "" CACHE PATH "Path to a HYPREDRV installation prefix or package config directory" )
 
 option( ENABLE_HYPRE_MIXINT "Enables mixed int32/int64 local/global" ON )
 

@@ -675,6 +675,11 @@ endif()
 if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     message(STATUS "HYPRE_DIR = ${HYPRE_DIR}")
 
+    set( HYPRE_INSTALL_DIR "${HYPRE_DIR}" )
+    if( EXISTS "${HYPRE_DIR}/HYPREConfig.cmake" OR EXISTS "${HYPRE_DIR}/HYPREConfigVersion.cmake" )
+        get_filename_component( HYPRE_INSTALL_DIR "${HYPRE_DIR}/../../.." ABSOLUTE )
+    endif()
+
     set( HYPRE_DEPENDS blas lapack umpire )
     if( ENABLE_SUPERLU_DIST )
         list( APPEND HYPRE_DEPENDS superlu_dist )
@@ -695,18 +700,18 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     endif( )
 
     find_and_import( NAME hypre
-                     INCLUDE_DIRECTORIES ${HYPRE_DIR}/include
-                     LIBRARY_DIRECTORIES ${HYPRE_DIR}/lib
+                     INCLUDE_DIRECTORIES ${HYPRE_INSTALL_DIR}/include
+                     LIBRARY_DIRECTORIES ${HYPRE_INSTALL_DIR}/lib
                      HEADER HYPRE.h
                      LIBRARIES HYPRE
                      DEPENDS ${HYPRE_DEPENDS} )
 
     extract_version_from_header( NAME hypre
-                                 HEADER "${HYPRE_DIR}/include/HYPRE_config.h"
+                                 HEADER "${HYPRE_INSTALL_DIR}/include/HYPRE_config.h"
                                  VERSION_STRING "HYPRE_RELEASE_VERSION" )
 
     # Extract some additional information about development version of hypre
-    file( READ ${HYPRE_DIR}/include/HYPRE_config.h header_file )
+    file( READ ${HYPRE_INSTALL_DIR}/include/HYPRE_config.h header_file )
     if( "${header_file}" MATCHES "HYPRE_DEVELOP_STRING *\"([^\"]*)\"" )
         set( hypre_dev_string "${CMAKE_MATCH_1}" )
         if( "${header_file}" MATCHES "HYPRE_BRANCH_NAME *\"([^\"]*)\"" )
@@ -718,7 +723,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     # Prepend Hypre to link flags, fix for Umpire appearing before Hypre on the link line
     # if (NOT CMAKE_HOST_APPLE)
-    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
+    #   blt_add_target_link_flags (TO hypre FLAGS "-Wl,--whole-archive ${HYPRE_INSTALL_DIR}/lib/libHYPRE.a -Wl,--no-whole-archive")
     # endif()
 
     # if( ENABLE_CUDA AND ( NOT ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA" ) )
@@ -739,6 +744,44 @@ else()
 
     set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using HYPRE.")
+endif()
+
+################################
+# HYPREDRV
+################################
+if( ENABLE_HYPREDRV AND NOT ENABLE_HYPRE )
+    message( FATAL_ERROR "ENABLE_HYPREDRV requires ENABLE_HYPRE." )
+endif()
+
+if( DEFINED HYPREDRV_DIR AND ENABLE_HYPREDRV )
+    message( STATUS "HYPREDRV_DIR = ${HYPREDRV_DIR}" )
+
+    list( PREPEND CMAKE_PREFIX_PATH "${HYPREDRV_DIR}" )
+    if( DEFINED HYPRE_DIR )
+        list( PREPEND CMAKE_PREFIX_PATH "${HYPRE_DIR}" )
+    endif()
+
+    find_package( HYPREDRV REQUIRED CONFIG
+                  PATHS ${HYPREDRV_DIR}
+                        ${HYPREDRV_DIR}/lib/cmake/HYPREDRV
+                        ${HYPREDRV_DIR}/cmake/HYPREDRV
+                  NO_DEFAULT_PATH )
+
+    blt_convert_to_system_includes( TARGET HYPREDRV::HYPREDRV )
+
+    if( HYPREDRV_VERSION )
+        message( " ----> HYPREDRV_VERSION = ${HYPREDRV_VERSION}" )
+    endif()
+
+    set( ENABLE_HYPREDRV ON CACHE BOOL "" FORCE )
+    set( thirdPartyLibs ${thirdPartyLibs} HYPREDRV::HYPREDRV )
+else()
+    if( ENABLE_HYPREDRV )
+        message( WARNING "ENABLE_HYPREDRV is ON but HYPREDRV_DIR isn't defined." )
+    endif()
+
+    set( ENABLE_HYPREDRV OFF CACHE BOOL "" FORCE )
+    message( STATUS "Not using HYPREDRV." )
 endif()
 
 ################################

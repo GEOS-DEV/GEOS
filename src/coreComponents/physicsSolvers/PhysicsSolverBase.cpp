@@ -28,6 +28,9 @@
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
 #include "common/Units.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
@@ -1237,6 +1240,15 @@ void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
   std::ostringstream oss;
   m_dofManager.printFieldInfo( oss );
   GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
+}
+
+bool PhysicsSolverBase::deferLinearSolverParametersPrint() const
+{
+#ifdef GEOS_USE_HYPREDRV
+  return hypre::hypreDrive::shouldUse( getLinearSolverParameters() );
+#else
+  return false;
+#endif
 }
 
 std::unique_ptr< PreconditionerBase< LAInterface > >
