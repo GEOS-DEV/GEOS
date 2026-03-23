@@ -575,6 +575,16 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 materialDirection[3] = {m_materialDirection[k][0][0],
                                  m_materialDirection[k][1][0],
                                  m_materialDirection[k][2][0]};
+
+  // DEBUG
+  real64 dirNorm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+  GEOS_ERROR_IF( !std::isfinite( dirNorm ) || dirNorm < 1e-20,
+                 "Invalid materialDirection for particle " << k
+                 << " q=" << q
+                 << " dir={" << materialDirection[0] << ", "
+                 << materialDirection[1] << ", "
+                 << materialDirection[2] << "}, norm=" << dirNorm );
+
   // LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
@@ -602,10 +612,48 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 nuzp = m_defaultPoissonRatioAxialTransverse;
   real64 nup = m_defaultPoissonRatioTransverse;
 
+  
+  // DEBUG checks before division
+  real64 bulkDenom = 2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1);
+  GEOS_ERROR_IF( !std::isfinite( bulkDenom ) || std::abs( bulkDenom ) < 1e-20,
+                 "Invalid bulk modulus denominator: " << bulkDenom
+                 << " Ez=" << Ez << " Ep=" << Ep
+                 << " nup=" << nup << " nuzp=" << nuzp
+                 << " particle=" << k << " q=" << q );
+  
+  GEOS_ERROR_IF( !std::isfinite( m_density[k][0] ) || m_density[k][0] <= 0.0,
+                 "Invalid density = " << m_density[k][0]
+                 << " particle=" << k << " q=" << q );
+  
   // Update effective elastic properties
-  m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
-  m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
-  m_wavespeed[k][0] = LvArray::math::sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
+  m_effectiveBulkModulus[k] = -Ep * Ez / bulkDenom;
+  m_effectiveShearModulus[k] = 0.6 * m_effectiveBulkModulus[k];
+  
+  // DEBUG check before sqrt
+  real64 waveArg =
+    ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0];
+  
+  GEOS_ERROR_IF( !std::isfinite( waveArg ) || waveArg < 0.0,
+                 "Invalid wavespeed sqrt arg = " << waveArg
+                 << " K=" << m_effectiveBulkModulus[k]
+                 << " G=" << m_effectiveShearModulus[k]
+                 << " density=" << m_density[k][0]
+                 << " particle=" << k << " q=" << q );
+  
+  m_wavespeed[k][0] = LvArray::math::sqrt( waveArg );
+
+
+
+
+
+  ////////////////// original code
+  // Update effective elastic properties
+  //m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
+  //m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
+  //m_wavespeed[k][0] = LvArray::math::sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
+  //////////////// end original code
+
+
 
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ":\n"
@@ -697,6 +745,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
+  //DEBUG
+  GEOS_ERROR_IF( !std::isfinite(m_crackSpeed) || m_crackSpeed <= 0.0,
+               "Invalid crackSpeed = " << m_crackSpeed );
+  GEOS_ERROR_IF( !std::isfinite(m_lengthScale[k]) || m_lengthScale[k] <= 0.0,
+               "Invalid lengthScale[" << k << "] = " << m_lengthScale[k] );
+
+
   // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
   if( planeNormalStress > failureStrength )
   {
@@ -771,6 +826,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // -------------------------------
   // "distortion" shear relating sigma normal and in-plane iso"
+
   x1 = 0;
   x2 = m_distortionShearResponseX2;
   y1 = m_distortionShearResponseY1 * m_strengthScale[k];
@@ -782,6 +838,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y1 *= damageMultiplier*strainHardeningMultiplier;
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+
+    //DEBUG
+  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
+               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
+               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
+                 "Degenerate slopePoint0 inputs: y1=" << y1
+                 << " y2=" << y2
+                 << " particle=" << k << " q=" << q );
+
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
   if( pressure < x1 )
@@ -800,6 +869,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // -------------------------------------------
   // Coupled shear response (slip on weak plane)
+
   x1 = 0;
   x2 = m_coupledShearResponseX2;
   y1 = m_coupledShearResponseY1 * m_strengthScale[k];
@@ -811,6 +881,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y1 *= damageMultiplier*strainHardeningMultiplier;
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+
+  //DEBUG
+  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
+               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
+               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
+                 "Degenerate slopePoint0 inputs: y1=" << y1
+                 << " y2=" << y2
+                 << " particle=" << k << " q=" << q );
+                 
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
   if( pressure<x1 )
@@ -829,6 +912,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // -------------------------------
   // In-plane shear response
+
   x1 = 0;
   x2 = m_inPlaneShearResponseX2;
   y1 = m_inPlaneShearResponseY1 * m_strengthScale[k];
@@ -840,6 +924,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y1 *= damageMultiplier*strainHardeningMultiplier;
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
+
+  //DEBUG
+  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
+               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
+               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
+               << " particle=" << k << " q=" << q );
+  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
+                 "Degenerate slopePoint0 inputs: y1=" << y1
+                 << " y2=" << y2
+                 << " particle=" << k << " q=" << q );
+
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
   if( pressure < x1 )
