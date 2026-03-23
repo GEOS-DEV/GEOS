@@ -108,11 +108,11 @@ private:
 
   void outputLogStats( real64 statsTime,
                        MeshLevel & mesh,
-                       RegionStatistics & meshRegionsStatistics );
+                       RegionStatistics & meshSetsStatistics );
 
   void outputCsvStats( real64 statsTime,
                        MeshLevel & mesh,
-                       RegionStatistics & meshRegionsStatistics );
+                       RegionStatistics & meshSetsStatistics );
 
   /// For each discretization (MeshLevel name), table formatter for log output.
   stdMap< string, std::unique_ptr< TableTextFormatter > > m_logFormatters;

@@ -88,10 +88,11 @@ namespace compositionalMultiphaseStatistics
 
 RegionStatistics::RegionStatistics( string const & name,
                                     dataRepository::Group * const parent,
-                                    bool statsOutputEnabled,
+                                    string_view setName,
+                                    bool dataOutputEnabled,
                                     integer const numPhases,
                                     integer const numComponents ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled ),
+  RegionStatisticsBase( name, parent, setName, dataOutputEnabled ),
   m_phaseDynamicPoreVolume( numPhases ),
   m_phaseMass( numPhases ),
   m_trappedPhaseMass( numPhases ),
@@ -105,15 +106,18 @@ RegionStatistics::RegionStatistics( string const & name,
 
 CFLStatistics::CFLStatistics( string const & name,
                               dataRepository::Group * const parent,
-                              bool const statsOutputEnabled ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled )
+                              bool const dataOutputEnabled ):
+  RegionStatisticsBase( name,
+                        parent,
+                        "", // for now, CFL numbers are not for given sets
+                        dataOutputEnabled )
 {
   // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
 }
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
-                                  bool const statsOutputEnabled ):
-  Base( ownerDataContext, statsOutputEnabled ),
+                                  bool const dataOutputEnabled ):
+  Base( ownerDataContext, dataOutputEnabled ),
   m_params()
 {}
 
@@ -127,20 +131,23 @@ void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBod
   Base::initStatisticsAggregation( meshBodies, solver );
 }
 
-void StatsAggregator::enableRegionStatisticsAggregation()
+void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
 {
   auto const registerStats = [=] ( Group & parent,
-                                   string const & targetName ) -> RegionStatistics &
+                                   string const & targetName,
+                                   string_view setName,
+                                   bool const dataOutputEnabled ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,
                                                                        &parent,
-                                                                       m_statsOutputEnabled,
+                                                                       setName,
+                                                                       dataOutputEnabled,
                                                                        m_numPhases,
                                                                        m_numComponents ) );
   };
 
-  Base::enableRegionStatisticsAggregation( registerStats );
+  Base::enableRegionStatisticsAggregation( registerStats, setNames );
 }
 
 void StatsAggregator::enableCFLStatistics()
@@ -157,7 +164,7 @@ void StatsAggregator::enableCFLStatistics()
     statisticsGroup.registerGroup< CFLStatistics >( cflStatsName,
                                                     std::make_unique< CFLStatistics >( cflStatsName,
                                                                                        &statisticsGroup,
-                                                                                       m_statsOutputEnabled ) );
+                                                                                       m_dataOutputEnabled ) );
   }
 
   m_cflStatsState.m_isEnabled = true;

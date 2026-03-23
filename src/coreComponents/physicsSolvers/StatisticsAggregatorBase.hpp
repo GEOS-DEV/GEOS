@@ -39,7 +39,7 @@ class RegionStatisticsBase : public dataRepository::Group
 {
 public:
 
-  /// Time of statistics computation
+  /// Time of statistics computation (std::numeric_limits< double >::lowest() if not initialized)
   real64 m_time;
 
   /**
@@ -47,10 +47,15 @@ public:
    * @param targetName name of the data-repository object that is targeted by the statistics
    *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
+   * @param setName Optional name of a set, restricting the statistics on given mesh element.
+   *                If none is specified (empty), "all" elements set is targeted.
+   * @param dataOutputEnabled If true, the stats are saved in the output HDF5 (dataRepository::RestartFlags, not functional for this output
+   * for now).
    */
   RegionStatisticsBase( string const & targetName,
                         dataRepository::Group * const parent,
-                        bool statsOutputEnabled );
+                        string_view setName,
+                        bool dataOutputEnabled );
 
   /**
    * @return the name of the data-repository object that is targeted by the statistics
@@ -59,6 +64,16 @@ public:
   string_view getTargetName() const
   { return getName(); }
 
+  /**
+   * @return Optional name of a set, restricting the statistics on given mesh element.
+   *         If none is specified (empty), "all" elements set is targeted.
+   */
+  string_view getSetName() const
+  { return m_setName; }
+
+private:
+  /// @see getSetName()
+  string const m_setName;
 };
 
 template< typename T >
@@ -80,6 +95,8 @@ public:
 
   using StatsGroupType = typename StatsAggregatorTraits< Impl >::StatsGroupType;
 
+  using SetType = SortedArray< localIndex >;
+
   /**
    * @brief Standard function signature for any functor that applies on statistics group instances (StatsGroupType)
    *        - param 0: OwnerType &, the group instance containing the data for which we want to aggregate the statistics (MeshLevel,
@@ -88,24 +105,41 @@ public:
    * @tparam OwnerType the concrete type of the OwnerType param
    */
   template< typename OwnerType >
-  using RegionStatsFunc = std::function< void ( OwnerType &,
+  using RegionStatsFunc = std::function< void ( OwnerType,
                                                 StatsGroupType & ) >;
 
   /**
    * @brief TODO Document
+   *        - dataRepository::Group & targetName: the parent Group,
+   *        - string const & parent: name of the statistics target (i.e. region name).
+   *        - string_view setName: name of the target element set. If none is specified (empty), "all" elements set is targeted.
+   *        - bool dataOutputEnabled: enable Group output features
    */
   using RegionStatsRegisterFunc = std::function< StatsGroupType & ( dataRepository::Group &,
-                                                                    string const & ) >;
+                                                                    string const &,
+                                                                    string_view,
+                                                                    bool ) >;
 
   /**
    * @brief the associated view keys
    */
   struct ViewKeys
   {
-    /// String for the discretization statistics group
+    /// String for the mesh-level statistics group
     constexpr static char const * statisticsString() { return "statistics"; }
     /// String for the region statistics group
+    constexpr static char const * setsStatisticsString() { return "setsStatistics"; }
+    /// String for the region statistics group
     constexpr static char const * regionsStatisticsString() { return "regionsStatistics"; }
+  };
+
+  /**
+   * @brief Allow to reference a set in a given MeshLevel structure.
+   */
+  struct MeshLevelSet
+  {
+    MeshLevel & mesh;
+    string_view setName;
   };
 
   /**
@@ -117,8 +151,7 @@ public:
                        bool statsOutputEnabled );
 
   /**
-   * @brief Enable the computation of any statistics, initialize data structure to collect them.
-   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
+   * @brief Enable the computation of any statistics, explores the data structure to collect them.
    * @param solver flow solver object to retrieve:
                    - the simulated regions,
                    - fields for statistics computation.
@@ -126,25 +159,6 @@ public:
    */
   void initStatisticsAggregation( dataRepository::Group & meshBodies,
                                   SolverType & solver );
-
-  void restrictToSets( string_array const & setNames );
-
-  void forRegionStatistics( RegionStatsFunc< MeshLevel > const & functor ) const;
-
-  void forRegionStatistics( MeshLevel & mesh,
-                            StatsGroupType & meshRegionsStatistics,
-                            RegionStatsFunc< CellElementRegion > const & functor ) const;
-
-  void forRegionStatistics( CellElementRegion & region,
-                            StatsGroupType & regionStatistics,
-                            RegionStatsFunc< CellElementSubRegion > const & functor ) const;
-
-  /**
-   * @param[in] timeRequest The time for which we want to know if the statistics are computed.
-   * @param[in] stats the statistics data structure we want to know if it has been computed
-   * @return true if the statistics have been computed.
-   */
-  bool isComputed( real64 const timeRequest, StatsGroupType const & stats );
 
   /**
    * @brief set the statistics as dirty, ensuring isComputed() will be false until the next computation.
@@ -160,6 +174,97 @@ public:
   bool computeRegionsStatistics( real64 const timeRequest );
 
   /**
+   * @name Data Structure Traversal Strategy
+   */
+  ///@{
+
+  /**
+   * @brief Execute the given functor on each mesh-level (discretization) available for this instance.
+   * @param functor the function to execute.
+   */
+  void forRegionStatistics( RegionStatsFunc< MeshLevel & > const & functor ) const;
+
+  /**
+   * @brief Execute the given functor on each set present in the given mesh-level (discretization).
+   * @param mesh the target mesh-level.
+   * @param meshSetsStats the instance mesh-level statistics data structure.
+   * @param functor the function to execute.
+   */
+  void forRegionStatistics( MeshLevel & mesh,
+                            StatsGroupType & meshSetsStats,
+                            RegionStatsFunc< MeshLevelSet > const & functor ) const;
+
+  /**
+   * @brief Execute the given functor on each region available in the given mesh-level for the given set.
+   * @param meshSet the target mesh-level set.
+   * @param setStats the mesh-level statistics data structure for the given set.
+   * @param functor the function to execute.
+   */
+  void forRegionStatistics( MeshLevelSet meshSet,
+                            StatsGroupType & setStats,
+                            RegionStatsFunc< CellElementRegion & > const & functor ) const;
+
+  /**
+   * @brief Execute the given functor on each sub-region available in the given region for the given set.
+   * @param meshSet the target region set.
+   * @param setRegionStats the region statistics data structure for the given set.
+   * @param functor the function to execute.
+   */
+  void forRegionStatistics( CellElementRegion & region,
+                            StatsGroupType & setRegionStats,
+                            RegionStatsFunc< CellElementSubRegion & > const & functor ) const;
+
+  /**
+   * @brief Get the Instance Statistics Group for the given mesh-level.
+   * @param mesh the mesh-level (discretization).
+   * @return A Group instance hierarchically holding all statistics data structures.
+   */
+  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
+
+  /**
+   * @return A statistics data structure (see StatsGroupType), aggregated from all targeted regions
+   *         and sets in the given mesh-level.
+   * @param mesh the mesh-level (discretization).
+   */
+  StatsGroupType & getMeshLevelStatistics( MeshLevel & mesh ) const;
+
+  /**
+   * @return A statistics data structure (see StatsGroupType), aggregated from all targeted regions
+   *         for the given set in the given mesh-level.
+   * @param mesh the mesh-level (discretization).
+   * @param setName the name of element set. If none is specified (empty), "all" elements set is targeted.
+   * @throw InputError if "all" is targeted, but the instance does not target "all" element set.
+   */
+  StatsGroupType & getSetStatistics( MeshLevel & mesh, string_view setName = "" ) const;
+
+  /**
+   * @return A statistics data structure (see StatsGroupType), for the given set, in the given region,
+   *         in the given mesh-level.
+   * @param mesh The mesh-level (discretization)
+   * @param setName the name of element set. If none is specified (empty), "all" elements set is targeted.
+   * @param regionName The name of the desired region
+   * @throw InputError - if no statistics data is found for the given region name.
+   *                   - if "all" is targeted, but the instance does not target "all" element set.
+   */
+  StatsGroupType & getRegionStatistics( MeshLevel & mesh, string_view regionName, string_view setName = "" ) const;
+
+  ///@}
+
+  /**
+   * @param[in] timeRequest The time for which we want to know if the statistics are computed.
+   * @param[in] stats the statistics data structure we want to know if it has been computed
+   * @return true if the statistics have been computed.
+   */
+  bool isComputed( real64 const timeRequest, StatsGroupType const & stats );
+
+  /**
+   * @return true if the region statistics target given sets.
+   *         false if the statistics are targeted on only one mesh-level-wide set
+   */
+  bool isRestrictedToSets()
+  {return m_setNames.empty() || ( m_setNames.size() == 1 && m_setNames.count( "all" ) > 0 ); }
+
+  /**
    * @return the name of the entity that needs the statistics.
    */
   string const & getOwnerName() const
@@ -171,19 +276,6 @@ public:
   stdVector< string > const & getWarnings() const
   { return m_warnings; }
 
-  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
-
-  StatsGroupType & getRegionsStatistics( MeshLevel & mesh ) const;
-
-  /**
-   * @brief TODO
-   * @throw InputError if no statistics data is found for the given region name.
-   * @param mesh TODO
-   * @param regionNname TODO
-   * @return TODO
-   */
-  StatsGroupType & getRegionStatistics( MeshLevel & mesh, string_view regionName ) const;
-
 protected:
 
   struct StatsState
@@ -192,32 +284,37 @@ protected:
     bool m_isDirty = false;
   };
 
-  struct DiscretizationGroupPath
+  struct DiscretizationSetPath
   {
+    /// The id of the mesh body in the "meshBodies" Group
     localIndex m_meshBody;
+    /// The id of the mesh level in the mesh body.
     localIndex m_meshLevel;
+    /// The names of this mesh-level element sets. If none is specified (empty), "all" elements set is targeted.
+    string_array m_setNames;
+    /// the regions names in the mesh-level / mesh level
     string_array m_regionNames;
-  };
-
-  struct SelectedSet {
-    SortedArrayView< localIndex const > m_set;
-    string m_name;
+    /// TODO: if m_isAnySetsIntersecting is true, a compound set is needed to compute mesh-level statistics.
+    // SetType meshLevelSetsCompound;
   };
 
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
 
-  bool const m_statsOutputEnabled;
-
-  /// if true, the statistics are computed for given sets of elements (see restrictToSets()).
-  bool m_isRestrictedToSets;
-
-  /// optional list of sets
-  array1d< SelectedSet > m_sets;
+  bool const m_dataOutputEnabled;
 
   dataRepository::Group * m_meshBodies = nullptr;
 
-  std::vector< DiscretizationGroupPath > m_discretizationsPaths;
+  /// Data repository paths of the element sets per mesh levels
+  /// TODO: can it be generalized with the "all" set
+  std::vector< DiscretizationSetPath > m_discretizationsPaths;
+
+  /// The list of mesh element sets to restrict the region statistics to.
+  /// Cannot be empty: if the whole mesh-level is to process, "all" must be targeted.
+  std::set< string > m_setNames;
+
+  /// if true, at least ont set intersects with another, threfore we must compute mesh-level statistics with a coupound.
+  bool m_isAnySetsIntersecting;
 
   /// @see getWarnings()
   stdVector< string > m_warnings;
@@ -230,14 +327,29 @@ protected:
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
    * @param registerStatsFunc The functor which register each statistics group whithin the regions hierarchy
+   * @param setNames The list of mesh element sets to restrict the statistics to.
+   *                 If empty, the whole mesh-level is processed.
    */
-  void enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc );
+  void enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc,
+                                          string_array const & setNames );
 
   /**
-   * @param path the path of the discretization group in the data-repository.
+   * @param path the path of the mesh-level group in the data-repository.
    * @return MeshLevel& the MeshLevel Group for the given discretisation
    */
-  MeshLevel & getMeshLevel( DiscretizationGroupPath const & path ) const;
+  MeshLevel & getMeshLevel( DiscretizationSetPath const & path ) const;
+
+  /**
+   * @brief TODO
+   */
+  static std::set< string > getMeshLevelPartialSetNames( MeshLevel const & mesh,
+                                                         string_array const & regionNames );
+
+  /**
+   * @brief Set the statstics target sets to restrict the statistics to.
+   * @param setNames the list of target sets. If "all" is included, or none is present, all the discretisation is targeted.
+   */
+  void setTargetSets( string_array const & setNames );
 
   /**
    * @brief Initialize all statistics values to aggregable default values,

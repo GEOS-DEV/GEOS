@@ -33,11 +33,13 @@ namespace geos
 
 inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
                                                    dataRepository::Group * const parent,
-                                                   bool const statsOutputEnabled ):
+                                                   string_view setName,
+                                                   bool const dataOutputEnabled ):
   dataRepository::Group( targetName, parent ),
-  m_time( std::numeric_limits< double >::lowest() )
+  m_time( std::numeric_limits< double >::lowest() ),
+  m_setName( setName )
 {
-  Group::setRestartFlags( statsOutputEnabled ?
+  Group::setRestartFlags( dataOutputEnabled ?
                           dataRepository::RestartFlags::WRITE_AND_READ :
                           dataRepository::RestartFlags::NO_WRITE );
 
@@ -46,11 +48,35 @@ inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
 
 template< typename Impl >
 StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
-                                                  bool const statsOutputEnabled ):
+                                                  bool const dataOutputEnabled ):
   m_ownerDataContext( ownerDataContext ),
-  m_statsOutputEnabled( statsOutputEnabled ),
-  m_isRestrictedToSets( false )
+  m_dataOutputEnabled( dataOutputEnabled ),
+  m_isAnySetsIntersecting( false )
 {}
+
+template< typename Impl >
+std::set< string >
+StatsAggregatorBase< Impl >::getMeshLevelPartialSetNames( MeshLevel const & mesh,
+                                                          string_array const & regionNames )
+{
+  std::set< string > foundSetNames;
+
+  mesh.getElemManager().forElementRegions< CellElementRegion >( regionNames,
+                                                                [&] ( localIndex &,
+                                                                      CellElementRegion const & region )
+  {
+    region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion ) {
+      dataRepository::Group const & sets = subRegion.sets();
+      sets.forWrappers< SetType >( [&] ( dataRepository::Wrapper< SetType > const & set )
+      {
+        // if( set.getName() != "all" ) // TODO: is it useful?
+        foundSetNames.emplace( set.getName() );
+      } );
+    } );
+  } );
+
+  return foundSetNames;
+}
 
 template< typename Impl >
 void
@@ -76,48 +102,82 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
                           m_ownerDataContext );
     meshStatsGroup->registerGroup( ownerName );
 
-    // remembering the path of this discretization
     MeshBody const & body = m_meshBodies->getGroup< MeshBody >( meshBodyName );
-    DiscretizationGroupPath const path {
-      /* .m_meshBody = */ body.getIndexInParent(),
-      /* .m_meshLevel = */ mesh.getIndexInParent(),
-      /* .m_regionNames = */ regionNames,
-    };
-    m_discretizationsPaths.push_back( path );
+
+    /// finding all sets in this mesh level
+    std::set< string > foundSetNames = getMeshLevelPartialSetNames( mesh, regionNames );
+
+    { // remembering the path of this discretization
+      DiscretizationSetPath const path {
+        /* .m_meshBody = */ body.getIndexInParent(),
+        /* .m_meshLevel = */ mesh.getIndexInParent(),
+        /* .m_setNames = */ string_array( foundSetNames.begin(), foundSetNames.end()),
+        /* .m_regionNames = */ regionNames,
+      };
+      m_discretizationsPaths.emplace_back( path );
+    }
   } );
 }
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc )
+StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc,
+                                                                string_array const & setNames )
 {
   if( m_meshBodies == nullptr )
     return;
 
+  m_setNames.insert( setNames.begin(), setNames.end() );
+  if( m_setNames.empty())
+    m_setNames.emplace( "all" );
+
   integer regionCount = 0;
   integer subRegionCount = 0;
+  std::set< string > confirmedSets;
 
   for( auto const & path : m_discretizationsPaths )
   {
     MeshLevel & mesh = getMeshLevel( path );
     ElementRegionManager & elemManager = mesh.getElemManager();
     dataRepository::Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
-    StatsGroupType & meshRegionsStats = registerStatsFunc( statisticsGroup,
-                                                           ViewKeys::regionsStatisticsString() );
+    StatsGroupType & meshStats = registerStatsFunc( statisticsGroup,
+                                                    ViewKeys::regionsStatisticsString(),
+                                                    "",
+                                                    m_dataOutputEnabled );
 
-    for( size_t i = 0; i < path.m_regionNames.size(); ++i )
+    for( string const & setName : m_setNames )
     {
-      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[i] );
-      StatsGroupType & regionStats = registerStatsFunc( meshRegionsStats,
-                                                        region.getName() );
+      StatsGroupType & meshSetStats = registerStatsFunc( meshStats,
+                                                         setName,
+                                                         setName,
+                                                         m_dataOutputEnabled );
 
-      region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+      for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
-        registerStatsFunc( regionStats,
-                           subRegion.getName() );
-        ++subRegionCount;
-      } );
-      ++regionCount;
+        CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[regionId] );
+        StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats,
+                                                             region.getName(),
+                                                             setName,
+                                                             m_dataOutputEnabled );
+        ++regionCount;
+
+        region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
+        {
+          registerStatsFunc( setRegionStats,
+                             subRegion.getName(),
+                             setName,
+                             false );
+          ++subRegionCount;
+
+          dataRepository::Group const & subRegionSets = subRegion.sets();
+          if( subRegionSets.hasWrapper( setName ) &&
+              subRegionSets.getWrapperBase( setName ).size() > 0 )
+          {
+            confirmedSets.emplace( setName );
+            // meshLevelSetsCompound.insert() TODO
+          }
+        } );
+      }
     }
   }
 
@@ -128,65 +188,141 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
 
   m_regionStatsState.m_isEnabled = true;
   m_regionStatsState.m_isDirty = true;
-}
 
-template< typename Impl >
-void
-StatsAggregatorBase< Impl >::restrictToSets( string_array const & /*setNames*/ )
-{
-  for( auto const & path : m_discretizationsPaths )
+  // at this point, m_setNames content is element sets user *requests*: they are the same on every ranks,
+  // but we don't know yet if any of these set is missing or empty (=> confirmedSets).
+  std::set< string > notFoundSets;
+  for( string const & requestedSetName : m_setNames )
   {
-    if( MpiWrapper::commRank()==0 )
-    {
-      GEOS_LOG( "=======================================" );
-      MeshLevel const & mesh = getMeshLevel( path );
-      mesh.printDataHierarchy( 2 );
-      GEOS_LOG( "=======================================" );
-    }
+    if( MpiWrapper::max( confirmedSets.count( requestedSetName ) ) == 0 )
+      notFoundSets.emplace( requestedSetName );
   }
+  if( MpiWrapper::commRank() == 0 )
+    GEOS_ERROR_IF( !notFoundSets.empty(),
+                   GEOS_FMT( "During retrieval of statistics element sets, the following set(s) could not be "
+                             "found or does not contain any element:\n- {}",
+                             stringutilities::join( notFoundSets, "\n- " ) ),
+                   m_ownerDataContext );
+}
 
-  m_isRestrictedToSets = MpiWrapper::max( m_sets.size()) > 0;
+template< typename Impl >
+MeshLevel &
+StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationSetPath const & path ) const
+{
+  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.m_meshBody );
+  MeshLevel & mesh = body.getMeshLevel( path.m_meshLevel );
+  return mesh;
+}
+
+template< typename Impl >
+dataRepository::Group &
+StatsAggregatorBase< Impl >::getInstanceStatisticsGroup( MeshLevel & mesh ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  dataRepository::Group & meshStatsGroup = mesh.getGroup( ViewKeys::statisticsString() );
+  dataRepository::Group & instanceStatisticsGroup = meshStatsGroup.getGroup( getOwnerName() );
+  return instanceStatisticsGroup;
+}
+
+template< typename Impl >
+typename StatsAggregatorBase< Impl >::StatsGroupType &
+StatsAggregatorBase< Impl >::
+getMeshLevelStatistics( MeshLevel & mesh ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  dataRepository::Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
+  return instanceStatisticsGroup.getGroup< StatsGroupType >( ViewKeys::regionsStatisticsString() );
+}
+
+template< typename Impl >
+typename StatsAggregatorBase< Impl >::StatsGroupType &
+StatsAggregatorBase< Impl >::getSetStatistics( MeshLevel & mesh,
+                                               string_view requestedSetName ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  StatsGroupType & meshStats = getMeshLevelStatistics( mesh );
+  string const setName = string( requestedSetName.empty() ? "all" : requestedSetName );
+  StatsGroupType * const stats = meshStats.template getGroupPointer< StatsGroupType >( setName );
+  GEOS_THROW_IF( stats == nullptr,
+                 GEOS_FMT( "Element set '{}' statistics data structure not found, has the set been requested?\nRequested element sets:\n- {}",
+                           setName, stringutilities::join( m_setNames, "\n- " ) ),
+                 InputError, m_ownerDataContext );
+  return *stats;
+}
+
+template< typename Impl >
+typename StatsAggregatorBase< Impl >::StatsGroupType &
+StatsAggregatorBase< Impl >::getRegionStatistics( MeshLevel & mesh,
+                                                  string_view setName,
+                                                  string_view regionName ) const
+{
+  StatsGroupType & setStats = getSetStatistics( mesh, setName );
+  StatsGroupType * const stats = setStats.template getGroupPointer< StatsGroupType >( string( regionName ) );
+  GEOS_THROW_IF( stats == nullptr,
+                 GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?\n"
+                           "Available target regions:\n- {}",
+                           regionName, stringutilities::join( setStats.getSubGroupsNames(), "\n- " ) ),
+                 InputError, m_ownerDataContext );
+  return *stats;
 }
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::forRegionStatistics( RegionStatsFunc< MeshLevel > const & func ) const
+StatsAggregatorBase< Impl >::forRegionStatistics( RegionStatsFunc< MeshLevel & > const & func ) const
 {
   for( auto const & path : m_discretizationsPaths )
   {
     MeshLevel & mesh = getMeshLevel( path );
-    StatsGroupType & meshRegionsStats = getRegionsStatistics( mesh );
+    StatsGroupType & meshLevelStats = getMeshLevelStatistics( mesh );
 
-    func( mesh, meshRegionsStats );
+    func( mesh, meshLevelStats );
   }
 }
 
 template< typename Impl >
 void
 StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevel & mesh,
-                                                  StatsGroupType & meshRegionsStatistics,
-                                                  RegionStatsFunc< CellElementRegion > const & func ) const
+                                                  StatsGroupType & meshLevelStats,
+                                                  RegionStatsFunc< MeshLevelSet > const & func ) const
 {
-  ElementRegionManager & elemManager = mesh.getElemManager();
-  meshRegionsStatistics.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & regionStatistics )
+  meshLevelStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & setStats )
   {
-    string_view targetName = regionStatistics.getTargetName();
-    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( string( targetName ) );
+    MeshLevelSet meshSet {
+      /* .mesh = */ mesh,
+      /* .setName = */ setStats.getTargetName(),
+    };
 
-    func( region, regionStatistics );
+    func( meshSet, setStats );
   } );
 }
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::forRegionStatistics( CellElementRegion & region,
-                                                  StatsGroupType & regionStatistics,
-                                                  RegionStatsFunc< CellElementSubRegion > const & func ) const
+StatsAggregatorBase< Impl >::forRegionStatistics( MeshLevelSet const meshSet,
+                                                  StatsGroupType & setStats,
+                                                  RegionStatsFunc< CellElementRegion & > const & func ) const
 {
-  regionStatistics.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & subRegionStatistics )
+  ElementRegionManager & elemManager = meshSet.mesh.getElemManager();
+  setStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & setRegionStats )
   {
-    string_view targetName = subRegionStatistics.getTargetName();
-    CellElementSubRegion & subRegion = region.getSubRegion< CellElementSubRegion >( string( targetName ) );
+    string_view regionName = setRegionStats.getTargetName();
+    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( string( regionName ) );
+
+    func( region, setRegionStats );
+  } );
+}
+
+template< typename Impl >
+void
+StatsAggregatorBase< Impl >::forRegionStatistics( CellElementRegion & setRegion,
+                                                  StatsGroupType & setRegionStats,
+                                                  RegionStatsFunc< CellElementSubRegion & > const & func ) const
+{
+  setRegionStats.template forSubGroups< StatsGroupType >( [&] ( StatsGroupType & subRegionStatistics )
+  {
+    string_view subRegionName = subRegionStatistics.getTargetName();
+    CellElementSubRegion & subRegion = setRegion.getSubRegion< CellElementSubRegion >( string( subRegionName ) );
+
     func( subRegion, subRegionStatistics );
   } );
 }
@@ -220,100 +356,74 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
   m_warnings.clear();
 
   // computation of sub region stats
-  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, StatsGroupType & meshRegionsStats )
+  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, StatsGroupType & meshLevelStats )
   {
     forRegionStatistics( mesh,
-                         meshRegionsStats,
-                         [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                         meshLevelStats,
+                         [&, timeRequest] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
-      forRegionStatistics( region,
-                           regionStats,
-                           [&, timeRequest] ( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats )
+      forRegionStatistics( meshSet,
+                           setStats,
+                           [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
       {
-        initStats( subRegionStats, timeRequest );
-        computeSubRegionRankStats( subRegion, subRegionStats );
+        forRegionStatistics( region,
+                             regionStats,
+                             [&, timeRequest] ( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats )
+        {
+          initStats( subRegionStats, timeRequest );
+          computeSubRegionRankStats( subRegion, subRegionStats );
+        } );
       } );
     } );
   } );
 
   // aggregation of computations from the sub regions
-  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, StatsGroupType & meshRegionsStats )
+  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, StatsGroupType & meshLevelStats )
   {
-    initStats( meshRegionsStats, timeRequest );
+    initStats( meshLevelStats, timeRequest );
 
     forRegionStatistics( mesh,
-                         meshRegionsStats,
-                         [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                         meshLevelStats,
+                         [&, timeRequest] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
-      initStats( regionStats, timeRequest );
+      initStats( setStats, timeRequest );
 
-      forRegionStatistics( region,
-                           regionStats,
-                           [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
+      forRegionStatistics( meshSet,
+                           setStats,
+                           [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
       {
-        aggregateStats( regionStats, subRegionStats );
+        initStats( regionStats, timeRequest );
 
-        mpiAggregateStats( subRegionStats );
-        postAggregateStats( subRegionStats );
+        forRegionStatistics( region,
+                             regionStats,
+                             [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
+        {
+          aggregateStats( regionStats, subRegionStats );
+        } );
+
+        aggregateStats( setStats, regionStats );
+
+        mpiAggregateStats( regionStats );
+        postAggregateStats( regionStats );
       } );
 
-      aggregateStats( meshRegionsStats, regionStats );
+      if( !m_isAnySetsIntersecting )
+        aggregateStats( meshLevelStats, setStats );
 
-      mpiAggregateStats( regionStats );
-      postAggregateStats( regionStats );
+      mpiAggregateStats( setStats );
+      postAggregateStats( setStats );
     } );
 
-    mpiAggregateStats( meshRegionsStats );
-    postAggregateStats( meshRegionsStats );
+    if( !m_isAnySetsIntersecting )
+    {
+      mpiAggregateStats( meshLevelStats );
+      postAggregateStats( meshLevelStats );
+    }
   } );
 
   m_regionStatsState.m_isDirty = false;
 
   return true;
-}
-
-template< typename Impl >
-MeshLevel &
-StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationGroupPath const & path ) const
-{
-  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.m_meshBody );
-  MeshLevel & mesh = body.getMeshLevel( path.m_meshLevel );
-  return mesh;
-}
-
-template< typename Impl >
-dataRepository::Group &
-StatsAggregatorBase< Impl >::getInstanceStatisticsGroup( MeshLevel & mesh ) const
-{
-  // considering everything is initialized, or else, crash gracefully
-  dataRepository::Group & meshStatsGroup = mesh.getGroup( ViewKeys::statisticsString() );
-  dataRepository::Group & instanceStatisticsGroup = meshStatsGroup.getGroup( getOwnerName() );
-  return instanceStatisticsGroup;
-}
-
-template< typename Impl >
-typename StatsAggregatorBase< Impl >::StatsGroupType &
-StatsAggregatorBase< Impl >::
-getRegionsStatistics( MeshLevel & mesh ) const
-{
-  // considering everything is initialized, or else, crash gracefully
-  dataRepository::Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
-  return instanceStatisticsGroup.getGroup< StatsGroupType >( ViewKeys::regionsStatisticsString() );
-}
-
-template< typename Impl >
-typename StatsAggregatorBase< Impl >::StatsGroupType &
-StatsAggregatorBase< Impl >::getRegionStatistics( MeshLevel & mesh,
-                                                  string_view regionName ) const
-{
-  StatsGroupType & meshRegionsStats = getRegionsStatistics( mesh );
-  StatsGroupType * const stats = meshRegionsStats.template getGroupPointer< StatsGroupType >( string( regionName ) );
-  GEOS_THROW_IF( stats == nullptr,
-                 GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?\n"
-                           "Available target regions:\n- {}",
-                           regionName, stringutilities::join( meshRegionsStats.getSubGroupsNames(), "\n- " ) ),
-                 InputError, m_ownerDataContext );
-  return *stats;
 }
 
 } /* namespace geos */

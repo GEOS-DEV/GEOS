@@ -64,8 +64,8 @@
  *          ____   |   |
  *          |      |   |-> statistics : Group (storage for all stats)
  *          |      |       |-> "flowStats" : Group (storage for this instance stats)
- *          |      |       |   |-> regionsStatistics : RegionStatistics (mesh-level aggregate)
- *          |      |       |       |-> all / "myBox" : RegionStatistics (selected set aggregate)
+ *          |      |       |   |-> regionsStatistics : RegionStatistics (selected sets aggregate, mpi reduced)
+ *          |      |       |       |-> "all" / "myBox" : RegionStatistics (set aggregate, "all" if no set restriction, mpi reduced)
  *          |      |       |       |   |-> "Channel" : RegionStatistics (region aggregate, mpi reduced)
  *          |      |       |       |   |   |-> "cb-0_0_0" : RegionStatistics (sub-region compute read-back)
  *  stats   |      |       |       |   |   |-> "cb-0_0_1" : RegionStatistics (sub-region compute read-back)
@@ -161,6 +161,7 @@ public:
    */
   RegionStatistics( string const & targetName,
                     dataRepository::Group * const parent,
+                    string_view setName,
                     bool statsOutputEnabled );
 
   RegionStatistics( RegionStatistics && ) = default;
@@ -191,9 +192,10 @@ public:
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
-   * @param meshBodies The Group containing the MeshBody objects
+   * @param setNames The list of mesh element sets to restrict the statistics to.
+   *                 If empty, the whole discretization is processed.
    */
-  void enableRegionStatisticsAggregation();
+  void enableRegionStatisticsAggregation( string_array const & setNames = string_array() );
 
   // template implementations
   /// @cond DO_NOT_DOCUMENT

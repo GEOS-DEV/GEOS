@@ -41,27 +41,31 @@ using namespace dataRepository;
 
 RegionStatistics::RegionStatistics( string const & name,
                                     dataRepository::Group * const parent,
-                                    bool const statsOutputEnabled ):
-  RegionStatisticsBase( name, parent, statsOutputEnabled )
+                                    string_view setName,
+                                    bool const dataOutputEnabled ):
+  RegionStatisticsBase( name, parent, setName, dataOutputEnabled )
 {}
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
-                                  bool const statsOutputEnabled ):
-  Base( ownerDataContext, statsOutputEnabled )
+                                  bool const dataOutputEnabled ):
+  Base( ownerDataContext, dataOutputEnabled )
 {}
 
-void StatsAggregator::enableRegionStatisticsAggregation()
+void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
 {
   auto const registerStats = [=] ( Group & parent,
-                                   string const & targetName ) -> RegionStatistics &
+                                   string const & targetName,
+                                   string_view setName,
+                                   bool const dataOutputEnabled ) -> RegionStatistics &
   {
     return parent.registerGroup( targetName,
                                  std::make_unique< RegionStatistics >( targetName,
                                                                        &parent,
-                                                                       m_statsOutputEnabled ) );
+                                                                       setName,
+                                                                       dataOutputEnabled ) );
   };
 
-  Base::enableRegionStatisticsAggregation( registerStats );
+  Base::enableRegionStatisticsAggregation( registerStats, setNames );
 }
 
 void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) const
