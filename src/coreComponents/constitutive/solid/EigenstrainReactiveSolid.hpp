@@ -73,6 +73,9 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );                              
   }
 
   GEOS_HOST_DEVICE
