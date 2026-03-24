@@ -39,7 +39,7 @@ namespace archiveInputDeck
  * structure to the actual structure in the disk.
  *
  * Note: XML files that are located "behind" the callpoint (the path to
- *       the first input file given as the -i paramater) will be prefixed
+ *       the first input file given as the -i parameter) will be prefixed
  *       with "__" for every "../" in the relative path from the callpoint.
  */
 void archiveInputDeck( string_array const & inputFileNames,
