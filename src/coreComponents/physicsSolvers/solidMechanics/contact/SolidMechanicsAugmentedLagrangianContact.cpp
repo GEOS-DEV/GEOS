@@ -2370,6 +2370,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     avgElementStress = elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
                                                           arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
 
+    ElementRegionManager::ElementViewConst< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const
+    avgElementStressView = avgElementStress.toNestedViewConst();
+
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       if( subRegion.hasField< contact::traction >() )
@@ -2418,7 +2421,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           hasCoulombParams,
                                                           cohesion,
                                                           frictionCoefficient,
-                                                          avgElementStressView=avgElementStress.toNestedViewConst()] ( localIndex const kfe )
+                                                          avgElementStressView] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
