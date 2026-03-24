@@ -406,42 +406,37 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
     StatsGroupType & meshLevelStats = getMeshLevelStatistics( mesh );
     bool const isSetsCompoundEnabled = !path.m_setsCompound.empty();
 
-    GEOS_ERROR_IF( isSetsCompoundEnabled, "WIP, NOT IMPLEMENTED" );
     // computation of sub region stats for each selected set
     initStats( meshLevelStats, timeRequest );
-    forRegionStatistics( mesh,
-                         meshLevelStats,
-                         true,
+    forRegionStatistics( mesh, meshLevelStats, true,
                          [&, timeRequest] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
       initStats( setStats, timeRequest );
-      forRegionStatistics( meshSet,
-                           setStats,
+      forRegionStatistics( meshSet, setStats,
                            [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
       {
         initStats( regionStats, timeRequest );
-        forRegionStatistics( region,
-                             regionStats,
+        forRegionStatistics( region, regionStats,
                              [&, timeRequest] ( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats )
         {
           initStats( subRegionStats, timeRequest );
-          computeSubRegionRankStats( subRegion, subRegionStats /*, TODO meshSet.setName*/ );
+
+          SetType const & targetSet = meshSet.setName == ViewKeys::compoundSetNameString() ?
+                                      path.m_setsCompound :
+                                      subRegion.sets().getReference< SetType >( string( meshSet.setName ) );
+          computeSubRegionRankStats( subRegion, subRegionStats, targetSet );
         } );
       } );
     } );
 
     // aggregation of computations from the sub regions
-    forRegionStatistics( mesh,
-                         meshLevelStats,
-                         true,
+    forRegionStatistics( mesh, meshLevelStats, true,
                          [&, timeRequest] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
-      forRegionStatistics( meshSet,
-                           setStats,
+      forRegionStatistics( meshSet, setStats,
                            [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
       {
-        forRegionStatistics( region,
-                             regionStats,
+        forRegionStatistics( region, regionStats,
                              [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
         {
           aggregateStats( regionStats, subRegionStats );

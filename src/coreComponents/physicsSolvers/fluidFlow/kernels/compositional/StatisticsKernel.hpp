@@ -51,7 +51,7 @@ struct StatisticsKernel
 
   template< typename POLICY >
   static void
-  launch( localIndex const size,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           integer const numComps,
           integer const numPhases,
           real64 const relpermThreshold,
@@ -96,36 +96,40 @@ struct StatisticsKernel
     // using an array of ReduceSum leads to a formal parameter overflow in CUDA.
     // As a workaround, we use a slice with RAJA::atomicAdd instead
 
-    forAll< parallelDevicePolicy<> >( size, [numComps,
-                                             numPhases,
-                                             relpermThreshold,
-                                             elemGhostRank,
-                                             volume,
-                                             refPorosity,
-                                             porosity,
-                                             pres,
-                                             deltaPres,
-                                             temp,
-                                             phaseDensity,
-                                             phaseVolFrac,
-                                             phaseTrappedVolFrac,
-                                             phaseRelperm,
-                                             phaseCompFraction,
-                                             subRegionMinPres,
-                                             subRegionAvgPresNumerator,
-                                             subRegionMaxPres,
-                                             subRegionMinDeltaPres,
-                                             subRegionMaxDeltaPres,
-                                             subRegionMinTemp,
-                                             subRegionAvgTempNumerator,
-                                             subRegionMaxTemp,
-                                             subRegionTotalUncompactedPoreVol,
-                                             phaseDynamicPoreVol,
-                                             phaseMass,
-                                             trappedPhaseMass,
-                                             immobilePhaseMass,
-                                             dissolvedComponentMass] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( targetSet.size(),
+                                      [targetSet,
+                                       numComps,
+                                       numPhases,
+                                       relpermThreshold,
+                                       elemGhostRank,
+                                       volume,
+                                       refPorosity,
+                                       porosity,
+                                       pres,
+                                       deltaPres,
+                                       temp,
+                                       phaseDensity,
+                                       phaseVolFrac,
+                                       phaseTrappedVolFrac,
+                                       phaseRelperm,
+                                       phaseCompFraction,
+                                       subRegionMinPres,
+                                       subRegionAvgPresNumerator,
+                                       subRegionMaxPres,
+                                       subRegionMinDeltaPres,
+                                       subRegionMaxDeltaPres,
+                                       subRegionMinTemp,
+                                       subRegionAvgTempNumerator,
+                                       subRegionMaxTemp,
+                                       subRegionTotalUncompactedPoreVol,
+                                       phaseDynamicPoreVol,
+                                       phaseMass,
+                                       trappedPhaseMass,
+                                       immobilePhaseMass,
+                                       dissolvedComponentMass] GEOS_HOST_DEVICE ( localIndex const setElemId )
     {
+      localIndex ei = targetSet[setElemId];
+
       if( elemGhostRank[ei] >= 0 )
       {
         return;

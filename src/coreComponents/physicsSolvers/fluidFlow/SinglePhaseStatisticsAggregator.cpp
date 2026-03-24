@@ -90,7 +90,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 }
 
 void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion,
-                                                 RegionStatistics & subRegionStats ) const
+                                                 RegionStatistics & subRegionStats,
+                                                 SetType const &  targetSet ) const
 {
   static constexpr string_view solidNamesVK = SinglePhaseBase::viewKeyStruct::solidNamesString();
   static constexpr string_view fluidNamesVK = FlowSolverBase::viewKeyStruct::fluidNamesString();
@@ -112,7 +113,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
   SingleFluidBase const & fluid = constitutiveModels.getGroup< SingleFluidBase >( fluidName );
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const densities = fluid.density();
 
-  singlePhaseBaseKernels::StatisticsKernel::launch( subRegion.size(),
+  singlePhaseBaseKernels::StatisticsKernel::launch( targetSet.toViewConst(),
                                                     elemGhostRank,
                                                     volume,
                                                     pres,

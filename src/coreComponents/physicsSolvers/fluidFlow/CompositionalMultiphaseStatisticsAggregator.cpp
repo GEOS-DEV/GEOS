@@ -251,7 +251,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 }
 
 void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion,
-                                                 RegionStatistics & subRegionStats ) const
+                                                 RegionStatistics & subRegionStats,
+                                                 SetType const & targetSet ) const
 {
   arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -281,7 +282,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
 
   isothermalCompositionalMultiphaseBaseKernels::
     StatisticsKernel::
-    launch< parallelDevicePolicy<> >( subRegion.size(),
+    launch< parallelDevicePolicy<> >( targetSet.toViewConst(),
                                       m_numComponents,
                                       m_numPhases,
                                       m_params.m_relpermThreshold,

@@ -380,10 +380,13 @@ protected:
    * @brief Compute the rank-local stats for the given sub-region and store the results in the given stats group.
    * @param subRegion
    * @param subRegionStats the stats group instance for the subregion
+   * @param targetSet
    * @note Must be implemented for each type that implements this template (CRTP).
    */
-  void computeSubRegionRankStats( CellElementSubRegion & subRegion, StatsGroupType & subRegionStats ) const
-  { static_cast< Impl const * >(this)->computeSubRegionRankStats( subRegion, subRegionStats ); }
+  void computeSubRegionRankStats( CellElementSubRegion & subRegion,
+                                  StatsGroupType & subRegionStats,
+                                  SetType const & targetSet ) const
+  { static_cast< Impl const * >(this)->computeSubRegionRankStats( subRegion, subRegionStats, targetSet ); }
 
   /**
    * @brief Aggregate all instance statistics with those of another instance on the current rank.

@@ -46,7 +46,7 @@ struct StatisticsKernel
   }
 
   static void
-  launch( localIndex const size,
+  launch( SortedArrayView< localIndex const > const & targetSet,
           arrayView1d< integer const > const & elemGhostRank,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 const > const & pres,
@@ -82,8 +82,11 @@ struct StatisticsKernel
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalPoreVol( 0.0 );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalMass( 0.0 );
 
-    forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( targetSet.size(),
+                                      [=] GEOS_HOST_DEVICE ( localIndex const setElemId )
     {
+      localIndex ei = targetSet[setElemId];
+
       if( elemGhostRank[ei] >= 0 )
       {
         return;
