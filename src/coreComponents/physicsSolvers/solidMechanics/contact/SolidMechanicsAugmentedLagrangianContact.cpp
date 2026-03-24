@@ -74,50 +74,8 @@ void sortKeyPermPairsOnHost( arrayView1d< localIndex > const & keys_v,
 
 } // anonymous namespace
 
-namespace internal
-{
 
-inline void printCudaLaunch( char const * functionName, int const line, char const * label )
-{
-  printf( "\n[CUDA TRY] %s:%d %s\n", functionName, line, label );
-}
 
-inline void printCudaStatus( char const * functionName, int const line, char const * label = "" )
-{
-#if defined( GEOS_USE_CUDA )
-  cudaError_t const launchErr = cudaGetLastError();
-  cudaError_t const syncErr = cudaDeviceSynchronize();
-  if( launchErr != cudaSuccess || syncErr != cudaSuccess )
-  {
-    printf( "\n[CUDA ERROR] %s:%d", functionName, line );
-    if( label != nullptr && label[0] != '\0' )
-    {
-      printf( " %s", label );
-    }
-    printf( "\n" );
-
-    if( launchErr != cudaSuccess )
-    {
-      printf( "  launch: %s\n", cudaGetErrorString( launchErr ) );
-    }
-
-    if( syncErr != cudaSuccess )
-    {
-      printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
-    }
-  }
-#else
-  GEOS_UNUSED_VAR( functionName );
-  GEOS_UNUSED_VAR( line );
-  GEOS_UNUSED_VAR( label );
-#endif
-}
-
-}
-
-#define GEOS_PRINT_CUDA_STATUS() ::geos::internal::printCudaStatus( __func__, __LINE__ )
-#define GEOS_PRINT_CUDA_STATUS_LABEL( label ) ::geos::internal::printCudaStatus( __func__, __LINE__, label )
-#define GEOS_PRINT_CUDA_LAUNCH( label ) ::geos::internal::printCudaLaunch( __func__, __LINE__, label )
 
 using namespace constitutive;
 using namespace dataRepository;
@@ -452,33 +410,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 
-
-  // ****************************************************************************************************************************
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-  // ****************************************************************************************************************************
-
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -505,7 +436,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
     if( subRegion.size() > 0 )
     {
-      GEOS_PRINT_CUDA_LAUNCH( "implicitStepSetup.computeRotationMatrices" );
       solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::
         launch< parallelDevicePolicy<> >( subRegion.size(),
                                           faceNormal,
@@ -514,7 +444,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                           unitNormal,
                                           unitTangent1,
                                           unitTangent2 );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "implicitStepSetup.computeRotationMatrices" );
     }
 
     // Set the tollerances
@@ -541,10 +470,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     {
       if( m_simultaneous )
       {
-        GEOS_PRINT_CUDA_LAUNCH( "implicitStepSetup.initializeSimultaneousPenalty" );
-        forAll< serialPolicy >( subRegion.size(),
-                                          [=]
-                                          GEOS_HOST ( localIndex const k )
+        forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const k )
         {
           if( fractureState[k] == contact::FractureState::Stick )
           {
@@ -559,13 +485,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
             iterativePenalty[k][4] = 0.0;
           }
         } );
-        GEOS_PRINT_CUDA_STATUS_LABEL( "implicitStepSetup.initializeSimultaneousPenalty" );
       }
 
-      GEOS_PRINT_CUDA_LAUNCH( "implicitStepSetup.resetIncrementalBubbleState" );
-      forAll< serialPolicy >( subRegion.size(),
-                                        [ = ]
-                                        GEOS_HOST ( localIndex const k )
+      forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const k )
       {
         LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
         localIndex const kf0 = elemsToFaces[k][0];
@@ -573,7 +495,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
         LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf0], 0.0 );
         LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf1], 0.0 );
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "implicitStepSetup.resetIncrementalBubbleState" );
     }
   } );
 
@@ -598,32 +519,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          domain.getNeighbors(),
                                                          true );
   } );
-
-    // ****************************************************************************************************************************
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-  // ****************************************************************************************************************************
-
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -644,27 +539,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localMatrix,
                                                localRhs );
 
-//  LvArray::print<parallelDevicePolicy< > >( localMatrix );
-
-  // printf( "************************Printing localRhs0 for debugging:\n" );
-  // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-  // {
-  //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  // } );
-  // std::cout << "************************ Finished printing localRhs0.************************" << std::endl;
-
-
   assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
-
-
-  // printf( "************************Printing localRhs1 for debugging:\n" );
-  // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-  // {
-  //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-  // } );
-  // std::cout << "************************ Finished printing localRhs1.************************" << std::endl;
-
-
 
   // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
   if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
@@ -701,31 +576,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
     string const & fractureRegionName = getUniqueFractureRegionName();
-
-  // ****************************************************************************************************************************
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-  // ****************************************************************************************************************************
 
     forFiniteElementOnStickFractureSubRegions( meshName, [&] ( string const &,
                                                                finiteElement::FiniteElementBase const & subRegionFE,
@@ -778,38 +628,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
       }
 
     } );
-
-  // ****************************************************************************************************************************
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-  // ****************************************************************************************************************************
-  
-    // printf( "************************Printing localRhs in assembleContact0 for debugging:\n" );
-    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-    // {
-    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-    // } );
-    // std::cout << "************************ Finished printing localRhs in assembleContact0.************************" << std::endl;
 
     forFiniteElementOnSlipFractureSubRegions( meshName, [&] ( string const &,
                                                               finiteElement::FiniteElementBase const & subRegionFE,
@@ -865,14 +683,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
   } );
 
-    // printf( "************************Printing localRhs in assembleContact1 for debugging:\n" );
-    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-    // {
-    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-    // } );
-    // std::cout << "************************ Finished printing localRhs in assembleContact1.************************" << std::endl;
-
-
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -906,16 +716,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
     GEOS_UNUSED_VAR( maxTraction );
 
-    // printf( "************************Printing localRhs in assembleContact2 for debugging:\n" );
-    // forAll< serialPolicy >( localRhs.size(), [ = ] ( localIndex const i )
-    // {
-    //   printf( "localRhs[%d] = %e\n", i, localRhs[i] );
-    // } );
-    // std::cout << "************************ Finished printing localRhs in assembleContact2.************************" << std::endl;
-
-
   } );
-  
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution( DomainPartition & domain,
@@ -1174,14 +975,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                     dt,
                                                     domain );
 
-  // forAll< serialPolicy >( localSolution.size(),
-  //                         [ = ]
-  //                        ( localIndex const i )
-  // {
-  //   printf( "localSolution[%d] = %e\n", i, localSolution[i] );
-  // } );
-  // std::cout << "Finished printing local solution." << std::endl;
-
   dofManager.addVectorToField( localSolution,
                                contact::totalBubbleDisplacement::key(),
                                contact::totalBubbleDisplacement::key(),
@@ -1191,16 +984,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                contact::totalBubbleDisplacement::key(),
                                contact::incrementalBubbleDisplacement::key(),
                                scalingFactor );
-
-
-  // {
-  //   arrayView2d< real64 > const totalBubbleDisp = domain.getMeshBodies()[0].getMeshLevel( 0 ).getFaceManager().getField< contact::totalBubbleDisplacement >();
-  //   forAll< parallelDevicePolicy<> >( dofManager.getNumDofs( contact::totalBubbleDisplacement::key() ),
-  //                                 [ = ]
-  //                                 GEOS_DEVICE ( globalIndex const i )
-  //   {
-  //   } );
-  // }
 
   // Synchronize bubble displacements before computing displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1239,31 +1022,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     CRSMatrix< real64, globalIndex > const voidMatrix;
     array1d< real64 > const voidRhs;
 
-
-
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,
                                                           finiteElement::FiniteElementBase const & subRegionFE,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -1288,30 +1046,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
     } );
   } );
-
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
-  {
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
-
-      localIndex numElements = subRegion.size();
-      forAll< parallelDevicePolicy<> >( 1,
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const  )
-      {
-        for( localIndex kfe=0; kfe<numElements; ++kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          printf( "oldDispJump[%d] = [%e, %e, %e]\n", kfe, oldDispJump[kfe][0], oldDispJump[kfe][1], oldDispJump[kfe][2] );
-          printf( "deltaDispJump[%d] = [%e, %e, %e]\n\n", kfe, deltaDispJump[kfe][0], deltaDispJump[kfe][1], deltaDispJump[kfe][2] );
-        }
-      });
-    } );
-  } );
-
 
   // Synchronize displacement jump after computation
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1515,11 +1249,6 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
         {
           LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
         } );
-
-        forAll< serialPolicy > ( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
-        {
-          printf( "traction[%d] = [%e, %e, %e]\n", kfe, traction[kfe][0], traction[kfe][1], traction[kfe][2] );
-        } );
       } );
     } );
   }
@@ -1580,13 +1309,6 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           dispJumpUpdPenalty[kfe][1] = deltaDispJump[kfe][1];
           dispJumpUpdPenalty[kfe][2] = deltaDispJump[kfe][2];
         } );
-
-
-        forAll< serialPolicy > ( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
-        {
-          printf( "traction[%d] = [%e, %e, %e]\n", kfe, traction[kfe][0], traction[kfe][1], traction[kfe][2] );
-        } );
-
       } );
     } );
   }
@@ -1636,7 +1358,6 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
 
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
-      GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.classifyStickSlip" );
       forAll< serialPolicy >( faceElementList.size(),
                                         [ = ]
                                         GEOS_HOST ( localIndex const kfe )
@@ -1662,7 +1383,6 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         }
 
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.classifyStickSlip" );
 
       localIndex nStick = static_cast< localIndex >(nStick_r.get());
       localIndex nSlip = static_cast< localIndex >(nSlip_r.get());
@@ -1678,21 +1398,17 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       arrayView1d< localIndex > const stickList_v = stickList.toView();
       arrayView1d< localIndex > const slipList_v = slipList.toView();
 
-      GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.copyStickList" );
       forAll< serialPolicy >( nStick, [ = ]
                                         GEOS_HOST ( localIndex const kfe )
       {
         stickList_v[kfe] = vals_v[kfe];
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.copyStickList" );
 
-      GEOS_PRINT_CUDA_LAUNCH( "updateStickSlipList.copySlipList" );
       forAll< serialPolicy >( nSlip, [ = ]
                                         GEOS_HOST ( localIndex const kfe )
       {
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "updateStickSlipList.copySlipList" );
 
       m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
       m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
@@ -1732,13 +1448,11 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     array1d< localIndex > triList;
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nTri_r( 0 );
     RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nQuad_r( 0 );
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nInvalid_r( 0 );
 
     arrayView1d< localIndex > const keys_v = keys.toView();
     arrayView1d< localIndex > const vals_v = vals.toView();
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
-    GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.classifyFaceTypes" );
     forAll< serialPolicy >( subRegion.size(),
                                       [ = ] GEOS_HOST ( localIndex const kfe )
     {
@@ -1758,16 +1472,12 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       }
       else
       {
-        nInvalid_r += 1;
-//        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
+        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
       }
     } );
-    GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.classifyFaceTypes" );
 
     localIndex nQuad = static_cast< localIndex >(nQuad_r.get());
     localIndex nTri = static_cast< localIndex >(nTri_r.get());
-    localIndex nInvalid = static_cast< localIndex >(nInvalid_r.get());
-    std::cout<<" nQuad = "<<nQuad<<" nTri = "<<nTri<<" nInvalid = "<<nInvalid<<std::endl;
 
     // Sort vals according to keys to ensure that
     // elements of the same type are adjacent in the vals list.
@@ -1780,26 +1490,20 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       arrayView1d< localIndex > const quadList_v = quadList.toView();
       arrayView1d< localIndex > const triList_v = triList.toView();
 
-      GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyTriList" );
       forAll< serialPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         triList_v[kfe] = vals_v[kfe];
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyTriList" );
 
-      GEOS_PRINT_CUDA_LAUNCH( "createFaceTypeList.copyQuadList" );
       forAll< serialPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         quadList_v[kfe] = vals_v[nTri+kfe];
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createFaceTypeList.copyQuadList" );
 
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 }
-
-
 
 void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainPartition & domain ) const
 {
@@ -1827,7 +1531,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     {
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
-      GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.collectFractureFaces" );
       forAll< serialPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
       {
 
@@ -1835,7 +1538,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         tmpSpace_v[2*kfe] = kf0, tmpSpace_v[2*kfe+1] = kf1;
 
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.collectFractureFaces" );
     }
 
     // Sort indexes to enable efficient searching using binary search.
@@ -1867,7 +1569,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
 
-      GEOS_PRINT_CUDA_LAUNCH( "createBubbleCellList.classifyBubbleCells" );
       forAll< serialPolicy >( cellElementSubRegion.size(),
                                         [ = ]
                                         GEOS_HOST ( localIndex const kfe )
@@ -1890,7 +1591,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
           }
         }
       } );
-      GEOS_PRINT_CUDA_STATUS_LABEL( "createBubbleCellList.classifyBubbleCells" );
 
       // Sort perms according to keys to ensure that bubble elements are adjacent
       // and occupy the first positions of the list.
@@ -2384,19 +2084,6 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >().toViewConst();
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-        localIndex const numElements = subRegion.size();
-        forAll< parallelDevicePolicy<> >( 1, [ = ] GEOS_DEVICE ( localIndex const  )
-        {
-          for( localIndex kfe=0; kfe<numElements; ++kfe )
-          {
-            printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          }
-        });
-
-
-      
-
-
         // Get friction law parameters for Coulomb check
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
@@ -2463,8 +2150,6 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStressView[er][esr][ei] );
-
-              printf( "aveElementStress[%d][%d][%d] = [%e, %e, %e, %e, %e, %e]\n", er, esr, ei, avgElementStressView[er][esr][ei][0], avgElementStressView[er][esr][ei][1], avgElementStressView[er][esr][ei][2], avgElementStressView[er][esr][ei][3], avgElementStressView[er][esr][ei][4], avgElementStressView[er][esr][ei][5] );
 
               // Compute and accumulate traction in global coordinates: t = sigma * n
               LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStressView[er][esr][ei], n );
@@ -2575,22 +2260,6 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             }
           }
         } );
-
-
-        printf( " initializeTractionFromAdjacentCellStress1 \n" );
-        printf( "host \n" );
-        forAll< serialPolicy >( numElements, [ = ] ( localIndex const kfe )
-        {
-          printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-        });
-        printf( "device \n" );
-        forAll< parallelDevicePolicy<> >( 1, [ = ] GEOS_DEVICE ( localIndex const  )
-        {
-          for( localIndex kfe=0; kfe<numElements; ++kfe )
-          {
-            printf( "\ndispJump[%d] = [%e, %e, %e]\n", kfe, dispJump[kfe][0], dispJump[kfe][1], dispJump[kfe][2] );
-          }
-        });
       }
     } );
   } );
@@ -2614,8 +2283,6 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                          true );
   } );
 }
-
-GEOS_NV_HOST_DEVICE_DIAG_DEFAULT
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsAugmentedLagrangianContact, string const &, Group * const )
 } /* namespace geos */

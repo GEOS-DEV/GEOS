@@ -23,8 +23,6 @@
 #include "SolidMechanicsConformingContactKernelsBase.hpp"
 #include "mesh/MeshFields.hpp"
 
-#include <stdio.h>
-
 
 namespace geos
 {
@@ -244,45 +242,6 @@ public:
       stack.bColIndices[i]      = m_bDofNumber[kf0] + i;
       stack.bColIndices[3+i]    = m_bDofNumber[kf1] + i;
     }
-
-    printf( "ALM::setup k=%lld\n", static_cast< long long >( k ) );
-    for( int a=0; a<numNodesPerElem; ++a )
-    {
-      printf( "  stack.X[%d] = [%.16e, %.16e, %.16e]\n",
-              a,
-              stack.X[a][0],
-              stack.X[a][1],
-              stack.X[a][2] );
-    }
-
-    for( int i=0; i<3; ++i )
-    {
-      printf( "  stack.localRotationMatrix[%d] = [%.16e, %.16e, %.16e]\n",
-              i,
-              stack.localRotationMatrix[i][0],
-              stack.localRotationMatrix[i][1],
-              stack.localRotationMatrix[i][2] );
-    }
-
-    printf( "  m_dispJump[%lld] = [%.16e, %.16e, %.16e]\n",
-            static_cast< long long >( k ),
-            m_dispJump( k, 0 ),
-            m_dispJump( k, 1 ),
-            m_dispJump( k, 2 ) );
-
-    printf( "  m_penalty[%lld] = [%.16e, %.16e, %.16e, %.16e, %.16e]\n",
-            static_cast< long long >( k ),
-            m_penalty( k, 0 ),
-            m_penalty( k, 1 ),
-            m_penalty( k, 2 ),
-            m_penalty( k, 3 ),
-            m_penalty( k, 4 ) );
-
-    printf( "  m_traction[%lld] = [%.16e, %.16e, %.16e]\n",
-            static_cast< long long >( k ),
-            m_traction( k, 0 ),
-            m_traction( k, 1 ),
-            m_traction( k, 2 ) );
   }
 
   GEOS_HOST_DEVICE
@@ -290,6 +249,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    GEOS_UNUSED_VAR( k );
     constexpr real64 zero = LvArray::NumericLimits< real64 >::epsilon;
 
     real64 matRRtAtu[3][numUdofs], matDRtAtu[3][numUdofs];
@@ -312,12 +272,6 @@ public:
                                          stack.localPenalty,
                                          tractionNew,
                                          fractureState );
-
-    printf( "ALM::complete k=%lld tractionNew = [%.16e, %.16e, %.16e]\n",
-            static_cast< long long >( k ),
-            tractionNew[0],
-            tractionNew[1],
-            tractionNew[2] );
 
     // Divide localPenalty by area
     real64 const fac = 1.0/m_faceArea[k];

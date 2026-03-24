@@ -413,11 +413,6 @@ TEST_P( ConsistencyTest, Run )
           real64 sig_xz = avgStress( c, 4 );
           real64 sig_xy = avgStress( c, 5 );
 
-          std::cout<<"Fracture element " << k << " face " << faceIdx << " adjacent to cell " << c
-                   << " with stress (sig_xx=" << sig_xx << ", sig_yy=" << sig_yy << ", sig_zz=" << sig_zz
-                   << ", sig_yz=" << sig_yz << ", sig_xz=" << sig_xz << ", sig_xy=" << sig_xy
-                   << ") and normal (" << nx << ", " << ny << ", " << nz << ")"<<std::endl;
-
           // Compute t_sim = sigma * n
           real64 ts_x = sig_xx * nx + sig_xy * ny + sig_xz * nz;
           real64 ts_y = sig_xy * nx + sig_yy * ny + sig_yz * nz;

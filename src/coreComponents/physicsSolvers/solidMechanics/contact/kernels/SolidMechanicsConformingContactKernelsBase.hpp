@@ -24,57 +24,11 @@
 #include "SolidMechanicsConformingContactKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
 
-#include <type_traits>
-
 namespace geos
 {
 
 namespace solidMechanicsConformingContactKernels
 {
-
-namespace internal
-{
-
-template< typename POLICY >
-struct SequentialDebugLaunchPolicy
-{
-  using type = POLICY;
-};
-
-template<>
-struct SequentialDebugLaunchPolicy< serialPolicy >
-{
-  using type = serialPolicy;
-};
-
-#if defined( GEOS_USE_OPENMP )
-template<>
-struct SequentialDebugLaunchPolicy< parallelHostPolicy >
-{
-  using type = serialPolicy;
-};
-#endif
-
-#if defined( GEOS_USE_CUDA )
-template< typename X, typename Y, typename C, size_t BLOCK_SIZE, bool ASYNC >
-struct SequentialDebugLaunchPolicy< RAJA::policy::cuda::cuda_exec_explicit< X, Y, C, BLOCK_SIZE, ASYNC > >
-{
-  using type = parallelDevicePolicy< 1 >;
-};
-#endif
-
-#if defined( GEOS_USE_HIP )
-template< size_t BLOCK_SIZE, bool ASYNC >
-struct SequentialDebugLaunchPolicy< RAJA::hip_exec< BLOCK_SIZE, ASYNC > >
-{
-  using type = parallelDevicePolicy< 1 >;
-};
-#endif
-
-template< typename POLICY >
-using SequentialDebugLaunchPolicyT = typename SequentialDebugLaunchPolicy< POLICY >::type;
-
-} // namespace internal
 
 /**
  * @brief Implements kernels for ALM.
@@ -217,18 +171,14 @@ public:
     GEOS_MARK_FUNCTION;
     GEOS_UNUSED_VAR( numElems );
 
-    using LaunchPolicy = internal::SequentialDebugLaunchPolicyT< POLICY >;
-    localIndex const numFaceElements = kernelComponent.m_faceElementList.size();
-
     // Define a RAJA reduction variable to get the maximum residual contribution.
-    RAJA::ReduceMax< ReducePolicy< LaunchPolicy >, real64 > maxResidual( 0 );
+    RAJA::ReduceMax< ReducePolicy< POLICY >, real64 > maxResidual( 0 );
 
-    forAll< LaunchPolicy >( 1,
-                            [=] GEOS_HOST_DEVICE ( localIndex const )
+    forAll< POLICY >( kernelComponent.m_faceElementList.size(),
+                      [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      for( localIndex i=0; i<numFaceElements; ++i )
-      {
-        localIndex const k = kernelComponent.m_faceElementList[i];
+
+      localIndex k = kernelComponent.m_faceElementList[i];
         typename KERNEL_TYPE::StackVariables stack;
 
         kernelComponent.setup( k, stack );
@@ -237,7 +187,6 @@ public:
           kernelComponent.quadraturePointKernel( k, q, stack );
         }
         maxResidual.max( kernelComponent.complete( k, stack ) );
-      }
     } );
 
     return maxResidual.get();

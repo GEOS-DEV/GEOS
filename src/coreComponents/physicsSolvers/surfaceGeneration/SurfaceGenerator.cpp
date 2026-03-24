@@ -54,53 +54,6 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 
-namespace internal
-{
-
-inline void printCudaStatus( char const * functionName, int const line, char const * label )
-{
-#if defined( GEOS_USE_CUDA )
-  cudaError_t const launchErr = cudaGetLastError();
-  cudaError_t const syncErr = cudaDeviceSynchronize();
-  if( launchErr != cudaSuccess || syncErr != cudaSuccess )
-  {
-    printf( "\n[CUDA ERROR] %s:%d", functionName, line );
-    if( label != nullptr && label[0] != '\0' )
-    {
-      printf( " %s", label );
-    }
-    printf( "\n" );
-
-    if( launchErr != cudaSuccess )
-    {
-      printf( "  launch: %s\n", cudaGetErrorString( launchErr ) );
-    }
-
-    if( syncErr != cudaSuccess )
-    {
-      printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
-    }
-  }
-  else
-  {
-    printf( "\n[CUDA] %s:%d", functionName, line );
-    if( label != nullptr && label[0] != '\0' )
-    {
-      printf( " %s", label );
-    }
-    printf( "\n" );
-  }
-#else
-  GEOS_UNUSED_VAR( functionName );
-  GEOS_UNUSED_VAR( line );
-  GEOS_UNUSED_VAR( label );
-#endif
-}
-
-}
-
-#define GEOS_SURFACEGENERATOR_CUDA_STATUS( label ) \
-  ::geos::internal::printCudaStatus( __func__, __LINE__, label )
 
 /// Return the other edge of a face given one edge.
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
@@ -538,7 +491,6 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                             numTileColors,
                                             0,
                                             time_n + dt );
-    GEOS_SURFACEGENERATOR_CUDA_STATUS( "after separationDriver" );
 
     rval += localRval;
 
@@ -624,7 +576,6 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     }
   } );
 
-  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end solverStep" );
   return rval;
 }
 
@@ -636,7 +587,6 @@ bool SurfaceGenerator::execute( real64 const time_n,
                                 DomainPartition & domain )
 {
   solverStep( time_n, dt, cycleNumber, domain );
-  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end execute" );
   return false;
 }
 
@@ -764,13 +714,12 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     ModifiedObjectLists receivedObjects;
 
-    GEOS_SURFACEGENERATOR_CUDA_STATUS( "separationDriver.beforeSynchronizeTopologyChange" );
+
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
-    GEOS_SURFACEGENERATOR_CUDA_STATUS( "separationDriver.afterSynchronizeTopologyChange" );
 
     synchronizeTipSets( faceManager,
                         edgeManager,
@@ -885,7 +834,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
                                      rval ) );
   }
 
-  GEOS_SURFACEGENERATOR_CUDA_STATUS( "end separationDriver" );
   return rval;
 }
 
