@@ -54,7 +54,11 @@
  *          |      |       |-> "compFlowStats" : Group (storage for this instance stats)
  *          |      |       |   |-> cflStatistics : CFLStatistics
  *          |      |       |   |-> regionsStatistics : RegionStatistics (selected sets aggregate, mpi reduced)
- *          |      |       |       |-> "all" / "myBox" : RegionStatistics (set aggregate -> "all" if no set restriction, mpi reduced)
+ *          |      |       |       |-> "..." : RegionStatistics (set aggregate, mpi reduced)
+ *          |      |       |       |   |       - all requested sets
+ *          |      |       |       |   |       - "all" if no set restriction
+ *          |      |       |       |   |       - "__compound" if a compoud set is needed to compute mesh-level stats
+ *          |      |       |       |   |
  *          |      |       |       |   |-> "Channel" : RegionStatistics (region aggregate, mpi reduced)
  *          |      |       |       |   |   |-> "cb-0_0_0" : RegionStatistics (sub-region compute read-back)
  *  stats   |      |       |       |   |   |-> "cb-0_0_1" : RegionStatistics (sub-region compute read-back)

@@ -97,6 +97,8 @@ public:
 
   using SetType = SortedArray< localIndex >;
 
+  using SetViewType = SortedArrayView< localIndex const >;
+
   /**
    * @brief Standard function signature for any functor that applies on statistics group instances (StatsGroupType)
    *        - param 0: OwnerType &, the group instance containing the data for which we want to aggregate the statistics (MeshLevel,
@@ -131,6 +133,8 @@ public:
     constexpr static char const * setsStatisticsString() { return "setsStatistics"; }
     /// String for the region statistics group
     constexpr static char const * regionsStatisticsString() { return "regionsStatistics"; }
+    /// on-purpose generated compound set name
+    constexpr static char const * compoundSetNameString() { return "__compound"; }
   };
 
   /**
@@ -188,10 +192,13 @@ public:
    * @brief Execute the given functor on each set present in the given mesh-level (discretization).
    * @param mesh the target mesh-level.
    * @param meshSetsStats the instance mesh-level statistics data structure.
+   * @param enableCompoundSet if true, the functor will also be applied on the compound set (which
+   *                          is an optional internal computation data structure).
    * @param functor the function to execute.
    */
   void forRegionStatistics( MeshLevel & mesh,
                             StatsGroupType & meshSetsStats,
+                            bool enableCompoundSet,
                             RegionStatsFunc< MeshLevelSet > const & functor ) const;
 
   /**
@@ -294,8 +301,8 @@ protected:
     string_array m_setNames;
     /// the regions names in the mesh-level / mesh level
     string_array m_regionNames;
-    /// TODO: if m_isAnySetsIntersecting is true, a compound set is needed to compute mesh-level statistics.
-    // SetType meshLevelSetsCompound;
+    /// if at least one set intersects with another, a compound set is needed to compute mesh-level statistics.
+    SetType m_setsCompound;
   };
 
   /// @see getOwnerName()
@@ -338,6 +345,14 @@ protected:
    * @return MeshLevel& the MeshLevel Group for the given discretisation
    */
   MeshLevel & getMeshLevel( DiscretizationSetPath const & path ) const;
+
+  /**
+   * @return An optional statistics data structure (see StatsGroupType), aggregated from all sets
+   *         over all targeted regions, for the given set in the given mesh-level.
+   * @param mesh the mesh-level (discretization).
+   * @throw InputError if no compound set exists, for instance if isSetsCompoundEnabled == false.
+   */
+  StatsGroupType & getCompoundSetStatistics( MeshLevel & mesh ) const;
 
   /**
    * @brief TODO

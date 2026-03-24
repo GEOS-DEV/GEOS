@@ -345,7 +345,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
   outputRegionStats( meshTitle, allSetsTitle, meshLevelStats );
 
-  m_aggregator->forRegionStatistics( mesh, meshLevelStats,
+  m_aggregator->forRegionStatistics( mesh, meshLevelStats, false,
                                      [&] ( StatsAggregator::MeshLevelSet meshSet,
                                            RegionStatistics & meshSetStats )
   {
@@ -429,7 +429,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
   if( !m_aggregator->isRestrictedToSets())
     outputRegionStats( mesh.getName(), allSetsTitle, meshLevelStats );
 
-  m_aggregator->forRegionStatistics( mesh, meshLevelStats,
+  m_aggregator->forRegionStatistics( mesh, meshLevelStats, false,
                                      [&] ( StatsAggregator::MeshLevelSet meshSet,
                                            RegionStatistics & meshSetStats )
   {
