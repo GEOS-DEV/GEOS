@@ -20,6 +20,8 @@
 #include "ArchiveInputDeck.hpp"
 
 #include "common/Path.hpp"
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 
 #include <chrono>
