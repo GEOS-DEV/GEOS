@@ -269,7 +269,14 @@ public:
    *         false if the statistics are targeted on only one mesh-level-wide set
    */
   bool isRestrictedToSets()
-  {return m_setNames.empty() || ( m_setNames.size() == 1 && m_setNames.count( "all" ) > 0 ); }
+  {return !( m_setNames.empty() || ( m_setNames.size() == 1 && m_setNames.count( "all" ) > 0 ) ); }
+
+  /**
+   * @return true if the region statistics target multiple sets.
+   *         false if the statistics are targeted on only one set
+   */
+  bool isTargetingMultipleSets()
+  { return m_setNames.size() > 1; }
 
   /**
    * @return the name of the entity that needs the statistics.

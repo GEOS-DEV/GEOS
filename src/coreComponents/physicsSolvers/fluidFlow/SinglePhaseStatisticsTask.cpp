@@ -98,7 +98,8 @@ void StatsTask::prepareLogTableLayouts( string_view meshName )
     return;
 
   TableLayout const tableLayout = TableLayout()
-                                    .setTitle( GEOS_FMT( "{}: mesh {}", getName(), meshName ) );
+                                    .setTitle( GEOS_FMT( "Statistics: {} / Discretization: {}",
+                                                         getName(), meshName ) );
 
   m_logFormatters.emplace( meshName, std::make_unique< TableTextFormatter >( tableLayout ) );
 }
@@ -113,8 +114,8 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
 
   TableLayout tableLayout( {
         TableLayout::Column( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
-        TableLayout::Column( "Set" ), // TODO : mention this change in PR description
-        TableLayout::Column( "Region" ), // TODO : mention this change in PR description
+        TableLayout::Column( "Set" ),
+        TableLayout::Column( "Region" ),
         TableLayout::Column( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
         TableLayout::Column( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
         TableLayout::Column( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
@@ -187,13 +188,12 @@ void StatsTask::outputLogStats( real64 const statsTime,
   tableData.addRow( "Statistics time", merge, merge, statsTime );
 
   // lamda to apply for each region statistics
-  auto const outputRegionStats = [&] ( string_view targetName,
-                                       string_view setName,
+  auto const outputRegionStats = [&] ( string_view title,
                                        RegionStatistics & stats )
   {
     tableData.addSeparator();
     tableData.addRow( merge, merge, merge, "" );
-    tableData.addRow( merge, merge, merge, GEOS_FMT( "{} / {}", setName, targetName ) );
+    tableData.addRow( merge, merge, merge, title );
     tableData.addSeparator();
 
     tableData.addRow( "statistics", "min", "average", "max" );
@@ -217,27 +217,36 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
   // apply the output lambda for the mesh sets and regions
   string const meshTitle = GEOS_FMT( "Discretization: '{}'", mesh.getName() );
-  string const allSetsTitle = m_aggregator->isRestrictedToSets() ? "Selected sets" : "All elements";
+  bool const logPerRegion = isLogLevelActive< logInfo::StatisticsPerRegion >( this->getLogLevel() );
 
-  outputRegionStats( meshTitle, allSetsTitle, meshLevelStats );
+  if( m_aggregator->isTargetingMultipleSets() )
+  {
+    string const allSetsTitle = m_aggregator->isRestrictedToSets() ? "Selected sets" : "All elements";
+    outputRegionStats( GEOS_FMT( "{} / {}", meshTitle, allSetsTitle ),
+                       meshLevelStats );
+  }
 
   m_aggregator->forRegionStatistics( mesh, meshLevelStats, false,
                                      [&] ( StatsAggregator::MeshLevelSet meshSet,
                                            RegionStatistics & meshSetStats )
   {
-    string const setTitle = GEOS_FMT( "Element set: '{}'", meshSet.setName );
+    string const setTitle = m_aggregator->isRestrictedToSets() ?
+                            GEOS_FMT( "Element set: '{}'", meshSet.setName ) :
+                            "All elements";
 
-    if( m_aggregator->isRestrictedToSets() )
-      outputRegionStats( meshTitle, setTitle, meshLevelStats );
+    outputRegionStats( GEOS_FMT( "{} / {}", meshTitle, setTitle ),
+                       meshLevelStats );
 
-    m_aggregator->forRegionStatistics( meshSet, meshSetStats,
-                                       [&] ( CellElementRegion & region,
-                                             RegionStatistics & setRegionStats )
+    if( logPerRegion )
     {
-      string const regionTitle = GEOS_FMT( "Region: '{}'", region.getName() );
-
-      outputRegionStats( regionTitle, setTitle, setRegionStats );
-    } );
+      m_aggregator->forRegionStatistics( meshSet, meshSetStats,
+                                         [&] ( CellElementRegion & region,
+                                               RegionStatistics & setRegionStats )
+      {
+        outputRegionStats( GEOS_FMT( "{} / {} / Region: '{}'", meshTitle, setTitle, region.getName() ),
+                           setRegionStats );
+      } );
+    }
   } );
 
   // output to log
@@ -287,17 +296,15 @@ void StatsTask::outputCsvStats( real64 statsTime,
   };
 
   // apply the output lambda for the mesh sets and regions
-  string const allSetsTitle = m_aggregator->isRestrictedToSets() ? "Selected sets" : "All elements";
+  string_view allSetsTitle = "Selected sets";
 
-  if( !m_aggregator->isRestrictedToSets())
-    outputRegionStats( mesh.getName(), allSetsTitle, meshLevelStats );
+  outputRegionStats( mesh.getName(), allSetsTitle, meshLevelStats );
 
   m_aggregator->forRegionStatistics( mesh, meshLevelStats, false,
                                      [&] ( StatsAggregator::MeshLevelSet meshSet,
                                            RegionStatistics & meshSetStats )
   {
-    if( m_aggregator->isRestrictedToSets())
-      outputRegionStats( meshSet.mesh.getName(), meshSet.setName, meshSetStats );
+    outputRegionStats( meshSet.mesh.getName(), meshSet.setName, meshSetStats );
 
     m_aggregator->forRegionStatistics( meshSet, meshSetStats,
                                        [&] ( CellElementRegion & region,
