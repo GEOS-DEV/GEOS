@@ -331,7 +331,7 @@ std::set< string > collectIncluded( string const & filePath );
  *        files it includes
  * @param[in] filePath absolute path of the root XML file
  * @param[inout] collection collection to append with absolute file paths
- *                          of every visisted file (including @p filePath itself)
+ *                          of every visited file (including @p filePath itself)
  */
 void collectIncludedRecursive( string const & filePath,
                                std::set< string > & collection );
