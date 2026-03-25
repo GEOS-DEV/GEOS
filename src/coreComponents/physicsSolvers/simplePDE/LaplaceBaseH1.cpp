@@ -211,7 +211,7 @@ void LaplaceBaseH1::
     fsManager.apply< NodeManager >( time,
                                     mesh,
                                     m_fieldName,
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
