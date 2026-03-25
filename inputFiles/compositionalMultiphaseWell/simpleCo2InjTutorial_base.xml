@@ -191,28 +191,38 @@
   </Outputs>
   <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
 
+
+  <!-- 
+    Do not remove the multiple CompositionalMultiphaseStatistics below:
+    the goal is also to test here the behaviour of intersecting & complementary sets.
+  -->
+
   <!-- SPHINX_FIELD_CASE_Co2_TASKS -->  
   <Tasks>
     <PackCollection
       name="wellPressureCollection"
       objectPath="ElementRegions/wellRegion/wellRegionUniqueSubRegion"
       fieldName="pressure" />
-    
+
+    <!-- stats table to compare the domain element set with the well surroundings element set -->
     <CompositionalMultiphaseStatistics 
       name="domainFlowStats"
       flowSolverName="compositionalMultiphaseFlow"
-      logLevel="2"
+      setNames="{all, injectorSurrounding}"
+      logLevel="1"
+      writeCSV="1"/>
+
+    <!-- stats table to compare the domain top part with the bottom part -->
+    <CompositionalMultiphaseStatistics 
+      name="domainFlowStats"
+      flowSolverName="compositionalMultiphaseFlow"
+      setNames="{domainBottom, domainTop}"
+      logLevel="1"
       writeCSV="1"/>
     
-    <CompositionalMultiphaseStatistics 
-      name="injectorSurroundingFlowStats"
-      flowSolverName="compositionalMultiphaseFlow"
-      logLevel="2"
-      writeCSV="1"
-      setNames="{injectorSurrounding}"/>
-
   </Tasks>
   <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->  
+
   <Functions>
     <TableFunction 
         name="permxFunc"

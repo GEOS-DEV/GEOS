@@ -46,6 +46,16 @@
       xMin="{ 470.0, 400.0, 6584.0 }"
       xMax="{ 590.0, 600.0, 6632.0 }" />
 
+    <!-- These two boxes are the top and bottom parts of the domain, and should contain an equal number of elements -->
+    <Box
+      name="domainTop"
+      xMin="{ 0.0, 450.0, 6500.0 }"
+      xMax="{ 1000.0, 550.0, 7100.0 }" />
+    <Box
+      name="domainBottom"
+      xMin="{ 0.0, 450.0, 7100.0 }"
+      xMax="{ 1000.0, 550.0, 7700.0 }" />
+
   </Geometry>
   <!-- SPHINX_FIELD_CASE_Co2_GEOMETRY_END --> 
  
@@ -86,6 +96,11 @@
       name="domainFlowStatsEvent"
       cycleFrequency="10"
       target="/Tasks/domainFlowStats"/>
+
+    <PeriodicEvent
+      name="domainFlowStatsVerifEvent"
+      cycleFrequency="10"
+      target="/Tasks/domainFlowStatsVerif"/>
 
     <PeriodicEvent
       name="injectorSurroundingFlowStatsEvent"
