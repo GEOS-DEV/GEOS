@@ -95,6 +95,12 @@ void archiveInputDeck( string_array const & inputFileNames,
     return;
   }
 
+  if ( outputDirectory.empty() )
+  {
+    return;
+  }
+
+
   string const timestamp = makeTimestamp();
   string const archiveDir = joinPath( outputDirectory, "archive_inputFiles", timestamp );
   makeDirsForPath( archiveDir + "/" );
