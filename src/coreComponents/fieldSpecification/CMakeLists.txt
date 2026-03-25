@@ -27,6 +27,7 @@ set( fieldSpecification_headers
      EquilibriumInitialCondition.hpp
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
+     FieldSpecificationImpl.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
