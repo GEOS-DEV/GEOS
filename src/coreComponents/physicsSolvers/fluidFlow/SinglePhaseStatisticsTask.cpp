@@ -123,7 +123,6 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   // output CSV header
   std::ofstream outputFile( getCsvFileName( meshName ) );
   outputFile << csvFormatter->headerToString();
-  GEOS_LOG( GEOS_FMT( "table {} : {}", meshName, csvFormatter->headerToString() ) );     // TODO : remove this log
 }
 
 string StatsTask::getCsvFileName( string_view meshName ) const
