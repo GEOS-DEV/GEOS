@@ -1149,7 +1149,7 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 void ProblemManager::applyInitialConditions()
 {
 
-  m_fieldSpecificationManager->forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase & fs )
+  m_fieldSpecificationManager->forSubGroups< FieldSpecification >( [&]( FieldSpecification & fs )
   {
     fs.setMeshObjectPath( getDomainPartition().getMeshBodies() );
   } );
