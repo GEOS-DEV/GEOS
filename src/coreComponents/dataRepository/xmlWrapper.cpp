@@ -283,7 +283,7 @@ void collectIncluded( string const & filePath,
 
   for ( auto & includedNode : rootNode.children( includedListTag ) )
   {
-    for ( auto & fileNode : includedNode.children() )
+    for ( auto & fileNode : includedNode.children( includedFileTag ) )
     {
       string const fileName = fileNode.attribute( "name" ).value();
 
