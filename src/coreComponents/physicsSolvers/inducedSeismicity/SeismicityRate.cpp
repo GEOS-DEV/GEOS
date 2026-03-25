@@ -361,7 +361,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
         fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                  mesh,
                                                  key,
-                                                 [&]( FieldSpecificationBase const & fs,
+                                                 [&]( FieldSpecification const & fs,
                                                       string const & setName,
                                                       SortedArrayView< localIndex const > const & lset,
                                                       ElementSubRegionBase & subRegion,
@@ -370,7 +370,7 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
           globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( bcLogMessage,
-                                                    this->getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                                    this->getName(), time_n+dt, FieldSpecification::catalogName(),
                                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ),
                                           fs );
 
