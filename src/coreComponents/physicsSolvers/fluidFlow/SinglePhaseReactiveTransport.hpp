@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
 
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
@@ -362,11 +363,12 @@ void SinglePhaseReactiveTransport::applyFieldValue( real64 const & time_n,
     }
 
     // Specify the bc value of the field
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( lset,
-                                                  time_n + dt,
-                                                  targetGroup,
-                                                  boundaryFieldKey );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                             parallelDevicePolicy<> >( fs,
+                                                                       lset,
+                                                                       time_n + dt,
+                                                                       targetGroup,
+                                                                       boundaryFieldKey );
   } );
 }
 
