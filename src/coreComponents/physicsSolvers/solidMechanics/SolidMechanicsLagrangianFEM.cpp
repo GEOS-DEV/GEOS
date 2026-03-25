@@ -620,7 +620,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue( time_n + dt,
                                mesh,
                                solidMechanics::totalDisplacement::key(),
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -634,7 +634,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
         vel( a, component ) = u( a, component );
       } );
     },
-                               [&]( FieldSpecificationBase const & bc,
+                               [&]( FieldSpecification const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
@@ -714,7 +714,7 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     fsManager.apply< NodeManager >( time,
                                     mesh,
                                     solidMechanics::totalDisplacement::key(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
@@ -1246,7 +1246,7 @@ SolidMechanicsLagrangianFEM::
     fsManager.apply< NodeManager >( time_n + dt,
                                     mesh,
                                     viewKeyStruct::forceString(),
-                                    [&]( FieldSpecificationBase const & bc,
+                                    [&]( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          NodeManager & targetGroup,
