@@ -1878,17 +1878,18 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
