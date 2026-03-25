@@ -208,7 +208,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     // isBoundaryFaceView is default-initialized to zero
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+    fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
     {
       string const & fieldName = fs.getFieldName();
       if( fieldName == flow::bcPressure::key() ||
@@ -741,7 +741,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
       // Get all face sets that have Dirichlet BCs
       std::set< string > bcFaceSets;
-      fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+      fsManager.forSubGroups< FieldSpecification >( [&]( FieldSpecification const & fs )
       {
         string const & fieldName = fs.getFieldName();
         if( fieldName == flow::bcPressure::key() ||
@@ -954,7 +954,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
                                     flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
+                                    [&] ( FieldSpecification const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
                                           FaceManager & targetGroup,
