@@ -30,6 +30,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
@@ -719,15 +720,16 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                                          NodeManager & targetGroup,
                                          string const fieldName )
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     fieldName,
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time,
+                                                                                          targetGroup,
+                                                                                          fieldName,
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
 
       if( targetSet.size() > 0 && bc.getComponent() == 0 )
       {
@@ -1251,15 +1253,16 @@ SolidMechanicsLagrangianFEM::
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
       // TODO: fix use of dummy name
-      bc.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                         parallelDevicePolicy<  > >( targetSet,
-                                                                     time_n + dt,
-                                                                     targetGroup,
-                                                                     solidMechanics::totalDisplacement::key(),
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationAdd,
+                                                              parallelDevicePolicy<  > >( bc,
+                                                                                          targetSet,
+                                                                                          time_n + dt,
+                                                                                          targetGroup,
+                                                                                          solidMechanics::totalDisplacement::key(),
+                                                                                          dofKey,
+                                                                                          dofManager.rankOffset(),
+                                                                                          localMatrix,
+                                                                                          localRhs );
     } );
 
   } );
