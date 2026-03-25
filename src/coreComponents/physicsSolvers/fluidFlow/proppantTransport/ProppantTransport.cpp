@@ -29,6 +29,7 @@
 #include "constitutive/fluid/singlefluid/ParticleFluidFields.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -673,15 +674,16 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       arrayView1d< real64 const > const
       proppantConc = subRegion.getReference< array1d< real64 > >( proppant::proppantConcentration::key() );
 
-      fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy<> >( lset,
-                                                                   time_n + dt,
-                                                                   subRegion,
-                                                                   dofNumber,
-                                                                   rankOffset,
-                                                                   localMatrix,
-                                                                   localRhs,
-                                                                   proppantConc );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy<> >( fs,
+                                                                                        lset,
+                                                                                        time_n + dt,
+                                                                                        subRegion,
+                                                                                        dofNumber,
+                                                                                        rankOffset,
+                                                                                        localMatrix,
+                                                                                        localRhs,
+                                                                                        proppantConc );
     } );
 
     //  Apply Dirichlet BC for component concentration
@@ -729,10 +731,11 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                        getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 
-        fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
-                                                       time_n + dt,
-                                                       subRegion,
-                                                       proppant::bcComponentConcentration::key() );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( fs,
+                                                                            targetSet,
+                                                                            time_n + dt,
+                                                                            subRegion,
+                                                                            proppant::bcComponentConcentration::key() );
 
       } );
 
