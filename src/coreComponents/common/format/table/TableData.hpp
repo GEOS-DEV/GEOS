@@ -78,6 +78,8 @@ public:
     void serialize( stdVector< buffer_unit_type > & out ) const;
   };
 
+  size_t getSerializedSize() const;
+
   /**
    * @tparam T The trivial type
    * @return Returns the size occupied by a trivial type in memory.
@@ -91,7 +93,7 @@ public:
    * @param str The target string
    * @return Size in bytes.
    */
-  static unsigned long sizeOfField( string_view str )
+  static unsigned long sizeOfField( string const & str )
   { return sizeof(string::size_type) + str.size(); }
 
   template< typename T >
@@ -100,7 +102,7 @@ public:
     buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
     buffer_unit_type const * end = begin + sizeof(data);
     out.insert( out.end(), begin, end );
-  };
+  }
 
   static void serializeString ( string const & data, stdVector< buffer_unit_type > & out )
   {
@@ -108,7 +110,7 @@ public:
     auto * begin = data.data();
     auto * end = begin + data.size();
     out.insert( out.end(), begin, end );
-  };
+  }
 
   template< typename T >
   static void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
@@ -140,7 +142,7 @@ public:
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
 
-  void serialize( stdVector< buffer_unit_type > localTableData ) const;
+  void serialize( stdVector< buffer_unit_type > & serializedTableData ) const;
 
   /**
    * @brief Add a row to the table.

@@ -96,41 +96,46 @@ size_t TableData::CellData::getSerializedSize() const
   return sizeOfField( type ) + sizeOfField( value );
 }
 
-void TableData::serialize( stdVector< buffer_unit_type > localTableData ) const
+size_t TableData::getSerializedSize() const
 {
+  size_t totalSize  =0;
+
   if( m_rows.empty())
-    return;
+    return totalSize;
 
-  size_t totalSize = 0;
-
-  // pre-calculate total size
-  totalSize += sizeof(size_t);
   for( auto & row : m_rows )
   {
     size_t rowSize = 0;
     for( auto & cell : row )
     {
-      rowSize += sizeof(size_t) + cell.getSerializedSize();
+      rowSize += cell.getSerializedSize();
     }
     totalSize += sizeof(size_t) + rowSize;
   }
+  return totalSize;
+}
 
-  localTableData.resize( totalSize );
-  serializePrimitive( totalSize, localTableData );
+void TableData::serialize( stdVector< buffer_unit_type > & serializedTableData ) const
+{
+  if( m_rows.empty())
+    return;
+
   for( auto & row : m_rows )
   {
-    size_t rowSize = 0;
-    // pack row size;
-    for( auto const & cell : row )
-      rowSize += sizeof(size_t) + cell.getSerializedSize();
-    serializePrimitive( rowSize, localTableData );
+    { // pack row size;
+      size_t rowSize = 0;
+      for( auto const & cell : row )
+        rowSize += cell.getSerializedSize();
+      serializePrimitive( rowSize, serializedTableData );
+    }
 
-    // pack cells
-    for( auto const & cell : row )
-    {
-      size_t cellSize =  cell.getSerializedSize();
-      serializePrimitive( cellSize, localTableData );
-      cell.serialize( localTableData );
+    { // pack cells
+      for( auto const & cell : row )
+      {
+        // size_t cellSize =  cell.getSerializedSize();
+        // serializePrimitive( cellSize, serializedTableData );
+        cell.serialize( serializedTableData );
+      }
     }
   }
 }
