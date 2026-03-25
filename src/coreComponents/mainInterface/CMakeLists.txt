@@ -53,7 +53,7 @@ blt_add_library( NAME       mainInterface
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
 
-#add_dependencies( mainInterface generate_version )
+add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

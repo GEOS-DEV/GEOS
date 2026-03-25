@@ -15,12 +15,6 @@ if( NOT DEFINED CMAKE_SCRIPT_MODE_FILE )
   set( SOURCE_DIR ${CMAKE_SOURCE_DIR} )
 endif()
 
-# Option to enable/disable querying git for version metadata.
-# Default ON preserves existing behavior unless explicitly disabled.
-if( NOT DEFINED GEOSX_USE_GIT_VERSION_INFO )
-  set( GEOSX_USE_GIT_VERSION_INFO ON )
-endif()
-
 # Get GEOSX version from a file
 # Inputs:
 #   -- SOURCE_DIR
@@ -44,7 +38,7 @@ endmacro()
 #   -- SOURCE_DIR
 #   -- GIT_FOUND
 #   -- GIT_EXECUTABLE (only when GIT_FOUND=TRUE )
-#   -- GEOSX_USE_GIT_VERSION_INFO
+#   -- GEOS_USE_GIT_VERSION_INFO
 # Outputs (if enabled, GIT_FOUND=TRUE, and inside git repo):
 #   -- GEOS_GIT_BRANCH
 #   -- GEOS_GIT_HASH
@@ -55,7 +49,7 @@ macro( geosx_get_git_version )
   set( GEOS_GIT_HASH   "" )
   set( GEOS_GIT_TAG    "" )
 
-  if( GIT_FOUND AND GEOSX_USE_GIT_VERSION_INFO )
+  if( GIT_FOUND AND GEOS_USE_GIT_VERSION_INFO )
     # Use BLT Git macros for convenience
     include( ${SOURCE_DIR}/cmake/blt/cmake/BLTGitMacros.cmake )
     blt_is_git_repo( OUTPUT_STATE is_git_repo
@@ -108,7 +102,7 @@ if( NOT DEFINED CMAKE_SCRIPT_MODE_FILE )
                      -D SOURCE_DIR=${SOURCE_DIR}
                      -D GIT_FOUND=${GIT_FOUND}
                      -D GIT_EXECUTABLE=${GIT_EXECUTABLE}
-                     -D GEOSX_USE_GIT_VERSION_INFO=${GEOSX_USE_GIT_VERSION_INFO}
+                     -D GEOS_USE_GIT_VERSION_INFO=${GEOS_USE_GIT_VERSION_INFO}
                      -P "${CMAKE_CURRENT_LIST_FILE}"
                      COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ver_tmp_file} ${ver_out_file} )
 endif()
