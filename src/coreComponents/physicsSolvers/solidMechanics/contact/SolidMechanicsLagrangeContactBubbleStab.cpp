@@ -29,6 +29,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 
@@ -78,14 +79,15 @@ real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_
       //   {
       //     if( fs.initialCondition() )
       //     {
-      //       fs.apply< SurfaceElementSubRegion >( mesh,
-      //                                            [&]( FieldSpecificationBase const & bc,
-      //                                                 string const &,
-      //                                                 SortedArrayView< localIndex const > const & targetSet,
-      //                                                 SurfaceElementSubRegion & targetGroup,
-      //                                                 string const fieldName )
+      //       FieldSpecificationImpl::apply< SurfaceElementSubRegion >( fs,
+      //                                                                 mesh,
+      //                                                                 [&]( FieldSpecificationBase const & bc,
+      //                                                                      string const &,
+      //                                                                      SortedArrayView< localIndex const > const & targetSet,
+      //                                                                      SurfaceElementSubRegion & targetGroup,
+      //                                                                      string const fieldName )
       //       {
-      //         bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
+      //         FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetSet, 0.0, targetGroup, fieldName );
       //       } );
       //     }
       //   } );
