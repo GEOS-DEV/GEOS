@@ -17,6 +17,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
@@ -57,7 +58,7 @@ void RegisterAndApplyField( DomainPartition & domain,
                                          Group & targetGroup,
                                          string const name )
   {
-    bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, name );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetSet, 0.0, targetGroup, name );
   } );
 }
 
