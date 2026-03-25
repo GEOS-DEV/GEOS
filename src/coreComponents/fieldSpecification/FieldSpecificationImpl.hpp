@@ -230,7 +230,7 @@ class FieldSpecificationImpl
                                                     ArrayView< T const, NDIM, USD > const & fieldView )
   {
     integer const component = fs.getComponent();
-    applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
+    applyBoundaryConditionToSystem< FIELD_OP, POLICY >( fs, targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
                                                         [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
     {
       real64 value = 0.0;
