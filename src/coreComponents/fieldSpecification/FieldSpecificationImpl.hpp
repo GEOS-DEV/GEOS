@@ -20,7 +20,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONIMPL_HPP
 #define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONIMPL_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TypeDispatch.hpp"
 #include "codingUtilities/traits.hpp"
@@ -60,7 +60,7 @@ class FieldSpecificationImpl
    * @param lambda The being executed
    */
   template< typename OBJECT_TYPE,
-            typename BC_TYPE = FieldSpecificationBase,
+            typename BC_TYPE = FieldSpecification,
             typename LAMBDA >
   static void apply( BC_TYPE const & fs,
                      MeshLevel & mesh,
@@ -97,7 +97,7 @@ class FieldSpecificationImpl
    * This function applies the value to a field variable.
    */
   template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
-  static void applyFieldValueKernel( FieldSpecificationBase const & fs,
+  static void applyFieldValueKernel( FieldSpecification const & fs,
                                      ArrayView< T, N, USD > const & field,
                                      SortedArrayView< localIndex const > const & targetSet,
                                      real64 const time,
@@ -127,10 +127,10 @@ class FieldSpecificationImpl
         catch( std::exception const & e )
         {
           string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
-                                            fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::functionNameString() ) );
+                                            fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() ) );
           ErrorLogger::global().modifyCurrentExceptionMessage()
             .addToMsg( errorMsg )
-            .addContextInfo( fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::functionNameString() )
+            .addContextInfo( fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() )
                                .getContextInfo()
                                .setPriority( 1 ) );
           throw InputError( e, errorMsg );
@@ -175,7 +175,7 @@ class FieldSpecificationImpl
    * called from within the lambda to a call to FieldSpecificationManager::applyFieldValue().
    */
   template< typename FIELD_OP, typename POLICY=parallelHostPolicy >
-  static void applyFieldValue( FieldSpecificationBase const & fs,
+  static void applyFieldValue( FieldSpecification const & fs,
                                SortedArrayView< localIndex const > const & targetSet,
                                real64 const time,
                                dataRepository::Group & dataGroup,
@@ -219,7 +219,7 @@ class FieldSpecificationImpl
    * @note This function is rarely used directly. More often it is called by other ApplyBoundaryCondition functions.
    */
   template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
-  static void applyBoundaryConditionToSystemKernel( FieldSpecificationBase const & fs,
+  static void applyBoundaryConditionToSystemKernel( FieldSpecification const & fs,
                                                     SortedArrayView< localIndex const > const & targetSet,
                                                     real64 const time,
                                                     dataRepository::Group const & dataGroup,
@@ -260,7 +260,7 @@ class FieldSpecificationImpl
    * typically called from within the lambda to a call to BoundaryConditionManager::ApplyBoundaryCondition().
    */
   template< typename FIELD_OP, typename POLICY >
-  static void applyBoundaryConditionToSystem( FieldSpecificationBase const & fs,
+  static void applyBoundaryConditionToSystem( FieldSpecification const & fs,
                                               SortedArrayView< localIndex const > const & targetSet,
                                               real64 const time,
                                               dataRepository::Group const & dataGroup,
@@ -316,7 +316,7 @@ class FieldSpecificationImpl
    */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   static void
-  applyBoundaryConditionToSystem( FieldSpecificationBase const & fs,
+  applyBoundaryConditionToSystem( FieldSpecification const & fs,
                                   SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
                                   dataRepository::Group const & dataGroup,
@@ -364,7 +364,7 @@ class FieldSpecificationImpl
    */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   static void
-  applyBoundaryConditionToSystem( FieldSpecificationBase const & fs,
+  applyBoundaryConditionToSystem( FieldSpecification const & fs,
                                   SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
                                   real64 const dt,
@@ -428,7 +428,7 @@ class FieldSpecificationImpl
    */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   static void
-  computeRhsContribution( FieldSpecificationBase const & fs,
+  computeRhsContribution( FieldSpecification const & fs,
                           SortedArrayView< localIndex const > const & targetSet,
                           real64 const time,
                           real64 const dt,
@@ -506,7 +506,7 @@ class FieldSpecificationImpl
    * This function zeroes the rows of the matrix that correspond to boundary conditions.
    */
   template< typename POLICY >
-  static void zeroSystemRowsForBoundaryCondition( FieldSpecificationBase const & fs,
+  static void zeroSystemRowsForBoundaryCondition( FieldSpecification const & fs,
                                                   SortedArrayView< localIndex const > const & targetSet,
                                                   arrayView1d< globalIndex const > const & dofMap,
                                                   CRSMatrixView< real64, globalIndex const > const & matrix )
