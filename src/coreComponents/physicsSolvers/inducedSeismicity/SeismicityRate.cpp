@@ -29,6 +29,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 
@@ -374,11 +375,12 @@ real64 SeismicityRate::updateStresses( real64 const & time_n,
                                           fs );
 
           // Specify the bc value of the field
-          fs.applyFieldValue< FieldSpecificationEqual,
-                              parallelDevicePolicy<> >( lset,
-                                                        time_n + dt,
-                                                        subRegion,
-                                                        key );
+          FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                                   parallelDevicePolicy<> >( fs,
+                                                                             lset,
+                                                                             time_n + dt,
+                                                                             subRegion,
+                                                                             key );
         } );
       }
     } );
