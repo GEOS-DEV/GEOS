@@ -554,7 +554,9 @@ public:
   solveLinearSystem( DofManager const & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
-                     ParallelVector & solution );
+                     ParallelVector & solution,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration );
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation

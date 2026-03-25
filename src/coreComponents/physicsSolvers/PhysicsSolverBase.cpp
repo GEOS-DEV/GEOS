@@ -584,7 +584,8 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
-    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                       cycleNumber, 0 );
   }
 
   getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -1122,7 +1123,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 
       // Solve the linear system
-      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution,
+                         cycleNumber, newtonIter );
 
       // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -1390,7 +1392,9 @@ PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
                                            ParallelMatrix & matrix,
                                            ParallelVector & rhs,
-                                           ParallelVector & solution )
+                                           ParallelVector & solution,
+                                           integer const cycleNumber,
+                                           integer const nonlinearIteration )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1425,6 +1429,15 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     {
       m_linearSolver = LAInterface::createSolver( params );
     }
+
+    LinearSolverExecutionContext executionContext;
+    executionContext.solverName = getName();
+    executionContext.cycleNumber = cycleNumber;
+    executionContext.timeStepAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
+    executionContext.configurationAttempt = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+    executionContext.nonlinearIteration = nonlinearIteration;
+    executionContext.systemSetupTimestamp = getSystemSetupTimestamp();
+    m_linearSolver->setExecutionContext( executionContext );
 
     if( isSetupNeeded )
     {

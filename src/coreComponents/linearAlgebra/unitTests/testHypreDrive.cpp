@@ -13,6 +13,7 @@
 
 #ifdef GEOS_USE_HYPRE
 #include "linearAlgebra/interfaces/hypre/HypreInterface.hpp"
+#include "linearAlgebra/unitTests/testLinearAlgebraUtils.hpp"
 
 #ifdef GEOS_USE_HYPREDRV
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
@@ -24,6 +25,20 @@ namespace geos
 {
 
 #if defined(GEOS_USE_HYPRE) && defined(GEOS_USE_HYPREDRV)
+class HypreDriveSolverTestPeer
+{
+public:
+  static size_t generation( HypreDriveSolver const & solver )
+  {
+    return solver.m_hypreDriveGeneration;
+  }
+
+  static HYPREDRV_t handle( HypreDriveSolver const & solver )
+  {
+    return solver.m_hypreDrive;
+  }
+};
+
 namespace
 {
 
@@ -117,6 +132,29 @@ private:
   std::streambuf * m_previous;
 };
 
+LinearSolverParameters makeReusableAMGParameters()
+{
+  LinearSolverParameters params;
+  params.solverType = LinearSolverParameters::SolverType::gmres;
+  params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+  params.logLevel = 0;
+  return params;
+}
+
+LinearSolverExecutionContext makeExecutionContext( Timestamp const systemSetupTimestamp,
+                                                   integer const nonlinearIteration,
+                                                   std::string const & solverName = {} )
+{
+  LinearSolverExecutionContext context;
+  context.solverName = solverName;
+  context.cycleNumber = 7;
+  context.timeStepAttempt = 0;
+  context.configurationAttempt = 0;
+  context.nonlinearIteration = nonlinearIteration;
+  context.systemSetupTimestamp = systemSetupTimestamp;
+  return context;
+}
+
 TEST( HypreDriveYaml, BuildsGeneratedFallbackForAMG )
 {
   LinearSolverParameters params;
@@ -193,8 +231,6 @@ TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   stdVector< string > const fieldNames = makeFieldNames();
   array1d< int > const numComponentsPerField = makeMgrNumComponentsPerField();
 
-  HypreInterface::initialize();
-
   for( integer value = static_cast< integer >( StrategyType::singlePhaseReservoirFVM );
        value <= static_cast< integer >( StrategyType::solidMechanicsEmbeddedFractures );
        ++value )
@@ -223,8 +259,6 @@ TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
       FAIL() << static_cast< int >( value ) << ": " << error.what();
     }
   }
-
-  HypreInterface::finalize();
 }
 
 TEST( HypreDriveYaml, UsesAuthoritativeFileWhenProvided )
@@ -297,6 +331,74 @@ TEST( HypreDriveLogging, LogsAuthoritativeFileContents )
   EXPECT_EQ( std::remove( params.hypredriveInputFile.c_str() ), 0 );
 }
 
+TEST( HypreDriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
+{
+  std::string const authoritativeFile = "/tmp/geos-hypredrive-statistics-authoritative.yml";
+  {
+    std::ofstream output( authoritativeFile );
+    ASSERT_TRUE( output.good() );
+    output << "general:\n"
+              "  statistics: 1\n"
+              "solver:\n"
+              "  gmres:\n"
+              "    max_iter: 5\n"
+              "preconditioner:\n"
+              "  amg:\n"
+              "    print_level: 0\n";
+  }
+
+  LinearSolverParameters params;
+  params.hypredriveInputFile = authoritativeFile;
+
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  HypreDriveSolver solver( params );
+  solver.setExecutionContext( makeExecutionContext( 51, 0 ) );
+  solver.setup( matrix );
+  solver.solve( rhs, sol );
+
+  ::testing::internal::CaptureStdout();
+  solver.clear();
+  std::string const output = ::testing::internal::GetCapturedStdout();
+
+  EXPECT_NE( output.find( "STATISTICS SUMMARY" ), std::string::npos );
+  EXPECT_EQ( std::remove( authoritativeFile.c_str() ), 0 );
+}
+
+TEST( HypreDriveLogging, GeneratedFallbackNamesStatisticsSummary )
+{
+  LinearSolverParameters params = makeReusableAMGParameters();
+
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  HypreDriveSolver solver( params );
+  solver.setExecutionContext( makeExecutionContext( 61, 0, "namedGeneratedSolver" ) );
+  solver.setup( matrix );
+  solver.solve( rhs, sol );
+
+  ::testing::internal::CaptureStdout();
+  solver.clear();
+  std::string const output = ::testing::internal::GetCapturedStdout();
+
+  EXPECT_NE( output.find( "STATISTICS SUMMARY for namedGeneratedSolver:" ), std::string::npos );
+}
+
 TEST( HypreDriveSolverSelection, UsesAdapterWhenAvailable )
 {
   LinearSolverParameters params;
@@ -319,7 +421,186 @@ TEST( HypreDriveSolverSelection, HonorsLegacyOverride )
   EXPECT_NE( dynamic_cast< HypreSolver * >( solver.get() ), nullptr );
 }
 
+TEST( HypreDriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
+{
+  HypreMatrix matrix1;
+  HypreMatrix matrix2;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix1 );
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix2 );
+
+  HypreVector rhs;
+  HypreVector sol;
+  rhs.create( matrix1.numLocalRows(), MPI_COMM_GEOS );
+  rhs.set( 1.0 );
+  sol.create( matrix1.numLocalCols(), MPI_COMM_GEOS );
+  sol.zero();
+
+  HypreDriveSolver solver( makeReusableAMGParameters() );
+  solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
+  solver.setup( matrix1 );
+
+  HYPREDRV_t const handle1 = HypreDriveSolverTestPeer::handle( solver );
+  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+  ASSERT_NE( handle1, nullptr );
+  solver.solve( rhs, sol );
+
+  sol.zero();
+  solver.setExecutionContext( makeExecutionContext( 11, 1 ) );
+  solver.setup( matrix2 );
+
+  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver ), handle1 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+  solver.solve( rhs, sol );
+
+  solver.clear();
 }
+
+TEST( HypreDriveSolverReuse, RecreatesHandleWhenStructureChanges )
+{
+  HypreMatrix matrix1;
+  HypreMatrix matrix2;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix1 );
+  testing::computeIdentity( MPI_COMM_GEOS, 5, matrix2 );
+
+  HypreDriveSolver solver( makeReusableAMGParameters() );
+  solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
+  solver.setup( matrix1 );
+  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+
+  solver.setExecutionContext( makeExecutionContext( 12, 0 ) );
+  solver.setup( matrix2 );
+
+  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+  solver.clear();
+}
+
+TEST( HypreDriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
+{
+  std::string const authoritativeFile = "/tmp/geos-hypredrive-reuse-authoritative.yml";
+  {
+    std::ofstream output( authoritativeFile );
+    ASSERT_TRUE( output.good() );
+    output << "solver:\n"
+              "  gmres:\n"
+              "    max_iter: 5\n"
+              "preconditioner:\n"
+              "  reuse:\n"
+              "    enabled: yes\n"
+              "    frequency: 1\n"
+              "  amg:\n"
+              "    print_level: 0\n";
+  }
+
+  LinearSolverParameters params;
+  params.hypredriveInputFile = authoritativeFile;
+
+  HypreMatrix matrix;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
+
+  HypreDriveSolver solver( params );
+  solver.setExecutionContext( makeExecutionContext( 21, 0 ) );
+  solver.setup( matrix );
+  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+
+  {
+    std::ofstream output( authoritativeFile );
+    ASSERT_TRUE( output.good() );
+    output << "solver:\n"
+              "  gmres:\n"
+              "    max_iter: 7\n"
+              "preconditioner:\n"
+              "  reuse:\n"
+              "    enabled: yes\n"
+              "    frequency: 1\n"
+              "  amg:\n"
+              "    print_level: 0\n";
+  }
+
+  solver.setExecutionContext( makeExecutionContext( 21, 1 ) );
+  solver.setup( matrix );
+  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+
+  solver.clear();
+  EXPECT_EQ( std::remove( authoritativeFile.c_str() ), 0 );
+}
+
+TEST( HypreDriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
+{
+  HypreMatrix matrix1;
+  HypreMatrix matrix2;
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix1 );
+  testing::computeIdentity( MPI_COMM_GEOS, 4, matrix2 );
+
+  HypreVector rhs1;
+  HypreVector rhs2;
+  HypreVector sol1;
+  HypreVector sol2;
+  rhs1.create( matrix1.numLocalRows(), MPI_COMM_GEOS );
+  rhs2.create( matrix2.numLocalRows(), MPI_COMM_GEOS );
+  rhs1.set( 1.0 );
+  rhs2.set( 2.0 );
+  sol1.create( matrix1.numLocalCols(), MPI_COMM_GEOS );
+  sol2.create( matrix2.numLocalCols(), MPI_COMM_GEOS );
+  sol1.zero();
+  sol2.zero();
+
+  HypreDriveSolver solver1( makeReusableAMGParameters() );
+  HypreDriveSolver solver2( makeReusableAMGParameters() );
+
+  solver1.setExecutionContext( makeExecutionContext( 31, 0 ) );
+  solver1.setup( matrix1 );
+  HYPREDRV_t const handle1 = HypreDriveSolverTestPeer::handle( solver1 );
+  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver1 );
+
+  solver2.setExecutionContext( makeExecutionContext( 41, 0 ) );
+  solver2.setup( matrix2 );
+  HYPREDRV_t const handle2 = HypreDriveSolverTestPeer::handle( solver2 );
+  size_t const generation2 = HypreDriveSolverTestPeer::generation( solver2 );
+
+  ASSERT_NE( handle1, nullptr );
+  ASSERT_NE( handle2, nullptr );
+  EXPECT_NE( handle1, handle2 );
+
+  solver1.solve( rhs1, sol1 );
+  solver2.solve( rhs2, sol2 );
+
+  sol1.zero();
+  sol2.zero();
+
+  solver1.setExecutionContext( makeExecutionContext( 31, 1 ) );
+  solver1.setup( matrix1 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver1 ), handle1 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver1 ), generation1 );
+
+  solver2.setExecutionContext( makeExecutionContext( 41, 1 ) );
+  solver2.setup( matrix2 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver2 ), handle2 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver2 ), generation2 );
+
+  solver1.setExecutionContext( makeExecutionContext( 32, 0 ) );
+  solver1.setup( matrix1 );
+  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver1 ), generation1 );
+
+  size_t const refreshedGeneration2 = HypreDriveSolverTestPeer::generation( solver2 );
+  solver2.setExecutionContext( makeExecutionContext( 41, 2 ) );
+  solver2.setup( matrix2 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver2 ), handle2 );
+  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver2 ), refreshedGeneration2 );
+
+  solver1.clear();
+  solver2.clear();
+}
+
+}
+
 #endif
 
 }
+
+#if defined(GEOS_USE_HYPRE) && defined(GEOS_USE_HYPREDRV)
+int main( int argc, char * * argv )
+{
+  geos::testing::LinearAlgebraTestScope scope( argc, argv );
+  return RUN_ALL_TESTS();
+}
+#endif

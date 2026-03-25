@@ -24,8 +24,20 @@
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "common/Stopwatch.hpp"
 
+#include <string>
+
 namespace geos
 {
+
+struct LinearSolverExecutionContext
+{
+  std::string solverName;
+  integer cycleNumber = -1;
+  integer timeStepAttempt = -1;
+  integer configurationAttempt = -1;
+  integer nonlinearIteration = -1;
+  Timestamp systemSetupTimestamp = 0;
+};
 
 /**
  * @brief Simple interface for linear solvers that allows to extract solution results.
@@ -59,6 +71,15 @@ public:
    * @param [in,out] sol system solution (input = initial guess, output = solution).
    */
   virtual void solve( Vector const & rhs, Vector & sol ) const = 0;
+
+  /**
+   * @brief Provide contextual execution metadata for backends that need it.
+   * @param context The current linear-solve execution context.
+   */
+  virtual void setExecutionContext( LinearSolverExecutionContext const & context )
+  {
+    GEOS_UNUSED_VAR( context );
+  }
 
   /**
    * @brief @return parameters of the solver.

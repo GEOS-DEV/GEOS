@@ -1223,6 +1223,70 @@ void finalizeRuntime()
 
 }
 
+namespace
+{
+
+std::string makeConfigurationSignature( hypre::hypreDrive::InputArgsParseTarget const & target )
+{
+  return GEOS_FMT( "{}\n{}",
+                   target.source == hypre::hypreDrive::InputSource::authoritativeFile ? "authoritativeFile" : "generatedFallback",
+                   hypre::hypreDrive::formatInputArgsParseTargetYaml( target ) );
+}
+
+std::string makeStructureSignature( HypreMatrix const & mat,
+                                    stdVector< string > const & fieldNames,
+                                    array1d< int > const & numComponentsPerField,
+                                    array1d< int > const & pointMarkers,
+                                    LinearSolverExecutionContext const * const executionContext )
+{
+  std::ostringstream signature;
+  signature << "systemSetupTimestamp: "
+            << ( executionContext != nullptr ? executionContext->systemSetupTimestamp : 0 ) << '\n';
+  signature << "localRows: " << mat.numLocalRows() << '\n';
+  signature << "localCols: " << mat.numLocalCols() << '\n';
+  signature << "globalRows: " << mat.numGlobalRows() << '\n';
+  signature << "globalCols: " << mat.numGlobalCols() << '\n';
+  signature << "fieldNames:";
+  for( string const & fieldName : fieldNames )
+  {
+    signature << ' ' << fieldName;
+  }
+  signature << '\n';
+  signature << "numComponentsPerField:";
+  for( int const numComponents : numComponentsPerField )
+  {
+    signature << ' ' << numComponents;
+  }
+  signature << '\n';
+  signature << "pointMarkers:";
+  for( int const pointMarker : pointMarkers )
+  {
+    signature << ' ' << pointMarker;
+  }
+  signature << '\n';
+
+  return signature.str();
+}
+
+std::string makeTimestepScopeName( LinearSolverExecutionContext const & context )
+{
+  return GEOS_FMT( "timestep-{}-{}-{}",
+                   context.cycleNumber,
+                   context.timeStepAttempt,
+                   context.configurationAttempt );
+}
+
+std::string makeNewtonScopeName( LinearSolverExecutionContext const & context )
+{
+  return GEOS_FMT( "newton-{}-{}-{}-{}",
+                   context.cycleNumber,
+                   context.timeStepAttempt,
+                   context.configurationAttempt,
+                   context.nonlinearIteration );
+}
+
+}
+
 HypreDriveSolver::HypreDriveSolver( LinearSolverParameters parameters )
   : Base( std::move( parameters ) )
 {}
@@ -1232,20 +1296,91 @@ HypreDriveSolver::~HypreDriveSolver()
   HypreDriveSolver::clear();
 }
 
+void HypreDriveSolver::setExecutionContext( LinearSolverExecutionContext const & context )
+{
+  m_executionContext = context;
+  m_hasExecutionContext = true;
+}
+
 void HypreDriveSolver::setup( HypreMatrix const & mat )
 {
-  clear();
   Base::setup( mat );
 
   if( !configureHypreDrive( mat ) )
   {
+    resetHypreDriveState();
     setupLegacy( mat );
+  }
+}
+
+void HypreDriveSolver::createHypreDrive( HypreMatrix const & mat,
+                                         hypre::hypreDrive::InputArgsParseTarget const & parseTarget,
+                                         std::string const & configurationSignature,
+                                         std::string const & structureSignature,
+                                         arrayView1d< int > const & pointMarkers )
+{
+  resetHypreDriveState();
+
+  checkHypreDriveCall( HYPREDRV_Create( mat.comm(), &m_hypreDrive ), "HYPREDRV_Create" );
+  checkHypreDriveCall( HYPREDRV_SetLibraryMode( m_hypreDrive ), "HYPREDRV_SetLibraryMode" );
+
+  char * argv[] = { const_cast< char * >( parseTarget.argument.c_str() ) };
+  checkHypreDriveCall( HYPREDRV_InputArgsParse( 1, argv, m_hypreDrive ),
+                       "HYPREDRV_InputArgsParse" );
+  if( parseTarget.source == hypre::hypreDrive::InputSource::generatedFallback &&
+      m_hasExecutionContext &&
+      !m_executionContext.solverName.empty() )
+  {
+    checkHypreDriveCall( HYPREDRV_ObjectSetName( m_hypreDrive,
+                                                 m_executionContext.solverName.c_str() ),
+                         "HYPREDRV_ObjectSetName" );
+  }
+
+  ++m_hypreDriveGeneration;
+  m_configurationSignature = configurationSignature;
+  m_structureSignature = structureSignature;
+
+  refreshBoundObjects( mat, pointMarkers );
+}
+
+void HypreDriveSolver::refreshBoundObjects( HypreMatrix const & mat,
+                                            arrayView1d< int > const & pointMarkers )
+{
+  checkHypreDriveCall( HYPREDRV_LinearSystemSetMatrix( m_hypreDrive,
+                                                       toHypreMatrix( mat.unwrappedIJ() ) ),
+                       "HYPREDRV_LinearSystemSetMatrix" );
+
+  if( !m_dummyRhs.ready() || m_dummyRhs.localSize() != mat.numLocalRows() )
+  {
+    m_dummyRhs.reset();
+    m_dummySol.reset();
+    m_dummyRhs.create( mat.numLocalRows(), mat.comm() );
+    m_dummySol.create( mat.numLocalRows(), mat.comm() );
+  }
+
+  checkHypreDriveCall( HYPREDRV_LinearSystemSetRHS( m_hypreDrive,
+                                                    reinterpret_cast< HYPRE_Vector >( m_dummyRhs.unwrappedIJ() ) ),
+                       "HYPREDRV_LinearSystemSetRHS" );
+  checkHypreDriveCall( HYPREDRV_LinearSystemSetSolution( m_hypreDrive,
+                                                         reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
+                       "HYPREDRV_LinearSystemSetSolution" );
+
+  if( pointMarkers.size() > 0 )
+  {
+    checkHypreDriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypreDrive,
+                                                         LvArray::integerConversion< int >( pointMarkers.size() ),
+                                                         pointMarkers.data() ),
+                         "HYPREDRV_LinearSystemSetDofmap" );
   }
 }
 
 void HypreDriveSolver::setupLegacy( HypreMatrix const & mat )
 {
-  m_legacySolver = std::make_unique< HypreSolver >( m_params );
+  if( !m_legacySolver )
+  {
+    m_legacySolver = std::make_unique< HypreSolver >( m_params );
+  }
+
   m_legacySolver->setup( mat );
   syncLegacyResult();
 }
@@ -1260,49 +1395,64 @@ bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
   DofManager const * const dofManager = mat.dofManager();
   stdVector< string > fieldNames;
   array1d< int > numComponentsPerField;
+  array1d< int > pointMarkers;
   if( dofManager != nullptr )
   {
     fieldNames = dofManager->fieldNames();
     numComponentsPerField = dofManager->numComponentsPerField();
+    dofManager->getLocalDofComponentLabels( pointMarkers );
   }
 
   hypre::hypreDrive::InputArgsParseTarget parseTarget;
-  if( !hypre::hypreDrive::buildInputArgsParseTarget( m_params, fieldNames, numComponentsPerField, parseTarget ) )
+  if( !hypre::hypreDrive::buildInputArgsParseTarget( m_params,
+                                                     fieldNames,
+                                                     numComponentsPerField,
+                                                     parseTarget ) )
   {
     return false;
   }
 
-  checkHypreDriveCall( HYPREDRV_Create( mat.comm(), &m_hypreDrive ), "HYPREDRV_Create" );
-  checkHypreDriveCall( HYPREDRV_SetLibraryMode( m_hypreDrive ), "HYPREDRV_SetLibraryMode" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetMatrix( m_hypreDrive, toHypreMatrix( mat.unwrappedIJ() ) ),
-                       "HYPREDRV_LinearSystemSetMatrix" );
-
-  m_dummyRhs.create( mat.numLocalRows(), mat.comm() );
-  m_dummySol.create( mat.numLocalRows(), mat.comm() );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetRHS( m_hypreDrive,
-                                                    reinterpret_cast< HYPRE_Vector >( m_dummyRhs.unwrappedIJ() ) ),
-                       "HYPREDRV_LinearSystemSetRHS" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetSolution( m_hypreDrive,
-                                                         reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
-                       "HYPREDRV_LinearSystemSetSolution" );
-
-  if( dofManager != nullptr )
-  {
-    array1d< int > pointMarkers;
-    dofManager->getLocalDofComponentLabels( pointMarkers );
-    checkHypreDriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypreDrive,
-                                                         LvArray::integerConversion< int >( pointMarkers.size() ),
-                                                         pointMarkers.data() ),
-                         "HYPREDRV_LinearSystemSetDofmap" );
-  }
+  std::string const configurationSignature = makeConfigurationSignature( parseTarget );
+  std::string const structureSignature =
+    makeStructureSignature( mat,
+                            fieldNames,
+                            numComponentsPerField,
+                            pointMarkers,
+                            m_hasExecutionContext ? &m_executionContext : nullptr );
 
   hypre::hypreDrive::logInputArgsParseTarget( m_params, parseTarget );
 
-  char * argv[] = { const_cast< char * >( parseTarget.argument.c_str() ) };
-  checkHypreDriveCall( HYPREDRV_InputArgsParse( 1, argv, m_hypreDrive ),
-                       "HYPREDRV_InputArgsParse" );
+  if( m_legacySolver )
+  {
+    m_legacySolver->clear();
+    m_legacySolver.reset();
+  }
+
+  bool const recreateHandle = ( m_hypreDrive == nullptr ) ||
+                              ( m_configurationSignature != configurationSignature ) ||
+                              ( m_structureSignature != structureSignature );
+
+  if( recreateHandle )
+  {
+    createHypreDrive( mat,
+                      parseTarget,
+                      configurationSignature,
+                      structureSignature,
+                      pointMarkers.toView() );
+  }
+  else
+  {
+    refreshBoundObjects( mat, pointMarkers.toView() );
+  }
+
+  syncExecutionAnnotations();
+
+  checkHypreDriveCall( HYPREDRV_AnnotateBegin( m_hypreDrive, "system", -1 ),
+                       "HYPREDRV_AnnotateBegin" );
   checkHypreDriveCall( HYPREDRV_LinearSolverCreate( m_hypreDrive ), "HYPREDRV_LinearSolverCreate" );
   checkHypreDriveCall( HYPREDRV_LinearSolverSetup( m_hypreDrive ), "HYPREDRV_LinearSolverSetup" );
+  checkHypreDriveCall( HYPREDRV_AnnotateEnd( m_hypreDrive, "system", -1 ),
+                       "HYPREDRV_AnnotateEnd" );
   checkHypreDriveCall( HYPREDRV_LinearSolverGetSetupTime( m_hypreDrive, &m_result.setupTime ),
                        "HYPREDRV_LinearSolverGetSetupTime" );
 
@@ -1411,6 +1561,78 @@ void HypreDriveSolver::syncLegacyResult() const
   }
 }
 
+void HypreDriveSolver::syncExecutionAnnotations()
+{
+  if( m_hypreDrive == nullptr || !m_hasExecutionContext )
+  {
+    return;
+  }
+
+  std::string const desiredTimestepScope = makeTimestepScopeName( m_executionContext );
+  std::string const desiredNewtonScope = makeNewtonScopeName( m_executionContext );
+
+  if( m_newtonScopeActive && m_activeNewtonScope != desiredNewtonScope )
+  {
+    checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 1,
+                                                    m_activeNewtonScope.c_str(), -1 ),
+                         "HYPREDRV_AnnotateLevelEnd" );
+    m_newtonScopeActive = false;
+    m_activeNewtonScope.clear();
+  }
+
+  if( m_timestepScopeActive && m_activeTimestepScope != desiredTimestepScope )
+  {
+    checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 0,
+                                                    m_activeTimestepScope.c_str(), -1 ),
+                         "HYPREDRV_AnnotateLevelEnd" );
+    m_timestepScopeActive = false;
+    m_activeTimestepScope.clear();
+  }
+
+  if( !m_timestepScopeActive )
+  {
+    checkHypreDriveCall( HYPREDRV_AnnotateLevelBegin( m_hypreDrive, 0,
+                                                      desiredTimestepScope.c_str(), -1 ),
+                         "HYPREDRV_AnnotateLevelBegin" );
+    m_timestepScopeActive = true;
+    m_activeTimestepScope = desiredTimestepScope;
+  }
+
+  if( !m_newtonScopeActive )
+  {
+    checkHypreDriveCall( HYPREDRV_AnnotateLevelBegin( m_hypreDrive, 1,
+                                                      desiredNewtonScope.c_str(), -1 ),
+                         "HYPREDRV_AnnotateLevelBegin" );
+    m_newtonScopeActive = true;
+    m_activeNewtonScope = desiredNewtonScope;
+  }
+}
+
+void HypreDriveSolver::closeExecutionAnnotations()
+{
+  if( m_hypreDrive != nullptr )
+  {
+    if( m_newtonScopeActive )
+    {
+      checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 1,
+                                                      m_activeNewtonScope.c_str(), -1 ),
+                           "HYPREDRV_AnnotateLevelEnd" );
+    }
+
+    if( m_timestepScopeActive )
+    {
+      checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 0,
+                                                      m_activeTimestepScope.c_str(), -1 ),
+                           "HYPREDRV_AnnotateLevelEnd" );
+    }
+  }
+
+  m_newtonScopeActive = false;
+  m_timestepScopeActive = false;
+  m_activeNewtonScope.clear();
+  m_activeTimestepScope.clear();
+}
+
 void HypreDriveSolver::destroyHypreDrive()
 {
   if( m_hypreDrive != nullptr )
@@ -1420,13 +1642,21 @@ void HypreDriveSolver::destroyHypreDrive()
   }
 }
 
+void HypreDriveSolver::resetHypreDriveState()
+{
+  closeExecutionAnnotations();
+  destroyHypreDrive();
+  m_dummyRhs.reset();
+  m_dummySol.reset();
+  m_configurationSignature.clear();
+  m_structureSignature.clear();
+}
+
 void HypreDriveSolver::clear()
 {
   Base::clear();
 
-  destroyHypreDrive();
-  m_dummyRhs.reset();
-  m_dummySol.reset();
+  resetHypreDriveState();
 
   if( m_legacySolver )
   {

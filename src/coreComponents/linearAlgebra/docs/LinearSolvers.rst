@@ -138,6 +138,8 @@ When ``hypredriveInputFile`` is provided, the file is **authoritative**:
 * GEOS passes the file path to hypredrive as-is.
 * GEOS does **not** merge, patch, or override the YAML ``solver`` or ``preconditioner`` blocks.
 * GEOS only injects the runtime matrix, vectors, and dof map.
+* Any ``preconditioner.reuse`` settings in that YAML file are preserved and become the source of
+  truth for reuse policy.
 
 This mode is recommended when:
 
@@ -149,12 +151,23 @@ For readability it is still a good idea to keep the XML ``solverType`` and
 ``preconditionerType`` consistent with the supplied YAML file, but the YAML file is the source
 of truth for hypreDrive solver options.
 
+When hypreDrive is active, GEOS keeps one ``HYPREDRV_t`` handle alive per
+``HypreDriveSolver`` and reuses that handle across compatible setup/solve cycles. GEOS only
+recreates the handle when the authoritative/generated YAML changes, when the system-setup
+timestamp changes, or when the matrix/dof-layout signature changes. This persistent handle is
+what allows hypreDrive's own preconditioner-reuse logic to work across repeated GEOS linear
+solves.
+
 Generated YAML from GEOS input
 ==============================
 
 If ``hypredriveInputFile`` is left empty, GEOS attempts to generate an equivalent hypreDrive
 input from the existing ``LinearSolverParameters`` values. This preserves the familiar GEOS XML
 workflow while letting hypreDrive manage the actual HYPRE solver objects.
+
+In this generated path, GEOS currently keeps ``preconditioner.reuse`` disabled. Reuse is
+available today through the authoritative-YAML mode, where the user can write the reuse block
+directly in hypreDrive YAML.
 
 The generated path currently supports the following iterative solver types:
 
@@ -254,7 +267,11 @@ The linear-solver ``logLevel`` can be used to inspect what GEOS is passing to hy
 * if ``logLevel >= 1`` and GEOS generates the YAML itself, GEOS logs the full generated YAML in the same delimited format,
 * GEOS emits this hypreDrive input dump once per hypreDrive-using solver during startup, after solver initialization has finalized the effective configuration and before the ``Import fields`` log section,
 * for those solvers, GEOS suppresses the usual GEOS linear-solver parameter table and logs only the hypreDrive YAML block,
-* the hypreDrive YAML does not repeat on later setups.
+* the hypreDrive YAML does not repeat on later setups,
+* when hypreDrive statistics printing is enabled, the destroy-time ``STATISTICS SUMMARY`` banner uses ``general.name`` when present in authoritative YAML, and GEOS labels generated-fallback objects with the owning solver name automatically,
+* internally, GEOS drives hypreDrive through handle-scoped ``system``, ``timestep``, and
+  ``newton`` annotations inside the hypreDrive adapter rather than from the generic physics
+  solver layer.
 
 This is especially useful when validating a new solver recipe or comparing the generated GEOS
 configuration with a standalone hypreDrive input file.

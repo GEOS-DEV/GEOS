@@ -1420,12 +1420,15 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
                                                      ParallelMatrix & matrix,
                                                      ParallelVector & rhs,
-                                                     ParallelVector & solution )
+                                                     ParallelVector & solution,
+                                                     integer const cycleNumber,
+                                                     integer const nonlinearIteration )
 {
   // Flip system sign to ensure matrix is positive definite
   matrix.scale( -1.0 );
   rhs.scale( -1.0 );
-  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution,
+                                        cycleNumber, nonlinearIteration );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
