@@ -293,6 +293,11 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
     tableData.addSeparator();
 
+    tableData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ),
+                      "all",
+                      CellType::MergeNext,
+                      stats.m_totalMass );
+
     tableData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
