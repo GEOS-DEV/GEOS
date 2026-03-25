@@ -41,7 +41,7 @@ void RegisterAndApplyField( DomainPartition & domain,
 {
   FieldSpecificationManager & fieldSpecificationManager = FieldSpecificationManager::getInstance();
 
-  FieldSpecificationBase & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecificationBase >( fieldName );
+  FieldSpecification & fieldSpec = fieldSpecificationManager.registerGroup< FieldSpecification >( fieldName );
   fieldSpec.setFieldName( fieldName );
   fieldSpec.setObjectPath( objectPath );
   fieldSpec.setMeshObjectPath( domain.getMeshBodies() );
@@ -52,7 +52,7 @@ void RegisterAndApplyField( DomainPartition & domain,
   fieldSpecificationManager.apply( 0.,
                                    domain.getMeshBody( 0 ).getBaseDiscretization(),
                                    "",
-                                   [&] ( FieldSpecificationBase const & bc,
+                                   [&] ( FieldSpecification const & bc,
                                          string const &,
                                          SortedArrayView< localIndex const > const & targetSet,
                                          Group & targetGroup,
