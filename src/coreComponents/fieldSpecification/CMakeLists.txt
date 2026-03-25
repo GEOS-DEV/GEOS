@@ -25,6 +25,7 @@ Contains:
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
      EquilibriumInitialCondition.hpp
+     FieldSpecification.hpp
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
      FieldSpecificationImpl.hpp
