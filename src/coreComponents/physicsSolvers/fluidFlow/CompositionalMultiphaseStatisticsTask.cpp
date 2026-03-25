@@ -213,7 +213,6 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   // output CSV header
   std::ofstream outputFile( getCsvFileName( meshName ) );
   outputFile << csvFormatter->headerToString();
-  GEOS_LOG( GEOS_FMT( "table {} : {}", meshName, csvFormatter->headerToString() ) );     // TODO : remove this log
 }
 
 string StatsTask::getCsvFileName( string_view meshName ) const
@@ -304,6 +303,11 @@ void StatsTask::outputLogStats( real64 const statsTime,
                       stringutilities::joinLambda( stats.m_phaseDynamicPoreVolume, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
+
+    tableData.addRow( GEOS_FMT( "Total fluid mass [{}]", massUnit ),
+                      "all",
+                      CellType::MergeNext,
+                      stats.m_totalMass );
 
     tableData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),

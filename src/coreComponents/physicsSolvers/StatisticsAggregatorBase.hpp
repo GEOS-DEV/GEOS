@@ -14,7 +14,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseStatisticsAg/gregator.hpp
+ * @file StatisticsAggregatorBase.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_STATISTICSAGGREGATOR_HPP_
@@ -111,7 +111,7 @@ public:
                                                 StatsGroupType & ) >;
 
   /**
-   * @brief TODO Document
+   * @brief A functor that can be used to register a statistics Group instance. Parameters:
    *        - dataRepository::Group & targetName: the parent Group,
    *        - string const & parent: name of the statistics target (i.e. region name).
    *        - string_view setName: name of the target element set. If none is specified (empty), "all" elements set is targeted.

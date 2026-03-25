@@ -139,7 +139,6 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
   subRegionStats.m_elemCount += targetSet.size();
 }
 
-
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {
