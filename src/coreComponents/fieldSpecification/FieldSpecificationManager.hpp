@@ -21,6 +21,7 @@
 #define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
 #include "FieldSpecificationBase.hpp"
+#include "FieldSpecificationImpl.hpp"
 
 #include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -224,7 +225,7 @@ public:
       if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
           ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
       {
-        fs.template apply< OBJECT_TYPE, BCTYPE, LAMBDA >( mesh, std::forward< LAMBDA >( lambda ) );
+        FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs, mesh, std::forward< LAMBDA >( lambda ) );
       }
     } );
   }
@@ -262,7 +263,7 @@ FieldSpecificationManager::
               Group & targetGroup,
               string const & targetField )
   {
-    fs.applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs, targetSet, time, targetGroup, targetField );
     lambda( fs, targetSet );
   } );
 }
@@ -286,7 +287,7 @@ FieldSpecificationManager::
               string const & targetField )
   {
     preLambda( fs, targetSet );
-    fs.applyFieldValue< FieldSpecificationEqual, POLICY >( targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs, targetSet, time, targetGroup, targetField );
     postLambda( fs, targetSet );
   } );
 }

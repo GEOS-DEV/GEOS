@@ -102,12 +102,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     // Step 2: apply the boundary condition
 
-    fs.apply< Group >( mesh,
-                       [&]( FieldSpecificationBase const &,
-                            string const & setName,
-                            SortedArrayView< localIndex const > const & targetSet,
-                            Group & targetGroup,
-                            string const fieldName )
+    FieldSpecificationImpl::apply< Group >( fs,
+                                            mesh,
+                                            [&]( FieldSpecificationBase const &,
+                                                 string const & setName,
+                                                 SortedArrayView< localIndex const > const & targetSet,
+                                                 Group & targetGroup,
+                                                 string const fieldName )
     {
       InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
 
@@ -299,14 +300,15 @@ void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
   {
     if( fs.initialCondition() )
     {
-      fs.apply< dataRepository::Group >( mesh,
-                                         [&]( FieldSpecificationBase const & bc,
-                                              string const &,
-                                              SortedArrayView< localIndex const > const & targetObject,
-                                              Group & targetGroup,
-                                              string const fieldName )
+      FieldSpecificationImpl::apply< dataRepository::Group >( fs,
+                                                              mesh,
+                                                              [&]( FieldSpecificationBase const & bc,
+                                                                   string const &,
+                                                                   SortedArrayView< localIndex const > const & targetObject,
+                                                                   Group & targetGroup,
+                                                                   string const fieldName )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+        FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetObject, 0.0, targetGroup, fieldName );
       } );
     }
   } );
