@@ -208,12 +208,11 @@ public:
   TableErrorListing & getErrorsList()
   { return *m_errors; }
 
-  /**
-   * @brief Gather all the TableData rows to the rank 0
-   * @param func The callable comparison function object to sort TableData rows, by default none
-   */
-  template< typename SortingFunc = std::nullptr_t >
-  void gatherRowsRank0( SortingFunc && func );
+  template< typename SortingFunc >
+  void sort( SortingFunc sortingFunctor )
+  {
+    std::sort( m_rows.begin(), m_rows.end(), sortingFunctor );
+  }
 
 private:
   /// @brief vector containing all rows with cell values
@@ -367,7 +366,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
 }
 
 // Custom Comp function;
-namespace tabledatasorting
+namespace tableDataSorting
 {
 /**
  * @brief Compare two string number string by  in ascending numerical order.

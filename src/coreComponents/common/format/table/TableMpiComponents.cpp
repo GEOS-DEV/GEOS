@@ -128,7 +128,6 @@ TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTa
   { // Packing
     if( totalSize > 0 )
     {
-      // std::cout <<  "Rank["<< MpiWrapper::commRank()<<"] total size "<< totalSize << std::endl;
       localTableData.serialize( serializedTableData );
     }
   }
@@ -188,7 +187,7 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
 
     if( status.m_isMasterRank )
     {
-      // tableData.sort( m_sortingFunctor );
+       tableDataGathered.sort( *m_sortingFunctor );
       TableTextFormatter::toStream( tableOutput, tableDataGathered );
     }
   }

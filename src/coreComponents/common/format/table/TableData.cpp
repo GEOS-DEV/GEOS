@@ -259,7 +259,7 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   return tableData1D;
 }
 
-bool tabledatasorting::positiveNumberStringComp( string_view s1, string_view s2 )
+bool tableDataSorting::positiveNumberStringComp( string_view s1, string_view s2 )
 {
   auto split = []( string_view s, string & intPart, string & decPart )
   {
