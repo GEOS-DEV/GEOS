@@ -237,7 +237,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
     outputRegionStats( GEOS_FMT( "{} / {} ({} elements)",
                                  meshTitle, setTitle, meshSetStats.m_elemCount ),
-                       meshLevelStats );
+                       meshSetStats );
 
     if( logPerRegion )
     {
