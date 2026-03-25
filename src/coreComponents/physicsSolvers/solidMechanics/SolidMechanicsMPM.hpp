@@ -363,7 +363,6 @@ public:
 
   void triggerEvents( const real64 dt,
                       const real64 time_n,
-                      DomainPartition & domain,
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
@@ -1008,6 +1007,13 @@ public:
   int factorial( int n );
 
 protected:
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
+
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos );
+
   virtual void postInputInitialization() override final;
 
   virtual void postRestartInitialization() override final;

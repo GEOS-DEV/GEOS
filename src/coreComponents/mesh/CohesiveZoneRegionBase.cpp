@@ -26,6 +26,7 @@ using namespace dataRepository;
 CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_initialized( 0 ),
+  m_enabled( 0 ),
   m_czVolumeNormalization( 1 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( 0 ),
@@ -38,37 +39,56 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
   m_referenceSurfaceNormal(),
   m_referenceArea()
 {
-//   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( "constitutiveModel", &m_constitutiveModelName ).
-    setInputFlag( InputFlags::FALSE).
-    setApplyDefaultValue( "" ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Name of cohesive region constitutive model");
-
   registerWrapper( "initialized", &m_initialized ).
-    setInputFlag( InputFlags::FALSE).
+    setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( m_initialized ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag marking whether cohesive zone has already be initialized.");
 
+  registerWrapper( "enabled", &m_enabled ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag marking if cohesive zone is currently enabled" );
+
+  registerWrapper( "constitutiveModel", &m_constitutiveModelName ).
+    setInputFlag( InputFlags::REQUIRED).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Name of cohesive region constitutive model");
+
+  registerWrapper( "czVolumeNormalization", &m_czVolumeNormalization ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czVolumeNormalization ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag to perform volume normalization of cohesive zone area");
+
+  registerWrapper( "computeParticleSurfaceNormalsAndPositions", &m_computeParticleSurfaceNormalsAndPositions ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_computeParticleSurfaceNormalsAndPositions ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag to compute particle surface normals and positions prior to initialization of cohesive zone");
+
+  registerWrapper( "m_normalsAndPositionsMethod", &m_normalsAndPositionsMethod ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_normalsAndPositionsMethod ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Method for computing particle surface normals and positions");
+
   registerWrapper( "tag", &m_tag ).
-   setInputFlag( InputFlags::FALSE ).
-   setApplyDefaultValue( m_tag ).
-   setRestartFlags( RestartFlags::WRITE_AND_READ ).
-   setDescription( "Tag ID");
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Tag ID");
 
   registerWrapper( "fieldA", &m_fieldA ).
-   setInputFlag( InputFlags::FALSE ).
-   setApplyDefaultValue( m_fieldA ).
-   setRestartFlags( RestartFlags::WRITE_AND_READ ).
-   setDescription( "Index of field A");
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_fieldA ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Index of field A");
 
   registerWrapper( "fieldB", &m_fieldB ).
-   setInputFlag( InputFlags::FALSE ).
-   setApplyDefaultValue( m_fieldB ).
-   setRestartFlags( RestartFlags::WRITE_AND_READ ).
-   setDescription( "Index of field B");
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( m_fieldB ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Index of field B");
 
  registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
     setInputFlag( InputFlags::FALSE ).

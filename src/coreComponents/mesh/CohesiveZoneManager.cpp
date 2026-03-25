@@ -40,8 +40,7 @@ class SpatialPartition;
 CohesiveZoneManager::CohesiveZoneManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  setInputFlags( InputFlags::OPTIONAL );
-  this->registerGroup< Group >( CohesiveZoneManager::groupKeyStruct::cohesiveZoneRegionsGroup() );
+  registerGroup< Group >( CohesiveZoneManager::groupKeyStruct::cohesiveZoneRegionsGroup() );
 }
 
 CohesiveZoneManager::~CohesiveZoneManager()

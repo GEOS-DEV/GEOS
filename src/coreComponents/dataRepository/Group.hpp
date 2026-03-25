@@ -778,7 +778,7 @@ public:
    * @param[in] xmlDocument the XML document that contains the targetNode.
    * @param[in] targetNode the XML node that to extract input values from.
    */
-  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+  virtual void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode );
   /**
    * @brief Same as processInputFileRecursive(xmlWrapper::xmlDocument &, xmlWrapper::xmlNode &)
@@ -787,7 +787,7 @@ public:
    * @param[in] targetNode the XML node that to extract input values from.
    * @param[in] targetNodePos the target node position, typically obtained with xmlDocument::getNodePosition().
    */
-  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+  virtual void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                   xmlWrapper::xmlNode & targetNode,
                                   xmlWrapper::xmlNodePos const & targetNodePos );
 
