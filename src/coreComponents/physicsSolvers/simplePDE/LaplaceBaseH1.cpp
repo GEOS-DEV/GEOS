@@ -20,6 +20,7 @@
 #include "LaplaceBaseH1.hpp"
 
 #include "dataRepository/InputFlags.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -216,15 +217,16 @@ void LaplaceBaseH1::
                                          NodeManager & targetGroup,
                                          string const & GEOS_UNUSED_PARAM( fieldName ) )
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< > >( targetSet,
-                                                                    time,
-                                                                    targetGroup,
-                                                                    m_fieldName,
-                                                                    dofManager.getKey( m_fieldName ),
-                                                                    dofManager.rankOffset(),
-                                                                    localMatrix,
-                                                                    localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy< > >( bc,
+                                                                                         targetSet,
+                                                                                         time,
+                                                                                         targetGroup,
+                                                                                         m_fieldName,
+                                                                                         dofManager.getKey( m_fieldName ),
+                                                                                         dofManager.rankOffset(),
+                                                                                         localMatrix,
+                                                                                         localRhs );
     } );
   } );
 }
