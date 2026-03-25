@@ -250,10 +250,9 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       arrayView1d< globalIndex const > const globalIperf =  wellSubRegionPerforationData->localToGlobalMap();
 
       array1d< integer > localCoords;
-      if( cellId != 0 )
+      if( cellId != -1 )
       {
         auto const & meshElems = wellSubRegionPerforationData->getMeshElements();
-
         localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
         localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
 
