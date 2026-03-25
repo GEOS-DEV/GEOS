@@ -31,7 +31,7 @@ namespace dataRepository
 {
 class Group;
 }
-class FieldSpecificationBase; // TODO: change to FieldSpecification
+class FieldSpecification;
 class FiniteElementBase;
 class DomainPartition;
 
