@@ -62,7 +62,7 @@ public:
    * @param mpiLayout MPI-specific layout information (default is having contiguous ranks data).
    */
   TableTextMpiFormatter( TableLayout const & tableLayout,
-                      TableMpiLayout mpiLayout = TableMpiLayout() );
+                         TableMpiLayout mpiLayout = TableMpiLayout() );
 
   /**
    * @brief Convert a data source to a table string.
@@ -116,6 +116,12 @@ private:
    * @return The parsed row as a vector of CellData.
    */
   stdVector< TableData::CellData > parseStringRow( string_view rowString ) const;
+
+  /**
+   * @brief
+   * @param localTableData
+   */
+  TableData gatherTableDataRank0( TableData const & localTableData ) const;
 
 
   /**

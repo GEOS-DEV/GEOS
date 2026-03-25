@@ -115,6 +115,58 @@ void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & 
   }
 }
 
+TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTableData ) const
+{
+  stdVector< buffer_unit_type > serializedTableData( 0 );
+  size_t totalSize = 0;
+
+  { // allocation
+    totalSize = localTableData.getSerializedSize();
+    serializedTableData.reserve( totalSize );
+  }
+
+  { // Packing
+    if( totalSize > 0 )
+    {
+      // std::cout <<  "Rank["<< MpiWrapper::commRank()<<"] total size "<< totalSize << std::endl;
+      localTableData.serialize( serializedTableData );
+    }
+  }
+  auto [globalLogRecords, counts, offsets] =
+    MpiWrapper::gatherBufferRank0< stdVector< buffer_unit_type > >( serializedTableData );
+
+
+  { // Unpacking
+    TableData tableDataGathered;
+    if( MpiWrapper::commRank() == 0 )
+    {
+      buffer_unit_type const * startBuff = globalLogRecords.data();
+      for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
+      {
+        integer byteFromThisRank = counts[idxRank];
+        buffer_unit_type const * endRowsBuff = startBuff + byteFromThisRank;
+        while( startBuff < endRowsBuff )
+        {
+          size_t byteFromThisRow = 0;
+          TableData::deserializeField( byteFromThisRow, startBuff, endRowsBuff );
+          buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
+          stdVector< TableData::CellData > row;
+          while( startBuff < endRowBuff )
+          {
+            CellType cellType;
+            TableData::deserializeField( cellType, startBuff, endRowBuff );
+            string cellValue;
+            TableData::deserializeField( cellValue, startBuff, endRowBuff );
+            row.push_back( {cellType, cellValue} );
+          }
+          tableDataGathered.addRow( row );
+        }
+      }
+    }
+    return tableDataGathered;
+  }
+}
+
 template<>
 void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
                                                    TableData const & tableData ) const
@@ -132,54 +184,12 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
 
   if( true )
   {
-    stdVector< buffer_unit_type > localTableData( 0 );
-    tableData.serialize( localTableData );
-
-    auto [globalLogRecords, counts, offsets] =
-      gatherTableDataOnRank0( tableData, X );
-
-    { //Deserialisation
-      if( !localTableData.empty())
-      {
-        for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
-        {
-          buffer_unit_type const * startBuff = localTableData.data();
-          integer byteFromThisRank = counts[idxRank];
-          buffer_unit_type const * endBuff= startBuff + byteFromThisRank;
-
-          TableData::deserializeField( startBuff, startBuff, endBuff );
-          buffer_unit_type const * endRowsBuff = startBuff + byteFromThisRank - sizeof(size_t);
-          while( startBuff < endRowsBuff )
-          {
-            size_t byteFromThisRow = 0;
-            TableData::deserializeField( startBuff, byteFromThisRow, endBuff );
-            buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
-            stdVector< TableData::CellData > row;
-            while( startBuff < endRowBuff )
-            {
-              size_t cellSize = 0;
-              TableData::deserializeField( startBuff, cellSize, endBuff );
-
-              size_t cellFirstArgSize = 0;
-              TableData::deserializeField( startBuff, cellFirstArgSize, endBuff );
-              CellType cellType;
-              TableData::deserializeField( startBuff, cellType, endBuff );
-
-              string cellValue;
-              TableData::deserializeField( startBuff, cellValue, endBuff );
-              row.push_back( {cellType, cellValue} );
-            }
-          }
-        }
-      }
-    }
-
-
+    TableData tableDataGathered = gatherTableDataRank0( tableData );
 
     if( status.m_isMasterRank )
     {
       // tableData.sort( m_sortingFunctor );
-      TableTextFormatter::toStream( tableOutput, tableData );
+      TableTextFormatter::toStream( tableOutput, tableDataGathered );
     }
   }
   else
