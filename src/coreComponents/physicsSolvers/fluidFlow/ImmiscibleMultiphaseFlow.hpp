@@ -264,7 +264,7 @@ private:
   void updatePhaseMobility( ObjectManagerBase & dataGroup ) const;
 
   /**
-   * @brief Utility function that encapsulates the call to FieldSpecificationBase::applyFieldValue in BC application
+   * @brief Utility function that encapsulates the call to FieldSpecificationImpl::applyFieldValue in BC application
    * @param[in] time_n the time at the beginning of the step
    * @param[in] dt the time step
    * @param[in] mesh the mesh level object
@@ -329,7 +329,7 @@ void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
   fsManager.apply< OBJECT_TYPE >( time_n + dt,
                                   mesh,
                                   fieldKey,
-                                  [&]( FieldSpecificationBase const & fs,
+                                  [&]( FieldSpecification const & fs,
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & lset,
                                        OBJECT_TYPE & targetGroup,
