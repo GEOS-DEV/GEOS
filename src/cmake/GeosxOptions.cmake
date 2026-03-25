@@ -36,7 +36,7 @@ endif()
 
 option( ENABLE_PVTPackage "" ON )
 
-option( ENABLE_HPCREACT "" ON )
+option( ENABLE_HPCREACT "" OFF )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 
@@ -122,14 +122,14 @@ if( GEOS_PARALLEL_LINK_JOBS )
 endif()
 
 # Physics packages
-option( GEOS_ENABLE_CONTACT "Enables contact physics package" ON )
-option( GEOS_ENABLE_FLUIDFLOW "Enables fluid flow physics package" ON )
-option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics package" ON )
-option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" ON )
-option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" ON )
+option( GEOS_ENABLE_CONTACT "Enables contact physics package" OFF )
+option( GEOS_ENABLE_FLUIDFLOW "Enables fluid flow physics package" OFF )
+option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics package" OFF )
+option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" OFF )
+option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" OFF )
 option( GEOS_ENABLE_SOLIDMECHANICS "Enables solid mechanics physics package" ON )
-option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" ON )
-option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" ON )
+option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" OFF )
+option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" OFF )
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)

@@ -307,6 +307,16 @@ void Graphite::postInputInitialization()
   //                  "max ep: " << m_maximumPlasticStrain );
 
   // Add elastic constants check
+  GEOS_THROW_IF( m_defaultYoungModulusAxial < 0.0, "defaultYoungModulusAxial must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransverse < 0.0, "defaultYoungModulusTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransverse < 0.0, "defaultShearModulusAxialTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusAxialPressureDerivative < 0.0, "defaultYoungModulusAxialPressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransversePressureDerivative < 0.0, "defaultYoungModulusTransversePressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransversePressureDerivative < 0.0, "defaultShearModulusAxialTransversePressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse < -0.499999,  "defaultPoissonRatioAxialTransverse must be > -0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse > 0.499999,  "defaultPoissonRatioAxialTransverse must be < 0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioTransverse < -0.499999,  "defaultPoissonRatioTransverse must be > -0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioTransverse > 0.499999,  "defaultPoissonRatioTransverse must be < 0.5 ", InputError );
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );

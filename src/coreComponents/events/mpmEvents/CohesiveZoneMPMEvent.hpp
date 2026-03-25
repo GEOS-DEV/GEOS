@@ -65,8 +65,6 @@ public:
   struct viewKeyStruct
   { 
     static constexpr char const * regionNamesString() { return "regionNames"; }
-    static constexpr char const * constitutiveModelsString() { return "constitutiveModels"; }
-    static constexpr char const * czTagsString() { return "czTags"; }
     static constexpr char const * czVolumeNormalizationString() { return "czVolumeNormalization"; }
     static constexpr char const * computeNormalsAndPositionsString() { return "computeNormalsAndPositions"; }
     static constexpr char const * normalsAndPositionsMethodString() { return "normalsAndPositionsMethod"; }
