@@ -122,8 +122,8 @@ class RegionStatistics : public RegionStatisticsBase
 {
 public:
 
-  /// Time of statistics computation
-  real64 m_time;
+  /// Element Count
+  globalIndex m_elemCount;
 
   /// average region pressure (numerator value before postAggregateCompute())
   real64 m_averagePressure;

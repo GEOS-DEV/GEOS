@@ -225,6 +225,8 @@ void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) c
 {
   stats.m_time = time;
 
+  stats.m_elemCount = 0;
+
   stats.m_averagePressure = 0.0;
   stats.m_maxPressure = 0.0;
   stats.m_minPressure = LvArray::NumericLimits< real64 >::max;
@@ -312,12 +314,16 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                       subRegionStats.m_trappedPhaseMass.toView(),
                                       subRegionStats.m_immobilePhaseMass.toView(),
                                       subRegionStats.m_componentMass.toView() );
+
+  subRegionStats.m_elemCount += targetSet.size();
 }
 
 
 void StatsAggregator::aggregateStats( RegionStatistics & stats,
                                       RegionStatistics const & other ) const
 {
+  stats.m_elemCount += other.m_elemCount;
+
   stats.m_averagePressure += other.m_averagePressure;
   stats.m_minPressure = LvArray::math::min( stats.m_minPressure, other.m_minPressure );
   stats.m_maxPressure = LvArray::math::max( stats.m_maxPressure, other.m_maxPressure );
@@ -347,6 +353,8 @@ void StatsAggregator::aggregateStats( RegionStatistics & stats,
 
 void StatsAggregator::mpiAggregateStats( RegionStatistics & stats ) const
 {
+  stats.m_elemCount = MpiWrapper::sum( stats.m_elemCount );
+
   stats.m_averagePressure = MpiWrapper::sum( stats.m_averagePressure );
   stats.m_minPressure = MpiWrapper::min( stats.m_minPressure );
   stats.m_maxPressure = MpiWrapper::max( stats.m_maxPressure );

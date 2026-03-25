@@ -222,7 +222,8 @@ void StatsTask::outputLogStats( real64 const statsTime,
   if( m_aggregator->isTargetingMultipleSets() )
   {
     string const allSetsTitle = m_aggregator->isRestrictedToSets() ? "Selected sets" : "All elements";
-    outputRegionStats( GEOS_FMT( "{} / {}", meshTitle, allSetsTitle ),
+    outputRegionStats( GEOS_FMT( "{} / {} ({} elements)",
+                                 meshTitle, allSetsTitle, meshLevelStats.m_elemCount ),
                        meshLevelStats );
   }
 
@@ -234,7 +235,8 @@ void StatsTask::outputLogStats( real64 const statsTime,
                             GEOS_FMT( "Element set: '{}'", meshSet.setName ) :
                             "All elements";
 
-    outputRegionStats( GEOS_FMT( "{} / {}", meshTitle, setTitle ),
+    outputRegionStats( GEOS_FMT( "{} / {} ({} elements)",
+                                 meshTitle, setTitle, meshSetStats.m_elemCount ),
                        meshLevelStats );
 
     if( logPerRegion )
@@ -243,7 +245,8 @@ void StatsTask::outputLogStats( real64 const statsTime,
                                          [&] ( CellElementRegion & region,
                                                RegionStatistics & setRegionStats )
       {
-        outputRegionStats( GEOS_FMT( "{} / {} / Region: '{}'", meshTitle, setTitle, region.getName() ),
+        outputRegionStats( GEOS_FMT( "{} / {} / Region: '{}' ({} elements)",
+                                     meshTitle, setTitle, region.getName(), setRegionStats.m_elemCount ),
                            setRegionStats );
       } );
     }

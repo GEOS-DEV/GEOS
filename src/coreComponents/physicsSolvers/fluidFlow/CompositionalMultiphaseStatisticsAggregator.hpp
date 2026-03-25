@@ -120,6 +120,9 @@ class RegionStatistics : public RegionStatisticsBase
 {
 public:
 
+  /// Element Count
+  globalIndex m_elemCount;
+
   /// average region pressure (numerator value before postAggregateCompute())
   real64 m_averagePressure;
   /// minimum region pressure
