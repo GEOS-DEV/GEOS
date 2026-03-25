@@ -141,7 +141,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
     MeshLevel & mesh = getMeshLevel( path );
     ElementRegionManager & elemManager = mesh.getElemManager();
     dataRepository::Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
-    StatsGroupType & meshStats = registerStatsFunc( statisticsGroup, ViewKeys::regionsStatisticsString(),
+    StatsGroupType & meshStats = registerStatsFunc( statisticsGroup, ViewKeys::setsStatisticsString(),
                                                     "", m_dataOutputEnabled );
     SetType meshLevelSetsCompound;
     bool isAnySetIntersects = false;
@@ -257,7 +257,7 @@ getMeshLevelStatistics( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
   dataRepository::Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
-  return instanceStatisticsGroup.getGroup< StatsGroupType >( ViewKeys::regionsStatisticsString() );
+  return instanceStatisticsGroup.getGroup< StatsGroupType >( ViewKeys::setsStatisticsString() );
 }
 
 template< typename Impl >
@@ -440,6 +440,9 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
                              [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
         {
           aggregateStats( regionStats, subRegionStats );
+          // sub-region stats finalization is disabled, it does not seem useful
+          // mpiAggregateStats( subRegionStats );
+          // postAggregateStats( subRegionStats );
         } );
 
         aggregateStats( setStats, regionStats );

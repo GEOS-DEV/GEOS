@@ -131,8 +131,6 @@ public:
     constexpr static char const * statisticsString() { return "statistics"; }
     /// String for the region statistics group
     constexpr static char const * setsStatisticsString() { return "setsStatistics"; }
-    /// String for the region statistics group
-    constexpr static char const * regionsStatisticsString() { return "regionsStatistics"; }
     /// on-purpose generated compound set name
     constexpr static char const * compoundSetNameString() { return "__compound"; }
   };

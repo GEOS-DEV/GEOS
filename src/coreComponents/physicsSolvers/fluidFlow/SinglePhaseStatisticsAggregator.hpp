@@ -64,10 +64,10 @@
  *          ____   |   |
  *          |      |   |-> statistics : Group (storage for all stats)
  *          |      |       |-> "flowStats" : Group (storage for this instance stats)
- *          |      |       |   |-> regionsStatistics : RegionStatistics (selected sets aggregate, mpi reduced)
+ *          |      |       |   |-> setsStatistics : RegionStatistics (selected sets aggregate, mpi reduced)
  *          |      |       |       |-> "..." : RegionStatistics (set aggregate, mpi reduced)
  *          |      |       |       |   |       - all requested sets
- *          |      |       |       |   |       - "all" if no set restriction
+ *          |      |       |       |   |       - "all" if no set restriction or if requested
  *          |      |       |       |   |       - "__compound" if a compoud set is needed to compute mesh-level stats
  *          |      |       |       |   |
  *          |      |       |       |   |-> "Channel" : RegionStatistics (region aggregate, mpi reduced)
