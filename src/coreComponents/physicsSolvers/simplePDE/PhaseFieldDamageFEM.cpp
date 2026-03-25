@@ -33,6 +33,7 @@
 #include "constitutive/solid/Damage.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/Kinematics.h"
 
@@ -596,15 +597,16 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
                                                   NodeManager & targetGroup,
                                                   string const GEOS_UNUSED_PARAM( fieldName ) ) -> void
     {
-      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                         parallelDevicePolicy< > >( targetSet,
-                                                                    time,
-                                                                    targetGroup,
-                                                                    m_fieldName,
-                                                                    dofManager.getKey( m_fieldName ),
-                                                                    dofManager.rankOffset(),
-                                                                    localMatrix,
-                                                                    localRhs );
+      FieldSpecificationImpl::applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                                              parallelDevicePolicy< > >( bc,
+                                                                                         targetSet,
+                                                                                         time,
+                                                                                         targetGroup,
+                                                                                         m_fieldName,
+                                                                                         dofManager.getKey( m_fieldName ),
+                                                                                         dofManager.rankOffset(),
+                                                                                         localMatrix,
+                                                                                         localRhs );
     } );
 
     fsManager.applyFieldValue< serialPolicy >( time, mesh, viewKeyStruct::coeffNameString() );
