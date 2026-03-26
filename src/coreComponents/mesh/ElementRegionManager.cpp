@@ -181,35 +181,6 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   } );
 }
 
-integer detectPerforationsAcrossRanks( TableData const & localPerfoData )
-{
-  stdVector< integer > counts;
-  integer const numRanks = MpiWrapper::commSize();
-  integer const numLocalValues  = static_cast< integer >(localPerfoData.getCellsData().size());
-
-  if( MpiWrapper::commRank() == 0 )
-  {
-    counts.resize( numRanks );
-  }
-
-  MpiWrapper::gather( &numLocalValues, 1, counts.data(), 1, 0 );
-
-  auto it = std::find_if( counts.begin(), counts.end(), []( integer const & rankCount )
-  {
-    return rankCount != 0;
-  } );
-
-  integer perfoDetected = false;
-  if( MpiWrapper::commRank() == 0 && it != counts.end())
-  {
-    perfoDetected = true;
-  }
-
-  MpiWrapper::bcast( &perfoDetected, 1, 0 );
-
-  return perfoDetected;
-}
-
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
                                           MeshLevel & meshLevel )
 {
@@ -292,7 +263,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       }
     }
 
-    integer perfoDetected = detectPerforationsAcrossRanks( localPerfoData );
+    integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
 
     if( perfoDetected )
     {
