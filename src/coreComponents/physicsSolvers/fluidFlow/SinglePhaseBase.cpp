@@ -133,14 +133,6 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
     setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
   
-  if( m_computePrescribedStressPath )
-  {
-    // Do it only for fractures 
-    if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
-    {
-      setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion, viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
-    }
-  }
 }
 
 void SinglePhaseBase::initializeAquiferBC() const
@@ -636,7 +628,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       applyDeltaVolume( subRegion );
 
       // This should fix NaN density in newly created fracture elements 
-      GEOS_LOG_RANK_0( "SinglePhaseBase::implicitStepSetup Cell/Surface" ); // AQUI
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
       // for thermal simulations, update solid internal energy
@@ -662,7 +653,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
       porousSolid.saveConvergedState();
 
       saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
-      GEOS_LOG_RANK_0( "AQUI SinglePhaseBase::implicitStepSetup only surface" ); // AQUI
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
@@ -1195,25 +1185,6 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  /*if(m_computePrescribedStressPath)
-  {
-    GEOS_LOG_RANK_0( "AQUI SinglePhaseBase::updateState" ); // AQUI
-    // m_updateStencil is temporary
-    //if(m_updateStencil) prepareStencilWeights( domain );
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-    {
-      mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                               auto & subRegion )
-      {
-        updateHydraulicAperture( subRegion );
-      } );
-    } );
-    // m_updateStencil is temporary
-    //if(m_updateStencil) updateStencilWeights( domain );
-  }*/
   
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1222,7 +1193,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      GEOS_LOG_RANK_0( "SinglePhaseBase::updateState Cell/Surface" ); // AQUI 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
@@ -1255,7 +1225,6 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
         temp.setValues< parallelDevicePolicy<> >( temp_n );
       }
 
-      GEOS_LOG_RANK_0( "SinglePhaseBase::resetStateToBeginningOfStep Cell/Surface" ); // AQUI 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 

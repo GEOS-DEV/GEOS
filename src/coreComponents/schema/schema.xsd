@@ -603,10 +603,6 @@
 					<xsd:selector xpath="BartonBandisPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveBartonBandisStressPathDrivenUniqueName">
-					<xsd:selector xpath="BartonBandisStressPathDriven" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="domainConstitutiveBiotPorosityUniqueName">
 					<xsd:selector xpath="BiotPorosity" />
 					<xsd:field xpath="@name" />
@@ -3074,8 +3070,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--contMultiplierDBC => Factor by which continuation parameter is changed every newton when DBC is used-->
 		<xsd:attribute name="contMultiplierDBC" type="real64" default="0.5" />
 		<!--continuationDBC => Flag for enabling continuation parameter-->
@@ -3204,8 +3198,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--formulationType => Type of formulation used.-->
@@ -3947,8 +3939,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--gravityDensityScheme => Scheme for density treatment in gravity-->
@@ -4466,8 +4456,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -4533,8 +4521,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
@@ -4641,8 +4627,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -4697,8 +4681,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -4992,8 +4974,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computePrescribedStressPath => Flag to determine whether or not this simulation computes the precribed stress path.-->
-		<xsd:attribute name="computePrescribedStressPath" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -6057,7 +6037,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BartonBandisPermeability" type="BartonBandisPermeabilityType" />
-			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -6185,22 +6164,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="referenceTotalStress" type="R1Tensor" use="required" />
 		<!--transversalPermeability => Default value of the permeability normal to the surface. If not specified the permeability is updated using the cubic law. -->
 		<xsd:attribute name="transversalPermeability" type="real64" default="-1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="BartonBandisStressPathDrivenType">
-		<!--biot => Biot coefficient.-->
-		<xsd:attribute name="biot" type="real64" use="required" />
-		<!--normalStiffness => Normal stiffness: Kni.-->
-		<xsd:attribute name="normalStiffness" type="real64" use="required" />
-		<!--poisson => Poisson ratio.-->
-		<xsd:attribute name="poisson" type="real64" use="required" />
-		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
-		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
-		<!--referencePressure => Reference pressure: p_0.-->
-		<xsd:attribute name="referencePressure" type="real64" use="required" />
-		<!--referenceTotalStress => Total stress at reference state: sigmaT_0.-->
-		<xsd:attribute name="referenceTotalStress" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

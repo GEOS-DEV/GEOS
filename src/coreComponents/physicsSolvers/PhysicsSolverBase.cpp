@@ -260,12 +260,10 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 
   {
     Timer timer( m_timers["step setup"] );
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::solverStep -> implicitStepSetup" ); // AQUI
     implicitStepSetup( time_n, dt, domain );
   }
 
   // currently the only method is implicit time integration
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::solverStep -> nonlinearImplicitStep" ); // AQUI
   real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
@@ -295,7 +293,6 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   stdVector< real64 > subStepDts( maxSubSteps, 0.0 );
   integer numOfSubSteps = 0;
 
-  GEOS_LOG_RANK_0( "PhysicsSolverBase::execute" ); // AQUI
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
@@ -646,7 +643,6 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
     applySystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain );
 
     // update non-primary variables (constitutive models)
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::lineSearch -> updateState lineSearchIteration: "<<lineSearchIteration ); // AQUI
     updateState( domain );
 
     // re-assemble system
@@ -840,7 +836,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       Timer timer( m_timers["reset state"] );
 
-      GEOS_LOG_RANK_0( "PhysicsSolverBase::nonlinearImplicitStep dtAttempt " << dtAttempt ); // AQUI 
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
     }
@@ -856,7 +851,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         outputConfigurationStatistics( domain );
       }
 
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::nonlinearImplicitStep -> solveNonlinearSystem" ); // AQUI
       bool const isNewtonConverged = solveNonlinearSystem( time_n,
                                                            stepDt,
                                                            cycleNumber,
@@ -880,7 +874,6 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
       else if( !attemptedSimplestConfiguration )
       {
-        GEOS_LOG_RANK_0( "PhysicsSolverBase::nonlinearImplicitStep !attemptedSimplestConfiguration dtAttempt " << dtAttempt ); // AQUI 
         resetStateToBeginningOfStep( domain );
         bool const breakLoop = resetConfigurationToDefault( domain );
         attemptedSimplestConfiguration = true;
@@ -1046,7 +1039,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
       {
         residualNorm = lastResidual;
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::solveNonlinearSystem -> lineSearch" ); // AQUI
         lineSearchSuccess = lineSearch( time_n,
                                         stepDt,
                                         cycleNumber,
@@ -1153,7 +1145,6 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers["update state"] );
 
       // update non-primary variables (constitutive models)
-    GEOS_LOG_RANK_0( "PhysicsSolverBase::solveNonlinearSystem -> updateState" ); // AQUI
       updateState( domain );
     }
 
@@ -1377,7 +1368,6 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
                                            ParallelVector & solution )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_RANK_0( "PhysicsSolverBase::solveLinearSystem" ); // AQUI
 
   rhs.scale( -1.0 );
   solution.zero();

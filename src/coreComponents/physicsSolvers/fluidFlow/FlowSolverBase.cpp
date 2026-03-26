@@ -36,7 +36,6 @@
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
-#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 
 namespace geos
 {
@@ -88,38 +87,13 @@ void updatePorosityAndPermeabilityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
 }
 
 template< typename POROUSWRAPPER_TYPE >
-void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE porousWrapper,
-                                                           SurfaceElementSubRegion & subRegion,
-                                                           arrayView1d< real64 const > const & pressure,
-                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
-                                                           arrayView1d< real64 const > const & newHydraulicAperture )
-{
-  //const int i = int(subRegion.size()/2); // AQUI
-  //GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " aperture " << newHydraulicAperture[i] <<" i = "<<i<<" updatePorosityAndPermeabilityFromPressureAndAperture");// AQUI
-     
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
-  {
-    for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
-    {
-       porousWrapper.updateStateFromPressureAndAperture( k, q,
-                                                        pressure[k],
-                                                        oldHydraulicAperture[k],
-                                                        newHydraulicAperture[k] );
-    }
-  } );
-}
-
-template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_TYPE porousWrapper,
                                                            SurfaceElementSubRegion & subRegion,
                                                            arrayView1d< real64 const > const & pressure,
                                                            arrayView1d< real64 const > const & oldHydraulicAperture,
-                                                           arrayView1d< real64 > const & newHydraulicAperture,
+                                                           arrayView1d< real64 const > const & newHydraulicAperture,
                                                            arrayView2d< real64 const > const & normalVector)
 {
-  //const int i = int(subRegion.size()/2); // AQUI
-  //GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " current aperture " << newHydraulicAperture[i] <<" i = "<<i<<" updatePorosityAndPermeabilityFromPressureApertureAndNormal");// AQUI
-     
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
     array1d < real64 > normal(3);
@@ -129,10 +103,10 @@ void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_T
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
        porousWrapper.updateStateFromPressureApertureAndNormal( k, q,
-                                                        pressure[k],
-                                                        oldHydraulicAperture[k],
-                                                        newHydraulicAperture[k],
-                                                        normal );
+                                                               pressure[k],
+                                                               oldHydraulicAperture[k],
+                                                               newHydraulicAperture[k],
+                                                               normal );
     }
   } );
 }
@@ -142,7 +116,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
   PhysicsSolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
-  m_computePrescribedStressPath( 0 ),
   m_keepVariablesConstantDuringInitStep( false ),
   m_isFixedStressPoromechanicsUpdate( false ),
   m_isJumpStabilized( false ),
@@ -152,11 +125,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
-
-  this->registerWrapper( viewKeyStruct::computePrescribedStressPathString(), &m_computePrescribedStressPath ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );
     
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
@@ -592,13 +560,11 @@ void FlowSolverBase::initializePorosityAndPermeability( MeshLevel & mesh, string
 
     // in some initializeState versions it uses newPorosity, so let's run updatePorosityAndPermeability to compute something
     saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
-    GEOS_LOG_RANK_0( "FlowSolverBase::initializePorosityAndPermeability Cell/Surface 1" ); // AQUI
     updatePorosityAndPermeability( subRegion );
     porousSolid.initializeState();
 
     // run final update
     saveConvergedState( subRegion );   // necessary for a meaningful porosity update in sequential schemes
-    GEOS_LOG_RANK_0( "FlowSolverBase::initializePorosityAndPermeability Cell/Surface 2" ); // AQUI
     updatePorosityAndPermeability( subRegion );
 
     // Save the computed porosity into the old porosity
@@ -637,7 +603,6 @@ void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string
 void FlowSolverBase::updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_RANK_0( "FlowSolverBase::updatePorosityAndPermeability CellElementSubRegion" ); // AQUI
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
   arrayView1d< real64 const > const & temperature = subRegion.getField< flow::temperature >();
@@ -667,14 +632,9 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_RANK_0( "AQUI FlowSolverBase::updatePorosityAndPermeability SurfaceElementSubRegion" ); // AQUI
-
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
-
-  arrayView1d< real64 > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hp
-
-  //arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
+  arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
@@ -684,40 +644,9 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    //updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
     updatePorosityAndPermeabilityFromPressureApertureAndNormal( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, normalVector );
 
   } );
-}
-
-void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegion ) const
-{
-  GEOS_MARK_FUNCTION;
-  
-  /*arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 > & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >(); // fluidFlow/FlowSolverBaseFields.hpp
-  arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
-  
-  string const & hydraulicApertureRelationName = 
-    subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
-  BartonBandisStressPathDriven const & hydraulicApertureModel = 
-    this->template getConstitutiveModel< BartonBandisStressPathDriven >( subRegion, hydraulicApertureRelationName );
-
-  BartonBandisStressPathDrivenUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
-  
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
-  {
-    array1d < real64 > normal(3);
-    normal[0] = normalVector[k][0];
-    normal[1] = normalVector[k][1];
-    normal[2] = normalVector[k][2];
-    
-    newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
-    
-  } );
-  const int i = int(subRegion.size()/2); 
-  GEOS_LOG_RANK_0( std::setprecision(15) << "Pressure " << pressure[i]<< " aperture " << newHydraulicAperture[i] <<" i = "<<i);
-  */
 }
 
 

@@ -113,8 +113,6 @@ public:
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
-  void updateHydraulicAperture( SurfaceElementSubRegion & subRegion ) const;
-
   /**
    * @brief Utility function to save the iteration state (useful for sequential simulations)
    * @param[in] domain the domain partition
@@ -263,9 +261,6 @@ protected:
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
-
-  /// flag to determine whether or not this simulation computes the precribed stress path
-  integer m_computePrescribedStressPath;
 
   /// the input temperature
   real64 m_inputTemperature;

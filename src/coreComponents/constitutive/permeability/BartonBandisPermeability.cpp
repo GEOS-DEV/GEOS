@@ -65,18 +65,8 @@ BartonBandisPermeability::BartonBandisPermeability( string const & name, Group *
     setApplyDefaultValue( { 85.0e6, 85.0e6, 105.0e6 } ). 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Total stress at reference state: sigmaT_0." );
-
-  //registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-/*void BartonBandisPermeability::allocateConstitutiveData( Group & parent,
-                                                           localIndex const numPts )
-{
-  // NOTE: enforcing 1 quadrature point
-  // m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
-
-  PermeabilityBase::allocateConstitutiveData( parent, numPts );
-}*/
 
 void BartonBandisPermeability::postInputInitialization()
 {

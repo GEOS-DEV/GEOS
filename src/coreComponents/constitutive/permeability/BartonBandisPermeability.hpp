@@ -33,17 +33,15 @@ class BartonBandisPermeabilityUpdate : public PermeabilityBaseUpdate
 public:
 
   BartonBandisPermeabilityUpdate( arrayView3d< real64 > const & permeability,
-                                    arrayView3d< real64 > const & dPerm_dPressure,
-                                    //arrayView4d< real64 > const & dPerm_dDispJump,
-                                    bool const updateTransversalComponent,
-                                    real64 const aperture0,
-                                       real64 const biot,
-                                       real64 const poisson,
-                                       real64 const normalStiffness,
-                                       real64 const referencePressure,
-                                       R1Tensor const &referenceTotalStress )
+                                  arrayView3d< real64 > const & dPerm_dPressure,
+                                  bool const updateTransversalComponent,
+                                  real64 const aperture0,
+                                  real64 const biot,
+                                  real64 const poisson,
+                                  real64 const normalStiffness,
+                                  real64 const referencePressure,
+                                  R1Tensor const &referenceTotalStress )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    //m_dPerm_dDispJump( dPerm_dDispJump ),
     m_numDimensionsToUpdate( 3 ),
     m_aperture0( aperture0 ),
     m_biot( biot ),
@@ -62,9 +60,7 @@ public:
   GEOS_HOST_DEVICE
   void compute( real64 const & oldHydraulicAperture,
                 real64 const & newHydraulicAperture,
-                //real64 const & dHydraulicAperture_dNormalJump,
                 arraySlice1d< real64 > const & permeability,
-                //arraySlice2d< real64 > const & dPerm_dDispJump,
                 real64 & dPerm_dHydraulicAperture  ) const
   {
     GEOS_UNUSED_VAR( oldHydraulicAperture );
@@ -75,9 +71,6 @@ public:
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
       permeability[dim]        = perm;
-      /*dPerm_dDispJump[dim][0]  = dPerm_dHydraulicAperture * dHydraulicAperture_dNormalJump;
-      dPerm_dDispJump[dim][1]  = 0.0;
-      dPerm_dDispJump[dim][2]  = 0.0;*/
     }
   }
 
@@ -98,12 +91,12 @@ public:
 
   GEOS_HOST_DEVICE
   virtual void updateFromPressureApertureAndNormal( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure,
-                                   real64 const & oldHydraulicAperture,
-                                   real64 & newHydraulicAperture,
-                                   array1d< real64 > const & normal,
-                                   real64 const & dHydraulicAperture_dNormalJump ) const override final
+                                                    localIndex const q,
+                                                    real64 const & pressure,
+                                                    real64 const & oldHydraulicAperture,
+                                                    real64 const & newHydraulicAperture,
+                                                    array1d< real64 > const & normal,
+                                                    real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
     GEOS_UNUSED_VAR( q, dHydraulicAperture_dNormalJump);
     // compute effective normal stress on the fracture
@@ -112,53 +105,60 @@ public:
     // compute new aperture using Barton Bandis model
     real64 dAperture_dStress = -1.0;
     real64 hydraulicAperture = computeHydraulicAperture(pressure, fractureStress, normal, dAperture_dStress, k);
-    //newHydraulicAperture = hydraulicAperture;
     
     real64 dPerm_dHydraulicAperture = -1.0;
     compute( oldHydraulicAperture,
-             hydraulicAperture, //newHydraulicAperture,
-             //dHydraulicAperture_dNormalJump,
+             hydraulicAperture, 
              m_permeability[k][0],
-             //m_dPerm_dDispJump[k][0],
              dPerm_dHydraulicAperture );
 
     real64 const dPerm_dPressure = dPerm_dHydraulicAperture * dAperture_dStress * dStress_dPressure;
-    //if ( k == 0 || k == 10 )
+    for( localIndex i=0; i < m_permeability[k][0].size(); i++ ) // size = 3
     {
-      GEOS_LOG_RANK_0( GEOS_FMT("  pressure                 {:.15e}", pressure) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  dStress_dPressure        {:.15e} fractureStress {:.15e}", dStress_dPressure, fractureStress ) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  dAperture_dStress        {:.15e} apertureBB {:.15e}", dAperture_dStress , hydraulicAperture) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  dPerm_dHydraulicAperture {:.15e} m_permeability[5][0][0] {:.15e}", dPerm_dHydraulicAperture, m_permeability[k][0][0] ) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  dPerm_dPressure          {:.15e} apertureField {:.15e}", dPerm_dPressure, newHydraulicAperture) );
-    
-    
-      for( localIndex i=0; i < m_permeability[k][0].size(); i++ ) // size = 3
-      {
-        m_dPerm_dPressure[k][0][i] = dPerm_dPressure; 
-        GEOS_LOG_RANK_0( GEOS_FMT("  m_dPerm_dPressure[{}][0][{}]   {:.15e} ", k, i, m_dPerm_dPressure[k][0][i]) );
-      }
-    
+      m_dPerm_dPressure[k][0][i] = dPerm_dPressure; 
     }
   }
 
-  /*GEOS_HOST_DEVICE
-  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
-                                                       localIndex const q,
-                                                       real64 const & oldHydraulicAperture,
-                                                       real64 const & newHydraulicAperture,
-                                                       real64 const & dHydraulicAperture_dNormalJump,
-                                                       real64 const & pressure,
-                                                       real64 const ( &dispJump )[3],
-                                                       real64 const ( &traction )[3] ) const override final
-  {
-    GEOS_UNUSED_VAR( dispJump, traction, pressure );
 
-    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
-  }*/
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 computeHydraulicAperture( real64 const pressure, real64 const normalComponentOfStressOnFracture, 
+                                   array1d< real64 > const & normal, real64 & dAperture_dStress, int k ) const
+  {
+    real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
+
+    // Computation of maximum fracture closure (Barton-Bandis parameter)
+    // Fracture traction via Terzaghi's Principle
+    real64 const sigma_c0[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
+                                m_referenceTotalStress[1] * normal[1] - biot_pressure * normal[1],
+                                m_referenceTotalStress[2] * normal[2] - biot_pressure * normal[2] };
+    real64 const sigma_n0 = sigma_c0[0]*normal[0] + 
+                            sigma_c0[1]*normal[1] + 
+                            sigma_c0[2]*normal[2];
+    real64 const g0 = (-m_normalStiffness*m_aperture0 + 
+                        std::sqrt((m_normalStiffness*m_aperture0)*
+                        (m_normalStiffness*m_aperture0) + 
+                        4.0*m_normalStiffness*sigma_n0*m_aperture0)) / (2.0*m_normalStiffness);
+    real64 const maximumFractureClosure = g0 + m_aperture0; // Vm -> a_m -> aperture at free-stress state
+
+    // Normal effective stress on the fracture
+    real64 const fractureClosure = normalComponentOfStressOnFracture*maximumFractureClosure/(m_normalStiffness*maximumFractureClosure + normalComponentOfStressOnFracture); // gn_BB
+
+    // Compute the new aperture which is equal to the aperture at the free-stress state 
+    // minus the closure from the free-stress state to the current state
+    real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
+
+    // derivative
+    real64 const Kni_apert = m_normalStiffness*maximumFractureClosure;
+    real64 const Kni_aper_stress = Kni_apert + normalComponentOfStressOnFracture;
+    dAperture_dStress = -(Kni_apert*maximumFractureClosure) / (Kni_aper_stress * Kni_aper_stress);
+
+    return newHydraulicAperture;
+  }
 
 private:
 
-  //arrayView4d< real64 > m_dPerm_dDispJump;
   int m_numDimensionsToUpdate;
 
 
@@ -193,56 +193,12 @@ private:
     array1d< real64 > effectiveStressOnFracture(3); // sigma_c
     matmul(effectiveStress, normal, effectiveStressOnFracture);
     real64 normalComponentOfStressOnFracture = dot(effectiveStressOnFracture, normal); // sigmaN_N
-    // derivative
+    // derivative 
     dStress_dPressure = -m_biot;
 
     return normalComponentOfStressOnFracture;
   }
 
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  real64 computeHydraulicAperture( real64 const pressure, real64 const normalComponentOfStressOnFracture, 
-                                   array1d< real64 > const & normal, real64 & dAperture_dStress, int k ) const
-  {
-    real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
-
-    // Computation of maximum fracture closure (Barton-Bandis parameter)
-    // Fracture traction via Terzaghi's Principle
-    real64 const sigma_c0[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
-                                m_referenceTotalStress[1] * normal[1] - biot_pressure * normal[1],
-                                m_referenceTotalStress[2] * normal[2] - biot_pressure * normal[2] };
-    real64 const sigma_n0 = sigma_c0[0]*normal[0] + 
-                            sigma_c0[1]*normal[1] + 
-                            sigma_c0[2]*normal[2];
-    real64 const g0 = (-m_normalStiffness*m_aperture0 + 
-                        std::sqrt((m_normalStiffness*m_aperture0)*
-                        (m_normalStiffness*m_aperture0) + 
-                        4.0*m_normalStiffness*sigma_n0*m_aperture0)) / (2.0*m_normalStiffness);
-    real64 const maximumFractureClosure = g0 + m_aperture0; // Vm -> a_m -> aperture at free-stress state
-
-    // Normal effective stress on the fracture
-    real64 const fractureClosure = normalComponentOfStressOnFracture*maximumFractureClosure/(m_normalStiffness*maximumFractureClosure + normalComponentOfStressOnFracture); // gn_BB
-
-    // Compute the new aperture which is equal to the aperture at the free-stress state 
-    // minus the closure from the free-stress state to the current state
-    real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
-
-    real64 const Kni_apert = m_normalStiffness*maximumFractureClosure;
-    real64 const Kni_aper_stress = Kni_apert + normalComponentOfStressOnFracture;
-    dAperture_dStress = -(Kni_apert*maximumFractureClosure) / (Kni_aper_stress * Kni_aper_stress);
-
-    //if ( k == 0 || k ==10 )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT("k {}     m_aperture0 {}", k, m_aperture0) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  sigmaN_N               {:.15e}", normalComponentOfStressOnFracture) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  maximumFractureClosure {:.15e}", maximumFractureClosure) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  fractureClosure        {:.15e}", fractureClosure) );
-      GEOS_LOG_RANK_0( GEOS_FMT("  g0   {:.15e} sigma_n0 {:.15e}", g0, sigma_n0) );
-    }
-
-
-    return newHydraulicAperture;
-  }
 };
 
 
@@ -255,9 +211,6 @@ public:
   static string catalogName() { return "BartonBandisPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
-
-  /*virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numPts ) override;*/
 
   virtual void initializeState() const override final;
 
@@ -272,7 +225,6 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          //m_dPerm_dDispJump,
                           m_updateTransversalComponent, 
                           m_aperture0, 
                           m_biot, 
@@ -302,10 +254,7 @@ protected:
 
 private:
 
-  array3d< real64 > m_dPerm_dAperture;
-
-  /// Derivative of fracture permeability w.r.t. displacement jump
-  //array4d< real64 > m_dPerm_dDispJump;
+  //array3d< real64 > m_dPerm_dAperture;
 
   real64 m_transversalPermeability;
 

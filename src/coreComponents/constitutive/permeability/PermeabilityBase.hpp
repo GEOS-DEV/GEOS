@@ -57,23 +57,13 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual void updateFromAperture( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & oldHydraulicAperture,
-                                   real64 const & newHydraulicAperture,
-                                   real64 const & dHydraulicAperture_dNormalJump ) const
-  {
-    GEOS_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
-  }
-
-  GEOS_HOST_DEVICE
   virtual void updateFromPressureApertureAndNormal( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & pressure,
-                                   real64 const & oldHydraulicAperture,
-                                   real64 & newHydraulicAperture,
-                                   array1d< real64 > const & normal,
-                                   real64 const & dHydraulicAperture_dNormalJump ) const
+                                                    localIndex const q,
+                                                    real64 const & pressure,
+                                                    real64 const & oldHydraulicAperture,
+                                                    real64 const & newHydraulicAperture,
+                                                    array1d< real64 > const & normal,
+                                                    real64 const & dHydraulicAperture_dNormalJump ) const
   {
     GEOS_UNUSED_VAR( k, q, pressure, oldHydraulicAperture, newHydraulicAperture, normal, dHydraulicAperture_dNormalJump );
   }

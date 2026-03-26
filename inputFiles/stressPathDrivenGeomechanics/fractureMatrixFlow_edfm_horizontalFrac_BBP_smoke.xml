@@ -46,7 +46,11 @@
     <PackCollection
       name="apertureCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="hydraulicAperture"/>           
+      fieldName="hydraulicAperture"/> 
+    <PackCollection
+      name="permeabilityCollection"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="fracturePerm_permeability"/>           
   </Tasks>
   
   <Events
@@ -72,6 +76,7 @@
       name="pressureHistoryOutput"
       targetExactTimestep="0"
       target="/Outputs/pressureHistoryOutput"/> 
+	  
     <PeriodicEvent
       name="apertureHistoryCollection"
       target="/Tasks/apertureCollection" />
@@ -79,6 +84,14 @@
       name="apertureHistoryOutput"
       targetExactTimestep="0"
       target="/Outputs/apertureHistoryOutput"/> 
+	  
+    <PeriodicEvent
+      name="permeabilityHistoryCollection"
+      target="/Tasks/permeabilityCollection" />
+    <PeriodicEvent
+      name="permeabilityHistoryOutput"
+      targetExactTimestep="0"
+      target="/Outputs/permeabilityHistoryOutput"/> 
   </Events>
  
  
@@ -100,5 +113,9 @@
       name="apertureHistoryOutput"
       sources="{/Tasks/apertureCollection}"
       filename="fracAperture_history" />
+    <TimeHistory
+      name="permeabilityHistoryOutput"
+      sources="{/Tasks/permeabilityCollection}"
+      filename="fracPermeability_history" />
   </Outputs>
 </Problem>

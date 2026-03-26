@@ -10,7 +10,7 @@
       targetRegions="{ RockMatrix, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="20"/>
+        newtonMaxIter="30"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -98,7 +98,7 @@
 	  normalStiffness="10.0e9"
 	  referenceAperture="1.0e-4"
 	  referencePressure="1e7"
-	  referenceTotalStress="{ 40.0e6, 40.0e6, 20.0e6 }"/>
+	  referenceTotalStress="{ 10.0e6, 10.0e6, 30.0e6 }"/>
     
   </Constitutive>
 
@@ -125,7 +125,7 @@
       name="initialFracturePressure"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions/Fracture"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="pressure"
       scale="1.0e7"/>
 	  
@@ -135,7 +135,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
-      scale="1.0e7"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="sourceTerm"
@@ -148,7 +148,7 @@
       name="sinkTerm"
       objectPath="ElementRegions/Fracture"
       fieldName="pressure"
-      scale="1.05e07"
+      scale="1.904100e7"
       setNames="{ sink }"/>
 
   </FieldSpecifications>
