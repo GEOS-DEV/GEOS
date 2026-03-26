@@ -206,7 +206,7 @@
 
     <!-- stats table to compare the domain element set with the well surroundings element set -->
     <CompositionalMultiphaseStatistics 
-      name="domainFlowStats"
+      name="domainAndInjectorFlowStats"
       flowSolverName="compositionalMultiphaseFlow"
       setNames="{all, injectorSurrounding}"
       logLevel="1"
@@ -214,7 +214,7 @@
 
     <!-- stats table to compare the domain top part with the bottom part -->
     <CompositionalMultiphaseStatistics 
-      name="domainFlowStats"
+      name="domainTopAndDownFlowStats"
       flowSolverName="compositionalMultiphaseFlow"
       setNames="{domainBottom, domainTop}"
       logLevel="1"
