@@ -20,12 +20,10 @@
 #ifndef GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 #define GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP
 
-#include "common/StdContainerWrappers.hpp"
 #include "common/Units.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "TableTypes.hpp"
-#include <cstddef>
 
 namespace geos
 {

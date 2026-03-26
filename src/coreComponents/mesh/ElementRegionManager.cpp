@@ -13,14 +13,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <algorithm>
 #include <map>
 #include <vector>
 
 #include "ElementRegionManager.hpp"
 
 #include "common/DataLayouts.hpp"
-#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
 #include "mesh/WellElementSubRegion.hpp"
