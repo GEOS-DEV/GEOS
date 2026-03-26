@@ -381,7 +381,7 @@ public:
     }
 
 
-    MpiWrapper::gather( &numLocalValues , 1, gatherResult.counts.data(), 1, 0 );
+    MpiWrapper::gather( &numLocalValues, 1, gatherResult.counts.data(), 1, 0 );
 
     if( MpiWrapper::commRank() == 0 )
     {
@@ -395,7 +395,7 @@ public:
     }
 
     MpiWrapper::gatherv( localBuffer.data(),
-                         numLocalValues ,
+                         numLocalValues,
                          gatherResult.data.data(),
                          gatherResult.counts.data(),
                          gatherResult.offsets.data(),

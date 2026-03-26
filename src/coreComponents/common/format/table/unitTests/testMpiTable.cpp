@@ -135,7 +135,7 @@ TEST( testMpiTables, testDifferentRankData )
                     oss.str().data() );
     }
   }
-   
+
 }
 
 TEST( testMpiTables, testSortingMethod )

@@ -118,8 +118,8 @@ private:
   stdVector< TableData::CellData > parseStringRow( string_view rowString ) const;
 
   /**
-   * @brief
-   * @param localTableData
+   * @brief Gather all the TableData to the rank 0.
+   * @param localTableData The local TableData to send to rank 0;
    */
   TableData gatherTableDataRank0( TableData const & localTableData ) const;
 
