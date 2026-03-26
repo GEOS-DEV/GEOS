@@ -17,31 +17,34 @@
  * @file ImmiscibleMultiphaseFlow.cpp
  */
 
-#include "ImmiscibleMultiphaseFlow.hpp"
+ #include "ImmiscibleMultiphaseFlow.hpp"
 
-#include "FlowSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+ #include "FlowSolverBaseFields.hpp"
+ #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
+ #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+ #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+ #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
+ #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/CapillaryPressureUpdateKernel.hpp"
+ #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
+ #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+ #include "constitutive/ConstitutiveManager.hpp"
+ #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
+ #include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
+ #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
-#include "fieldSpecification/EquilibriumInitialCondition.hpp"
-#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
-#include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
+ #include "fieldSpecification/EquilibriumInitialCondition.hpp"
+ #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
+ #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
+ #include "physicsSolvers/LogLevelsInfo.hpp"
 
-#include "constitutive/ConstitutivePassThru.hpp"
-#include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
+ #include "constitutive/ConstitutivePassThru.hpp"
+ #include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 
-#include <cmath>
+ #include <cmath>
 
-#if defined( __INTEL_COMPILER )
-#pragma GCC optimize "O0"
-#endif
+ #if defined( __INTEL_COMPILER )
+ #pragma GCC optimize "O0"
+ #endif
 
 namespace geos
 {
@@ -90,7 +93,12 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
+    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+
+  this->registerWrapper( viewKeyStruct::interfaceFaceSetNamesString(),
+                         &m_interfaceFaceSetNames ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the interface face sets" );
 }
 
 void ImmiscibleMultiphaseFlow::postInputInitialization()
@@ -143,9 +151,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
         string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
         GEOS_THROW_IF( capPresName.empty(),
-                       GEOS_FMT( "Capillary pressure model not found on subregion {}",
-                                 subRegion.getName() ),
-                       InputError, getDataContext(), subRegion.getDataContext() );
+                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
+                                 getDataContext(), subRegion.getDataContext() ),
+                       InputError );
       }
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
@@ -169,7 +177,7 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numPhases );
 
       subRegion.registerField< dPhaseMobility >( getName() ).
-        reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases ); // dP, dS
+        reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases );  // dP, dS
 
     } );
 
@@ -203,6 +211,194 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
       temp.setValues< parallelHostPolicy >( m_inputTemperature );
     } );
   } );
+
+  // ***** Create FaceElements *****
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & GEOS_UNUSED_PARAM( regionNames ))
+  {
+
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    Group const & faceSetGroup = faceManager.sets();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    m_interfaceConstitutivePairs.resize( m_interfaceFaceSetNames.size() );
+    m_interfacePairRegionIndices.resize( m_interfaceFaceSetNames.size() );
+    // Explicitly initialize all tuple entries to nullptr so that ranks without
+    // interface face elements don't leave garbage pointers in the tuples
+    for( size_t i = 0; i < m_interfaceConstitutivePairs.size(); ++i )
+    {
+      m_interfaceConstitutivePairs[i][0] = std::make_tuple( nullptr, nullptr, nullptr );
+      m_interfaceConstitutivePairs[i][1] = std::make_tuple( nullptr, nullptr, nullptr );
+      m_interfacePairRegionIndices[i] = {{ -1, -1 }};
+    }
+
+    // this is the FaceElement Level
+    for( size_t surfaceRegionIndex=0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
+    {
+      string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
+      SortedArrayView< localIndex const > const & faceSet = faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName );
+      SurfaceElementRegion & faceRegion = elemManager.getRegion< SurfaceElementRegion >( faceSetName );
+
+      for( localIndex const faceIndex : faceSet )
+      {
+        localIndex const faceIndices[2] = { faceIndex, faceIndex };
+        faceRegion.addToSurfaceMesh( &faceManager, faceIndices );
+      }
+
+      FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
+      FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
+
+      // Precompute numRegions once (it's constant for all face elements)
+      localIndex const numRegions = elemManager.numRegions();
+      constexpr int MAX_REASONABLE_REGION_INDEX = 100000;
+
+      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *,
+                                                                                                                                                                       CellElementSubRegion * >
+      {
+
+        int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][0];
+        int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][1];
+        int subRegionIdx0 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][0];
+        int subRegionIdx1 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][1];
+
+        // Fast validation checks (ordered from cheapest to most expensive)
+        if( regionIdx0 < 0 || regionIdx1 < 0 ||
+            subRegionIdx0 < 0 || subRegionIdx1 < 0 )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        if( regionIdx0 > MAX_REASONABLE_REGION_INDEX || regionIdx1 > MAX_REASONABLE_REGION_INDEX )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        if( static_cast< localIndex >( regionIdx0 ) >= numRegions ||
+            static_cast< localIndex >( regionIdx1 ) >= numRegions )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        // Try to get regions - they might not exist on this MPI rank even if index is in range
+        ElementRegionBase * region0BasePtr = nullptr;
+        ElementRegionBase * region1BasePtr = nullptr;
+
+        try
+        {
+          region0BasePtr = &elemManager.getRegion< ElementRegionBase >( regionIdx0 );
+          region1BasePtr = &elemManager.getRegion< ElementRegionBase >( regionIdx1 );
+        }
+        catch( std::exception const & )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        // Check if they are CellElementRegion (interface conditions only apply to cell-to-cell interfaces)
+        CellElementRegion * cellRegion0 = dynamic_cast< CellElementRegion * >( region0BasePtr );
+        CellElementRegion * cellRegion1 = dynamic_cast< CellElementRegion * >( region1BasePtr );
+
+        if( cellRegion0 == nullptr || cellRegion1 == nullptr )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        // Validate subregion indices before accessing
+        if( static_cast< localIndex >( subRegionIdx0 ) >= cellRegion0->numSubRegions() ||
+            static_cast< localIndex >( subRegionIdx1 ) >= cellRegion1->numSubRegions() )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        CellElementSubRegion * subRegion0 = &cellRegion0->getSubRegion< CellElementSubRegion >( subRegionIdx0 );
+        CellElementSubRegion * subRegion1 = &cellRegion1->getSubRegion< CellElementSubRegion >( subRegionIdx1 );
+        return std::make_tuple( subRegion0, subRegion1 );
+      };
+
+      //  std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( surfaceRegionIndex );
+      //  CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
+      //  CellElementSubRegion * subRegion1 = std::get< 1 >( subRegionPair );
+
+      //  // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
+      //  std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
+      //  std::string & relPermName1 = subRegion1->getReference< std::string >( viewKeyStruct::relPermNamesString());
+      //  RelativePermeabilityBase * relPerm0 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion0, relPermName0 );
+      //  RelativePermeabilityBase * relPerm1 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion1, relPermName1 );
+
+      //  std::string & cappresName0 = subRegion0->getReference< std::string >( viewKeyStruct::capPressureNamesString());
+      //  std::string & cappresName1 = subRegion1->getReference< std::string >( viewKeyStruct::capPressureNamesString());
+      //  CapillaryPressureBase * capPressure0 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion0, cappresName0 );
+      //  CapillaryPressureBase * capPressure1 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion1, cappresName1 );
+
+      //  std::string & fluidName0 = subRegion0->getReference< std::string >( viewKeyStruct::fluidNamesString() );
+      //  std::string & fluidName1 = subRegion1->getReference< std::string >( viewKeyStruct::fluidNamesString() );
+
+      //  TwoPhaseImmiscibleFluid * fluid0 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion0, fluidName0 );
+      //  TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion1, fluidName1 );
+
+      //  m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
+      //  m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
+      // Find a representative face element that connects two CellElementRegion objects
+// (not SurfaceElementRegion, which we don't handle for interface conditions)
+      CellElementSubRegion * subRegion0 = nullptr;
+      CellElementSubRegion * subRegion1 = nullptr;
+      bool foundValidFei = false;
+      localIndex pairRegionIdx0 = -1;
+      localIndex pairRegionIdx1 = -1;
+
+// Single loop to find a valid face element (avoids redundant scanning)
+      for( localIndex i = 0; i < faceElementsToCells.size(); ++i )
+      {
+        // Quick check: must have two adjacent cells with non-negative region indices
+        if( faceElementsToCells.m_toElementRegion[i].size() >= 2 &&
+            faceElementsToCells.m_toElementRegion[i][0] >= 0 &&
+            faceElementsToCells.m_toElementRegion[i][1] >= 0 )
+        {
+          std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( i );
+          CellElementSubRegion * testSubRegion0 = std::get< 0 >( subRegionPair );
+          CellElementSubRegion * testSubRegion1 = std::get< 1 >( subRegionPair );
+
+          if( testSubRegion0 != nullptr && testSubRegion1 != nullptr )
+          {
+            subRegion0 = testSubRegion0;
+            subRegion1 = testSubRegion1;
+            pairRegionIdx0 = faceElementsToCells.m_toElementRegion[i][0];
+            pairRegionIdx1 = faceElementsToCells.m_toElementRegion[i][1];
+            foundValidFei = true;
+            break;
+          }
+        }
+      }
+
+// If no valid face element connecting two CellElementRegion objects, skip this surface region
+      if( !foundValidFei )
+      {
+        continue;
+      }
+
+// get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
+      std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
+      std::string & relPermName1 = subRegion1->getReference< std::string >( viewKeyStruct::relPermNamesString());
+      RelativePermeabilityBase * relPerm0 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion0, relPermName0 );
+      RelativePermeabilityBase * relPerm1 = &getConstitutiveModel< RelativePermeabilityBase >( *subRegion1, relPermName1 );
+
+      std::string & cappresName0 = subRegion0->getReference< std::string >( viewKeyStruct::capPressureNamesString());
+      std::string & cappresName1 = subRegion1->getReference< std::string >( viewKeyStruct::capPressureNamesString());
+      CapillaryPressureBase * capPressure0 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion0, cappresName0 );
+      CapillaryPressureBase * capPressure1 = &getConstitutiveModel< CapillaryPressureBase >( *subRegion1, cappresName1 );
+
+      std::string & fluidName0 = subRegion0->getReference< std::string >( viewKeyStruct::fluidNamesString() );
+      std::string & fluidName1 = subRegion1->getReference< std::string >( viewKeyStruct::fluidNamesString() );
+
+      TwoPhaseImmiscibleFluid * fluid0 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion0, fluidName0 );
+      TwoPhaseImmiscibleFluid * fluid1 = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( *subRegion1, fluidName1 );
+
+      m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
+      m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
+      m_interfacePairRegionIndices[surfaceRegionIndex] = {{ pairRegionIdx0, pairRegionIdx1 }};
+
+    }
+  } );
+
 }
 
 
@@ -265,7 +461,8 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      isothermalCompositionalMultiphaseBaseKernels::
+      // isothermalCompositionalMultiphaseBaseKernels::
+      immiscibleMultiphaseKernels::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -373,7 +570,7 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
     permeabilityModel.scaleHorizontalPermeability( netToGross );
     porousSolid.scaleReferencePorosity( netToGross );
-    saveConvergedState( subRegion ); // necessary for a meaningful porosity update in sequential schemes
+    saveConvergedState( subRegion );  // necessary for a meaningful porosity update in sequential schemes
     updatePorosityAndPermeability( subRegion );
 
     // Now, we initialize and update each constitutive model one by one
@@ -402,9 +599,9 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
     string const & relpermName = subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase & relPermMaterial =
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
-    relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
+    relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );  // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
-    relPermMaterial.saveConvergedState(); // this needs to happen after calling updateRelPermModel
+    relPermMaterial.saveConvergedState();  // this needs to happen after calling updateRelPermModel
 
     // 4.4 Then, we initialize/update the capillary pressure model
     //
@@ -425,6 +622,7 @@ void ImmiscibleMultiphaseFlow::initializeFluidState( MeshLevel & mesh,
       CapillaryPressureBase const & capPressureMaterial =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
       capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
+      capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       updateCapPressureModel( subRegion );
     }
 
@@ -472,6 +670,53 @@ void ImmiscibleMultiphaseFlow::initializePostInitialConditionsPreSubGroups()
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
   } );
+
+  // Retrieve the numerical methods and finite volume manager
+  FiniteVolumeManager const & fvManager = domain.getNumericalMethodManager().getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  const geos::string flux_approximation_name = fluxApprox.getName();
+
+  // Clear the existing mapping between connector indices and interface region indices
+  m_interfaceRegionByConnector.clear();
+  m_iconnToGlobalFace.clear();
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( std::string const &,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & GEOS_UNUSED_PARAM( regionNames ))
+  {
+    // Access the face manager and retrieve the face set group for the current mesh level
+    FaceManager const & faceManager = meshLevel.getFaceManager();
+    Group const & faceSetGroup = faceManager.sets();
+    arrayView1d< globalIndex const > const faceLocalToGlobal = faceManager.localToGlobalMap();
+
+    // Access the connector indices map (face index → connector index)
+    Group & stencilGroup =
+      meshLevel.getGroup( FluxApproximationBase::groupKeyStruct::stencilMeshGroupString())
+        .getGroup( flux_approximation_name );
+    CellElementStencilTPFA & stencil =
+      stencilGroup.getReference< CellElementStencilTPFA >(
+        FluxApproximationBase::viewKeyStruct::cellStencilString());
+    unordered_map< localIndex, localIndex > const & connectorIndices = stencil.getConnectorIndices();
+
+    // for all interface face sets to map connector indices to their corresponding interface region indices
+    for( size_t surfaceRegionIndex = 0; surfaceRegionIndex < m_interfaceFaceSetNames.size(); ++surfaceRegionIndex )
+    {
+      // Iterate over each face and associate its connector index
+      std::string const & faceSetName = m_interfaceFaceSetNames[surfaceRegionIndex];
+      for( localIndex kf : faceSetGroup.getReference< SortedArray< localIndex > >( faceSetName ))
+      {
+        auto it = connectorIndices.find( kf );
+        if( it != connectorIndices.end())
+        {
+          localIndex const iconn = it->second;
+          // Map the connector index to the corresponding surface region index
+          m_interfaceRegionByConnector[iconn] = surfaceRegionIndex;
+          // Map the connector index to the global face index for MPI-invariant warm-start
+          m_iconnToGlobalFace[iconn] = faceLocalToGlobal[kf];
+        }
+      }
+    }
+  } );
+
 
   initializeState( domain );
 }
@@ -582,7 +827,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 }
 
 void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
-                                                  DomainPartition const & domain,
+                                                  DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
@@ -595,30 +840,108 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel const & mesh,
-                                                                string_array const & )
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
   {
-    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+    if( m_hasCapPressure )
     {
-      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-      immiscibleMultiphaseKernels::
-        FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                             dofManager.rankOffset(),
-                                                                             dofKey,
-                                                                             m_hasCapPressure,
-                                                                             m_useTotalMassEquation,
-                                                                             m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                             getName(),
-                                                                             mesh.getElemManager(),
-                                                                             stencilWrapper,
-                                                                             dt,
-                                                                             localMatrix.toViewConstSizes(),
-                                                                             localRhs.toView() );
-    } );
+      // Get the first subregion to pass to the kernel factory (only used for domainSize, not for filtering connections)
+      ElementSubRegionBase const * firstSubRegion = nullptr;
+      mesh.getElemManager().forElementSubRegions( regionNames,
+                                                  [&]( localIndex const,
+                                                       ElementSubRegionBase const & subRegion )
+      {
+        if( firstSubRegion == nullptr )
+        {
+          firstSubRegion = &subRegion;
+        }
+      } );
+
+      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+      {
+        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+        // Build flat warm-start array from MPI-invariant global map.
+        // Each interface connection's warm-start Pc is keyed by global face index in
+        // m_convergedPcIntByGlobalFace, ensuring identical initial guesses regardless of
+        // MPI partitioning.
+        localIndex const numConn = stencilWrapper.size();
+        array1d< real64 > convergedPcInt( numConn );
+        convergedPcInt.setValues< serialPolicy >( -1.0 );
+        for( auto const & entry : m_iconnToGlobalFace )
+        {
+          localIndex const iconn = entry.first;
+          globalIndex const globalFace = entry.second;
+          if( iconn < numConn )
+          {
+            auto pcIt = m_convergedPcIntByGlobalFace.find( globalFace );
+            if( pcIt != m_convergedPcIntByGlobalFace.end() )
+            {
+              convergedPcInt[iconn] = pcIt->second;
+            }
+          }
+        }
+
+        immiscibleMultiphaseKernels::
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                               dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               m_hasCapPressure,
+                                                                               m_useTotalMassEquation,
+                                                                               m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               m_interfaceFaceSetNames,
+                                                                               m_interfaceConstitutivePairs,
+                                                                               m_interfacePairRegionIndices,
+                                                                               m_interfaceRegionByConnector,
+                                                                               *firstSubRegion,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView(),
+                                                                               convergedPcInt.toView() );
+
+        // Read back updated warm-start values into MPI-invariant global map
+        for( auto const & entry : m_iconnToGlobalFace )
+        {
+          localIndex const iconn = entry.first;
+          globalIndex const globalFace = entry.second;
+          if( iconn < numConn && convergedPcInt[iconn] > 0.0 )
+          {
+            m_convergedPcIntByGlobalFace[globalFace] = convergedPcInt[iconn];
+          }
+        }
+      } );
+    }
+    else
+    {
+      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+      {
+        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+        immiscibleMultiphaseKernels::
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                               dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               m_hasCapPressure,
+                                                                               m_useTotalMassEquation,
+                                                                               m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
+      } );
+    }
+
   } );
 }
 
+// Ryan: Looks like this will need to be overwritten as well...
+// I have left the CompositionalMultiphaseFVM implementation for reference
 void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
                                           DofManager & dofManager ) const
 {
@@ -723,16 +1046,14 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  fields::flow::pressure::key() ),
-                      getDataContext() );
+                                                  fields::flow::pressure::key() ) );
       }
       if( comp < 0 || comp >= m_numPhases )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ),
-                      getDataContext() );
-        return; // can't check next part with invalid component id
+                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
+        return;  // can't check next part with invalid component id
       }
 
       ComponentMask< MAX_NP > & compMask = subRegionSetMap[setName];
@@ -742,11 +1063,9 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
-          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() )
-                        , getDataContext() );
+                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
         } );
       }
       compMask.set( comp );
@@ -797,7 +1116,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, "ImmiscibleMultiphaseFlow : inconsistent boundary conditions", getDataContext() );
+    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "ImmiscibleMultiphaseFlow {}: inconsistent boundary conditions", getDataContext() ) );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1018,7 +1337,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
           return;
         }
 
-        real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+        real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;  // scale the contribution by the sizeScalingFactor here!
         massProd += rhsValue;
         if( useTotalMassEquation > 0 )
         {
@@ -1027,7 +1346,7 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
           localRhs[totalMassBalanceRow] += rhsValue;
           if( fluidPhaseId < numFluidPhases - 1 )
           {
-            globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidPhaseId + 1; // component mass bal equations are shifted
+            globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidPhaseId + 1;  // component mass bal equations are shifted
             localRhs[compMassBalanceRow] += rhsValue;
           }
         }
@@ -1128,8 +1447,6 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
                                                               coupledSolverAttributePrefix(), residualNorm ))
 
-  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
-
   return residualNorm;
 }
 
@@ -1162,7 +1479,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    stdVector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
+    std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );
@@ -1180,6 +1497,7 @@ void ImmiscibleMultiphaseFlow::updateVolumeConstraint( ElementSubRegionBase & su
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
+    phaseVolumeFraction[ei][0] = fmin( 1.0, fmax( phaseVolumeFraction[ei][0], 0.0 ));;
     phaseVolumeFraction[ei][1] = 1.0 - phaseVolumeFraction[ei][0];
   } );
 }
@@ -1258,11 +1576,11 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
       if( m_keepVariablesConstantDuringInitStep )
       {
-        porousMaterial.ignoreConvergedState(); // newPorosity <- porosity_n
+        porousMaterial.ignoreConvergedState();  // newPorosity <- porosity_n
       }
       else
       {
-        porousMaterial.saveConvergedState(); // porosity_n <- porosity
+        porousMaterial.saveConvergedState();  // porosity_n <- porosity
       }
 
       // Step 4: save converged state for the relperm model to handle hysteresis
@@ -1288,10 +1606,10 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
         CapillaryPressureBase const & capPressureMaterial =
           getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
         capPressureMaterial.saveConvergedRockState( porosity, permeability );
+        capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       }
     } );
   } );
-
 }
 
 void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subRegion ) const
@@ -1411,4 +1729,4 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )
 
-} // namespace geos
+}  // namespace geos

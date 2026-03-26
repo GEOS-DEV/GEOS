@@ -3267,6 +3267,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="waterOilMaxRelPerm" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
+		<!--KilloughModel => (no description available)-->
+		<xsd:attribute name="KilloughModel" type="geosx_constitutive_KilloughHysteresis" />
+		<!--KilloughWrappers => (no description available)-->
+		<xsd:attribute name="KilloughWrappers" type="geosx_constitutive_KilloughHysteresis_KernelKilloughHysteresisBase" />
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
 		<!--drainageRelPermWrappers => (no description available)-->
@@ -3276,7 +3280,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--landParameter => (no description available)-->
 		<xsd:attribute name="landParameter" type="real64_array" />
 		<!--nonWettingCurve => (no description available)-->
+<<<<<<< HEAD
 		<xsd:attribute name="nonWettingCurve" type="geos_constitutive_KilloughHysteresis_HysteresisCurve" />
+=======
+		<xsd:attribute name="nonWettingCurve" type="geosx_constitutive_KilloughHysteresis_HysteresisCurve" />
+>>>>>>> Killough-PC_copy
 		<!--phaseHasHysteresis => (no description available)-->
 		<xsd:attribute name="phaseHasHysteresis" type="integer_array" />
 		<!--phaseMaxHistoricalVolFraction => Phase max historical phase volume fraction-->

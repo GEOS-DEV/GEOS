@@ -39,10 +39,12 @@ public:
                                        real64 const volFracScale,
                                        arrayView1d< integer const > const & phaseTypes,
                                        arrayView1d< integer const > const & phaseOrder,
+                                       arrayView3d< geos::real64, cappres::USD_CAPPRES > const & phaseTrapped,
                                        arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPressure,
                                        arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPressure_dPhaseVolFrac )
     : CapillaryPressureBaseUpdate( phaseTypes,
                                    phaseOrder,
+                                   phaseTrapped,
                                    phaseCapPressure,
                                    dPhaseCapPressure_dPhaseVolFrac ),
     m_phaseMinVolumeFraction( phaseMinVolumeFraction ),
@@ -56,6 +58,11 @@ public:
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                 arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                 arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
+
+  GEOS_HOST_DEVICE
+  void computeInv( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                   arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                   arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -132,6 +139,69 @@ VanGenuchtenCapillaryPressureUpdate::
   compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
            arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
            arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+{
+  LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
+
+  // the VanGenuchten model does not support volFracScaled = 0 and = 1
+  // hence we need an epsilon value to avoid a division by zero
+  // TODO: for S < epsilon and S > 1 - epsilon, replace the original unbounded VG curve with a bounded power-law
+  // extension
+  real64 const eps = m_capPressureEpsilon;
+  real64 const volFracScaleInv = 1.0 / m_volFracScale;
+
+  // compute first water-oil capillary pressure as a function of water-phase vol fraction
+  integer const ip_water = m_phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+  if( ip_water >= 0 )
+  {
+
+    real64 const volFracScaled = (phaseVolFraction[ip_water] - m_phaseMinVolumeFraction[ip_water]) * volFracScaleInv;
+    real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_water]; // div by 0 taken care of by initialization
+                                                                          // check
+    real64 const multiplier    = m_phaseCapPressureMultiplier[ip_water];
+
+    real64 const scaledWettingVolFrac                = volFracScaled;
+    real64 const dScaledWettingPhaseVolFrac_dVolFrac = volFracScaleInv;
+
+    evaluateVanGenuchtenFunction( scaledWettingVolFrac,
+                                  dScaledWettingPhaseVolFrac_dVolFrac,
+                                  exponentInv,
+                                  multiplier,
+                                  eps,
+                                  phaseCapPres[ip_water],
+                                  dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
+
+  }
+
+
+  // then compute the oil-gas capillary pressure as a function of gas-phase vol fraction
+  integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+  if( ip_gas >= 0 )
+  {
+    real64 const volFracScaled = (phaseVolFraction[ip_gas] - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
+    real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_gas]; // div by 0 taken care of by initialization
+                                                                        // check
+    real64 const multiplier    = -m_phaseCapPressureMultiplier[ip_gas]; // for gas capillary pressure, take the opposite
+                                                                        // of the VG function
+
+    real64 const scaledWettingVolFrac                = 1-volFracScaled;
+    real64 const dScaledWettingPhaseVolFrac_dVolFrac =  -volFracScaleInv;
+
+    evaluateVanGenuchtenFunction( scaledWettingVolFrac,
+                                  dScaledWettingPhaseVolFrac_dVolFrac,
+                                  exponentInv,
+                                  multiplier,
+                                  eps,
+                                  phaseCapPres[ip_gas],
+                                  dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+  }
+}
+
+GEOS_HOST_DEVICE
+inline void
+VanGenuchtenCapillaryPressureUpdate::
+  computeInv( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+              arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+              arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 

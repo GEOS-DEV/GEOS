@@ -27,12 +27,14 @@ set( constitutive_headers
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
+     KilloughHysteresis.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
      capillaryPressure/InverseCapillaryPressure.hpp
      capillaryPressure/JFunctionCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressure.hpp
+     capillaryPressure/TableCapillaryPressureHysteresis.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureSelector.hpp
@@ -226,11 +228,13 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
+     KilloughHysteresis.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/InverseCapillaryPressure.cpp
      capillaryPressure/JFunctionCapillaryPressure.cpp
      capillaryPressure/TableCapillaryPressure.cpp
+     capillaryPressure/TableCapillaryPressureHysteresis.cpp
      capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/BartonBandis.cpp
@@ -369,6 +373,7 @@ if( ENABLE_PVTPackage )
 endif()
 
 if (ENABLE_HPCREACT)
+  if( EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/HPCReact/CMakeLists.txt" )
     set( constitutive_headers
         ${constitutive_headers}
         fluid/reactivefluid/ReactiveFluidSelector.hpp 
@@ -383,8 +388,9 @@ if (ENABLE_HPCREACT)
          ${constitutive_sources}
          fluid/reactivefluid/ReactiveSinglePhaseFluid.cpp 
         )
-  add_subdirectory( HPCReact )
-  list( APPEND dependencyList hpcReact )
+    add_subdirectory( HPCReact )
+    list( APPEND dependencyList hpcReact )
+  endif()
 endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies

@@ -29,8 +29,6 @@ set( fluidFlowSolvers_headers
      ImmiscibleMultiphaseFlow.hpp
      ImmiscibleMultiphaseFlowFields.hpp
      LogLevelsInfo.hpp
-     ReactiveCompositionalMultiphaseOBL.hpp
-     ReactiveCompositionalMultiphaseOBLFields.hpp
      SourceFluxStatistics.hpp
      SinglePhaseBase.hpp
      SinglePhaseBaseFields.hpp
@@ -67,18 +65,6 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/ThermalFluxComputeKernel.hpp
      kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      kernels/singlePhase/proppant/ProppantFluxKernels.hpp
-     kernels/singlePhase/reactive/AccumulationKernels.hpp
-     kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp
-     kernels/singlePhase/reactive/FluidUpdateKernel.hpp
-     kernels/singlePhase/reactive/FluxComputeKernel.hpp
-     kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
-     kernels/singlePhase/reactive/ReactionUpdateKernel.hpp
-     kernels/singlePhase/reactive/ResidualNormKernel.hpp
-     kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp
-     kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp
-     kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp
-     kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp
-     kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp
      kernels/compositional/AccumulationKernel.hpp
      kernels/compositional/AquiferBCKernel.hpp
      kernels/compositional/PPUPhaseFlux.hpp
@@ -106,7 +92,6 @@ set( fluidFlowSolvers_headers
      kernels/compositional/PotGrad.hpp
      kernels/compositional/PPUPhaseFlux.hpp
      kernels/compositional/PropertyKernelBase.hpp
-     kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
      kernels/compositional/RelativePermeabilityUpdateKernel.hpp
      kernels/compositional/ResidualNormKernel.hpp
      kernels/compositional/SolidInternalEnergyUpdateKernel.hpp
@@ -147,14 +132,12 @@ set( fluidFlowSolvers_sources
      CompositionalMultiphaseStatistics.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
-     ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
      SinglePhaseStatistics.cpp
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
-     SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
      SolutionCheckHelpers.cpp
      StencilDataCollection.cpp
@@ -177,8 +160,10 @@ file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
 # Keep only the templates that are unrelated to hybrid flux/dirichlet
+if( ENABLE_HPCREACT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../constitutive/HPCReact/CMakeLists.txt" )
 list( APPEND kernelTemplateFileList
       ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+endif()
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
@@ -190,6 +175,31 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
   list(APPEND fluidFlowSolvers_headers ${headerFiles})
   list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 endforeach()
+
+# Conditionally add reactive transport files when HPCReact is available
+if( ENABLE_HPCREACT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../constitutive/HPCReact/CMakeLists.txt" )
+  list( APPEND fluidFlowSolvers_headers
+       ReactiveCompositionalMultiphaseOBL.hpp
+       ReactiveCompositionalMultiphaseOBLFields.hpp
+       kernels/singlePhase/reactive/AccumulationKernels.hpp
+       kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/FluidUpdateKernel.hpp
+       kernels/singlePhase/reactive/FluxComputeKernel.hpp
+       kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
+       kernels/singlePhase/reactive/ReactionUpdateKernel.hpp
+       kernels/singlePhase/reactive/ResidualNormKernel.hpp
+       kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp
+       kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp
+       kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
+       SinglePhaseReactiveTransport.hpp )
+  
+  list( APPEND fluidFlowSolvers_sources
+       ReactiveCompositionalMultiphaseOBL.cpp
+       SinglePhaseReactiveTransport.cpp )
+endif()
 
 # TODO: The two kernels below have non-matching file names and JSON keys.
 #       Either fix them to follow pattern, or come up with another mechanism.

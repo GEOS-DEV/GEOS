@@ -20,6 +20,7 @@
 #include "InverseCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/TableCapillaryPressureHysteresis.hpp"
 #include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
 
@@ -317,6 +318,7 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculateJFunctionIndex( integer 
 
 template class InverseCapillaryPressure< BrooksCoreyCapillaryPressure >;
 template class InverseCapillaryPressure< TableCapillaryPressure >;
+template class InverseCapillaryPressure< TableCapillaryPressureHysteresis >;
 template class InverseCapillaryPressure< JFunctionCapillaryPressure >;
 template class InverseCapillaryPressure< VanGenuchtenCapillaryPressure >;
 template class InverseCapillaryPressure< NoOpCapillaryPressure >;

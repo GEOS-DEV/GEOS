@@ -1002,12 +1002,24 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // We postpone the other constitutive models for now
 
     // Now, we initialize and update each constitutive model one by one
-
     // initialized phase volume fraction
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.template getField< flow::phaseVolumeFraction >();
+      subRegion.template getField< fields::flow::phaseVolumeFraction >();
 
-    // Initialize/update the relative permeability model using the initial phase volume fraction
+    // 4.2 Save the computed porosity into the old porosity
+    //
+    // Note:
+    // - This must be called after updatePorosityAndPermeability
+    // - This step depends on porosity
+    string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+    porousMaterial.initializeState();
+
+    // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
+    //     This is needed to handle relative permeability hysteresis
+    //     Also, initialize the fluid model (to compute the initial total mass density, needed to compute the body force increment in
+    // coupled simulations)
+    //
     // Note:
     // - This must be called after updatePhaseVolumeFraction
     // - This step depends on phaseVolFraction
@@ -2867,6 +2879,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         CapillaryPressureBase const & capPressureMaterial =
           getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
         capPressureMaterial.saveConvergedRockState( porosity, permeability );
+        capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
       }
 
       // Step 6: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model

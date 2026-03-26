@@ -27,6 +27,12 @@
 namespace geos
 {
 
+
+namespace constitutive
+{
+class ConstitutiveBase;
+} // namespace constitutive
+
 //START_SPHINX_INCLUDE_00
 /**
  * @class ImmiscibleMultiphaseFlow
@@ -160,12 +166,11 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-  virtual void
-  assembleFluxTerms( real64 const dt,
-                     DomainPartition const & domain,
-                     DofManager const & dofManager,
-                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                     arrayView1d< real64 > const & localRhs ) const;
+  void assembleFluxTerms( real64 const dt,
+                          DomainPartition & domain,
+                          DofManager const & dofManager,
+                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                          arrayView1d< real64 > const & localRhs ) const;
 
   /**
    * @brief Function to perform the Application of Dirichlet type BC's
@@ -215,6 +220,10 @@ public:
   struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
   {
     // inputs
+    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+    static constexpr char const * relPermNamesString() { return "relPermNames"; }
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+    static constexpr char const * interfaceFaceSetNamesString() { return "interfaceFaceSetNames"; }
 
     // density averaging scheme
     static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
@@ -228,9 +237,9 @@ public:
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
 
-    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
-    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
-    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
+//    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
+//    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
+//    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 
 
@@ -299,6 +308,29 @@ private:
 
   /// damping factor for solution change targets
   real64 m_solutionChangeScalingFactor;
+
+  string_array m_interfaceFaceSetNames;
+
+  stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
+                                     constitutive::CapillaryPressureBase *,
+                                     constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  m_interfaceConstitutivePairs;
+
+  /// For each surface region, the element region index for side 0 and side 1 of the interface pair.
+  /// Used to match stencil cell ordering to the constitutive pair ordering.
+  stdVector< std::array< localIndex, 2 > > m_interfacePairRegionIndices;
+
+  unordered_map< localIndex, localIndex >  m_interfaceRegionByConnector;
+  unordered_map< localIndex, localIndex >  m_connectorIndicesByInterfaceRegion;
+
+  /// Warm-start capillary pressure at interface connections, keyed by global face index.
+  /// This ensures MPI-invariant warm-start across different partitioning configurations.
+  /// Marked mutable because it is a convergence cache updated during const assembleSystem().
+  mutable std::unordered_map< globalIndex, real64 > m_convergedPcIntByGlobalFace;
+
+  /// Mapping from local connection index (iconn) to global face index for interface connections.
+  /// Built once in initializePostInitialConditionsPreSubGroups and used to populate/read-back
+  /// the warm-start array for the flux kernel.
+  std::unordered_map< localIndex, globalIndex > m_iconnToGlobalFace;
 
 
 private:

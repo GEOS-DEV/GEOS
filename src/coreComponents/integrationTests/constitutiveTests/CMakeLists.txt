@@ -1,6 +1,16 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testRelPermHysteresis.cpp )
+     # testCapillaryPressure.cpp
+     # testCO2BrinePVTModels.cpp
+     # testCO2SpycherPruessModels.cpp
+     # testDamage.cpp
+     # testMultiFluidCO2Brine.cpp
+     # testMultiFluidCompositionalMultiphase.cpp
+     # testMultiFluidDeadOil.cpp
+     # testMultiFluidLiveOil.cpp
+     # testRelPerm.cpp
+     testRelPermHysteresis.cpp
+   )
 
 set( gtest_triaxial_xmls
      testTriaxial_druckerPragerExtended.xml
