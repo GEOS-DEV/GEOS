@@ -62,7 +62,7 @@ public:
   bool operator==( TableData const & comparingTable ) const;
 
   /**
-   * @brief Representing a data in TableData
+   * @brief Representing a single cell's data within a TableData row.
    */
   struct CellData
   {
@@ -71,95 +71,31 @@ public:
     /// The cell value
     string value;
 
+    /**
+     * @return Total size in bytes required to serialize this cell.
+     */
     size_t getSerializedSize() const;
 
+    /**
+     * @brief Serializes the cell type and value into the output buffer.
+     * @param out Buffer to append the serialized cell data to.
+     */
     void serialize( stdVector< buffer_unit_type > & out ) const;
   };
 
+  /**
+   * @brief Returns the total serialized byte size of all rows in the table.
+   * @return Total size in bytes required to serialize the entire TableData.
+   */
   size_t getSerializedSize() const;
-
-  /**
-   * @tparam T The trivial type
-   * @return Returns the size occupied by a trivial type in memory.
-   */
-  template< typename T >
-  static unsigned long sizeOfField( T )
-  { return sizeof(T); }
-
-  /**
-   * @brief Returns the size of a string (header size + content).
-   * @param str The target string
-   * @return Size in bytes.
-   */
-  static unsigned long sizeOfField( string const & str )
-  { return sizeof(string::size_type) + str.size(); }
-
-  /**
-   * @brief Write the data to the buffer.
-   * @tparam T The type of the data who must be trivially copiable
-   * @param data Destination variable.
-   * @param out The buffer to write in.
-   */
-  template< typename T >
-  static void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
-  {
-    static_assert( std::is_trivially_copyable_v< T > );
-    buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
-    buffer_unit_type const * end = begin + sizeof(data);
-    out.insert( out.end(), begin, end );
-  }
-
-  /**
-   * @brief Write a string value to the buffer.
-   * @param data String variable.
-   * @param out The buffer to write in.
-   */
-  static void serializeString ( string const & data, stdVector< buffer_unit_type > & out )
-  {
-    serializePrimitive( data.size(), out );
-    auto * begin = data.data();
-    auto * end = begin + data.size();
-    out.insert( out.end(), begin, end );
-  }
-
-  /**
-   * @brief Reads the data from the buffer and advances the pointer.
-   * @tparam T The type of the data who must be trivially copiable
-   * @param data Destination variable.
-   * @param ptr Current read pointer (advanced by sizeof(string)).
-   * @param end Safety: maximum buffer limit.
-   */
-  template< typename T >
-  static void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-  {
-    static_assert( std::is_trivially_copyable_v< T > );
-    if( ptr + sizeof(T)> end ) throw std::runtime_error( "Buffer truncated" );
-    memcpy( &data, ptr, sizeof(T) );
-    ptr += sizeof(T);
-  }
-
-  /**
-   * @brief Reads a string value from the buffer and advances the pointer.
-   * @param data Destination variable.
-   * @param ptr Current read pointer (advanced by sizeof(string)).
-   * @param end Safety: maximum buffer limit.
-   */
-  static void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-  {
-    string::size_type strSize = 0;
-    deserializeField( strSize, ptr, end );
-    if( std::distance( ptr, end ) < (long) strSize )
-    {
-      throw std::runtime_error( "Buffer truncated reading string" );
-    }
-    str.assign( ptr, ptr + strSize );
-    ptr += str.size();
-  }
-
 
   /// Alias for table data rows with cells values
   using DataRows = stdVector< stdVector< CellData > >;
 
+  /**
+   * @brief Serializes the tableData into the output buffer.
+   * @param serializedTableData Buffer to append the serialized tableData.
+   */
   void serialize( stdVector< buffer_unit_type > & serializedTableData ) const;
 
   /**
@@ -225,6 +161,11 @@ public:
   TableErrorListing & getErrorsList()
   { return *m_errors; }
 
+  /**
+   * @brief Sorts the rows using a custom comparator functor.
+   * @tparam SortingFunc Type of the sorting comparator functor.
+   * @param sortingFunctor  Comparator functor used to sort the rows.
+   */
   template< typename SortingFunc >
   void sort( SortingFunc sortingFunctor )
   {
@@ -382,7 +323,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
-// Serialisation/ Deserialisation 
+// Serialisation/ Deserialisation
 namespace serialBuffer
 {
 
@@ -447,6 +388,25 @@ namespace tableDataSorting
  * @return True if a is greater than b
  */
 bool positiveNumberStringComp( string_view a, string_view b );
+}
+
+template< typename T >
+void serialBuffer::serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
+{
+  static_assert( std::is_trivially_copyable_v< T > );
+  buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
+  buffer_unit_type const * end = begin + sizeof(data);
+  out.insert( out.end(), begin, end );
+}
+
+template< typename T >
+void serialBuffer::deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  static_assert( std::is_trivially_copyable_v< T > );
+  if( ptr + sizeof(T)> end )
+    throw std::runtime_error( "Buffer truncated" );
+  data = *reinterpret_cast< T const * >(ptr);
+  ptr += sizeof(T);
 }
 
 }

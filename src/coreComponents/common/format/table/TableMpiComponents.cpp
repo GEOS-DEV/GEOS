@@ -20,6 +20,7 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
+#include "common/format/table/TableTypes.hpp"
 
 namespace geos
 {
@@ -145,15 +146,15 @@ TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTa
         while( startBuff < endRowsBuff )
         {
           size_t byteFromThisRow = 0;
-          TableData::deserializeField( byteFromThisRow, startBuff, endRowsBuff );
+          serialBuffer::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
           buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
           stdVector< TableData::CellData > row;
           while( startBuff < endRowBuff )
           {
             CellType cellType;
-            TableData::deserializeField( cellType, startBuff, endRowBuff );
+            serialBuffer::deserializePrimitive( cellType, startBuff, endRowBuff );
             string cellValue;
-            TableData::deserializeField( cellValue, startBuff, endRowBuff );
+            serialBuffer::deserializeString( cellValue, startBuff, endRowBuff );
             row.push_back( {cellType, cellValue} );
           }
           tableDataGathered.addRow( row );
