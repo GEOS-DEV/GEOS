@@ -410,9 +410,8 @@ public:
    * @param str The local string to send from the calling rank.
    * @param func Callback invoked on rank 0 for each non-empty received string.
    */
-  template< typename FUNC >
   static void gatherStringOnRank0( string_view str,
-                                   FUNC && func );
+                                   std::function< void(string_view) > && func );
 
   /**
    * @brief Strongly typed wrapper around MPI_Allgather.
@@ -1695,34 +1694,6 @@ MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::max( MpiWrapper::PairType< FIR
 template< typename FIRST, typename SECOND, typename CONTAINER >
 MpiWrapper::PairType< FIRST, SECOND > MpiWrapper::max( CONTAINER const & pairs, MPI_Comm comm )
 { return allReduce< FIRST, SECOND, CONTAINER, PairReduction::Max >( pairs, comm ); }
-
-/**
- * @brief Specialization of gatherStringOnRank0 for std::function< void(string_view) > callbacks.
- * @tparam std::function< void(string_view) > callable invoked on rank 0 for each non-empty rank string.
- * @param rankStr The local string to send from the calling rank.
- * @param func Callback invoked on rank 0 for each non-empty received string, passed as a string_view.
- */
-template<>
-inline void MpiWrapper::gatherStringOnRank0< std::function< void(string_view) > >
-  ( string_view rankStr, std::function< void(string_view) > && func )
-{
-  std::vector< buffer_unit_type > localbuffer;
-  localbuffer.reserve( rankStr.size());
-  localbuffer.insert( localbuffer.end(), rankStr.begin(), rankStr.end());
-  auto [globalLogRecords, counts, offsets] =
-    MpiWrapper::gatherBufferRank0< std::vector< buffer_unit_type > >( localbuffer );
-  if( MpiWrapper::commRank() == 0 )
-  {
-    for( integer rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
-    {
-      if( counts[rankId] > 0 )
-      {
-        func( string( globalLogRecords.begin() + offsets[rankId],
-                      globalLogRecords.begin() + offsets[rankId]+ counts[rankId] ) );
-      }
-    }
-  }
-}
 
 } /* namespace geos */
 
