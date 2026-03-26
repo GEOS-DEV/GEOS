@@ -280,7 +280,7 @@ void serialBuffer::deserializePrimitive( T & data, buffer_unit_type const * & pt
   static_assert( std::is_trivially_copyable_v< T > );
   if( ptr + sizeof(T)> end )
     throw std::runtime_error( "Buffer truncated" );
-  memcpy( &data, ptr, sizeof(T) );
+  data = *reinterpret_cast< T const * >(ptr);
   ptr += sizeof(T);
 }
 
@@ -288,7 +288,7 @@ void serialBuffer::deserializeString( string & str, buffer_unit_type const * & p
 {
   string::size_type strSize = 0;
   serialBuffer::deserializePrimitive( strSize, ptr, end );
-  if( std::distance( ptr, end ) < (long) strSize )
+  if( static_cast< long >(strSize) < std::distance( ptr, end )  )
   {
     throw std::runtime_error( "Buffer truncated reading string" );
   }
