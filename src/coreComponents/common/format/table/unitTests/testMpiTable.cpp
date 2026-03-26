@@ -104,77 +104,9 @@ TEST( testMpiTables, testDifferentRankData )
   {
     int const rankId = MpiWrapper::commRank();
     int const nbRanks = MpiWrapper::commSize();
-    if( nbRanks > 1 )
-    {
-      ASSERT_EQ( nbRanks, 4 );
+    ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
 
-      TableLayout const layout = TableLayout().
-                                   setTitle( "Summary of negative pressure elements" ).
-                                   addColumns( { "Global Id", "pressure [Pa]" } ).
-                                   setDefaultHeaderAlignment( TableLayout::Alignment::left );
-      TableData data;
-      auto const & rankTestData = testCase.m_ranksValues[rankId];
 
-      TableMpiLayout mpiLayout;
-      mpiLayout.m_separatorBetweenRanks = true;
-
-      if( !rankTestData.empty() )
-      {
-        mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
-        for( auto const & [id, value] : rankTestData )
-        {
-          data.addRow( id, value );
-        }
-      }
-
-      TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
-      std::ostringstream oss;
-      formatter.toStream( oss, data );
-      if( rankId == 0 )
-      {
-        EXPECT_STREQ( testCase.m_expectedResult.data(),
-                      oss.str().data() );
-      }
-    }
-  }
-}
-
-TEST( testMpiTables, testSortingMethod )
-{
-  struct TestCase
-  {
-    stdVector< stdVector< std::pair< integer, real64 > > > m_ranksValues;
-    string m_expectedResult;
-  };
-
-  TestCase const testCase =
-  {
-    {   // m_ranksValues: in this test, rank 2 has no value
-      { {1, 0.502} },
-      { {2, 0.624}, {3, 0.791} },
-      {},
-      { {4, 0.243}, {5, 0.804}, {6, 0.302} },
-    },
-    "\n"   // m_expectedResult
-    "-------------------------------------------\n"
-    "|  Summary of negative pressure elements  |\n"
-    "|-----------------------------------------|\n"
-    "|    Global Id     |    pressure [Pa]     |\n"
-    "|------------------|----------------------|\n"
-    "|               1  |               0.502  |\n"
-    "|               2  |               0.624  |\n"
-    "|               3  |               0.791  |\n"
-    "|               4  |               0.243  |\n"
-    "|               5  |               0.804  |\n"
-    "|               6  |               0.302  |\n"
-    "-------------------------------------------\n"
-  };
-
-  int const rankId = MpiWrapper::commRank();
-  int const nbRanks = MpiWrapper::commSize();
-  if( nbRanks > 1 )
-  {
-    ASSERT_EQ( nbRanks, 4 );
 
     TableLayout const layout = TableLayout().
                                  setTitle( "Summary of negative pressure elements" ).
@@ -194,13 +126,7 @@ TEST( testMpiTables, testSortingMethod )
         data.addRow( id, value );
       }
     }
-
-    TableTextMpiFormatter formatter = TableTextMpiFormatter( layout, mpiLayout );
-    formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
-                                  std::vector< TableData::CellData > const & row2 ) {
-      return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
-    } );
-
+    TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
     std::ostringstream oss;
     formatter.toStream( oss, data );
     if( rankId == 0 )
@@ -209,6 +135,78 @@ TEST( testMpiTables, testSortingMethod )
                     oss.str().data() );
     }
   }
+   
+}
+
+TEST( testMpiTables, testSortingMethod )
+{
+  struct TestCase
+  {
+    stdVector< stdVector< std::pair< integer, real64 > > > m_ranksValues;
+    string m_expectedResult;
+  };
+
+  TestCase const testCase =
+  {
+    {   // m_ranksValues: in this test, rank 2 has no value
+      { {2, 0.624}, {3, 0.791} },
+      { {1, 0.502} },
+      { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+      {},
+    },
+    "\n"   // m_expectedResult
+    "-------------------------------------------\n"
+    "|  Summary of negative pressure elements  |\n"
+    "|-----------------------------------------|\n"
+    "|    Global Id     |    pressure [Pa]     |\n"
+    "|------------------|----------------------|\n"
+    "|               1  |               0.502  |\n"
+    "|               2  |               0.624  |\n"
+    "|               3  |               0.791  |\n"
+    "|               4  |               0.243  |\n"
+    "|               5  |               0.804  |\n"
+    "|               6  |               0.302  |\n"
+    "-------------------------------------------\n"
+  };
+
+  int const rankId = MpiWrapper::commRank();
+  int const nbRanks = MpiWrapper::commSize();
+  ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
+
+
+  TableLayout const layout = TableLayout().
+                               setTitle( "Summary of negative pressure elements" ).
+                               addColumns( { "Global Id", "pressure [Pa]" } ).
+                               setDefaultHeaderAlignment( TableLayout::Alignment::left );
+  TableData data;
+  auto const & rankTestData = testCase.m_ranksValues[rankId];
+
+  TableMpiLayout mpiLayout;
+  mpiLayout.m_separatorBetweenRanks = true;
+
+  if( !rankTestData.empty() )
+  {
+    mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
+    for( auto const & [id, value] : rankTestData )
+    {
+      data.addRow( id, value );
+    }
+  }
+
+  TableTextMpiFormatter formatter = TableTextMpiFormatter( layout, mpiLayout );
+  formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
+                                std::vector< TableData::CellData > const & row2 ) {
+    return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+  } );
+
+  std::ostringstream oss;
+  formatter.toStream( oss, data );
+  if( rankId == 0 )
+  {
+    EXPECT_STREQ( testCase.m_expectedResult.data(),
+                  oss.str().data() );
+  }
+
 
 }
 

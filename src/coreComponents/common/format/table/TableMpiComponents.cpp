@@ -181,7 +181,7 @@ void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
     ""
   };
 
-  if( true )
+  if( m_sortingFunctor )
   {
     TableData tableDataGathered = gatherTableDataRank0( tableData );
 
