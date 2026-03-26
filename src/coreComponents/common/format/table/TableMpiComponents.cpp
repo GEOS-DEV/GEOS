@@ -20,8 +20,6 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
-#include "dataRepository/BufferOps.hpp"
-
 
 namespace geos
 {

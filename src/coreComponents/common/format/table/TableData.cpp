@@ -18,9 +18,7 @@
  */
 
 #include "TableData.hpp"
-#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
-#include "dataRepository/BufferOps.hpp"
 
 namespace geos
 {

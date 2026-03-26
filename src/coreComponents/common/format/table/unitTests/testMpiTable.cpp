@@ -14,7 +14,6 @@
  */
 
 // Source includes
-#include "common/format/table/TableData.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
 #include "common/initializeEnvironment.hpp"
 #include "common/MpiWrapper.hpp"

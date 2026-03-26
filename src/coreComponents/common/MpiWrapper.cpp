@@ -538,7 +538,6 @@ template<> MPI_Datatype getMpiPairType< double, double >()
 
 } /* namespace internal */
 
-
 } /* namespace geos */
 
 #if defined(__clang__)

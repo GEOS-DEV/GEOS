@@ -222,7 +222,6 @@ public:
    * @brief Get all error messages
    * @return The list of error messages
    */
-
   TableErrorListing & getErrorsList()
   { return *m_errors; }
 
@@ -383,6 +382,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
+// Serialisation/ Deserialisation 
 namespace serialBuffer
 {
 
