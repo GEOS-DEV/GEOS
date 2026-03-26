@@ -6324,7 +6324,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
-		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are computed by the solver will be taken into account.-->
+		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to an imported index set of mesh elements in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are processed by the solver will be taken into account.-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" default="{}" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
@@ -6544,7 +6544,7 @@ Information output from lower logLevels is added with the desired log level
 1
  - Print statistics-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are computed by the solver will be taken into account.-->
+		<!--setNames => Optional targeted mesh element set(s) for which the statistics will be restricted. A set can be be defined by a 'Geometry' component, or correspond to an imported index set of mesh elements in case of an external mesh. If empty, all mesh regions will be processed. Be aware that only the regions that are processed by the solver will be taken into account.-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" default="{}" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
