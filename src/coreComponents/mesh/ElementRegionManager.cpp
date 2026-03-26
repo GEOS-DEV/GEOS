@@ -13,12 +13,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include <algorithm>
 #include <map>
 #include <vector>
 
 #include "ElementRegionManager.hpp"
 
 #include "common/DataLayouts.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/format/table/TableMpiComponents.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -181,6 +183,35 @@ void ElementRegionManager::generateMesh( CellBlockManagerABC const & cellBlockMa
   } );
 }
 
+integer detectPerforationsAcrossRanks( TableData const & localPerfoData )
+{
+  stdVector< integer > counts;
+  integer const numRanks = MpiWrapper::commSize();
+  integer const numLocalValues  = static_cast< integer >(localPerfoData.getCellsData().size());
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    counts.resize( numRanks );
+  }
+
+  MpiWrapper::gather( &numLocalValues, 1, counts.data(), 1, 0 );
+
+  auto it = std::find_if( counts.begin(), counts.end(), []( integer const & rankCount )
+  {
+    return rankCount != 0;
+  } );
+
+  integer perfoDetected = false;
+  if( MpiWrapper::commRank() == 0 && it != counts.end())
+  {
+    perfoDetected = true;
+  }
+
+  MpiWrapper::bcast( &perfoDetected, 1, 0 );
+
+  return perfoDetected;
+}
+
 void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockManager,
                                           MeshLevel & meshLevel )
 {
@@ -262,7 +293,10 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
                                region.getName(), subRegion.getName(), cellId, rankId );
       }
     }
-    if( !localPerfoData.getCellsData().empty())
+
+    integer perfoDetected = detectPerforationsAcrossRanks( localPerfoData );
+
+    if( perfoDetected )
     {
       TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
                                                       wellRegion.getWellGeneratorName()),
