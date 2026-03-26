@@ -86,8 +86,8 @@ bool TableData::operator==( TableData const & comparingTable ) const
 
 void TableData::CellData::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  serializePrimitive( type, out );
-  serializeString( value, out );
+  serialBuffer::serializePrimitive( type, out );
+  serialBuffer::serializeString( value, out );
 }
 
 
@@ -126,14 +126,12 @@ void TableData::serialize( stdVector< buffer_unit_type > & serializedTableData )
       size_t rowSize = 0;
       for( auto const & cell : row )
         rowSize += cell.getSerializedSize();
-      serializePrimitive( rowSize, serializedTableData );
+      serialBuffer::serializePrimitive( rowSize, serializedTableData );
     }
 
     { // pack cells
       for( auto const & cell : row )
       {
-        // size_t cellSize =  cell.getSerializedSize();
-        // serializePrimitive( cellSize, serializedTableData );
         cell.serialize( serializedTableData );
       }
     }
@@ -257,6 +255,45 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   }
 
   return tableData1D;
+}
+
+template< typename T >
+void serialBuffer::serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
+{
+  static_assert( std::is_trivially_copyable_v< T > );
+  buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
+  buffer_unit_type const * end = begin + sizeof(data);
+  out.insert( out.end(), begin, end );
+}
+
+void serialBuffer::serializeString ( string const & data, stdVector< buffer_unit_type > & out )
+{
+  serialBuffer::serializePrimitive( data.size(), out );
+  auto * begin = data.data();
+  auto * end = begin + data.size();
+  out.insert( out.end(), begin, end );
+}
+
+template< typename T >
+void serialBuffer::deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  static_assert( std::is_trivially_copyable_v< T > );
+  if( ptr + sizeof(T)> end )
+    throw std::runtime_error( "Buffer truncated" );
+  memcpy( &data, ptr, sizeof(T) );
+  ptr += sizeof(T);
+}
+
+void serialBuffer::deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  string::size_type strSize = 0;
+  serialBuffer::deserializePrimitive( strSize, ptr, end );
+  if( std::distance( ptr, end ) < (long) strSize )
+  {
+    throw std::runtime_error( "Buffer truncated reading string" );
+  }
+  str.assign( ptr, ptr + strSize );
+  ptr += str.size();
 }
 
 bool tableDataSorting::positiveNumberStringComp( string_view s1, string_view s2 )

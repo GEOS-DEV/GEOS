@@ -94,14 +94,26 @@ public:
   static unsigned long sizeOfField( string const & str )
   { return sizeof(string::size_type) + str.size(); }
 
+  /**
+   * @brief Write the data to the buffer.
+   * @tparam T The type of the data who must be trivially copiable
+   * @param data Destination variable.
+   * @param out The buffer to write in.
+   */
   template< typename T >
   static void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
   {
+    static_assert( std::is_trivially_copyable_v< T > );
     buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
     buffer_unit_type const * end = begin + sizeof(data);
     out.insert( out.end(), begin, end );
   }
 
+  /**
+   * @brief Write a string value to the buffer.
+   * @param data String variable.
+   * @param out The buffer to write in.
+   */
   static void serializeString ( string const & data, stdVector< buffer_unit_type > & out )
   {
     serializePrimitive( data.size(), out );
@@ -110,6 +122,13 @@ public:
     out.insert( out.end(), begin, end );
   }
 
+  /**
+   * @brief Reads the data from the buffer and advances the pointer.
+   * @tparam T The type of the data who must be trivially copiable
+   * @param data Destination variable.
+   * @param ptr Current read pointer (advanced by sizeof(string)).
+   * @param end Safety: maximum buffer limit.
+   */
   template< typename T >
   static void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
   {
@@ -119,7 +138,8 @@ public:
     ptr += sizeof(T);
   }
 
-  /** @brief Reads a string value from the buffer and advances the pointer.
+  /**
+   * @brief Reads a string value from the buffer and advances the pointer.
    * @param data Destination variable.
    * @param ptr Current read pointer (advanced by sizeof(string)).
    * @param end Safety: maximum buffer limit.
@@ -361,6 +381,60 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   static_assert( has_formatter_v< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   m_columnValues.insert( columnValue );
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
+}
+
+namespace serialBuffer
+{
+
+/**
+ * @tparam T The trivial type
+ * @return Returns the size occupied by a trivial type in memory.
+ */
+template< typename T >
+inline unsigned long sizeOfPrimitive( T )
+{ return sizeof(T); }
+
+/**
+ * @brief Returns the size of a string (header size + content).
+ * @param str The target string
+ * @return Size in bytes.
+ */
+inline unsigned long sizeOfString( string const & str )
+{ return sizeof(string::size_type) + str.size(); }
+
+/**
+ * @brief Write the data to the buffer.
+ * @tparam T The type of the data who must be trivially copiable
+ * @param data Destination variable.
+ * @param out The buffer to write in.
+ */
+template< typename T >
+void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out );
+
+/**
+ * @brief Write a string value to the buffer.
+ * @param data String variable.
+ * @param out The buffer to write in.
+ */
+void serializeString ( string const & data, stdVector< buffer_unit_type > & out );
+
+/**
+ * @brief Reads the data from the buffer and advances the pointer.
+ * @tparam T The type of the data who must be trivially copiable
+ * @param data Destination variable.
+ * @param ptr Current read pointer (advanced by sizeof(string)).
+ * @param end Safety: maximum buffer limit.
+ */
+template< typename T >
+void deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end );
+
+/**
+ * @brief Reads a string value from the buffer and advances the pointer.
+ * @param data Destination variable.
+ * @param ptr Current read pointer (advanced by sizeof(string)).
+ * @param end Safety: maximum buffer limit.
+ */
+void deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end );
 }
 
 // Custom Comp function;
