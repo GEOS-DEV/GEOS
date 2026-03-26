@@ -58,7 +58,7 @@ int main( int argc, char *argv[] )
     }
 
     MemoryLogging::getInstance().memoryStatsReport();
-    
+
     basicCleanup( false );
 
     std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
@@ -81,6 +81,7 @@ int main( int argc, char *argv[] )
   { // GEOS generated exceptions management
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
+    std::abort();
   }
   catch( std::exception const & e )
   { // native exceptions management
