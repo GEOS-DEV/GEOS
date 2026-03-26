@@ -179,14 +179,14 @@ public:
     {
 
       localIndex k = kernelComponent.m_faceElementList[i];
-        typename KERNEL_TYPE::StackVariables stack;
+      typename KERNEL_TYPE::StackVariables stack;
 
-        kernelComponent.setup( k, stack );
-        for( integer q=0; q<numQuadraturePointsPerElem; ++q )
-        {
-          kernelComponent.quadraturePointKernel( k, q, stack );
-        }
-        maxResidual.max( kernelComponent.complete( k, stack ) );
+      kernelComponent.setup( k, stack );
+      for( integer q=0; q<numQuadraturePointsPerElem; ++q )
+      {
+        kernelComponent.quadraturePointKernel( k, q, stack );
+      }
+      maxResidual.max( kernelComponent.complete( k, stack ) );
     } );
 
     return maxResidual.get();

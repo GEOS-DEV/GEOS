@@ -244,9 +244,9 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
   forAll< parallelHostPolicy >( this->size(), [=]( localIndex const faceIndex )
   {
     faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( toNodes[ faceIndex ],
-                                                                         X,
-                                                                         faceCenter[ faceIndex ],
-                                                                         faceNormal[ faceIndex ] );
+                                                                       X,
+                                                                       faceCenter[ faceIndex ],
+                                                                       faceNormal[ faceIndex ] );
 
   } );
 }

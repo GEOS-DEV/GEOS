@@ -573,12 +573,12 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                         dt,
                                                                         faceElementList );
 
-        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >,CoulombFriction >( mesh,
-                                                                                                                        fractureRegionName,
-                                                                                                                        faceElementList,
-                                                                                                                        subRegionFE,
-                                                                                                                        viewKeyStruct::frictionLawNameString(),
-                                                                                                                        kernelFactory );
+        real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, CoulombFriction >( mesh,
+                                                                                                                         fractureRegionName,
+                                                                                                                         faceElementList,
+                                                                                                                         subRegionFE,
+                                                                                                                         viewKeyStruct::frictionLawNameString(),
+                                                                                                                         kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
 
@@ -650,11 +650,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                             m_symmetric );
 
         real64 maxTraction = finiteElement::interfaceBasedKernelApplication< parallelDevicePolicy< >, CoulombFriction >( mesh,
-                                                  fractureRegionName,
-                                                  faceElementList,
-                                                  subRegionFE,
-                                                  viewKeyStruct::frictionLawNameString(),
-                                                  kernelFactory );
+                                                                                                                         fractureRegionName,
+                                                                                                                         faceElementList,
+                                                                                                                         subRegionFE,
+                                                                                                                         viewKeyStruct::frictionLawNameString(),
+                                                                                                                         kernelFactory );
 
         GEOS_UNUSED_VAR( maxTraction );
       }
@@ -691,7 +691,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     real64 maxTraction = finiteElement::regionBasedKernelApplication< parallelDevicePolicy< >, ElasticIsotropic, CellElementSubRegion >( mesh,
                                                                                                                                          regionNames,
                                                                                                                                          getDiscretizationName(),
-                                                                                                                                         SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                                                                                                         SolidMechanicsLagrangianFEM::viewKeyStruct::
+                                                                                                                                           solidMaterialNamesString(),
                                                                                                                                          kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
@@ -1250,7 +1251,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [m_symmetric=m_symmetric]( localIndex const,
-                                                                                  FaceElementSubRegion & subRegion )
+                                                                                                        FaceElementSubRegion & subRegion )
       {
 
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
@@ -1349,9 +1350,9 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
 
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
-      forAll< parallelHostPolicy >( faceElementList.size(), [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( faceElementList.size(),
+                                    [ = ] GEOS_HOST ( localIndex const kfe )
       {
-
         localIndex const faceIndex = faceElementList[kfe];
         if( fractureState[faceIndex] == contact::FractureState::Stick )
         {
@@ -1446,7 +1447,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
     forAll< parallelHostPolicy >( subRegion.size(),
-                                      [ = ] GEOS_HOST ( localIndex const kfe )
+                                  [ = ] GEOS_HOST ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
       localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
@@ -1479,18 +1480,18 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
 
     quadList.resize( nQuad );
     triList.resize( nTri );
-      arrayView1d< localIndex > const quadList_v = quadList.toView();
-      arrayView1d< localIndex > const triList_v = triList.toView();
+    arrayView1d< localIndex > const quadList_v = quadList.toView();
+    arrayView1d< localIndex > const triList_v = triList.toView();
 
-      forAll< parallelHostPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
-      {
-        triList_v[kfe] = vals_v[kfe];
-      } );
+    forAll< parallelHostPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
+    {
+      triList_v[kfe] = vals_v[kfe];
+    } );
 
-      forAll< parallelHostPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
-      {
-        quadList_v[kfe] = vals_v[nTri+kfe];
-      } );
+    forAll< parallelHostPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
+    {
+      quadList_v[kfe] = vals_v[nTri+kfe];
+    } );
 
     // these operations are suspect for host/device issues.
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
@@ -1565,8 +1566,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
 
       forAll< parallelHostPolicy >( cellElementSubRegion.size(),
-                                        [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+                                    [ = ] GEOS_HOST ( localIndex const kfe )
       {
         for( int i=0; i < elemsToFaces.size( 1 ); ++i )
         {
@@ -1630,8 +1630,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
       forAll< parallelHostPolicy >( nBubElems,
-                                        [ = ]
-                                        GEOS_HOST ( localIndex const k )
+                                    [ = ] GEOS_HOST ( localIndex const k )
       {
         localIndex const kfe =  bubbleElemsList_v[k];
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
@@ -2063,7 +2062,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     arrayView2d< real64 > totalBubbleDisplacement = faceManager.getField< contact::totalBubbleDisplacement >();
 
     // Get stress accessor
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const 
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const
     avgElementStress = elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
                                                           arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
 
