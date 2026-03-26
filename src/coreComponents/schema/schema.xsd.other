@@ -1620,7 +1620,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
 			<xsd:element name="BartonBandisPermeability" type="BartonBandisPermeabilityType" />
-			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -1738,7 +1737,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
-	<xsd:complexType name="BartonBandisStressPathDrivenType" />
 	<xsd:complexType name="BiotPorosityType">
 		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
 		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />
