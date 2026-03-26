@@ -49,34 +49,6 @@
 namespace geos
 {
 
-
-/// Helper functions for createBubbleCellList / createFaceTypeList / updateStickSlipList.
-/// Isolated into free functions so that RAJA serial sort templates are never
-/// instantiated in the same nvcc context as device lambdas.
-namespace
-{
-
-void sortAndInsertFaceIds( arrayView1d< localIndex > const & tmpSpace_v,
-                           SortedArray< localIndex > & faceIdList )
-{
-  tmpSpace_v.move( LvArray::MemorySpace::host );
-  RAJA::stable_sort< serialPolicy >( tmpSpace_v );
-  faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end() );
-}
-
-void sortKeyPermPairsOnHost( arrayView1d< localIndex > const & keys_v,
-                             arrayView1d< localIndex > const & perms_v )
-{
-  keys_v.move( LvArray::MemorySpace::host );
-  perms_v.move( LvArray::MemorySpace::host );
-  RAJA::sort_pairs< serialPolicy >( keys_v, perms_v );
-}
-
-} // anonymous namespace
-
-
-
-
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
@@ -267,6 +239,7 @@ void SolidMechanicsAugmentedLagrangianContact::validateTetrahedralQuadrature( Gr
 void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const & domain,
                                                           DofManager & dofManager ) const
 {
+
   GEOS_MARK_FUNCTION;
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
@@ -290,6 +263,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupDofs( DomainPartition const 
   dofManager.addCoupling( contact::totalBubbleDisplacement::key(),
                           contact::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & domain,
@@ -299,6 +273,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
                                                             ParallelVector & solution,
                                                             bool const setSparsity )
 {
+
   GEOS_MARK_FUNCTION;
 
   // Recompute geometric quantities (face normals, areas) after mesh topology changes.
@@ -408,6 +383,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                                   real64 const & dt,
                                                                   DomainPartition & domain )
 {
+
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -470,7 +446,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     {
       if( m_simultaneous )
       {
-        forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const k )
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
         {
           if( fractureState[k] == contact::FractureState::Stick )
           {
@@ -487,7 +463,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
         } );
       }
 
-      forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const k )
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
       {
         LvArray::tensorOps::fill< 3 >( dispJumpUpdPenalty[k], 0.0 );
         localIndex const kf0 = elemsToFaces[k][0];
@@ -519,6 +495,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
                                                          domain.getNeighbors(),
                                                          true );
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time,
@@ -528,6 +505,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                arrayView1d< real64 > const & localRhs )
 {
+
   GEOS_MARK_FUNCTION;
 
   synchronizeFractureState( domain );
@@ -546,6 +524,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
   {
     assembleForceResidualPressureContribution( domain, dt, dofManager, localMatrix, localRhs );
   }
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const time,
@@ -555,6 +534,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                 arrayView1d< real64 > const & localRhs )
 {
+
   GEOS_MARK_FUNCTION;
 
   GEOS_UNUSED_VAR( time );
@@ -717,6 +697,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     GEOS_UNUSED_VAR( maxTraction );
 
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution( DomainPartition & domain,
@@ -725,6 +706,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
                                                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                                           arrayView1d< real64 > const & localRhs )
 {
+
   GEOS_MARK_FUNCTION;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
@@ -809,12 +791,14 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     GEOS_UNUSED_VAR( maxTraction );
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 const & time_n,
                                                                      real64 const & dt,
                                                                      DomainPartition & domain )
 {
+
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
   forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
@@ -854,6 +838,7 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
       } );
     } );
   } );
+
 }
 
 real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 const & time,
@@ -862,6 +847,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
                                                                         DofManager const & dofManager,
                                                                         arrayView1d< real64 const > const & localRhs )
 {
+
   GEOS_MARK_FUNCTION;
 
   real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
@@ -958,6 +944,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
   getConvergenceStats().setResidualValue( "RBubbleDisp", bubbleResidualNorm );
+
   return totalResidualNorm;
 }
 
@@ -967,6 +954,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                                     real64 const dt,
                                                                     DomainPartition & domain )
 {
+
   GEOS_MARK_FUNCTION;
 
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
@@ -1063,6 +1051,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                          domain.getNeighbors(),
                                                          true );
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & domain )
@@ -1321,12 +1310,14 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
   {
     updateStickSlipList( domain );
   }
+
   return hasConfigurationConvergedGlobally;
 
 }
 
 void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartition const & domain )
 {
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & )
@@ -1353,14 +1344,12 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       array1d< localIndex > vals( subRegion.size());
       array1d< localIndex > stickList;
       array1d< localIndex > slipList;
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nStick_r( 0 );
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nSlip_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelHostPolicy >, localIndex > nStick_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelHostPolicy >, localIndex > nSlip_r( 0 );
 
       arrayView1d< localIndex > const keys_v = keys.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
-      forAll< serialPolicy >( faceElementList.size(),
-                                        [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( faceElementList.size(), [ = ] GEOS_HOST ( localIndex const kfe )
       {
 
         localIndex const faceIndex = faceElementList[kfe];
@@ -1391,35 +1380,38 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       // elements of the same type are adjacent in the vals list.
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
-      sortKeyPermPairsOnHost( keys_v, vals_v );
+      RAJA::sort_pairs< parallelHostPolicy >( keys_v, vals_v );
 
       stickList.resize( nStick );
       slipList.resize( nSlip );
       arrayView1d< localIndex > const stickList_v = stickList.toView();
       arrayView1d< localIndex > const slipList_v = slipList.toView();
 
-      forAll< serialPolicy >( nStick, [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( nStick, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         stickList_v[kfe] = vals_v[kfe];
       } );
 
-      forAll< serialPolicy >( nSlip, [ = ]
-                                        GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( nSlip, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
+      // these operations are suspect for host/device issues.
+      // the values of m_faceTypesToFaceElementsStick/Slip are host
+      // but the values being inserted may not be.
       m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
       m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartition const & domain )
 {
+
   // Generate lists containing elements of various face types
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
@@ -1446,14 +1438,14 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
     array1d< localIndex > triList;
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nTri_r( 0 );
-    RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nQuad_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelHostPolicy >, localIndex > nTri_r( 0 );
+    RAJA::ReduceSum< ReducePolicy< parallelHostPolicy >, localIndex > nQuad_r( 0 );
 
     arrayView1d< localIndex > const keys_v = keys.toView();
     arrayView1d< localIndex > const vals_v = vals.toView();
     // Determine the size of the lists and generate the vector keys and vals for parallel indexing into lists.
     // (With RAJA, parallelizing this operation seems the most viable approach.)
-    forAll< serialPolicy >( subRegion.size(),
+    forAll< parallelHostPolicy >( subRegion.size(),
                                       [ = ] GEOS_HOST ( localIndex const kfe )
     {
       localIndex const kf0 = elemsToFaces[kfe][0];
@@ -1483,30 +1475,33 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
     // elements of the same type are adjacent in the vals list.
     // This arrangement allows for efficient copying into the container
     // by leveraging parallelism.
-    sortKeyPermPairsOnHost( keys_v, vals_v );
+    RAJA::sort_pairs< parallelHostPolicy >( keys_v, vals_v );
 
     quadList.resize( nQuad );
     triList.resize( nTri );
       arrayView1d< localIndex > const quadList_v = quadList.toView();
       arrayView1d< localIndex > const triList_v = triList.toView();
 
-      forAll< serialPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( nTri, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         triList_v[kfe] = vals_v[kfe];
       } );
 
-      forAll< serialPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( nQuad, [ = ] GEOS_HOST ( localIndex const kfe )
       {
         quadList_v[kfe] = vals_v[nTri+kfe];
       } );
 
+    // these operations are suspect for host/device issues.
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
     m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainPartition & domain ) const
 {
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1531,7 +1526,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     {
       arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
-      forAll< serialPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
+      forAll< parallelHostPolicy >( subRegion.size(), [ = ] GEOS_HOST ( localIndex const kfe )
       {
 
         localIndex const kf0 = elemsToFaces[kfe][0], kf1 = elemsToFaces[kfe][1];
@@ -1541,22 +1536,22 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     }
 
     // Sort indexes to enable efficient searching using binary search.
-    // The sort is in a separate free function to prevent nvcc from seeing
-    // std::sort templates in the same scope as __host__ __device__ lambdas.
-    // Data is moved to host BEFORE sorting (the device kernel above wrote it on GPU).
-    sortAndInsertFaceIds( tmpSpace_v, faceIdList );
+    RAJA::stable_sort< parallelHostPolicy >( tmpSpace_v );
+    // Move data back to host: after the device sort the buffer lives on the GPU,
+    // but SortedArray::insert is a host-only operation that dereferences the iterators.
+    faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
     SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
     // Search for bubble element on each CellElementSubRegion and
     // store element indexes, global and local face indexes.
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                              [faceIdList_v]( localIndex const,
-                                                                              CellElementSubRegion & cellElementSubRegion )
+                                                              [&]( localIndex const,
+                                                                   CellElementSubRegion & cellElementSubRegion )
     {
 
       arrayView2d< localIndex const > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
 
-      RAJA::ReduceSum< ReducePolicy< serialPolicy >, localIndex > nBubElems_r( 0 );
+      RAJA::ReduceSum< ReducePolicy< parallelHostPolicy >, localIndex > nBubElems_r( 0 );
 
       localIndex const n_max = cellElementSubRegion.size() * elemsToFaces.size( 1 );
       array1d< localIndex > keys( n_max );
@@ -1569,7 +1564,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
 
-      forAll< serialPolicy >( cellElementSubRegion.size(),
+      forAll< parallelHostPolicy >( cellElementSubRegion.size(),
                                         [ = ]
                                         GEOS_HOST ( localIndex const kfe )
       {
@@ -1597,21 +1592,19 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       // This arrangement allows for efficient copying into the container
       // by leveraging parallelism.
       localIndex nBubElems = static_cast< localIndex >(nBubElems_r.get());
-      // Sort is in a separate free function — see comment above sortAndInsertFaceIds.
-      // Data is moved to host BEFORE sorting (the device kernel above wrote it on GPU).
-      sortKeyPermPairsOnHost( keys_v, perms_v );
+      RAJA::sort_pairs< parallelHostPolicy >( keys_v, perms_v );
 
       array1d< localIndex > bubbleElemsList;
       bubbleElemsList.resize( nBubElems );
 
       arrayView1d< localIndex > const bubbleElemsList_v = bubbleElemsList.toView();
 
-      forAll< serialPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelHostPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
       {
         keys_v[k] = vals_v[perms_v[k]];
       } );
 
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelHostPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
@@ -1621,12 +1614,12 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
       bubbleCellsStorage.resize( nBubElems );
       arrayView1d< localIndex > const bubbleCellsStorage_v = bubbleCellsStorage.toView();
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelHostPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
       {
         bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
       } );
 
-      forAll< serialPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelHostPolicy >( n_max, [ = ] GEOS_HOST ( localIndex const k )
       {
         keys_v[k] = localFaceIds_v[perms_v[k]];
       } );
@@ -1636,7 +1629,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
-      forAll< serialPolicy >( nBubElems,
+      forAll< parallelHostPolicy >( nBubElems,
                                         [ = ]
                                         GEOS_HOST ( localIndex const k )
       {
@@ -1650,7 +1643,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );
       faceElemsStorage.resize( nBubElems, 2 );
       arrayView2d< localIndex > const faceElemsStorage_v = faceElemsStorage.toView();
-      forAll< serialPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
+      forAll< parallelHostPolicy >( nBubElems, [ = ] GEOS_HOST ( localIndex const k )
       {
         faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
         faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
@@ -1659,12 +1652,14 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     } );
 
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPartition & domain,
                                                                        DofManager & dofManager,
                                                                        arrayView1d< localIndex > const & rowLengths ) const
 {
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & regionNames )
@@ -1772,6 +1767,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
                                                                            DofManager const & dofManager,
                                                                            SparsityPatternView< globalIndex > const & pattern ) const
 {
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & regionNames )
@@ -1918,6 +1914,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
       }
     }
   } );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartition & domain ) const

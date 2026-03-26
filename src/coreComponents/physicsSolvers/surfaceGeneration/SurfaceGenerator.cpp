@@ -1058,8 +1058,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
       localIndex const er  = nodeToRegionMap[k];
       localIndex const esr = nodeToSubRegionMap[k];
       localIndex const ei  = nodeToElementMap[k];
-      CellElementSubRegion const * subRegion =
-        &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const * subRegion = &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
       std::pair< CellElementSubRegion const *, localIndex > const p( subRegion, ei );
 
       // Keep pairs unique (small N — linear search is fine).
@@ -1100,7 +1099,6 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
       nodeToRuptureReadyFaces.insert( parentFaceIndex );
     }
   }
-
 
 
   // local map to hold the edgesToRuptureReadyFaces
