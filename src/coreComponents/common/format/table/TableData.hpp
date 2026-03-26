@@ -323,7 +323,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
   m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
-// Serialisation/ Deserialisation
+// Serialisation/ Deserialisation utils for common
 namespace serialBuffer
 {
 
