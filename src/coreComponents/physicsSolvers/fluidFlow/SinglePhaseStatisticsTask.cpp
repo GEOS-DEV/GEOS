@@ -38,9 +38,10 @@ StatsTask::StatsTask( const string & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Optional targeted mesh element set(s) for which the statistics will be restricted. "
-                    "A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh. "
+                    "A set can be be defined by a 'Geometry' component, or correspond to an imported index set "
+                    "of mesh elements in case of an external mesh. "
                     "If empty, all mesh regions will be processed. "
-                    "Be aware that only the regions that are computed by the solver will be taken into account." );
+                    "Be aware that only the regions that are processed by the solver will be taken into account." );
 
   addLogLevel< logInfo::Statistics >();
 }
