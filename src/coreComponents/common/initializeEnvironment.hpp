@@ -153,7 +153,7 @@ void setupEnvironment( int argc, char * argv[] );
 
 /**
  * @brief Cleanup/finalize the environment.
- * @param inError indicate if an exception occured
+ * @param inError indicate if an exception occurred
  */
 void cleanupEnvironment( bool inError );
 
