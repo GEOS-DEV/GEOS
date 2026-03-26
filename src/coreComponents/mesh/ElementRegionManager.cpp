@@ -234,12 +234,6 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
   forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
     WellElementSubRegion const &
     wellSubRegion = wellRegion.getSubRegion< WellElementSubRegion >( wellRegion.getSubRegionName() );
-    TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
-                                                    wellRegion.getWellGeneratorName()),
-      {
-        "Perforation", "Well element", "Coordinates",
-        "Cell region", "Cell sub-region", "Cell ID", "Rank"
-      } );
 
     PerforationData const * wellSubRegionPerforationData= wellSubRegion.getPerforationData();
     arrayView2d< const real64 > wsrPerfLocation = wellSubRegionPerforationData->getLocation();
@@ -268,23 +262,32 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
                                region.getName(), subRegion.getName(), cellId, rankId );
       }
     }
-
-    TableMpiLayout mpiLayout;
-    TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
-
-    formatter.setSortingFunc(
-      []( std::vector< TableData::CellData > const & row1,
-          std::vector< TableData::CellData > const & row2 ) {
-      return tableDataSorting::positiveNumberStringComp( row1[1].value, row2[1].value );
-    } );
-
-    std::ostringstream outputStream;
-    formatter.toStream( outputStream, localPerfoData );
-
-    if( rankId == 0 )
+    if( !localPerfoData.getCellsData().empty())
     {
-      TableTextFormatter const globalFormatter( layoutPerforation );
-      GEOS_LOG( outputStream.str());
+      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
+                                                      wellRegion.getWellGeneratorName()),
+        {
+          "Perforation", "Well element", "Coordinates",
+          "Cell region", "Cell sub-region", "Cell ID", "Rank"
+        } );
+
+      TableMpiLayout mpiLayout;
+      TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
+
+      formatter.setSortingFunc(
+        []( std::vector< TableData::CellData > const & row1,
+            std::vector< TableData::CellData > const & row2 ) {
+        return tableDataSorting::positiveNumberStringComp( row1[1].value, row2[1].value );
+      } );
+
+      std::ostringstream outputStream;
+      formatter.toStream( outputStream, localPerfoData );
+
+      if( rankId == 0 )
+      {
+        TableTextFormatter const globalFormatter( layoutPerforation );
+        GEOS_LOG( outputStream.str());
+      }
     }
 
   } );
