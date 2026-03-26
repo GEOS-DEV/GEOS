@@ -69,7 +69,6 @@ StatsAggregatorBase< Impl >::getMeshLevelPartialSetNames( MeshLevel const & mesh
       dataRepository::Group const & sets = subRegion.sets();
       sets.forWrappers< SetType >( [&] ( dataRepository::Wrapper< SetType > const & set )
       {
-        // if( set.getName() != "all" ) // TODO: is it useful?
         foundSetNames.emplace( set.getName() );
       } );
     } );
