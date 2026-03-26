@@ -180,6 +180,13 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable isothermal estimator prior to coupled reservoir and well solve." );
 
+  registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
+                    "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+
   registerGroup( viewKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
 
   addLogLevel< logInfo::WellControl >();
@@ -481,6 +488,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
       std::vector< WellConstraintBase * >  const constraints =  getInjRateConstraints();
       for( auto const & constraint : constraints )
       {
+        std::cout << "Checking injection constraint " << constraint->getName() << " with value " << constraint->getConstraintValue( currentTime ) << std::endl;
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
           m_wellStatus =  WellControls::Status::CLOSED;
@@ -725,7 +733,6 @@ void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRe
     integer gi = globalWellElementIndex[i];
     localElemStatus[i] = currentStatus[gi];
   }
-
 }
 
 void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const & gravVector )
@@ -1032,6 +1039,8 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   }
   if( isoThermalEstimatorEnabled() )
   {
+    std::cout << "Solving limiting constraint " << limitingConstraint->getName() << " without thermal effects for well " << subRegion.getName() << std::endl;
+
     enableThermalEffects( false );
     solveConstraint ( limitingConstraint, time_n,
                       dt,
@@ -1104,6 +1113,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     }
     constraintChecked[i]=1;
   }
+#if 1
   solveConstraint ( limitingConstraint, time_n,
                     dt,
                     cycleNumber,
@@ -1113,7 +1123,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                     elemManager,
                     subRegion,
                     dofManager );
-
+#endif
   GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                      " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " << limitingConstraint->phaseVolumeRates() << " " <<
                      limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());

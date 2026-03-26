@@ -748,7 +748,8 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
   //fluid.initializeState();  // tjb
-  std::cout << "Well " << getName() << " updating fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = " << compFrac    << std::endl;
+  //std::cout << "Well " << getName() << " updating fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = "
+  // << compFrac    << std::endl;
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
@@ -843,7 +844,8 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
     }
   }
   fluidSeparator.initializeState();  // tjb
-  std::cout << "Well " << getName() << " updating separator fluid model with pressure = " << pres << ", temperature = " << temp << ", compFrac = " << compFrac    << std::endl;
+  //std::cout << "Well " << getName() << " updating separator fluid model with pressure = " << pres << ", temperature = " << temp << ",
+  // compFrac = " << compFrac    << std::endl;
 
   constitutive::constitutiveUpdatePassThru( fluidSeparator, [&] ( auto & castedFluidSeparator )
   {
@@ -1014,7 +1016,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
 
-  std::cout << "Initializing well " << getName() << " at time " << time_n << std::endl;
+
   // TODO: change the way we access the flowSolver here
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -1027,7 +1029,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   arrayView2d< real64 const > const compPerfRate = perforationData.getField< fields::well::compPerforationRate >();
 
   bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( compPerfRate ));
-
+  std::cout << "Initializing well " << getName() << " at time " << time_n << " " <<  isWellOpen(  ) << " " << hasNonZeroRate << std::endl;
   if( time_n <= 0.0  || (  isWellOpen(  ) && !hasNonZeroRate ) )
   {
     setWellState( true );
@@ -1061,6 +1063,8 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
         } );
       }
     }
+
+    GEOS_ERROR_IF( getCurrentConstraint() == nullptr, GEOS_FMT( "No active constraint found for well {} with input control {}", getName(), getInputControl() ) );
     // get well primary variables on well elements
     arrayView1d< real64 > const & wellElemPressure = subRegion.getField< well::pressure >();
     arrayView1d< real64 > const & wellElemTemp = subRegion.getField< well::temperature >();
@@ -1199,6 +1203,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     }
 
   }
+  std::cout << "Finished initializing well " << getName() << " at time " << time_n << " " <<  int(getWellStatus()) << std::endl;
 }
 
 
@@ -2020,7 +2025,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
-  if( m_allowCompDensChopping )
+  //if( m_allowCompDensChopping )
   {
     chopNegativeDensities( subRegion );
   }
@@ -2060,17 +2065,20 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
 
   arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
     subRegion.getField< fields::well::globalCompDensity >();
-
+  // arrayView1d< real64 > const & wellElemTemperature =
+  //  subRegion.getField< well::temperature >();
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     if( wellElemGhostRank[iwelem] < 0 )
     {
+      //std::cout << " Temperature: " << iwelem << " " << wellElemTemperature[iwelem] << std::endl;
       for( integer ic = 0; ic < numComp; ++ic )
       {
         // we allowed for some densities to be slightly negative in CheckSystemSolution
         // if the new density is negative, chop back to zero
         if( wellElemCompDens[iwelem][ic] < 0 )
         {
+          std::cout << "Chopping negative density to zero for well element " << iwelem << " component " << ic << " value before chopping: " << wellElemCompDens[iwelem][ic] << std::endl;
           wellElemCompDens[iwelem][ic] = 0.0;
         }
       }
@@ -2145,7 +2153,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
       // Need to use name since there could be multiple constraints of the same type
       if( constraint.getName() ==  getCurrentConstraint()->getName())
       {
-        std::cout << "Assembling constraint: " << constraint.getName() << std::endl;
+        //std::cout << "Assembling constraint: " << constraint.getName() << std::endl;
         // found limiting constraint
         constitutive::MultiFluidBase & fluidSeparator =   getMultiFluidSeparator();
         integer isThermal = fluidSeparator.isThermal();
@@ -2462,7 +2470,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
   real64 const & currentTotalVolRate =
     getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
 
-  integer const hasWHP =  hasMinimumWHPConstraint();
+  integer const hasWHP =  hasMinimumWHPConstraint()||hasMaximumWHPConstraint();
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [&numPhase,
                               &numComp,
@@ -2485,6 +2493,10 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     real64 const currentTotalRate = connRate[iwelemRef];
     GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                         wellControlsName, currentBHP ) );
+    if( hasWHP )
+      GEOS_LOG( GEOS_FMT( "{}: WHP (at the well head): {} Pa",
+                          wellControlsName, currentWHP ) );
+
     GEOS_LOG( GEOS_FMT( "{}: Total rate: {} {}/s; total {} volumetric rate: {} {}m3/s",
                         wellControlsName, currentTotalRate, massUnit, conditionKey, currentTotalVolRate, unitKey ) );
     for( integer ip = 0; ip < numPhase; ++ip )
