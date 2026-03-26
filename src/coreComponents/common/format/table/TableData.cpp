@@ -267,9 +267,9 @@ void serialBuffer::deserializeString( string & str, buffer_unit_type const * & p
 {
   string::size_type strSize = 0;
   serialBuffer::deserializePrimitive( strSize, ptr, end );
-  if( static_cast< long >(strSize) < std::distance( ptr, end )  )
+  if( std::distance( ptr, end ) < (long) strSize )
   {
-    throw std::runtime_error( "Buffer truncated reading string" );
+    throw std::runtime_error( "Buffer overflow reading string" );
   }
   str.assign( ptr, ptr + strSize );
   ptr += str.size();

@@ -404,7 +404,7 @@ void serialBuffer::deserializePrimitive( T & data, buffer_unit_type const * & pt
 {
   static_assert( std::is_trivially_copyable_v< T > );
   if( ptr + sizeof(T)> end )
-    throw std::runtime_error( "Buffer truncated" );
+    throw std::runtime_error( "Buffer overflow" );
   data = *reinterpret_cast< T const * >(ptr);
   ptr += sizeof(T);
 }

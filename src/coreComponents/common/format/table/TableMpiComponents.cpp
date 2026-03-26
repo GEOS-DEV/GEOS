@@ -133,7 +133,6 @@ TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTa
   auto [globalLogRecords, counts, offsets] =
     MpiWrapper::gatherBufferRank0< stdVector< buffer_unit_type > >( serializedTableData );
 
-
   { // Unpacking
     TableData tableDataGathered;
     if( MpiWrapper::commRank() == 0 )
