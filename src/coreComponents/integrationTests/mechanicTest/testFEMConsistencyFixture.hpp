@@ -27,7 +27,6 @@
 
 #include <gtest/gtest.h>
 #include <fstream>
-#include <iostream>
 #include <tuple>
 #include <limits>
 #include "mainInterface/GeosxState.hpp"
@@ -241,35 +240,23 @@ TEST_P( ConsistencyTest, Run )
     ASSERT_TRUE( state.initializeDataRepository() );
     state.applyInitialConditions();
     state.run();
-    std::cout << "breakpoint after state.run" << std::endl;
+
+    std::cout<<"Finished running test. Now verifying results..."<<std::endl;
 
     // Verification using bulk stress and geometric normal
     ProblemManager & pm = state.getProblemManager();
-    SurfaceElementRegion const & fractureRegion = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager().template getRegion< SurfaceElementRegion >( "Fracture" );
-    ElementRegionManager const & elemManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager();
-    CellElementRegion const & volumeRegion = elemManager.template getRegion< CellElementRegion >( "Region" );
+    auto & fractureRegion = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager().template getRegion< SurfaceElementRegion >( "Fracture" );
+    auto & elemManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager();
+    auto & volumeRegion = elemManager.template getRegion< CellElementRegion >( "Region" );
 
-    FaceManager const & faceManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getFaceManager();
-    NodeManager const & nodeManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getNodeManager();
+    auto const & faceManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getFaceManager();
+    auto const & nodeManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getNodeManager();
 
-    arrayView2d< localIndex const > const faceToCell = faceManager.elementList();
-    arrayView2d< localIndex const > const faceToRegion = faceManager.elementRegionList();
-    arrayView2d< localIndex const > const faceToSubRegion = faceManager.elementSubRegionList();
-    ArrayOfArraysView< localIndex const > const faceNodes = faceManager.nodeList().base().toViewConst();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePos = nodeManager.referencePosition();
-
-    faceToCell.move( LvArray::MemorySpace::host );
-    faceToRegion.move( LvArray::MemorySpace::host );
-    faceToSubRegion.move( LvArray::MemorySpace::host );
-    faceNodes.move( LvArray::MemorySpace::host );
-    nodePos.move( LvArray::MemorySpace::host );
-
-    volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
-    {
-      fields::solidMechanics::arrayViewConst2dLayoutAvgStress const avgStress =
-        subRegion.getField< fields::solidMechanics::averageStress >();
-      avgStress.move( LvArray::MemorySpace::host );
-    } );
+    auto const & faceToCell = faceManager.elementList();
+    auto const & faceToRegion = faceManager.elementRegionList();
+    auto const & faceToSubRegion = faceManager.elementSubRegionList();
+    auto const & faceNodes = faceManager.nodeList();
+    auto const & nodePos = nodeManager.referencePosition();
 
     // RELAXED TOLERANCE FOR WAVY_HEX MESHES:
     // Wavy-hex geometry results in faceted fracture surfaces where the local
@@ -285,16 +272,12 @@ TEST_P( ConsistencyTest, Run )
     real64 const shear_tolerance = isWavyHexMesh ? 1.0e-1 : relative_tolerance;
     real64 const normal_tolerance = isWavyHexMesh ? 1.0e-1 : relative_tolerance;
 
-    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+    fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 const > const fractureTraction = subRegion.getField< fields::contact::traction >();
-      arrayView3d< real64 const > const rotationMatrix = subRegion.getField< fields::contact::rotationMatrix >();
-      arrayView2d< localIndex const > const faces = subRegion.faceList().toViewConst();
+      auto const & fractureTraction = subRegion.getField< fields::contact::traction >();
+      auto const & rotationMatrix = subRegion.getField< fields::contact::rotationMatrix >();
+      auto const & faces = subRegion.faceList();
       localIndex const numFractureElements = subRegion.size();
-
-      fractureTraction.move( LvArray::MemorySpace::host );
-      rotationMatrix.move( LvArray::MemorySpace::host );
-      faces.move( LvArray::MemorySpace::host );
 
       // ===================================================================================
       // Test 1: Verify traction from volume element stress matches expected applied stress
@@ -418,8 +401,8 @@ TEST_P( ConsistencyTest, Run )
             continue;
           }
 
-          ElementRegionBase const & region = elemManager.getRegion( er );
-          ElementSubRegionBase const & cellSubRegion = region.getSubRegion( esr );
+          ElementRegionBase & region = elemManager.getRegion( er );
+          ElementSubRegionBase & cellSubRegion = region.getSubRegion( esr );
           arrayView2d< real64 const, cells::RANK2_TENSOR_USD > const avgStress = cellSubRegion.getField< fields::solidMechanics::averageStress >();
           avgStress.move( LvArray::MemorySpace::host );
 
@@ -495,11 +478,9 @@ TEST_P( ConsistencyTest, Run )
       }
     } );
 
-    volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+    volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
-      fields::solidMechanics::arrayViewConst2dLayoutAvgStress const avgStress =
-        subRegion.getField< fields::solidMechanics::averageStress >();
-      avgStress.move( LvArray::MemorySpace::host );
+      auto const & avgStress = subRegion.getField< fields::solidMechanics::averageStress >();
       localIndex n_cells = subRegion.size();
       for( localIndex k=0; k < n_cells; ++k )
       {

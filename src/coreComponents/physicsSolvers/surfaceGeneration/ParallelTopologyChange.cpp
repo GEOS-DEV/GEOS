@@ -26,6 +26,12 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
+#include <stdio.h>
+
+#if defined( GEOS_USE_CUDA )
+#include <cuda_runtime.h>
+#endif
+
 #if PARALLEL_TOPOLOGY_CHANGE_METHOD==0
 namespace geos
 {
@@ -35,6 +41,40 @@ using namespace dataRepository;
 
 namespace
 {
+inline void printCudaStatus( char const * functionName, int const line, char const * label )
+{
+#if defined( GEOS_USE_CUDA )
+  cudaError_t const launchErr = cudaGetLastError();
+  cudaError_t const syncErr = cudaDeviceSynchronize();
+  if( launchErr != cudaSuccess || syncErr != cudaSuccess )
+  {
+    printf( "\n[CUDA ERROR] %s:%d", functionName, line );
+    if( label != nullptr && label[0] != '\0' )
+    {
+      printf( " %s", label );
+    }
+    printf( "\n" );
+
+    if( launchErr != cudaSuccess )
+    {
+      printf( "  launch: %s\n", cudaGetErrorString( launchErr ) );
+    }
+
+    if( syncErr != cudaSuccess )
+    {
+      printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
+    }
+  }
+#else
+  GEOS_UNUSED_VAR( functionName );
+  GEOS_UNUSED_VAR( line );
+  GEOS_UNUSED_VAR( label );
+#endif
+}
+
+#define GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( label ) \
+  printCudaStatus( __func__, __LINE__, label )
+
 void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighbor,
                                              MeshLevel * const meshLevel,
                                              ModifiedObjectLists const & modifiedObjects,
@@ -241,7 +281,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   bufferSize += edgeManager.packSize( modEdgePackListArray, 0, false, sizeEvents );
   bufferSize += faceManager.packSize( modFacePackListArray, 0, false, sizeEvents );
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.beforeWaitSizeEvents" );
   waitAllDeviceEvents( sizeEvents );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.afterWaitSizeEvents" );
   neighbor->resizeSendBuffer( commID, bufferSize );
 
   buffer_type & sendBuffer = neighbor->sendBuffer( commID );
@@ -284,7 +326,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   packedSize += faceManager.pack( sendBufferPtr, modFacePackListArray, 0, false, packEvents );
 
   // poll for pack completion here
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.beforeWaitPackEvents" );
   waitAllDeviceEvents( packEvents );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.afterWaitPackEvents" );
   GEOS_ERROR_IF( bufferSize != packedSize,
                  GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
                            bufferSize,
@@ -375,7 +419,9 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, false, events );
 //    unpackedSize += elemManager.Unpack( receiveBufferPtr, modifiedElements );
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewAndModifiedObjectsOnOwningRanks.beforeWaitEvents" );
   waitAllDeviceEvents( events );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewAndModifiedObjectsOnOwningRanks.afterWaitEvents" );
 
   std::set< localIndex > & allNewNodes      = receivedObjects.newNodes;
   std::set< localIndex > & allModifiedNodes = receivedObjects.modifiedNodes;
@@ -569,7 +615,9 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   bufferSize += edgeManager.packParentChildMapsSize( modEdgesToSend );
   bufferSize += faceManager.packParentChildMapsSize( modFacesToSend );
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.beforeWaitSizeEvents" );
   waitAllDeviceEvents( sizeEvents );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.afterWaitSizeEvents" );
   neighbor->resizeSendBuffer( commID, bufferSize );
 
   buffer_type & sendBuffer = neighbor->sendBuffer( commID );
@@ -608,7 +656,9 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
 
   GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.beforeWaitPackEvents" );
   waitAllDeviceEvents( packEvents );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.afterWaitPackEvents" );
 }
 
 void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
@@ -692,7 +742,9 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
   faceManager.unpackParentChildMaps( receiveBufferPtr, modGhostFaces );
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewModToGhosts.beforeWaitEvents" );
   waitAllDeviceEvents( events );
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewModToGhosts.afterWaitEvents" );
 
   if( newGhostNodes.size() > 0 )
   {
@@ -803,6 +855,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                                         int mpiCommOrder )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.begin" );
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
@@ -877,6 +930,8 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                               commData.commID(),
                                               receivedObjects );
   }
+
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.afterOwningRankExchange" );
 
   nodeManager.inheritGhostRankFromParent( receivedObjects.newNodes );
   edgeManager.inheritGhostRankFromParent( receivedObjects.newEdges );
@@ -966,6 +1021,8 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     unpackNewModToGhosts( &neighbor, commData2.commID(), mesh, receivedObjects );
   }
 
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.afterGhostExchange" );
+
   modifiedObjects.insert( receivedObjects );
 
   nodeManager.fixUpDownMaps( false );
@@ -1021,6 +1078,8 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   MpiWrapper::waitAll( commData2.size(),
                        commData2.mpiSendBufferRequest(),
                        commData2.mpiSendBufferSizeStatus() );
+
+  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.end" );
 
 }
 

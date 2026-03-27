@@ -1183,19 +1183,19 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
 void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager,
                                                        ElementRegionManager const & elemManager )
 {
-  arrayView2d< localIndex > const & elems2dToFaces = faceList().toView();
-  arrayView2d< localIndex const > const & faceToElementRegionIndex    = faceManager.elementRegionList();
-  arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
-  arrayView2d< localIndex const > const & faceToElementIndex          = faceManager.elementList();
+  arrayView2d< localIndex > const elems2dToFaces = faceList().toView();
+  arrayView2d< localIndex const > const faceToElementRegionIndex    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const faceToElementIndex          = faceManager.elementList();
 
   arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
-  FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+  ArrayOfArraysView< localIndex > const faceToNodes = faceManager.nodeList().base().toView();
 
   auto elemCenter = elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   // We need to modify the normals and the nodes ordering to be consistent.
   arrayView2d< real64 > const faceNormal = faceManager.faceNormal();
-  forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const kfe )
   {
     if( !( elems2dToFaces[kfe][0] == -1 || elems2dToFaces[kfe][1] == -1 ) )
     {

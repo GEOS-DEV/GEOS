@@ -39,8 +39,13 @@
 
 #include <algorithm>
 #include <deque>
+#include <stdio.h>
 #include <sstream>
 #include <unordered_map>
+
+#if defined( GEOS_USE_CUDA )
+#include <cuda_runtime.h>
+#endif
 
 namespace geos
 {
@@ -48,6 +53,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
+
 
 /// Return the other edge of a face given one edge.
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
@@ -573,6 +579,17 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
   return rval;
 }
 
+bool SurfaceGenerator::execute( real64 const time_n,
+                                real64 const dt,
+                                integer const cycleNumber,
+                                integer const GEOS_UNUSED_PARAM( eventCounter ),
+                                real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                DomainPartition & domain )
+{
+  solverStep( time_n, dt, cycleNumber, domain );
+  return false;
+}
+
 int SurfaceGenerator::separationDriver( DomainPartition & domain,
                                         MeshLevel & mesh,
                                         stdVector< NeighborCommunicator > & neighbors,
@@ -1041,8 +1058,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
       localIndex const er  = nodeToRegionMap[k];
       localIndex const esr = nodeToSubRegionMap[k];
       localIndex const ei  = nodeToElementMap[k];
-      CellElementSubRegion const * subRegion =
-        &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+      CellElementSubRegion const * subRegion = &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
       std::pair< CellElementSubRegion const *, localIndex > const p( subRegion, ei );
 
       // Keep pairs unique (small N — linear search is fine).
@@ -1083,7 +1099,6 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
       nodeToRuptureReadyFaces.insert( parentFaceIndex );
     }
   }
-
 
 
   // local map to hold the edgesToRuptureReadyFaces

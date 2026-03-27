@@ -238,18 +238,32 @@ numElementsFromByteSize( localIndex const byteSize )
 }
 
 
+/// @cond DO_NOT_DOCUMENT
+namespace detail
+{
+template< typename T >
+std::enable_if_t< traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T & value, localIndex const newCapacity )
+{
+  localIndex const oldCapacity = value.size();
+  double const oldValueCapacity = value.valueCapacity();
+  localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
+  value.reserveValues( newValueCapacity );
+}
+
+template< typename T >
+std::enable_if_t< !traits::HasMemberFunction_reserveValues< T const > >
+reserveValuesIfAvailable( T &, localIndex const )
+{}
+}
+/// @endcond
+
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_reserve< T > >
 reserve( T & value, localIndex const newCapacity )
 {
   value.reserve( newCapacity );
-  if constexpr ( traits::HasMemberFunction_reserveValues< T const > )
-  {
-    localIndex const oldCapacity = value.size();
-    double const oldValueCapacity = value.valueCapacity();
-    localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
-    value.reserveValues( newValueCapacity );
-  }
+  detail::reserveValuesIfAvailable( value, newCapacity );
 }
 
 template< typename T,

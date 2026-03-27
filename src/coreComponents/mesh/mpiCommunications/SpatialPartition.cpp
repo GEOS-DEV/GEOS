@@ -465,22 +465,22 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
   forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
+  {
+    bool inPartition = true;
+    R1Tensor p_x;
+    for( int i=0; i<3; i++ )
     {
-      bool inPartition = true;
-      R1Tensor p_x;
-      for( int i=0; i<3; i++ )
-      {
-        p_x[i] = particleCenter[pp][i];
-        inPartition = inPartition && isCoordInPartition( p_x[i], i );
-      }
-      if( particleRank[pp]==this->m_rank && !inPartition )
-      {
-        outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
-        outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
-        particleRank[pp] = -1;                             // Temporarily set particleRank of out-of-domain particle to -1 until it is
+      p_x[i] = particleCenter[pp][i];
+      inPartition = inPartition && isCoordInPartition( p_x[i], i );
+    }
+    if( particleRank[pp]==this->m_rank && !inPartition )
+    {
+      outOfDomainParticleCoordinates.emplace_back( p_x );   // Store the coordinate of the out-of-domain particle
+      outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
+      particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is
                                                            // requested by someone.
-      }
-    } );
+    }
+  } );
 
 
   // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -546,15 +546,15 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
       particleLocalIndicesRequestedFromNeighbors[n].resize( ni );
 
       forAll< serialPolicy >( ni, [&, particleRank] GEOS_HOST ( localIndex const k )
-        {
-          int const i = particleListIndicesRequestedFromNeighbors[n][k];
-          outOfDomainParticleRequests[i] += 1;
-          localIndex pp = outOfDomainParticleLocalIndices[i];
+      {
+        int const i = particleListIndicesRequestedFromNeighbors[n][k];
+        outOfDomainParticleRequests[i] += 1;
+        localIndex pp = outOfDomainParticleLocalIndices[i];
 
-          particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
-          // Set ghost rank of the particle equal to neighbor rank.
-          particleRank[pp] = m_neighbors[n].neighborRank();
-        } );
+        particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+        // Set ghost rank of the particle equal to neighbor rank.
+        particleRank[pp] = m_neighbors[n].neighborRank();
+      } );
     }
 
     // Check that there is exactly one processor requesting each out-of-domain particle.
@@ -611,17 +611,17 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
   forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  {
+    if( particleRankAfter[p] == -1 )
     {
-      if( particleRankAfter[p] == -1 )
-      {
-        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-        indicesToErase.insert( p );
-      }
-      else if( particleRankAfter[p] != m_rank )
-      {
-        indicesToErase.insert( p );
-      }
-    } );
+      GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+      indicesToErase.insert( p );
+    }
+    else if( particleRankAfter[p] != m_rank )
+    {
+      indicesToErase.insert( p );
+    }
+  } );
   subRegion.erase( indicesToErase );
 
   // Resize particle region owning this subregion
@@ -673,21 +673,21 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
+    {
+      bool inPartition = true;
+      R1Tensor p_x;
+      for( int i=0; i<3; i++ )
       {
-        bool inPartition = true;
-        R1Tensor p_x;
-        for( int i=0; i<3; i++ )
-        {
-          p_x[i] = particleCenter[p][i];
-          inPartition = inPartition && isCoordInPartition( p_x[i], i );
-        }
-        if( particleRank[p]==this->m_rank && inPartition )
-        {
-          inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-          inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
+        p_x[i] = particleCenter[p][i];
+        inPartition = inPartition && isCoordInPartition( p_x[i], i );
+      }
+      if( particleRank[p]==this->m_rank && inPartition )
+      {
+        inDomainMasterParticleCoordinates.emplace_back( p_x );    // Store the coordinate of the out-of-domain particle
+        inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );       // Store the local index "pp" for the current
                                                                                     // coordinate.
-        }
-      } );
+      }
+    } );
 
 
     // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -739,14 +739,14 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
           // This particle should be a ghost on the current processor. See if it already exists here.
           bool alreadyHere = false;
           forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
+          {
+            if( gI == particleGlobalID[p] )
             {
-              if( gI == particleGlobalID[p] )
-              {
-                // The particle already exists as a ghost on this partition, so we should update its rank.
-                particleRank[p] = m_neighbors[n].neighborRank();
-                alreadyHere = true;
-              }
-            } );
+              // The particle already exists as a ghost on this partition, so we should update its rank.
+              particleRank[p] = m_neighbors[n].neighborRank();
+              alreadyHere = true;
+            }
+          } );
           if( !alreadyHere )
           {
             // The global index is not represented on this partition, so we should add the particle.
@@ -773,12 +773,12 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     int partitionRank = this->m_rank;
     forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
+    {
+      if( particleRank[p] != partitionRank )
       {
-        if( particleRank[p] != partitionRank )
-        {
-          particleRank[p] = -1;
-        }
-      } );
+        particleRank[p] = -1;
+      }
+    } );
 
 
     // (6.1) Resize particle subRegion to accommodate incoming particles.
