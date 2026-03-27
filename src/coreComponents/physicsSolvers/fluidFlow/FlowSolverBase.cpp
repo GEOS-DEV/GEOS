@@ -369,15 +369,17 @@ void FlowSolverBase::checkDiscretizationName() const
 
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
-                            getDataContext(), m_discretizationName, discretizationMethods,
-                            stringutilities::join( discretizationMethods, ", " )));
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
+                            m_discretizationName, discretizationMethods,
+                            stringutilities::join( discretizationMethods, ", " )),
+                  getDataContext());
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
-                            getDataContext(), m_discretizationName ));
+                            m_discretizationName ),
+                  getDataContext());
     }
   }
 }

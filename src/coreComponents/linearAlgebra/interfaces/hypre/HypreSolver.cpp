@@ -187,7 +187,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+      GEOS_ERROR( GEOS_FMT( "Solver type not supported in hypre interface: {}", params.solverType ) );
     }
   }
 }

@@ -336,8 +336,7 @@ void WaveSolverBase::postInputInitialization()
   {
     counter++;
   } );
-  GEOS_THROW_IF( counter > 1,
-                 getDataContext() << ": One single PML field specification is allowed",
+  GEOS_THROW_IF( counter > 1, "One single PML field specification is allowed",
                  InputError, getDataContext() );
 
   m_usePML = counter;
@@ -387,7 +386,7 @@ void WaveSolverBase::postInputInitialization()
   {
     GEOS_THROW_IF( m_slsReferenceAngularFrequencies.size( 0 ) != m_slsAnelasticityCoefficients.size( 0 ),
                    "The number of attenuation anelasticity coefficients for the SLS model must be equal to the number of reference angular frequencies",
-                   InputError );
+                   InputError, getDataContext() );
     if( m_slsReferenceAngularFrequencies.size( 0 ) == 0 || m_slsAnelasticityCoefficients.size( 0 ) == 0 )
     {
       m_slsReferenceAngularFrequencies.resize( 1 );
@@ -401,11 +400,11 @@ void WaveSolverBase::postInputInitialization()
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the sources",
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers",
-                 InputError );
+                 InputError, getDataContext() );
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -421,7 +420,7 @@ void WaveSolverBase::postInputInitialization()
 
   GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && static_cast< localIndex >(m_sourceWaveletTableNames.size()) != m_sourceCoordinates.size( 0 ),
                  "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
-                 InputError );
+                 InputError, getDataContext() );
   m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
 
 }
@@ -461,7 +460,7 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
+                 GEOS_FMT( "FE discretization not found: {}", m_discretizationName ),
                  InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;

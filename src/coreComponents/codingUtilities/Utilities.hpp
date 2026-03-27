@@ -92,7 +92,7 @@ template< typename T1, typename T2, typename SORTED >
 T2 & stlMapLookup( mapBase< T1, T2, SORTED > & Map, const T1 & key )
 {
   typename mapBase< T1, T2, SORTED >::iterator MapIter = Map.find( key );
-  GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
+  GEOS_ERROR_IF( MapIter == Map.end(), GEOS_FMT( "Key not found: {}", key ) );
   return MapIter->second;
 }
 
@@ -214,6 +214,11 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 string const & optionName,
                 string const & contextName )
 {
+  // In device compilation, GEOS_THROW_IF does not evaluate MSG, so these appear unused.
+#if defined(GEOS_DEVICE_COMPILE)
+  GEOS_UNUSED_VAR( optionName, contextName );
+#endif
+
   auto const iter = map.find( option );
   GEOS_THROW_IF( iter == map.end(),
                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",

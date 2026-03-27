@@ -211,7 +211,7 @@ else()
 endif()
 
 ################################
-# ZLIB 
+# ZLIB
 ################################
 if(DEFINED ZLIB_DIR)
   list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
@@ -638,11 +638,18 @@ endif()
 if(DEFINED SUITESPARSE_DIR)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
+    set( SUITESPARSE_LIBRARIES umfpack amd suitesparseconfig )
+    if( APPLE )
+      # UMFPACK on macOS can route ordering through CHOLMOD internals.
+      # Link these components explicitly to avoid fragile runtime symbol resolution.
+      list( APPEND SUITESPARSE_LIBRARIES cholmod colamd camd ccolamd )
+    endif()
+
     find_and_import(NAME suitesparse
                       INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
                       LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
                       HEADER umfpack.h
-                      LIBRARIES umfpack
+                      LIBRARIES ${SUITESPARSE_LIBRARIES}
                       DEPENDS blas lapack)
 
     extract_version_from_header( NAME suitesparse
@@ -887,7 +894,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.6.0...<4 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...<4.0.0 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)

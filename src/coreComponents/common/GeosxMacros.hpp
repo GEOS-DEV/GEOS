@@ -198,6 +198,24 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 #define GEOS_DETAIL_REST_PREP_ARGS( ... ) GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
                                                                                __VA_ARGS__ )
 
+namespace geos::internal
+{
+
+/**
+ * @brief Minimal "ostream-like" sink used to type-check stream-insertion expressions
+ *        in device compilation, without pulling in iostreams.
+ */
+struct DeviceNullStream
+{
+  template< class T >
+  GEOS_HOST_DEVICE constexpr DeviceNullStream & operator<<( T const & ) noexcept
+  {
+    return *this;
+  }
+};
+
+}
+
 ///@}
 
 #endif // GEOS_COMMON_GEOSXMACROS_HPP_
