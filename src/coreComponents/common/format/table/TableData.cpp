@@ -91,7 +91,7 @@ void TableData::CellData::serialize( stdVector< buffer_unit_type > & out ) const
 
 size_t TableData::CellData::getSerializedSize() const
 {
-  return serialBuffer::sizeOfPrimitive(type) + serialBuffer::sizeOfString( value );
+  return serialBuffer::sizeOfPrimitive( type ) + serialBuffer::sizeOfString( value );
 }
 
 size_t TableData::getSerializedSize() const
@@ -267,9 +267,9 @@ void serialBuffer::deserializeString( string & str, buffer_unit_type const * & p
 {
   string::size_type strSize = 0;
   serialBuffer::deserializePrimitive( strSize, ptr, end );
-  if( std::distance( ptr, end ) < (long) strSize )
+  if( static_cast< long >(strSize) > std::distance( ptr, end ) )
   {
-    throw std::runtime_error( "Buffer overflow reading string" );
+    throw std::runtime_error( "buffer overflow reading string" );
   }
   str.assign( ptr, ptr + strSize );
   ptr += str.size();
