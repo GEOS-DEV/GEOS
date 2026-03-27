@@ -37,6 +37,6 @@ DirichletBoundaryCondition::~DirichletBoundaryCondition()
 
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, DirichletBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, DirichletBoundaryCondition, string const &, Group * const )
 
 } /* namespace geos */

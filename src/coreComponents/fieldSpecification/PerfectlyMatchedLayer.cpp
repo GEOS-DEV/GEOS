@@ -121,6 +121,6 @@ void PerfectlyMatchedLayer::postInputInitialization()
 }
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, PerfectlyMatchedLayer, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PerfectlyMatchedLayer, string const &, Group * const )
 
 } /* namespace geos */

@@ -300,7 +300,7 @@ AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWr
                                                   pressureInfluenceFunction.createKernelWrapper() );
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, AquiferBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, AquiferBoundaryCondition, string const &, Group * const )
 
 
 } /* namespace geos */

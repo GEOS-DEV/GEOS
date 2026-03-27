@@ -14,6 +14,7 @@
  */
 
 #include "FieldSpecificationManager.hpp"
+#include "FieldSpecificationABC.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshObjectPath.hpp"
@@ -53,8 +54,8 @@ FieldSpecificationManager & FieldSpecificationManager::getInstance()
 Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< FieldSpecificationBase > bc =
-    FieldSpecificationBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
+  std::unique_ptr< FieldSpecificationABC > bc =
+    FieldSpecificationABC::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup( childName, std::move( bc ) );
 }
 
@@ -62,7 +63,7 @@ Group * FieldSpecificationManager::createChild( string const & childKey, string 
 void FieldSpecificationManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from BoundaryConditionBase here
-  for( auto & catalogIter: FieldSpecificationBase::getCatalog())
+  for( auto & catalogIter: FieldSpecificationABC::getCatalog())
   {
     createChild( catalogIter.first, catalogIter.first );
   }

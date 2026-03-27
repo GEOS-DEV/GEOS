@@ -31,6 +31,7 @@
 #include "mesh/MeshObjectPath.hpp"
 #include "functions/FunctionManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "FieldSpecificationABC.hpp"
 
 namespace geos
 {
@@ -41,21 +42,10 @@ class Function;
  * @class FieldSpecificationBase
  * A class to hold values for and administer a single boundary condition
  */
-class FieldSpecificationBase : public dataRepository::Group
+class FieldSpecificationBase : public FieldSpecificationABC
 {
 public:
 
-  /**
-   * @defgroup alias and functions to defined statically initialized catalog
-   * @{
-   */
-
-  /**
-   * alias to define the catalog type for this base type
-   */
-  using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
-                                                             string const &,
-                                                             dataRepository::Group * const >;
   /**
    * @enum  SetErrorMode
    * @brief Indicate the error handling mode.
@@ -66,12 +56,6 @@ public:
     error,
     warning
   };
-
-  /**
-   * @brief static function to return static catalog.
-   * @return the static catalog to create derived types through the static factory methods.
-   */
-  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @brief Static Factory Catalog Functions
@@ -87,10 +71,6 @@ public:
   {
     return FieldSpecificationBase::catalogName();
   }
-
-  /**
-   * @}
-   */
 
 
   /**

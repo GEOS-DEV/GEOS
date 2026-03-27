@@ -22,7 +22,7 @@ namespace geos
 using namespace dataRepository;
 
 FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
-  Group( name, parent )
+  FieldSpecificationABC( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -102,13 +102,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
 FieldSpecificationBase::~FieldSpecificationBase()
 {}
 
-FieldSpecificationBase::CatalogInterface::CatalogType &
-FieldSpecificationBase::getCatalog()
-{
-  static FieldSpecificationBase::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
-
 
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
@@ -131,6 +124,6 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecificationABC, FieldSpecificationBase, string const &, Group * const )
 
 }
