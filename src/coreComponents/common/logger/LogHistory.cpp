@@ -92,6 +92,28 @@ void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) con
   serializePrimitive( m_value.m_msgType );
 }
 
+template< typename T >
+void LogHistory::LogRecord::deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  static_assert( std::is_trivially_copyable_v< T > );
+  if( ptr + sizeof(T)> end )
+    throw std::runtime_error( "Buffer truncated" );
+  memcpy( &data, ptr, sizeof(T) );
+  ptr += sizeof(T);
+}
+
+void LogHistory::LogRecord::deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  string::size_type strSize = 0;
+  deserializeField( strSize, ptr, end );
+  if( std::distance( ptr, end ) < (long) strSize )
+  {
+    throw std::runtime_error( "Buffer truncated reading string" );
+  }
+  str.assign( ptr, ptr + strSize );
+  ptr += str.size();
+}
+
 void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
 {
   string_view fileName =  extractAfterLastOccurrence( msgType.m_file, '/' );
@@ -118,7 +140,7 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
   }
   else
   {
-    it->second.m_count +=  1;
+    it->second.m_count +=  logRecord.m_value.m_count;
   }
 }
 
@@ -185,33 +207,35 @@ void LogHistory::gatherRecordsRank0()
 template<>
 string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const
 {
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+
   TableLayout tableLayout;
   tableLayout.addColumn( "Types" );
 
   // fill header
-  for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
   {
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
+  // prepare logHistory row
   stdMap< std::pair< string, MsgType >, integer > countPerPartAndType;
-  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
   CellRow emptyCellRow;
   emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
 
   stdMap< string, CellRow > rowByPart;
-
+  // retrive unique message
   for( const auto & [key, values] : logHistory.getDiagnosticHistory())
   {
     auto logPart = values.m_logPart;
     MsgType msgType = values.m_msgType;
-
     countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 
     if( rowByPart.find( logPart ) == rowByPart.end())
       rowByPart.get_inserted( logPart ) = emptyCellRow;
   }
 
+  // update rowByPart values
   for( auto & [keyPair, count] : countPerPartAndType )
   {
     auto logPart = std::get< 0 >( keyPair );

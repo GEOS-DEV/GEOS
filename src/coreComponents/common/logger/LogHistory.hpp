@@ -134,30 +134,14 @@ private:
      * @param end Safety: maximum buffer limit.
      */
     template< typename T >
-    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-    {
-      static_assert( std::is_trivially_copyable_v< T > );
-      if( ptr + sizeof(T)> end ) throw std::runtime_error( "Buffer truncated" );
-      memcpy( &data, ptr, sizeof(T) );
-      ptr += sizeof(T);
-    }
+    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end );
 
     /** @brief Reads a string value from the buffer and advances the pointer.
      * @param data Destination variable.
      * @param ptr Current read pointer (advanced by sizeof(string)).
      * @param end Safety: maximum buffer limit.
      */
-    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-    {
-      string::size_type strSize = 0;
-      deserializeField( strSize, ptr, end );
-      if( std::distance( ptr, end ) < (long) strSize )
-      {
-        throw std::runtime_error( "Buffer truncated reading string" );
-      }
-      str.assign( ptr, ptr + strSize );
-      ptr += str.size();
-    }
+    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end );
 
   };
 
