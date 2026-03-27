@@ -211,7 +211,7 @@ else()
 endif()
 
 ################################
-# ZLIB 
+# ZLIB
 ################################
 if(DEFINED ZLIB_DIR)
   list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
@@ -638,13 +638,18 @@ endif()
 if(DEFINED SUITESPARSE_DIR)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
+    set( SUITESPARSE_LIBRARIES umfpack amd suitesparseconfig )
+    if( APPLE )
+      # UMFPACK on macOS can route ordering through CHOLMOD internals.
+      # Link these components explicitly to avoid fragile runtime symbol resolution.
+      list( APPEND SUITESPARSE_LIBRARIES cholmod colamd camd ccolamd )
+    endif()
+
     find_and_import(NAME suitesparse
                       INCLUDE_DIRECTORIES ${SUITESPARSE_DIR}/include
                       LIBRARY_DIRECTORIES ${SUITESPARSE_DIR}/lib ${SUITESPARSE_DIR}/lib64
                       HEADER umfpack.h
-                      # Some SuiteSparse builds (notably on macOS) do not encode UMFPACK's
-                      # dependencies in the dylib load commands, so link them explicitly.
-                      LIBRARIES umfpack amd suitesparseconfig
+                      LIBRARIES ${SUITESPARSE_LIBRARIES}
                       DEPENDS blas lapack)
 
     extract_version_from_header( NAME suitesparse

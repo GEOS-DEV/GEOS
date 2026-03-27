@@ -1450,7 +1450,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
       arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
-
       array1d< real64 > elevationBoundaries( numPhases );
       array1d< integer > phaseIndexOrdering( numPhases );
       if( singlePhaseInitialisation )
@@ -1470,12 +1469,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
           phaseIndexOrdering[0] = ipWater;
           phaseIndexOrdering[1] = ipOil;
         }
-        if( ipOil < 0 )
+        else if( ipOil < 0 )
         {
           phaseIndexOrdering[0] = ipWater;
           phaseIndexOrdering[1] = ipGas;
         }
-        if( ipWater < 0 )
+        else if( ipWater < 0 )
         {
           phaseIndexOrdering[0] = ipOil;
           phaseIndexOrdering[1] = ipGas;
