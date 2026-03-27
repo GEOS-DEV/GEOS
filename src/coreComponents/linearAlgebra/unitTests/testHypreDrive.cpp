@@ -343,6 +343,26 @@ TEST( HypreDriveYaml, UsesWellTemperatureLabelForThermalReservoirWellBlocks )
   EXPECT_NE( target.argument.find( "wellTemperature: 8" ), std::string::npos );
 }
 
+TEST( HypreDriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
+{
+  stdVector< string > const fieldNames = { "totalDisplacement", "singlePhaseVariables", "singlePhaseWellVars" };
+  array1d< int > numComponentsPerField( 3 );
+  numComponentsPerField[0] = 3;
+  numComponentsPerField[1] = 2;
+  numComponentsPerField[2] = 3;
+
+  hypre::hypreDrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "totalDisplacement_0: 0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "singlePhaseVariables_1: 4" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "singlePhaseWellVars_2: 7" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [singlePhaseWellVars_0, singlePhaseWellVars_1, singlePhaseWellVars_2]" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "num_functions: 2" ), std::string::npos );
+}
+
 TEST( HypreDriveYaml, UsesAuthoritativeFileWhenProvided )
 {
   std::string const authoritativeFile = "/tmp/geos-hypredrive-authoritative.yml";

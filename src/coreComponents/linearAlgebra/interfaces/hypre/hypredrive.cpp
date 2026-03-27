@@ -32,6 +32,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanicsReservoirFVM.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp"
 
 #include <HYPRE_IJ_mv.h>
@@ -401,6 +402,7 @@ bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::Strat
     case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
     case StrategyType::singlePhasePoromechanicsConformingFractures:
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
+    case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
     case StrategyType::hydrofracture:
     case StrategyType::lagrangianContactMechanics:
     case StrategyType::augmentedLagrangianContactMechanics:
@@ -842,6 +844,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     case StrategyType::thermalSinglePhasePoromechanics:
     case StrategyType::hybridSinglePhasePoromechanics:
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
+    case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
     case StrategyType::multiphasePoromechanics:
     case StrategyType::multiphasePoromechanicsReservoirFVM:
     case StrategyType::thermalMultiphasePoromechanics:
@@ -849,6 +852,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = ( strategy == StrategyType::thermalSinglePhasePoromechanics ||
+                                      strategy == StrategyType::thermalSinglePhasePoromechanicsReservoirFVM ||
                                       strategy == StrategyType::thermalMultiphasePoromechanics )
                                       ? AMGFlavor::pressureTemperature
                                       : AMGFlavor::pressure;
@@ -1180,6 +1184,8 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsConformingFractures >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::singlePhasePoromechanicsReservoirFVM:
       return buildStrategyYaml< hypre::mgr::SinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
+    case StrategyType::thermalSinglePhasePoromechanicsReservoirFVM:
+      return buildStrategyYaml< hypre::mgr::ThermalSinglePhasePoromechanicsReservoirFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::compositionalMultiphaseFVM:
       return buildStrategyYaml< hypre::mgr::CompositionalMultiphaseFVM >( params, labelNames, numComponentsPerField, preconditionerYaml );
     case StrategyType::compositionalMultiphaseHybridFVM:
