@@ -367,42 +367,7 @@ public:
       >
     >
   static GatherResult< CONTAINER >
-  gatherBufferRank0( CONTAINER const & localBuffer )
-  {
-    integer const numRanks = MpiWrapper::commSize();
-    integer const numLocalValues  = static_cast< integer >(localBuffer.size());
-
-    GatherResult< CONTAINER > gatherResult;
-
-    if( MpiWrapper::commRank() == 0 )
-    {
-      gatherResult.counts.resize( numRanks );
-      gatherResult.offsets.resize( numRanks );
-    }
-
-
-    MpiWrapper::gather( &numLocalValues, 1, gatherResult.counts.data(), 1, 0 );
-
-    if( MpiWrapper::commRank() == 0 )
-    {
-      integer totalSize = 0;
-      for( integer i = 0; i < numRanks; ++i )
-      {
-        gatherResult.offsets[i] = totalSize;
-        totalSize += gatherResult.counts[i];
-      }
-      gatherResult.data.resize( totalSize );
-    }
-
-    MpiWrapper::gatherv( localBuffer.data(),
-                         numLocalValues,
-                         gatherResult.data.data(),
-                         gatherResult.counts.data(),
-                         gatherResult.offsets.data(),
-                         0 );
-
-    return gatherResult;
-  }
+  gatherBufferRank0( CONTAINER const & localBuffer );
 
   /**
    * @brief Gather srting from all ranks to rank 0
@@ -1058,6 +1023,45 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
       GEOS_ERROR( "Unsupported reduction operation" );
       return MPI_NO_OP;
   }
+}
+
+template< typename CONTAINER, typename VALUE_T, typename >
+GatherResult< CONTAINER >
+MpiWrapper::gatherBufferRank0( CONTAINER const & localBuffer )
+{
+  integer const numRanks = MpiWrapper::commSize();
+  integer const numLocalValues  = static_cast< integer >(localBuffer.size());
+
+  GatherResult< CONTAINER > gatherResult;
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    gatherResult.counts.resize( numRanks );
+    gatherResult.offsets.resize( numRanks );
+  }
+
+
+  MpiWrapper::gather( &numLocalValues, 1, gatherResult.counts.data(), 1, 0 );
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    integer totalSize = 0;
+    for( integer i = 0; i < numRanks; ++i )
+    {
+      gatherResult.offsets[i] = totalSize;
+      totalSize += gatherResult.counts[i];
+    }
+    gatherResult.data.resize( totalSize );
+  }
+
+  MpiWrapper::gatherv( localBuffer.data(),
+                       numLocalValues,
+                       gatherResult.data.data(),
+                       gatherResult.counts.data(),
+                       gatherResult.offsets.data(),
+                       0 );
+
+  return gatherResult;
 }
 
 template< typename T_SEND, typename T_RECV >
