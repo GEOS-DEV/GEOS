@@ -111,38 +111,6 @@ private:
      * @param end Upper limit of readable memory.
      */
     void deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end );
-
-    /**
-     * @tparam T The trivial type
-     * @return Returns the size occupied by a trivial type in memory.
-     */
-    template< typename T >
-    unsigned long sizeOfField( T ) const
-    { return sizeof(T); }
-
-    /**
-     * @brief Returns the size of a string (header size + content).
-     * @param str The target string
-     * @return Size in bytes.
-     */
-    unsigned long sizeOfField( string_view str ) const
-    { return sizeof(string::size_type) + str.size(); }
-
-    /** @brief Reads a trivial value from the buffer and advances the pointer.
-     * @param data Destination variable.
-     * @param ptr Current read pointer (advanced by sizeof(T)).
-     * @param end Safety: maximum buffer limit.
-     */
-    template< typename T >
-    void deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end );
-
-    /** @brief Reads a string value from the buffer and advances the pointer.
-     * @param data Destination variable.
-     * @param ptr Current read pointer (advanced by sizeof(string)).
-     * @param end Safety: maximum buffer limit.
-     */
-    void deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end );
-
   };
 
   /**

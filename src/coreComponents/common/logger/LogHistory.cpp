@@ -61,10 +61,10 @@ bool LogHistory::LogRecord::Key::operator==( Key const & rhs ) const
 
 void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
-  deserializeField( m_key.m_filename, logRecordBytes, end );
-  deserializeField( m_key.m_lineId, logRecordBytes, end );
-  deserializeField( m_value.m_logPart, logRecordBytes, end );
-  deserializeField( m_value.m_msgType, logRecordBytes, end );
+  serialBuffer::deserializeString( m_key.m_filename, logRecordBytes, end );
+  serialBuffer::deserializePrimitive( m_key.m_lineId, logRecordBytes, end );
+  serialBuffer::deserializeString( m_value.m_logPart, logRecordBytes, end );
+  serialBuffer::deserializePrimitive( m_value.m_msgType, logRecordBytes, end );
 
   m_value.m_count = 0;
 }
@@ -90,28 +90,6 @@ void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) con
   serializePrimitive( m_key.m_lineId );
   serializeString( m_value.m_logPart );
   serializePrimitive( m_value.m_msgType );
-}
-
-template< typename T >
-void LogHistory::LogRecord::deserializeField( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-{
-  static_assert( std::is_trivially_copyable_v< T > );
-  if( ptr + sizeof(T)> end )
-    throw std::runtime_error( "Buffer truncated" );
-  memcpy( &data, ptr, sizeof(T) );
-  ptr += sizeof(T);
-}
-
-void LogHistory::LogRecord::deserializeField( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
-{
-  string::size_type strSize = 0;
-  deserializeField( strSize, ptr, end );
-  if( std::distance( ptr, end ) < (long) strSize )
-  {
-    throw std::runtime_error( "Buffer truncated reading string" );
-  }
-  str.assign( ptr, ptr + strSize );
-  ptr += str.size();
 }
 
 void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
@@ -149,10 +127,10 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
 size_t LogHistory::LogRecord::getSerializedSize() const
 {
   return
-    sizeOfField( m_key.m_filename ) +
-    sizeOfField( m_key.m_lineId ) +
-    sizeOfField( m_value.m_logPart ) +
-    sizeOfField( m_value.m_msgType );
+    serialBuffer::sizeOfString( m_key.m_filename ) +
+    serialBuffer::sizeOfPrimitive( m_key.m_lineId ) +
+    serialBuffer::sizeOfString( m_value.m_logPart ) +
+    serialBuffer::sizeOfPrimitive( m_value.m_msgType );
 }
 
 void LogHistory::gatherRecordsRank0()
