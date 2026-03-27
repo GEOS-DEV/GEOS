@@ -59,16 +59,18 @@ ConstitutiveDriver::ConstitutiveDriver( const string & name,
 
 void ConstitutiveDriver::postInputInitialization()
 {
+  bool const is_root = MpiWrapper::commRank() == 0;
+
   GEOS_THROW_IF_LT_MSG( m_numSteps, 1,
                         "Number of steps must be at least 1",
                         InputError );
 
-  GEOS_WARNING_IF( m_precision < minPrecision,
+  GEOS_WARNING_IF( ( m_precision < minPrecision) && is_root,
                    GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                              getWrapperDataContext( viewKeyStruct::precisionString() ),
                              minPrecision, maxPrecision, minPrecision ));
 
-  GEOS_WARNING_IF( maxPrecision < m_precision,
+  GEOS_WARNING_IF( ( maxPrecision < m_precision) && is_root,
                    GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                              getWrapperDataContext( viewKeyStruct::precisionString() ),
                              minPrecision, maxPrecision, maxPrecision ) );
@@ -82,7 +84,7 @@ bool ConstitutiveDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                   DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   // This code only makes sense in serial
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Constitutive Driver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Constitutive Driver should only be run in serial", InputError, getDataContext() );
 
   bool executeResult = execute();
 
