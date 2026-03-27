@@ -879,14 +879,14 @@ struct LevelAMGBlock
   LevelAMGBlock( HYPRE_Int const inputLevel,
                  AMGFlavor const inputFlavor )
     : level( inputLevel ),
-      flavor( inputFlavor )
+    flavor( inputFlavor )
   {}
 
   // GCC 12 emits a false positive from std::vector's memmove fast path when this
   // type stays trivially relocatable under -Wnonnull.
   LevelAMGBlock( LevelAMGBlock const & other )
     : level( other.level ),
-      flavor( other.flavor )
+    flavor( other.flavor )
   {}
 
   LevelAMGBlock & operator=( LevelAMGBlock const & other )
