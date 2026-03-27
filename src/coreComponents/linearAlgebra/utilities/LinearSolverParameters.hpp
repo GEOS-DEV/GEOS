@@ -79,6 +79,7 @@ struct LinearSolverParameters
 
   SolverType solverType = SolverType::direct;          ///< Solver type
   PreconditionerType preconditionerType = PreconditionerType::iluk;  ///< Preconditioner type
+  string hypredriveInputFile;                          ///< Optional authoritative hypreDrive YAML file
 
   /// Direct solver parameters: used for SuperLU_Dist interface through hypre and PETSc
   struct Direct

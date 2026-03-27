@@ -515,6 +515,61 @@ stdVector< string > buildCompositionalWellFieldLabelNames( LinearSolverParameter
   return labelNames;
 }
 
+stdVector< string > buildSinglePhaseFieldLabelNames( int const numComponents )
+{
+  stdVector< string > labelNames;
+  labelNames.reserve( std::max( numComponents, 0 ) );
+
+  if( numComponents <= 0 )
+  {
+    return labelNames;
+  }
+
+  labelNames.emplace_back( "pressure" );
+
+  if( numComponents > 1 )
+  {
+    labelNames.emplace_back( "temperature" );
+  }
+
+  for( int component = LvArray::integerConversion< int >( labelNames.size() ); component < numComponents; ++component )
+  {
+    labelNames.emplace_back( GEOS_FMT( "singlePhaseVariables_{}", component ) );
+  }
+
+  return labelNames;
+}
+
+stdVector< string > buildSinglePhaseWellFieldLabelNames( int const numComponents )
+{
+  stdVector< string > labelNames;
+  labelNames.reserve( std::max( numComponents, 0 ) );
+
+  if( numComponents <= 0 )
+  {
+    return labelNames;
+  }
+
+  labelNames.emplace_back( "wellPressure" );
+
+  if( numComponents > 1 )
+  {
+    labelNames.emplace_back( "wellRate" );
+  }
+
+  if( numComponents > 2 )
+  {
+    labelNames.emplace_back( "wellTemperature" );
+  }
+
+  for( int component = LvArray::integerConversion< int >( labelNames.size() ); component < numComponents; ++component )
+  {
+    labelNames.emplace_back( GEOS_FMT( "singlePhaseWellVars_{}", component ) );
+  }
+
+  return labelNames;
+}
+
 stdVector< string > buildFieldComponentLabelNames( LinearSolverParameters::MGR::StrategyType const strategy,
                                                    std::string const & baseName,
                                                    int const numComponents )
@@ -528,6 +583,16 @@ stdVector< string > buildFieldComponentLabelNames( LinearSolverParameters::MGR::
   }
 
   std::string const normalizedBaseName = normalizeLabelToken( baseName );
+
+  if( normalizedBaseName == "singlephasevariables" )
+  {
+    return buildSinglePhaseFieldLabelNames( numComponents );
+  }
+
+  if( normalizedBaseName == "singlephasewellvars" )
+  {
+    return buildSinglePhaseWellFieldLabelNames( numComponents );
+  }
 
   if( normalizedBaseName == "compositionalvariables" && strategyUsesCompositionalSemanticLabels( strategy ) )
   {

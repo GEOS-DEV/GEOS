@@ -357,9 +357,14 @@ TEST( HypreDriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
                                                              numComponentsPerField,
                                                              target ) );
   EXPECT_NE( target.argument.find( "totalDisplacement_0: 0" ), std::string::npos );
-  EXPECT_NE( target.argument.find( "singlePhaseVariables_1: 4" ), std::string::npos );
-  EXPECT_NE( target.argument.find( "singlePhaseWellVars_2: 7" ), std::string::npos );
-  EXPECT_NE( target.argument.find( "f_dofs: [singlePhaseWellVars_0, singlePhaseWellVars_1, singlePhaseWellVars_2]" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "pressure: 3" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "temperature: 4" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellPressure: 5" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellRate: 6" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellTemperature: 7" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "singlePhaseVariables_0" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "singlePhaseWellVars_0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [wellPressure, wellRate, wellTemperature]" ), std::string::npos );
   EXPECT_NE( target.argument.find( "num_functions: 2" ), std::string::npos );
 }
 
