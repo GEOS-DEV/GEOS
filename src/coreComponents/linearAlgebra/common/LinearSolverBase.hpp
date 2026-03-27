@@ -29,13 +29,25 @@
 namespace geos
 {
 
+/**
+ * @brief Execution metadata associated with a linear-solver invocation.
+ *
+ * This context lets solver backends annotate per-solve setup, logging, and
+ * statistics with the timestep/newton state that produced the linear system.
+ */
 struct LinearSolverExecutionContext
 {
+  /// Human-readable name of the owning solver.
   std::string solverName;
+  /// Current outer cycle index, or `-1` when unavailable.
   integer cycleNumber = -1;
+  /// Current timestep-attempt index, or `-1` when unavailable.
   integer timeStepAttempt = -1;
+  /// Current configuration-attempt index, or `-1` when unavailable.
   integer configurationAttempt = -1;
+  /// Current nonlinear-iteration index, or `-1` when unavailable.
   integer nonlinearIteration = -1;
+  /// Timestamp of the last system assembly/setup used by this solve.
   Timestamp systemSetupTimestamp = 0;
 };
 

@@ -68,7 +68,7 @@ void HypreInterface::initialize()
 #else
   HYPRE_SetSpGemmUseVendor( 1 );
 #endif
-#if !defined(GEOS_USE_HYPREDRV) || !HYPRE_CHECK_MIN_VERSION(23100, 0)
+#if !defined(GEOS_USE_HYPREDRV) || !HYPRE_CHECK_MIN_VERSION( 23100, 0 )
   HYPRE_DeviceInitialize();
 #endif
 #endif

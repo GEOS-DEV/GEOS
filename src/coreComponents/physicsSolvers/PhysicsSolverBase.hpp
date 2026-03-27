@@ -543,6 +543,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param cycleNumber outer solver cycle associated with this linear solve
+   * @param nonlinearIteration nonlinear iteration associated with this linear solve
    *
    * This function calls the linear solver package to perform a single linear solve on the block
    * system. The derived physics solver is required to specify the call, as no default is provided.
@@ -791,6 +793,7 @@ public:
   /**
    * @brief Whether the standard GEOS linear-solver table should be suppressed
    *        because hypreDrive YAML logging is used instead.
+   * @return `true` when the standard table should be suppressed, `false` otherwise.
    */
   bool deferLinearSolverParametersPrint() const;
 
