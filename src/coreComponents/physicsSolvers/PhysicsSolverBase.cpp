@@ -138,6 +138,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
+  if( m_linearSolverParameters.getLogLevel() < getLogLevel() )
+  {
+    m_linearSolverParameters.setLogLevel( getLogLevel() );
+    m_linearSolverParameters.get().logLevel = m_linearSolverParameters.getLogLevel();
+  }
+
   m_solverStatistics.setOutputFilesName( getName() );
 
   m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
