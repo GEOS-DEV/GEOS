@@ -39,6 +39,12 @@
 #include "_hypre_utilities.hpp"
 #endif
 
+#if defined(GEOS_USE_HYPREDRV) && defined(HYPRE_CHECK_MIN_VERSION)
+#define GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT HYPRE_CHECK_MIN_VERSION( 23100, 0 )
+#else
+#define GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT 0
+#endif
+
 namespace geos
 {
 
@@ -68,7 +74,7 @@ void HypreInterface::initialize()
 #else
   HYPRE_SetSpGemmUseVendor( 1 );
 #endif
-#if !defined(GEOS_USE_HYPREDRV) || !HYPRE_CHECK_MIN_VERSION( 23100, 0 )
+#if !GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
   HYPRE_DeviceInitialize();
 #endif
 #endif
@@ -138,5 +144,7 @@ geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }
+
+#undef GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
 
 }
