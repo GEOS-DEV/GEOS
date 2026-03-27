@@ -105,11 +105,6 @@ void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
 
   physicsSolverManager.forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
   {
-    solver.generateMeshTargetsFromTargetRegions( meshBodies );
-  } );
-
-  physicsSolverManager.forSubGroups< PhysicsSolverBase >( [&]( PhysicsSolverBase & solver )
-  {
     LinearSolverParameters const & params = solver.getLinearSolverParameters();
     if( params.logLevel < 1 || !solver.deferLinearSolverParametersPrint() )
     {
@@ -126,6 +121,11 @@ void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
     }
     else
     {
+      if( solver.getMeshTargets().empty() )
+      {
+        solver.generateMeshTargetsFromTargetRegions( meshBodies );
+      }
+
       DofManager previewDofManager( GEOS_FMT( "{}_hypreDrivePreview", solver.getName() ) );
       previewDofManager.setDomain( domain );
       solver.setupDofs( domain, previewDofManager );
