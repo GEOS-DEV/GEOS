@@ -2196,6 +2196,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
 		<!--directRowPerm => How to permute the rows. Available options are: ``none``, ``mc64``-->
 		<xsd:attribute name="directRowPerm" type="geos_LinearSolverParameters_Direct_RowPerm" default="mc64" />
+		<!--hypredriveInputFile => Optional authoritative hypreDrive YAML file. When provided, hypreDrive consumes this file as-is for solver/preconditioner options.-->
+		<xsd:attribute name="hypredriveInputFile" type="string" default="" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -2228,8 +2230,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="reuseFactorization" type="integer" default="0" />
 		<!--solverType => Linear solver type. Available options are: ``direct``, ``cg``, ``gmres``, ``fgmres``, ``bicgstab``, ``richardson``, ``preconditioner``-->
 		<xsd:attribute name="solverType" type="geos_LinearSolverParameters_SolverType" default="direct" />
-		<!--hypredriveInputFile => Optional authoritative hypreDrive YAML file used as-is for solver and preconditioner options-->
-		<xsd:attribute name="hypredriveInputFile" type="xsd:string" default="" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>

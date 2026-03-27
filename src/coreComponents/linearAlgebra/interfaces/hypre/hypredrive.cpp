@@ -339,7 +339,7 @@ std::string sanitizeLabelToken( std::string const & name )
   {
     if( std::isalnum( c ) )
     {
-      sanitized.push_back( static_cast< char >( std::tolower( c ) ) );
+      sanitized.push_back( static_cast< char >( c ) );
       lastWasUnderscore = false;
     }
     else if( !lastWasUnderscore )
@@ -361,7 +361,194 @@ std::string sanitizeLabelToken( std::string const & name )
   return sanitized;
 }
 
-stdVector< string > buildDofLabelNames( stdVector< string > const & fieldNames,
+std::string normalizeLabelToken( std::string const & name )
+{
+  std::string normalized;
+  normalized.reserve( name.size() );
+  for( unsigned char const c : name )
+  {
+    normalized.push_back( static_cast< char >( std::tolower( c ) ) );
+  }
+  return normalized;
+}
+
+bool strategyUsesCompositionalSemanticLabels( LinearSolverParameters::MGR::StrategyType const strategy )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  switch( strategy )
+  {
+    case StrategyType::compositionalMultiphaseFVM:
+    case StrategyType::compositionalMultiphaseHybridFVM:
+    case StrategyType::compositionalMultiphaseReservoirFVM:
+    case StrategyType::compositionalMultiphaseReservoirHybridFVM:
+    case StrategyType::immiscibleMultiphaseFVM:
+    case StrategyType::reactiveCompositionalMultiphaseOBL:
+    case StrategyType::thermalCompositionalMultiphaseFVM:
+    case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
+    case StrategyType::multiphasePoromechanics:
+    case StrategyType::multiphasePoromechanicsReservoirFVM:
+    case StrategyType::thermalMultiphasePoromechanics:
+      return true;
+    case StrategyType::invalid:
+    case StrategyType::singlePhaseReservoirFVM:
+    case StrategyType::thermalSinglePhaseReservoirFVM:
+    case StrategyType::singlePhaseHybridFVM:
+    case StrategyType::singlePhaseReservoirHybridFVM:
+    case StrategyType::singlePhasePoromechanics:
+    case StrategyType::thermalSinglePhasePoromechanics:
+    case StrategyType::hybridSinglePhasePoromechanics:
+    case StrategyType::singlePhasePoromechanicsEmbeddedFractures:
+    case StrategyType::singlePhasePoromechanicsConformingFractures:
+    case StrategyType::singlePhasePoromechanicsReservoirFVM:
+    case StrategyType::hydrofracture:
+    case StrategyType::lagrangianContactMechanics:
+    case StrategyType::augmentedLagrangianContactMechanics:
+    case StrategyType::lagrangianContactMechanicsBubbleStab:
+    case StrategyType::solidMechanicsEmbeddedFractures:
+      return false;
+  }
+
+  return false;
+}
+
+bool strategyUsesTemperatureLabel( LinearSolverParameters::MGR::StrategyType const strategy )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  switch( strategy )
+  {
+    case StrategyType::thermalCompositionalMultiphaseFVM:
+    case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
+    case StrategyType::thermalMultiphasePoromechanics:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool strategyUsesCompositionalWellSemanticLabels( LinearSolverParameters::MGR::StrategyType const strategy )
+{
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+
+  switch( strategy )
+  {
+    case StrategyType::compositionalMultiphaseReservoirFVM:
+    case StrategyType::compositionalMultiphaseReservoirHybridFVM:
+    case StrategyType::thermalCompositionalMultiphaseReservoirFVM:
+    case StrategyType::multiphasePoromechanicsReservoirFVM:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool strategyUsesWellTemperatureLabel( LinearSolverParameters::MGR::StrategyType const strategy )
+{
+  return strategy == LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM;
+}
+
+stdVector< string > buildCompositionalFieldLabelNames( LinearSolverParameters::MGR::StrategyType const strategy,
+                                                       int const numComponents )
+{
+  stdVector< string > labelNames;
+  labelNames.reserve( std::max( numComponents, 0 ) );
+
+  if( numComponents <= 0 )
+  {
+    return labelNames;
+  }
+
+  bool const hasTemperature = strategyUsesTemperatureLabel( strategy );
+  labelNames.emplace_back( "pressure" );
+
+  int const densityCount = hasTemperature
+                           ? std::max( numComponents - 2, 0 )
+                           : std::max( numComponents - 1, 0 );
+  for( int densityIndex = 0; densityIndex < densityCount; ++densityIndex )
+  {
+    labelNames.emplace_back( GEOS_FMT( "density_{}", densityIndex ) );
+  }
+
+  if( hasTemperature && numComponents > 1 )
+  {
+    labelNames.emplace_back( "temperature" );
+  }
+
+  return labelNames;
+}
+
+stdVector< string > buildCompositionalWellFieldLabelNames( LinearSolverParameters::MGR::StrategyType const strategy,
+                                                           int const numComponents )
+{
+  stdVector< string > labelNames;
+  labelNames.reserve( std::max( numComponents, 0 ) );
+
+  if( numComponents <= 0 )
+  {
+    return labelNames;
+  }
+
+  bool const hasTemperature = strategyUsesWellTemperatureLabel( strategy );
+  labelNames.emplace_back( "wellPressure" );
+
+  int const densityCount = hasTemperature
+                           ? std::max( numComponents - 3, 0 )
+                           : std::max( numComponents - 2, 0 );
+  for( int densityIndex = 0; densityIndex < densityCount; ++densityIndex )
+  {
+    labelNames.emplace_back( GEOS_FMT( "wellDensity_{}", densityIndex ) );
+  }
+
+  if( numComponents > 1 )
+  {
+    labelNames.emplace_back( "wellRate" );
+  }
+
+  if( hasTemperature && numComponents > 2 )
+  {
+    labelNames.emplace_back( "wellTemperature" );
+  }
+
+  return labelNames;
+}
+
+stdVector< string > buildFieldComponentLabelNames( LinearSolverParameters::MGR::StrategyType const strategy,
+                                                   std::string const & baseName,
+                                                   int const numComponents )
+{
+  stdVector< string > labelNames;
+  labelNames.reserve( std::max( numComponents, 0 ) );
+
+  if( numComponents <= 0 )
+  {
+    return labelNames;
+  }
+
+  std::string const normalizedBaseName = normalizeLabelToken( baseName );
+
+  if( normalizedBaseName == "compositionalvariables" && strategyUsesCompositionalSemanticLabels( strategy ) )
+  {
+    return buildCompositionalFieldLabelNames( strategy, numComponents );
+  }
+
+  if( normalizedBaseName == "compositionalwellvars" && strategyUsesCompositionalWellSemanticLabels( strategy ) )
+  {
+    return buildCompositionalWellFieldLabelNames( strategy, numComponents );
+  }
+
+  for( int component = 0; component < numComponents; ++component )
+  {
+    labelNames.emplace_back( numComponents == 1
+                             ? baseName
+                             : GEOS_FMT( "{}_{}", baseName, component ) );
+  }
+
+  return labelNames;
+}
+
+stdVector< string > buildDofLabelNames( LinearSolverParameters::MGR::StrategyType const strategy,
+                                        stdVector< string > const & fieldNames,
                                         arrayView1d< int const > const & numComponentsPerField )
 {
   stdVector< string > labels;
@@ -378,12 +565,10 @@ stdVector< string > buildDofLabelNames( stdVector< string > const & fieldNames,
       baseName = GEOS_FMT( "field_{}", fieldIndex );
     }
 
-    int const numComponents = numComponentsPerField[fieldIndex];
-    for( int component = 0; component < numComponents; ++component )
+    for( std::string labelName : buildFieldComponentLabelNames( strategy,
+                                                                baseName,
+                                                                numComponentsPerField[fieldIndex] ) )
     {
-      std::string labelName = numComponents == 1
-                              ? baseName
-                              : GEOS_FMT( "{}_{}", baseName, component );
       if( labelName.empty() || std::isdigit( static_cast< unsigned char >( labelName.front() ) ) )
       {
         labelName = GEOS_FMT( "dof_{}", labels.size() );
@@ -970,7 +1155,7 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
     return false;
   }
 
-  stdVector< string > const labelNames = buildDofLabelNames( fieldNames, numComponentsPerField );
+  stdVector< string > const labelNames = buildDofLabelNames( params.mgr.strategy, fieldNames, numComponentsPerField );
   linearSystemYaml = buildDofLabelsYaml( labelNames );
 
   switch( params.mgr.strategy )

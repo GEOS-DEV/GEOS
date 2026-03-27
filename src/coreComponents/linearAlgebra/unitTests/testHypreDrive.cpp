@@ -261,6 +261,88 @@ TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   }
 }
 
+TEST( HypreDriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
+{
+  stdVector< string > const fieldNames = { "totalDisplacement", "compositionalVariables" };
+  array1d< int > numComponentsPerField( 2 );
+  numComponentsPerField[0] = 3;
+  numComponentsPerField[1] = 3;
+
+  hypre::hypreDrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "totalDisplacement_0: 0" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "totaldisplacement_0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "pressure: 3" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "density_0: 4" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "density_1: 5" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "compositionalvariables_0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [density_1]" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [density_0]" ), std::string::npos );
+}
+
+TEST( HypreDriveYaml, UsesSemanticCompositionalWellLabelsWhenFieldNamesAreAvailable )
+{
+  stdVector< string > const fieldNames = { "totalDisplacement", "compositionalVariables", "compositionalWellVars" };
+  array1d< int > numComponentsPerField( 3 );
+  numComponentsPerField[0] = 3;
+  numComponentsPerField[1] = 3;
+  numComponentsPerField[2] = 4;
+
+  hypre::hypreDrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "totalDisplacement_0: 0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellPressure: 6" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellDensity_0: 7" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellDensity_1: 8" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellRate: 9" ), std::string::npos );
+  EXPECT_EQ( target.argument.find( "compositionalwellvars_0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [wellPressure, wellDensity_0, wellDensity_1, wellRate]" ), std::string::npos );
+}
+
+TEST( HypreDriveYaml, UsesTemperatureLabelForThermalCompositionalBlocks )
+{
+  stdVector< string > const fieldNames = { "compositionalVariables" };
+  array1d< int > numComponentsPerField( 1 );
+  numComponentsPerField[0] = 4;
+
+  hypre::hypreDrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "pressure: 0" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "density_0: 1" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "density_1: 2" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "temperature: 3" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [density_1]" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "f_dofs: [density_0]" ), std::string::npos );
+}
+
+TEST( HypreDriveYaml, UsesWellTemperatureLabelForThermalReservoirWellBlocks )
+{
+  stdVector< string > const fieldNames = { "compositionalVariables", "compositionalWellVars" };
+  array1d< int > numComponentsPerField( 2 );
+  numComponentsPerField[0] = 4;
+  numComponentsPerField[1] = 5;
+
+  hypre::hypreDrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM ),
+                                                             fieldNames,
+                                                             numComponentsPerField,
+                                                             target ) );
+  EXPECT_NE( target.argument.find( "wellPressure: 4" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellDensity_0: 5" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellDensity_1: 6" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellRate: 7" ), std::string::npos );
+  EXPECT_NE( target.argument.find( "wellTemperature: 8" ), std::string::npos );
+}
+
 TEST( HypreDriveYaml, UsesAuthoritativeFileWhenProvided )
 {
   std::string const authoritativeFile = "/tmp/geos-hypredrive-authoritative.yml";
