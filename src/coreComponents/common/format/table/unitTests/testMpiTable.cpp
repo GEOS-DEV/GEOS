@@ -99,13 +99,14 @@ TEST( testMpiTables, testDifferentRankData )
       "-------------------------------------------\n"
     },
   };
-
-  int const rankId = MpiWrapper::commRank();
-  int const nbRanks = MpiWrapper::commSize();
-  ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
-
   for( TestCase const & testCase: testCases )
   {
+    int const rankId = MpiWrapper::commRank();
+    int const nbRanks = MpiWrapper::commSize();
+    ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
+
+
+
     TableLayout const layout = TableLayout().
                                  setTitle( "Summary of negative pressure elements" ).
                                  addColumns( { "Global Id", "pressure [Pa]" } ).
@@ -124,8 +125,7 @@ TEST( testMpiTables, testDifferentRankData )
         data.addRow( id, value );
       }
     }
-
-    TableTextMpiOutput const formatter = TableTextMpiOutput( layout, mpiLayout );
+    TableTextMpiFormatter const formatter = TableTextMpiFormatter( layout, mpiLayout );
     std::ostringstream oss;
     formatter.toStream( oss, data );
     if( rankId == 0 )
@@ -134,6 +134,119 @@ TEST( testMpiTables, testDifferentRankData )
                     oss.str().data() );
     }
   }
+
+}
+
+TEST( testMpiTables, testSortingMethod )
+{
+  struct TestCase
+  {
+    stdVector< stdVector< std::pair< integer, real64 > > > m_ranksValues;
+    string m_expectedResult;
+  };
+
+  TestCase const testCase =
+  {
+    {   // m_ranksValues: in this test, rank 2 has no value
+      { {2, 0.624}, {3, 0.791} },
+      { {1, 0.502} },
+      { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+      {},
+    },
+    "\n"   // m_expectedResult
+    "-------------------------------------------\n"
+    "|  Summary of negative pressure elements  |\n"
+    "|-----------------------------------------|\n"
+    "|    Global Id     |    pressure [Pa]     |\n"
+    "|------------------|----------------------|\n"
+    "|               1  |               0.502  |\n"
+    "|               2  |               0.624  |\n"
+    "|               3  |               0.791  |\n"
+    "|               4  |               0.243  |\n"
+    "|               5  |               0.804  |\n"
+    "|               6  |               0.302  |\n"
+    "-------------------------------------------\n"
+  };
+
+  int const rankId = MpiWrapper::commRank();
+  int const nbRanks = MpiWrapper::commSize();
+  ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
+
+
+  TableLayout const layout = TableLayout().
+                               setTitle( "Summary of negative pressure elements" ).
+                               addColumns( { "Global Id", "pressure [Pa]" } ).
+                               setDefaultHeaderAlignment( TableLayout::Alignment::left );
+  TableData data;
+  auto const & rankTestData = testCase.m_ranksValues[rankId];
+
+  TableMpiLayout mpiLayout;
+  mpiLayout.m_separatorBetweenRanks = true;
+
+  if( !rankTestData.empty() )
+  {
+    mpiLayout.m_rankTitle = GEOS_FMT( "Rank {}, {} values", rankId, rankTestData.size() );
+    for( auto const & [id, value] : rankTestData )
+    {
+      data.addRow( id, value );
+    }
+  }
+
+  TableTextMpiFormatter formatter = TableTextMpiFormatter( layout, mpiLayout );
+  formatter.setSortingFunc( []( std::vector< TableData::CellData > const & row1,
+                                std::vector< TableData::CellData > const & row2 ) {
+    return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
+  } );
+
+  std::ostringstream oss;
+  formatter.toStream( oss, data );
+  if( rankId == 0 )
+  {
+    EXPECT_STREQ( testCase.m_expectedResult.data(),
+                  oss.str().data() );
+  }
+
+
+}
+
+TEST( testMpiTables, testCompPositiveValueTable )
+{
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "123", "45" ));
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "45", "123" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "42", "42" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "0", "0" ));
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "9", "1" ));
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "10000000", "9999999" ));
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "9999999", "10000000" ));
+
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "10.5", "9.99" ));
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "9.99", "10.5" ));
+
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "10", "9.999" ));
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "9.999", "10" ));
+
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "1.2", "1.9" ));
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "1.9", "1.2" ));
+
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "1.5", "1.50" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "1.50", "1.5" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "1.500", "1.5" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "1.5", "1.500" ));
+
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "1.51", "1.510" ));
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "1.51", "1.509" ));
+
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "3.14", "3.14" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "0.001", "0.001" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "100.0", "100.0" ));
+
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "5", "5.0" ));
+  EXPECT_FALSE( tableDataSorting::positiveNumberStringComp( "5.0", "5" ));
+
+  EXPECT_FALSE ( tableDataSorting::positiveNumberStringComp( "5595", "5155" ));
+  EXPECT_TRUE( tableDataSorting::positiveNumberStringComp( "5155", "5595" ));
+
+
 }
 
 int main( int argc, char * * argv )

@@ -20,69 +20,24 @@
 
 #include "TableMpiComponents.hpp"
 #include "common/MpiWrapper.hpp"
+#include "common/format/table/TableTypes.hpp"
 
 namespace geos
 {
 
-TableTextMpiOutput::TableTextMpiOutput( TableMpiLayout mpiLayout ):
+TableTextMpiFormatter::TableTextMpiFormatter( TableMpiLayout mpiLayout ):
   TableTextFormatter(),
   m_mpiLayout( mpiLayout )
 {}
 
-TableTextMpiOutput::TableTextMpiOutput( TableLayout const & tableLayout,
-                                        TableMpiLayout mpiLayout ):
+TableTextMpiFormatter::TableTextMpiFormatter( TableLayout const & tableLayout,
+                                              TableMpiLayout mpiLayout ):
   TableTextFormatter( tableLayout ),
   m_mpiLayout( mpiLayout )
 {}
 
-template<>
-void TableTextMpiOutput::toStream< TableData >( std::ostream & tableOutput,
-                                                TableData const & tableData ) const
-{
-  TableTextMpiOutput::Status status {
-    // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
-    MpiWrapper::commRank() == 0,
-    // m_isContributing (some ranks does not have any output to produce)
-    !tableData.getCellsData().empty(),
-    // m_hasContent
-    false,
-    // m_sepLine
-    ""
-  };
-
-  CellLayoutRows headerCellsLayout;
-  CellLayoutRows dataCellsLayout;
-  CellLayoutRows errorCellsLayout;
-  size_t tableTotalWidth = 0;
-
-  {
-    ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
-      stretchColumnsByRanks( columnsWidth, status );
-    };
-    initalizeTableGrids( m_tableLayout, tableData,
-                         headerCellsLayout, dataCellsLayout, errorCellsLayout,
-                         tableTotalWidth, columnWidthModifier );
-    status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
-  }
-
-  if( status.m_isMasterRank )
-  {
-    outputTableHeader( tableOutput, m_tableLayout, headerCellsLayout, status.m_sepLine );
-    tableOutput.flush();
-  }
-
-  outputTableDataToRank0( tableOutput, m_tableLayout, dataCellsLayout, status );
-
-  if( status.m_isMasterRank )
-  {
-    outputTableFooter( tableOutput, m_tableLayout, errorCellsLayout,
-                       status.m_sepLine, status.m_hasContent );
-    tableOutput.flush();
-  }
-}
-
-void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
-                                                TableTextMpiOutput::Status const & status ) const
+void TableTextMpiFormatter::stretchColumnsByRanks( stdVector< size_t > & columnsWidth,
+                                                   TableTextMpiFormatter::Status const & status ) const
 {
   { // we ensure we have the correct amount of columns on all ranks (for correct MPI reduction operation)
     size_t const rankColumnsCount = columnsWidth.size();
@@ -103,13 +58,33 @@ void TableTextMpiOutput::stretchColumnsByRanks( stdVector< size_t > & columnsWid
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
-                                                 PreparedTableLayout const & tableLayout,
-                                                 CellLayoutRows const & dataCellsLayout,
-                                                 TableTextMpiOutput::Status & status ) const
+stdVector< TableData::CellData > TableTextMpiFormatter::parseStringRow( string_view rowString ) const
 {
-  integer const ranksCount = MpiWrapper::commSize();
+  if( rowString.empty() )
+    return stdVector< TableData::CellData >{};
 
+  if( rowString.front() == '|' )
+    rowString.remove_prefix( 1 );
+  string_view rowContent =rowString;
+  string cell;
+  stdVector< TableData::CellData > dataRow;
+
+  std::string::size_type end = 0;
+
+  while( (end = rowContent.find( m_verticalLine )) != string_view::npos )
+  {
+    cell =std::string( stringutilities::trimSpaces( rowContent.substr( 0, end )));
+    dataRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
+    rowContent.remove_prefix( end + 1 );
+  }
+  return dataRow;
+}
+
+void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
+                                                                 TableFormatter::CellLayoutRows const & rows,
+                                                                 PreparedTableLayout const & tableLayout,
+                                                                 TableTextMpiFormatter::Status & status ) const
+{
   // master rank does the output directly to the output, other ranks will have to send it through a string.
   std::ostringstream localStringStream;
   std::ostream & rankOutput = status.m_isMasterRank ? tableOutput : localStringStream;
@@ -118,44 +93,129 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
   {
     if( m_mpiLayout.m_separatorBetweenRanks )
     {
-      string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, status.m_sepLine.size() - 2 );
+      size_t const sepWidth = status.m_sepLine.size() > 2 ? status.m_sepLine.size() - 2 : 0;
+      string const rankSepLine = GEOS_FMT( "{:-^{}}", m_mpiLayout.m_rankTitle, sepWidth );
       rankOutput << tableLayout.getIndentationStr() << m_verticalLine << rankSepLine << m_verticalLine << '\n';
     }
-    outputTableData( rankOutput, tableLayout, dataCellsLayout );
+    outputTableData( rankOutput, tableLayout, rows );
   }
-
-  // all other ranks than rank 0 render their output in a string and comunicate its size
-  stdVector< integer > ranksStrsSizes = stdVector< integer >( ranksCount, 0 );
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
-  integer const rankStrSize = rankStr.size();
-  MpiWrapper::gather( &rankStrSize, 1, ranksStrsSizes.data(), 1, 0 );
+  stdVector< string > strsAccrossRanks;
 
-  // we compute the memory layout of the ranks strings
-  stdVector< integer > ranksStrsOffsets = stdVector< integer >( ranksCount, 0 );
-  integer ranksStrsTotalSize = 0;
-  for( integer rankId = 1; rankId < ranksCount; ++rankId )
+  MpiWrapper::gatherStringOnRank0( rankStr, std::function< void(string_view) >( [&]( string_view str ){
+    status.m_hasContent = true;
+    strsAccrossRanks.emplace_back( str );
+  } ) );
+
+  if( status.m_isMasterRank && status.m_hasContent )
   {
-    ranksStrsOffsets[rankId] = ranksStrsTotalSize;
-    ranksStrsTotalSize += ranksStrsSizes[rankId];
+    for( string_view str : strsAccrossRanks )
+      tableOutput << str;
+  }
+}
+
+TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTableData ) const
+{
+  stdVector< buffer_unit_type > serializedTableData( 0 );
+  size_t totalSize = 0;
+
+  { // allocation
+    totalSize = localTableData.getSerializedSize();
+    serializedTableData.reserve( totalSize );
   }
 
-  // finally, we can send all text data to rank 0, then we output it in the output stream.
-  string ranksStrs = string( ranksStrsTotalSize, '\0' );
-  MpiWrapper::gatherv( &rankStr[0], rankStrSize,
-                       &ranksStrs[0], ranksStrsSizes.data(), ranksStrsOffsets.data(),
-                       0, MPI_COMM_GEOS );
-  if( status.m_isMasterRank )
-  {
-    // master rank status
-    status.m_hasContent = !dataCellsLayout.empty();
-
-    for( integer rankId = 1; rankId < ranksCount; ++rankId )
+  { // Packing
+    if( totalSize > 0 )
     {
-      if( ranksStrsSizes[rankId] > 0 )
+      localTableData.serialize( serializedTableData );
+    }
+  }
+  auto [globalLogRecords, counts, offsets] =
+    MpiWrapper::gatherBufferRank0< stdVector< buffer_unit_type > >( serializedTableData );
+
+  { // Unpacking
+    TableData tableDataGathered;
+    if( MpiWrapper::commRank() == 0 )
+    {
+      buffer_unit_type const * startBuff = globalLogRecords.data();
+      for( size_t idxRank = 0; idxRank <  (size_t)MpiWrapper::commSize(); ++idxRank )
       {
-        status.m_hasContent = true;
-        tableOutput << string_view( &ranksStrs[ranksStrsOffsets[rankId]], ranksStrsSizes[rankId] );
+        integer byteFromThisRank = counts[idxRank];
+        buffer_unit_type const * endRowsBuff = startBuff + byteFromThisRank;
+        while( startBuff < endRowsBuff )
+        {
+          size_t byteFromThisRow = 0;
+          serialBuffer::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
+          buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
+          stdVector< TableData::CellData > row;
+          while( startBuff < endRowBuff )
+          {
+            CellType cellType;
+            serialBuffer::deserializePrimitive( cellType, startBuff, endRowBuff );
+            string cellValue;
+            serialBuffer::deserializeString( cellValue, startBuff, endRowBuff );
+            row.push_back( {cellType, cellValue} );
+          }
+          tableDataGathered.addRow( row );
+        }
       }
+    }
+    return tableDataGathered;
+  }
+}
+
+template<>
+void TableTextMpiFormatter::toStream< TableData >( std::ostream & tableOutput,
+                                                   TableData const & tableData ) const
+{
+  TableTextMpiFormatter::Status status {
+    // m_isMasterRank (only the master rank does the output of the header && bottom of the table)
+    MpiWrapper::commRank() == 0,
+    // m_isContributing (some ranks does not have any output to produce)
+    !tableData.getCellsData().empty(),
+    // m_hasContent
+    false,
+    // m_sepLine
+    ""
+  };
+
+  if( m_sortingFunctor )
+  {
+    TableData tableDataGathered = gatherTableDataRank0( tableData );
+
+    if( status.m_isMasterRank )
+    {
+      tableDataGathered.sort( *m_sortingFunctor );
+      TableTextFormatter::toStream( tableOutput, tableDataGathered );
+    }
+  }
+  else
+  { // this version is faster (MPI cooperation) but can only be ordered by rank id
+    CellLayoutRows headerRows;
+    CellLayoutRows dataRows;
+    CellLayoutRows errorRows;
+    size_t tableTotalWidth = 0;
+    { // compute layout
+      ColumnWidthModifier const columnWidthModifier = [this, status]( stdVector< size_t > & columnsWidth ) {
+        stretchColumnsByRanks( columnsWidth, status );
+      };
+      initalizeTableGrids( m_tableLayout, tableData,
+                           headerRows, dataRows, errorRows,
+                           tableTotalWidth, columnWidthModifier );
+      status.m_sepLine = string( tableTotalWidth, m_horizontalLine );
+    }
+
+    if( status.m_isMasterRank )
+    {
+      outputTableHeader( tableOutput, m_tableLayout, headerRows, status.m_sepLine );
+      tableOutput.flush();
+    }
+    gatherAndOutputTableDataInRankOrder( tableOutput, dataRows, m_tableLayout, status );
+    if( status.m_isMasterRank )
+    {
+      outputTableFooter( tableOutput, m_tableLayout, errorRows,
+                         status.m_sepLine, status.m_hasContent );
+      tableOutput.flush();
     }
   }
 }
