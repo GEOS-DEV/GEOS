@@ -874,6 +874,28 @@ enum class AMGFlavor
 
 struct LevelAMGBlock
 {
+  LevelAMGBlock() = default;
+
+  LevelAMGBlock( HYPRE_Int const inputLevel,
+                 AMGFlavor const inputFlavor )
+    : level( inputLevel ),
+      flavor( inputFlavor )
+  {}
+
+  // GCC 12 emits a false positive from std::vector's memmove fast path when this
+  // type stays trivially relocatable under -Wnonnull.
+  LevelAMGBlock( LevelAMGBlock const & other )
+    : level( other.level ),
+      flavor( other.flavor )
+  {}
+
+  LevelAMGBlock & operator=( LevelAMGBlock const & other )
+  {
+    level = other.level;
+    flavor = other.flavor;
+    return *this;
+  }
+
   HYPRE_Int level;
   AMGFlavor flavor;
 };
@@ -921,7 +943,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
                                       strategy == StrategyType::thermalMultiphasePoromechanics )
                                       ? AMGFlavor::pressureTemperature
                                       : AMGFlavor::pressure;
-      specialization.fRelaxAMGLevels.push_back( { 0, AMGFlavor::displacementFiltered } );
+      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 0, AMGFlavor::displacementFiltered } };
       if( strategy == StrategyType::hydrofracture )
       {
         specialization.coarseMinCoarseSize = 1000;
@@ -933,7 +955,7 @@ MGRSpecialization getSpecialization( LinearSolverParameters::MGR::StrategyType c
     {
       MGRSpecialization specialization;
       specialization.coarseFlavor = AMGFlavor::pressure;
-      specialization.fRelaxAMGLevels.push_back( { 1, AMGFlavor::displacement } );
+      specialization.fRelaxAMGLevels = { LevelAMGBlock{ 1, AMGFlavor::displacement } };
       return specialization;
     }
     case StrategyType::invalid:
