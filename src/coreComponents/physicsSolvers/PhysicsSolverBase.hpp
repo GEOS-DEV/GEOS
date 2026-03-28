@@ -792,7 +792,7 @@ public:
 
   /**
    * @brief Whether the standard GEOS linear-solver table should be suppressed
-   *        because hypreDrive YAML logging is used instead.
+   *        because hypredrive YAML logging is used instead.
    * @return `true` when the standard table should be suppressed, `false` otherwise.
    */
   bool deferLinearSolverParametersPrint() const;

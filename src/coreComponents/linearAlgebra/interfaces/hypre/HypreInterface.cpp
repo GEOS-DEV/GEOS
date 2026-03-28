@@ -63,7 +63,7 @@ void HypreInterface::initialize()
 #endif
 
 #ifdef GEOS_USE_HYPREDRV
-  hypre::hypreDrive::initializeRuntime();
+  hypre::hypredrive::initializeRuntime();
 #else
   HYPRE_Initialize();
 #endif
@@ -94,7 +94,7 @@ void HypreInterface::initialize()
 void HypreInterface::finalize()
 {
 #ifdef GEOS_USE_HYPREDRV
-  hypre::hypreDrive::finalizeRuntime();
+  hypre::hypredrive::finalizeRuntime();
 #else
   HYPRE_Finalize();
 #endif
@@ -104,9 +104,9 @@ std::unique_ptr< LinearSolverBase< HypreInterface > >
 HypreInterface::createSolver( LinearSolverParameters params )
 {
 #ifdef GEOS_USE_HYPREDRV
-  if( hypre::hypreDrive::shouldUse( params ) )
+  if( hypre::hypredrive::shouldUse( params ) )
   {
-    return std::make_unique< HypreDriveSolver >( std::move( params ) );
+    return std::make_unique< HypredriveSolver >( std::move( params ) );
   }
 #endif
 

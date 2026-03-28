@@ -25,17 +25,17 @@ namespace geos
 {
 
 #if defined(GEOS_USE_HYPRE) && defined(GEOS_USE_HYPREDRV)
-class HypreDriveSolverTestPeer
+class HypredriveSolverTestPeer
 {
 public:
-  static size_t generation( HypreDriveSolver const & solver )
+  static size_t generation( HypredriveSolver const & solver )
   {
-    return solver.m_hypreDriveGeneration;
+    return solver.m_hypredriveGeneration;
   }
 
-  static HYPREDRV_t handle( HypreDriveSolver const & solver )
+  static HYPREDRV_t handle( HypredriveSolver const & solver )
   {
-    return solver.m_hypreDrive;
+    return solver.m_hypredrive;
   }
 };
 
@@ -155,15 +155,15 @@ LinearSolverExecutionContext makeExecutionContext( Timestamp const systemSetupTi
   return context;
 }
 
-TEST( HypreDriveYaml, BuildsGeneratedFallbackForAMG )
+TEST( HypredriveYaml, BuildsGeneratedFallbackForAMG )
 {
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
-  EXPECT_EQ( target.source, hypre::hypreDrive::InputSource::generatedFallback );
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_EQ( target.source, hypre::hypredrive::InputSource::generatedFallback );
   EXPECT_NE( target.argument.find( "solver:" ), std::string::npos );
   EXPECT_NE( target.argument.find( "gmres:" ), std::string::npos );
   EXPECT_NE( target.argument.find( "preconditioner:" ), std::string::npos );
@@ -171,7 +171,7 @@ TEST( HypreDriveYaml, BuildsGeneratedFallbackForAMG )
   EXPECT_EQ( target.argument.find( "linear_system:" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, MapsFGSAndBGSRelaxationNames )
+TEST( HypredriveYaml, MapsFGSAndBGSRelaxationNames )
 {
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
@@ -180,8 +180,8 @@ TEST( HypreDriveYaml, MapsFGSAndBGSRelaxationNames )
 
   params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::fgs;
   {
-    hypre::hypreDrive::InputArgsParseTarget target;
-    ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
     EXPECT_NE( target.argument.find( "down_type: forward-hl1gs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "up_type: forward-hl1gs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "coarse_type: forward-hl1gs" ), std::string::npos );
@@ -189,8 +189,8 @@ TEST( HypreDriveYaml, MapsFGSAndBGSRelaxationNames )
 
   params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::bgs;
   {
-    hypre::hypreDrive::InputArgsParseTarget target;
-    ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
     EXPECT_NE( target.argument.find( "down_type: backward-hl1gs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "up_type: backward-hl1gs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "coarse_type: backward-hl1gs" ), std::string::npos );
@@ -199,8 +199,8 @@ TEST( HypreDriveYaml, MapsFGSAndBGSRelaxationNames )
   params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1sgs;
   params.amg.coarseType = LinearSolverParameters::AMG::CoarseType::direct;
   {
-    hypre::hypreDrive::InputArgsParseTarget target;
-    ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+    hypre::hypredrive::InputArgsParseTarget target;
+    ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
     EXPECT_NE( target.argument.find( "down_type: l1-hsgs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "up_type: l1-hsgs" ), std::string::npos );
     EXPECT_NE( target.argument.find( "coarse_type: ge" ), std::string::npos );
@@ -208,7 +208,7 @@ TEST( HypreDriveYaml, MapsFGSAndBGSRelaxationNames )
   }
 }
 
-TEST( HypreDriveYaml, UsesCanonicalL1JacobiRelaxationName )
+TEST( HypredriveYaml, UsesCanonicalL1JacobiRelaxationName )
 {
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
@@ -216,15 +216,15 @@ TEST( HypreDriveYaml, UsesCanonicalL1JacobiRelaxationName )
   params.amg.smootherType = LinearSolverParameters::AMG::SmootherType::l1jacobi;
   params.amg.coarseType = LinearSolverParameters::AMG::CoarseType::l1jacobi;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
   EXPECT_NE( target.argument.find( "down_type: l1-jacobi" ), std::string::npos );
   EXPECT_NE( target.argument.find( "up_type: l1-jacobi" ), std::string::npos );
   EXPECT_NE( target.argument.find( "coarse_type: l1-jacobi" ), std::string::npos );
   EXPECT_EQ( target.argument.find( "l1jacobi" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
+TEST( HypredriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
 {
   using StrategyType = LinearSolverParameters::MGR::StrategyType;
 
@@ -236,16 +236,16 @@ TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
        ++value )
   {
     StrategyType const strategy = static_cast< StrategyType >( value );
-    hypre::hypreDrive::InputArgsParseTarget target;
+    hypre::hypredrive::InputArgsParseTarget target;
 
     try
     {
-      EXPECT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
+      EXPECT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( strategy ),
                                                                  fieldNames,
                                                                  numComponentsPerField,
                                                                  target ) )
         << static_cast< int >( value );
-      EXPECT_EQ( target.source, hypre::hypreDrive::InputSource::generatedFallback ) << static_cast< int >( value );
+      EXPECT_EQ( target.source, hypre::hypredrive::InputSource::generatedFallback ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "linear_system:" ), std::string::npos ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "dof_labels:" ), std::string::npos ) << static_cast< int >( value );
       EXPECT_NE( target.argument.find( "field0_0: 0" ), std::string::npos ) << static_cast< int >( value );
@@ -261,15 +261,15 @@ TEST( HypreDriveYaml, BuildsGeneratedYamlForEveryMGRStrategy )
   }
 }
 
-TEST( HypreDriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
+TEST( HypredriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "compositionalVariables" };
   array1d< int > numComponentsPerField( 2 );
   numComponentsPerField[0] = 3;
   numComponentsPerField[1] = 3;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics ),
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics ),
                                                              fieldNames,
                                                              numComponentsPerField,
                                                              target ) );
@@ -283,7 +283,7 @@ TEST( HypreDriveYaml, UsesSemanticCompositionalLabelsWhenFieldNamesAreAvailable 
   EXPECT_NE( target.argument.find( "f_dofs: [density_0]" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, UsesSemanticCompositionalWellLabelsWhenFieldNamesAreAvailable )
+TEST( HypredriveYaml, UsesSemanticCompositionalWellLabelsWhenFieldNamesAreAvailable )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "compositionalVariables", "compositionalWellVars" };
   array1d< int > numComponentsPerField( 3 );
@@ -291,8 +291,8 @@ TEST( HypreDriveYaml, UsesSemanticCompositionalWellLabelsWhenFieldNamesAreAvaila
   numComponentsPerField[1] = 3;
   numComponentsPerField[2] = 4;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM ),
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM ),
                                                              fieldNames,
                                                              numComponentsPerField,
                                                              target ) );
@@ -305,14 +305,14 @@ TEST( HypreDriveYaml, UsesSemanticCompositionalWellLabelsWhenFieldNamesAreAvaila
   EXPECT_NE( target.argument.find( "f_dofs: [wellPressure, wellDensity_0, wellDensity_1, wellRate]" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, UsesTemperatureLabelForThermalCompositionalBlocks )
+TEST( HypredriveYaml, UsesTemperatureLabelForThermalCompositionalBlocks )
 {
   stdVector< string > const fieldNames = { "compositionalVariables" };
   array1d< int > numComponentsPerField( 1 );
   numComponentsPerField[0] = 4;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM ),
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM ),
                                                              fieldNames,
                                                              numComponentsPerField,
                                                              target ) );
@@ -324,15 +324,15 @@ TEST( HypreDriveYaml, UsesTemperatureLabelForThermalCompositionalBlocks )
   EXPECT_NE( target.argument.find( "f_dofs: [density_0]" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, UsesWellTemperatureLabelForThermalReservoirWellBlocks )
+TEST( HypredriveYaml, UsesWellTemperatureLabelForThermalReservoirWellBlocks )
 {
   stdVector< string > const fieldNames = { "compositionalVariables", "compositionalWellVars" };
   array1d< int > numComponentsPerField( 2 );
   numComponentsPerField[0] = 4;
   numComponentsPerField[1] = 5;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM ),
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseReservoirFVM ),
                                                              fieldNames,
                                                              numComponentsPerField,
                                                              target ) );
@@ -343,7 +343,7 @@ TEST( HypreDriveYaml, UsesWellTemperatureLabelForThermalReservoirWellBlocks )
   EXPECT_NE( target.argument.find( "wellTemperature: 8" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
+TEST( HypredriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
 {
   stdVector< string > const fieldNames = { "totalDisplacement", "singlePhaseVariables", "singlePhaseWellVars" };
   array1d< int > numComponentsPerField( 3 );
@@ -351,8 +351,8 @@ TEST( HypreDriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
   numComponentsPerField[1] = 2;
   numComponentsPerField[2] = 3;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM ),
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( makeMgrParameters( LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM ),
                                                              fieldNames,
                                                              numComponentsPerField,
                                                              target ) );
@@ -368,7 +368,7 @@ TEST( HypreDriveYaml, BuildsThermalSinglePhasePoromechanicsReservoirYaml )
   EXPECT_NE( target.argument.find( "num_functions: 2" ), std::string::npos );
 }
 
-TEST( HypreDriveYaml, UsesAuthoritativeFileWhenProvided )
+TEST( HypredriveYaml, UsesAuthoritativeFileWhenProvided )
 {
   std::string const authoritativeFile = "/tmp/geos-hypredrive-authoritative.yml";
 
@@ -377,42 +377,42 @@ TEST( HypreDriveYaml, UsesAuthoritativeFileWhenProvided )
   params.preconditionerType = LinearSolverParameters::PreconditionerType::none;
   params.hypredriveInputFile = authoritativeFile;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
-  EXPECT_EQ( target.source, hypre::hypreDrive::InputSource::authoritativeFile );
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
+  EXPECT_EQ( target.source, hypre::hypredrive::InputSource::authoritativeFile );
   EXPECT_EQ( target.argument, authoritativeFile );
-  EXPECT_TRUE( hypre::hypreDrive::shouldUse( params ) );
+  EXPECT_TRUE( hypre::hypredrive::shouldUse( params ) );
 
   auto solver = HypreInterface::createSolver( params );
-  EXPECT_NE( dynamic_cast< HypreDriveSolver * >( solver.get() ), nullptr );
+  EXPECT_NE( dynamic_cast< HypredriveSolver * >( solver.get() ), nullptr );
 }
 
-TEST( HypreDriveLogging, LogLevelGatesGeneratedYamlDump )
+TEST( HypredriveLogging, LogLevelGatesGeneratedYamlDump )
 {
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
 
   {
     ScopedCoutCapture capture;
     params.logLevel = 0;
-    hypre::hypreDrive::logInputArgsParseTarget( params, target );
+    hypre::hypredrive::logInputArgsParseTarget( params, target );
     EXPECT_TRUE( capture.str().empty() );
   }
 
   {
     ScopedCoutCapture capture;
     params.logLevel = 1;
-    hypre::hypreDrive::logInputArgsParseTarget( params, target );
+    hypre::hypredrive::logInputArgsParseTarget( params, target );
     EXPECT_NE( capture.str().find( "generated fallback" ), std::string::npos );
     EXPECT_NE( capture.str().find( "preconditioner:" ), std::string::npos );
   }
 }
 
-TEST( HypreDriveLogging, LogsAuthoritativeFileContents )
+TEST( HypredriveLogging, LogsAuthoritativeFileContents )
 {
   LinearSolverParameters params;
   params.hypredriveInputFile = "/tmp/geos-hypredrive-authoritative.yml";
@@ -426,11 +426,11 @@ TEST( HypreDriveLogging, LogsAuthoritativeFileContents )
               "    max_iter: 3\n";
   }
 
-  hypre::hypreDrive::InputArgsParseTarget target;
-  ASSERT_TRUE( hypre::hypreDrive::buildInputArgsParseTarget( params, target ) );
+  hypre::hypredrive::InputArgsParseTarget target;
+  ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
 
   ScopedCoutCapture capture;
-  hypre::hypreDrive::logInputArgsParseTarget( params, target );
+  hypre::hypredrive::logInputArgsParseTarget( params, target );
   EXPECT_NE( capture.str().find( "authoritative file" ), std::string::npos );
   EXPECT_NE( capture.str().find( params.hypredriveInputFile ), std::string::npos );
   EXPECT_NE( capture.str().find( "max_iter: 3" ), std::string::npos );
@@ -438,7 +438,7 @@ TEST( HypreDriveLogging, LogsAuthoritativeFileContents )
   EXPECT_EQ( std::remove( params.hypredriveInputFile.c_str() ), 0 );
 }
 
-TEST( HypreDriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
+TEST( HypredriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
 {
   std::string const authoritativeFile = "/tmp/geos-hypredrive-statistics-authoritative.yml";
   {
@@ -467,7 +467,7 @@ TEST( HypreDriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
   sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
   sol.zero();
 
-  HypreDriveSolver solver( params );
+  HypredriveSolver solver( params );
   solver.setExecutionContext( makeExecutionContext( 51, 0 ) );
   solver.setup( matrix );
   solver.solve( rhs, sol );
@@ -480,7 +480,7 @@ TEST( HypreDriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
   EXPECT_EQ( std::remove( authoritativeFile.c_str() ), 0 );
 }
 
-TEST( HypreDriveLogging, GeneratedFallbackNamesStatisticsSummary )
+TEST( HypredriveLogging, GeneratedFallbackNamesStatisticsSummary )
 {
   LinearSolverParameters params = makeReusableAMGParameters();
 
@@ -494,7 +494,7 @@ TEST( HypreDriveLogging, GeneratedFallbackNamesStatisticsSummary )
   sol.create( matrix.numLocalCols(), MPI_COMM_GEOS );
   sol.zero();
 
-  HypreDriveSolver solver( params );
+  HypredriveSolver solver( params );
   solver.setExecutionContext( makeExecutionContext( 61, 0, "namedGeneratedSolver" ) );
   solver.setup( matrix );
   solver.solve( rhs, sol );
@@ -506,17 +506,17 @@ TEST( HypreDriveLogging, GeneratedFallbackNamesStatisticsSummary )
   EXPECT_NE( output.find( "STATISTICS SUMMARY for namedGeneratedSolver:" ), std::string::npos );
 }
 
-TEST( HypreDriveSolverSelection, UsesAdapterWhenAvailable )
+TEST( HypredriveSolverSelection, UsesAdapterWhenAvailable )
 {
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::gmres;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
 
   auto solver = HypreInterface::createSolver( params );
-  EXPECT_NE( dynamic_cast< HypreDriveSolver * >( solver.get() ), nullptr );
+  EXPECT_NE( dynamic_cast< HypredriveSolver * >( solver.get() ), nullptr );
 }
 
-TEST( HypreDriveSolverSelection, HonorsLegacyOverride )
+TEST( HypredriveSolverSelection, HonorsLegacyOverride )
 {
   ScopedEnvVar legacyOverride( "GEOS_HYPREDRV_FORCE_LEGACY", "1" );
 
@@ -528,7 +528,7 @@ TEST( HypreDriveSolverSelection, HonorsLegacyOverride )
   EXPECT_NE( dynamic_cast< HypreSolver * >( solver.get() ), nullptr );
 }
 
-TEST( HypreDriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
+TEST( HypredriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
 {
   HypreMatrix matrix1;
   HypreMatrix matrix2;
@@ -542,12 +542,12 @@ TEST( HypreDriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   sol.create( matrix1.numLocalCols(), MPI_COMM_GEOS );
   sol.zero();
 
-  HypreDriveSolver solver( makeReusableAMGParameters() );
+  HypredriveSolver solver( makeReusableAMGParameters() );
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
 
-  HYPREDRV_t const handle1 = HypreDriveSolverTestPeer::handle( solver );
-  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+  HYPREDRV_t const handle1 = HypredriveSolverTestPeer::handle( solver );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
   ASSERT_NE( handle1, nullptr );
   solver.solve( rhs, sol );
 
@@ -555,33 +555,33 @@ TEST( HypreDriveSolverReuse, ReusesHandleAcrossCompatibleSetupCycles )
   solver.setExecutionContext( makeExecutionContext( 11, 1 ) );
   solver.setup( matrix2 );
 
-  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver ), handle1 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+  EXPECT_EQ( HypredriveSolverTestPeer::handle( solver ), handle1 );
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver ), generation1 );
   solver.solve( rhs, sol );
 
   solver.clear();
 }
 
-TEST( HypreDriveSolverReuse, RecreatesHandleWhenStructureChanges )
+TEST( HypredriveSolverReuse, RecreatesHandleWhenStructureChanges )
 {
   HypreMatrix matrix1;
   HypreMatrix matrix2;
   testing::computeIdentity( MPI_COMM_GEOS, 4, matrix1 );
   testing::computeIdentity( MPI_COMM_GEOS, 5, matrix2 );
 
-  HypreDriveSolver solver( makeReusableAMGParameters() );
+  HypredriveSolver solver( makeReusableAMGParameters() );
   solver.setExecutionContext( makeExecutionContext( 11, 0 ) );
   solver.setup( matrix1 );
-  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
 
   solver.setExecutionContext( makeExecutionContext( 12, 0 ) );
   solver.setup( matrix2 );
 
-  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+  EXPECT_GT( HypredriveSolverTestPeer::generation( solver ), generation1 );
   solver.clear();
 }
 
-TEST( HypreDriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
+TEST( HypredriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
 {
   std::string const authoritativeFile = "/tmp/geos-hypredrive-reuse-authoritative.yml";
   {
@@ -604,10 +604,10 @@ TEST( HypreDriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
   HypreMatrix matrix;
   testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
 
-  HypreDriveSolver solver( params );
+  HypredriveSolver solver( params );
   solver.setExecutionContext( makeExecutionContext( 21, 0 ) );
   solver.setup( matrix );
-  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver );
 
   {
     std::ofstream output( authoritativeFile );
@@ -625,13 +625,13 @@ TEST( HypreDriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
 
   solver.setExecutionContext( makeExecutionContext( 21, 1 ) );
   solver.setup( matrix );
-  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver ), generation1 );
+  EXPECT_GT( HypredriveSolverTestPeer::generation( solver ), generation1 );
 
   solver.clear();
   EXPECT_EQ( std::remove( authoritativeFile.c_str() ), 0 );
 }
 
-TEST( HypreDriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
+TEST( HypredriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
 {
   HypreMatrix matrix1;
   HypreMatrix matrix2;
@@ -651,18 +651,18 @@ TEST( HypreDriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
   sol1.zero();
   sol2.zero();
 
-  HypreDriveSolver solver1( makeReusableAMGParameters() );
-  HypreDriveSolver solver2( makeReusableAMGParameters() );
+  HypredriveSolver solver1( makeReusableAMGParameters() );
+  HypredriveSolver solver2( makeReusableAMGParameters() );
 
   solver1.setExecutionContext( makeExecutionContext( 31, 0 ) );
   solver1.setup( matrix1 );
-  HYPREDRV_t const handle1 = HypreDriveSolverTestPeer::handle( solver1 );
-  size_t const generation1 = HypreDriveSolverTestPeer::generation( solver1 );
+  HYPREDRV_t const handle1 = HypredriveSolverTestPeer::handle( solver1 );
+  size_t const generation1 = HypredriveSolverTestPeer::generation( solver1 );
 
   solver2.setExecutionContext( makeExecutionContext( 41, 0 ) );
   solver2.setup( matrix2 );
-  HYPREDRV_t const handle2 = HypreDriveSolverTestPeer::handle( solver2 );
-  size_t const generation2 = HypreDriveSolverTestPeer::generation( solver2 );
+  HYPREDRV_t const handle2 = HypredriveSolverTestPeer::handle( solver2 );
+  size_t const generation2 = HypredriveSolverTestPeer::generation( solver2 );
 
   ASSERT_NE( handle1, nullptr );
   ASSERT_NE( handle2, nullptr );
@@ -676,23 +676,23 @@ TEST( HypreDriveSolverReuse, KeepsMultipleSolverHandlesIndependent )
 
   solver1.setExecutionContext( makeExecutionContext( 31, 1 ) );
   solver1.setup( matrix1 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver1 ), handle1 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver1 ), generation1 );
+  EXPECT_EQ( HypredriveSolverTestPeer::handle( solver1 ), handle1 );
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver1 ), generation1 );
 
   solver2.setExecutionContext( makeExecutionContext( 41, 1 ) );
   solver2.setup( matrix2 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver2 ), handle2 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver2 ), generation2 );
+  EXPECT_EQ( HypredriveSolverTestPeer::handle( solver2 ), handle2 );
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver2 ), generation2 );
 
   solver1.setExecutionContext( makeExecutionContext( 32, 0 ) );
   solver1.setup( matrix1 );
-  EXPECT_GT( HypreDriveSolverTestPeer::generation( solver1 ), generation1 );
+  EXPECT_GT( HypredriveSolverTestPeer::generation( solver1 ), generation1 );
 
-  size_t const refreshedGeneration2 = HypreDriveSolverTestPeer::generation( solver2 );
+  size_t const refreshedGeneration2 = HypredriveSolverTestPeer::generation( solver2 );
   solver2.setExecutionContext( makeExecutionContext( 41, 2 ) );
   solver2.setup( matrix2 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::handle( solver2 ), handle2 );
-  EXPECT_EQ( HypreDriveSolverTestPeer::generation( solver2 ), refreshedGeneration2 );
+  EXPECT_EQ( HypredriveSolverTestPeer::handle( solver2 ), handle2 );
+  EXPECT_EQ( HypredriveSolverTestPeer::generation( solver2 ), refreshedGeneration2 );
 
   solver1.clear();
   solver2.clear();

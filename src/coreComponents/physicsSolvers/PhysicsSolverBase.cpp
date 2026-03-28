@@ -1253,7 +1253,7 @@ void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
 bool PhysicsSolverBase::deferLinearSolverParametersPrint() const
 {
 #ifdef GEOS_USE_HYPREDRV
-  return hypre::hypreDrive::shouldUse( getLinearSolverParameters() );
+  return hypre::hypredrive::shouldUse( getLinearSolverParameters() );
 #else
   return false;
 #endif

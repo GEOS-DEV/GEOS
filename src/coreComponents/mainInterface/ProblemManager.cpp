@@ -71,7 +71,7 @@ using namespace constitutive;
 namespace
 {
 
-std::string formatDelimitedHypreDriveYamlBlock( std::string const & title,
+std::string formatDelimitedHypredriveYamlBlock( std::string const & title,
                                                 std::string const & yaml )
 {
   size_t const innerWidth = std::max< size_t >( title.size() + 2, 83 );
@@ -98,7 +98,7 @@ std::string formatDelimitedHypreDriveYamlBlock( std::string const & title,
   return output.str();
 }
 
-void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
+void logHypredriveInputs( PhysicsSolverManager & physicsSolverManager,
                           DomainPartition & domain )
 {
   Group const & meshBodies = domain.getMeshBodies();
@@ -111,10 +111,10 @@ void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
       return;
     }
 
-    hypre::hypreDrive::InputArgsParseTarget target;
+    hypre::hypredrive::InputArgsParseTarget target;
     if( !params.hypredriveInputFile.empty() )
     {
-      if( !hypre::hypreDrive::buildInputArgsParseTarget( params, target ) )
+      if( !hypre::hypredrive::buildInputArgsParseTarget( params, target ) )
       {
         return;
       }
@@ -126,13 +126,13 @@ void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
         solver.generateMeshTargetsFromTargetRegions( meshBodies );
       }
 
-      DofManager previewDofManager( GEOS_FMT( "{}_hypreDrivePreview", solver.getName() ) );
+      DofManager previewDofManager( GEOS_FMT( "{}_hypredrivePreview", solver.getName() ) );
       previewDofManager.setDomain( domain );
       solver.setupDofs( domain, previewDofManager );
       stdVector< string > const fieldNames = previewDofManager.fieldNames();
       array1d< integer > const numComponentsPerField = previewDofManager.numComponentsPerField();
 
-      if( !hypre::hypreDrive::buildInputArgsParseTarget( params,
+      if( !hypre::hypredrive::buildInputArgsParseTarget( params,
                                                          fieldNames,
                                                          numComponentsPerField.toViewConst(),
                                                          target ) )
@@ -141,9 +141,9 @@ void logHypreDriveInputs( PhysicsSolverManager & physicsSolverManager,
       }
     }
 
-    GEOS_LOG_RANK_0( formatDelimitedHypreDriveYamlBlock( GEOS_FMT( "{}: hypreDrive input (YAML)", solver.getName() ),
-                                                         hypre::hypreDrive::formatInputArgsParseTargetYaml( target ) ) );
-    hypre::hypreDrive::markInputArgsParseTargetLogged( target );
+    GEOS_LOG_RANK_0( formatDelimitedHypredriveYamlBlock( GEOS_FMT( "{}: hypredrive input (YAML)", solver.getName() ),
+                                                         hypre::hypredrive::formatInputArgsParseTargetYaml( target ) ) );
+    hypre::hypredrive::markInputArgsParseTargetLogged( target );
   } );
 }
 
@@ -277,7 +277,7 @@ void ProblemManager::problemSetup()
   initialize();
 
 #ifdef GEOS_USE_HYPREDRV
-  logHypreDriveInputs( *m_physicsSolverManager, getDomainPartition() );
+  logHypredriveInputs( *m_physicsSolverManager, getDomainPartition() );
 #endif
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );

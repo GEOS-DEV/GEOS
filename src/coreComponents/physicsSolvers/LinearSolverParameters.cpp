@@ -607,7 +607,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
 
   registerWrapper( viewKeyStruct::hypredriveInputFileString(), &m_parameters.hypredriveInputFile ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Optional authoritative hypreDrive YAML file. When provided, hypreDrive consumes this file as-is for solver/preconditioner options." );
+    setDescription( "Optional authoritative hypredrive YAML file. When provided, hypredrive consumes this file as-is for solver/preconditioner options." );
 
   registerWrapper( viewKeyStruct::stopIfErrorString(), &m_parameters.stopIfError ).
     setApplyDefaultValue( m_parameters.stopIfError ).
@@ -883,7 +883,7 @@ void LinearSolverParametersInput::postInputInitialization()
 
   bool deferPrint = false;
 #ifdef GEOS_USE_HYPREDRV
-  deferPrint = hypre::hypreDrive::shouldUse( m_parameters );
+  deferPrint = hypre::hypredrive::shouldUse( m_parameters );
 #endif
 
   if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) && !deferPrint )
@@ -900,7 +900,7 @@ Group * LinearSolverParametersInput::createChild( string const & childKey,
 void LinearSolverParametersInput::print() const
 {
 #ifdef GEOS_USE_HYPREDRV
-  if( hypre::hypreDrive::shouldUse( m_parameters ) )
+  if( hypre::hypredrive::shouldUse( m_parameters ) )
   {
     return;
   }

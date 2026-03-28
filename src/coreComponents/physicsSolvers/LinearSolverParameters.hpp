@@ -69,7 +69,7 @@ public:
     static constexpr char const * solverTypeString() { return "solverType"; }
     /// Preconditioner type key
     static constexpr char const * preconditionerTypeString() { return "preconditionerType"; }
-    /// Authoritative hypreDrive YAML file key
+    /// Authoritative hypredrive YAML file key
     static constexpr char const * hypredriveInputFileString() { return "hypredriveInputFile"; }
     /// stop if error key
     static constexpr char const * stopIfErrorString() { return "stopIfError"; }

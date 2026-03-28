@@ -56,7 +56,7 @@ namespace geos
 namespace
 {
 
-void checkHypreDriveCall( uint32_t const errorCode,
+void checkHypredriveCall( uint32_t const errorCode,
                           char const * const call )
 {
   if( errorCode != 0 )
@@ -94,10 +94,10 @@ std::optional< std::string > readTextFileContents( std::string const & path )
   return buffer.str();
 }
 
-std::string makeInputArgsParseTargetSignature( hypre::hypreDrive::InputArgsParseTarget const & target )
+std::string makeInputArgsParseTargetSignature( hypre::hypredrive::InputArgsParseTarget const & target )
 {
   return GEOS_FMT( "{}\n{}",
-                   target.source == hypre::hypreDrive::InputSource::authoritativeFile ? "authoritativeFile" : "generatedFallback",
+                   target.source == hypre::hypredrive::InputSource::authoritativeFile ? "authoritativeFile" : "generatedFallback",
                    target.argument );
 }
 
@@ -321,7 +321,7 @@ char const * getGeneratedMGRGlobalSmootherName( hypre::MGRGlobalSmootherType con
     case SmootherType::blockGaussSeidel:
       return "blk-gs";
     case SmootherType::jacobi:
-      // hypreDrive follows hypre's MGR global smoother table, where code 2 is exposed as mixed-gs.
+      // hypredrive follows hypre's MGR global smoother table, where code 2 is exposed as mixed-gs.
       return "mixed-gs";
     case SmootherType::ilu0:
       return "ilu";
@@ -662,7 +662,7 @@ std::string joinLabelNames( std::vector< HYPRE_Int > const & values,
   {
     HYPRE_Int const label = values[i];
     GEOS_ERROR_IF( label < 0 || label >= LvArray::integerConversion< HYPRE_Int >( labelNames.size() ),
-                   GEOS_FMT( "Invalid dof label {} while generating hypreDrive MGR YAML", label ) );
+                   GEOS_FMT( "Invalid dof label {} while generating hypredrive MGR YAML", label ) );
     if( i > 0 )
     {
       stream << ", ";
@@ -704,7 +704,7 @@ void appendSolverYaml( std::ostringstream & stream,
 {
   char const * const solverName = getSolverName( params.solverType );
   GEOS_ERROR_IF( solverName == nullptr,
-                 GEOS_FMT( "Unsupported generated hypreDrive solver {}", params.solverType ) );
+                 GEOS_FMT( "Unsupported generated hypredrive solver {}", params.solverType ) );
 
   appendLine( stream, 0, "solver:" );
   appendLine( stream, 1, GEOS_FMT( "{}:", solverName ) );
@@ -1193,7 +1193,7 @@ bool buildStrategyYaml( LinearSolverParameters const & params,
     {
       std::optional< AMGFlavor > const amgFlavor = getFRelaxAMGFlavor( specialization, level );
       GEOS_ERROR_IF( !amgFlavor.has_value(),
-                     GEOS_FMT( "Missing hypreDrive AMG block description for MGR strategy {} level {}",
+                     GEOS_FMT( "Missing hypredrive AMG block description for MGR strategy {} level {}",
                                params.mgr.strategy, level ) );
       appendLine( stream, 4, "f_relaxation:" );
       appendAMGByFlavor( stream, 5, *amgFlavor, params.mgr );
@@ -1315,7 +1315,7 @@ bool buildMGRPreconditionerYaml( LinearSolverParameters const & params,
 bool buildGeneratedInputArgsParseTarget( LinearSolverParameters const & params,
                                          stdVector< string > const & fieldNames,
                                          arrayView1d< int const > const & numComponentsPerField,
-                                         hypre::hypreDrive::InputArgsParseTarget & target )
+                                         hypre::hypredrive::InputArgsParseTarget & target )
 {
   std::string linearSystemYaml;
   std::string preconditionerYaml;
@@ -1356,7 +1356,7 @@ bool buildGeneratedInputArgsParseTarget( LinearSolverParameters const & params,
   appendSolverYaml( stream, params );
   stream << preconditionerYaml;
 
-  target.source = hypre::hypreDrive::InputSource::generatedFallback;
+  target.source = hypre::hypredrive::InputSource::generatedFallback;
   target.argument = stream.str();
   return true;
 }
@@ -1366,7 +1366,7 @@ bool buildGeneratedInputArgsParseTarget( LinearSolverParameters const & params,
 namespace hypre
 {
 
-namespace hypreDrive
+namespace hypredrive
 {
 
 bool shouldUse( LinearSolverParameters const & params )
@@ -1425,17 +1425,17 @@ std::string formatInputArgsParseTargetYaml( InputArgsParseTarget const & target 
     std::optional< std::string > const contents = readTextFileContents( target.argument );
     if( contents.has_value() )
     {
-      return GEOS_FMT( "# hypreDrive authoritative file: {}\n{}",
+      return GEOS_FMT( "# hypredrive authoritative file: {}\n{}",
                        target.argument,
                        *contents );
     }
 
-    return GEOS_FMT( "# hypreDrive authoritative file: {}\n"
-                     "# GEOS was unable to read this YAML file while formatting the hypreDrive input dump.",
+    return GEOS_FMT( "# hypredrive authoritative file: {}\n"
+                     "# GEOS was unable to read this YAML file while formatting the hypredrive input dump.",
                      target.argument );
   }
 
-  return GEOS_FMT( "# hypreDrive input generated by GEOS\n{}",
+  return GEOS_FMT( "# hypredrive input generated by GEOS\n{}",
                    target.argument );
 }
 
@@ -1469,32 +1469,32 @@ void logInputArgsParseTarget( LinearSolverParameters const & params,
     std::optional< std::string > const contents = readTextFileContents( target.argument );
     if( contents.has_value() )
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( "        hypreDrive input | authoritative file | {}\n{}",
+      GEOS_LOG_RANK_0( GEOS_FMT( "        hypredrive input | authoritative file | {}\n{}",
                                  target.argument,
                                  *contents ) );
     }
     else
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( "        hypreDrive input | authoritative file | {}\n"
-                                 "        hypreDrive input | unable to read authoritative YAML from GEOS",
+      GEOS_LOG_RANK_0( GEOS_FMT( "        hypredrive input | authoritative file | {}\n"
+                                 "        hypredrive input | unable to read authoritative YAML from GEOS",
                                  target.argument ) );
     }
   }
   else
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "        hypreDrive input | generated fallback\n{}",
+    GEOS_LOG_RANK_0( GEOS_FMT( "        hypredrive input | generated fallback\n{}",
                                target.argument ) );
   }
 }
 
 void initializeRuntime()
 {
-  checkHypreDriveCall( HYPREDRV_Initialize(), "HYPREDRV_Initialize" );
+  checkHypredriveCall( HYPREDRV_Initialize(), "HYPREDRV_Initialize" );
 }
 
 void finalizeRuntime()
 {
-  checkHypreDriveCall( HYPREDRV_Finalize(), "HYPREDRV_Finalize" );
+  checkHypredriveCall( HYPREDRV_Finalize(), "HYPREDRV_Finalize" );
 }
 
 }
@@ -1504,11 +1504,11 @@ void finalizeRuntime()
 namespace
 {
 
-std::string makeConfigurationSignature( hypre::hypreDrive::InputArgsParseTarget const & target )
+std::string makeConfigurationSignature( hypre::hypredrive::InputArgsParseTarget const & target )
 {
   return GEOS_FMT( "{}\n{}",
-                   target.source == hypre::hypreDrive::InputSource::authoritativeFile ? "authoritativeFile" : "generatedFallback",
-                   hypre::hypreDrive::formatInputArgsParseTargetYaml( target ) );
+                   target.source == hypre::hypredrive::InputSource::authoritativeFile ? "authoritativeFile" : "generatedFallback",
+                   hypre::hypredrive::formatInputArgsParseTargetYaml( target ) );
 }
 
 std::string makeStructureSignature( HypreMatrix const & mat,
@@ -1565,66 +1565,66 @@ std::string makeNewtonScopeName( LinearSolverExecutionContext const & context )
 
 }
 
-HypreDriveSolver::HypreDriveSolver( LinearSolverParameters parameters )
+HypredriveSolver::HypredriveSolver( LinearSolverParameters parameters )
   : Base( std::move( parameters ) )
 {}
 
-HypreDriveSolver::~HypreDriveSolver()
+HypredriveSolver::~HypredriveSolver()
 {
-  HypreDriveSolver::clear();
+  HypredriveSolver::clear();
 }
 
-void HypreDriveSolver::setExecutionContext( LinearSolverExecutionContext const & context )
+void HypredriveSolver::setExecutionContext( LinearSolverExecutionContext const & context )
 {
   m_executionContext = context;
   m_hasExecutionContext = true;
 }
 
-void HypreDriveSolver::setup( HypreMatrix const & mat )
+void HypredriveSolver::setup( HypreMatrix const & mat )
 {
   Base::setup( mat );
 
-  if( !configureHypreDrive( mat ) )
+  if( !configureHypredrive( mat ) )
   {
-    resetHypreDriveState();
+    resetHypredriveState();
     setupLegacy( mat );
   }
 }
 
-void HypreDriveSolver::createHypreDrive( HypreMatrix const & mat,
-                                         hypre::hypreDrive::InputArgsParseTarget const & parseTarget,
+void HypredriveSolver::createHypredrive( HypreMatrix const & mat,
+                                         hypre::hypredrive::InputArgsParseTarget const & parseTarget,
                                          std::string const & configurationSignature,
                                          std::string const & structureSignature,
                                          arrayView1d< int > const & pointMarkers )
 {
-  resetHypreDriveState();
+  resetHypredriveState();
 
-  checkHypreDriveCall( HYPREDRV_Create( mat.comm(), &m_hypreDrive ), "HYPREDRV_Create" );
-  checkHypreDriveCall( HYPREDRV_SetLibraryMode( m_hypreDrive ), "HYPREDRV_SetLibraryMode" );
+  checkHypredriveCall( HYPREDRV_Create( mat.comm(), &m_hypredrive ), "HYPREDRV_Create" );
+  checkHypredriveCall( HYPREDRV_SetLibraryMode( m_hypredrive ), "HYPREDRV_SetLibraryMode" );
 
   char * argv[] = { const_cast< char * >( parseTarget.argument.c_str() ) };
-  checkHypreDriveCall( HYPREDRV_InputArgsParse( 1, argv, m_hypreDrive ),
+  checkHypredriveCall( HYPREDRV_InputArgsParse( 1, argv, m_hypredrive ),
                        "HYPREDRV_InputArgsParse" );
-  if( parseTarget.source == hypre::hypreDrive::InputSource::generatedFallback &&
+  if( parseTarget.source == hypre::hypredrive::InputSource::generatedFallback &&
       m_hasExecutionContext &&
       !m_executionContext.solverName.empty() )
   {
-    checkHypreDriveCall( HYPREDRV_ObjectSetName( m_hypreDrive,
+    checkHypredriveCall( HYPREDRV_ObjectSetName( m_hypredrive,
                                                  m_executionContext.solverName.c_str() ),
                          "HYPREDRV_ObjectSetName" );
   }
 
-  ++m_hypreDriveGeneration;
+  ++m_hypredriveGeneration;
   m_configurationSignature = configurationSignature;
   m_structureSignature = structureSignature;
 
   refreshBoundObjects( mat, pointMarkers );
 }
 
-void HypreDriveSolver::refreshBoundObjects( HypreMatrix const & mat,
+void HypredriveSolver::refreshBoundObjects( HypreMatrix const & mat,
                                             arrayView1d< int > const & pointMarkers )
 {
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetMatrix( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetMatrix( m_hypredrive,
                                                        toHypreMatrix( mat.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetMatrix" );
 
@@ -1636,23 +1636,23 @@ void HypreDriveSolver::refreshBoundObjects( HypreMatrix const & mat,
     m_dummySol.create( mat.numLocalRows(), mat.comm() );
   }
 
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetRHS( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
                                                     reinterpret_cast< HYPRE_Vector >( m_dummyRhs.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetRHS" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetSolution( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetSolution( m_hypredrive,
                                                          reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
 
   if( pointMarkers.size() > 0 )
   {
-    checkHypreDriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypreDrive,
+    checkHypredriveCall( HYPREDRV_LinearSystemSetDofmap( m_hypredrive,
                                                          LvArray::integerConversion< int >( pointMarkers.size() ),
                                                          pointMarkers.data() ),
                          "HYPREDRV_LinearSystemSetDofmap" );
   }
 }
 
-void HypreDriveSolver::setupLegacy( HypreMatrix const & mat )
+void HypredriveSolver::setupLegacy( HypreMatrix const & mat )
 {
   if( !m_legacySolver )
   {
@@ -1663,9 +1663,9 @@ void HypreDriveSolver::setupLegacy( HypreMatrix const & mat )
   syncLegacyResult();
 }
 
-bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
+bool HypredriveSolver::configureHypredrive( HypreMatrix const & mat )
 {
-  if( !hypre::hypreDrive::shouldUse( m_params ) )
+  if( !hypre::hypredrive::shouldUse( m_params ) )
   {
     return false;
   }
@@ -1681,8 +1681,8 @@ bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
     dofManager->getLocalDofComponentLabels( pointMarkers );
   }
 
-  hypre::hypreDrive::InputArgsParseTarget parseTarget;
-  if( !hypre::hypreDrive::buildInputArgsParseTarget( m_params,
+  hypre::hypredrive::InputArgsParseTarget parseTarget;
+  if( !hypre::hypredrive::buildInputArgsParseTarget( m_params,
                                                      fieldNames,
                                                      numComponentsPerField,
                                                      parseTarget ) )
@@ -1698,7 +1698,7 @@ bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
                             pointMarkers,
                             m_hasExecutionContext ? &m_executionContext : nullptr );
 
-  hypre::hypreDrive::logInputArgsParseTarget( m_params, parseTarget );
+  hypre::hypredrive::logInputArgsParseTarget( m_params, parseTarget );
 
   if( m_legacySolver )
   {
@@ -1706,13 +1706,13 @@ bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
     m_legacySolver.reset();
   }
 
-  bool const recreateHandle = ( m_hypreDrive == nullptr ) ||
+  bool const recreateHandle = ( m_hypredrive == nullptr ) ||
                               ( m_configurationSignature != configurationSignature ) ||
                               ( m_structureSignature != structureSignature );
 
   if( recreateHandle )
   {
-    createHypreDrive( mat,
+    createHypredrive( mat,
                       parseTarget,
                       configurationSignature,
                       structureSignature,
@@ -1725,19 +1725,19 @@ bool HypreDriveSolver::configureHypreDrive( HypreMatrix const & mat )
 
   syncExecutionAnnotations();
 
-  checkHypreDriveCall( HYPREDRV_AnnotateBegin( m_hypreDrive, "system", -1 ),
+  checkHypredriveCall( HYPREDRV_AnnotateBegin( m_hypredrive, "system", -1 ),
                        "HYPREDRV_AnnotateBegin" );
-  checkHypreDriveCall( HYPREDRV_LinearSolverCreate( m_hypreDrive ), "HYPREDRV_LinearSolverCreate" );
-  checkHypreDriveCall( HYPREDRV_LinearSolverSetup( m_hypreDrive ), "HYPREDRV_LinearSolverSetup" );
-  checkHypreDriveCall( HYPREDRV_AnnotateEnd( m_hypreDrive, "system", -1 ),
+  checkHypredriveCall( HYPREDRV_LinearSolverCreate( m_hypredrive ), "HYPREDRV_LinearSolverCreate" );
+  checkHypredriveCall( HYPREDRV_LinearSolverSetup( m_hypredrive ), "HYPREDRV_LinearSolverSetup" );
+  checkHypredriveCall( HYPREDRV_AnnotateEnd( m_hypredrive, "system", -1 ),
                        "HYPREDRV_AnnotateEnd" );
-  checkHypreDriveCall( HYPREDRV_LinearSolverGetSetupTime( m_hypreDrive, &m_result.setupTime ),
+  checkHypredriveCall( HYPREDRV_LinearSolverGetSetupTime( m_hypredrive, &m_result.setupTime ),
                        "HYPREDRV_LinearSolverGetSetupTime" );
 
   return true;
 }
 
-void HypreDriveSolver::apply( HypreVector const & src,
+void HypredriveSolver::apply( HypreVector const & src,
                               HypreVector & dst ) const
 {
   if( m_legacySolver )
@@ -1746,10 +1746,10 @@ void HypreDriveSolver::apply( HypreVector const & src,
     return;
   }
 
-  applyHypreDrive( src, dst );
+  applyHypredrive( src, dst );
 }
 
-void HypreDriveSolver::applyHypreDrive( HypreVector const & rhs,
+void HypredriveSolver::applyHypredrive( HypreVector const & rhs,
                                         HypreVector & sol ) const
 {
   GEOS_LAI_ASSERT( ready() );
@@ -1757,23 +1757,23 @@ void HypreDriveSolver::applyHypreDrive( HypreVector const & rhs,
   GEOS_LAI_ASSERT( sol.ready() );
 
   m_dummySol.copy( sol );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetInitialGuess( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetInitialGuess( m_hypredrive,
                                                              reinterpret_cast< HYPRE_Vector >( m_dummySol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetInitialGuess" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetRHS( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetRHS( m_hypredrive,
                                                     reinterpret_cast< HYPRE_Vector >( rhs.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetRHS" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemSetSolution( m_hypreDrive,
+  checkHypredriveCall( HYPREDRV_LinearSystemSetSolution( m_hypredrive,
                                                          reinterpret_cast< HYPRE_Vector >( sol.unwrappedIJ() ) ),
                        "HYPREDRV_LinearSystemSetSolution" );
-  checkHypreDriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypreDrive ),
+  checkHypredriveCall( HYPREDRV_LinearSystemResetInitialGuess( m_hypredrive ),
                        "HYPREDRV_LinearSystemResetInitialGuess" );
-  checkHypreDriveCall( HYPREDRV_LinearSolverApply( m_hypreDrive ), "HYPREDRV_LinearSolverApply" );
+  checkHypredriveCall( HYPREDRV_LinearSolverApply( m_hypredrive ), "HYPREDRV_LinearSolverApply" );
 
   sol.touch();
 }
 
-void HypreDriveSolver::solve( HypreVector const & rhs,
+void HypredriveSolver::solve( HypreVector const & rhs,
                               HypreVector & sol ) const
 {
   if( m_legacySolver )
@@ -1793,14 +1793,14 @@ void HypreDriveSolver::solve( HypreVector const & rhs,
     return;
   }
 
-  applyHypreDrive( rhs, sol );
+  applyHypredrive( rhs, sol );
 
   int numIterations = 0;
-  checkHypreDriveCall( HYPREDRV_LinearSolverGetNumIter( m_hypreDrive, &numIterations ),
+  checkHypredriveCall( HYPREDRV_LinearSolverGetNumIter( m_hypredrive, &numIterations ),
                        "HYPREDRV_LinearSolverGetNumIter" );
   m_result.numIterations = numIterations;
 
-  checkHypreDriveCall( HYPREDRV_LinearSolverGetSolveTime( m_hypreDrive, &m_result.solveTime ),
+  checkHypredriveCall( HYPREDRV_LinearSolverGetSolveTime( m_hypredrive, &m_result.solveTime ),
                        "HYPREDRV_LinearSolverGetSolveTime" );
 
   HypreVector residual( rhs );
@@ -1831,7 +1831,7 @@ void HypreDriveSolver::solve( HypreVector const & rhs,
   }
 }
 
-void HypreDriveSolver::syncLegacyResult() const
+void HypredriveSolver::syncLegacyResult() const
 {
   if( m_legacySolver )
   {
@@ -1839,9 +1839,9 @@ void HypreDriveSolver::syncLegacyResult() const
   }
 }
 
-void HypreDriveSolver::syncExecutionAnnotations()
+void HypredriveSolver::syncExecutionAnnotations()
 {
-  if( m_hypreDrive == nullptr || !m_hasExecutionContext )
+  if( m_hypredrive == nullptr || !m_hasExecutionContext )
   {
     return;
   }
@@ -1851,7 +1851,7 @@ void HypreDriveSolver::syncExecutionAnnotations()
 
   if( m_newtonScopeActive && m_activeNewtonScope != desiredNewtonScope )
   {
-    checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 1,
+    checkHypredriveCall( HYPREDRV_AnnotateLevelEnd( m_hypredrive, 1,
                                                     m_activeNewtonScope.c_str(), -1 ),
                          "HYPREDRV_AnnotateLevelEnd" );
     m_newtonScopeActive = false;
@@ -1860,7 +1860,7 @@ void HypreDriveSolver::syncExecutionAnnotations()
 
   if( m_timestepScopeActive && m_activeTimestepScope != desiredTimestepScope )
   {
-    checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 0,
+    checkHypredriveCall( HYPREDRV_AnnotateLevelEnd( m_hypredrive, 0,
                                                     m_activeTimestepScope.c_str(), -1 ),
                          "HYPREDRV_AnnotateLevelEnd" );
     m_timestepScopeActive = false;
@@ -1869,7 +1869,7 @@ void HypreDriveSolver::syncExecutionAnnotations()
 
   if( !m_timestepScopeActive )
   {
-    checkHypreDriveCall( HYPREDRV_AnnotateLevelBegin( m_hypreDrive, 0,
+    checkHypredriveCall( HYPREDRV_AnnotateLevelBegin( m_hypredrive, 0,
                                                       desiredTimestepScope.c_str(), -1 ),
                          "HYPREDRV_AnnotateLevelBegin" );
     m_timestepScopeActive = true;
@@ -1878,7 +1878,7 @@ void HypreDriveSolver::syncExecutionAnnotations()
 
   if( !m_newtonScopeActive )
   {
-    checkHypreDriveCall( HYPREDRV_AnnotateLevelBegin( m_hypreDrive, 1,
+    checkHypredriveCall( HYPREDRV_AnnotateLevelBegin( m_hypredrive, 1,
                                                       desiredNewtonScope.c_str(), -1 ),
                          "HYPREDRV_AnnotateLevelBegin" );
     m_newtonScopeActive = true;
@@ -1886,20 +1886,20 @@ void HypreDriveSolver::syncExecutionAnnotations()
   }
 }
 
-void HypreDriveSolver::closeExecutionAnnotations()
+void HypredriveSolver::closeExecutionAnnotations()
 {
-  if( m_hypreDrive != nullptr )
+  if( m_hypredrive != nullptr )
   {
     if( m_newtonScopeActive )
     {
-      checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 1,
+      checkHypredriveCall( HYPREDRV_AnnotateLevelEnd( m_hypredrive, 1,
                                                       m_activeNewtonScope.c_str(), -1 ),
                            "HYPREDRV_AnnotateLevelEnd" );
     }
 
     if( m_timestepScopeActive )
     {
-      checkHypreDriveCall( HYPREDRV_AnnotateLevelEnd( m_hypreDrive, 0,
+      checkHypredriveCall( HYPREDRV_AnnotateLevelEnd( m_hypredrive, 0,
                                                       m_activeTimestepScope.c_str(), -1 ),
                            "HYPREDRV_AnnotateLevelEnd" );
     }
@@ -1911,30 +1911,30 @@ void HypreDriveSolver::closeExecutionAnnotations()
   m_activeTimestepScope.clear();
 }
 
-void HypreDriveSolver::destroyHypreDrive()
+void HypredriveSolver::destroyHypredrive()
 {
-  if( m_hypreDrive != nullptr )
+  if( m_hypredrive != nullptr )
   {
-    checkHypreDriveCall( HYPREDRV_Destroy( &m_hypreDrive ), "HYPREDRV_Destroy" );
-    m_hypreDrive = nullptr;
+    checkHypredriveCall( HYPREDRV_Destroy( &m_hypredrive ), "HYPREDRV_Destroy" );
+    m_hypredrive = nullptr;
   }
 }
 
-void HypreDriveSolver::resetHypreDriveState()
+void HypredriveSolver::resetHypredriveState()
 {
   closeExecutionAnnotations();
-  destroyHypreDrive();
+  destroyHypredrive();
   m_dummyRhs.reset();
   m_dummySol.reset();
   m_configurationSignature.clear();
   m_structureSignature.clear();
 }
 
-void HypreDriveSolver::clear()
+void HypredriveSolver::clear()
 {
   Base::clear();
 
-  resetHypreDriveState();
+  resetHypredriveState();
 
   if( m_legacySolver )
   {
