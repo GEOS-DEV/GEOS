@@ -10,6 +10,10 @@ PR #4007 (2026-03-28) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Add XML input parameter: "hypredriveInputFile"
 
+PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3967-16106-c0f34de.tar.gz>
+=====================
+Fix 2D/3D cell co-location in parallel mesh redistribution
+
 PR #3986 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
 =====================
 Corrected traction boundary conditions
