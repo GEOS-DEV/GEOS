@@ -73,7 +73,7 @@ HYPRE through hypredrive
 ************************
 
 When GEOS is built with both ``HYPRE`` and ``HYPREDRV`` support, the standard HYPRE-based
-linear solver path can delegate iterative solves to `hypredrive <https://github.com/LLNL/hypredrive>`__.
+linear solver path can delegate iterative solves to `hypredrive <https://github.com/hypre-space/hypredrive>`__.
 This provides a YAML-driven way to configure HYPRE solvers and preconditioners while keeping
 GEOS backward compatible with the existing ``LinearSolverParameters`` input block.
 
@@ -273,8 +273,10 @@ The linear-solver ``logLevel`` can be used to inspect what GEOS is passing to hy
   ``newton`` annotations inside the hypredrive adapter rather than from the generic physics
   solver layer.
 
-This is especially useful when validating a new solver recipe or comparing the generated GEOS
-configuration with a standalone hypredrive input file.
+Numeric meanings of ``logLevel`` for hypredrive (for example ``2``, ``4``, ``48``, ``56``)
+are summarized in *Important ``logLevel`` values (hypredrive)* in the parameter table section
+above. That subsection is especially useful when validating a new solver recipe or comparing
+the generated GEOS configuration with a standalone hypredrive input file.
 
 For regression studies and side-by-side comparisons, hypredrive can be disabled at runtime by
 setting the environment variable:
