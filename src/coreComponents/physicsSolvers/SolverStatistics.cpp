@@ -20,6 +20,7 @@
 #include "SolverStatistics.hpp"
 
 #include "fileIO/Outputs/OutputBase.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -142,7 +143,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeIterationStatsToTable()
 {
-  if( m_numTimeSteps == 0 || !m_logOutputRequest )
+  if( m_numTimeSteps == 0 || !m_logOutputRequest || MpiWrapper::commRank() != 0 )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -204,7 +205,7 @@ ConvergenceStatistics::ConvergenceStatistics():
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
-  if( !m_CSVOutputRequest )
+  if( !m_CSVOutputRequest || MpiWrapper::commRank() != 0 )
     return;
   stdVector< TableData::CellData > residualsNormCells;
 
