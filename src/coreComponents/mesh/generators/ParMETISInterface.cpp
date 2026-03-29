@@ -126,5 +126,61 @@ partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
   return part;
 }
 
+array1d< idx_t >
+partitionWeighted( ArrayOfArraysView< idx_t const, idx_t > const & graph,
+                   arrayView1d< idx_t const > const & vertexWeights,
+                   arrayView1d< idx_t const > const & vertDist,
+                   idx_t const numParts,
+                   MPI_Comm comm,
+                   int const numRefinements )
+{
+  array1d< idx_t > part( graph.size() );
+  if( numParts == 1 )
+  {
+    return part;
+  }
+
+  array1d< real_t > tpwgts( numParts );
+  tpwgts.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
+
+  idx_t wgtflag = 2;  // vertex weights only
+  idx_t numflag = 0;
+  idx_t ncon = 1;
+  idx_t npart = numParts;
+
+  // Options: [use_defaults, log_level, seed, coupling]
+  // PARMETIS_PSR_UNCOUPLED = 0 (default - uses PartitionSmallGraph)
+  // PARMETIS_PSR_COUPLED = 1 (forces distributed algorithm)
+  idx_t options[4] = { 1, 0, 2022, 0 };
+
+  idx_t edgecut = 0;
+  real_t ubvec = 1.05;
+
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway(
+                         const_cast< idx_t * >( vertDist.data() ),
+                         const_cast< idx_t * >( graph.getOffsets() ),
+                         const_cast< idx_t * >( graph.getValues() ),
+                         const_cast< idx_t * >( vertexWeights.data() ),
+                         nullptr, // edge weights
+                         &wgtflag,
+                         &numflag, &ncon, &npart, tpwgts.data(),
+                         &ubvec, options, &edgecut, part.data(), &comm ) );
+
+  for( int iter = 0; iter < numRefinements; ++iter )
+  {
+    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway(
+                           const_cast< idx_t * >( vertDist.data() ),
+                           const_cast< idx_t * >( graph.getOffsets() ),
+                           const_cast< idx_t * >( graph.getValues() ),
+                           const_cast< idx_t * >( vertexWeights.data() ),
+                           nullptr,
+                           &wgtflag,
+                           &numflag, &ncon, &npart, tpwgts.data(),
+                           &ubvec, options, &edgecut, part.data(), &comm ) );
+  }
+
+  return part;
+}
+
 } // namespace parmetis
 } // namespace geos

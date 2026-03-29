@@ -1248,6 +1248,204 @@ redistribute2DAndMergeWith3D( vtkSmartPointer< vtkDataSet > redistributed3D,
   return AllMeshes( mergedMesh, redistributedFractures );
 }
 
+/**
+ * @brief Find 3D cells whose faces exactly match a fracture element
+ *
+ * A 3D cell matches if it has a face that shares all nodes with the fracture element,
+ * accounting for collocated nodes at split interfaces.
+ *
+ * @param fractureNodeIds Local node IDs of the fracture element
+ * @param collocatedNodes Mapping from local node ID to all collocated global IDs
+ * @param nodesToCells Reverse map from global node ID to cells containing that node
+ * @return Global IDs of matching 3D cells (typically 0-2 neighbors for fractures)
+ */
+stdVector< vtkIdType > findMatchingCellsForFractureElement(
+  vtkIdList * fractureNodeIds,
+  CollocatedNodes const & collocatedNodes,
+  stdMap< vtkIdType, std::set< vtkIdType > > const & nodesToCells )
+{
+  vtkIdType const numFractureNodes = fractureNodeIds->GetNumberOfIds();
+
+  // Build set of ALL collocated nodes for this fracture element
+  std::unordered_set< vtkIdType > fractureCollocatedNodes;
+  fractureCollocatedNodes.reserve( numFractureNodes * 2 );  // Typical case: 2 versions per node
+
+  for( vtkIdType j = 0; j < numFractureNodes; ++j )
+  {
+    vtkIdType const localNodeIdx = fractureNodeIds->GetId( j );
+    stdVector< vtkIdType > const & ns = collocatedNodes[ localNodeIdx ];
+    fractureCollocatedNodes.insert( ns.begin(), ns.end() );
+  }
+
+  // Build map: candidate cellId -> set of its nodes that match fracture's collocated nodes
+  std::unordered_map< vtkIdType, std::unordered_set< vtkIdType > > cellToMatchedNodes;
+  cellToMatchedNodes.reserve( fractureCollocatedNodes.size() );
+
+  for( vtkIdType const & collocatedNode : fractureCollocatedNodes )
+  {
+    auto it = nodesToCells.find( collocatedNode );
+    if( it != nodesToCells.cend() )
+    {
+      for( vtkIdType const & cellId : it->second )
+      {
+        cellToMatchedNodes[cellId].insert( collocatedNode );
+      }
+    }
+  }
+
+  // Filter to cells that form a valid matching face
+  stdVector< vtkIdType > matchingCells;
+  matchingCells.reserve( 2 );  // Most fractures have 0-2 neighbors
+
+  for( auto const & [cellId, matchedNodes] : cellToMatchedNodes )
+  {
+    // Must match exactly the number of fracture nodes
+    if( matchedNodes.size() != static_cast< std::size_t >( numFractureNodes ) )
+    {
+      continue;
+    }
+
+    // Verify each fracture node has at least one collocated version in the matched set
+    // (ensures we matched a true face, not just any numFractureNodes nodes)
+    bool allFractureNodesRepresented = true;
+
+    for( vtkIdType j = 0; j < numFractureNodes; ++j )
+    {
+      vtkIdType const localNodeIdx = fractureNodeIds->GetId( j );
+      stdVector< vtkIdType > const & nodeCollocated = collocatedNodes[ localNodeIdx ];
+
+      // Check if ANY collocated version of this node is in the matched set
+      bool nodeRepresented = std::any_of(
+        nodeCollocated.begin(),
+        nodeCollocated.end(),
+        [&matchedNodes]( vtkIdType collocNode ) {
+        return matchedNodes.count( collocNode ) > 0;
+      }
+        );
+
+      if( !nodeRepresented )
+      {
+        allFractureNodesRepresented = false;
+        break;
+      }
+    }
+
+    if( allFractureNodesRepresented )
+    {
+      matchingCells.push_back( cellId );
+
+      // Early exit - most fractures have ≤2 neighbors (boundary or internal)
+      if( matchingCells.size() >= 2 )
+      {
+        return matchingCells;
+      }
+    }
+  }
+
+  return matchingCells;
+}
+
+/**
+ * @brief Build fracture-to-3D neighbor connectivity
+ *
+ * @param originalMesh The original mesh containing both 3D cells and fractures
+ * @param fractureMesh The fracture mesh (separate mesh on rank 0)
+ * @param cells3DIndices Indices of 3D cells in the original mesh
+ * @return Mapping: fracture element index -> global IDs of neighboring 3D cells
+ */
+static ArrayOfArrays< localIndex, int64_t >
+buildFractureNeighbor( vtkDataSet & originalMesh,
+                       vtkSmartPointer< vtkDataSet > fractureMesh,
+                       arrayView1d< vtkIdType const > cells3DIndices )
+{
+  GEOS_MARK_FUNCTION;
+
+  vtkIdType const numFractureElems = fractureMesh->GetNumberOfCells();
+  
+  vtkDataArray * meshGlobalCellIds = originalMesh.GetCellData()->GetGlobalIds();
+  vtkDataArray * meshGlobalNodeIds = originalMesh.GetPointData()->GetGlobalIds();
+  
+  GEOS_ERROR_IF( meshGlobalCellIds == nullptr, "Original mesh must have cell GlobalIds" );
+  GEOS_ERROR_IF( meshGlobalNodeIds == nullptr, "Original mesh must have node GlobalIds" );
+
+  // -----------------------------------------------------------------------
+  // Step 1: Build reverse lookup: original mesh index -> global cell ID (3D cells only)
+  // -----------------------------------------------------------------------
+  stdUnorderedMap< vtkIdType, int64_t > mesh3DIdxToGlobalId;
+  mesh3DIdxToGlobalId.reserve( cells3DIndices.size() );
+
+  for( localIndex i = 0; i < cells3DIndices.size(); ++i )
+  {
+    vtkIdType const origIdx = cells3DIndices[i];
+    int64_t const globalId = static_cast< int64_t >( meshGlobalCellIds->GetTuple1( origIdx ) );
+    mesh3DIdxToGlobalId.emplace( origIdx, globalId );
+  }
+
+  // -----------------------------------------------------------------------
+  // Step 2: Build node-to-3D-cell connectivity for the original mesh
+  // -----------------------------------------------------------------------
+  stdMap< vtkIdType, std::set< vtkIdType > > nodeGlobalIdToCells3D;
+
+  for( localIndex i = 0; i < cells3DIndices.size(); ++i )
+  {
+    vtkIdType const origCellIdx = cells3DIndices[i];
+    vtkCell * cell = originalMesh.GetCell( origCellIdx );
+    vtkIdList * pointIds = cell->GetPointIds();
+
+    for( vtkIdType p = 0; p < pointIds->GetNumberOfIds(); ++p )
+    {
+      vtkIdType const nodeLocalId = pointIds->GetId( p );
+      vtkIdType const nodeGlobalId = static_cast< vtkIdType >( meshGlobalNodeIds->GetTuple1( nodeLocalId ) );
+      
+      nodeGlobalIdToCells3D.get_inserted( nodeGlobalId ).insert( origCellIdx );
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Step 3: Build collocated nodes for fracture mesh
+  // -----------------------------------------------------------------------
+  CollocatedNodes collocatedNodes( "fracture", fractureMesh, false );
+
+  // -----------------------------------------------------------------------
+  // Step 4: Build fracture-to-3D neighbor mapping
+  // -----------------------------------------------------------------------
+  ArrayOfArrays< localIndex, int64_t > result;
+  result.reserve( numFractureElems );
+
+  for( vtkIdType fracElemIdx = 0; fracElemIdx < numFractureElems; ++fracElemIdx )
+  {
+    vtkCell * fracCell = fractureMesh->GetCell( fracElemIdx );
+    vtkIdList * fracPointIds = fracCell->GetPointIds();
+
+    // Find matching 3D cells using exact node matching
+    stdVector< vtkIdType > matchingOriginalCells = findMatchingCellsForFractureElement(
+      fracPointIds,
+      collocatedNodes,
+      nodeGlobalIdToCells3D );
+
+    // Convert original mesh indices to global cell IDs
+    array1d< int64_t > neighbor3DGlobalIds;
+    neighbor3DGlobalIds.reserve( matchingOriginalCells.size() );
+
+    for( vtkIdType origCellIdx : matchingOriginalCells )
+    {
+      auto it = mesh3DIdxToGlobalId.find( origCellIdx );
+      if( it != mesh3DIdxToGlobalId.end() )
+      {
+        neighbor3DGlobalIds.emplace_back( it->second );
+      }
+    }
+
+    // Error on orphaned fractures
+    GEOS_ERROR_IF( neighbor3DGlobalIds.empty(),
+                   GEOS_FMT( "Fracture element {} has no 3D neighbors", fracElemIdx ) );
+
+    result.appendArray( neighbor3DGlobalIds.begin(), neighbor3DGlobalIds.end() );
+  }
+
+  return result;
+}
+
 
 vtkSmartPointer< vtkUnstructuredGrid >
 threshold( vtkDataSet & mesh,
@@ -1632,6 +1830,7 @@ redistributeMeshes( integer const logLevel,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
+                    int const GEOS_UNUSED_PARAM(partitionFractureWeight),
                     int const useGlobalIds,
                     string const & structuredIndexAttributeName,
                     int const numPartZ )
