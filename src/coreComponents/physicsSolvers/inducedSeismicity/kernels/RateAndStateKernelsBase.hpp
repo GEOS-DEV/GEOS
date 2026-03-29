@@ -67,11 +67,10 @@ static bool newtonSolve( SurfaceElementSubRegion & subRegion,
       converged.min( elementConverged );
       residualNorm.max( elementResidualNorm );
     } );
-
     real64 const maxResidualNorm = MpiWrapper::max( residualNorm.get() );
     GEOS_LOG_RANK_0( GEOS_FMT( "   Newton iter {} : residual = {:.10e} ", iter, maxResidualNorm ) );
-
-    if( converged.get() )
+    int const globalConvergence = MpiWrapper::min( converged.get() );
+    if( globalConvergence )
     {
       allConverged = true;
       break;
@@ -92,17 +91,12 @@ void enforceRateAndVelocityConsistency( FRICTION_TYPE const & frictionLawKernelW
   arrayView1d< real64 > const backgroundNormalStress = subRegion.getField< fields::rateAndState::backgroundNormalStress >();
 
   RAJA::ReduceMax< parallelDeviceReduce, int > negativeSlipRate( 0 );
-  RAJA::ReduceMax< parallelDeviceReduce, int > bothNonZero( 0 );
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
   {
     if( slipRate[k] < 0.0 )
     {
       negativeSlipRate.max( 1 );
-    }
-    else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 && slipRate[k] > 0.0 )
-    {
-      bothNonZero.max( 1 );
     }
     else if( LvArray::tensorOps::l2Norm< 2 >( slipVelocity[k] ) > 0.0 )
     {
@@ -122,7 +116,6 @@ void enforceRateAndVelocityConsistency( FRICTION_TYPE const & frictionLawKernelW
   } );
 
   GEOS_ERROR_IF( negativeSlipRate.get() > 0, "SlipRate cannot be negative." );
-  GEOS_ERROR_IF( bothNonZero.get() > 0, "Only one between slipRate and slipVelocity can be specified as i.c." );
 }
 
 /**

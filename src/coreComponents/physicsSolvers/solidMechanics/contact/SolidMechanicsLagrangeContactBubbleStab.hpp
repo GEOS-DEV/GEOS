@@ -126,6 +126,9 @@ public:
                                        DofManager const & dofManager,
                                        arrayView1d< real64 const > const & localRhs );
 
+
+  void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
+
   /**
    * @brief Loop over the finite element type on the fracture subregions of meshName and apply callback.
    * @tparam LAMBDA The callback function type
@@ -202,6 +205,11 @@ public:
    */
   void computeRotationMatrices( DomainPartition & domain ) const;
 
+  /**
+   * @brief set all variables to zero (needed for earthquake models)
+   * @param domain The domain partition object
+   */
+  virtual void setAllVariablesToZero( DomainPartition & domain ) const override final; 
 
 private:
   /**

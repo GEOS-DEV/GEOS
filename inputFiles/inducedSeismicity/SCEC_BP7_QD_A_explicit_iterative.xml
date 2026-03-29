@@ -1,0 +1,153 @@
+<?xml version="1.0" ?>
+<Problem>
+
+  <Included>
+    <File
+      name="./SCEC_BP7_QD_A_base.xml"/>
+  </Included>
+  
+  <Solvers
+    gravityVector="{0.0, 0.0, 0.0}">
+    <ExplicitQuasiDynamicEQ
+      name="QDSolver"
+      targetRegions="{ Domain, Fault }"
+      shearImpedance="4.6247113164e6"
+      initialDt="1.0e-1"
+      relTimeStepTol="1e-6"
+      absTimeStepTol="1e-6"
+      timeStepAcceptSafety="0.8"
+      logLevel="1"
+      discretization="FE1"
+      stressSolverName="stressSolver">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        logLevel="2"
+        newtonMaxIter="100"
+        maxNumConfigurationAttempts="1"
+        lineSearchAction="None"
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="1"
+        maxSubSteps="100"/>
+     </ExplicitQuasiDynamicEQ>
+
+    <SolidMechanicsLagrangeContactBubbleStab
+      name="stressSolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="2"
+      writeLinearSystem="0"
+      discretization="FE1"
+      targetRegions="{ Domain, Fault }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        logLevel="2"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="1"
+        lineSearchAction="None"
+        lineSearchMaxCuts="2"
+        maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        logLevel="1"/>
+    </SolidMechanicsLagrangeContactBubbleStab>
+    
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      initialRockToughness="1.0"
+      mpiCommOrder="1"
+      fractureRegion="Fault"/>  
+  </Solvers>
+
+  <Events
+    maxTime="1e8">
+
+    <SoloEvent 
+      name="generateFault"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="vtkOutput"
+      cycleFrequency="50"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications_0"
+      maxEventDt="0.1"
+      beginTime="0.0"
+      endTime="1.0"
+      target="/Solvers/QDSolver"/>    
+      
+    <PeriodicEvent
+      name="solverApplications_1"
+      maxEventDt="0.1"
+      beginTime="1"
+      endTime="10"
+      target="/Solvers/QDSolver"/>
+
+    <PeriodicEvent
+      name="solverApplications_2"
+      maxEventDt="10.0"
+      beginTime="10"
+      endTime="1000"
+      target="/Solvers/QDSolver"/>  
+
+    <PeriodicEvent
+      name="solverApplications_3"
+      maxEventDt="1e3"
+      beginTime="1000"
+      endTime="1e5"
+      target="/Solvers/QDSolver"/> 
+
+    <PeriodicEvent
+      name="solverApplications_4"
+      maxEventDt="1e5"
+      beginTime="1e5"
+      endTime="1.5e7"
+      target="/Solvers/QDSolver"/>  
+
+    <PeriodicEvent
+      name="solverApplications_5"
+      maxEventDt="1e3"
+      beginTime="1.5e7"
+      target="/Solvers/QDSolver"/>  
+
+     <!-- Time history collection -->
+    <PeriodicEvent
+      name="slipRateCollection"
+      cycleFrequency="2"
+      targetExactTimestep="0"
+      target="/Tasks/slipVelocityCollection" />
+
+    <PeriodicEvent
+      name="slipCollection"
+      cycleFrequency="2"
+      targetExactTimestep="0"
+      target="/Tasks/slipCollection"/>
+
+    <PeriodicEvent
+      name="shearTractionCollection"
+      cycleFrequency="2"
+      targetExactTimestep="0"
+      target="/Tasks/shearTractionCollection"/>
+
+    <PeriodicEvent
+      name="stateCollection"
+      cycleFrequency="2"
+      targetExactTimestep="0"
+      target="/Tasks/stateCollection"/>        
+
+  <!-- Time history output -->
+   <PeriodicEvent
+      name="timeHistoryOutput"
+      cycleFrequency="2"
+      targetExactTimestep="0"
+      target="/Outputs/timeHistoryOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="500"
+      target="/Outputs/restartOutput"/>
+  </Events> 
+</Problem>

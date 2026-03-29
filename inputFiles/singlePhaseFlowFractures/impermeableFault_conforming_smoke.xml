@@ -10,10 +10,10 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -5, 5 }"
-      yCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
       nx="{ 10 }"
-      ny="{ 10 }"
+      ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
@@ -21,8 +21,8 @@
   <Geometry>
     <Box
       name="fracture"
-      xMin="{ -0.01, 2.5, -0.01 }"
-      xMax="{ 0.01, 7.5, 1.01 }"/>
+      xMin="{ -0.01, -1.1, -0.01 }"
+      xMax="{ 0.01, 1.1, 1.01 }"/>
   </Geometry>
 
   <Events

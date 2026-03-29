@@ -42,11 +42,11 @@ namespace rateAndStateKernels
  */
 struct Kutta32Table
 {
-  integer constexpr static algHighOrder = 3;                      // High-order update order
-  integer constexpr static algLowOrder = 2;                       // Low-order update order
-  integer constexpr static numStages = 3;                         // Number of stages
+  integer constexpr static algHighOrder = 3;           // High-order update order
+  integer constexpr static algLowOrder = 2;            // Low-order update order
+  integer constexpr static numStages = 3;              // Number of stages
   real64 const a[2][2] = { { 1.0/2.0, 0.0 },           // Coefficients for stage value updates
-    { -1.0, 2.0 } };                                              // (lower-triangular part of table).
+    { -1.0, 2.0 } };                                   // (lower-triangular part of table).
   real64 const c[3] = { 0.0, 1.0/2.0, 1.0 };           // Coefficients for time increments of substages
   real64 const b[3] = { 1.0/6.0, 4.0/6.0, 1.0/6.0 };   // Quadrature weights used to step the solution to next time
   real64 const bStar[3] = { 1.0/2.0, 0.0, 1.0/2.0 };   // Quadrature weights used for low-order comparision solution
@@ -58,17 +58,17 @@ struct Kutta32Table
  */
 struct BogackiShampine32Table
 {
-  integer constexpr static algHighOrder = 3;                                   // High-order update order
-  integer constexpr static algLowOrder = 2;                                    // Low-order update order
-  integer constexpr static numStages = 4;                                      // Number of stages
-  real64 const a[3][3] = { { 1.0/2.0, 0.0, 0.0     },               // Coefficients for stage value updates
-    { 0.0, 3.0/4.0, 0.0     },                                                 // (lower-triangular part of table).
+  integer constexpr static algHighOrder = 3;                       // High-order update order
+  integer constexpr static algLowOrder = 2;                        // Low-order update order
+  integer constexpr static numStages = 4;                          // Number of stages
+  real64 const a[3][3] = { { 1.0/2.0, 0.0, 0.0     },              // Coefficients for stage value updates
+    { 0.0, 3.0/4.0, 0.0     },                                     // (lower-triangular part of table).
     { 2.0/9.0, 1.0/3.0, 4.0/9.0 } };
   real64 const c[4] = { 0.0, 1.0/2.0, 3.0/4.0, 1.0 };               // Coefficients for time increments of substages
   real64 const b[4] = { 2.0/9.0, 1.0/3.0, 4.0/9.0, 0.0 };           // Quadrature weights used to step the solution to next time
   real64 const bStar[4] = { 7.0/24.0, 1.0/4.0, 1.0/3.0, 1.0/8.0};   // Quadrature weights used for low-order comparision solution
-  bool constexpr static FSAL = true;                                           // First same as last (can reuse the last stage rate in next
-                                                                               // update)
+  bool constexpr static FSAL = true;                                // First same as last (can reuse the last stage rate in next
+                                                                    // update)
 };
 
 /**
@@ -92,25 +92,14 @@ public:
     m_slipVelocity( subRegion.getField< fields::rateAndState::slipVelocity >() ),
     m_slipVelocity_n( subRegion.getField< fields::rateAndState::slipVelocity_n >() ),
     m_deltaSlip( subRegion.getField< fields::contact::deltaSlip >() ),
-    m_deltaSlip_n( subRegion.getField< fields::contact::deltaSlip_n >() ),
-    m_dispJump( subRegion.getField< fields::contact::dispJump >() ),
-    m_dispJump_n( subRegion.getField< fields::contact::dispJump_n >() ),
+    m_totalSlip( subRegion.getField< fields::rateAndState::totalSlip >() ),
+    m_totalSlip_n( subRegion.getField< fields::rateAndState::totalSlip_n >() ),
     m_error( subRegion.getField< fields::rateAndState::error >() ),
     m_stageRates( subRegion.getField< fields::rateAndState::rungeKuttaStageRates >() ),
     m_frictionLaw( frictionLaw.createKernelUpdates() ),
     m_butcherTable( butcherTable )
   {}
 
-  /**
-   * @brief Initialize slip and state buffers
-   */
-  GEOS_HOST_DEVICE
-  void initialize( localIndex const k ) const
-  {
-    LvArray::tensorOps::copy< 2 >( m_slipVelocity[k], m_slipVelocity_n[k] );
-    m_slipRate[k] =  LvArray::tensorOps::l2Norm< 2 >( m_slipVelocity_n[k] );
-    m_stateVariable[k] = m_stateVariable_n[k];
-  }
 
   /**
    * @brief Re-uses the last stage rate from the previous time step as the first
@@ -134,7 +123,7 @@ public:
   }
 
   /**
-   * @brief Update stage values (slip, state and displacement jump) to a Runge-Kutta substage.
+   * @brief Update stage values (delta slip, state) to a Runge-Kutta substage.
    */
   GEOS_HOST_DEVICE
   void updateStageValues( localIndex const k, integer const stageIndex, real64 const dt ) const
@@ -149,16 +138,19 @@ public:
       deltaSlipIncrement[1] += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][1];
       stateVariableIncrement += m_butcherTable.a[stageIndex-1][i] * m_stageRates[k][i][2];
     }
-    m_deltaSlip[k][0] = m_deltaSlip_n[k][0] + dt*deltaSlipIncrement[0];
-    m_deltaSlip[k][1] = m_deltaSlip_n[k][1] + dt*deltaSlipIncrement[1];
-    m_stateVariable[k] = m_stateVariable_n[k] + dt*stateVariableIncrement;
-
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
+    m_deltaSlip[k][0] = dt * deltaSlipIncrement[0];
+    m_deltaSlip[k][1] = dt * deltaSlipIncrement[1];
+    m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
+    
+    // if( m_stateVariable[k] < 0)
+    // {
+    //   std::cout << "stateVariable " << m_stateVariable[k] << std::endl;
+    // }
+    
   }
 
   /**
-   * @brief Updates slip, state and displacement jump to the next time computes error the local error
+   * @brief Updates delta slip, total slip, state to the next time and computes the local error
    * in the time step
    */
   GEOS_HOST_DEVICE
@@ -185,20 +177,22 @@ public:
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
 
-    m_deltaSlip[k][0]  = m_deltaSlip_n[k][0]  + dt * deltaSlipIncrement[0];
-    m_deltaSlip[k][1]  = m_deltaSlip_n[k][1]  + dt * deltaSlipIncrement[1];
+    // Slip accumulated over time step
+    m_deltaSlip[k][0]  = dt * deltaSlipIncrement[0];
+    m_deltaSlip[k][1]  = dt * deltaSlipIncrement[1];
+    
+    // Total slip accumulated
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + dt * deltaSlipIncrement[0];
+    m_totalSlip[k][1] = m_totalSlip_n[k][1] + dt * deltaSlipIncrement[1];
     m_stateVariable[k] = m_stateVariable_n[k] + dt * stateVariableIncrement;
 
-    real64 const deltaSlipLowOrder[2]  = {m_deltaSlip_n[k][0]  + dt * deltaSlipIncrementLowOrder[0],
-                                          m_deltaSlip_n[k][1]  + dt * deltaSlipIncrementLowOrder[1]};
+    real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] + dt * deltaSlipIncrementLowOrder[0],
+                                           m_totalSlip_n[k][1] + dt * deltaSlipIncrementLowOrder[1] };
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
-
     // Compute error
-    m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
-    m_error[k][1] = computeError( m_deltaSlip[k][1], deltaSlipLowOrder[1], absTol, relTol );
+    m_error[k][0] = computeError( m_totalSlip[k][0], totalSlipLowOrder[0], absTol, relTol );
+    m_error[k][1] = computeError( m_totalSlip[k][1], totalSlipLowOrder[1], absTol, relTol );
     m_error[k][2] = computeError( m_stateVariable[k], stateVariableLowOrder, absTol, relTol );
   }
 
@@ -213,26 +207,28 @@ public:
     real64 deltaSlipIncrementLowOrder[2] = {0.0, 0.0};
     real64 stateVariableIncrementLowOrder = 0.0;
 
+    // In FSAL algorithms the last RK substage update coincides with the
+    // high-order update. Only need to compute increments for the the
+    // low-order updates for error computation, and can reuse the high-order updates.
     for( localIndex i = 0; i < m_butcherTable.numStages; i++ )
     {
-      // In FSAL algorithms the last RK substage update coincides with the
-      // high-order update. Only need to compute increments for the the
-      // low-order updates for error computation.
       deltaSlipIncrementLowOrder[0]   += m_butcherTable.bStar[i] * m_stageRates[k][i][0];
       deltaSlipIncrementLowOrder[1]   += m_butcherTable.bStar[i] * m_stageRates[k][i][1];
       stateVariableIncrementLowOrder  += m_butcherTable.bStar[i] * m_stageRates[k][i][2];
     }
+    
+    // Update total slip accumulated using delta slip from stage value updates.
+    m_totalSlip[k][0] = m_totalSlip_n[k][0] + m_deltaSlip[k][0]; 
+    m_totalSlip[k][1] = m_totalSlip_n[k][1] + m_deltaSlip[k][1];
 
-    real64 const deltaSlipLowOrder[2]  = {m_deltaSlip_n[k][0]  + dt * deltaSlipIncrementLowOrder[0],
-                                          m_deltaSlip_n[k][1]  + dt * deltaSlipIncrementLowOrder[1]};
+    
+    real64 const totalSlipLowOrder[2]  = { m_totalSlip_n[k][0] +  dt * deltaSlipIncrementLowOrder[0],
+                                           m_totalSlip_n[k][1] +  dt * deltaSlipIncrementLowOrder[1]};
     real64 const stateVariableLowOrder = m_stateVariable_n[k] + dt * stateVariableIncrementLowOrder;
 
-    m_dispJump[k][1] = m_dispJump_n[k][1] + m_deltaSlip[k][0];
-    m_dispJump[k][2] = m_dispJump_n[k][2] + m_deltaSlip[k][1];
-
     // Compute error
-    m_error[k][0] = computeError( m_deltaSlip[k][0], deltaSlipLowOrder[0], absTol, relTol );
-    m_error[k][1] = computeError( m_deltaSlip[k][1], deltaSlipLowOrder[1], absTol, relTol );
+    m_error[k][0] = computeError( m_totalSlip[k][0], totalSlipLowOrder[0], absTol, relTol );
+    m_error[k][1] = computeError( m_totalSlip[k][1], totalSlipLowOrder[1], absTol, relTol );
     m_error[k][2] = computeError( m_stateVariable[k], stateVariableLowOrder, absTol, relTol );
   }
 
@@ -266,14 +262,11 @@ private:
   /// Current slip change
   arrayView2d< real64 > const m_deltaSlip;
 
-  /// Slip change at time t_n
-  arrayView2d< real64 > const m_deltaSlip_n;
+  /// Current Slip
+  arrayView2d< real64 > const m_totalSlip;
 
-  /// Current displacment jump
-  arrayView2d< real64 > const m_dispJump;
-
-  /// Displacment jump at time t_n
-  arrayView2d< real64 > const m_dispJump_n;
+  /// Slip at time t_n
+  arrayView2d< real64 > const m_totalSlip_n;
 
   /// Local error for each solution component stored as slip1, slip2, state
   arrayView2d< real64 > const m_error;
@@ -288,47 +281,32 @@ private:
   TABLE_TYPE m_butcherTable;
 };
 
-template< typename FRICTION_TYPE, typename BUTCHER_TABLE_TYPE >
-void createAndlaunchODEInitialSubStage( SurfaceElementSubRegion & subRegion,
-                                        FRICTION_TYPE & frictionLaw,
-                                        BUTCHER_TABLE_TYPE const & butcherTable,
-                                        real64 const dt,
-                                        bool const successfulStep )
+template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
+void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
+                                              FRICTION_TYPE & frictionLaw,
+                                              BUTCHER_TABLE_TYPE const & butcherTable,
+                                              integer const stageIndex,
+                                              real64 const dt,
+                                              bool const successfulStep)
 {
+
   rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
-  if( butcherTable.FSAL && successfulStep )
+  if( butcherTable.FSAL && successfulStep && stageIndex == 0)
   {
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       rkKernel.updateStageRatesFSAL( k );
-      rkKernel.updateStageValues( k, 1, dt );
+      rkKernel.updateStageValues( k, stageIndex + 1, dt );
     } );
   }
   else
   {
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-      rkKernel.initialize( k );
-      rkKernel.updateStageRates( k, 0 );
-      rkKernel.updateStageValues( k, 1, dt );
+      rkKernel.updateStageRates( k, stageIndex );
+      rkKernel.updateStageValues( k, stageIndex + 1, dt );
     } );
   }
-}
-
-template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >
-void createAndlaunchStepRateStateODESubstage( SurfaceElementSubRegion & subRegion,
-                                              FRICTION_TYPE & frictionLaw,
-                                              BUTCHER_TABLE_TYPE const & butcherTable,
-                                              integer const stageIndex,
-                                              real64 const dt )
-{
-
-  rateAndStateKernels::EmbeddedRungeKuttaKernel< BUTCHER_TABLE_TYPE, FRICTION_TYPE > rkKernel( subRegion, frictionLaw, butcherTable );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
-  {
-    rkKernel.updateStageRates( k, stageIndex );
-    rkKernel.updateStageValues( k, stageIndex+1, dt );
-  } );
 }
 
 template< typename BUTCHER_TABLE_TYPE, typename FRICTION_TYPE >

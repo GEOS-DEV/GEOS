@@ -523,6 +523,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setSparsityPattern( DomainPart
   addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView());
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+
+  dofManager.printFieldInfo();
 }
 
 template< typename POROMECHANICS_SOLVER >

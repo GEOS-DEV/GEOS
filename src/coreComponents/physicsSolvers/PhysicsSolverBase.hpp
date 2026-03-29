@@ -662,6 +662,16 @@ public:
    */
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain );
+  
+  /**
+   * @brief 
+   * 
+   * @param domain
+   * 
+   * @note This is needed solely for the Earthquake simulations in which we want to compute changes w.r.t. to a zero configuration
+   */
+  virtual void
+  setAllVariablesToZero( DomainPartition & domain ) const { GEOS_UNUSED_VAR( domain );}
 
   /**
    * @brief perform cleanup for implicit timestep

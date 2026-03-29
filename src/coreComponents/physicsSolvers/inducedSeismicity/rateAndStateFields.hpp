@@ -128,6 +128,22 @@ DECLARE_FIELD( backgroundShearStress,
                WRITE_AND_READ,
                "Background Shear Stress" );
 
+DECLARE_FIELD( shearStressPerturbation,
+               "shearStressPerturbation",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Perturbation to the shear stress" );
+
+DECLARE_FIELD( normalStressPerturbationRate,
+               "normalStressPerturbationRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Perturbation rate to the normal stress" );
+
 DECLARE_FIELD( rungeKuttaStageRates,
                "rungeKuttaStageRates",
                array3d< real64 >,
@@ -144,6 +160,38 @@ DECLARE_FIELD( error,
                LEVEL_0,
                WRITE_AND_READ,
                "Error for rate-and-state fields" );
+
+DECLARE_FIELD( backSlipRate,
+               "backSlipRate",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "BackSlipRate" );
+
+DECLARE_FIELD( totalSlip,
+               "totalSlip",
+               array2d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "totalSlip at current time." );
+
+DECLARE_FIELD( totalSlip_n,
+               "totalSlip_n",
+               array2d< real64 >,
+               0.0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "totalSlip at time n." );
+
+DECLARE_FIELD( slipRateBounds,
+                "slipRateBounds",
+                array2d< real64 >,
+                0.0,
+                NOPLOT,
+                WRITE_AND_READ,
+                "Slip rate lower bound" ); 
 
 }
 

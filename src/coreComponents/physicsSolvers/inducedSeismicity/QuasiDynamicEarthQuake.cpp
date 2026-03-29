@@ -68,13 +68,20 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
                                                                 const int cycleNumber,
                                                                 DomainPartition & domain ) const
 {
+
+  GEOS_UNUSED_VAR( cycleNumber );
+
   // 1. Setup variables for stress solver
-  setTargetDispJump( domain );
+  setTargetDispJump( domain, dt, time_n );
 
   // 2. Solve the momentum balance
+  // real64 const dtAccepted = dt;
   real64 const dtAccepted = m_stressSolver->solverStep( time_n, dt, cycleNumber, domain );
 
-  // 3. Add background stress and possible forcing.
+  // 3. Apply background stress value (if any was prescribed)
+  applyBackGroundStress( time_n, dt, domain );
+
+  // 4. Add background stress and possible forcing.
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
                                                                      string_array const & regionNames )
@@ -89,14 +96,18 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
       arrayView1d< real64 > const normalTraction  = subRegion.getField< rateAndState::normalTraction >();
 
       arrayView2d< real64 const > const backgroundShearStress = subRegion.getField< rateAndState::backgroundShearStress >();
+      arrayView2d< real64 const > const perturbation = subRegion.getField< rateAndState::shearStressPerturbation >();
       arrayView1d< real64 const > const backgroundNormalStress = subRegion.getField< rateAndState::backgroundNormalStress >();
+      arrayView1d< real64 const > const normalStressPerturbationRate = subRegion.getField< rateAndState::normalStressPerturbationRate >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        normalTraction[k] = backgroundNormalStress[k] - traction[k][0]; // compressive traction is negative in geos
+        real64 const normalStressPerturbation = normalStressPerturbationRate[k] * ( time_n + dt );
+        
+        normalTraction[k] = backgroundNormalStress[k] - traction[k][0] - normalStressPerturbation; // compressive traction is negative in geos
         for( int i = 0; i < 2; ++i )
         {
-          shearTraction( k, i ) = backgroundShearStress( k, i ) + traction( k, i+1 );
+          shearTraction( k, i ) = backgroundShearStress( k, i ) + perturbation( k, i ) + traction( k, i+1 );
         }
       } );
     } );
@@ -106,7 +117,48 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
 }
 
 template< typename RSSOLVER_TYPE >
-void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain ) const
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::applyBackGroundStress( real64 const time_n,
+                                                                     real64 const dt,
+                                                                     DomainPartition & domain ) const
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                     MeshLevel & mesh,
+                                                                     string_array const & )
+  {
+    string_array keys = { rateAndState::backgroundNormalStress::key(), rateAndState::backgroundShearStress::key(), rateAndState::shearStressPerturbation::key() };
+    for( auto key : keys )
+    {
+      fsManager.apply< ElementSubRegionBase >( time_n + dt,
+                                               mesh,
+                                               key,
+                                               [&] ( FieldSpecificationBase const & fs,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     ElementSubRegionBase & subRegion,
+                                                     string const & )
+      {
+        fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                               time_n+dt,
+                                                                               subRegion,
+                                                                               key );
+      } );
+    }
+  } );
+}
+
+template< typename RSSOLVER_TYPE >
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::resetStressState( DomainPartition & domain )
+{
+  // m_stressSolver->resetStateToBeginningOfStep( domain );
+  m_stressSolver->setAllVariablesToZero( domain );
+}
+
+template< typename RSSOLVER_TYPE >
+void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition & domain,
+                                                                 real64 const dt,
+                                                                 real64 const time_n ) const
 {
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                      MeshLevel & mesh,
@@ -116,14 +168,15 @@ void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::setTargetDispJump( DomainPartition
                                                                            [&]( localIndex const,
                                                                                 SurfaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const deltaSlip      = subRegion.getField< contact::deltaSlip >();
-      arrayView2d< real64 > const targetDispJump = subRegion.getField< contact::targetIncrementalJump >();
+      arrayView2d< real64 const > const totalSlip     = subRegion.getField< rateAndState::totalSlip >();
+      arrayView2d< real64 const > const backSlipRate  = subRegion.getField< rateAndState::backSlipRate >();
+      arrayView2d< real64 > const targetDispJump      = subRegion.getField< contact::targetIncrementalJump >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
         targetDispJump( k, 0 ) = 0.0;
-        targetDispJump( k, 1 ) = deltaSlip( k, 0 );
-        targetDispJump( k, 2 ) = deltaSlip( k, 1 );
+        targetDispJump( k, 1 ) = totalSlip( k, 0 ) - backSlipRate( k, 0 ) * ( time_n + dt );
+        targetDispJump( k, 2 ) = totalSlip( k, 1 ) - backSlipRate( k, 1 ) * ( time_n + dt );
       } );
     } );
   } );
