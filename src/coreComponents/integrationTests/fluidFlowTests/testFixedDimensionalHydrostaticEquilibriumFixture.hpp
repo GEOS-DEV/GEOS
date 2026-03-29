@@ -251,7 +251,7 @@ TEST_P( FixedDimensionalHydrostaticEquilibriumTest, Run )
   MpiWrapper::barrier( MPI_COMM_GEOS );
 
   {
-    auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
+    std::unique_ptr< CommandLineOptions > options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
     options->inputFileNames.push_back( xmlPath );
     options->problemName = xmlName;
 

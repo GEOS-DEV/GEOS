@@ -225,7 +225,7 @@ TEST_P( ConsistencyTest, Run )
   }
   MpiWrapper::barrier();
 
-  auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
+  std::unique_ptr< CommandLineOptions > options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_fem_consistency";
 
@@ -245,11 +245,11 @@ TEST_P( ConsistencyTest, Run )
 
     // Verification using bulk stress and geometric normal
     ProblemManager & pm = state.getProblemManager();
-    auto & fractureRegion = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager().template getRegion< SurfaceElementRegion >( "Fracture" );
+    SurfaceElementRegion & fractureRegion = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager().template getRegion< SurfaceElementRegion >( "Fracture" );
     auto & elemManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getElemManager();
-    auto & volumeRegion = elemManager.template getRegion< CellElementRegion >( "Region" );
+    CellElementRegion & volumeRegion = elemManager.template getRegion< CellElementRegion >( "Region" );
 
-    auto const & faceManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getFaceManager();
+    FaceManager const & faceManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getFaceManager();
     auto const & nodeManager = pm.getDomainPartition().getMeshBody( "mesh1" ).getBaseDiscretization().getNodeManager();
 
     auto const & faceToCell = faceManager.elementList();
