@@ -58,28 +58,6 @@ void TableTextMpiFormatter::stretchColumnsByRanks( stdVector< size_t > & columns
   MpiWrapper::allReduce( columnsWidth, columnsWidth, MpiWrapper::Reduction::Max );
 }
 
-stdVector< TableData::CellData > TableTextMpiFormatter::parseStringRow( string_view rowString ) const
-{
-  if( rowString.empty() )
-    return stdVector< TableData::CellData >{};
-
-  if( rowString.front() == '|' )
-    rowString.remove_prefix( 1 );
-  string_view rowContent =rowString;
-  string cell;
-  stdVector< TableData::CellData > dataRow;
-
-  std::string::size_type end = 0;
-
-  while( (end = rowContent.find( m_verticalLine )) != string_view::npos )
-  {
-    cell =std::string( stringutilities::trimSpaces( rowContent.substr( 0, end )));
-    dataRow.emplace_back( TableData::CellData( {CellType::Value, cell} ));
-    rowContent.remove_prefix( end + 1 );
-  }
-  return dataRow;
-}
-
 void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & tableOutput,
                                                                  TableFormatter::CellLayoutRows const & rows,
                                                                  PreparedTableLayout const & tableLayout,
@@ -102,10 +80,10 @@ void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & 
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   stdVector< string > strsAccrossRanks;
 
-  MpiWrapper::gatherStringOnRank0( rankStr, std::function< void(string_view) >( [&]( string_view str ){
+  MpiWrapper::gatherStringOnRank0( rankStr,  [&]( string_view str ){
     status.m_hasContent = true;
     strsAccrossRanks.emplace_back( str );
-  } ) );
+  } );
 
   if( status.m_isMasterRank && status.m_hasContent )
   {
@@ -145,15 +123,15 @@ TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTa
         while( startBuff < endRowsBuff )
         {
           size_t byteFromThisRow = 0;
-          serialBuffer::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
+          basicSerialization::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
           buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
           stdVector< TableData::CellData > row;
           while( startBuff < endRowBuff )
           {
             CellType cellType;
-            serialBuffer::deserializePrimitive( cellType, startBuff, endRowBuff );
+            basicSerialization::deserializePrimitive( cellType, startBuff, endRowBuff );
             string cellValue;
-            serialBuffer::deserializeString( cellValue, startBuff, endRowBuff );
+            basicSerialization::deserializeString( cellValue, startBuff, endRowBuff );
             row.push_back( {cellType, cellValue} );
           }
           tableDataGathered.addRow( row );

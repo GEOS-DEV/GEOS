@@ -339,11 +339,11 @@ public:
   template< typename CONTAINER >
   struct GatherResult
   {
-    // Collected data who must be trivially copyable
+    // Collected data which must be trivially copyable
     CONTAINER data;
-    // Number of elements per row
+    // Number of elements per rank
     stdVector< integer > counts;
-    // Starting index for each row in 'data'
+    // Starting index for each rank in 'data'
     stdVector< integer > offsets;
   };
 
@@ -1026,7 +1026,7 @@ inline MPI_Op MpiWrapper::getMpiOp( Reduction const op )
 }
 
 template< typename CONTAINER, typename VALUE_T, typename >
-GatherResult< CONTAINER >
+MpiWrapper::GatherResult< CONTAINER >
 MpiWrapper::gatherBufferRank0( CONTAINER const & localBuffer )
 {
   integer const numRanks = MpiWrapper::commSize();
