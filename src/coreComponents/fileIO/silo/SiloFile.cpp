@@ -1416,17 +1416,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                                         WellElementSubRegion >( [&]( auto const & elementSubRegion )
     {
       typename TYPEOFREF( elementSubRegion ) ::NodeMapType const & elemsToNodes = elementSubRegion.nodeList();
-      using SubRegionType = std::remove_cv_t< std::remove_reference_t< decltype( elementSubRegion ) > >;
 
       // TODO HACK. this isn't correct for variable relations.
       elementToNodeMap[count].resize( elementSubRegion.size(), elementSubRegion.numNodesPerElement() );
 
       arrayView1d< integer const > const & elemGhostRank = elementSubRegion.ghostRank();
-      stdVector< int > nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
-      if( std::is_same_v< SubRegionType, FaceElementSubRegion > )
-      {
-        nodeOrdering = { 0, 1, 2, 3, 4, 7, 6, 5 };
-      }
+      stdVector< int > const nodeOrdering = getSiloNodeOrdering( elementSubRegion.getElementType() );
       for( localIndex k = 0; k < elementSubRegion.size(); ++k )
       {
         integer const numNodesPerElement = LvArray::integerConversion< int >( elementSubRegion.numNodesPerElement( k ) );
@@ -2196,9 +2191,9 @@ void SiloFile::writeDataField( string const & meshName,
       castedField[i].resize( nels );
       vars[i] = static_cast< void * >( (castedField[i]).data() );
       forAll< serialPolicy >( nels, [=, &castedField] GEOS_HOST ( localIndex const k )
-      {
-        castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
-      } );
+        {
+          castedField[i][k] = siloFileUtilities::CastField< OUTTYPE >( field[k], i );
+        } );
     }
   }
 
