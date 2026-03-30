@@ -319,6 +319,6 @@ int main( int argc, char * * argv )
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup();
+  basicCleanup();
   return result;
 }
