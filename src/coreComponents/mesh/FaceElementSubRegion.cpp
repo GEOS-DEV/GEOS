@@ -1265,6 +1265,29 @@ void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceM
   FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
+  // Pre-check: ensure no face has more nodes than the fixed stack arrays allow.
+  // Using a serial loop here avoids stack overflows inside the parallel kernel.
+  constexpr localIndex MAX_FACE_NODES = 8;
+  for( localIndex kfe = 0; kfe < this->size(); ++kfe )
+  {
+    localIndex const kf0 = elems2dToFaces[kfe][0];
+    localIndex const kf1 = elems2dToFaces[kfe][1];
+    if( kf0 == -1 || kf1 == -1 )
+      continue;
+
+    localIndex const numNodes0 = faceToNodes.sizeOfArray( kf0 );
+    // We expect numNodes0 == numNodes1 in normal cases; check only one is sufficient here.
+    if( numNodes0 > MAX_FACE_NODES )
+    {
+      // General polyhedral faces are out of scope for this PR (only tetrahedra/hexahedra support intended).
+      GEOS_ERROR( GEOS_FMT( "FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0: found face with {} nodes (> {}).\n"
+                            "This code uses fixed-size stack arrays of length {} and cannot handle general polyhedral faces.\n"
+                            "Either reduce the face node count or extend the implementation to support general polyhedra.\n"
+                            "Fracture: {} faceElementIndex: {} faceIndex: {}",
+                            numNodes0, MAX_FACE_NODES, MAX_FACE_NODES, getName(), kfe, kf0 ), getDataContext() );
+    }
+  }
+
   forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
   {
     localIndex const kf0 = elems2dToFaces[kfe][0];
@@ -1290,7 +1313,7 @@ void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceM
     // For each node in kf0, find the closest node in kf1 and build a reordering.
     // After mesh splitting, collocated nodes are at (nearly) identical positions.
     localIndex const numNodes = numNodes0;
-    constexpr localIndex MAX_FACE_NODES = 8;
+    // Use fixed-size stack arrays but ensure caller has been validated by the pre-check above.
     localIndex reorderedKf1[MAX_FACE_NODES];
     bool matched[MAX_FACE_NODES];
 

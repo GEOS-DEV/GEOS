@@ -83,7 +83,28 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
       graph.appendToArray( k, adjncy + xadj[k], adjncy + xadj[k+1] );
     } );
 
+    // Free ParMETIS/METIS allocations if they were allocated. ParMETIS may allocate these even when
+    // the local element count is zero, so guard frees by null-check to avoid leaking.
+    if( xadj != nullptr )
+    {
+      METIS_Free( xadj );
+    }
+    if( adjncy != nullptr )
+    {
+      METIS_Free( adjncy );
+    }
+
+    return graph;
+  }
+
+  // We may have allocated xadj/adjncy even for empty graphs (ranks with zero local elements);
+  // free them unconditionally if non-null to avoid leaking.
+  if( xadj != nullptr )
+  {
     METIS_Free( xadj );
+  }
+  if( adjncy != nullptr )
+  {
     METIS_Free( adjncy );
   }
 

@@ -34,7 +34,7 @@
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
 #include <ml_epetra_utils.h>
-
+#include <limits>
 #include <numeric>
 
 namespace geos
