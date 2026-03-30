@@ -2149,7 +2149,7 @@ redistributeMeshes( integer const logLevel,
     }
   }
 
-  // Initialize empty neighbor arrays on ALL ranks
+  // Initialize empty neighbor arrays
   for( auto const & fractureName : fractureNames )
   {
     fractureNeighbors.get_inserted( fractureName ).resize( 0, 0 );
@@ -2169,6 +2169,7 @@ redistributeMeshes( integer const logLevel,
       }
     }
   }
+
   // -----------------------------------------------------------------------
   // Step 4: Extract cells and tag super-cells
   // -----------------------------------------------------------------------
