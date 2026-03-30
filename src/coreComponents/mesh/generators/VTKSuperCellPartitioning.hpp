@@ -86,7 +86,7 @@ struct SuperCellInfo
  */
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
-  stdMap< string, ArrayOfArrays< vtkIdType, int64_t > > const & fractureNeighbors,
+  stdMap< string, ArrayOfArrays< localIndex, int64_t > > const & fractureNeighbors,
   integer fractureWeight );
 
 /**

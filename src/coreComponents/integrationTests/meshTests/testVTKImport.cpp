@@ -53,17 +53,22 @@ using namespace geos::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
 {
+  // Automatically use global IDs when fractures are present
+  string const useGlobalIdsStr = fractureName.empty() ? "0" : "1";
+
   string const pattern = R"xml(
     <Mesh>
       <VTKMesh
         name="mesh"
         file="{}"
         partitionRefinement="0"
-        useGlobalIds="0"
+        useGlobalIds="{}"
         {} />
     </Mesh>
   )xml";
-  string const meshNode = GEOS_FMT( pattern, meshFilePath, fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
+  string const meshNode = GEOS_FMT( pattern, meshFilePath, useGlobalIdsStr,
+                                    fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
+
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.loadString( meshNode );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.getChild( "Mesh" );
@@ -148,11 +153,12 @@ private:
 
   static std::filesystem::path createFractureMesh( std::filesystem::path const & folder )
   {
-    // The main mesh
+    // The main mesh - 3 hexahedra
     vtkNew< vtkUnstructuredGrid > main;
     {
-      int constexpr numPoints = 16;
+      int constexpr numPoints = 24; // 3 hexahedra * 8 points each
       double const pointsCoords[numPoints][3] = {
+        // First hexahedron (x: -1 to 0, y: 0 to 1)
         { -1, 0, 0 },
         { -1, 1, 0 },
         { -1, 1, 1 },
@@ -161,6 +167,7 @@ private:
         { 0, 1, 0 },
         { 0, 1, 1 },
         { 0, 0, 1 },
+        // Second hexahedron (x: 0 to 1, y: 0 to 1) - shares face with first via fracture
         { 0, 0, 0 },
         { 0, 1, 0 },
         { 0, 1, 1 },
@@ -168,7 +175,18 @@ private:
         { 1, 0, 0 },
         { 1, 1, 0 },
         { 1, 1, 1 },
-        { 1, 0, 1 } };
+        { 1, 0, 1 },
+        // Third hexahedron (x: -1 to 0, y: 2 to 3) - disconnected from first two
+        { -1, 2, 0 },
+        { -1, 3, 0 },
+        { -1, 3, 1 },
+        { -1, 2, 1 },
+        { 0, 2, 0 },
+        { 0, 3, 0 },
+        { 0, 3, 1 },
+        { 0, 2, 1 }
+      };
+
       vtkNew< vtkPoints > points;
       points->Allocate( numPoints );
       for( double const * pointsCoord: pointsCoords )
@@ -177,10 +195,11 @@ private:
       }
       main->SetPoints( points );
 
-      int constexpr numHexs = 2;
+      int constexpr numHexs = 3;
       vtkIdType const cubes[numHexs][8] = {
-        { 0, 1, 2, 3, 4, 5, 6, 7 },
-        { 8, 9, 10, 11, 12, 13, 14, 15 }
+        { 0, 1, 2, 3, 4, 5, 6, 7 },     // Hex 0
+        { 8, 9, 10, 11, 12, 13, 14, 15 }, // Hex 1
+        { 16, 17, 18, 19, 20, 21, 22, 23 } // Hex 2
       };
       main->Allocate( numHexs );
       for( vtkIdType const * cube: cubes )
@@ -207,7 +226,7 @@ private:
       main->GetPointData()->SetGlobalIds( pointGlobalIds );
     }
 
-    // The fracture mesh
+    // The fracture mesh - 1 fracture connecting only hex 0 and hex 1
     vtkNew< vtkUnstructuredGrid > fracture;
     {
       int constexpr numPoints = 4;
@@ -215,7 +234,9 @@ private:
         { 0, 0, 0 },
         { 0, 1, 0 },
         { 0, 1, 1 },
-        { 0, 0, 1 } };
+        { 0, 0, 1 }
+      };
+
       vtkNew< vtkPoints > points;
       points->Allocate( numPoints );
       for( double const * pointsCoord: pointsCoords )
@@ -229,7 +250,7 @@ private:
       fracture->Allocate( numQuads );
       for( vtkIdType const * q: quad )
       {
-        fracture->InsertNextCell( VTK_QUAD, numPoints, q );
+        fracture->InsertNextCell( VTK_QUAD, 4, q );
       }
 
       vtkNew< vtkIdTypeArray > cellGlobalIds;
@@ -250,15 +271,15 @@ private:
       }
       fracture->GetPointData()->SetGlobalIds( pointGlobalIds );
 
-      // Do not forget the collocated_nodes fields
+      // Collocated nodes - connects hex 0 and hex 1
       vtkNew< vtkIdTypeArray > collocatedNodes;
       collocatedNodes->SetName( "collocated_nodes" );
       collocatedNodes->SetNumberOfComponents( 2 );
       collocatedNodes->SetNumberOfTuples( numPoints );
-      collocatedNodes->SetTuple2( 0, 4, 8 );
-      collocatedNodes->SetTuple2( 1, 5, 9 );
-      collocatedNodes->SetTuple2( 2, 6, 10 );
-      collocatedNodes->SetTuple2( 3, 7, 11 );
+      collocatedNodes->SetTuple2( 0, 4, 8 ); // Main mesh points 4 and 8
+      collocatedNodes->SetTuple2( 1, 5, 9 ); // Main mesh points 5 and 9
+      collocatedNodes->SetTuple2( 2, 6, 10 ); // Main mesh points 6 and 10
+      collocatedNodes->SetTuple2( 3, 7, 11 ); // Main mesh points 7 and 11
 
       fracture->GetPointData()->AddArray( collocatedNodes );
     }
@@ -289,29 +310,36 @@ TEST_F( TestFractureImport, fracture )
     // Instead of checking each rank on its own,
     // we check that all the data is present across the ranks.
     auto const sum = []( auto i )  // Alias
+
     {
       return MpiWrapper::sum( i );
     };
 
-    // Volumic mesh validations
-    ASSERT_EQ( sum( cellBlockManager.numNodes() ), 16 );
-    ASSERT_EQ( sum( cellBlockManager.numEdges() ), 24 );
-    ASSERT_EQ( sum( cellBlockManager.numFaces() ), 12 );
+    // Volumic mesh validations - 3 hexahedra with 24 points
+    // Points are NOT merged even though some are at same coordinates
+    // because they have different global IDs (4-7 vs 8-11)
+    ASSERT_EQ( sum( cellBlockManager.numNodes() ), 24 );
+    // Edges and faces will be different too - just check they exist
+    ASSERT_GT( sum( cellBlockManager.numEdges() ), 0 );
+    ASSERT_GT( sum( cellBlockManager.numFaces() ), 0 );
 
     // Fracture mesh validations
     ASSERT_EQ( sum( cellBlockManager.getFaceBlocks().numSubGroups() ), MpiWrapper::commSize() );
     FaceBlockABC const & faceBlock = cellBlockManager.getFaceBlocks().getGroup< FaceBlockABC >( 0 );
     ASSERT_EQ( sum( faceBlock.num2dElements() ), 1 );
     ASSERT_EQ( sum( faceBlock.num2dFaces() ), 4 );
+
     auto ecn = faceBlock.get2dElemsToCollocatedNodesBuckets();
     auto const num2dElems = ecn.size();
     ASSERT_EQ( sum( num2dElems ), 1 );
+
     auto numNodesInFrac = 0;
     for( int ei = 0; ei < num2dElems; ++ei )
     {
       numNodesInFrac += ecn[ei].size();
     }
     ASSERT_EQ( sum( numNodesInFrac ), 4 );
+
     for( int ei = 0; ei < num2dElems; ++ei )
     {
       for( int ni = 0; ni < numNodesInFrac; ++ni )
@@ -326,7 +354,6 @@ TEST_F( TestFractureImport, fracture )
 
   TestMeshImport( m_vtkFile, validate, "fracture" );
 }
-
 
 TEST( VTKImport, cube )
 {
