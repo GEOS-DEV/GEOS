@@ -2119,29 +2119,17 @@ redistributeMeshes( integer const logLevel,
   }
 
   // -----------------------------------------------------------------------
-  // Step 3: Build fracture-to-3D neighbor mappings (rank 0 only)
+  // Step 3: Build fracture-to-3D neighbor mappings
   // -----------------------------------------------------------------------
   stdMap< string, ArrayOfArrays< localIndex, int64_t > > fractureNeighbors;
   stdVector< string > fractureNames;
 
+  // Collect fracture names on rank 0
   if( rank == 0 )
   {
     for( auto const & [fractureName, fractureMesh]: namesToFractures )
     {
       fractureNames.push_back( fractureName );
-
-      if( fractureMesh && fractureMesh->GetNumberOfCells() > 0 )
-      {
-        fractureNeighbors[fractureName] = buildFractureTo3DNeighbors(
-          *mesh,
-          fractureMesh,
-          cells3DIndices.toViewConst() );
-      }
-      else
-      {
-        // Empty fracture on rank 0
-        fractureNeighbors[fractureName].resize( 0, 0 );
-      }
     }
   }
 
@@ -2161,29 +2149,48 @@ redistributeMeshes( integer const logLevel,
     }
   }
 
-  // Initialize empty neighbor arrays on non-root ranks only
-  if( rank != 0 )
+  // Initialize empty neighbor arrays on ALL ranks
+  for( auto const & fractureName : fractureNames )
   {
-    for( auto const & fractureName : fractureNames )
-    {
-      fractureNeighbors[fractureName].resize( 0, 0 );
-    }
+    fractureNeighbors.get_inserted( fractureName ).resize( 0, 0 );
   }
 
+  // Build actual neighbors only on rank 0
+  if( rank == 0 )
+  {
+    for( auto const & [fractureName, fractureMesh]: namesToFractures )
+    {
+      if( fractureMesh && fractureMesh->GetNumberOfCells() > 0 )
+      {
+        fractureNeighbors[fractureName] = buildFractureTo3DNeighbors(
+          *mesh,
+          fractureMesh,
+          cells3DIndices.toViewConst() );
+      }
+    }
+  }
   // -----------------------------------------------------------------------
   // Step 4: Extract cells and tag super-cells
   // -----------------------------------------------------------------------
   SuperCellInfo superCellInfo;
   bool hasSuperCells = false;
 
-  // All ranks extract their 3D cells
   vtkSmartPointer< vtkUnstructuredGrid > cells3D = extractCellsByIndices( *mesh, cells3DIndices );
 
-  // Rank 0: Tag with super-cells if fractures present
-  if( rank == 0 && !fractureNeighbors.empty() )
+  if( rank == 0 && !fractureNames.empty() )
   {
     superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, partitionFractureWeight );
-    hasSuperCells = !superCellInfo.atomicSuperCells.empty();
+
+    // Verify SuperCellId array was actually created
+    vtkIdTypeArray * scArray =
+      vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
+    hasSuperCells = (scArray != nullptr);
+
+    if( hasSuperCells )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "Tagged {} super-cells from fracture connectivity",
+                                 superCellInfo.atomicSuperCells.size() ));
+    }
   }
 
   // Broadcast whether we have super-cells
