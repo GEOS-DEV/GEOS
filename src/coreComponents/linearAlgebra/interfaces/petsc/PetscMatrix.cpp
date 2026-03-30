@@ -32,7 +32,6 @@
 #include <petscmat.h>
 
 #include <cfenv>
-#include <limits>
 #include <numeric>
 
 namespace geos

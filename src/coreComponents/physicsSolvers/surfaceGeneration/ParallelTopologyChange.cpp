@@ -26,68 +26,15 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
-#include <stdio.h>
-
-#if defined( GEOS_USE_CUDA )
-#include <cuda_runtime.h>
-#endif
-
 #if PARALLEL_TOPOLOGY_CHANGE_METHOD==0
 namespace geos
 {
 
 using namespace dataRepository;
 
+
 namespace
 {
-
-/**
- * @brief Checks for CUDA errors and synchronizes the device.
- * @note This is extremely expensive for performance.
- */
-inline void printCudaStatus( char const * functionName, int const line, char const * label )
-{
-#if defined( GEOS_USE_CUDA )
-  cudaError_t const launchErr = cudaGetLastError();
-  cudaError_t const syncErr = cudaDeviceSynchronize();
-  if( launchErr != cudaSuccess || syncErr != cudaSuccess )
-  {
-    printf( "\n[CUDA ERROR] %s:%d", functionName, line );
-    if( label != nullptr && label[0] != '\0' )
-    {
-      printf( " %s", label );
-    }
-    printf( "\n" );
-
-    if( launchErr != cudaSuccess )
-    {
-      printf( "  launch: %s\n", cudaGetErrorString( launchErr ) );
-    }
-
-    if( syncErr != cudaSuccess )
-    {
-      printf( "  sync: %s\n", cudaGetErrorString( syncErr ) );
-    }
-  }
-#else
-  GEOS_UNUSED_VAR( functionName );
-  GEOS_UNUSED_VAR( line );
-  GEOS_UNUSED_VAR( label );
-#endif
-}
-
-/**
- * OPTIMIZED MACRO:
- * Only synchronizes if GEOS_DEBUG_CUDA_SYNC is defined.
- * In production/release builds, this resolves to a no-op.
- */
-#if defined(GEOS_USE_CUDA) && defined(GEOS_DEBUG_CUDA_SYNC)
-#define GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( label ) \
-  printCudaStatus( __func__, __LINE__, label )
-#else
-#define GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( label ) (void)0
-#endif
-
 void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighbor,
                                              MeshLevel * const meshLevel,
                                              ModifiedObjectLists const & modifiedObjects,
@@ -260,6 +207,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     }
   }
 
+  // if we start packing sizing on device + async, poll for completion
   parallelDeviceEvents sizeEvents;
   bufferSize += nodeManager.packGlobalMapsSize( newNodePackListArray, 0 );
   bufferSize += edgeManager.packGlobalMapsSize( newEdgePackListArray, 0 );
@@ -293,14 +241,13 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   bufferSize += edgeManager.packSize( modEdgePackListArray, 0, false, sizeEvents );
   bufferSize += faceManager.packSize( modFacePackListArray, 0, false, sizeEvents );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.beforeWaitSizeEvents" );
   waitAllDeviceEvents( sizeEvents );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.afterWaitSizeEvents" );
   neighbor->resizeSendBuffer( commID, bufferSize );
 
   buffer_type & sendBuffer = neighbor->sendBuffer( commID );
   buffer_unit_type * sendBufferPtr = sendBuffer.data();
 
+  // empty event buffer
   int packedSize = 0;
   parallelDeviceEvents packEvents;
 
@@ -337,13 +284,13 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
   packedSize += faceManager.pack( sendBufferPtr, modFacePackListArray, 0, false, packEvents );
 
   // poll for pack completion here
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.beforeWaitPackEvents" );
   waitAllDeviceEvents( packEvents );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewAndModifiedObjectsToOwningRanks.afterWaitPackEvents" );
   GEOS_ERROR_IF( bufferSize != packedSize,
                  GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
                            bufferSize,
                            packedSize ) );
+
+
 }
 
 localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * const neighbor,
@@ -357,6 +304,8 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   EdgeManager & edgeManager = mesh->getEdgeManager();
   FaceManager & faceManager = mesh->getFaceManager();
   ElementRegionManager & elemManager = mesh->getElemManager();
+
+
 
   buffer_type const & receiveBuffer = neighbor->receiveBuffer( commID );
   buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
@@ -388,6 +337,7 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
     }
   }
 
+  // if we move to device + async packing here, add polling of events or pass out
   parallelDeviceEvents events;
   int unpackedSize = 0;
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newLocalNodes, 0 );
@@ -422,26 +372,35 @@ localIndex unpackNewAndModifiedObjectsOnOwningRanks( NeighborCommunicator * cons
   unpackedSize += edgeManager.unpack( receiveBufferPtr, modifiedLocalEdges, 0, false, events );
   unpackedSize += faceManager.unpack( receiveBufferPtr, modifiedLocalFaces, 0, false, events );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewAndModifiedObjectsOnOwningRanks.beforeWaitEvents" );
   waitAllDeviceEvents( events );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewAndModifiedObjectsOnOwningRanks.afterWaitEvents" );
 
-  receivedObjects.newNodes.insert( newLocalNodes.begin(), newLocalNodes.end() );
-  receivedObjects.modifiedNodes.insert( modifiedLocalNodes.begin(), modifiedLocalNodes.end() );
-  receivedObjects.newEdges.insert( newLocalEdges.begin(), newLocalEdges.end() );
-  receivedObjects.modifiedEdges.insert( modifiedLocalEdges.begin(), modifiedLocalEdges.end() );
-  receivedObjects.newFaces.insert( newLocalFaces.begin(), newLocalFaces.end() );
-  receivedObjects.modifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
+  std::set< localIndex > & allNewNodes      = receivedObjects.newNodes;
+  std::set< localIndex > & allModifiedNodes = receivedObjects.modifiedNodes;
+  std::set< localIndex > & allNewEdges      = receivedObjects.newEdges;
+  std::set< localIndex > & allModifiedEdges = receivedObjects.modifiedEdges;
+  std::set< localIndex > & allNewFaces      = receivedObjects.newFaces;
+  std::set< localIndex > & allModifiedFaces = receivedObjects.modifiedFaces;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allNewElements = receivedObjects.newElements;
+  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allModifiedElements = receivedObjects.modifiedElements;
+
+  allNewNodes.insert( newLocalNodes.begin(), newLocalNodes.end() );
+  allModifiedNodes.insert( modifiedLocalNodes.begin(), modifiedLocalNodes.end() );
+
+  allNewEdges.insert( newLocalEdges.begin(), newLocalEdges.end() );
+  allModifiedEdges.insert( modifiedLocalEdges.begin(), modifiedLocalEdges.end() );
+
+  allNewFaces.insert( newLocalFaces.begin(), newLocalFaces.end() );
+  allModifiedFaces.insert( modifiedLocalFaces.begin(), modifiedLocalFaces.end() );
 
   for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
     for( localIndex esr = 0; esr < elemRegion.numSubRegions(); ++esr )
     {
-      receivedObjects.newElements[{er, esr}].insert( newLocalElements[er][esr].get().begin(),
-                                                     newLocalElements[er][esr].get().end() );
-      receivedObjects.modifiedElements[{er, esr}].insert( modifiedLocalElements[er][esr].get().begin(),
-                                                          modifiedLocalElements[er][esr].get().end() );
+      allNewElements[{er, esr}].insert( newLocalElements[er][esr].get().begin(),
+                                        newLocalElements[er][esr].get().end() );
+      allModifiedElements[{er, esr}].insert( modifiedLocalElements[er][esr].get().begin(),
+                                             modifiedLocalElements[er][esr].get().end() );
     }
   }
 
@@ -454,7 +413,10 @@ void FilterNewObjectsForPackToGhosts( std::set< localIndex > const & objectList,
                                       localIndex_array & ghostsToSend,
                                       localIndex_array & objectsToSend )
 {
+
   ghostsToSend.move( hostMemorySpace );
+  //TODO this needs to be inverted since the ghostToSend list should be much longer....
+  // and the objectList is a searchable set.
   for( auto const index : objectList )
   {
     localIndex const parentIndex = parentIndices[index];
@@ -604,9 +566,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
   bufferSize += edgeManager.packParentChildMapsSize( modEdgesToSend );
   bufferSize += faceManager.packParentChildMapsSize( modFacesToSend );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.beforeWaitSizeEvents" );
   waitAllDeviceEvents( sizeEvents );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.afterWaitSizeEvents" );
   neighbor->resizeSendBuffer( commID, bufferSize );
 
   buffer_type & sendBuffer = neighbor->sendBuffer( commID );
@@ -645,9 +605,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
 
   GEOS_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.beforeWaitPackEvents" );
   waitAllDeviceEvents( packEvents );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "packNewModifiedObjectsToGhosts.afterWaitPackEvents" );
 }
 
 void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
@@ -655,13 +613,16 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
                            MeshLevel * const mesh,
                            ModifiedObjectLists & receivedObjects )
 {
+
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
   FaceManager & faceManager = mesh->getFaceManager();
   ElementRegionManager & elemManager = mesh->getElemManager();
 
   localIndex_array & nodeGhostsToRecv = nodeManager.getNeighborData( neighbor->neighborRank() ).ghostsToReceive();
+
   localIndex_array & edgeGhostsToRecv = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToReceive();
+
   localIndex_array & faceGhostsToRecv = faceManager.getNeighborData( neighbor->neighborRank() ).ghostsToReceive();
 
   buffer_type const & receiveBuffer = neighbor->receiveBuffer( commID );
@@ -697,7 +658,9 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
     }
   }
 
+  // if we move to device + async unoacking, poll these events for completion or pass out
   parallelDeviceEvents events;
+
   nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
   edgeManager.unpackGlobalMaps( receiveBufferPtr, newGhostEdges, 0 );
   faceManager.unpackGlobalMaps( receiveBufferPtr, newGhostFaces, 0 );
@@ -726,9 +689,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   edgeManager.unpackParentChildMaps( receiveBufferPtr, modGhostEdges );
   faceManager.unpackParentChildMaps( receiveBufferPtr, modGhostFaces );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewModToGhosts.beforeWaitEvents" );
   waitAllDeviceEvents( events );
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "unpackNewModToGhosts.afterWaitEvents" );
 
   if( newGhostNodes.size() > 0 )
   {
@@ -765,12 +726,14 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
     if( newGhostElemsData[er][esr].size() > 0 )
     {
       elemGhostsToReceive.move( hostMemorySpace );
+
       for( localIndex const & newElemIndex : newGhostElemsData[er][esr] )
       {
         elemGhostsToReceive.emplace_back( newElemIndex );
         receivedObjects.newElements[ { er, esr } ].insert( newElemIndex );
       }
     }
+
     receivedObjects.modifiedElements[ { er, esr } ].insert( modGhostElemsData[er][esr].begin(),
                                                             modGhostElemsData[er][esr].end() );
   } );
@@ -781,6 +744,7 @@ void unpackNewModToGhosts( NeighborCommunicator * const neighbor,
   receivedObjects.modifiedEdges.insert( modGhostEdges.begin(), modGhostEdges.end() );
   receivedObjects.newFaces.insert( newGhostFaces.begin(), newGhostFaces.end() );
   receivedObjects.modifiedFaces.insert( modGhostFaces.begin(), modGhostFaces.end() );
+
 }
 
 void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements,
@@ -835,27 +799,38 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                                         ModifiedObjectLists & receivedObjects,
                                                         int mpiCommOrder )
 {
-  GEOS_MARK_FUNCTION;
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.begin" );
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();
   FaceManager & faceManager = mesh->getFaceManager();
   ElementRegionManager & elemManager = mesh->getElemManager();
 
-  // Exchange with Owning Ranks
+  //************************************************************************************************
+  // 2) first we need to send over:
+  //   a) the new objects to owning ranks. New objects are assumed to be
+  //      owned by the rank that owned the parent.
+  //   b) the modified objects to the owning ranks.
+
+  // pack the buffers, and send the size of the buffers
   MPI_iCommData commData;
   commData.resize( neighbors.size() );
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    packNewAndModifiedObjectsToOwningRanks( &neighbor, mesh, modifiedObjects, commData.commID() );
+
+    packNewAndModifiedObjectsToOwningRanks( &neighbor,
+                                            mesh,
+                                            modifiedObjects,
+                                            commData.commID() );
+
     neighbor.mpiISendReceiveBufferSizes( commData.commID(),
                                          commData.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData.mpiRecvBufferSizeRequest( neighborIndex ),
                                          MPI_COMM_GEOS );
+
   }
 
+  // send/recv the buffers
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
     int neighborIndex;
@@ -865,14 +840,17 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                          commData.mpiRecvBufferSizeStatus() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
     neighbor.mpiISendReceiveBuffers( commData.commID(),
                                      commData.mpiSendBufferRequest( neighborIndex ),
                                      commData.mpiRecvBufferRequest( neighborIndex ),
                                      MPI_COMM_GEOS );
   }
 
+  // unpack the buffers and get lists of the new objects.
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
+
     int neighborIndex = count;
     if( mpiCommOrder == 0 )
     {
@@ -881,6 +859,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                            &neighborIndex,
                            commData.mpiRecvBufferStatus() );
     }
+    // Unpack buffers in set ordering for integration testing
     else
     {
       MpiWrapper::wait( commData.mpiRecvBufferRequest() + count,
@@ -888,10 +867,12 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     }
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    unpackNewAndModifiedObjectsOnOwningRanks( &neighbor, mesh, commData.commID(), receivedObjects );
-  }
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.afterOwningRankExchange" );
+    unpackNewAndModifiedObjectsOnOwningRanks( &neighbor,
+                                              mesh,
+                                              commData.commID(),
+                                              receivedObjects );
+  }
 
   nodeManager.inheritGhostRankFromParent( receivedObjects.newNodes );
   edgeManager.inheritGhostRankFromParent( receivedObjects.newEdges );
@@ -905,22 +886,40 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     subRegion.inheritGhostRankFromParentFace( faceManager, receivedObjects.newElements[{er, esr}] );
   } );
 
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferSizeRequest(), commData.mpiSendBufferSizeStatus() );
-  MpiWrapper::waitAll( commData.size(), commData.mpiSendBufferRequest(), commData.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferSizeRequest(),
+                       commData.mpiSendBufferSizeStatus() );
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferRequest(),
+                       commData.mpiSendBufferSizeStatus() );
 
   modifiedObjects.insert( receivedObjects );
 
-  // Exchange with Ghost Ranks
+
+  //************************************************************************************************
+  // 3) now we need to send over:
+  //   a) the new objects whose parents are ghosts on neighbors.
+  //   b) the modified objects whose parents are ghosts on neighbors.
+
+
+
   MPI_iCommData commData2;
   commData2.resize( neighbors.size());
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    packNewModifiedObjectsToGhosts( &neighbor, commData2.commID(), mesh, modifiedObjects );
+
+    packNewModifiedObjectsToGhosts( &neighbor,
+                                    commData2.commID(),
+                                    mesh,
+                                    modifiedObjects );
+
     neighbor.mpiISendReceiveBufferSizes( commData2.commID(),
                                          commData2.mpiSendBufferSizeRequest( neighborIndex ),
                                          commData2.mpiRecvBufferSizeRequest( neighborIndex ),
                                          MPI_COMM_GEOS );
+
   }
 
   for( unsigned int count=0; count<neighbors.size(); ++count )
@@ -932,14 +931,17 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                          commData2.mpiRecvBufferSizeStatus() );
 
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
     neighbor.mpiISendReceiveBuffers( commData2.commID(),
                                      commData2.mpiSendBufferRequest( neighborIndex ),
                                      commData2.mpiRecvBufferRequest( neighborIndex ),
                                      MPI_COMM_GEOS );
   }
 
+
   for( unsigned int count=0; count<neighbors.size(); ++count )
   {
+
     int neighborIndex = count;
     if( mpiCommOrder == 0 )
     {
@@ -953,17 +955,19 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
       MpiWrapper::wait( commData2.mpiRecvBufferRequest() + count,
                         commData2.mpiRecvBufferStatus() + count );
     }
+
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+
     unpackNewModToGhosts( &neighbor, commData2.commID(), mesh, receivedObjects );
   }
-
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.afterGhostExchange" );
 
   modifiedObjects.insert( receivedObjects );
 
   nodeManager.fixUpDownMaps( false );
   edgeManager.fixUpDownMaps( false );
   faceManager.fixUpDownMaps( false );
+
 
   for( localIndex er = 0; er < elemManager.numRegions(); ++er )
   {
@@ -982,6 +986,7 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
     updateConnectorsToFaceElems( receivedObjects.newElements.at( {er, esr} ), subRegion );
   } );
 
+
   std::set< localIndex > allTouchedNodes;
   allTouchedNodes.insert( modifiedObjects.newNodes.begin(), modifiedObjects.newNodes.end() );
   allTouchedNodes.insert( modifiedObjects.modifiedNodes.begin(), modifiedObjects.modifiedNodes.end() );
@@ -993,7 +998,8 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   std::set< localIndex > allTouchedEdges;
   allTouchedEdges.insert( modifiedObjects.newEdges.begin(), modifiedObjects.newEdges.end() );
   allTouchedEdges.insert( modifiedObjects.modifiedEdges.begin(), modifiedObjects.modifiedEdges.end() );
-  edgeManager.depopulateUpMaps( allTouchedEdges, faceManager.edgeList().toViewConst() );
+  edgeManager.depopulateUpMaps( allTouchedEdges,
+                                faceManager.edgeList().toViewConst() );
 
   std::set< localIndex > allTouchedFaces;
   allTouchedFaces.insert( modifiedObjects.newFaces.begin(), modifiedObjects.newFaces.end() );
@@ -1004,11 +1010,17 @@ void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
   edgeManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedEdges );
   faceManager.enforceStateFieldConsistencyPostTopologyChange( modifiedObjects.modifiedFaces );
 
-  MpiWrapper::waitAll( commData2.size(), commData2.mpiSendBufferSizeRequest(), commData2.mpiSendBufferSizeStatus() );
-  MpiWrapper::waitAll( commData2.size(), commData2.mpiSendBufferRequest(), commData2.mpiSendBufferSizeStatus() );
+  MpiWrapper::waitAll( commData2.size(),
+                       commData2.mpiSendBufferSizeRequest(),
+                       commData2.mpiSendBufferSizeStatus() );
 
-  GEOS_PARALLEL_TOPOLOGY_CHANGE_CUDA_STATUS( "synchronizeTopologyChange.end" );
+  MpiWrapper::waitAll( commData2.size(),
+                       commData2.mpiSendBufferRequest(),
+                       commData2.mpiSendBufferSizeStatus() );
+
 }
+
+
 
 } /* namespace geos */
 #endif // PARALLEL_TOPOLOGY_CHANGE_METHOD==0
