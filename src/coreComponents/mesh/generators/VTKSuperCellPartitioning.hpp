@@ -16,73 +16,59 @@
 #ifndef GEOS_MESH_GENERATORS_VTKSUPERCELLPARTITIONING_HPP
 #define GEOS_MESH_GENERATORS_VTKSUPERCELLPARTITIONING_HPP
 
-
+#include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/TimingMacros.hpp"
-#include "mesh/generators/VTKMeshGeneratorTools.hpp"  // for PartitionMethod
-
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
+#include "mesh/generators/ParMETISInterface.hpp"
+#include "LvArray/src/ArrayOfArrays.hpp"
 
 #include <vtkSmartPointer.h>
 
-// GEOS types
-#include "common/DataTypes.hpp"
-#include "LvArray/src/ArrayOfArrays.hpp"
-
-// VTK forward declarations
 class vtkUnstructuredGrid;
 class vtkDataSet;
 
-// Get pmet_idx_t definition from ParMETIS interface
-#include "mesh/generators/ParMETISInterface.hpp"  // Defines pmet_idx_t as int64_t
-
-
-
 namespace geos
 {
-
 namespace vtk
 {
 
 /**
- * @brief Strategy for initial super-cell scatter across ranks (before ParMETIS refinement)
+ * @brief Initial distribution strategy for super-cells
  */
 enum class InitialDistributionStrategy
 {
-  MORTON,  /// Distribute by Morton Z-curve for spatial locality
-  BLOCK    /// Distribute by simple contiguous blocks (faster)
+  MORTON,  ///< Morton Z-curve ordering for spatial locality
+  BLOCK    ///< Contiguous block distribution
 };
 
 /**
- * @brief Metadata about super-cells for partitioning
+ * @brief Super-cell metadata for constrained partitioning
  *
- * A super-cell is a group of 3D cells that must stay together during partitioning.
- * Typically these are cells connected by fractures.
+ * Groups cells that must remain co-located (e.g., fracture-connected cells).
  */
 struct SuperCellInfo
 {
-  /// Map: SuperCellId -> vector of global cell IDs in that super-cell
+  /// SuperCellId to global cell IDs
   std::map< vtkIdType, std::vector< vtkIdType > > superCellToOriginalCells;
 
-  /// Map: SuperCellId -> weight (number of cells in super-cell)
+  /// SuperCellId to vertex weight
   std::map< vtkIdType, vtkIdType > vertexWeights;
 
-  /// Set of SuperCellIds that contain multiple cells (atomic units)
+  /// SuperCellIds containing multiple cells
   std::set< vtkIdType > atomicSuperCells;
 };
 
 /**
- * @brief Tag 3D cells with super-cell IDs based on fracture connectivity
+ * @brief Assign super-cell IDs based on fracture connectivity
  *
- * Creates a "SuperCellId" cell data array where:
- * - Cells connected by fractures share the same super-cell ID
- * - Regular cells have their own unique super-cell ID (= their global ID)
+ * Cells sharing a fracture get the same ID; isolated cells use their global ID.
+ * Adds a "SuperCellId" array to the mesh. Runs on rank 0.
  *
- * This runs on rank 0 only, using the fracture neighbor information.
- *
- * @param cells3D The 3D volumetric cells (modified in-place to add SuperCellId array)
- * @param fractureNeighbors Map of fracture name to neighbor mapping (fracture element -> 3D cell neighbors)
- * @param fractureWeight Additional weight applied to fracture super-cells for load balancing
- * @return Super-cell metadata for partitioning
+ * @param cells3D Volumetric mesh (modified in-place)
+ * @param fractureNeighbors Fracture element to 3D neighbor mappings
+ * @param fractureWeight Load balancing weight boost for fracture super-cells
+ * @return Super-cell metadata
  */
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
@@ -90,50 +76,46 @@ SuperCellInfo tagCellsWithSuperCellIds(
   integer fractureWeight );
 
 /**
- * @brief Reconstruct super-cell info from the SuperCellId array
+ * @brief Rebuild super-cell metadata from SuperCellId array
  *
- * After mesh redistribution, each rank needs to rebuild its local super-cell metadata
- * from the SuperCellId cell data array. Fracture super-cells are weighted to improve
- * load balancing by accounting for their higher computational cost.
+ * After redistribution, each rank reconstructs local super-cell info.
+ * Applies fracture weights to account for contact computation cost.
  *
- * @param mesh The distributed mesh with SuperCellId array
- * @param fractureWeight Additional weight added to fracture super-cells (cells.size() > 1)
- *                       to account for contact mechanics computation cost.
- * @return Local super-cell metadata with weighted super-cells
+ * @param mesh Distributed mesh with SuperCellId array
+ * @param fractureWeight Weight boost for multi-cell super-cells
+ * @return Local super-cell metadata
  */
 SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                                         integer fractureWeight );
 
 /**
  * @brief Initial redistribution preserving super-cell integrity
- * @param cells3D Input mesh (only non-empty on rank 0)
- * @param comm MPI communicator
- * @param strategy Initial distribution strategy:
- *                 - MORTON: Sort super-cells by Morton Z-curve for spatial locality
- *                 - BLOCK: Simple contiguous block assignment
- * @return Redistributed mesh with SuperCellId array preserved
  *
- * Uses simple round-robin assignment of super-cells to ranks.
- * This is faster than graph partitioning and suitable for initial distribution.
+ * Distributes super-cells across ranks without graph partitioning.
+ * Faster than ParMETIS for initial scatter.
+ *
+ * @param cells3D Input mesh (non-empty on rank 0 only)
+ * @param comm MPI communicator
+ * @param strategy Distribution strategy (MORTON or BLOCK)
+ * @return Redistributed mesh with preserved SuperCellId array
  */
 vtkSmartPointer< vtkDataSet >
 redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
                                MPI_Comm comm,
                                InitialDistributionStrategy strategy = InitialDistributionStrategy::MORTON );
 
-
 /**
- * @brief Build a graph where nodes are super-cells (not individual cells)
+ * @brief Build super-cell adjacency graph
  *
- * Each super-cell becomes a single node in the graph. Edges connect super-cells
- * whose constituent cells are neighbors in the original mesh.
+ * Collapses the cell graph into a super-cell graph where each vertex
+ * represents a super-cell and edges connect neighboring super-cells.
  *
- * @param cells3D The tagged 3D mesh with SuperCellId array
- * @param baseGraph The original cell-to-cell adjacency graph
- * @param baseElemDist Element distribution for base graph (numRanks+1 array)
+ * @param cells3D Mesh with SuperCellId array
+ * @param baseGraph Original cell-to-cell adjacency
+ * @param baseElemDist Element distribution for base graph
  * @param info Super-cell metadata
  * @param comm MPI communicator
- * @return Pair of (super-cell graph, super-cell vertex weights)
+ * @return (super-cell graph, vertex weights)
  */
 std::pair< ArrayOfArrays< pmet_idx_t, pmet_idx_t >, array1d< pmet_idx_t > >
 buildSuperCellGraph(
@@ -144,20 +126,15 @@ buildSuperCellGraph(
   MPI_Comm comm );
 
 /**
- * @brief Validate super-cell graph integrity before partitioning
+ * @brief Validate super-cell graph before partitioning
  *
- * Checks for:
- * - Self-loops
- * - Out-of-range neighbor indices
- * - Duplicate edges
- * - Isolated vertices
- * - Invalid vertex weights
+ * Checks for self-loops, invalid indices, duplicate edges,
+ * isolated vertices, and invalid weights.
  *
- * @param superGraph The super-cell adjacency graph
- * @param superElemDist Element distribution array for super-cells
- * @param vertexWeights Vertex weights for load balancing
+ * @param superGraph Super-cell adjacency graph
+ * @param superElemDist Element distribution array
+ * @param vertexWeights Vertex weights
  * @param comm MPI communicator
- * @throws If graph has integrity errors
  */
 void validateSuperCellGraph(
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const & superGraph,
@@ -166,16 +143,16 @@ void validateSuperCellGraph(
   MPI_Comm comm );
 
 /**
- * @brief Unpack super-cell partitioning to individual cells
+ * @brief Map super-cell partitions back to individual cells
  *
- * Maps the super-cell → rank assignments from ParMETIS back to individual cell assignments.
- * All cells in the same super-cell get assigned to the same rank.
+ * Converts super-cell -> rank assignments into cell -> rank assignments.
+ * All cells in a super-cell go to the same rank.
  *
- * @param cells3D The 3D mesh with SuperCellId array
- * @param superPartitioning Super-cell → rank assignments from ParMETIS
- * @param superCellIdToLocalIdx Mapping from SuperCellId to local super-cell index
+ * @param cells3D Mesh with SuperCellId array
+ * @param superPartitioning Super-cell to rank assignments from ParMETIS
+ * @param superCellIdToLocalIdx SuperCellId to local index mapping
  * @param comm MPI communicator
- * @return Cell-level partitioning array (cell → rank)
+ * @return Cell-level partition assignments
  */
 array1d< int64_t >
 unpackSuperCellPartitioning(
@@ -185,7 +162,6 @@ unpackSuperCellPartitioning(
   MPI_Comm comm );
 
 } // namespace vtk
-
 } // namespace geos
 
 #endif /* GEOS_MESH_GENERATORS_VTKSUPERCELLPARTITIONING_HPP */
