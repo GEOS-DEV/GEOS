@@ -86,9 +86,9 @@ void Group::deregisterWrapper( string const & name )
 
 void Group::resize( indexType const newSize )
 {
-  GEOS_MARK_FUNCTION
+  GEOS_MARK_FUNCTION;
 
-    forWrappers( [newSize] ( WrapperBase & wrapper )
+  forWrappers( [newSize] ( WrapperBase & wrapper )
   {
     if( wrapper.sizedFromParent() == 1 )
     {
