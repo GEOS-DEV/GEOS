@@ -383,6 +383,10 @@ public:
    * @return list of indicies
    */
   array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
+
+  integer hasLocalPerforationInRegion( integer perfoLocal ) const
+  { return localPerfoInRegion[perfoLocal]; }
+
 private:
 
   /**
@@ -492,6 +496,8 @@ private:
 
   /// Indices of the next well element (to reconstruct connectivity after ghost exchange)
   array1d< localIndex > m_nextWellElementIndexGlobal;
+
+  array1d< integer > localPerfoInRegion;
 
   /// Local index of well's top segment
   localIndex m_topWellElementIndex;

@@ -240,12 +240,23 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     TableData localPerfoData;
     for( globalIndex iperfLocal = 0; iperfLocal < wellSubRegionPerforationData->getNumPerforationsGlobal(); ++iperfLocal )
     {
-      integer const cellId = wellSubRegionPerforationData->getReservoirElementGlobalIndex()[iperfLocal];
       arrayView1d< globalIndex const > const globalIperf =  wellSubRegionPerforationData->localToGlobalMap();
 
       array1d< integer > localCoords;
-      if( cellId != -1 )
+      int localPerfoInRegion =
+        MpiWrapper::allReduce( wellSubRegion.hasLocalPerforationInRegion( iperfLocal ),
+                               MpiWrapper::Reduction::LogicalOr );
+
+      if( !localPerfoInRegion )
       {
+        if( MpiWrapper::commRank() == 0 )
+          localPerfoData.addRow( globalIperf[iperfLocal], "globalWellElemIndices", localCoords,
+                                 "NONE", "NONE", "NONE", rankId );
+      }
+      else if( wellSubRegion.hasLocalPerforationInRegion( iperfLocal ))
+      {
+        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+        integer const cellId = wellSubRegionPerforationData->getReservoirElementGlobalIndex()[iperfLocal];
         auto const & meshElems = wellSubRegionPerforationData->getMeshElements();
         localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
         localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
@@ -254,13 +265,13 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
           meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
         ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
-        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
         localPerfoData.addRow( globalIperf[iperfLocal], globalWellElemIndices, localCoords,
                                region.getName(), subRegion.getName(), cellId, rankId );
       }
+
     }
 
     integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
