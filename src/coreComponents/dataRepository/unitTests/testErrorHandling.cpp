@@ -457,6 +457,6 @@ int main( int ac, char * av[] )
   ::testing::InitGoogleTest( &ac, av );
   geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
-  geos::cleanupEnvironment( false );
+  geos::cleanupEnvironment();
   return result;
 }

@@ -52,7 +52,7 @@ public:
   ~LinearAlgebraTestScope()
   {
     finalizeLAI();
-    geos::cleanupEnvironment( false );
+    geos::cleanupEnvironment();
   }
 };
 

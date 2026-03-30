@@ -33,7 +33,7 @@ public:
 
   ~MpiTestScope()
   {
-    geos::cleanupEnvironment( false );
+    geos::cleanupEnvironment();
   }
 
 };
