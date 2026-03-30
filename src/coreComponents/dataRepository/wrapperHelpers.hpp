@@ -246,6 +246,10 @@ std::enable_if_t< traits::HasMemberFunction_reserveValues< T const > >
 reserveValuesIfAvailable( T & value, localIndex const newCapacity )
 {
   localIndex const oldCapacity = value.size();
+  if( oldCapacity == 0 )
+  {
+    return;
+  }
   double const oldValueCapacity = value.valueCapacity();
   localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
   value.reserveValues( newValueCapacity );
