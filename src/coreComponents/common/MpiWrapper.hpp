@@ -347,16 +347,16 @@ public:
     stdVector< integer > offsets;
   };
 
-/**
- * @brief Gather buffers of varying sizes from all ranks to rank 0.
- * @tparam CONTAINER The container type holding the data.
- * @tparam VALUE_T The trivially copyable underlying data type (deduced automatically).
- * @param localBuffer The local buffer to be gathered on rank 0.
- * @return A struct containing:
- * - 'data': all the gathered data on rank 0
- * - 'counts': number of elements for each rank
- * - 'offsets': starting index for each rank in 'data'
- */
+  /**
+   * @brief Gather buffers of varying sizes from all ranks to rank 0.
+   * @tparam CONTAINER The container type holding the data.
+   * @tparam VALUE_T The trivially copyable underlying data type (deduced automatically).
+   * @param localBuffer The local buffer to be gathered on rank 0.
+   * @return A struct containing:
+   * - 'data': all the gathered data on rank 0
+   * - 'counts': number of elements for each rank
+   * - 'offsets': starting index for each rank in 'data'
+   */
   template<
     typename CONTAINER,
     typename VALUE_T = typename CONTAINER::value_type,
