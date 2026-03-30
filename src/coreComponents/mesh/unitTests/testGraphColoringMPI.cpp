@@ -162,7 +162,7 @@ int main( int argc, char * *argv )
   int result = RUN_ALL_TESTS();
 
   // Finalize MPI
-  MpiWrapper::finalize( false );
+  MpiWrapper::finalize();
 
   return result;
 }
