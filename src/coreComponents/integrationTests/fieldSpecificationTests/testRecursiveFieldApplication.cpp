@@ -215,7 +215,7 @@ int main( int argc, char * * argv )
   ::testing::InitGoogleTest( &argc, argv );
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup( false );
+  geos::basicCleanup();
 
   return result;
 }

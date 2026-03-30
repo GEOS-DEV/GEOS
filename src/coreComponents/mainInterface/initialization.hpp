@@ -44,7 +44,7 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
  * @brief Perform the basic GEOSX cleanup.
  * @param inError indicate if an exception occurred
  */
-void basicCleanup( bool inError );
+void basicCleanup( bool inError = false );
 
 
 

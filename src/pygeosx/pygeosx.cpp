@@ -271,7 +271,7 @@ PyObject * finalize( PyObject * self, PyObject * args ) noexcept
   }
 
   g_state = nullptr;
-  geos::basicCleanup( false );
+  geos::basicCleanup();
   Py_RETURN_NONE;
 }
 

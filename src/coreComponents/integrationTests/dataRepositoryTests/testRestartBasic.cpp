@@ -140,7 +140,7 @@ int main( int argc, char * argv[] )
 
   int const result = RUN_ALL_TESTS();
 
-  geos::basicCleanup( false );
+  geos::basicCleanup();
 
   return result;
 }
