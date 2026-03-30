@@ -18,7 +18,6 @@
  */
 
 #include "MpiWrapper.hpp"
-#include "LvArray/src/system.hpp"
 #include <unistd.h>
 
 #if defined(__clang__)
