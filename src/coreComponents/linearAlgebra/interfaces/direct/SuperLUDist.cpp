@@ -67,7 +67,8 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
     { LinearSolverParameters::Direct::ColPerm::parmetis, PARMETIS },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist columns permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist columns permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -84,7 +85,8 @@ rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const 
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported SuperLU_Dist rows permutation option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported SuperLU_Dist rows permutation option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -289,8 +291,9 @@ void SuperLUDist< LAI >::solve( Vector const & rhs,
       {
         if( m_params.logLevel > 0 )
         {
-          GEOS_WARNING( "SuperLUDist: failed to reduce residual below tolerance.\n"
-                        "Condition number estimate: " << condEst );
+          GEOS_WARNING( GEOS_FMT( "SuperLUDist: failed to reduce residual below tolerance.\n"
+                                  "Condition number estimate: {}",
+                                  condEst ) );
         }
         m_result.status = LinearSolverResult::Status::Breakdown;
       }
@@ -386,7 +389,6 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
   {
     real64 const * const R = m_data->scalePerm.R;
     real64 const * const C = m_data->scalePerm.C;
-    int const * const perm_c = m_data->scalePerm.perm_c;
 
     real64 minU = std::numeric_limits< real64 >::lowest();
     real64 maxU = std::numeric_limits< real64 >::max();
@@ -395,7 +397,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
 
     for( int_t i = 0; i < m_data->mat.nrow; ++i )
     {
-      real64 const u = std::abs( diagU[perm_c[i]] / C[i] );
+      real64 const u = std::abs( diagU[m_data->scalePerm.perm_c[i]] / C[i] );
       minU = std::min( u, minU );
       maxU = std::max( u, maxU );
       real64 const l = std::abs( 1.0 / R[i] );

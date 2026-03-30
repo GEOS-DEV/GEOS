@@ -57,7 +57,7 @@ macro( geosx_add_code_checks )
 
     if (ENABLE_COVERAGE)
         blt_add_code_coverage_target( NAME   ${arg_PREFIX}_coverage
-                                      RUNNER ctest -E 'blt_gtest_smoke|blt_mpi_smoke|testUncrustifyCheck|testDoxygenCheck'
+                                      RUNNER ctest --progress --output-on-failure -E 'blt_gtest_smoke|blt_mpi_smoke|testUncrustifyCheck|testDoxygenCheck'
                                       SOURCE_DIRECTORIES ${PROJECT_SOURCE_DIR}/coreComponents )
     endif()
 
