@@ -158,7 +158,6 @@ SuperCellInfo tagCellsWithSuperCellIds(
   // -----------------------------------------------------------------------
   SuperCellInfo info;
 
-  vtkIdType numCellsInSuperCells = 0;
   vtkIdType numSuperCellsCreated = 0;
   vtkIdType largestSuperCellSize = 0;
 
@@ -173,7 +172,6 @@ SuperCellInfo tagCellsWithSuperCellIds(
       info.atomicSuperCells.insert( scId );
     }
 
-    numCellsInSuperCells += members.size();
     numSuperCellsCreated++;
     largestSuperCellSize = std::max( largestSuperCellSize,
                                      static_cast< vtkIdType >( members.size() ) );

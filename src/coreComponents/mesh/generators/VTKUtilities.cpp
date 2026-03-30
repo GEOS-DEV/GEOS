@@ -1537,7 +1537,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
   for( auto const & cellToNodes : cellToMatchedNodes )
   {
     vtkIdType const cellId = cellToNodes.first;
-    std::unordered_set< vtkIdType > const & matchedNodes = cellToNodes.second;
+    auto const & matchedNodes = cellToNodes.second;
 
     // Must match exactly the number of fracture nodes
     if( matchedNodes.size() != static_cast< std::size_t >( numFractureNodes ) )
@@ -1558,9 +1558,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
       bool nodeRepresented = std::any_of(
         nodeCollocated.begin(),
         nodeCollocated.end(),
-        [&matchedNodes]( vtkIdType collocNode ) {
-        return matchedNodes.count( collocNode ) > 0;
-      }
+        [&matchedNodes]( vtkIdType collocNode ) { return matchedNodes.count( collocNode ) > 0; }
         );
 
       if( !nodeRepresented )
