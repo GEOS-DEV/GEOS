@@ -280,7 +280,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       formatter.setSortingFunc(
         []( std::vector< TableData::CellData > const & row1,
             std::vector< TableData::CellData > const & row2 ) {
-        return tableDataSorting::positiveNumberStringComp( row1[1].value, row2[1].value );
+        return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
       } );
 
       std::ostringstream outputStream;
