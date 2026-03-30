@@ -539,7 +539,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       }
     }
 
-// Process each matching 3D cell
+    // Process each matching 3D cell
     for( vtkIdType const & cellGlobalId : matchingCells )
     {
       elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( cellGlobalId ) );
