@@ -196,12 +196,10 @@ public:
   static int init( int * argc, char * * * argv );
 
   /**
-   * @brief Finalize the MPI environment and free MPI-managed resources. 
+   * @brief Finalize the MPI environment and free MPI-managed resources.
    * Please note that once called, MPI functions, communicators and resources can no longer be used.
-   * @param inError Indicates whether an error has occurred; if true, the error handler is invoked  
-   *                and the process is expected to terminate instead of returning.  
    */
-  static void finalize( bool inError );
+  static void finalize();
 
   static MPI_Comm commDup( MPI_Comm const comm );
 
