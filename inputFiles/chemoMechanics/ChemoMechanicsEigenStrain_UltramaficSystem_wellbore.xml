@@ -2,12 +2,41 @@
 
 <Problem>
   <Included>
-    <File name="./ChemoMechanics_UltramaficSystem_base.xml" />
+    <File name="./ChemoMechanicsEigenStrain_UltramaficSystem_base.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_surfaceArea.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_initialAggregate.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_initialPrimaryConc.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_logConc.xml" />
   </Included>
+
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.009, 0.10, 5.0 }"
+      theta="{ 0, 90 }"
+      zCoords="{ 0, 0.001 }"
+      nr="{ 1, 350 }"
+      nt="{ 50 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 0.1 } }"
+      autoSpaceRadialElems="{ 0, 1 }"
+      cellBlockNames="{ cb1, cb2 }"
+      />
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Source"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ cb2 }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+  </ElementRegions>
 
   <Events
     maxTime="500">
@@ -27,44 +56,72 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <Constitutive>
-    <EigenStrainReactiveElasticIsotropic
-      name="reactiveRock"
-      solidModelName="rockSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ rpos, tpos  }"/>
 
-    <ElasticIsotropic
-      name="rockSolid"
-      defaultDensity="0"
-      defaultBulkModulus="6.6667e9"
-      defaultShearModulus="4.0e9"/>
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ rpos, tneg }"/>
 
-    <ReactiveCompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="5e-10"
-      viscosibility="0.0"
-      chemicalSystemType="ultramafic"/>
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos  }"/>
 
-    <ReactivePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.05"
-      defaultInitialVolumeFractions="{ 0.1, 0.1, 0.1, 0.1, 0.1 }"
-      molarWeights="{ 0.140693, 0.084314, 0.060084, 0.277112, 0.058320 }"
-      mineralDensities="{ 3212.9, 3009.28, 2648.27, 2554.03, 2367.84 }"/>
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
 
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 3.0e-10, 3.0e-10, 3.0e-10 }"/>
+    <FieldSpecification
+      name="PorosityRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
 
-    <ConstantDiffusion
-      name="diffusion"
-      phaseNames="{ water }"
-      defaultPhaseDiffusivityMultipliers="{ 1 }"
-      diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
-  </Constitutive>
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressureRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-5.5"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ rpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+  </FieldSpecifications>
 
 </Problem>

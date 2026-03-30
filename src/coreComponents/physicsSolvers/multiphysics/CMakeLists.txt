@@ -31,6 +31,7 @@ set( multiPhysicsSolvers_headers
     MultiphasePoromechanics.hpp
     OneWayCoupledFractureFlowContactMechanics.hpp
     MultiphasePoromechanicsConformingFractures.hpp
+    MultiphasePoromechanicsConformingFracturesALM.hpp
     PhaseFieldFractureSolver.hpp
     PhaseFieldPoromechanicsSolver.hpp
     PoromechanicsInitialization.hpp
@@ -72,6 +73,7 @@ set( multiPhysicsSolvers_sources
     MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
     MultiphasePoromechanicsConformingFractures.cpp
+    MultiphasePoromechanicsConformingFracturesALM.cpp
     PhaseFieldFractureSolver.cpp
     PhaseFieldPoromechanicsSolver.cpp
     PoromechanicsInitialization.cpp

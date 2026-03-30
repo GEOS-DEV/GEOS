@@ -91,22 +91,19 @@ void TableRelativePermeability::postInputInitialization()
 
   integer const numPhases = m_phaseNames.size();
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
-                 GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
-                           getFullName() ),
+                 "the expected number of fluid phases is either two, or three",
                  InputError, getDataContext() );
 
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( m_wettingNonWettingRelPermTableNames.empty(),
-                   GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, non-wetting phase)",
-                             getFullName(),
+                   GEOS_FMT( "for a two-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, non-wetting phase)",
                              viewKeyStruct::wettingNonWettingRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_wettingNonWettingRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a two-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the non-wetting phase relperm table",
-                     getFullName(),
+                     "for a two-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the non-wetting phase relperm table",
                      viewKeyStruct::wettingNonWettingRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
@@ -115,23 +112,20 @@ void TableRelativePermeability::postInputInitialization()
   {
     GEOS_THROW_IF( m_wettingIntermediateRelPermTableNames.empty() || m_nonWettingIntermediateRelPermTableNames.empty(),
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, intermediate phase), and {} to specify the relative permeability tables for the pair (non-wetting phase, intermediate phase)",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify the relative permeability tables for the pair (wetting phase, intermediate phase), and {} to specify the relative permeability tables for the pair (non-wetting phase, intermediate phase)",
                      viewKeyStruct::wettingIntermediateRelPermTableNamesString(),
                      viewKeyStruct::nonWettingIntermediateRelPermTableNamesString()  ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_wettingIntermediateRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the intermediate phase relperm table",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the wetting phase relperm table, second the name on the intermediate phase relperm table",
                      viewKeyStruct::wettingIntermediateRelPermTableNamesString() ),
                    InputError, getDataContext() );
 
     GEOS_THROW_IF( m_nonWettingIntermediateRelPermTableNames.size() != 2,
                    GEOS_FMT(
-                     "{}: for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the non-wetting phase relperm table, second the name on the intermediate phase relperm table",
-                     getFullName(),
+                     "for a three-phase flow simulation, we must use {} to specify exactly two names: first the name of the non-wetting phase relperm table, second the name on the intermediate phase relperm table",
                      viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() ),
                    InputError, getDataContext() );
   }
@@ -161,8 +155,7 @@ void TableRelativePermeability::initializePreSubGroups()
     for( size_t ip = 0; ip < m_wettingNonWettingRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_wettingNonWettingRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_wettingNonWettingRelPermTableNames[ip] ),
                      InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingRelPermTableNames[ip] );
@@ -190,8 +183,7 @@ void TableRelativePermeability::initializePreSubGroups()
     for( size_t ip = 0; ip < m_wettingIntermediateRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_wettingIntermediateRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_wettingIntermediateRelPermTableNames[ip] ),
                      InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_wettingIntermediateRelPermTableNames[ip] );
@@ -218,8 +210,7 @@ void TableRelativePermeability::initializePreSubGroups()
     for( size_t ip = 0; ip < m_nonWettingIntermediateRelPermTableNames.size(); ++ip )
     {
       GEOS_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateRelPermTableNames[ip] ),
-                     GEOS_FMT( "{}: the table function named {} could not be found",
-                               getFullName(),
+                     GEOS_FMT( "the table function named {} could not be found",
                                m_nonWettingIntermediateRelPermTableNames[ip] ),
                      InputError, getDataContext() );
       TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateRelPermTableNames[ip] );

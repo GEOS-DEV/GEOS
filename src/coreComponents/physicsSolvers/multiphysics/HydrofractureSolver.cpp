@@ -226,10 +226,13 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
   setMGRStrategy();
 
   static const std::set< integer > binaryOptions = { 0, 1 };
-  GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );
+  GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0,
+                 GEOS_FMT( "{} option can be either 0 (false) or 1 (true)",
+                           viewKeyStruct::isMatrixPoroelasticString() ) );
 
   GEOS_ERROR_IF( m_newFractureInitializationType != InitializationType::Pressure && m_newFractureInitializationType != InitializationType::Displacement,
-                 viewKeyStruct::newFractureInitializationTypeString() << " option can be either Pressure or Displacement" );
+                 GEOS_FMT( "{} option can be either Pressure or Displacement",
+                           viewKeyStruct::newFractureInitializationTypeString() ) );
 
   m_surfaceGenerator = &this->getParent().template getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
 

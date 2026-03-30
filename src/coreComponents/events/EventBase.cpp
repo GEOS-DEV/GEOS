@@ -153,10 +153,11 @@ void EventBase::getTargetReferences()
     {
       string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                         getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
-      ErrorLogger::global().currentErrorMsg()
+
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo()
-                           .setPriority( 1 ) );
+                           .setPriority( 1 ));
       throw InputError( e, errorMsg );
     }
   }
@@ -182,7 +183,10 @@ void EventBase::checkEvents( real64 const time,
     }
     else
     {
-      this->setForecast( int( ( m_beginTime - time ) / dt ) );
+      //this->setForecast( int( ( m_beginTime - time ) / dt ) );
+      real64 const ratio = (m_beginTime - time) / dt;
+      real64 const step = std::clamp(ratio, static_cast<double>(std::numeric_limits<int>::min()), static_cast<double>(std::numeric_limits<int>::max()));
+      this->setForecast( int( step ) );
     }
   }
   else if( time >= m_endTime )

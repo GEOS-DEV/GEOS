@@ -9,7 +9,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="0"
-      scale="-19.2052"/>
+      scale="-16.949711"/>
 
     <FieldSpecification
       name="log_HCO3_source"
@@ -17,7 +17,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="1"
-      scale="-2.9774"/>
+      scale="-8.631112"/>
     
     <FieldSpecification
       name="log_Mg_source"
@@ -25,7 +25,7 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="2"
-      scale="-9.1905377447"/>
+      scale="-3.444233"/>
 
     <FieldSpecification
       name="log_SiO2_aq_source"
@@ -33,6 +33,6 @@
       objectPath="ElementRegions/Source"
       fieldName="logPrimarySpeciesConcentration"
       component="3"
-      scale="-10.6458249773"/>
+      scale="-9.216339"/>
   </FieldSpecifications>
 </Problem>

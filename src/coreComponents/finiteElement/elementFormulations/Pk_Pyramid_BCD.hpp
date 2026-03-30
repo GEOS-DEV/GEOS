@@ -31,6 +31,12 @@ namespace geos
 namespace finiteElement
 {
 
+namespace
+{
+template< int ORDER >
+constexpr int Pk_Pyramid_BCD_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( 2 * ORDER + 3 ) / 6;
+}
+
 
 /**
  * This class is the basis class for the pyramid finite element cells with
@@ -39,36 +45,41 @@ namespace finiteElement
  * For now only P1 is implemented, P2 and higher will be implemented later.
  */
 template< int ORDER >
-class Pk_Pyramid_BCD final : public FiniteElementBase
+class Pk_Pyramid_BCD_impl : public FiniteElementBase_impl< Pk_Pyramid_BCD_NumNodes< ORDER >,
+                                                           5,
+                                                           Pk_Pyramid_BCD_NumNodes< ORDER > >
 {
 public:
+  /// Convenience alias for the base class.
+  using Base = FiniteElementBase_impl< Pk_Pyramid_BCD_NumNodes< ORDER >,
+                                       5,
+                                       Pk_Pyramid_BCD_NumNodes< ORDER > >;
+
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
+
+  /// The number of shape functions per element.
+  using Base::numNodes;
+
+  /// The number of quadrature points per element.
+  using Base::numQuadraturePoints;
+
+  /// The maximum number of support points per element.
+  using Base::maxSupportPoints;
 
   /// The order of the finite element.
   static constexpr int order = ORDER;
 
-  /// The number of shape functions per element.
-  constexpr static localIndex numNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( 2 * ORDER + 3 ) / 6;
-
-  /// The number of faces points per element.
-  constexpr static localIndex numFaces = 5;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes;
-
   /// The number of modal points per element.
   constexpr static localIndex numModes = numNodes;
 
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
-
-  virtual ~Pk_Pyramid_BCD() = default;
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -86,16 +97,18 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -199,9 +212,29 @@ public:
           func( i, j, k );
         }
       }
-
     }
+  }
 
+  /**
+   * @brief Generate the indexes for the modal shape functions
+   * @param func The function to call with the generated indexes
+   */
+  template< typename FUNC >
+  GEOS_FORCE_INLINE
+  static constexpr void generateIndexesHost( FUNC && func )
+  {
+
+    for( localIndex i = 0; i <= ORDER; ++i )
+    {
+      for( localIndex j = 0; j <= ORDER; ++j )
+      {
+        localIndex maxIj = LvArray::math::max( i, j );
+        for( localIndex k = 0; k <= ORDER - maxIj; ++k )
+        {
+          func( i, j, k );
+        }
+      }
+    }
   }
 
   /**
@@ -462,13 +495,12 @@ public:
     for( int j = 0; j < numNodes; ++j )
     {
       localIndex count = 0;
-      generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
+      generateIndexesHost( [&]( localIndex const p, localIndex const r, localIndex const s )
       {
-        PsiX[count]=calcModal( p, r, s, coords[j] );
+        PsiX[count] = calcModal( p, r, s, coords[j] );
         VDM[count][j] = PsiX[count];
         ++count;
       } );
-      //   }
     }
     array2d< real64 > VDM_inv;
     VDM_inv.resize( numNodes, numNodes );
@@ -742,10 +774,65 @@ public:
 
 };
 
-/**
- *  Pyramid element with BCD basis functions of order 1.
- */
+/// @copydoc Pk_Pyramid_BCD_impl
+template< int ORDER >
+class Pk_Pyramid_BCD final : public Pk_Pyramid_BCD_impl< ORDER >, public FiniteElementBase
+{
+public:
+
+  /// The Implementation type
+  using ImplType = Pk_Pyramid_BCD_impl< ORDER >;
+
+  /// The number of nodes per element.
+  using ImplType::numNodes;
+
+  /// The max number of support points per element.
+  using ImplType::maxSupportPoints;
+
+  /// The number of quadrature points per element.
+  using ImplType::numQuadraturePoints;
+
+  Pk_Pyramid_BCD():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
+  GEOS_HOST_DEVICE
+  virtual ~Pk_Pyramid_BCD() override final = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  ImplType * getImpl()
+  {
+    return static_cast< ImplType * >(this);
+  }
+
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
+  ImplType const * getImpl() const
+  {
+    return static_cast< ImplType const * >(this);
+  }
+
+};
+
+/// Pyramid element with BCD basis functions of order 1.
 using P1_Pyramid_BCD = Pk_Pyramid_BCD< 1 >;
+
+/// Pyramid element with BCD basis functions of order 1.
+using P1_Pyramid_BCD_impl = Pk_Pyramid_BCD_impl< 1 >;
 
 
 }
