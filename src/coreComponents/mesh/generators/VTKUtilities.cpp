@@ -1534,8 +1534,11 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
   stdVector< vtkIdType > matchingCells;
   matchingCells.reserve( 2 );  // Most fractures have 0-2 neighbors
 
-  for( auto const & [cellId, matchedNodes] : cellToMatchedNodes )
+  for( auto const & cellToNodes : cellToMatchedNodes )
   {
+    vtkIdType const cellId = cellToNodes.first;
+    std::unordered_set< vtkIdType > const & matchedNodes = cellToNodes.second;
+
     // Must match exactly the number of fracture nodes
     if( matchedNodes.size() != static_cast< std::size_t >( numFractureNodes ) )
     {
