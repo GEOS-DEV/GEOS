@@ -378,10 +378,6 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
   LogPart logpart( "Time step", MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );
   logpart.addEndDescription( "- N substeps ", numOfSubSteps );
-  if( MpiWrapper::commRank() == 1 )
-  {
-    GEOS_WARNING( "labla" );
-  }
   std::stringstream logMessage;
   for( integer i = 0; i < numOfSubSteps; ++i )
   {
@@ -391,16 +387,10 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
     }
     logMessage << subStepDts[i] << " " << units::getSymbol( units::Unit::Time );
   }
-  if( MpiWrapper::commRank() != 1 )
-  {
-    GEOS_WARNING( "labla" );
-  }
+
   if( logMessage.rdbuf()->in_avail() == 0 )
     logMessage << "/";
-  if( MpiWrapper::commRank() ==3 )
-  {
-    GEOS_WARNING( "labla" );
-  }
+  
   logpart.addEndDescription( "- substep dts ", logMessage.str() );
   logpart.end();
 
