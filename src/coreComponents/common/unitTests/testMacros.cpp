@@ -20,6 +20,7 @@
 #include <gtest/gtest-spi.h>
 // test dependancies
 #include <array>
+#include "common/StdContainerWrappers.hpp"
 
 TEST( testMacros, testArgumentCount )
 {

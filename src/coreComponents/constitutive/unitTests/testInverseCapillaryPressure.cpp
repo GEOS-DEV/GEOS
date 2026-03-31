@@ -14,6 +14,8 @@
  */
 
 // Source includes
+#include "common/StdContainerWrappers.hpp"
+
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/InverseCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
