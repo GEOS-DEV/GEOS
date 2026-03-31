@@ -71,25 +71,10 @@ void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordByt
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  auto const serializePrimitive = [&]( auto const data )
-  {
-    buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
-    buffer_unit_type const * end = begin + sizeof(data);
-    out.insert( out.end(), begin, end );
-  };
-
-  auto const serializeString = [&]( string const & data )
-  {
-    serializePrimitive( data.size());
-    auto * begin = data.data();
-    auto * end = begin + data.size();
-    out.insert( out.end(), begin, end );
-  };
-
-  serializeString( m_key.m_filename );
-  serializePrimitive( m_key.m_lineId );
-  serializeString( m_value.m_logPart );
-  serializePrimitive( m_value.m_msgType );
+  serialBuffer::serializeString( m_key.m_filename, out );
+  serialBuffer::serializePrimitive( m_key.m_lineId, out );
+  serialBuffer::serializeString( m_value.m_logPart, out );
+  serialBuffer::serializePrimitive( m_value.m_msgType, out );
 }
 
 void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
