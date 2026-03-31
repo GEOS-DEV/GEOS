@@ -147,7 +147,7 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   //      counted exactly once.
 
   using EdgeKey = std::pair< globalIndex, globalIndex >;
-  using FaceKey = std::vector< globalIndex >;
+  using FaceKey = stdVector< globalIndex >;
 
   arrayView1d< globalIndex const > const localToGlobal = nodeManager.localToGlobalMap();
   arrayView1d< integer const > const nodeGhostRank = nodeManager.ghostRank();
@@ -185,7 +185,7 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
         ++numOwnedCells;
 
       localIndex const npe = elemToNodeMap.size( 1 );
-      std::vector< globalIndex > gn( npe );
+      stdVector< globalIndex > gn( npe );
       for( localIndex ni = 0; ni < npe; ++ni )
       {
         gn[ni] = localToGlobal[ elemToNodeMap[ei][ni] ];

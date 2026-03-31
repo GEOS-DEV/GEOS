@@ -1022,7 +1022,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
                                   numInternalNodesPerEdge, numNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset, order]( localIndex const iter_edge )
   {
-    std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    stdUnorderedMap< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex edgeHeadNode = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex edgeEndNode = edgeToNodesMapSource[ iter_edge ][ 1 ];
     globalIndex edgeHeadNodeG = nodeLocalToGlobalNew[ edgeHeadNode ];
@@ -1030,15 +1030,15 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     array1d< localIndex > const edgeToNodeMapWork( numNodesPerEdge );
     edgeToNodeMapWork[ 0 ] = edgeHeadNode;
     edgeToNodeMapWork[ 1 ] = edgeEndNode;
-    nodeIDs[ createNodeKey( edgeHeadNode ) ] = 0;
-    nodeIDs[ createNodeKey( edgeEndNode ) ] = 1;
+    nodeIDs.get_inserted( createNodeKey( edgeHeadNode )) = 0;
+    nodeIDs.get_inserted( createNodeKey( edgeEndNode ) )= 1;
 
     for( localIndex iter_node = 0; iter_node < numInternalNodesPerEdge; iter_node++ )
     {
       real64 alpha = ( glCoords[ iter_node ] + 1.0 ) / 2.0;
       localIndex nodeLocalID = localNodeOffset + iter_edge * ( numInternalNodesPerEdge ) + iter_node;
       edgeToNodeMapWork[ iter_node + 2 ] = nodeLocalID;
-      nodeIDs[ createNodeKey( edgeHeadNode, edgeEndNode, iter_node + 1, order ) ] = iter_node + 2;
+      nodeIDs.get_inserted( createNodeKey( edgeHeadNode, edgeEndNode, iter_node + 1, order ) ) = iter_node + 2;
       stdArray< globalIndex, 6 > referenceOrientation = createNodeKey( edgeHeadNodeG, edgeEndNodeG, iter_node + 1, order );
       int gq = referenceOrientation[4] - 1;
       nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
@@ -1048,7 +1048,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
     // reorder map
     for( localIndex q = 0; q < numNodesPerEdge; q++ )
     {
-      edgeToNodeMapNew[ iter_edge ][ q ] = edgeToNodeMapWork[ nodeIDs[ createNodeKey( edgeHeadNode, edgeEndNode, q, order ) ] ];
+      edgeToNodeMapNew[ iter_edge ][ q ] = edgeToNodeMapWork[ nodeIDs.get_inserted( createNodeKey( edgeHeadNode, edgeEndNode, q, order ) ) ];
     }
   } );
   localNodeOffset += numInternalNodesPerEdge * numLocalEdges;
@@ -1086,7 +1086,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_face )
   {
-    std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    stdUnorderedMap< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex faceVertID[ numVerticesPerFace ];
     globalIndex faceVertGID[ numVerticesPerFace ];
     array1d< localIndex > const faceToNodeMapWork( numNodesPerFace );
@@ -1100,7 +1100,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       faceVertGID[ iter_node ] = nodeLocalToGlobalNew[ faceVertID[ iter_node ] ];
       faceToNodeMapWork[ iter_node ] = faceVertID[ iter_node ];
       // store location of nodes for later reordering
-      nodeIDs[ createNodeKey( faceVertID[ iter_node ] ) ] = iter_node;
+      nodeIDs.get_inserted( createNodeKey( faceVertID[ iter_node ] ) ) = iter_node;
     }
 
     for( localIndex iter_edge=0; iter_edge<numEdgesPerFace; iter_edge++ )
@@ -1110,7 +1110,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         localIndex nodeIdxInMap = numVerticesPerFace + iter_edge * numInternalNodesPerEdge + iter_node;
         localIndex edge = faceToEdges[ iter_face ][ iter_edge ];
         faceToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][ iter_node + 1 ];
-        nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ] = nodeIdxInMap;
+        nodeIDs.get_inserted( createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ) = nodeIdxInMap;
       }
     }
     for( localIndex iter_node=0; iter_node<numInternalNodesPerFace; iter_node++ )
@@ -1138,7 +1138,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       if( q1 == 0  || q1 == numNodesPerEdge - 1 || q2 == 0 || q2 == numNodesPerEdge - 1 )
       {
         faceToNodeMapNew[ iter_face ][ q ] = faceToNodeMapWork[
-          nodeIDs[ createNodeKey( faceVertID[0], faceVertID[1], faceVertID[2], faceVertID[3], q1, q2, order ) ] ];
+          nodeIDs.get_inserted( createNodeKey( faceVertID[0], faceVertID[1], faceVertID[2], faceVertID[3], q1, q2, order ) ) ];
       }
     }
   } );
@@ -1189,14 +1189,14 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
                                     nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_elem )
     {
-      std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+      stdUnorderedMap< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
       array1d< localIndex > const elemToNodeMapWork( numNodesPerCell );
       for( localIndex iter_node=0; iter_node < numVerticesPerCell; iter_node++ )
       {
         elemVertID[ iter_node ] = elemsToNodesSource[ iter_elem ][ iter_node ];
         elemToNodeMapWork[ iter_node ] = elemVertID[ iter_node ];
-        nodeIDs[ createNodeKey( elemVertID[ iter_node ] ) ] = iter_node;
+        nodeIDs.get_inserted( createNodeKey( elemVertID[ iter_node ] ) ) = iter_node;
       }
 
       for( localIndex iter_edge=0; iter_edge < numEdgesPerCell; iter_edge++ )
@@ -1206,7 +1206,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
           localIndex nodeIdxInMap = numVerticesPerCell + iter_edge * numInternalNodesPerEdge + iter_node;
           localIndex edge = elemsToEdges[iter_elem][iter_edge];
           elemToNodeMapWork[ nodeIdxInMap ] = edgeToNodeMapNew[ edge ][iter_node+1];
-          nodeIDs[ createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ] = nodeIdxInMap;
+          nodeIDs.get_inserted( createNodeKey( edgeToNodeMapNew[ edge ][ 0 ], edgeToNodeMapNew[ edge ][ numNodesPerEdge - 1 ], iter_node + 1, order ) ) = nodeIdxInMap;
         }
       }
       for( localIndex iter_face=0; iter_face < numFacesPerCell; iter_face++ )
@@ -1218,8 +1218,8 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
           localIndex nodeIdxInMap = numVerticesPerCell + numEdgesPerCell * numInternalNodesPerEdge + iter_face * numInternalNodesPerFace + iter_node;
           localIndex face = elemsToFaces[iter_elem][iter_face];
           elemToNodeMapWork[ nodeIdxInMap ] = faceToNodeMapNew[face][(q2 + 1) * numNodesPerEdge + (q1 + 1 )];
-          nodeIDs[ createNodeKey( faceToNodeMapNew[ face ][ 0 ], faceToNodeMapNew[ face ][ numNodesPerEdge - 1 ],
-                                  faceToNodeMapNew[ face ][ numNodesPerFace - numNodesPerEdge ], faceToNodeMapNew[ face ][ numNodesPerFace- 1 ], q1 + 1, q2 + 1, order ) ] = nodeIdxInMap;
+          nodeIDs.get_inserted( createNodeKey( faceToNodeMapNew[ face ][ 0 ], faceToNodeMapNew[ face ][ numNodesPerEdge - 1 ],
+                                               faceToNodeMapNew[ face ][ numNodesPerFace - numNodesPerEdge ], faceToNodeMapNew[ face ][ numNodesPerFace- 1 ], q1 + 1, q2 + 1, order ) ) = nodeIdxInMap;
         }
       }
       for( localIndex iter_node=0; iter_node < numInternalNodesPerCell; iter_node++ )
@@ -1246,7 +1246,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
         if( q1 == 0  || q1 == numNodesPerEdge - 1 || q2 == 0 || q2 == numNodesPerEdge - 1 || q3 == 0 || q3 == numNodesPerEdge - 1 )
         {
           elemsToNodesNew[ iter_elem ][ q ] = elemToNodeMapWork[
-            nodeIDs[ createNodeKey( elemVertID, q1, q2, q3, order ) ] ];
+            nodeIDs.get_inserted( createNodeKey( elemVertID, q1, q2, q3, order ) ) ];
         }
       }
     } );

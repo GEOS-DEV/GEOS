@@ -281,7 +281,7 @@ protected:
     {
       // collect node coordinates for element k
       localIndex const numNodes = this->numNodesPerElement( k );
-      std::vector< stdArray< real64, 3 > > nodes;
+      stdVector< stdArray< real64, 3 > > nodes;
       nodes.reserve( numNodes );
       for( localIndex a = 0; a < numNodes; ++a )
       {

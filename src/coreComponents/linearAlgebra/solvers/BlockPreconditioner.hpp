@@ -115,7 +115,7 @@ public:
    *       DoF components in the monolithic system.
    */
   void setupBlock( localIndex const blockIndex,
-                   std::vector< DofManager::SubComponent > blockDofs,
+                   stdVector< DofManager::SubComponent > blockDofs,
                    PreconditionerBase< LAI > * const solver,
                    real64 const scaling = 1.0 );
 

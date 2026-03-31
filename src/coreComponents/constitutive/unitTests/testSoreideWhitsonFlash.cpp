@@ -64,7 +64,7 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
   /* UNCRUSTIFY-OFF */
   // Soreide-Whitson correlations work only with "true" values of component parameters
   // kij_NA is the binary interation coefficient in the gas phase (see Table 5 Soreide-Whitson (1992))
-  std::unordered_map<integer, stdArray<real64 const, 6> const> const componentDatabase = {
+  stdUnorderedMap<integer, stdArray<real64 const, 6> const> const componentDatabase = {
     //             Mw            Pc            Tc            Vc            Ac           kij_NA
     {Fluid::H2O, { 1.80153e-02,  2.20640e+07,  6.47096e+02,  5.59480e-05,  3.44300e-01, 0.0000 }},
     {Fluid::CO2, { 4.40095e-02,  7.37730e+06,  3.04128e+02,  9.41185e-05,  2.23940e-01, 0.1896 }},

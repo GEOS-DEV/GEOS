@@ -16,6 +16,7 @@
 #include "SpatialPartition.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
+#include "common/DataTypes.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #ifdef GEOS_USE_TRILINOS
 #include "mesh/graphs/ZoltanGraphColoring.hpp"
@@ -139,19 +140,19 @@ int SpatialPartition::getColor()
 
     // Step 1: allgather the sizes of every rank's neighbor list.
     int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
-    std::vector< int > allNeighborCounts( commSize );
+    stdVector< integer > allNeighborCounts( commSize );
     MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
 
     // Step 2: allgatherv the neighbor lists themselves.
-    std::vector< int > displacements( commSize, 0 );
+    stdVector< int > displacements( commSize, 0 );
     for( int i = 1; i < commSize; ++i )
     {
       displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
     }
     int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
 
-    std::vector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
-    std::vector< int > allNeighbors( totalNeighbors );
+    stdVector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    stdVector< int > allNeighbors( totalNeighbors );
     MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
                             allNeighbors.data(), allNeighborCounts.data(),
                             displacements.data(), MPI_COMM_GEOS );
@@ -177,7 +178,7 @@ int SpatialPartition::getColor()
       }
     }
 
-    std::vector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+    stdVector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
 
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
