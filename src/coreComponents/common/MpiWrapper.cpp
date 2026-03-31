@@ -155,9 +155,9 @@ void internal::ManagedResources::finalize()
 void MpiWrapper::finalize()
 {
 #ifdef GEOS_USE_MPI
-    MpiWrapper::commFree( MPI_COMM_GEOS );
-    internal::getManagedResources().finalize();
-    MPI_CHECK_ERROR( MPI_Finalize() );
+  MpiWrapper::commFree( MPI_COMM_GEOS );
+  internal::getManagedResources().finalize();
+  MPI_CHECK_ERROR( MPI_Finalize() );
 #endif
 }
 
