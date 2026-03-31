@@ -32,6 +32,7 @@ set( fieldSpecification_headers
      TractionBoundaryCondition.hpp
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
+     PermeabilitySpecification.hpp
    )
 
 #
@@ -47,6 +48,7 @@ set( fieldSpecification_sources
      TractionBoundaryCondition.cpp
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
+     PermeabilitySpecification.cpp
    )
 
 set( dependencyList ${parallelDeps} mesh )
