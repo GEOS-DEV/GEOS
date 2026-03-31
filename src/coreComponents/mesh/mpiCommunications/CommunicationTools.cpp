@@ -271,6 +271,8 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
 void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
                                                  std::set< localIndex > const & indexList )
 {
+  GEOS_MARK_FUNCTION;
+
   globalIndex const glocalIndexOffset = MpiWrapper::prefixSum< globalIndex >( indexList.size(), MPI_COMM_GEOS );
 
   arrayView1d< globalIndex > const & localToGlobal = manager.localToGlobalMap();
@@ -296,6 +298,7 @@ void
 CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManager,
                                             stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
+  GEOS_MARK_FUNCTION;
   localIndex numberOfNewObjectsHere = 0;
   for( auto const & iter : newElems )
   {
