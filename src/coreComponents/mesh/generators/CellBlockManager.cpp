@@ -1123,7 +1123,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       localIndex nodeLocalID = localNodeOffset + iter_face * numInternalNodesPerFace + iter_node;
       faceToNodeMapNew[ iter_face ][ (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
       stdArray< globalIndex, 6 > referenceOrientation = createNodeKey( faceVertGID[ 0 ], faceVertGID[ 1 ], faceVertGID[ 2 ], faceVertGID[ 3 ],
-                                                                         q1 + 1, q2 + 1, order );
+                                                                       q1 + 1, q2 + 1, order );
       int gq1 = referenceOrientation[4] - 1;
       int gq2 = referenceOrientation[5] - 1;
       nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + faceLocalToGlobal[ iter_face ] * numInternalNodesPerFace + gq2 * numInternalNodesPerEdge + gq1;

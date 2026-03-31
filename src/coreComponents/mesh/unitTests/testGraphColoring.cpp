@@ -25,7 +25,7 @@
 
 using namespace geos;
 using namespace graph;
-TEST( GraphColoringTest, CountPositiveDistinctColors ) 
+TEST( GraphColoringTest, CountPositiveDistinctColors )
 {
   stdVector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3, -1, 0};
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors ), 6 );

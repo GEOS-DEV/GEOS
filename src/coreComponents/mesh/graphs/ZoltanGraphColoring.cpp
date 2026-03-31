@@ -67,7 +67,7 @@ int ZoltanGraphColoring::colorGraph( const stdVector< camp::idx_t > & localAdjnc
 
 
 stdVector< int > ZoltanGraphColoring::colorGraph( const stdVector< camp::idx_t > & xadj,
-                                                    const stdVector< camp::idx_t > & adjncy )
+                                                  const stdVector< camp::idx_t > & adjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
 

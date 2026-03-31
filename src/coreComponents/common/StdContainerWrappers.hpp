@@ -491,6 +491,7 @@ template< size_t Ind, typename Tp, size_t Nm >
 struct tuple_element< Ind, geos::stdArray< Tp, Nm > >
 {
   static_assert( Ind < Nm, "array index is in range" );
+  /// The type of the Ind-th element, which is Tp for a homogeneous array.
   using type = Tp;
 };
 

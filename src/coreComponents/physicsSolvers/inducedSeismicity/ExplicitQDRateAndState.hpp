@@ -150,7 +150,7 @@ public:
     real64 const acceptSafety; // Acceptance safety
 
     stdArray< real64, 3 > errors; // Errors for current and two previous updates
-                                    // stored as [n+1, n, n-1]
+                                  // stored as [n+1, n, n-1]
 
     real64 computeUpdateFactor( integer const algHighOrder, integer const algLowOrder )
     {

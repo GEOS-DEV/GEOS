@@ -196,7 +196,7 @@ TEST( TransmissibilityTest, StencilOutputVerificationAniso )
   std::ostringstream xmlInput;
   xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
 
-    static TestParams constexpr params {
+  static TestParams constexpr params {
     { 3, 4, 5 }, // cellCount
     { 70.0, 10.0, 54.321 }, // meshSize
   };

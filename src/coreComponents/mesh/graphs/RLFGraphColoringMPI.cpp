@@ -45,7 +45,7 @@ int RLFGraphColoringMPI::colorGraph( const stdVector< camp::idx_t > & localAdjnc
 
 
 stdVector< int > RLFGraphColoringMPI::colorGraph( const stdVector< camp::idx_t > & localXadj,
-                                                    const stdVector< camp::idx_t > & localAdjncy )
+                                                  const stdVector< camp::idx_t > & localAdjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
   int const size = MpiWrapper::commSize( m_comm );

@@ -447,7 +447,7 @@ int MpiWrapper::nodeCommSize()
   int len;
   stdArray< char, MPI_MAX_PROCESSOR_NAME + 1 > hostname;
   MPI_Get_processor_name( hostname.data(), &len );
-  hostname.at(len) = '\0';
+  hostname.at( len ) = '\0';
   int color = (int)std::hash< string >{} (hostname.data());
   if( color < 0 )
     color *= -1;
