@@ -135,7 +135,7 @@ void setupMPI( int argc, char * argv[] );
 
 /**
  * @brief Finalize MPI.
- * @param inError-Indicate if the simulation end with an exception.
+ * @param inError inError Indicate if the simulation end with an exception.
  * By default set to false
  */
 void finalizeMPI( bool inError = false );
