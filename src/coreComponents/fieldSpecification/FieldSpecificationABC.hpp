@@ -57,6 +57,12 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /**
+   * @brief return the catalog name
+   * @return the catalog name
+   */
+  virtual const string getCatalogName() const = 0;
+
+  /**
    * @}
    */
 

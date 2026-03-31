@@ -21,6 +21,7 @@
 #define GEOS_FIELDSPECIFICATION_FIELDSPECIFICATIONMANAGER_HPP_
 
 #include "FieldSpecificationBase.hpp"
+#include "FieldSpecificationFactory.hpp"
 
 #include "common/format/StringUtilities.hpp"
 #include "common/DataTypes.hpp"
@@ -238,10 +239,22 @@ public:
     m_isSurfaceGenerationCase = isSurfaceGenerationCase;
   }
 
+  void registerFactory( std::unique_ptr< FieldSpecificationFactory > factory );
+
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+
 private:
+  
   static FieldSpecificationManager * m_instance;
+  
   /// Indicate if the SurfaceGenerator element is present
   bool m_isSurfaceGenerationCase = false;
+
+  std::unordered_map< string, std::unique_ptr< FieldSpecificationFactory > > m_factories;
 
 };
 
