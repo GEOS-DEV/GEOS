@@ -383,7 +383,6 @@ public:
    * @return list of indicies
    */
   array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
-
 private:
 
   /**

@@ -15,7 +15,6 @@
 
 #include "WellElementSubRegion.hpp"
 
-#include "common/logger/Logger.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
