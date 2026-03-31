@@ -70,7 +70,58 @@ void setupLogger()
 #endif
 
   { // setup error handling (using LvArray helper system functions)
-    using ErrorContext = ErrorLogger::ErrorContext;
+
+    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
+
+    ///// set external error handling behaviour /////
+    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
+                                                           string_view detectionLocation )
+    {
+      // Filter out INFO level messages from external libraries (e.g., VTK)
+      // ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
+      if( ExternalErrorHandler::isNotAnErrorMsg( errorMsg ) )
+      {
+        // Just print the message without error formatting
+        GEOS_LOG( errorMsg );
+        return;
+      }
+      else
+      {
+        std::string const stackHistory = LvArray::system::stackTrace( true );
+        DiagnosticMsg diagnosticMsg;
+        ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                         MsgType::Error, errorMsg,
+                                                                         ::geos::logger::internal::g_rank )
+                                               .addCallStackInfo( stackHistory )
+                                               .addDetectionLocation( detectionLocation )
+                                               .getDiagnosticMsg() );
+
+        // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
+      }
+    } );
+
+    ///// set signal handling behaviour /////
+    LvArray::system::setSignalHandling( []( int const signal )
+    {
+      // Disable signal handling to prevent catching exit signal (infinite loop)
+      LvArray::system::setSignalHandling( nullptr );
+
+      // first of all, external error can await to be output, we must output them
+      ExternalErrorHandler::instance().flush( "before signal error output" );
+
+      // error message output
+      std::string const stackHistory = LvArray::system::stackTrace( true );
+      DiagnosticMsg diagnosticMsg;
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                       MsgType::ExternalError, "",
+                                                                       ::geos::logger::internal::g_rank )
+                                             .addSignal( signal )
+                                             .addCallStackInfo( stackHistory )
+                                             .getDiagnosticMsg() );
+
+      // call program termination
+      LvArray::system::callErrorHandler();
+    } );
 
     ///// set Post-Handled Error behaviour /////
     LvArray::system::setErrorHandler( []()
@@ -85,80 +136,6 @@ void setupLogger()
   #endif
       std::abort();
     } );
-
-    ///// set external error handling behaviour /////
-    ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
-                                                           string_view detectionLocation )
-    {
-      // Filter out INFO level messages from external libraries (e.g., VTK)
-      // TODO: use dedicated functions to make the process easier to read
-      // ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
-      if( errorMsg.find( "INFO|" ) != string_view::npos )
-      {
-        // Just print the message without error formatting
-        GEOS_LOG( errorMsg );
-        return;
-      }
-
-      std::string const stackHistory = LvArray::system::stackTrace( true );
-
-      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** LOCATION: (external error, detected {})\n"
-                          "{}\n{}",
-                          detectionLocation, errorMsg, stackHistory ) );
-      if( ErrorLogger::global().isOutputFileEnabled() )
-      {
-        ErrorLogger::ErrorMsg error;
-        error.setType( ErrorLogger::MsgType::Error );
-        error.addToMsg( errorMsg );
-        error.addRank( ::geos::logger::internal::g_rank );
-        error.addCallStackInfo( stackHistory );
-        error.addContextInfo(
-          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
-
-        ErrorLogger::global().flushErrorMsg( error );
-      }
-
-      // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
-    } );
-    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
-
-    ///// set signal handling behaviour /////
-    LvArray::system::setSignalHandling( []( int const signal )
-    {
-      // Disable signal handling to prevent catching exit signal (infinite loop)
-      LvArray::system::setSignalHandling( nullptr );
-
-      // first of all, external error can await to be output, we must output them
-      ExternalErrorHandler::instance().flush( "before signal error output" );
-
-      // error message output
-      std::string const stackHistory = LvArray::system::stackTrace( true );
-      ErrorLogger::ErrorMsg error;
-      error.addSignalToMsg( signal );
-
-      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** SIGNAL: {}\n"
-                          "***** LOCATION: (external error, captured by signal handler)\n"
-                          "{}\n{}",
-                          signal, error.m_msg, stackHistory ) );
-
-      if( ErrorLogger::global().isOutputFileEnabled() )
-      {
-        error.setType( ErrorLogger::MsgType::Error );
-        error.addRank( ::geos::logger::internal::g_rank );
-        error.addCallStackInfo( stackHistory );
-        error.addContextInfo(
-          ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
-          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
-
-        ErrorLogger::global().flushErrorMsg( error );
-      }
-
-      // call program termination
-      LvArray::system::callErrorHandler();
-    } );
-
   }
 }
 
@@ -230,7 +207,7 @@ void setupCUDA()
   {
     cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
     GEOS_ERROR_IF( status != cudaSuccess,
-                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+                   GEOS_FMT( "Failed to set CUDA stack size. Error {}: {}", status, cudaGetErrorString( status ) ) );
   }
 #endif
 }
@@ -242,7 +219,8 @@ void setupCaliper( cali::ConfigManager & caliperManager,
                    CommandLineOptions const & commandLineOptions )
 {
   caliperManager.add( commandLineOptions.timerOutput.c_str() );
-  GEOS_ERROR_IF( caliperManager.error(), "Caliper config error: " << caliperManager.error_msg() );
+  GEOS_ERROR_IF( caliperManager.error(),
+                 GEOS_FMT( "Caliper config error: {}", caliperManager.error_msg() ) );
   caliperManager.start();
 
 #if defined( GEOS_USE_ADIAK )

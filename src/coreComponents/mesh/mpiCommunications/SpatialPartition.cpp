@@ -24,6 +24,8 @@
 #endif
 
 #include <cmath>
+#include <set>
+#include <vector>
 
 namespace geos
 {
@@ -117,10 +119,66 @@ int SpatialPartition::getColor()
   }
   else
   {
-    // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
-    std::vector< camp::idx_t > adjncy;
-    adjncy.reserve( m_metisNeighborList.size());
-    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
+    // External partitioner such as ParMetis or PTScotch (for VTK external mesh).
+    //
+    // findNeighborRanks() runs independently on each rank using bounding-box intersection,
+    // which can produce ASYMMETRIC neighbor lists in Release builds: rank A may include rank B
+    // in its list while rank B does not include rank A (or vice versa), due to floating-point
+    // differences in the intersection test under -O2/-O3.  An asymmetric graph fed to the RLF
+    // coloring algorithm on rank 0 means the coloring is only valid for one direction of each
+    // missing edge; the subsequent isColoringValid() check (which uses the rank's own local
+    // adjncy) then detects the conflict and raises GEOS_ERROR.
+    //
+    // Fix: symmetrize the global neighbor graph before coloring.
+    // Each rank allgathers its own neighbor list; any rank i that appears in rank j's list
+    // automatically gets rank j added to its own list.  After symmetrization the graph is
+    // guaranteed to be undirected and the coloring is valid for all ranks.
+
+    int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+    int const commRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+    // Step 1: allgather the sizes of every rank's neighbor list.
+    int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
+    std::vector< int > allNeighborCounts( commSize );
+    MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
+
+    // Step 2: allgatherv the neighbor lists themselves.
+    std::vector< int > displacements( commSize, 0 );
+    for( int i = 1; i < commSize; ++i )
+    {
+      displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
+    }
+    int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
+
+    std::vector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    std::vector< int > allNeighbors( totalNeighbors );
+    MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
+                            allNeighbors.data(), allNeighborCounts.data(),
+                            displacements.data(), MPI_COMM_GEOS );
+
+    // Step 3: build the symmetrized local adjacency list.
+    // Start from the current (possibly incomplete) local list, then add any rank j
+    // that lists commRank as its neighbor but is not yet in our list.
+    std::set< int > symmetricNeighbors( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    for( int rankJ = 0; rankJ < commSize; ++rankJ )
+    {
+      if( rankJ == commRank )
+        continue;
+      int const start = displacements[rankJ];
+      int const end   = start + allNeighborCounts[rankJ];
+      for( int k = start; k < end; ++k )
+      {
+        if( allNeighbors[k] == commRank )
+        {
+          // rank j lists us as a neighbor → we must list rank j too
+          symmetricNeighbors.insert( rankJ );
+          break;
+        }
+      }
+    }
+
+    std::vector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
@@ -130,6 +188,14 @@ int SpatialPartition::getColor()
 
     if( !coloring.isColoringValid( adjncy, color ))
     {
+      // Print per-rank diagnostics to help identify the root cause.
+      std::string neighborStr;
+      for( auto const nb : adjncy )
+        neighborStr += std::to_string( nb ) + " ";
+      GEOS_LOG_RANK( "getColor() coloring FAILED on rank " << commRank
+                                                           << "  assigned color=" << color
+                                                           << "  neighbors=[" << neighborStr << "]" );
+      MpiWrapper::barrier( MPI_COMM_GEOS );
       GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
     }
     m_numColors = coloring.getNumberOfColors( color );
@@ -215,7 +281,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
     //check to make sure our dimensions agree
     {
-      string_view partitionsLogMessage =
+      GEOS_MAYBE_UNUSED string_view partitionsLogMessage =
         "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
         "The number of cells in an axis cannot be lower that the partition count of this axis\n";
 
@@ -399,22 +465,22 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
   forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank] GEOS_HOST ( localIndex const pp )
+  {
+    bool inPartition = true;
+    R1Tensor p_x;
+    for( int i=0; i<3; i++ )
     {
-      bool inPartition = true;
-      R1Tensor p_x;
-      for( int i=0; i<3; i++ )
-      {
-        p_x[i] = particleCenter[pp][i];
-        inPartition = inPartition && isCoordInPartition( p_x[i], i );
-      }
-      if( particleRank[pp]==this->m_rank && !inPartition )
-      {
-        outOfDomainParticleCoordinates.emplace_back( p_x ); // Store the coordinate of the out-of-domain particle
-        outOfDomainParticleLocalIndices.push_back( pp );   // Store the local index "pp" for the current coordinate.
-        particleRank[pp] = -1;                             // Temporarily set particleRank of out-of-domain particle to -1 until it is
+      p_x[i] = particleCenter[pp][i];
+      inPartition = inPartition && isCoordInPartition( p_x[i], i );
+    }
+    if( particleRank[pp]==this->m_rank && !inPartition )
+    {
+      outOfDomainParticleCoordinates.emplace_back( p_x );   // Store the coordinate of the out-of-domain particle
+      outOfDomainParticleLocalIndices.push_back( pp );     // Store the local index "pp" for the current coordinate.
+      particleRank[pp] = -1;                               // Temporarily set particleRank of out-of-domain particle to -1 until it is
                                                            // requested by someone.
-      }
-    } );
+    }
+  } );
 
 
   // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -480,15 +546,15 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
       particleLocalIndicesRequestedFromNeighbors[n].resize( ni );
 
       forAll< serialPolicy >( ni, [&, particleRank] GEOS_HOST ( localIndex const k )
-        {
-          int const i = particleListIndicesRequestedFromNeighbors[n][k];
-          outOfDomainParticleRequests[i] += 1;
-          localIndex pp = outOfDomainParticleLocalIndices[i];
+      {
+        int const i = particleListIndicesRequestedFromNeighbors[n][k];
+        outOfDomainParticleRequests[i] += 1;
+        localIndex pp = outOfDomainParticleLocalIndices[i];
 
-          particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
-          // Set ghost rank of the particle equal to neighbor rank.
-          particleRank[pp] = m_neighbors[n].neighborRank();
-        } );
+        particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+        // Set ghost rank of the particle equal to neighbor rank.
+        particleRank[pp] = m_neighbors[n].neighborRank();
+      } );
     }
 
     // Check that there is exactly one processor requesting each out-of-domain particle.
@@ -545,17 +611,17 @@ void SpatialPartition::repartitionMasterParticles( ParticleSubRegion & subRegion
   arrayView1d< int > const particleRankAfter = subRegion.getParticleRank();
   std::set< localIndex > indicesToErase;
   forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter, particleCenterAfter] GEOS_HOST ( localIndex const p )
+  {
+    if( particleRankAfter[p] == -1 )
     {
-      if( particleRankAfter[p] == -1 )
-      {
-        GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
-        indicesToErase.insert( p );
-      }
-      else if( particleRankAfter[p] != m_rank )
-      {
-        indicesToErase.insert( p );
-      }
-    } );
+      GEOS_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[p] );
+      indicesToErase.insert( p );
+    }
+    else if( particleRankAfter[p] != m_rank )
+    {
+      indicesToErase.insert( p );
+    }
+  } );
   subRegion.erase( indicesToErase );
 
   // Resize particle region owning this subregion
@@ -607,21 +673,21 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
     unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
 
     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
+    {
+      bool inPartition = true;
+      R1Tensor p_x;
+      for( int i=0; i<3; i++ )
       {
-        bool inPartition = true;
-        R1Tensor p_x;
-        for( int i=0; i<3; i++ )
-        {
-          p_x[i] = particleCenter[p][i];
-          inPartition = inPartition && isCoordInPartition( p_x[i], i );
-        }
-        if( particleRank[p]==this->m_rank && inPartition )
-        {
-          inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-          inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
+        p_x[i] = particleCenter[p][i];
+        inPartition = inPartition && isCoordInPartition( p_x[i], i );
+      }
+      if( particleRank[p]==this->m_rank && inPartition )
+      {
+        inDomainMasterParticleCoordinates.emplace_back( p_x );    // Store the coordinate of the out-of-domain particle
+        inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );       // Store the local index "pp" for the current
                                                                                     // coordinate.
-        }
-      } );
+      }
+    } );
 
 
     // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
@@ -673,14 +739,14 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
           // This particle should be a ghost on the current processor. See if it already exists here.
           bool alreadyHere = false;
           forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
+          {
+            if( gI == particleGlobalID[p] )
             {
-              if( gI == particleGlobalID[p] )
-              {
-                // The particle already exists as a ghost on this partition, so we should update its rank.
-                particleRank[p] = m_neighbors[n].neighborRank();
-                alreadyHere = true;
-              }
-            } );
+              // The particle already exists as a ghost on this partition, so we should update its rank.
+              particleRank[p] = m_neighbors[n].neighborRank();
+              alreadyHere = true;
+            }
+          } );
           if( !alreadyHere )
           {
             // The global index is not represented on this partition, so we should add the particle.
@@ -707,12 +773,12 @@ void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartiti
 
     int partitionRank = this->m_rank;
     forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
+    {
+      if( particleRank[p] != partitionRank )
       {
-        if( particleRank[p] != partitionRank )
-        {
-          particleRank[p] = -1;
-        }
-      } );
+        particleRank[p] = -1;
+      }
+    } );
 
 
     // (6.1) Resize particle subRegion to accommodate incoming particles.

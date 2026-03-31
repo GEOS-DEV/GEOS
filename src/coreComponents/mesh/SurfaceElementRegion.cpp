@@ -76,8 +76,8 @@ void SurfaceElementRegion::generateMesh( Group const & faceBlocks )
 void SurfaceElementRegion::initializePreSubGroups()
 {
   GEOS_ERROR_IF_LE_MSG( m_defaultAperture, 0.0,
-                        getWrapperDataContext( viewKeyStruct::defaultApertureString() ) <<
-                        ": default aperture must be larger than 0.0" );
+                        GEOS_FMT( "{}: default aperture must be larger than 0.0",
+                                  getWrapperDataContext( viewKeyStruct::defaultApertureString() ) ) );
 
   this->forElementSubRegions< SurfaceElementSubRegion >( [&] ( SurfaceElementSubRegion & subRegion )
   {
@@ -89,6 +89,7 @@ void SurfaceElementRegion::initializePreSubGroups()
 localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const faceManager,
                                                    localIndex const faceIndices[2] )
 {
+  GEOS_MARK_FUNCTION;
   localIndex rval = -1;
   arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
@@ -171,6 +172,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                     localIndex const faceIndices[2] )
 {
+  GEOS_MARK_FUNCTION;
   localIndex const kfe = this->addToSurfaceMesh( faceManager, faceIndices );
 
   FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
@@ -215,12 +217,23 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
 
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
+  return kfe;
+}
+
+void SurfaceElementRegion::updateSets( FaceManager const & faceManager )
+{
+  GEOS_MARK_FUNCTION;
   // update the sets
+  FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   FaceElementSubRegion::FaceMapType const & faceMap = subRegion.faceList();
-  for( auto const & setIter : faceManager->sets().wrappers() )
+
+  // loop over all sets in the faceManaager and if the face is in the set, add the face element to the corresponding set in the subregion
+  for( auto const & setIter : faceManager.sets().wrappers() )
   {
-    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
+
+    SortedArrayView< localIndex const > const & faceSet = faceManager.sets().getReference< SortedArray< localIndex > >( setIter.first );
     SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
+
     for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
     {
       if( faceSet.count( faceMap[a][0] ) )
@@ -229,8 +242,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
       }
     }
   }
-
-  return kfe;
 }
 
 
