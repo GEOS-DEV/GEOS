@@ -45,12 +45,6 @@ public:
   void recordDiagnostic( DiagnosticMsg const & diagMsg );
 
   /**
-   * @return The const historical diagnostic
-   */
-  auto const & getDiagnosticHistory() const
-  { return m_diagnosticHistory; }
-
-  /**
    * @brief Gather all the records to the rank 0
    * @note Store all records to an unordered_map, non unique records will increment the LogRecord::m_count
    */
@@ -114,6 +108,12 @@ private:
   };
 
   /**
+  * @return The const historical diagnostic
+  */
+  auto const & getDiagnosticHistory() const
+  { return m_diagnosticHistory; }
+
+  /**
    * @brief Insert a LogRepord in the m_diagnosticHistory
    * @param log The logRecord with all the information
    */
@@ -122,23 +122,14 @@ private:
   /// @cond DO_NOT_DOCUMENT
   struct LocationKeyHash
   {
-
-    size_t operator()( LogRecord::Key const & key ) const noexcept
-    {
-      size_t h1 = std::hash< string >{} (key.m_filename);
-      size_t h2 = std::hash< integer >{} (key.m_lineId);
-
-      return h1 ^ (h2 << 1);
-    }
-
+    size_t operator()( LogRecord::Key const & key ) const noexcept;
   };
   /// @endcond
 
   /**
    * @brief Diagnostic history happened during the simulation
    */
-  stdUnorderedMap< LogRecord::Key, LogRecord::Values,
-                   LocationKeyHash > m_diagnosticHistory;
+  stdUnorderedMap< LogRecord::Key, LogRecord::Values, LocationKeyHash > m_diagnosticHistory;
 };
 
 /**

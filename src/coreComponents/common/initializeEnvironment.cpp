@@ -334,11 +334,11 @@ void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
 
-  ErrorLogger::global().getLoggerReportData().gatherRecordsRank0();
+  ErrorLogger::global().getLoggerHistory().gatherRecordsRank0();
   if( MpiWrapper::commRank() == 0 )
   {
     TableTextFormatter tableReportFormatter;
-    GEOS_LOG( tableReportFormatter.toString< LogHistory >( ErrorLogger::global().getLoggerReportData() ));
+    GEOS_LOG( tableReportFormatter.toString< LogHistory >( ErrorLogger::global().getLoggerHistory() ));
   }
 
   LvArray::system::resetSignalHandling();

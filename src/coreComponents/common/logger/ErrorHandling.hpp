@@ -147,15 +147,15 @@ public:
    * @brief Gets the current logger report data.
    * @return The current log part as a string.
    */
-  LogHistory const & getLoggerReportData() const
-  {return loggerMsgReportData;}
+  LogHistory const & getLoggerHistory() const
+  {return m_history;}
 
   /**
    * @brief Gets the current logger report data.
    * @return The current log part as a string.
    */
-  LogHistory & getLoggerReportData()
-  {return loggerMsgReportData;}
+  LogHistory & getLoggerHistory()
+  {return m_history;}
 
   /**
    * @brief Gets the current log part.
@@ -176,7 +176,7 @@ private:
   /// The error constructed via exceptions
   DiagnosticMsg m_getCurrentExceptionMsg;
   /// The log history associated
-  LogHistory loggerMsgReportData = {};
+  LogHistory m_history = {};
 
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
