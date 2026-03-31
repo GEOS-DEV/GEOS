@@ -153,7 +153,7 @@ public:
   arrayView1d< localIndex > getWellElements() { return m_wellElementIndex; }
 
   /**
-   * @return an array containing the values of the local perforations connected to a reservoir element
+   * @return an array of booleans each value of hasLocalPerforationInReservoir() per perforation.
    */
   array1d< bool > & isReservoirElementFound() { return m_isReservoirElementFound; }
 

@@ -982,9 +982,9 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
 
     if( !globalResElemFound )
     {
-      GEOS_WARNING( GEOS_FMT( "Perforation {} not maching any regions", iperfGlobal ));
+      GEOS_WARNING( GEOS_FMT( "Perforation {} not maching any regions", iperfGlobal ), 
+                    m_perforation.getName(), m_perforation.getDataContext());
     }
-    //set de boolean
   }
 
   // set the size based on the number of perforations matched with local reservoir elements
