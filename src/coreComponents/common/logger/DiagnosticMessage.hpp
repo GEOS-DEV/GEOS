@@ -252,7 +252,7 @@ public:
 
   /**
    * @brief Add stack trace information about the error
-   * @param ossStackTrace stack trace information to add
+   * @param stacktrace stack trace information to add
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addCallStackInfo( std::string_view stacktrace );

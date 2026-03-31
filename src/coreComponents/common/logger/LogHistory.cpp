@@ -61,35 +61,20 @@ bool LogHistory::LogRecord::Key::operator==( Key const & rhs ) const
 
 void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
-  deserializeField( m_key.m_filename, logRecordBytes, end );
-  deserializeField( m_key.m_lineId, logRecordBytes, end );
-  deserializeField( m_value.m_logPart, logRecordBytes, end );
-  deserializeField( m_value.m_msgType, logRecordBytes, end );
+  basicSerialization::deserializeString( m_key.m_filename, logRecordBytes, end );
+  basicSerialization::deserializePrimitive( m_key.m_lineId, logRecordBytes, end );
+  basicSerialization::deserializeString( m_value.m_logPart, logRecordBytes, end );
+  basicSerialization::deserializePrimitive( m_value.m_msgType, logRecordBytes, end );
 
   m_value.m_count = 0;
 }
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  auto const serializePrimitive = [&]( auto const data )
-  {
-    buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
-    buffer_unit_type const * end = begin + sizeof(data);
-    out.insert( out.end(), begin, end );
-  };
-
-  auto const serializeString = [&]( string const & data )
-  {
-    serializePrimitive( data.size());
-    auto * begin = data.data();
-    auto * end = begin + data.size();
-    out.insert( out.end(), begin, end );
-  };
-
-  serializeString( m_key.m_filename );
-  serializePrimitive( m_key.m_lineId );
-  serializeString( m_value.m_logPart );
-  serializePrimitive( m_value.m_msgType );
+  basicSerialization::serializeString( m_key.m_filename, out );
+  basicSerialization::serializePrimitive( m_key.m_lineId, out );
+  basicSerialization::serializeString( m_value.m_logPart, out );
+  basicSerialization::serializePrimitive( m_value.m_msgType, out );
 }
 
 void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
@@ -118,7 +103,7 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
   }
   else
   {
-    it->second.m_count +=  1;
+    it->second.m_count +=  logRecord.m_value.m_count;
   }
 }
 
@@ -127,10 +112,10 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
 size_t LogHistory::LogRecord::getSerializedSize() const
 {
   return
-    sizeOfField( m_key.m_filename ) +
-    sizeOfField( m_key.m_lineId ) +
-    sizeOfField( m_value.m_logPart ) +
-    sizeOfField( m_value.m_msgType );
+    basicSerialization::sizeOfString( m_key.m_filename ) +
+    basicSerialization::sizeOfPrimitive( m_key.m_lineId ) +
+    basicSerialization::sizeOfString( m_value.m_logPart ) +
+    basicSerialization::sizeOfPrimitive( m_value.m_msgType );
 }
 
 void LogHistory::gatherRecordsRank0()
@@ -185,33 +170,35 @@ void LogHistory::gatherRecordsRank0()
 template<>
 string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const
 {
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+
   TableLayout tableLayout;
   tableLayout.addColumn( "Types" );
 
   // fill header
-  for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
   {
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
+  // prepare logHistory row
   stdMap< std::pair< string, MsgType >, integer > countPerPartAndType;
-  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
   CellRow emptyCellRow;
   emptyCellRow.fill( TableData::CellData{CellType::Value, "0"} );
 
   stdMap< string, CellRow > rowByPart;
-
+  // retrive unique message
   for( const auto & [key, values] : logHistory.getDiagnosticHistory())
   {
     auto logPart = values.m_logPart;
     MsgType msgType = values.m_msgType;
-
     countPerPartAndType.get_inserted( std::make_pair( logPart, msgType ))++;
 
     if( rowByPart.find( logPart ) == rowByPart.end())
       rowByPart.get_inserted( logPart ) = emptyCellRow;
   }
 
+  // update rowByPart values
   for( auto & [keyPair, count] : countPerPartAndType )
   {
     auto logPart = std::get< 0 >( keyPair );

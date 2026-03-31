@@ -59,7 +59,81 @@ TableData & TableData::operator=( TableData const & other )
 
 bool TableData::operator<( TableData const & other ) const
 {
-  return m_rows < other.m_rows;
+  if( other.getCellsData().size()!= getCellsData().size())
+    return false;
+
+  for( size_t i = 0; i < getCellsData().size(); i++ )
+  {
+    if( getCellsData()[i].data()->value > other.getCellsData()[i].data()->value )
+      return false;
+  }
+  return true;
+}
+
+bool TableData::operator==( TableData const & comparingTable ) const
+{
+  if( comparingTable.getCellsData().size()!= getCellsData().size())
+    return false;
+  for( size_t i = 0; i < getCellsData().size(); i++ )
+  {
+    if( getCellsData()[i].data()->value  != comparingTable.getCellsData()[i].data()->value )
+      return false;
+  }
+  return true;
+}
+
+void TableData::CellData::serialize( stdVector< buffer_unit_type > & out ) const
+{
+  basicSerialization::serializePrimitive( type, out );
+  basicSerialization::serializeString( value, out );
+}
+
+
+size_t TableData::CellData::getSerializedSize() const
+{
+  return basicSerialization::sizeOfPrimitive( type ) + basicSerialization::sizeOfString( value );
+}
+
+size_t TableData::getSerializedSize() const
+{
+  size_t totalSize  =0;
+
+  if( m_rows.empty())
+    return totalSize;
+
+  for( auto & row : m_rows )
+  {
+    size_t rowSize = 0;
+    for( auto & cell : row )
+    {
+      rowSize += cell.getSerializedSize();
+    }
+    totalSize += sizeof(size_t) + rowSize;
+  }
+  return totalSize;
+}
+
+void TableData::serialize( stdVector< buffer_unit_type > & serializedTableData ) const
+{
+  if( m_rows.empty())
+    return;
+
+  for( auto & row : m_rows )
+  {
+    { // pack row size;
+      size_t rowSize = 0;
+      for( auto const & cell : row )
+        rowSize += cell.getSerializedSize();
+      basicSerialization::serializePrimitive( rowSize, serializedTableData );
+    }
+
+    { // pack cells
+      for( auto const & cell : row )
+      {
+        cell.serialize( serializedTableData );
+      }
+    }
+  }
 }
 
 void TableData::addSeparator()
@@ -173,4 +247,63 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
 
   return tableData1D;
 }
+
+void basicSerialization::serializeString ( string const & data, stdVector< buffer_unit_type > & out )
+{
+  basicSerialization::serializePrimitive( data.size(), out );
+  auto * begin = data.data();
+  auto * end = begin + data.size();
+  out.insert( out.end(), begin, end );
+}
+
+void basicSerialization::deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+{
+  string::size_type strSize = 0;
+  basicSerialization::deserializePrimitive( strSize, ptr, end );
+  if( static_cast< long >(strSize) > std::distance( ptr, end ) )
+  {
+    throw std::runtime_error( "buffer overflow reading string" );
+  }
+  str.assign( ptr, ptr + strSize );
+  ptr += str.size();
+}
+
+bool tableDataSorting::positiveNumberStringComp( string_view s1, string_view s2 )
+{
+  auto split = []( string_view s, string & intPart, string & decPart )
+  {
+    size_t dotPos = s.find( '.' );
+    if( dotPos == string::npos )
+    {
+      intPart = s;
+      decPart = "";
+    }
+    else
+    {
+      intPart = s.substr( 0, dotPos );
+      decPart = s.substr( dotPos + 1 );
+    }
+  };
+
+  string s1Int, s1Dec, s2Int, s2Dec;
+  split( s1, s1Int, s1Dec );
+  split( s2, s2Int, s2Dec );
+
+  if( s1Int.length() != s2Int.length())
+    return s1Int.length() < s2Int.length();
+
+  if( s1Int != s2Int )
+    return s1Int < s2Int;
+
+  size_t minLen = std::min( s1Dec.length(), s2Dec.length());
+  for( size_t i = 0; i < minLen; ++i )
+  {
+    if( s1Dec[i] != s2Dec[i] )
+      return s1Dec[i] < s2Dec[i];
+  }
+
+
+  return false;
+}
+
 }

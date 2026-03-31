@@ -173,12 +173,10 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  {
-    LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
-    meshGenerationLog.begin();
-    generateMesh();
-    meshGenerationLog.end();
-  }
+  LogPart meshGenerationLog( "Mesh Generation", MpiWrapper::commRank() == 0 );
+  meshGenerationLog.begin();
+  generateMesh();
+  meshGenerationLog.end();
 
   // initialize_postMeshGeneration();
   {
@@ -192,12 +190,10 @@ void ProblemManager::problemSetup()
 
   initialize();
 
-  {
-    LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
-    importFieldsLog.begin();
-    importFields();
-    importFieldsLog.end();
-  }
+  LogPart importFieldsLog( "Import Fields", MpiWrapper::commRank() == 0 );
+  importFieldsLog.begin();
+  importFields();
+  importFieldsLog.end();
 }
 
 

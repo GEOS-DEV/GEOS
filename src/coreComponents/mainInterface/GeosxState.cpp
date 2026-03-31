@@ -127,7 +127,7 @@ bool GeosxState::initializeDataRepository()
   Timer timer( m_initTime );
 
   GEOS_THROW_IF_NE( m_state, State::UNINITIALIZED, geos::LogicError );
-  LogPart postProcessiveLog( "Parsing", MpiWrapper::commRank() == 0 );
+  LogPart postProcessiveLog( "Input Files Processing", MpiWrapper::commRank() == 0 );
   postProcessiveLog.begin();
   getProblemManager().parseCommandLineInput();
 

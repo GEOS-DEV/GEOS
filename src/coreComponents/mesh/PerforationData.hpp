@@ -152,6 +152,23 @@ public:
    */
   arrayView1d< localIndex > getWellElements() { return m_wellElementIndex; }
 
+  /**
+   * @return an array of booleans each value of hasLocalPerforationInReservoir() per perforation.
+   */
+  array1d< bool > & isReservoirElementFound() { return m_isReservoirElementFound; }
+
+  /**
+   * @return an immutable accessor to an array containing the boolean values of the local perforations
+   * connected to a reservoir element
+   */
+  arrayView1d< bool const > isReservoirElementFound() const { return m_isReservoirElementFound; }
+
+  /**
+   * @param perfoLocalIndex Local index of the perforation
+   * @return  Whether the reservoir element associated with this local perforation is found.
+   */
+  bool hasLocalPerforationInReservoir( localIndex perfoLocalIndex ) const
+  { return m_isReservoirElementFound[perfoLocalIndex]; }
 
   /**
    * @brief Provide an immutable accessor to a const perforation-to-well-element connectivity.
@@ -341,6 +358,9 @@ private:
 
   /// Global indices of reservoir cell containing perforation
   array1d< globalIndex > m_reservoirElementGlobalIndex;
+
+  /// Vector indicating if the local perforation is connected to a reservoir element
+  array1d< bool > m_isReservoirElementFound;
 
   /// Location of the perforations
   array2d< real64 > m_location;
