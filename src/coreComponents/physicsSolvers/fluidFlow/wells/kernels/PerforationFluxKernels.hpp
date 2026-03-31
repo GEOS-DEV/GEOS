@@ -786,12 +786,15 @@ public:
           // compute the phase flux and derivatives using upstream cell mobility
           eflux = resPhaseMobE * potDiff;
           real64 dEFlux[2][CP_Deriv::nDer]{};
+          dEFlux[TAG::WELL][CP_Deriv::dP] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dP];
+          dEFlux[TAG::WELL][CP_Deriv::dT] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dT];
           // Handles all dependencies
           for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
           {
             dEFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMobE * dPotDiff[TAG::RES][jc];
             m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = resPhaseMobE * dPotDiff[TAG::WELL][jc];
           }
+
           m_energyPerfFlux[iperf] += resPhaseVolFrac * eflux;
           // energy equation derivatives WRT res P & T
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dEFlux[TAG::RES][CP_Deriv::dP] * resPhaseVolFrac +

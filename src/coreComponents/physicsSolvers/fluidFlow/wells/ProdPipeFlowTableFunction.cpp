@@ -102,7 +102,7 @@ void ProdPipeFlowTableFunction::postInputInitialization()
       }
     }
   };
-  std::cout << " rate " << m_rate.size() << " whp " << m_whp.size() << " wfr " << m_wfr.size() << " gfr " << m_gfr.size() <<std::endl;
+
   checkNotDecreasing( m_rate, getRateType());
   checkNotDecreasing( m_whp, "wellHeadPressure" );
   checkNotDecreasing( m_wfr, getWaterFractionType());
@@ -199,7 +199,7 @@ void ProdPipeFlowTableFunction::initializeFunction()
   setTableCoordinates( nDims, nOps, axisCoord, axisPointsr );
   setTableValues( m_bhp );
   MultivariableNonuniformTableFunction::initializeFunction();
-  std::cout << " bhp table min max " << *std::min_element( m_bhp.begin(), m_bhp.end()) << " " << *std::max_element( m_bhp.begin(), m_bhp.end()) << std::endl;
+  GEOS_LOG_RANK( GEOS_FMT( "{}: flow table min and max BHP  {} Pa   {} Pa", getName(), *std::min_element( m_bhp.begin(), m_bhp.end()), *std::max_element( m_bhp.begin(), m_bhp.end()) ) );
 
   m_tableFunction0->setTableCoordinates( axisCoordinates, { units::Dimensionless } );
   m_tableFunction0->setTableValues( m_bhp, units::Dimensionless );
@@ -304,37 +304,19 @@ void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRat
   {
     wct = phaseRates[2]/(phaseRates[0]+phaseRates[2]);
   }
-#if 0
-  if( wct < m_wfr[0] )
-  {
-    wct = m_wfr[0] + 0.00000001;
-  }
-  else if( wct > m_wfr[ m_wfr.size() -1 ] )
-  {
-    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
-  }
-#endif
+
   real64 gor = 0;
   if( phaseRates[1]*m_sign  > 0 )
     gor =  phaseRates[1]/(phaseRates[0] );
-#if 0
-  if( gor < m_gfr[0] )
-  {
-    gor = m_gfr[0]+   0.00000001;
-  }
-  else if( gor > m_gfr[ m_gfr.size() -1 ] )
-  {
-    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
-  }
-#endif
-  //gor = m_gfr[0];
+
+
   array1d< real64 > table_coords( 5 );
 
   array2d< real64 > table_derv( 1, 5 );
   table_coords[0]=liq*m_sign; // gas oil ratio
   table_coords[1]=whp;  // well head pressure
   table_coords[2]=wct;  // water cut
-  table_coords[3]=gor; // well head pressure
+  table_coords[3]=gor; // gas oil ratio
   table_coords[4]=gasLift; // gas lift rate
   array1d< real64 > table_coordsr( 5 );
 
@@ -344,15 +326,9 @@ void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRat
   }
   if( solveStat == 0 )
   {
-    std::cout << "ProdPipeFlowTableFunction::calculateBHP input coords = " << table_coordsr << std::endl;
-
     array1d< real64 > table_bhp( 1 );
     kernel.compute( table_coordsr, table_bhp, table_derv );
     real64 bhpbt = table_bhp[0];
-    // std::cout << " ProdPipeFlowTableFunction::calculateBHP initial bhp = " << bhp << " bhp calc " << table_bhp[0] << " " << table_coordsr
-    // <<std::endl;
-    std::cout << "ProdPipeFlowTableFunction::calculateBHP 0  output bhp = " << bhp <<    " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << table_derv[0][3]<<
-      std::endl;
     bhp=bhpbt;
   }
   else
@@ -361,8 +337,6 @@ void ProdPipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRat
     real64 derivatives[5]{};
     table_bhp[0] = kernelWrapper.compute( table_coords, derivatives );
     bhp = table_bhp[0];
-    std::cout << "ProdPipeFlowTableFunction::calculateBHP 1 output bhp = " << bhp <<  " " <<  " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << " " << derivatives[1] <<
-      std::endl;
   }
   if( whp >m_whp[m_whp.size()-1] )
     solveStat=2;
@@ -383,7 +357,7 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
                                                                    getAxisHypercubeMults(),
                                                                    getHypercubeData()
                                                                    );
-  TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
+  //TableFunction::KernelWrapper kernelWrapper = m_tableFunction0->createKernelWrapper();
   //solveStat = 0;  // Assume success
   // liq(oil)=0 vap = 1 wat = 2
   //real64 totalVolumeRate = 0.0;
@@ -406,33 +380,13 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
   {
     wct = phaseRates[2]/(phaseRates[0]+phaseRates[2]);
   }
-#if 0
-  if( wct < m_wfr[0] )
-  {
-    wct = m_wfr[0] + 0.00000001;
-  }
-  else if( wct > m_wfr[ m_wfr.size() -1 ] )
-  {
-    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
-  }
-#endif
   real64 gor = 0;
   if( phaseRates[1]*m_sign  > 0 )
     gor =  phaseRates[1]/(phaseRates[0] );
-#if 0
-  if( gor <  m_gfr[0] )
-  {
-    gor = m_gfr[0]+   0.00000001;
-  }
-  else if( gor > m_gfr[ m_gfr.size() -1 ] )
-  {
-    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
-  }
-#endif
-  std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP  bhp " << bhp << " liq " << liq << " wct " << wct << " gor " << gor << std::endl;
+
 #if 1
   array1d< real64 > table_coords( 5 );
-  real64 derivatives[5]{};
+  //real64 derivatives[5]{};
   array1d< real64 > table_bhp( 1 );
   array2d< real64 > table_derv( 1, 5 );
   table_coords[4]=liq*m_sign; // gas oil ratio
@@ -496,8 +450,7 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
       //bhpN = kernelWrapper.compute( table_coords, derivatives );
       whpN = m_whp[0] + ( bhp - bhp0 )*( m_whp[1] - whp0 )/( bhpN - bhp0 );
       //whpN = m_whp[0] + ( bhp - bhp0 )*table_derv[0][3];
-      std::cout << wellName << " ProdPipeFlowTableFunction::calculateWHP extrapolate at low whp = " << whpN << " liq = " << liq*m_sign << " bhp "<< bhp << " bhpN " << bhpN << " wct = " << wct <<
-        " gor = " << gor << std::endl;
+
       whp=whpN;
       solveStat=0;
       return;
@@ -611,38 +564,6 @@ void ProdPipeFlowTableFunction::calculateWHP( const std::string & wellName, real
   }
 #endif
   return;
-
-  std::cout << "ProdPipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp0 << " wct = " << wct << " gor = " << gor << std::endl;
-
-  // array1d< real64 > table_bhp( 1 );
-
-  //kernel.compute( table_coords, table_bhp, derivs );
-  bhp0 = kernelWrapper.compute( table_coords, derivatives );
-  double whpn = whp0 + 2e5;
-  table_coords[1]= whpn;
-
-  double bhpn =  kernelWrapper.compute( table_coords, derivatives );
-  std::cout << " residual bhp = " <<  bhp0 - bhp << std::endl;
-  double dpdwhp = ( bhpn - bhp0 )/2e5;
-  integer const maxIters=20;
-  real64 const tol = 1e-6;
-  integer iter = 0;
-
-  while( iter < maxIters && std::abs( bhpn - bhp ) > tol )
-  {
-    // update whp
-    dpdwhp = ( bhpn - bhp0 ) / (whpn - whp0);
-    table_coords[1] -= dpdwhp;
-    bhp0=bhpn;
-    whp0 =whpn;
-    whpn = table_coords[1];
-    bhpn = kernelWrapper.compute( table_coords, derivatives );
-    std::cout << " ProdPipeFlowTableFunction::calculateWHP iter = " << iter << " bhp " << bhpn << " whp = " << whpn <<  " derive " << dpdwhp<< " residual = " << bhpn - bhp0 << std::endl;
-
-    ++iter;
-  }
-  whp0 = table_coords[1];
-  std::cout << "ProdPipeFlowTableFunction::calculateWHP output whp = " << whp0 << " liq = " << liq*m_sign << " bhp " << bhpn << " wct = " << wct << " gor = " << gor << std::endl;
 }
 
 void ProdPipeFlowTableFunction::writeTable() const
@@ -651,8 +572,6 @@ void ProdPipeFlowTableFunction::writeTable() const
   std::ofstream of;
   std::string filename12 = getTableName() + ".csv";
   of.open( filename12 );
-
-
 
   MultivariableNonuniformTableFunctionStaticKernel< 5, 1 > kernel( getAxisCoordinates(),
                                                                    getAxisPoints(),
