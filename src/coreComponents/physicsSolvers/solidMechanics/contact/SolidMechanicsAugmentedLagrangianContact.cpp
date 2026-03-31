@@ -54,9 +54,9 @@ using namespace dataRepository;
 using namespace fields;
 
 // Workaround for nvcc bug: forDiscretizationOnMeshTargets lambdas receive
-// string_array const & (= std::vector<std::string>) as a parameter.  When the
+// string_array const & (= stdVector<std::string>) as a parameter.  When the
 // lambda body also contains device kernel launches, nvcc erroneously tries to
-// generate a device-compatible destructor for std::vector<std::string> even
+// generate a device-compatible destructor for stdVector<std::string> even
 // though it is a reference parameter whose lifetime is not managed by the lambda.
 GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
 

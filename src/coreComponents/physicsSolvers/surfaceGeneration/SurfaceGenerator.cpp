@@ -4402,25 +4402,25 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   }
 
   // Union-Find data structure (map-based so we don't need a dense array).
-  // std::map is used instead of std::unordered_map to guarantee deterministic
+  // stdMap is used instead of std::unordered_map to guarantee deterministic
   // iteration order across platforms (libstdc++ vs libc++) and MPI runs.
-  std::map< localIndex, localIndex > parent;
-  std::map< localIndex, localIndex > rank;
+  stdMap< localIndex, localIndex > parent;
+  stdMap< localIndex, localIndex > rank;
 
   for( localIndex const fi : allFaces )
   {
-    parent[fi] = fi;
-    rank[fi] = 0;
+    parent.get_inserted( fi ) = fi;
+    rank.get_inserted( fi ) = 0;
   }
 
   // Find with path compression.
   std::function< localIndex( localIndex ) > findRoot = [&]( localIndex x ) -> localIndex
   {
-    if( parent[x] != x )
+    if( parent.at( x ) != x )
     {
-      parent[x] = findRoot( parent[x] );
+      parent.get_inserted( x ) = findRoot( parent.at( x ) );
     }
-    return parent[x];
+    return parent.at( x );
   };
 
   // Union by rank.
@@ -4430,11 +4430,11 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
     localIndex rb = findRoot( b );
     if( ra == rb )
       return;
-    if( rank[ra] < rank[rb] )
+    if( rank.at( ra ) < rank.at( rb ) )
       std::swap( ra, rb );
-    parent[rb] = ra;
-    if( rank[ra] == rank[rb] )
-      ++rank[ra];
+    parent.get_inserted( rb ) = ra;
+    if( rank.at( ra ) == rank.at( rb ) )
+      ++rank.get_inserted( ra );
   };
 
   // Two ruptured faces sharing a node belong to the same fracture set.
@@ -4456,9 +4456,9 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   }
 
   // Gather connected components.
-  // std::map guarantees deterministic iteration order (by sorted key),
+  // stdMap guarantees deterministic iteration order (by sorted key),
   // so the result vector is built in the same order on every platform/rank.
-  std::map< localIndex, std::set< localIndex > > components;
+  stdMap< localIndex, std::set< localIndex > > components;
   for( localIndex const fi : allFaces )
   {
     components[findRoot( fi )].insert( fi );
