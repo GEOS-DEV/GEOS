@@ -1,4 +1,3 @@
-
 Notes
 ==========
 
@@ -6,9 +5,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4007 (2026-03-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16136-c06d5b3.tar.gz>
+PR #4007 (2026-04-XX) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests->
 =====================
 Add XML input parameter: "hypredriveInputFile"
+
+PR #3957 (2026-03-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3957-16171-da51804.tar.gz>
+=====================
+Add checkEulerCharacteristic option, rebaseline due to new input.
 
 PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3967-16106-c0f34de.tar.gz>
 =====================
