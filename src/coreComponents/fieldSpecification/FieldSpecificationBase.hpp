@@ -506,6 +506,24 @@ public:
 
   /**
    * Mutator
+   * @param[in] component The component index 
+   */
+  void setComponent( int component )
+  {
+    m_component = component;
+  }
+
+  /**
+   * Mutator
+   * @param[in] functionName The name of the function
+   */
+  void setFunctionName( string const & functionName )
+  {
+    m_functionName = functionName;
+  }
+
+  /**
+   * Mutator
    * @param[in] isInitialCondition Logical value to indicate if it is an initial condition
    */
   void initialCondition( bool isInitialCondition )

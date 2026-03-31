@@ -34,6 +34,7 @@ set( fieldSpecification_headers
      AquiferBoundaryCondition.hpp
      PerfectlyMatchedLayer.hpp
      PermeabilitySpecification.hpp
+     PermeabilitySpecificationFactory.hpp
    )
 
 #
@@ -50,6 +51,7 @@ set( fieldSpecification_sources
      AquiferBoundaryCondition.cpp
      PerfectlyMatchedLayer.cpp
      PermeabilitySpecification.cpp
+     PermeabilitySpecificationFactory.cpp
    )
 
 set( dependencyList ${parallelDeps} mesh )
