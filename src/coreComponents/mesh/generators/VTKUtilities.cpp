@@ -1445,11 +1445,35 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
   int const numParts = LvArray::integerConversion< int >( boundingBoxes.size() );
   int const thisRank = MpiWrapper::commRank();
 
-  // Inflate boxes to detect intersections more reliably
-  double constexpr inflateFactor = 1.01;
+  // Inflate boxes to detect intersections more reliably.
+  //
+  // Pure relative scaling (ScaleAboutCenter) fails for small or thin partitions in Release builds:
+  // two face-adjacent partitions share an exact planar boundary, so their bounding boxes only
+  // *touch* rather than overlap. After scaling by 1% about the center, the expanded extents of
+  // one box may still not penetrate the other in that dimension if the box is very thin relative
+  // to floating-point rounding under -O2/-O3.
+  //
+  // Fix: compute a per-box absolute inflation in each dimension as
+  //   max( relative_expand, absoluteMinExpand )
+  // where absoluteMinExpand is a small fixed distance that guarantees overlap even for
+  // degenerate (zero-length) extents along a split plane.
+  double constexpr relativeExpandFactor = 0.01; // 1% of the box length in each dimension
+  double constexpr absoluteMinExpand    = 1.0e-6; // absolute fallback (mesh units)
+
   for( vtkBoundingBox & box : boundingBoxes )
   {
-    box.ScaleAboutCenter( inflateFactor );
+    double const * minPt = box.GetMinPoint();
+    double const * maxPt = box.GetMaxPoint();
+    double newMin[3], newMax[3];
+    for( int d = 0; d < 3; ++d )
+    {
+      double const half = 0.5 * ( maxPt[d] - minPt[d] );
+      double const expand = std::max( relativeExpandFactor * half, absoluteMinExpand );
+      newMin[d] = minPt[d] - expand;
+      newMax[d] = maxPt[d] + expand;
+    }
+    box.SetMinPoint( newMin );
+    box.SetMaxPoint( newMax );
   }
 
   stdVector< int > neighbors;
