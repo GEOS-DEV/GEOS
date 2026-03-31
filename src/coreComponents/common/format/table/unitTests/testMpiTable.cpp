@@ -102,7 +102,7 @@ TEST( testMpiTables, testDifferentRankData )
   int const rankId = MpiWrapper::commRank();
   int const nbRanks = MpiWrapper::commSize();
   ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
-  
+
   for( TestCase const & testCase: testCases )
   {
     TableLayout const layout = TableLayout().

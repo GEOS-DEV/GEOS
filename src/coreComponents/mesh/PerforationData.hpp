@@ -153,12 +153,13 @@ public:
   arrayView1d< localIndex > getWellElements() { return m_wellElementIndex; }
 
   /**
-   * @return an array containing the value of the local perforations connected to a reservoir element
+   * @return an array containing the values of the local perforations connected to a reservoir element
    */
   array1d< bool > & isReservoirElementFound() { return m_isReservoirElementFound; }
 
   /**
-   * @return an immutable accessor to an array containing the value of the local perforations connected to a reservoir element
+   * @return an immutable accessor to an array containing the boolean values of the local perforations
+   * connected to a reservoir element
    */
   arrayView1d< bool const > isReservoirElementFound() const { return m_isReservoirElementFound; }
 

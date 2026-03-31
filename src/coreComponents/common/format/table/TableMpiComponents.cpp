@@ -80,7 +80,7 @@ void TableTextMpiFormatter::gatherAndOutputTableDataInRankOrder( std::ostream & 
   string const rankStr = !status.m_isMasterRank && status.m_isContributing ? localStringStream.str() : "";
   stdVector< string > strsAccrossRanks;
 
-  MpiWrapper::gatherStringOnRank0( rankStr,  [&]( string_view str ){
+  MpiWrapper::gatherStringOnRank0( rankStr, [&]( string_view str ){
     status.m_hasContent = true;
     strsAccrossRanks.emplace_back( str );
   } );
