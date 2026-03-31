@@ -111,13 +111,6 @@ private:
                               Status const & status ) const;
 
   /**
-   * @brief Parse a string row to a TablaData cells.
-   * @param rowString The string row string to parse.
-   * @return The parsed row as a vector of CellData.
-   */
-  stdVector< TableData::CellData > parseStringRow( string_view rowString ) const;
-
-  /**
    * @brief Gather all the TableData to the rank 0.
    * @param localTableData The local TableData to send to rank 0;
    */

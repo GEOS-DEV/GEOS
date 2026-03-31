@@ -235,32 +235,43 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     WellElementSubRegion const &
     wellSubRegion = wellRegion.getSubRegion< WellElementSubRegion >( wellRegion.getSubRegionName() );
 
-    PerforationData const * wellSubRegionPerforationData= wellSubRegion.getPerforationData();
-    arrayView2d< const real64 > wsrPerfLocation = wellSubRegionPerforationData->getLocation();
+    PerforationData const * perforationData= wellSubRegion.getPerforationData();
+    arrayView2d< const real64 > wsrPerfLocation = perforationData->getLocation();
     TableData localPerfoData;
-    for( globalIndex iperfLocal = 0; iperfLocal < wellSubRegionPerforationData->getNumPerforationsGlobal(); ++iperfLocal )
+    for( globalIndex iperfLocal = 0; iperfLocal < perforationData->getNumPerforationsGlobal(); ++iperfLocal )
     {
-      integer const cellId = wellSubRegionPerforationData->getReservoirElementGlobalIndex()[iperfLocal];
-      arrayView1d< globalIndex const > const globalIperf =  wellSubRegionPerforationData->localToGlobalMap();
+      arrayView1d< globalIndex const > const globalIperf =  perforationData->localToGlobalMap();
 
       array1d< integer > localCoords;
-      if( cellId != -1 )
+      bool const localResElementFound =  perforationData->hasLocalPerforationInReservoir( iperfLocal );
+      bool const globalResElemFound =(bool)MpiWrapper::allReduce(
+        (integer)localResElementFound, MpiWrapper::Reduction::LogicalOr );
+      if( !globalResElemFound )
       {
-        auto const & meshElems = wellSubRegionPerforationData->getMeshElements();
+        if( MpiWrapper::commRank() == 0 )
+          localPerfoData.addRow( globalIperf[iperfLocal], "NONE", localCoords,
+                                 "NONE", "NONE", "NONE", rankId );
+      }
+      else if( localResElementFound )
+      {
+        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+        integer const cellId = perforationData->getReservoirElementGlobalIndex()[iperfLocal];
+        auto const & meshElems = perforationData->getMeshElements();
         localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
         localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
 
         ElementRegionBase const & region =
           meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
 
-        ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
-        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
+        ElementSubRegionBase const & subRegion =
+          region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
         localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
         localPerfoData.addRow( globalIperf[iperfLocal], globalWellElemIndices, localCoords,
                                region.getName(), subRegion.getName(), cellId, rankId );
       }
+
     }
 
     integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
@@ -280,7 +291,7 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       formatter.setSortingFunc(
         []( std::vector< TableData::CellData > const & row1,
             std::vector< TableData::CellData > const & row2 ) {
-        return tableDataSorting::positiveNumberStringComp( row1[1].value, row2[1].value );
+        return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
       } );
 
       std::ostringstream outputStream;

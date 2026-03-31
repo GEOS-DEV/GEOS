@@ -99,14 +99,12 @@ TEST( testMpiTables, testDifferentRankData )
       "-------------------------------------------\n"
     },
   };
+  int const rankId = MpiWrapper::commRank();
+  int const nbRanks = MpiWrapper::commSize();
+  ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
+
   for( TestCase const & testCase: testCases )
   {
-    int const rankId = MpiWrapper::commRank();
-    int const nbRanks = MpiWrapper::commSize();
-    ASSERT_EQ( nbRanks, 4 ) << "This unit test cases are designed for exactly 4 ranks to check row ordering consistency.";
-
-
-
     TableLayout const layout = TableLayout().
                                  setTitle( "Summary of negative pressure elements" ).
                                  addColumns( { "Global Id", "pressure [Pa]" } ).
@@ -148,9 +146,9 @@ TEST( testMpiTables, testSortingMethod )
   TestCase const testCase =
   {
     {   // m_ranksValues: in this test, rank 2 has no value
-      { {2, 0.624}, {3, 0.791} },
+      {  {3, 0.791}, {2, 0.624}},
       { {1, 0.502} },
-      { {4, 0.243}, {5, 0.804}, {6, 0.302} },
+      { {4, 0.243}, {6, 0.302}, {5, 0.804} },
       {},
     },
     "\n"   // m_expectedResult

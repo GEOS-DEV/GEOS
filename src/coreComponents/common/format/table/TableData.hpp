@@ -373,7 +373,7 @@ void deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit
 
 /**
  * @brief Reads a string value from the buffer and advances the pointer.
- * @param data Destination variable.
+ * @param str Destination string variable.
  * @param ptr Current read pointer (advanced by sizeof(string)).
  * @param end Safety: maximum buffer limit.
  */
