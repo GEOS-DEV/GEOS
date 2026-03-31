@@ -61,20 +61,20 @@ bool LogHistory::LogRecord::Key::operator==( Key const & rhs ) const
 
 void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
-  serialBuffer::deserializeString( m_key.m_filename, logRecordBytes, end );
-  serialBuffer::deserializePrimitive( m_key.m_lineId, logRecordBytes, end );
-  serialBuffer::deserializeString( m_value.m_logPart, logRecordBytes, end );
-  serialBuffer::deserializePrimitive( m_value.m_msgType, logRecordBytes, end );
+  basicSerialization::deserializeString( m_key.m_filename, logRecordBytes, end );
+  basicSerialization::deserializePrimitive( m_key.m_lineId, logRecordBytes, end );
+  basicSerialization::deserializeString( m_value.m_logPart, logRecordBytes, end );
+  basicSerialization::deserializePrimitive( m_value.m_msgType, logRecordBytes, end );
 
   m_value.m_count = 0;
 }
 
 void LogHistory::LogRecord::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  serialBuffer::serializeString( m_key.m_filename, out );
-  serialBuffer::serializePrimitive( m_key.m_lineId, out );
-  serialBuffer::serializeString( m_value.m_logPart, out );
-  serialBuffer::serializePrimitive( m_value.m_msgType, out );
+  basicSerialization::serializeString( m_key.m_filename, out );
+  basicSerialization::serializePrimitive( m_key.m_lineId, out );
+  basicSerialization::serializeString( m_value.m_logPart, out );
+  basicSerialization::serializePrimitive( m_value.m_msgType, out );
 }
 
 void LogHistory::recordDiagnostic( DiagnosticMsg const & msgType )
@@ -112,10 +112,10 @@ void LogHistory::insertDiagnosticReport( LogRecord const & logRecord )
 size_t LogHistory::LogRecord::getSerializedSize() const
 {
   return
-    serialBuffer::sizeOfString( m_key.m_filename ) +
-    serialBuffer::sizeOfPrimitive( m_key.m_lineId ) +
-    serialBuffer::sizeOfString( m_value.m_logPart ) +
-    serialBuffer::sizeOfPrimitive( m_value.m_msgType );
+    basicSerialization::sizeOfString( m_key.m_filename ) +
+    basicSerialization::sizeOfPrimitive( m_key.m_lineId ) +
+    basicSerialization::sizeOfString( m_value.m_logPart ) +
+    basicSerialization::sizeOfPrimitive( m_value.m_msgType );
 }
 
 void LogHistory::gatherRecordsRank0()

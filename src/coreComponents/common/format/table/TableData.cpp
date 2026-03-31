@@ -84,14 +84,14 @@ bool TableData::operator==( TableData const & comparingTable ) const
 
 void TableData::CellData::serialize( stdVector< buffer_unit_type > & out ) const
 {
-  serialBuffer::serializePrimitive( type, out );
-  serialBuffer::serializeString( value, out );
+  basicSerialization::serializePrimitive( type, out );
+  basicSerialization::serializeString( value, out );
 }
 
 
 size_t TableData::CellData::getSerializedSize() const
 {
-  return serialBuffer::sizeOfPrimitive(type) + serialBuffer::sizeOfString( value );
+  return basicSerialization::sizeOfPrimitive(type) + basicSerialization::sizeOfString( value );
 }
 
 size_t TableData::getSerializedSize() const
@@ -124,7 +124,7 @@ void TableData::serialize( stdVector< buffer_unit_type > & serializedTableData )
       size_t rowSize = 0;
       for( auto const & cell : row )
         rowSize += cell.getSerializedSize();
-      serialBuffer::serializePrimitive( rowSize, serializedTableData );
+      basicSerialization::serializePrimitive( rowSize, serializedTableData );
     }
 
     { // pack cells
@@ -248,18 +248,18 @@ TableData2D::TableDataHolder TableData2D::buildTableData( string_view targetUnit
   return tableData1D;
 }
 
-void serialBuffer::serializeString ( string const & data, stdVector< buffer_unit_type > & out )
+void basicSerialization::serializeString ( string const & data, stdVector< buffer_unit_type > & out )
 {
-  serialBuffer::serializePrimitive( data.size(), out );
+  basicSerialization::serializePrimitive( data.size(), out );
   auto * begin = data.data();
   auto * end = begin + data.size();
   out.insert( out.end(), begin, end );
 }
 
-void serialBuffer::deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+void basicSerialization::deserializeString( string & str, buffer_unit_type const * & ptr, buffer_unit_type const * end )
 {
   string::size_type strSize = 0;
-  serialBuffer::deserializePrimitive( strSize, ptr, end );
+  basicSerialization::deserializePrimitive( strSize, ptr, end );
   if( std::distance( ptr, end ) < (long) strSize )
   {
     throw std::runtime_error( "Buffer overflow reading string" );

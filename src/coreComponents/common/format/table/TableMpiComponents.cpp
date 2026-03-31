@@ -145,15 +145,15 @@ TableData TableTextMpiFormatter::gatherTableDataRank0( TableData const & localTa
         while( startBuff < endRowsBuff )
         {
           size_t byteFromThisRow = 0;
-          serialBuffer::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
+          basicSerialization::deserializePrimitive( byteFromThisRow, startBuff, endRowsBuff );
           buffer_unit_type const * endRowBuff= startBuff + byteFromThisRow;
           stdVector< TableData::CellData > row;
           while( startBuff < endRowBuff )
           {
             CellType cellType;
-            serialBuffer::deserializePrimitive( cellType, startBuff, endRowBuff );
+            basicSerialization::deserializePrimitive( cellType, startBuff, endRowBuff );
             string cellValue;
-            serialBuffer::deserializeString( cellValue, startBuff, endRowBuff );
+            basicSerialization::deserializeString( cellValue, startBuff, endRowBuff );
             row.push_back( {cellType, cellValue} );
           }
           tableDataGathered.addRow( row );

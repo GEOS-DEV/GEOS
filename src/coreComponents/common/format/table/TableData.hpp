@@ -326,7 +326,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
 }
 
 // Serialisation/ Deserialisation utils for common
-namespace serialBuffer
+namespace basicSerialization
 {
 
 /**
@@ -393,7 +393,7 @@ bool positiveNumberStringComp( string_view a, string_view b );
 }
 
 template< typename T >
-void serialBuffer::serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
+void basicSerialization::serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
 {
   static_assert( std::is_trivially_copyable_v< T > );
   buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
@@ -402,7 +402,7 @@ void serialBuffer::serializePrimitive ( T const data, stdVector< buffer_unit_typ
 }
 
 template< typename T >
-void serialBuffer::deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+void basicSerialization::deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
 {
   static_assert( std::is_trivially_copyable_v< T > );
   if( ptr + sizeof(T)> end )
