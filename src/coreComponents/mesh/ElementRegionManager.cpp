@@ -243,20 +243,18 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       arrayView1d< globalIndex const > const globalIperf =  perforationData->localToGlobalMap();
 
       array1d< integer > localCoords;
-      bool resElemFound =
-        (bool)MpiWrapper::allReduce( (integer) perforationData->hasLocalPerforationInReservoir( iperfLocal ),
-                                     MpiWrapper::Reduction::LogicalOr );
-
-      integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
-
-      if( !resElemFound )
+      bool const localResElementFound =  perforationData->hasLocalPerforationInReservoir( iperfLocal );
+      bool const globalResElemFound =(bool)MpiWrapper::allReduce(
+        (integer)localResElementFound, MpiWrapper::Reduction::LogicalOr );
+      if( !globalResElemFound )
       {
         if( MpiWrapper::commRank() == 0 )
-          localPerfoData.addRow( globalIperf[iperfLocal], globalWellElemIndices, localCoords,
+          localPerfoData.addRow( globalIperf[iperfLocal], "NONE", localCoords,
                                  "NONE", "NONE", "NONE", rankId );
       }
-      else if( perforationData->hasLocalPerforationInReservoir( iperfLocal ))
+      else if( localResElementFound )
       {
+        integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
         integer const cellId = perforationData->getReservoirElementGlobalIndex()[iperfLocal];
         auto const & meshElems = perforationData->getMeshElements();
         localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
