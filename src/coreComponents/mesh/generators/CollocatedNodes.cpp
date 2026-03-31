@@ -44,7 +44,9 @@ CollocatedNodes::CollocatedNodes( string const & faceBlockName,
     {
       GEOS_LOG_RANK_0( " - " << faceMesh->GetPointData()->GetArrayName( i ) << " of type '" << faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() << "'" );
     }
-    GEOS_ERROR( "Could not find valid field \"" << COLLOCATED_NODES << "\" for fracture \"" << faceBlockName << "\"." );
+    GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\".",
+                          COLLOCATED_NODES,
+                          faceBlockName ) );
   }
 
   if( collocatedNodes )

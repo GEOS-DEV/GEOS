@@ -41,8 +41,9 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
 void BartonBandis::postInputInitialization()
 {
   GEOS_THROW_IF( m_referenceNormalStress <= 0.0,
-                 getFullName() << ": The provided reference stress is zero or negative. Value: " << m_referenceNormalStress,
-                 InputError );
+                 GEOS_FMT( "The provided reference stress is zero or negative. Value: {}",
+                           m_referenceNormalStress ),
+                 InputError, getDataContext() );
 
 }
 

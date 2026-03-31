@@ -1390,7 +1390,7 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
       return lambda( std::integral_constant< int, 13 >{} );
     }
     default:
-      GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+      GEOS_ERROR( GEOS_FMT( "Unknown numFacesInElem value: {}", value ) );
   }
 }
 
@@ -1434,7 +1434,7 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     }
     else
     {
-      GEOS_ERROR( "Unsupported number of components: " << numComps );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) );
     }
   }
   else if( numPhases == 3 )
@@ -1461,12 +1461,12 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     }
     else
     {
-      GEOS_ERROR( "Unsupported number of components: " << numComps );
+      GEOS_ERROR( GEOS_FMT( "Unsupported number of components: {}", numComps ) );
     }
   }
   else
   {
-    GEOS_ERROR( "Unsupported number of phases: " << numPhases );
+    GEOS_ERROR( GEOS_FMT( "Unsupported number of phases: {}", numPhases ) );
   }
 }
 

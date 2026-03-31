@@ -37,6 +37,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
@@ -134,8 +135,8 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 
     if( m_dbcParams.useDBC ) // z_c formulation is not compatible with DBC
     {
-      GEOS_ERROR( GEOS_FMT( "{}: '{}' is not compatible with {}",
-                            getDataContext(), formulationName, viewKeyStruct::useDBCString() ) );
+      GEOS_ERROR( GEOS_FMT( " '{}' is not compatible", formulationName ),
+                  getWrapperDataContext( viewKeyStruct::useDBCString() ) );
     }
 
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -147,10 +148,9 @@ void CompositionalMultiphaseFVM::postInputInitialization()
         upwindingParams.upwindingScheme == UpwindingScheme::IHU ||
         upwindingParams.upwindingScheme == UpwindingScheme::HU2PH )
     {
-      GEOS_ERROR( GEOS_FMT( "{}: {} is not available for {}",
-                            getDataContext(),
+      GEOS_ERROR( GEOS_FMT( "{} is not available for {}",
                             EnumStrings< UpwindingScheme >::toString( upwindingParams.upwindingScheme ),
-                            formulationName ) );
+                            formulationName ), getDataContext() );
     }
   }
 }
@@ -190,9 +190,10 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   if( m_scalingType == ScalingType::Local &&
       m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+    GEOS_ERROR( GEOS_FMT( "line search is not supported for {} = {}",
+                          viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )),
+                getDataContext());
   }
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
@@ -206,8 +207,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
-                 GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
-                           getDataContext(),
+                 GEOS_FMT( "upwinding scheme {} only supports 2-phase flow",
                            EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
                  getDataContext() );
 }
@@ -541,6 +541,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
         // volume
         subRegionResidualNorm[1] = subRegionFlowResidualNorm[1];
         subRegionResidualNormalizer[1] = subRegionFlowResidualNormalizer[1];
+        // Ensure that the normalizer for the energy equation is non-zero
+        subRegionResidualNormalizer[2] = m_nonlinearSolverParameters.m_minNormalizer;
       }
 
       // step 2: first reduction across meshBodies/regions/subRegions
@@ -850,7 +852,12 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     integer localCheck = 1;
     real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
-    integer numNegPres = 0, numNegDens = 0, numNegTotalDens = 0;
+    ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                               isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+    ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                              isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
+    // output only total density sum, not cell details
+    ElementsReporterBuffer rankTotalNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ), 0 };
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -869,76 +876,75 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
         arrayView1d< real64 > pressureScalingFactor = subRegion.getField< flow::pressureScalingFactor >();
         arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
         arrayView1d< real64 > compDensScalingFactor = subRegion.getField< flow::globalCompDensityScalingFactor >();
+        auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
+        auto const negPresCollector = rankNegPressureIds.createCollector( cellLocalToGlobalIds );
+        auto const negDensCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
+        auto const negTotalDensCollector = rankTotalNegDensityIds.createCollector( cellLocalToGlobalIds );
+
         // check that pressure and component densities are non-negative
         // for thermal, check that temperature is above 273.15 K
         const integer temperatureOffset = m_numComponents+1;
-        auto const subRegionData =
-          m_isThermal
-    ? thermalCompositionalMultiphaseBaseKernels::
-            SolutionCheckKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                       m_allowNegativePressure,
-                                                       m_scalingType,
-                                                       scalingFactor,
-                                                       pressure,
-                                                       temperature,
-                                                       compDens,
-                                                       pressureScalingFactor,
-                                                       temperatureScalingFactor,
-                                                       compDensScalingFactor,
-                                                       dofManager.rankOffset(),
-                                                       m_numComponents,
-                                                       dofKey,
-                                                       subRegion,
-                                                       localSolution,
-                                                       temperatureOffset )
-    : isothermalCompositionalMultiphaseBaseKernels::
-            SolutionCheckKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                       m_allowNegativePressure,
-                                                       m_scalingType,
-                                                       scalingFactor,
-                                                       pressure,
-                                                       compDens,
-                                                       pressureScalingFactor,
-                                                       compDensScalingFactor,
-                                                       dofManager.rankOffset(),
-                                                       m_numComponents,
-                                                       dofKey,
-                                                       subRegion,
-                                                       localSolution );
+        auto const subRegionData = m_isThermal ?
+                                   thermalCompositionalMultiphaseBaseKernels::
+                                     SolutionCheckKernelFactory::
+                                     createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                                                m_allowNegativePressure,
+                                                                                m_scalingType,
+                                                                                scalingFactor,
+                                                                                pressure,
+                                                                                temperature,
+                                                                                compDens,
+                                                                                pressureScalingFactor,
+                                                                                temperatureScalingFactor,
+                                                                                compDensScalingFactor,
+                                                                                dofManager.rankOffset(),
+                                                                                m_numComponents,
+                                                                                dofKey,
+                                                                                subRegion,
+                                                                                localSolution,
+                                                                                negPresCollector,
+                                                                                negDensCollector,
+                                                                                negTotalDensCollector,
+                                                                                temperatureOffset ) :
+                                   isothermalCompositionalMultiphaseBaseKernels::
+                                     SolutionCheckKernelFactory::
+                                     createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                                                m_allowNegativePressure,
+                                                                                m_scalingType,
+                                                                                scalingFactor,
+                                                                                pressure,
+                                                                                compDens,
+                                                                                pressureScalingFactor,
+                                                                                compDensScalingFactor,
+                                                                                dofManager.rankOffset(),
+                                                                                m_numComponents,
+                                                                                dofKey,
+                                                                                subRegion,
+                                                                                localSolution,
+                                                                                negPresCollector,
+                                                                                negDensCollector,
+                                                                                negTotalDensCollector );
 
         localCheck = std::min( localCheck, subRegionData.localMinVal );
 
-        minPres  = std::min( minPres, subRegionData.localMinPres );
-        minDens = std::min( minDens, subRegionData.localMinDens );
-        minTotalDens = std::min( minTotalDens, subRegionData.localMinTotalDens );
-        numNegPres += subRegionData.localNumNegPressures;
-        numNegDens += subRegionData.localNumNegDens;
-        numNegTotalDens += subRegionData.localNumNegTotalDens;
+        minPres  = std::min( minPres, subRegionData.localMinNegPres );
+        minDens = std::min( minDens, subRegionData.localMinNegDens );
+        minTotalDens = std::min( minTotalDens, subRegionData.localMinNegTotalDens );
       } );
     } );
 
     minPres  = MpiWrapper::min( minPres );
     minDens = MpiWrapper::min( minDens );
     minTotalDens = MpiWrapper::min( minTotalDens );
-    numNegPres = MpiWrapper::sum( numNegPres );
-    numNegDens = MpiWrapper::sum( numNegDens );
-    numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
-    if( numNegPres > 0 )
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                       getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
-    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-    if( numNegDens > 0 )
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative component density values: {}, minimum value: {} {}}",
-                                       getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
-    if( minTotalDens > 0 )
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}}",
-                                       getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
+    rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                          "negative pressure", minPres, units::Unit::Pressure );
+
+    units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
+    rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                         "negative component density", minDens, massUnit );
+    rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                         "negative component total density", minTotalDens, massUnit );
 
     return MpiWrapper::min( localCheck );
   }
@@ -1269,9 +1275,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent,
-                   GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ),
-                   getDataContext() );
+    GEOS_ERROR_IF( !bcConsistent, "inconsistent boundary conditions", getDataContext() );
   }
 
   using namespace isothermalCompositionalMultiphaseFVMKernels;
