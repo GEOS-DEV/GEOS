@@ -983,7 +983,7 @@ void WellElementSubRegion::connectPerforationsToMeshElements( MeshLevel & mesh,
     if( !globalResElemFound )
     {
       GEOS_WARNING( GEOS_FMT( "Perforation {} not maching any regions", iperfGlobal ), 
-                    m_perforation.getName(), m_perforation.getDataContext());
+                    m_perforationData.getName(), m_perforationData.getDataContext());
     }
   }
 
