@@ -66,23 +66,23 @@ TEST( testMacros, testRestArguments )
   EXPECT_EQ( 2.0, double( GEOS_DETAIL_REST_ARGS( 1.0, 2.0 ) ) );
 
   {
-    auto const generatedArray = std::array< double, 3 >{ GEOS_DETAIL_REST_ARGS( 1.0, 2.0, 3.0, 4.0 ) };
-    auto const expectedArray = std::array< double, 3 >{ 2.0, 3.0, 4.0 };
+    auto const generatedArray = stdArray< double, 3 >{ GEOS_DETAIL_REST_ARGS( 1.0, 2.0, 3.0, 4.0 ) };
+    auto const expectedArray = stdArray< double, 3 >{ 2.0, 3.0, 4.0 };
     EXPECT_EQ( generatedArray, expectedArray );
   }
 
   {
-    auto const generatedArray = std::array< double, 16 >{ GEOS_DETAIL_REST_ARGS( 01.0, 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
+    auto const generatedArray = stdArray< double, 16 >{ GEOS_DETAIL_REST_ARGS( 01.0, 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
                                                                                  09.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 ) };
-    auto const expectedArray = std::array< double, 16 >{ 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0, 09.0,
+    auto const expectedArray = stdArray< double, 16 >{ 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0, 09.0,
                                                          10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
     EXPECT_EQ( generatedArray, expectedArray );
   }
 
   // { // Out of bound (>16 params): Cannot compile here, not testable.
-  //   auto const generatedArray = std::array< double, 3 >{ GEOS_DETAIL_REST_ARGS( 01.0, 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
+  //   auto const generatedArray = stdArray< double, 3 >{ GEOS_DETAIL_REST_ARGS( 01.0, 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
   //                                                                               09.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0 ) };
-  //   auto const expectedArray = std::array< double, 3 >{ 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
+  //   auto const expectedArray = stdArray< double, 3 >{ 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
   //                                                       09.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0 };
   //   EXPECT_EQ( generatedArray, expectedArray );
   // }

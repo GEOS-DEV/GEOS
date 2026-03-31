@@ -43,8 +43,8 @@ namespace testing
 
 template< integer NP >
 using TestData = std::tuple<
-  std::array< real64 const, NP > const,    // capillary pressures
-  std::array< real64 const, NP > const,    // phase saturations
+  stdArray< real64 const, NP > const,    // capillary pressures
+  stdArray< real64 const, NP > const,    // phase saturations
   real64 const                             // Permeability (mD) (if required)
   >;
 
