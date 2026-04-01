@@ -89,9 +89,9 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
                                                            string_array const & regionNames )
   {
     // getting the container of all requesters statistics groups (can be already initialized)
-    dataRepository::Group * meshStatsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
+    dataRepository::Group * meshStatsGroup = mesh.getGroupPointer( string( ViewKeys::statisticsString()) );
     if( meshStatsGroup == nullptr )
-      meshStatsGroup = &mesh.registerGroup( ViewKeys::statisticsString() );
+      meshStatsGroup = &mesh.registerGroup( string( ViewKeys::statisticsString() ) );
 
     // registering the container of instance statistics groups (must be unique for this instance)
     string const & ownerName = getOwnerName();
@@ -112,7 +112,7 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
         /* .m_meshLevel = */ mesh.getIndexInParent(),
         /* .m_setNames = */ string_array( foundSetNames.begin(), foundSetNames.end()),
         /* .m_regionNames = */ regionNames,
-        /* .m_setsCompound = */ SetType{},
+        /* .m_setsCompound = */ {},
       };
       m_discretizationsPaths.emplace_back( path );
     }
@@ -140,9 +140,9 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
     MeshLevel & mesh = getMeshLevel( path );
     ElementRegionManager & elemManager = mesh.getElemManager();
     dataRepository::Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
-    StatsGroupType & meshStats = registerStatsFunc( statisticsGroup, ViewKeys::setsStatisticsString(),
+    StatsGroupType & meshStats = registerStatsFunc( statisticsGroup, string( ViewKeys::setsStatisticsString() ),
                                                     "", m_dataOutputEnabled );
-    SetType meshLevelSetsCompound;
+    SetsCompound meshSetsCompounds;
     bool isAnySetIntersects = false;
 
     // registering all stats Group in the dataRepository for each set
@@ -156,6 +156,7 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
         CellElementRegion & region = elemManager.getRegion< CellElementRegion >( path.m_regionNames[regionId] );
         StatsGroupType & setRegionStats = registerStatsFunc( meshSetStats, region.getName(),
                                                              setName, m_dataOutputEnabled );
+        stdMap< string, SetType > & regionSetsCompounds = meshSetsCompounds.get_inserted( region.getName() );
         regionFound = true;
 
         region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
@@ -164,28 +165,35 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
                              setName, false );
           subRegionFound = true;
 
-          auto const * const subRegionSetWrapper = subRegion.sets()
-                                                     .getWrapperPointer< SetType >( setName );
+          auto const * const subRegionSetWrapper = subRegion.sets().getWrapperPointer< SetType >( setName );
           if( subRegionSetWrapper != nullptr )
           {
             confirmedSets.emplace( setName );
 
             // Insert the set elements ids in the mesh-level compound. If doubles are found, sets intersect.
             SetViewType const & subRegionSet = subRegionSetWrapper->reference();
-            localIndex setElemCount = subRegionSet.size();
-            localIndex setInsertCount = meshLevelSetsCompound.insert( subRegionSet.begin(),
-                                                                      subRegionSet.end() );
-            isAnySetIntersects |= ( setInsertCount != setElemCount);
+            arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+            SetType & subRegionSetsCompound = regionSetsCompounds.get_inserted( subRegion.getName() );
+            for( localIndex setIter = 0; setIter < subRegionSet.size(); ++setIter )
+            {
+              localIndex elemId = subRegionSet[setIter];
+              if( elemGhostRank[elemId] < 0 )
+              {
+                if( !subRegionSetsCompound.insert( elemId ) )
+                  isAnySetIntersects = true;
+              }
+            }
           }
         } );
       }
     }
 
+    // if needed, registering stats Group in the dataRepository for the compound set
+    isAnySetIntersects = (bool)( MpiWrapper::max( (unsigned char)( isAnySetIntersects ) ) );
     if( isAnySetIntersects )
     {
-      // if needed, registering stats Group in the dataRepository for the compound set
-      string const & setName = ViewKeys::compoundSetNameString();
-      StatsGroupType & meshSetStats = registerStatsFunc( meshStats, setName,
+      string_view setName = ViewKeys::compoundSetNameString();
+      StatsGroupType & meshSetStats = registerStatsFunc( meshStats, string( setName ),
                                                          setName, false );
       for( size_t regionId = 0; regionId < path.m_regionNames.size(); ++regionId )
       {
@@ -197,10 +205,14 @@ StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegis
         {
           registerStatsFunc( setRegionStats, subRegion.getName(),
                              setName, false );
+
+          path.m_setsCompound
+            .get_inserted( region.getName())
+            .insert( meshSetsCompounds
+                       .at( region.getName() )
+                       .extract( subRegion.getName() ) );
         } );
       }
-
-      path.m_setsCompound = std::move( meshLevelSetsCompound );
     }
   }
 
@@ -244,7 +256,7 @@ dataRepository::Group &
 StatsAggregatorBase< Impl >::getInstanceStatisticsGroup( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
-  dataRepository::Group & meshStatsGroup = mesh.getGroup( ViewKeys::statisticsString() );
+  dataRepository::Group & meshStatsGroup = mesh.getGroup( string( ViewKeys::statisticsString() ) );
   dataRepository::Group & instanceStatisticsGroup = meshStatsGroup.getGroup( getOwnerName() );
   return instanceStatisticsGroup;
 }
@@ -256,7 +268,7 @@ getMeshLevelStatistics( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
   dataRepository::Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
-  return instanceStatisticsGroup.getGroup< StatsGroupType >( ViewKeys::setsStatisticsString() );
+  return instanceStatisticsGroup.getGroup< StatsGroupType >( string( ViewKeys::setsStatisticsString()) );
 }
 
 template< typename Impl >
@@ -281,13 +293,20 @@ StatsAggregatorBase< Impl >::getCompoundSetStatistics( MeshLevel & mesh ) const
 {
   // considering mesh-level stats structure is initialized, or else, crash gracefully
   StatsGroupType & meshStats = getMeshLevelStatistics( mesh );
-  string const setName = ViewKeys::compoundSetNameString();
+  string const setName = string( ViewKeys::compoundSetNameString() );
   StatsGroupType * const stats = meshStats.template getGroupPointer< StatsGroupType >( setName );
   GEOS_THROW_IF( stats == nullptr,
                  GEOS_FMT( "Compound element set data structure not found ({}), is the aggregator initialized? Was the compound needed?\nRequested element sets:\n- {}",
                            setName, stringutilities::join( m_setNames, "\n- " ) ),
                  InputError, m_ownerDataContext );
   return *stats;
+}
+
+template< typename Impl >
+bool
+StatsAggregatorBase< Impl >::isCompoundSetStatistics( StatsGroupType const & setStats ) const
+{
+  return setStats.getSetName() == ViewKeys::compoundSetNameString();
 }
 
 template< typename Impl >
@@ -421,7 +440,7 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
           initStats( subRegionStats, timeRequest );
 
           SetType const & targetSet = meshSet.setName == ViewKeys::compoundSetNameString() ?
-                                      path.m_setsCompound :
+                                      path.m_setsCompound.at( region.getName() ).at( subRegion.getName() ) :
                                       subRegion.sets().getReference< SetType >( string( meshSet.setName ) );
           computeSubRegionRankStats( subRegion, subRegionStats, targetSet );
         } );
@@ -451,16 +470,15 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
       } );
 
       // if there is no compound set, we can simply aggregate each set statistics to the mesh-level statistics.
-      if( !isSetsCompoundEnabled )
+      // if there is one, we will only take into account the statistics of the compound set.
+      if( !isSetsCompoundEnabled || isCompoundSetStatistics( setStats ) )
+      {
         aggregateStats( meshLevelStats, setStats );
+      }
 
       mpiAggregateStats( setStats );
       postAggregateStats( setStats );
     } );
-
-    // if there is no compound set, we can simply aggregate each set statistics to the mesh-level statistics.
-    if( isSetsCompoundEnabled )
-      aggregateStats( meshLevelStats, getCompoundSetStatistics( mesh ) );
 
     mpiAggregateStats( meshLevelStats );
     postAggregateStats( meshLevelStats );

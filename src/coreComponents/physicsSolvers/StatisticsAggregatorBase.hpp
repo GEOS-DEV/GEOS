@@ -128,11 +128,11 @@ public:
   struct ViewKeys
   {
     /// String for the mesh-level statistics group
-    constexpr static char const * statisticsString() { return "statistics"; }
+    constexpr static string_view statisticsString() { return "statistics"; }
     /// String for the region statistics group
-    constexpr static char const * setsStatisticsString() { return "setsStatistics"; }
+    constexpr static string_view setsStatisticsString() { return "setsStatistics"; }
     /// on-purpose generated compound set name
-    constexpr static char const * compoundSetNameString() { return "__compound"; }
+    constexpr static string_view compoundSetNameString() { return "__compound"; }
   };
 
   /**
@@ -296,6 +296,8 @@ protected:
     bool m_isDirty = false;
   };
 
+  using SetsCompound = stdMap< string, stdMap< string, SetType > >;
+
   struct DiscretizationSetPath
   {
     /// The id of the mesh body in the "meshBodies" Group
@@ -306,8 +308,8 @@ protected:
     string_array m_setNames;
     /// the regions names in the mesh-level / mesh level
     string_array m_regionNames;
-    /// if at least one set intersects with another, a compound set is needed to compute mesh-level statistics.
-    SetType m_setsCompound;
+    /// if at least one set intersects with another, a compound of (local element index) set is needed to compute the mesh-level statistics.
+    SetsCompound m_setsCompound;
   };
 
   /// @see getOwnerName()
@@ -358,6 +360,12 @@ protected:
    * @throw InputError if no compound set exists, for instance if isSetsCompoundEnabled == false.
    */
   StatsGroupType & getCompoundSetStatistics( MeshLevel & mesh ) const;
+
+  /**
+   * @return true if the RegionStatistics is processed from a compound set of other instances.
+   * @param stats a statistics data structure
+   */
+  bool isCompoundSetStatistics( StatsGroupType const & stats ) const;
 
   /**
    * @brief TODO

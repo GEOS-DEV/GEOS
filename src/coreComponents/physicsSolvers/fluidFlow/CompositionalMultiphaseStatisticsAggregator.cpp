@@ -244,6 +244,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                       phaseVolFrac,
                                       phaseTrappedVolFrac,
                                       phaseRelperm,
+                                      subRegionStats.m_elemCount,
                                       subRegionStats.m_minPressure,
                                       subRegionStats.m_averagePressure,
                                       subRegionStats.m_maxPressure,
@@ -258,8 +259,6 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                       subRegionStats.m_trappedPhaseMass.toView(),
                                       subRegionStats.m_immobilePhaseMass.toView(),
                                       subRegionStats.m_componentMass.toView() );
-
-  subRegionStats.m_elemCount += targetSet.size();
 }
 
 void StatsAggregator::aggregateStats( RegionStatistics & stats,

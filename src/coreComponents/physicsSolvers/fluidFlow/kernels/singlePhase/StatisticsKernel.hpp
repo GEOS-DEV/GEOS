@@ -55,6 +55,7 @@ struct StatisticsKernel
           arrayView1d< real64 const > const & refPorosity,
           arrayView2d< real64 const > const & porosity,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & density,
+          globalIndex & elemCount,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -67,6 +68,8 @@ struct StatisticsKernel
           real64 & totalPoreVol,
           real64 & totalMass )
   {
+    RAJA::ReduceSum< parallelDeviceReduce, localIndex > subRegionElemCount( 0 );
+
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( -LvArray::NumericLimits< real64 >::max );
@@ -88,13 +91,13 @@ struct StatisticsKernel
       localIndex ei = targetSet[setElemId];
 
       if( elemGhostRank[ei] >= 0 )
-      {
         return;
-      }
 
       // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
       real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
       real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
+
+      subRegionElemCount += 1;
 
       subRegionMinPres.min( pres[ei] );
       subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
@@ -111,6 +114,8 @@ struct StatisticsKernel
       subRegionTotalPoreVol += dynamicPoreVol;
       subRegionTotalMass += dynamicPoreVol * density[ei][0];
     } );
+
+    elemCount = globalIndex( subRegionElemCount.get() );
 
     minPres = subRegionMinPres.get();
     avgPresNumerator = subRegionAvgPresNumerator.get();

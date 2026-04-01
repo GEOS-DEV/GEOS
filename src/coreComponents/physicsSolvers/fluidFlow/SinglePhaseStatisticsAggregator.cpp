@@ -124,6 +124,7 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                                     refPorosity,
                                                     porosity,
                                                     densities,
+                                                    subRegionStats.m_elemCount,
                                                     subRegionStats.m_minPressure,
                                                     subRegionStats.m_averagePressure,
                                                     subRegionStats.m_maxPressure,
@@ -135,8 +136,6 @@ void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegio
                                                     subRegionStats.m_totalUncompactedPoreVolume,
                                                     subRegionStats.m_totalDynamicPoreVolume,
                                                     subRegionStats.m_totalMass );
-
-  subRegionStats.m_elemCount += targetSet.size();
 }
 
 void StatsAggregator::aggregateStats( RegionStatistics & stats,

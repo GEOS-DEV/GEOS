@@ -67,6 +67,7 @@ struct StatisticsKernel
           arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
           arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > const & phaseTrappedVolFrac,
           arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > const & phaseRelperm,
+          globalIndex & elemCount,
           real64 & minPres,
           real64 & avgPresNumerator,
           real64 & maxPres,
@@ -82,6 +83,7 @@ struct StatisticsKernel
           arrayView1d< real64 > const & immobilePhaseMass,
           arrayView2d< real64 > const & dissolvedComponentMass )
   {
+    RAJA::ReduceSum< parallelDeviceReduce, localIndex > subRegionElemCount( 0 );
     RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPres( LvArray::NumericLimits< real64 >::max );
     RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPresNumerator( 0.0 );
     RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPres( -LvArray::NumericLimits< real64 >::max );
@@ -113,6 +115,7 @@ struct StatisticsKernel
                                        phaseTrappedVolFrac,
                                        phaseRelperm,
                                        phaseCompFraction,
+                                       subRegionElemCount,
                                        subRegionMinPres,
                                        subRegionAvgPresNumerator,
                                        subRegionMaxPres,
@@ -131,14 +134,14 @@ struct StatisticsKernel
       localIndex ei = targetSet[setElemId];
 
       if( elemGhostRank[ei] >= 0 )
-      {
         return;
-      }
 
       // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
       real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
       real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
-
+      
+      subRegionElemCount += 1;
+      
       subRegionMinPres.min( pres[ei] );
       subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
       subRegionMaxPres.max( pres[ei] );
@@ -172,14 +175,18 @@ struct StatisticsKernel
 
     } );
 
+    elemCount = globalIndex( subRegionElemCount.get() );
+
     minPres = subRegionMinPres.get();
     avgPresNumerator = subRegionAvgPresNumerator.get();
     maxPres = subRegionMaxPres.get();
     minDeltaPres = subRegionMinDeltaPres.get();
     maxDeltaPres = subRegionMaxDeltaPres.get();
+
     minTemp = subRegionMinTemp.get();
     avgTempNumerator = subRegionAvgTempNumerator.get();
     maxTemp = subRegionMaxTemp.get();
+
     totalUncompactedPoreVol = subRegionTotalUncompactedPoreVol.get();
 
     // dummy loop to bring data back to the CPU
