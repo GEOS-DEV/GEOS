@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Check if the PR name has conventional semantics
         if: github.event_name == 'pull_request'
-        uses: amannn/action-semantic-pull-request@v5.5.3
+        uses: amannn/action-semantic-pull-request@v6.1.1
         id: lint_pr_title
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -72,7 +72,7 @@ jobs:
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -108,7 +108,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -279,7 +279,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         submodules: false
         lfs: false
