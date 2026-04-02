@@ -149,7 +149,7 @@ public:
 
   virtual void expandObjectCatalogs() override;
 
-  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) = 0;
+  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion );
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const = 0;
   /**
    * @brief Create well separator

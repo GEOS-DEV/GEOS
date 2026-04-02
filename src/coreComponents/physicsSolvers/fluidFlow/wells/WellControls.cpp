@@ -393,6 +393,16 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 
   registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
   registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
+
+  // If estimator is used including thermal effects set during constraint evaluation
+  // otherwise they are always included
+  if( isThermal() )
+  {
+    if( m_estimateSolution == 0 )
+    {
+      enableThermalEffects( true );
+    }
+  }
 }
 void WellControls::postInputInitialization()
 {
@@ -408,8 +418,6 @@ void WellControls::postInputInitialization()
   {
     m_currentControl = m_inputControl;
   }
-
-
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                  "The flag to select surface/reservoir conditions must be equal to 0 or 1",
@@ -465,6 +473,8 @@ void WellControls::postInputInitialization()
 }
 void WellControls::postRestartInitialization( )
 {}
+
+
 void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
   m_wellStatus = status;
@@ -837,7 +847,6 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );
   }
-
 
 }
 

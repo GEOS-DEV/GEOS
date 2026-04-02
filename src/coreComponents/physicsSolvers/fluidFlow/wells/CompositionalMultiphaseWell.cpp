@@ -151,7 +151,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
 void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
 
-
+  WellControls::registerWellDataOnMesh( subRegion );
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   setConstitutiveNames ( subRegion );
