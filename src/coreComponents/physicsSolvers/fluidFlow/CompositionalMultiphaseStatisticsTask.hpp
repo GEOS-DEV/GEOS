@@ -35,8 +35,6 @@ namespace compositionalMultiphaseStatistics
 {
 
 /**
- * @class compositionalMultiphaseStatistics::StatsStats
- *
  * Task class allowing for the computation of aggregate statistics in compositional multiphase simulations
  */
 class StatsTask : public FieldStatisticsBase< CompositionalMultiphaseBase >

@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SinglePhaseStatistics.hpp
+ * @file SinglePhaseStatisticsTask.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_
@@ -32,8 +32,6 @@ namespace singlePhaseStatistics
 {
 
 /**
- * @class singlePhaseStatistics::Task
- *
  * Task class allowing for the computation of aggregate statistics in single phase simulations
  */
 class StatsTask : public FieldStatisticsBase< SinglePhaseBase >
