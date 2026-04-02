@@ -25,6 +25,7 @@ set( solidMechanicsSolvers_headers
      kernels/SolidMechanicsLagrangianFEMKernels.hpp
      SolidMechanicsMPM.hpp
      MPMSolverFields.hpp
+     MPMEnums.hpp
      kernels/ExplicitFiniteStrain.hpp
      kernels/ExplicitFiniteStrain_impl.hpp
      kernels/ExplicitMPM.hpp

@@ -20,18 +20,23 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 
-#include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
-#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+
 #include "kernels/ExplicitMPM.hpp"
+
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "MPMSolverFields.hpp"
+
+// #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
+// #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+
 #include "events/mpmEvents/MPMEventManager.hpp"
 #include "mesh/CohesiveZoneManager.hpp"
+
+#include "physicsSolvers/solidMechanics/MPMSolverFields.hpp"
+#include "physicsSolvers/solidMechanics/MPMEnums.hpp"
 
 namespace geos
 {
@@ -98,18 +103,6 @@ public:
     Surface,
     Cohesive,
     DamagedCohesive
-  };
-
-  /**
-   * @enum InterpolationOption
-   *
-   * The options for interpolating tables
-   */
-  enum struct InterpolationOption : integer
-  {
-    Linear,
-    Cosine,
-    Smoothstep
   };
 
   /**
@@ -794,12 +787,12 @@ public:
   void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
                                                  NodeManager & nodeManager );
 
-  void interpolateTable( real64 x,
-                         real64 dx,
-                         array2d< real64 > table,
+  void interpolateTable( real64 const & x,
+                         real64 const & dx,
+                         arrayView2d< real64 const > const &  table,
                          arrayView1d< real64 > output,
                          arrayView1d< real64 > outputRate,
-                         SolidMechanicsMPM::InterpolationOption interpolationType );
+                         mpm::InterpolationOption const & interpolationType );
 
   void interpolateValueInRange( real64 const & x,
                                 real64 const & xmin,
@@ -807,7 +800,7 @@ public:
                                 real64 const & ymin,
                                 real64 const & ymax,
                                 real64 & output,
-                                SolidMechanicsMPM::InterpolationOption interpolationType );
+                                mpm::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 
@@ -1099,7 +1092,7 @@ protected:
 
   int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
-  InterpolationOption m_fTableInterpType;
+  mpm::InterpolationOption m_fTableInterpType;
   array2d< real64 > m_fTable;
   array1d< real64 > m_domainF;
   array1d< real64 > m_domainL;
@@ -1110,7 +1103,7 @@ protected:
   array1d< real64 > m_globalFaceReactions;
 
   array1d< int > m_stressControl;
-  InterpolationOption m_stressTableInterpType;
+  mpm::InterpolationOption m_stressTableInterpType;
   array2d< real64 > m_stressTable;
   real64 m_stressControlKp;
   real64 m_stressControlKi;
@@ -1135,12 +1128,8 @@ protected:
   array1d< real64 > m_confiningPressureBoxMax;
 
   // Temperature options
-  InterpolationOption m_temperatureTableInterpType;
-  array2d< real64 > m_temperatureTable;
   real64 m_domainTemperature;
-  int m_setDomainTemperature;
   real64 m_domainTemperatureRate;
-  int m_setDomainTemperatureRate;
 
   int m_shockHeating;
   int m_computeInternalEnergyAndTemperature;
@@ -1282,11 +1271,6 @@ ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
               "Moving",
               "Contact" );
 
-ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
-              "Linear",
-              "Cosine",
-              "Smoothstep" );
-
 ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
               "Difference",
               "MassWeighted",
@@ -1303,7 +1287,6 @@ ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
 ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
               "BruteForce",
               "Mesh" );
-
 
 ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",

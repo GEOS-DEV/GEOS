@@ -20,6 +20,7 @@
 #define GEOSX_BOREHOLEPRESSURE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
+#include "physicsSolvers/solidMechanics/MPMEnums.hpp"
 
 namespace geos
 {
@@ -60,7 +61,7 @@ public:
   real64 getBoreholeRadius() const { return m_boreholeRadius; }
   real64 getStartPressure() const { return m_startPressure; }
   real64 getEndPressure() const { return m_endPressure; }
-  int getInterpType() const { return m_interpType; }
+  mpm::InterpolationOption getInterpType() const { return m_interpType; }
 
 protected:
   virtual void postInputInitialization() override final;
@@ -69,7 +70,7 @@ protected:
   real64 m_boreholeRadius;
   real64 m_startPressure;
   real64 m_endPressure;
-  int m_interpType;
+  mpm::InterpolationOption m_interpType;
 
 };
 

@@ -342,7 +342,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_boundaryFaceFrictionCoefficients(),
   m_prescribedFTable( 0 ),
   m_prescribedBoundaryFTable( 0 ),
-  m_fTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
+  m_fTableInterpType( mpm::InterpolationOption::Linear ),
   m_fTable(),
   m_domainF(),
   m_domainL(),
@@ -350,7 +350,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_prescribedBoundaryTransverseVelocities(),
   m_globalFaceReactions(),
   m_stressControl(),
-  m_stressTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
+  m_stressTableInterpType( mpm::InterpolationOption::Linear ),
   m_stressTable(),
   m_stressControlKp( 0.1 ),
   m_stressControlKi( 0.0 ),
@@ -368,18 +368,14 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_confiningStress( ),
   m_confiningPressureBoxMin( ),
   m_confiningPressureBoxMax( ),
-  m_temperatureTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
-  m_temperatureTable(),
   m_domainTemperature(),
-  m_setDomainTemperature(),
   m_domainTemperatureRate(),
-  m_setDomainTemperatureRate(),
   m_shockHeating( 0 ),
   m_computeInternalEnergyAndTemperature( 0 ),
   m_useArtificialViscosity( 0 ),
   m_artificialViscosityQ0( 0.0 ),
   m_artificialViscosityQ1( 0.0 ),
-  m_damageHessianSurfaceThreshold( DBL_MAX ),
+  m_damageHessianSurfaceThreshold( 1e16 ), // Setting to DBL_MAX may cause floating point error in calculations from overflow
   m_computeCZInterfacesFromDamage( 0 ),
   m_checkForBinder( 0 ),
   m_damageFieldPartitioning( 0 ),
@@ -605,36 +601,15 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to compute particle surface normals and positions" );
 
-  registerWrapper( "temperatureTableInterpType", &m_temperatureTableInterpType ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setApplyDefaultValue( m_temperatureTableInterpType ).
-    setDescription( "The type of temperature table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
-
-  registerWrapper( "temperatureTable", &m_temperatureTable ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores the time-dependent domain temperature" );
-
   registerWrapper( "domainTemperature", &m_domainTemperature ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores current target domain temperature as driven by temp table or other event" );
 
-  registerWrapper( "setDomainTemperature", &m_setDomainTemperature ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag that activates domain temperature interpolation from table." );
-
   registerWrapper( "domainTemperatureRate", &m_domainTemperatureRate ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Stores current target domain temperature rate as driven by temp table or other event" );
-
-  registerWrapper( "setDomainTemperatureRate", &m_setDomainTemperatureRate ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag that activates domain temperature rateinterpolation from table." );
 
   registerWrapper( "normalAndPositionMethod", &m_normalAndPositionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -5316,12 +5291,12 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
 }
 
 
-void SolidMechanicsMPM::interpolateTable( real64 x,
-                                          real64 dx,
-                                          array2d< real64 > table,
+void SolidMechanicsMPM::interpolateTable( real64 const & x,
+                                          real64 const & dx,
+                                          arrayView2d< real64 const > const & table,
                                           arrayView1d< real64 > output,
                                           arrayView1d< real64 > outputRate,
-                                          SolidMechanicsMPM::InterpolationOption interpolationType )
+                                          mpm::InterpolationOption const & interpolationType )
 {
   int numRows = table.size( 0 );
   int numColumns = table.size( 1 );
@@ -5366,17 +5341,17 @@ void SolidMechanicsMPM::interpolateTable( real64 x,
   {
     switch( interpolationType )
     {
-      case SolidMechanicsMPM::InterpolationOption::Linear:
+      case mpm::InterpolationOption::Linear:
         // default linear interpolation
         output[i] = table[tableInterval][i + 1] * ( 1.0 - timeFrac ) + table[tableInterval + 1][i + 1] * timeFrac;
         outputRate[i] = ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) / timeInterval;
         break;
-      case SolidMechanicsMPM::InterpolationOption::Cosine:
+      case mpm::InterpolationOption::Cosine:
         // smooth-step interpolation with cosine, zero endpoint velocity
         output[i] = table[tableInterval][i + 1] - 0.5 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
         outputRate[i] = 0.5 * 3.141592653589793 * ( table[tableInterval + 1][i + 1] - table[tableInterval][i + 1] ) * sin( 3.141592653589793 * timeFrac ) / timeInterval;
         break;
-      case SolidMechanicsMPM::InterpolationOption::Smoothstep:
+      case mpm::InterpolationOption::Smoothstep:
         // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
         output[i] = table[tableInterval][i+1] + ( table[tableInterval+1][i+1] - table[tableInterval][i+1] ) *
                     ( 10.0 * LvArray::math::pow( timeFrac, 3 ) - 15.0 * LvArray::math::pow( timeFrac, 4 ) + 6.0 * LvArray::math::pow( timeFrac, 5 ) );
@@ -5398,7 +5373,7 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
                                                  real64 const & ymin,
                                                  real64 const & ymax,
                                                  real64 & output,
-                                                 SolidMechanicsMPM::InterpolationOption interpolationType )
+                                                 mpm::InterpolationOption interpolationType )
 { // Stripped down version of the table interpolation to be used when interpolating a 1D function
   // in a fixed and well-defined range (xmin<x<xmax).
   // Perhaps this should construct a table and call the tableInterpolation so we don't need to
@@ -5418,15 +5393,15 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
     real64 timeFrac = ( x - xmin ) / ( xmax - xmin );
     switch( interpolationType )
     {
-      case SolidMechanicsMPM::InterpolationOption::Linear:
+      case mpm::InterpolationOption::Linear:
         // default linear interpolation
         output = ymin * ( 1.0 - timeFrac ) + ymax * timeFrac;
         break;
-      case SolidMechanicsMPM::InterpolationOption::Cosine:
+      case mpm::InterpolationOption::Cosine:
         // smooth-step interpolation with cosine, zero endpoint velocity
         output = ymin - 0.5 * ( ymax - ymin ) * ( cos( 3.141592653589793 * timeFrac ) - 1.0 );
         break;
-      case SolidMechanicsMPM::InterpolationOption::Smoothstep:
+      case mpm::InterpolationOption::Smoothstep:
         // smooth-step interpolation with 5th order polynomial, zero endpoint velocity and acceleration
         output = ymin + ( ymax - ymin ) * ( 10.0 * LvArray::math::pow( timeFrac, 3 ) - 15.0 * LvArray::math::pow( timeFrac, 4 ) + 6.0 * LvArray::math::pow( timeFrac, 5 ) );
         break;
@@ -5972,11 +5947,43 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
   MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
   eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
   {
+    // Skip events that are already done
+    if( event.isComplete() )
+    {
+      return;
+    }
+
+    // Check if event depends on others
+    if( event.hasDependencies() && !event.hasStarted() )
+    {
+      string_array dependencies = event.getDependencies();
+
+      // Check that all dependencies are complete
+      for( long unsigned int i = 0; i < dependencies.size(); ++i )
+      {
+        MPMEventBase & dependency = eventManager.getEvent< MPMEventBase >( dependencies[i] );
+        if(!dependency.isComplete())
+        {
+          return;
+        }
+      }
+
+      event.setHasStarted( 1 );
+      event.setStartTime( time_n + event.getDelay() );
+      event.setEndTime( time_n + event.getDelay() + event.getDuration() );
+      GEOS_LOG_RANK_0("Dependencies met for " << event.getName() << " starting at " << event.getStartTime() << " and ending at " << event.getEndTime() );
+    }
+
     real64 const startTime = event.getStartTime();
     real64 const endTime = event.getEndTime();
     real64 const timeInterval = event.getTimeInterval();
 
-    if( ( startTime - dt / 2 <= time_n && time_n <= endTime + dt/2 ) && !event.isComplete() )
+    if( ( startTime - dt / 2 <= time_n && time_n <= startTime + dt/2 ) )
+    {
+      GEOS_LOG_RANK_0("Started event " << event.getName() << " (" << event.getCatalogName() << ") at " << time_n );
+    }
+
+    if( ( startTime - dt / 2 <= time_n && time_n <= endTime + dt/2 ) )
     {
       if( event.getCatalogName() == "MaterialSwap" )
       {
@@ -5994,10 +6001,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         m_boreholeRadius = boreholePressureEvent.getBoreholeRadius();
         real64 startPressure = boreholePressureEvent.getStartPressure();
         real64 endPressure = boreholePressureEvent.getEndPressure();
-        InterpolationOption interpolationType = static_cast< InterpolationOption >( boreholePressureEvent.getInterpType() ); // Interpolation
-                                                                                                                             // type should
-                                                                                                                             // be available
-                                                                                                                             // in events
+        mpm::InterpolationOption interpolationType = boreholePressureEvent.getInterpType();
 
         // Set boreholePressure to interpolated value.  The default is 0, but at the end of the event
         // it won't be reset.
@@ -6031,7 +6035,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         real64 startPressure = confiningPressure.getStartPressure();
         real64 endPressure = confiningPressure.getEndPressure();
-        InterpolationOption interpolationType = static_cast< InterpolationOption >( confiningPressure.getInterpType() );
+        mpm::InterpolationOption interpolationType = confiningPressure.getInterpType();
 
         // Set m_confiningPressure to interpolated value.  The default is 0, but at the end of the event
         // it won't be reset.
@@ -6053,7 +6057,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
         GEOS_LOG_RANK_0( "Setting confining pressure to "<<confiningPressureValue );
 
-        //sevent.setIsComplete( 1 );
+        //event.setIsComplete( 1 );
       }
 
       if( event.getCatalogName() == "InitializeStress" )
@@ -6133,6 +6137,11 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       {
         AnnealMPMEvent & anneal = dynamicCast< AnnealMPMEvent & >( event );
 
+        if( time_n >= endTime - dt / 2)
+        {
+          event.setIsComplete( 1 );
+        }
+
         particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
         {
           if( region.getName() == anneal.getTargetRegion() || anneal.getTargetRegion() == "all" )
@@ -6202,6 +6211,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             }
           } );
         } );
+
         event.setIsComplete( 1 );
       }
 
@@ -6210,14 +6220,14 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         // InsertPeriodicContactSurfacesMPMEvent & insertPeriodicContactSurfaces = dynamicCast< InsertPeriodicContactSurfacesMPMEvent & >(
         // event );
 
-        real64 hEl[3] = { };
+        real64 hEl[3] = {};
         LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
-        real64 xGlobalMin[3] = { };
+        real64 xGlobalMin[3] = {};
         LvArray::tensorOps::copy< 3 >( xGlobalMin, m_xGlobalMin );
-        real64 xGlobalMax[3] = { };
+        real64 xGlobalMax[3] = {};
         LvArray::tensorOps::copy< 3 >( xGlobalMax, m_xGlobalMax );
 
-        // Perhaps I need to find the largest particle size during initialize
+        // Perhaps I need to find the largest particle size during initialization
         auto periodic = partition.getPeriodic();
 
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -6239,6 +6249,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             }
           } );
         } );
+
         event.setIsComplete( 1 );
       }
 
@@ -6302,6 +6313,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             }
           }
         } );
+
         event.setIsComplete( 1 );
       }
 
@@ -6429,6 +6441,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                       particleStrengthScale[p] *= (1.0 - strengthKnockdown);
                     }
                   } );
+
                   event.setIsComplete( 1 );
                 }
                 else
@@ -6552,6 +6565,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
             } );
         } );
+
         event.setIsComplete( 1 );
       }
 
@@ -6581,18 +6595,40 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       {
         DeformationUpdateMPMEvent & deformationUpdate = dynamicCast< DeformationUpdateMPMEvent & >( event );
 
-        int oldPrescribedFTable = m_prescribedFTable;
-        int oldPrescribedBoundaryFTable = m_prescribedBoundaryFTable;
-        int oldStressControl[3] = {};
-        GEOS_UNUSED_VAR( oldPrescribedFTable );
-        GEOS_UNUSED_VAR( oldPrescribedBoundaryFTable );
-        GEOS_UNUSED_VAR( oldStressControl );
-        LvArray::tensorOps::copy< 3 >( oldStressControl, m_stressControl );
-
-        // CC: TODO need to add special handling for turning off and on stress control because the F values will not be known
         m_prescribedFTable = deformationUpdate.getPrescribedFTable();
         m_prescribedBoundaryFTable = deformationUpdate.getPrescribedBoundaryFTable();
         m_stressControl = deformationUpdate.getStressControl();
+
+        m_fTableInterpType = deformationUpdate.getFTableInterpolation();
+        m_stressTableInterpType = deformationUpdate.getStressTableInterpolation();
+
+        m_fTable = deformationUpdate.getFTable();
+        m_stressTable = deformationUpdate.getStressTable();
+
+        // F table
+        for( int i  = 0; i < m_fTable.size( 0 ); ++i)
+        {
+          // Update time of table relative to simulation time
+          m_fTable[i][0] += time_n;
+          
+          // Use instantaneous domain values and start deformation from there
+          if( deformationUpdate.getRelativeDeformation() )
+          {
+            for( int j = 1; j < 4; ++j)
+            {
+              m_fTable[i][j] *= m_domainF[j];
+            }   
+          }  
+        }
+
+        // Stress table
+        for( int i  = 0; i < m_stressTable.size( 0 ); ++i)
+        {
+          // Update time of table relative to simulation time
+          m_stressTable[i][0] += time_n;
+        }
+
+        event.setIsComplete( 1 );
       }
 
       if( event.getCatalogName() == "CohesiveZone" )
@@ -6651,8 +6687,24 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       }
 
       if( event.getCatalogName() == "TemperatureProfile" )
-      { // Read from domain temperature table and set global temp value to all particles.
-        interpolateTemperatureTable( dt, time_n );
+      { 
+        TemperatureProfileMPMEvent & tempEvent = dynamicCast< TemperatureProfileMPMEvent & >( event );
+
+        // Globaly set the particle temperature based on table interpolation setting domain temperature
+        real64 time_elapsed = time_n - startTime; 
+
+        array1d< real64 > temp( 1 );
+        array1d< real64 > tempRate( 1 );
+        interpolateTable( time_elapsed,
+                          dt,
+                          tempEvent.getTemperatureTable(),
+                          temp,
+                          tempRate,
+                          tempEvent.getInterpolationType() );
+
+        m_domainTemperature = temp[0];
+        m_domainTemperatureRate = tempRate[0];
+
         particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
         {
           SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -6804,30 +6856,6 @@ void SolidMechanicsMPM::performMaterialSwap( ParticleManager & particleManager,
     sourceSubRegion.setActiveParticleIndices();
     destinationSubRegion.setActiveParticleIndices();
   }
-}
-
-
-void SolidMechanicsMPM::interpolateTemperatureTable( real64 dt,
-                                                     real64 time_n )
-{
-  GEOS_MARK_FUNCTION;
-
-  array1d< real64 > temperature( 1 ); // not used
-  array1d< real64 > temperature_rate( 1 ); // not used
-
-  interpolateTable( time_n,
-                    dt,
-                    m_temperatureTable,
-                    temperature, // This is set by the interpolation
-                    temperature_rate, // unused
-                    m_temperatureTableInterpType );
-
-  m_domainTemperature = temperature[0];
-  m_domainTemperatureRate = temperature_rate[0];
-
-  //std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<", temperature rate=
-  // "<<temperature_rate<<", m_domainTemperatureRate = "<<m_domainTemperatureRate<<std::endl;
-
 }
 
 
@@ -8727,6 +8755,8 @@ void SolidMechanicsMPM::computeDamageHessian( ParticleManager & particleManager 
           // damageFieldHessianTermL2NormSquared += (scaleFactor*grad[0]*scaleFactor*grad[0]);               // [2][0]
           // damageFieldHessianTermL2NormSquared += (scaleFactor*grad[1]*scaleFactor*grad[1]);               // [2][1]
           // damageFieldHessianTermL2NormSquared += (scaleFactor*grad[2] - 1.0)*(scaleFactor*grad[2] - 1.0); // [2][2]
+
+          particleDamageHessianL2Norm[p] = LvArray::math::sqrt( particleDamageHessianL2Norm[p] );
         }
       } );
   } );
@@ -8737,7 +8767,11 @@ void SolidMechanicsMPM::czSurfaceFlagUpdate( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
 
+  GEOS_LOG_RANK( "m_damageHessianSurfaceThreshold: " << m_damageHessianSurfaceThreshold << ", m_neighborRadius: " << m_neighborRadius );
+
   real64 const normalizedThreshold = m_damageHessianSurfaceThreshold / ( m_neighborRadius * m_neighborRadius ); // Normalize by the square of neighbor radius
+
+  GEOS_LOG_RANK( "Starting czSurfaceFlagUpdate loop" );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {

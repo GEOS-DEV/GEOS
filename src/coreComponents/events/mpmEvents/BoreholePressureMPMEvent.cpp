@@ -29,7 +29,7 @@ BoreholePressureMPMEvent::BoreholePressureMPMEvent( const string & name,
   m_boreholeRadius( 0.0 ),
   m_startPressure( 0.0 ),
   m_endPressure( 0.0 ),
-  m_interpType( 1 )
+  m_interpType( mpm::InterpolationOption::Cosine )
 {
   registerWrapper( viewKeyStruct::boreholeRadiusString(), &m_boreholeRadius ).
     setInputFlag( InputFlags::REQUIRED ).

@@ -30,7 +30,7 @@ ConfiningPressureMPMEvent::ConfiningPressureMPMEvent( const string & name,
   m_confiningPressureBoxMax(  ),
   m_startPressure( 0.0 ),
   m_endPressure( 0.0 ),
-  m_interpType( 1 )
+  m_interpType( mpm::InterpolationOption::Cosine )
 {
   registerWrapper( viewKeyStruct::confiningPressureBoxMinString(), &m_confiningPressureBoxMin ).
     setInputFlag( InputFlags::REQUIRED ).

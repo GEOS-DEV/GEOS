@@ -51,6 +51,29 @@ public:
    */
   virtual ~MPMEventManager() override = default;
 
+    /**
+    * @brief Get a MPM event.
+    * @param key The key of MPM event, either name or number.
+    * @return Reference to const T.
+    */
+    template< typename T=MPMEventBase, typename KEY_TYPE=void >
+    T const & getEvent( KEY_TYPE const & key ) const
+    {
+        return this->getGroup< T>( key );
+    }
+
+    /**
+    * @brief Get a MPM event.
+    * @param key The key of the MPM event, either name or number.
+    * @return Reference to T.
+    */
+    template< typename T=MPMEventBase, typename KEY_TYPE=void >
+    T & getEvent( KEY_TYPE const & key )
+    {
+        return this->getGroup< T >( key );
+    }
+
+
   /**
    * @brief Create a child MPMEventManager
    * @param[in] childKey the key of the Event to be added
