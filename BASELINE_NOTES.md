@@ -1,4 +1,3 @@
-
 Notes
 ==========
 
@@ -9,6 +8,14 @@ These notes should be in reverse-chronological order, and use the following time
 PR #3836 (2026-03-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3836-15934-16cbaff.tar.gz>
 =====================
 Added statistics `Group` objects for each statistics `Task` instance
+
+PR #3957 (2026-03-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3957-16171-da51804.tar.gz>
+=====================
+Add checkEulerCharacteristic option, rebaseline due to new input.
+
+PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3967-16106-c0f34de.tar.gz>
+=====================
+Fix 2D/3D cell co-location in parallel mesh redistribution
 
 PR #3970 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
 =====================
