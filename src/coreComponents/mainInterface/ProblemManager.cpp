@@ -112,6 +112,13 @@ void logHypredriveInputs( PhysicsSolverManager & physicsSolverManager,
       return;
     }
 
+    // Sequentially coupled solvers do not assemble a solver-owned coupled system.
+    // Previewing their DOFs here can force unsupported fully implicit coupling paths.
+    if( solver.getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      return;
+    }
+
     hypre::hypredrive::InputArgsParseTarget target;
     if( !params.hypredriveInputFile.empty() )
     {
