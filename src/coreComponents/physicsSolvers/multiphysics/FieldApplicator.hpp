@@ -21,15 +21,20 @@
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDAPPLICATOR_HPP_
 
 #include "events/tasks/TaskBase.hpp"
+#include "fieldSpecification/EquilibriumInitialCondition.hpp"
+#include "functions/FunctionManager.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 
 namespace geos
 {
 
-class EquilibriumInitialCondition;
-class FunctionManager;
-class FlowSolverBase;
-class CompositionalMultiphaseBase;
-class ElementSubRegionBase;
+// class EquilibriumInitialCondition;
+// class FunctionManager;
+// class FlowSolverBase;
+// class CompositionalMultiphaseBase;
+// class ElementSubRegionBase;
 
 
 /**
