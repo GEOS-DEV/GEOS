@@ -63,9 +63,9 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::mapSolutionBetweenSolvers( re
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     GEOS_MARK_FUNCTION;
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                 MeshLevel & mesh,
-                                                                                 string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                   MeshLevel & mesh,
+                                                                                   string_array const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -125,9 +125,9 @@ void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::applyDamageOnTractionBC( Doma
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   GEOS_MARK_FUNCTION;
-  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                               MeshLevel & mesh,
-                                                                               string_array const & )
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
