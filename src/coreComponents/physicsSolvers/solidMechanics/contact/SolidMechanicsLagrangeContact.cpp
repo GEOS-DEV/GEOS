@@ -136,12 +136,14 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
 
@@ -910,8 +912,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     {
       blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
-      // Using GEOSX implementation of Jacobi preconditioner
-      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
       // Using LAI implementation of Jacobi preconditioner
       LinearSolverParameters tracParams;
@@ -943,11 +943,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
                          std::move( mechPrecond ) );
 
     return precond;
-  }
-  else
-  {
-    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
-    //return SolverBase::createPreconditioner( domain );
   }
   return {};
 }
