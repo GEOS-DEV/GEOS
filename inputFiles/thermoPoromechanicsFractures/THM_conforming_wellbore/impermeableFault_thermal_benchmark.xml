@@ -1,0 +1,184 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+     <File name="faultPoroelastic_thermal_base.xml"/>
+     <File name="domain_boundaries.xml"/>
+     <File name="wellbore.xml"/>
+  </Included>
+
+<!-- SPHINX_POROMECHANICSSOLVER -->
+  <Solvers gravityVector="{0.0, 0.0, -9.8}">
+    <SinglePhasePoromechanicsConformingFracturesReservoir
+      name="reservoirSolver"
+      targetRegions="{ Domain, Fault, WELL.W001 }" 
+      initialDt="1e0"
+      poromechanicsConformingFracturesSolverName="poroFractureSolver"
+      wellSolverName="singlePhaseWellSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="10"
+        maxSubSteps="100"
+        maxTimeStepCuts="4"
+        maxAllowedResidualNorm="1e+15"
+        maxNumConfigurationAttempts="10"
+        lineSearchInterpolationType="Parabolic"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        logLevel="1"/>
+    </SinglePhasePoromechanicsConformingFracturesReservoir>
+
+    <SinglePhasePoromechanicsConformingFractures
+      name="poroFractureSolver"
+      targetRegions="{ Domain, Fault }" 
+      initialDt="1e-3"
+      flowSolverName="singlePhaseFlowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1"      
+      isThermal="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-1"
+        newtonMaxIter="10"
+        maxSubSteps="100"
+        maxTimeStepCuts="4"
+        maxAllowedResidualNorm="1e+15"
+        maxNumConfigurationAttempts="10"
+        lineSearchInterpolationType="Parabolic"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        logLevel="0"/>
+    </SinglePhasePoromechanicsConformingFractures>
+
+    <SolidMechanicsLagrangeContact
+      name="fractureMechSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      targetRegions="{ Domain, Fault }" 
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      contactPenaltyStiffness="1e12"> 
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        logLevel="0"/> 
+    </SolidMechanicsLagrangeContact>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      isThermal="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fault}" 
+      temperature="366.483"> 
+      <NonlinearSolverParameters
+        normType="L2"
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-6"
+        logLevel="0"/> 
+    </SinglePhaseFVM>
+
+    <SinglePhaseWell
+      name="singlePhaseWellSolver"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ WELL.W001 }">
+      <WellControls
+        name="wellControls1"
+        logLevel="1"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="-600"
+        targetBHPTableName="BHP"
+        targetTotalRateTableName="CO2RATE" 
+        enableCrossflow="0"
+        useSurfaceConditions="1"
+        surfacePressure="1.45e7"
+        surfaceTemperature="300.15"
+        injectionTemperature="320"
+        injectionStream="{1.0,0.0}"/>
+    </SinglePhaseWell>
+  </Solvers>
+<!-- SPHINX_SINGLEPHASEFVM_END -->
+
+  <Functions>
+    <TableFunction
+        name="CO2RATE"
+        inputVarNames="{ time }"
+        interpolation="lower"
+        coordinates="{0, 10.0, 20.0, 1.0e10}"
+        values="{0, 0.2, 0.3, 0.3}" /> 
+
+    <TableFunction
+        name="BHP"
+        inputVarNames="{ time }"
+        interpolation="lower"
+        coordinates="{ -1.0e10, 1.0e10 }"
+        values="{ 6.0e+07, 6.0e+07 }" />
+
+    <TableFunction
+        name="temperatureField"
+        inputVarNames="{ elementCenter }"
+        coordinateFiles="{ userTables/x.csv, userTables/y.csv, userTables/z.csv }"
+        voxelFile="userTables/temperature.csv"
+        interpolation="linear"/>
+  </Functions>
+
+
+  <Events 
+    minTime="-1.0e11"
+    maxTime="1.0e5">
+
+    <!-- Initialisation events -->
+    <SoloEvent
+      name="ELASTICITY.PRE.INIT.STEP"
+      targetTime="-1.0e11"
+      beginTime="-1.0e11"
+      target="/Tasks/ELASTICITY.PRE.INIT.STEP" />
+    <!-- end -->       
+
+    <SoloEvent
+      name="outputs.PostEquilibrationStep"
+      targetTime="0"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/vtkOutput"/>
+
+     <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1.0e4"
+      target="/Solvers/reservoirSolver"/>
+
+    <PeriodicEvent
+      name="tractionCollection"      
+      target="/Tasks/tractionCollection" />
+
+    <PeriodicEvent
+      name="tractionOutput"
+      targetExactTimestep="0"
+      target="/Outputs/tractionOutput"/>
+
+    <PeriodicEvent
+      name="displacementJumpCollection"      
+      target="/Tasks/displacementJumpCollection" />
+
+    <PeriodicEvent
+      name="displacementJumpOutput"
+      targetExactTimestep="0"
+      target="/Outputs/displacementJumpOutput"/>  	     
+  </Events>
+
+</Problem>

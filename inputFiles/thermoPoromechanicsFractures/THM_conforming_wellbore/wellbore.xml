@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+
+<Problem>
+<!-- SPHINX_MESH -->
+  <Mesh>
+     <VTKMesh         
+      name="FaultModel"      
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="displacedFault.vtm"
+      logLevel="5">    
+       <InternalWell
+         name="well.W001"
+         wellRegionName="WELL.W001"
+         wellControlsName="wellControls1"
+         radius="0.1"
+         polylineNodeCoords="{
+            {  1700.0,   900.0,  -0.0 },
+            {  1700.0,   900.0,  -1000.0}
+         }"
+         polylineSegmentConn="{ {0,1} }"
+         numElementsPerSegment="1"
+         logLevel="0">
+         <Perforation
+             name="W001.perf1"
+             distanceFromHead="600.0" />
+       </InternalWell>
+    </VTKMesh>
+  </Mesh>
+</Problem>
+<!-- SPHINX_MESH_END -->
+

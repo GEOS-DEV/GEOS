@@ -126,6 +126,33 @@ setMGRStrategy()
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
+template<>
+void
+SinglePhaseReservoirAndWells< SinglePhasePoromechanicsConformingFractures<> >::
+setMGRStrategy()
+{
+  LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
+
+  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
+    return;
+
+  linearSolverParameters.mgr.separateComponents = true;
+  linearSolverParameters.dofsPerNode = 3;
+
+  if( dynamic_cast< SinglePhaseHybridFVM * >( this->flowSolver() ) )
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for poromechanics {}/{}",
+                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+  }
+  else
+  {
+    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsConformingFracturesReservoirFVM;
+  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
+                         GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
+                                   EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+}
+
 template< typename RESERVOIR_SOLVER >
 void
 SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
