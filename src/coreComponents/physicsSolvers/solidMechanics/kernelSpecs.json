@@ -176,7 +176,9 @@
         "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >",
         "PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability >",
-        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+        "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability >",
+        "PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability >"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

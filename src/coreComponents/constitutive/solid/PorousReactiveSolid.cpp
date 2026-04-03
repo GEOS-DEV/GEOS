@@ -25,6 +25,7 @@
 #include "DamageVolDev.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/DamagePermeability.hpp"
 
 namespace geos
 {
@@ -55,12 +56,19 @@ typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeabil
 
 typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > PorousReactiveElasticIsotropicCK;
 
+typedef PorousReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageDamagePermeability;
+// typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageSpectralDamagePermeability;
+typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > PorousReactiveDamageVolDevDamagePermeability;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageConstant, string const &, Group * const )
 // REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageDamagePermeability, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevDamagePermeability, string const &, Group * const )
 
 
 }

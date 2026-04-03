@@ -22,9 +22,11 @@
 #define GEOS_CONSTITUTIVE_SOLID_POROUSREACTIVESOLID_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
+#include "constitutive/solid/Damage.hpp"
 #include "constitutive/solid/porosity/BiotReactivePorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
+#include "constitutive/permeability/DamagePermeability.hpp"
 
 #include "constitutive/fluid/reactivefluid/ReactiveFluidLayouts.hpp"
 
@@ -73,6 +75,8 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
+
+    updateMatrixPermeability( k );
   }
 
   GEOS_HOST_DEVICE
@@ -90,12 +94,43 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  real64 getDamage( localIndex const k, localIndex const q ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > )
+      return m_solidUpdate.getDamage( k, q );
+    else
+      return 0.0;
+  }
+
+  GEOS_HOST_DEVICE
+  void updateMatrixPermeability( localIndex const k ) const
+  {
+    if constexpr ( std::is_base_of_v< DamageBase, SOLID_TYPE > && std::is_same_v< PERM_TYPE, DamagePermeability > )
+    {
+      // Use the averaged damage value from all quadrature points to get the cell-centered permeability
+      integer const quadSize = m_solidUpdate.m_newDamage[k].size();
+
+      real64 damageAvg = 0.0;
+
+      for( localIndex i=0; i<quadSize; ++i )
+      {
+        damageAvg += fmax( fmin( 1.0, m_solidUpdate.getDamage( k, i ) ), 0.0 );
+      }
+
+      damageAvg = damageAvg/quadSize;
+
+      m_permUpdate.updateDamagePermeability( k, damageAvg );
+    }
+  }
+
+  GEOS_HOST_DEVICE
   virtual void updateSurfaceArea( localIndex const k,
                                   localIndex const q,
                                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
                                   arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
   {
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    real64 const damage = fmax( fmin( 1.0, getDamage( k, q ) ), 0.0 );
+    real64 const porosity = damage + ( 1 - damage ) * m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );
 
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
@@ -332,6 +367,7 @@ public:
   {
     return getSolidModel().getDensity();
   }
+
 
 private:
   using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getSolidModel;
