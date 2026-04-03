@@ -54,6 +54,10 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerField< fields::solid::bulkModulus >( &m_bulkModulus );
 
   registerField< fields::solid::shearModulus >( &m_shearModulus );
+
+  registerField< fields::solid::youngModulus >( &m_youngModulus );
+
+  registerField< fields::solid::poissonRatio >( &m_poissonRatio );
 }
 
 void ElasticIsotropic::postInputInitialization()
@@ -145,6 +149,66 @@ void ElasticIsotropic::postInputInitialization()
 
   getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
+}
+
+void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
+{
+  SolidBase::initializePostInitialConditionsPreSubGroups();
+
+  // If per-cell Young's modulus and Poisson's ratio were imported from an external mesh
+  // (indicated by youngModulus[k] > 0 and poissonRatio[k] in (-0.5, 0.5)),
+  // convert them to bulk and shear modulus on a cell-by-cell basis.
+  arrayView1d< real64 const > const youngMod = m_youngModulus;
+  arrayView1d< real64 const > const nu       = m_poissonRatio;
+  arrayView1d< real64 > const bulkMod        = m_bulkModulus;
+  arrayView1d< real64 > const shearMod       = m_shearModulus;
+
+  localIndex numConverted = 0;
+  localIndex numInvalidE  = 0;
+
+  for( localIndex k = 0; k < m_youngModulus.size(); ++k )
+  {
+    // youngModulus default is 0: negative values are invalid, zero means not imported
+    if( youngMod[k] < 0.0 )
+    {
+      GEOS_WARNING( GEOS_FMT( "ElasticIsotropic '{}': element {} has negative Young's modulus ({:.6e}). "
+                              "Skipping per-cell conversion; default bulk/shear modulus will be used.",
+                              getName(), k, youngMod[k] ) );
+      ++numInvalidE;
+      continue;
+    }
+
+    // youngModulus default is 0: not imported — skip silently
+    if( !( youngMod[k] > 0.0 ) )
+      continue;
+
+    // E was imported and is positive: nu must also be valid
+    GEOS_ERROR_IF( nu[k] <= -0.5 || nu[k] >= 0.5,
+                   GEOS_FMT( "ElasticIsotropic '{}': element {} has Young's modulus imported ({:.6e}) "
+                             "but Poisson's ratio ({:.6f}) is outside the valid range (-0.5, 0.5). "
+                             "Both youngModulus and poissonRatio must be provided together.",
+                             getName(), k, youngMod[k], nu[k] ) );
+
+    bulkMod[k]  = conversions::youngModAndPoissonRatio::toBulkMod( youngMod[k], nu[k] );
+    shearMod[k] = conversions::youngModAndPoissonRatio::toShearMod( youngMod[k], nu[k] );
+    ++numConverted;
+  }
+
+  GEOS_LOG_RANK_0_IF( numConverted > 0,
+                      GEOS_FMT( "ElasticIsotropic '{}': converted per-cell Young's modulus / Poisson's ratio "
+                                "to bulk / shear modulus for {} element(s).",
+                                getName(), numConverted ) );
+  GEOS_WARNING_IF( numInvalidE > 0,
+                   GEOS_FMT( "ElasticIsotropic '{}': {} element(s) had non-positive Young's modulus and were skipped.",
+                             getName(), numInvalidE ) );
+
+  // Back-compute E and nu for all cells from the final K/G so that output fields are meaningful
+  // for both imported and default cells.
+  for( localIndex k = 0; k < m_bulkModulus.size(); ++k )
+  {
+    m_youngModulus[k] = conversions::bulkModAndShearMod::toYoungMod( bulkMod[k], shearMod[k] );
+    m_poissonRatio[k] = conversions::bulkModAndShearMod::toPoissonRatio( bulkMod[k], shearMod[k] );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )
