@@ -160,6 +160,7 @@ public:
     Off,
     NormalForce,
     SPH,
+    Volume
   };
 
 
@@ -308,6 +309,7 @@ public:
     static constexpr char const * gridDamageString() { return "gridDamage"; }
     static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
+    static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
 
     static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
     static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
@@ -869,7 +871,8 @@ public:
                                      real64 const & maxDamageB,
                                      arraySlice1d< real64 const > const damageGradient,
                                      arraySlice1d< real64 const > const xA,
-                                     arraySlice1d< real64 const > const xB );
+                                     arraySlice1d< real64 const > const xB,
+                                     real64 const & surfaceQuality );
 
   void flagOutOfRangeParticles( ParticleManager & particleManager );
 
@@ -1139,6 +1142,7 @@ protected:
   int m_numContactFlags;
   int m_numVelocityFields;
   real64 m_separabilityMinDamage;
+  real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
   int m_treatFullyDamagedAsSingleField;
   real64 m_thinFeatureDFGThreshold;
   int m_useDamageAsSurfaceFlag;
@@ -1289,7 +1293,8 @@ ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
 ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",
               "NormalForce",
-              "SPH" );
+              "SPH",
+              "Volume" );
 
 ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
               "Uncoupled",

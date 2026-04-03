@@ -476,7 +476,7 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
-  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for CeramicDamage model" );
+  GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for Graphite model" );
 }
 
 GEOS_HOST_DEVICE
@@ -628,8 +628,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                            unrotatedMaterialDirection,     // preferred direction
                                            oldStress,            // stress at start of step
                                            D,                    // D=sym(L)
-                                           stress,
-                                           k );             // stress at end of step
+                                           stress,               // stress at end of step
+                                           k );             
+
 
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ", Trial stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] <<
