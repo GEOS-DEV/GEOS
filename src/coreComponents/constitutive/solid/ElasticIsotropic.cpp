@@ -194,10 +194,6 @@ void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
     ++numConverted;
   }
 
-  GEOS_LOG_RANK_0_IF( numConverted > 0,
-                      GEOS_FMT( "ElasticIsotropic '{}': converted per-cell Young's modulus / Poisson's ratio "
-                                "to bulk / shear modulus for {} element(s).",
-                                getName(), numConverted ) );
   GEOS_WARNING_IF( numInvalidE > 0,
                    GEOS_FMT( "ElasticIsotropic '{}': {} element(s) had non-positive Young's modulus and were skipped.",
                              getName(), numInvalidE ) );
