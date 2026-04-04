@@ -2829,12 +2829,11 @@ string buildCellBlockName( ElementType const type, int const regionId )
 
 } // namespace vtk
 
-
 /**
  * @brief Build node sets
  *
- * @param[in] logLevel the log level
- * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @param[in] logLevel The log level
+ * @param[in] mesh The vtk grid that is loaded
  * @param[in] nodesetNames An array of the node sets names
  * @param[in] cellBlockManager The instance that stores the node sets.
  */
@@ -2846,24 +2845,52 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( size_t i=0; i < nodesetNames.size(); ++i )
+  for( size_t i = 0; i < nodesetNames.size(); ++i )
   {
     GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
 
     vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
-    GEOS_THROW_IF( curArray == nullptr,
-                   GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
-                   InputError );
-    vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
-    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetNames[i] );
-    for( localIndex j=0; j < numPoints; ++j )
+    GEOS_THROW_IF( curArray == nullptr,
+                   GEOS_FMT( "Target nodeset '{}' not found in mesh",
+                             nodesetNames[i] ),
+                   InputError );
+
+    // Explicit type check: must be UInt8 (VTK_UNSIGNED_CHAR)
+    GEOS_THROW_IF( curArray->GetDataType() != VTK_TYPE_UINT8,
+                   GEOS_FMT( "Nodeset '{}' must be UInt8 (VTK_UNSIGNED_CHAR), but is '{}'",
+                             nodesetNames[i],
+                             curArray->GetDataTypeAsString() ),
+                   InputError );
+
+    // Fast downcast after type verification
+    vtkUnsignedCharArray * const dataArray = vtkUnsignedCharArray::FastDownCast( curArray );
+    vtkTypeUInt8 const * const rawData = dataArray->GetPointer( 0 );
+
+    // First pass: count the number of nodes in the set
+    RAJA::ReduceSum< parallelHostReduce, localIndex > count_reducer( 0 );
+
+    forAll< parallelHostPolicy >( numPoints, [=]( localIndex const j )
     {
-      if( nodesetMask.GetValue( j ) == 1 )
+      count_reducer += rawData[j] & 1;  // Extract least significant bit 
+    } );
+
+    localIndex const count = count_reducer.get();
+
+    // Second pass: collect the indices (unique and sorted)
+    array1d< localIndex > nodeIndices;
+    nodeIndices.reserve( count );
+
+    for( localIndex j = 0; j < numPoints; ++j )
+    {
+      if( rawData[j] & 1 )
       {
-        targetNodeset.insert( j );
+        nodeIndices.emplace_back( j );
       }
     }
+
+    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetNames[i] );
+    targetNodeset.insert( nodeIndices.begin(), nodeIndices.end() );
   }
 }
 
