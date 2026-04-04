@@ -1,7 +1,7 @@
 .. _VonMisesJModel:
 
 ############################################
-Von Mises J Model
+Von Mises J Model (MPM Only)
 ############################################
 
 Overview, Summary

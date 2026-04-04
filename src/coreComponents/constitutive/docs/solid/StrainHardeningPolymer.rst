@@ -1,7 +1,7 @@
 .. _StrainHardeningPolymer:
 
 ############################################
-Strain Hardening Polymer Model
+Strain Hardening Polymer (MPM Only)
 ############################################
 
 

@@ -1,7 +1,7 @@
 .. _CeramicDamageModel:
 
 ############################################
-Ceramic Damage Model
+Ceramic Damage Model (MPM Only)
 ############################################
 
 Overview, Summary

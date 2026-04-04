@@ -1,7 +1,7 @@
 .. _GraphiteModel:
 
 ############################################
-Graphite Model
+Graphite Model (MPM Only)
 ############################################
 
 Overview, Summary

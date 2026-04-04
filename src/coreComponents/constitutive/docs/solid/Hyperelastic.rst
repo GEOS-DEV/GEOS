@@ -1,7 +1,7 @@
 .. _HyperelasticModel:
 
 ############################################
-Hyperelastic Model
+Hyperelastic Model (MPM Only)
 ############################################
 
 Overview, Summary

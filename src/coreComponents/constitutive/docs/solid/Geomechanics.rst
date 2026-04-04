@@ -1,7 +1,7 @@
 .. _Geomechanics Model:
 
 ############################################
-Geomechanics Model
+Geomechanics Model (MPM Only)
 ############################################
 
 Overview

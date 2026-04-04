@@ -1,7 +1,7 @@
 .. _HyperelasticMMSModel:
 
 ############################################
-HyperelasticMMS Model
+HyperelasticMMS Model (MPM Only)
 ############################################
 
 Overview, Summary

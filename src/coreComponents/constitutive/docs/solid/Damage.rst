@@ -1,7 +1,7 @@
 .. _DamageModel:
 
 ############################################
-Damage Models
+Damage Model (MPM Only)
 ############################################
 
 Overview

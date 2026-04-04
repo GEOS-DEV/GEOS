@@ -1,7 +1,7 @@
 .. _ChiumentiModel:
 
 ############################################
-Chiumenti Damage Model
+Chiumenti Damage Model (MPM Only)
 ############################################
 
 Overview, Summary

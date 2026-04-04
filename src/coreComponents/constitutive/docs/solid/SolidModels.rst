@@ -23,7 +23,9 @@ known models.
    Graphite
    Hyperelastic
    HyperelasticMMS
+   InputFiles
    ModifiedCamClay
+   MPMTheory
    Plasticity
    StrainHardeningPolymer
    Theory
