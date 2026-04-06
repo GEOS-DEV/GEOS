@@ -2872,7 +2872,7 @@ void importNodesets( integer const logLevel,
 
     forAll< parallelHostPolicy >( numPoints, [=]( localIndex const j )
     {
-      count_reducer += rawData[j] & 1;  // Extract least significant bit 
+      count_reducer += rawData[j] & 1;  // Extract least significant bit
     } );
 
     localIndex const count = count_reducer.get();
