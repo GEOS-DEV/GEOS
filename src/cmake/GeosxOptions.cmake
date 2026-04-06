@@ -21,6 +21,8 @@ option( RAJA_ENABLE_CUDA "" OFF )
 option( RAJA_ENABLE_HIP "" OFF )
 option( RAJA_ENABLE_TESTS "" OFF )
 
+option( GEOS_USE_GIT_VERSION_INFO "Enables querying git for version metadata" ON )
+
 option( GEOS_ENABLE_BOUNDS_CHECK "Enables array bounds checking" OFF )
 if( NOT CMAKE_CONFIGURATION_TYPES )
     ######################################################
@@ -35,6 +37,8 @@ if( GEOS_ENABLE_BOUNDS_CHECK )
 endif()
 
 option( ENABLE_PVTPackage "" ON )
+
+option( ENABLE_HPCREACT "" ON )
 
 option( ENABLE_UNCRUSTIFY "" ON )
 

@@ -123,6 +123,12 @@ public:
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 localIndex const faceIndices[2] );
 
+  /**
+   * @brief This function updates the face/surface mesh entries for the faces that are part of the surface region.
+   * @param faceManager pointer to the FaceManager object.
+   */
+  void updateSets( FaceManager const & faceManager );
+
   ///@}
 
 
@@ -211,8 +217,7 @@ private:
       subRegionNames.push_back( sr.getName() );
     } );
     GEOS_ERROR_IF( subRegionNames.size() != 1,
-                   "Surface region \"" << getDataContext() <<
-                   "\" should have one unique sub region (" << subRegionNames.size() << " found).",
+                   GEOS_FMT( "Surface region should have one unique sub region ({} found).", subRegionNames.size() ),
                    getDataContext() );
     return subRegionNames.front();
   }

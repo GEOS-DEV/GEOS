@@ -41,8 +41,10 @@
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/CeramicDamage.hpp"
+#include "solid/ReactiveSolid.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
+#include "solid/porosity/ReactivePorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ExponentialDecayPermeability.hpp"
@@ -259,9 +261,9 @@ struct ConstitutivePassThru< NullModel >
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< NullModel >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( GEOS_FMT( "ConstitutivePassThru< NullModel >::execute failed on constitutive relation {}",
+                            LvArray::system::demangleType( constitutiveRelation ) ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
@@ -282,9 +284,10 @@ struct ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability > >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( GEOS_FMT( "ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability > >::execute "
+                            "failed on constitutive relation {}",
+                            LvArray::system::demangleType( constitutiveRelation ) ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
@@ -395,6 +398,34 @@ struct ConstitutivePassThru< CompressibleSolidBase >
 };
 
 /**
+ * Specialization for the ReactiveSolid models.
+ */
+template<>
+struct ConstitutivePassThru< ReactiveSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+
+/**
  * Specialization for the ProppantModel.
  */
 template<>
@@ -410,9 +441,9 @@ struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeabili
     }
     else
     {
-      GEOS_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed on constitutive relation "
-                  << constitutiveRelation.getDataContext() << " with type "
-                  << LvArray::system::demangleType( constitutiveRelation ) );
+      GEOS_ERROR( GEOS_FMT( "ConstitutivePassThru< ProppantSolid >::execute failed on constitutive relation {}",
+                            LvArray::system::demangleType( constitutiveRelation ) ),
+                  constitutiveRelation.getDataContext() );
     }
   }
 };
@@ -458,8 +489,11 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
-                                                                                             std::forward< LAMBDA >( lambda ) );
+                                 PorousDamageSolid< Damage< ElasticIsotropic > >,
+                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                     std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -496,8 +530,11 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
-                                                                                             std::forward< LAMBDA >( lambda ) );
+                                 PorousDamageSolid< Damage< ElasticIsotropic > >,
+                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                     std::forward< LAMBDA >( lambda ) );
   }
 };
 
