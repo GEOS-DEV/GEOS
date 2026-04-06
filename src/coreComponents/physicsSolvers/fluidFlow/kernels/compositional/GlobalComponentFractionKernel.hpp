@@ -28,6 +28,9 @@ namespace geos
 namespace isothermalCompositionalMultiphaseBaseKernels
 {
 
+/// Minimum |sum(global component density)| for forming global component fractions; matches minDensForDivision in AccumulationKernel.hpp.
+static constexpr real64 minTotalDensityForGlobalCompFraction = 1e-10;
+
 /******************************** GlobalComponentFractionKernel ********************************/
 
 /**
@@ -77,16 +80,32 @@ public:
       totalDensity += compDens[ic];
     }
 
-    real64 const totalDensityInv = 1.0 / totalDensity;
-
-    for( integer ic = 0; ic < numComp; ++ic )
+    real64 const absTotalDensity = totalDensity >= 0.0 ? totalDensity : -totalDensity;
+    if( absTotalDensity < minTotalDensityForGlobalCompFraction )
     {
-      compFrac[ic] = compDens[ic] * totalDensityInv;
-      for( integer jc = 0; jc < numComp; ++jc )
+      real64 const invN = 1.0 / numComp;
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
+        compFrac[ic] = invN;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dCompFrac_dCompDens[ic][jc] = 0.0;
+        }
       }
-      dCompFrac_dCompDens[ic][ic] += totalDensityInv;
+    }
+    else
+    {
+      real64 const totalDensityInv = 1.0 / totalDensity;
+
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        compFrac[ic] = compDens[ic] * totalDensityInv;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
+        }
+        dCompFrac_dCompDens[ic][ic] += totalDensityInv;
+      }
     }
 
     compFractionKernelOp( compFrac, dCompFrac_dCompDens );

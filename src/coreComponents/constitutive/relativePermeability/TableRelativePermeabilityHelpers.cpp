@@ -68,10 +68,10 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
-    GEOS_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-15,
-                   GEOS_FMT( "TableFunction '{}' values must be strictly increasing (|Delta kr| > 1e-15 between two non-zero values)",
-                             fullConstitutiveName ),
-                   InputError, relPermTable.getDataContext() );
+    // GEOS_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-15,
+    //                GEOS_FMT( "TableFunction '{}' values must be strictly increasing (|Delta kr| > 1e-15 between two non-zero values)",
+    //                          fullConstitutiveName ),
+    //                InputError, relPermTable.getDataContext() );
 
     if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
     {

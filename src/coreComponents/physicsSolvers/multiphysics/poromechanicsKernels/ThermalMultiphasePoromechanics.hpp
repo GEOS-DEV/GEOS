@@ -62,7 +62,7 @@ public:
   /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Maximum number of fluid components
-  static constexpr int maxNumComponents = 3;
+  static constexpr int maxNumComponents = 4;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
