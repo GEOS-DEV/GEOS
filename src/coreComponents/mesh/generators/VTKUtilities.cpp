@@ -2829,13 +2829,87 @@ string buildCellBlockName( ElementType const type, int const regionId )
 
 } // namespace vtk
 
+namespace
+{
+
 /**
- * @brief Build node sets
+ * @brief Extract node indices from a binary mask array using parallel scan
+ *
+ * @tparam ValueType The underlying data type (vtkTypeUInt8, vtkTypeUInt16, vtkTypeUInt32, vtkTypeUInt64)
+ * @param[in] rawData Pointer to the raw mask array data
+ * @param[in] numPoints Total number of points in the mesh
+ * @param[out] targetNodeset The sorted array to populate with node indices
+ *
+ */
+template< typename ValueType >
+void extractNodesetFromMask( ValueType const * rawData,
+                             localIndex const numPoints,
+                             SortedArray< localIndex > & targetNodeset )
+{
+  // Early exit for empty mesh
+  if( numPoints == 0 )
+  {
+    return;
+  }
+
+  // Allocate temporary array for positions (initially stores flags)
+  array1d< localIndex > positions( numPoints );
+
+  // Bitmask for membership (Least Significant Bit)
+  constexpr ValueType mask = 1;
+
+  // Step 1: Extract binary flags from mask (parallel)
+  forAll< parallelHostPolicy >( numPoints, [rawData, &positions, mask]( localIndex const j )
+  {
+    positions[j] = rawData[j] & mask;
+  } );
+
+  // Save last flag value before scan overwrites it
+  localIndex const lastFlag = positions[numPoints - 1];
+
+  // Step 2: In-place exclusive scan to compute write positions (parallel)
+  RAJA::exclusive_scan_inplace< parallelHostPolicy >(
+    RAJA::make_span( positions.data(), numPoints ),
+    RAJA::operators::plus< localIndex >{}
+    );
+
+  // Step 3: Compute total count from scan result
+  localIndex const lastPosition = positions[numPoints - 1];
+  localIndex const count = lastPosition + lastFlag;
+
+  if( count == 0 )
+  {
+    return;  // No nodes in this nodeset
+  }
+
+  // Step 4: Allocate exact-size output array
+  array1d< localIndex > nodeIndices( count );
+
+  // Step 5: Scatter flagged node indices to compacted array (parallel)
+  forAll< parallelHostPolicy >( numPoints, [rawData, &nodeIndices, &positions, mask]( localIndex const j )
+  {
+    if( rawData[j] & mask )
+    {
+      nodeIndices[ positions[j] ] = j;
+    }
+  } );
+
+  // Step 6: Insert into sorted nodeset container exploiting sortedness and uniqueness of nodeIndices
+  targetNodeset.insert( nodeIndices.begin(), nodeIndices.end() );
+}
+
+}
+
+/**
+ * @brief Build node sets from binary mask arrays
  *
  * @param[in] logLevel The log level
  * @param[in] mesh The vtk grid that is loaded
  * @param[in] nodesetNames An array of the node sets names
  * @param[in] cellBlockManager The instance that stores the node sets.
+ *
+ * @note Nodeset arrays should be binary masks (0 or 1 values) stored as unsigned integers.
+ *       UInt8 is recommended for optimal memory usage.
  */
 void importNodesets( integer const logLevel,
                      vtkDataSet & mesh,
@@ -2847,50 +2921,44 @@ void importNodesets( integer const logLevel,
 
   for( size_t i = 0; i < nodesetNames.size(); ++i )
   {
-    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
+    string const & nodesetName = nodesetNames[i];
 
-    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
+    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    Processing nodeset: " + nodesetName );
+
+    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetName.c_str() );
 
     GEOS_THROW_IF( curArray == nullptr,
-                   GEOS_FMT( "Target nodeset '{}' not found in mesh",
-                             nodesetNames[i] ),
+                   GEOS_FMT( "Nodeset '{}' not found in mesh point data", nodesetName ),
                    InputError );
 
-    // Explicit type check: must be UInt8 (VTK_UNSIGNED_CHAR)
-    GEOS_THROW_IF( curArray->GetDataType() != VTK_TYPE_UINT8,
-                   GEOS_FMT( "Nodeset '{}' must be UInt8 (VTK_UNSIGNED_CHAR), but is '{}'",
-                             nodesetNames[i],
-                             curArray->GetDataTypeAsString() ),
-                   InputError );
+    // Get the target nodeset container
+    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetName );
 
-    // Fast downcast after type verification
-    vtkUnsignedCharArray * const dataArray = vtkUnsignedCharArray::FastDownCast( curArray );
-    vtkTypeUInt8 const * const rawData = dataArray->GetPointer( 0 );
+    // Get array metadata
+    int const dataType = curArray->GetDataType();
+    string const dataTypeName = curArray->GetDataTypeAsString();
 
-    // First pass: count the number of nodes in the set
-    RAJA::ReduceSum< parallelHostReduce, localIndex > count_reducer( 0 );
+    vtkDataArray * dataArray = vtkDataArray::FastDownCast( curArray );
+    void const * rawData = dataArray->GetVoidPointer( 0 );
 
-    forAll< parallelHostPolicy >( numPoints, [=]( localIndex const j )
+    // Dispatch based on data type
+    switch( dataType )
     {
-      count_reducer += rawData[j] & 1;  // Extract least significant bit
-    } );
-
-    localIndex const count = count_reducer.get();
-
-    // Second pass: collect the indices (unique and sorted)
-    array1d< localIndex > nodeIndices;
-    nodeIndices.reserve( count );
-
-    for( localIndex j = 0; j < numPoints; ++j )
-    {
-      if( rawData[j] & 1 )
-      {
-        nodeIndices.emplace_back( j );
-      }
+      case VTK_TYPE_UINT8:
+        extractNodesetFromMask( static_cast< vtkTypeUInt8 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT16:
+        extractNodesetFromMask( static_cast< vtkTypeUInt16 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT32:
+        extractNodesetFromMask( static_cast< vtkTypeUInt32 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT64:
+        extractNodesetFromMask( static_cast< vtkTypeUInt64 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      default:
+        GEOS_THROW( GEOS_FMT( "Nodeset '{}': unsupported type '{}' (use UInt8/16/32/64)", nodesetName, dataTypeName ), InputError );
     }
-
-    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetNames[i] );
-    targetNodeset.insert( nodeIndices.begin(), nodeIndices.end() );
   }
 }
 
