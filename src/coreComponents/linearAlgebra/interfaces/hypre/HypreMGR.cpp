@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/HybridSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/Hydrofracture.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseFVM.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/ImmiscibleMultiphaseMFD.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp"
@@ -215,6 +216,11 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     case LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM:
     {
       setStrategy< ImmiscibleMultiphaseFVM >( params.mgr, numComponentsPerField, precond, mgrData );
+      break;
+    }
+    case LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseMFD:
+    {
+      setStrategy< ImmiscibleMultiphaseMFD >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     default:

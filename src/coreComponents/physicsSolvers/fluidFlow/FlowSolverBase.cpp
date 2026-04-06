@@ -210,6 +210,8 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       faceManager.registerField< flow::facePressure >( getName() );
       faceManager.registerField< flow::gravityCoefficient >( getName() );
       faceManager.registerField< flow::transMultiplier >( getName() );
+      // transGgradZ: consistent mimetic operator applied to the gravitational potential
+      faceManager.registerField< flow::transGgradZ >( getName() );
     }
 
   } );

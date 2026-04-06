@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+
+<!-- ------------------------------------------------------------------
+ Simple 1D two‑phase immiscible flow example using the
+ ImmiscibleMultiphaseFlowMFD solver with a hybrid mimetic (polytopal)
+ discretization. The problem drives flow from a left high‑pressure
+ box region to a right low‑pressure box region.
+------------------------------------------------------------------- -->
+<Problem>
+  <Solvers gravityVector="{ 0.0, 0.0, -10.0 }">
+    <ImmiscibleMultiphaseFlowMFD
+      name="FlowSolverMFD"
+      discretization="immiscibleHybridMimetic"
+      targetRegions="{ Domain }"
+      logLevel="2"
+      dependentPhaseIndex="1">
+      <NonlinearSolverParameters
+        newtonTol="1e-6"
+        lineSearchAction="None"
+        maxTimeStepCuts="100"
+        maxSubSteps="100"
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        directParallel="0"
+        reuseFactorization="0"/>
+    </ImmiscibleMultiphaseFlowMFD>
+  </Solvers>
+
+  <Mesh>
+    <!-- 1D line extruded to thin 1x1 cross section -->
+    <InternalMesh name="mesh1"
+                  elementTypes="{ C3D8 }"
+                  xCoords="{ 0, 1 }"
+                  yCoords="{ 0, 1 }"
+                  zCoords="{ 0, 10 }"
+                  nx="{ 1 }" ny="{ 1 }" nz="{ 8000 }"
+                  cellBlockNames="{ block1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="top_BC"
+      xMin="{ -0.0001, -0.0001, 9.9999 }"
+      xMax="{ 1.0001, 1.0001, 10.0001 }"/>
+  </Geometry>
+
+  <Events maxTime="864000">
+    <PeriodicEvent name="outputs" timeFrequency="216" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="216" target="/Solvers/FlowSolverMFD"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <!-- Hybrid mimetic discretization; choose innerProductType (tpfa, quasiTPFA, quasiRT, simple) -->
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Domain" cellBlocks="{ block1 }" materialList="{ fluid, rock, relperm }"/>
+  </ElementRegions>
+
+  <Functions>
+    <!-- Constant property tables (single entry) -->
+    <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 500.0 }"/>
+    <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
+    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
+
+    <!-- Linear relative permeability tables -->
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+                     0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0 }"
+      values="{ 0.0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+                0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinates="{ 0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+                     0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0 }"
+      values="{ 0.0, 0.0025, 0.0100, 0.0225, 0.0400, 0.0625, 0.0900, 0.1225, 0.1600, 0.2025,
+                0.2500, 0.3025, 0.3600, 0.4225, 0.4900, 0.5625, 0.6400, 0.7225, 0.8100, 0.9025, 1.0000 }"/>
+
+    <!-- Initial saturation tables using voxel files -->
+    <TableFunction
+      name="initSatWaterTable"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="initSatWater.geos"
+      interpolation="linear" />
+    <TableFunction
+      name="initSatGasTable"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="initSatGas.geos"
+      interpolation="linear" />
+  </Functions>
+
+  <Constitutive>
+    <TwoPhaseImmiscibleFluid
+      name="fluid"
+      phaseNames="{ water, gas }"
+      densityTableNames="{ densityWater, densityGas }"
+      viscosityTableNames="{ viscosityWater, viscosityGas }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.1" referencePressure="0" compressibility="0.0"/>
+
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ water, gas }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification name="Porosity" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.1"/>
+
+    <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
+    <FieldSpecification name="initialfacePressure" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="facePressure" scale="1.0e7"/>
+
+    <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
+    <FieldSpecification name="initSatWater" initialCondition="1" functionName="initSatWaterTable" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="1.0"/>
+
+    <FieldSpecification name="initSatGas" initialCondition="1" functionName="initSatGasTable" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="1.0"/>
+
+    <!-- Pressure BC regions -->
+    <FieldSpecification name="topPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>
+
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK name="vtkOutput"/>
+  </Outputs>
+</Problem>

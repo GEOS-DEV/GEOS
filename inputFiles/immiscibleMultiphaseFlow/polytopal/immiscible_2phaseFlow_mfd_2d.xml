@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+
+<!-- ------------------------------------------------------------------
+ Simple 1D two‑phase immiscible flow example using the
+ ImmiscibleMultiphaseFlowMFD solver with a hybrid mimetic (polytopal)
+ discretization. The problem drives flow from a left high‑pressure
+ box region to a right low‑pressure box region.
+------------------------------------------------------------------- -->
+<Problem>
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
+    <ImmiscibleMultiphaseFlowMFD
+      name="FlowSolverMFD"
+      discretization="immiscibleHybridMimetic"
+      targetRegions="{ Domain }"
+      logLevel="2"
+      dependentPhaseIndex="1">
+      <NonlinearSolverParameters 
+        newtonTol="1e-5"
+        lineSearchAction="None"
+        maxTimeStepCuts="50"
+        maxSubSteps="50"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters 
+        directParallel="0"
+        reuseFactorization="0"/>
+    </ImmiscibleMultiphaseFlowMFD>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh name="mesh1"
+                  elementTypes="{ C3D8 }"
+                  xCoords="{ 0, 100 }"
+                  yCoords="{ 0, 100 }"
+                  zCoords="{ 0, 1 }"
+                  nx="{ 100 }" ny="{ 100 }" nz="{ 1 }"
+                  cellBlockNames="{ block1 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box name="source" xMin="{ -0.01, -0.01, -0.01 }" xMax="{ 1.01, 1.01, 1.01 }"/>
+    <Box name="sink"   xMin="{ 98.99, 98.99, -0.01 }" xMax="{ 100.01, 100.01, 1.01 }"/>
+    <Box name="bc_xz_y100"   
+      xMin="{ 98.99, 99.99, -0.01 }" 
+      xMax="{ 100.01, 100.01, 1.01 }"/>
+    <Box name="bc_yz_x100"   
+      xMin="{ 99.99, 98.99, -0.01 }" 
+      xMax="{ 100.01, 100.01, 1.01 }"/>      
+  </Geometry>
+
+  <Events maxTime="2592000000">
+    <PeriodicEvent name="outputs" timeFrequency="2592000" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="2592000" target="/Solvers/FlowSolverMFD"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <!-- Hybrid mimetic discretization; choose innerProductType (tpfa, quasiTPFA, quasiRT, simple) -->
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="quasiTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion name="Domain" cellBlocks="{ block1 }" materialList="{ fluid, rock, relperm }"/>
+  </ElementRegions>
+
+  <Functions>
+    <!-- Constant property tables (single entry) -->
+    <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 100.0 }"/>
+    <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
+    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-4 }"/>
+
+    <!-- Linear relative permeability tables -->
+    <TableFunction
+      name="waterRelativePermeabilityTable"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear"/>
+    <TableFunction
+      name="gasRelativePermeabilityTable"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear"/>
+  </Functions>
+
+  <Constitutive>
+
+    <TwoPhaseImmiscibleFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      densityTableNames="{ densityGas, densityWater }"
+      viscosityTableNames="{ viscosityGas, viscosityWater }"/>      
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel name="nullSolid"/>
+
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="0.0"/>
+
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
+
+    <TableRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification name="Porosity" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.25"/>
+
+    <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.5e7"/>
+    <FieldSpecification name="initialfacePressure" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="facePressure" scale="1.5e7"/>         
+
+    <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
+    <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.999"/>
+    <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.001"/>
+
+    <!-- Pressure BC regions -->
+    <FieldSpecification name="sinkPressure_flank_1" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ bc_xz_y100 }"/>
+
+    <FieldSpecification name="sinkPressure_flank_2" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ bc_yz_x100 }"/>      
+
+  <!-- Pressure + saturation -->
+  <SourceFlux
+    name="injector_pressure_and_sat"
+    objectPath="ElementRegions/Domain"
+    component="1"
+    scale="-5.0e-5"
+    setNames="{ source }"/>
+
+
+  </FieldSpecifications>
+
+
+
+  <Outputs>
+    <VTK name="vtkOutput"/>
+  </Outputs>
+</Problem>

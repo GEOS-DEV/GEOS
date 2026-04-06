@@ -233,6 +233,14 @@ DECLARE_FIELD( transMultiplier,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
 
+DECLARE_FIELD( transGgradZ,
+               "transGgradZ",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face field transGgradZ: consistent mimetic operator applied to the gravitational potential (harmonic average of element contributions)" );
+
 DECLARE_FIELD( pressureScalingFactor,
                "pressureScalingFactor",
                array1d< real64 >,
