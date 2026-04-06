@@ -148,7 +148,7 @@ public:
 
   virtual void expandObjectCatalogs() override;
 
-  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) = 0;
+  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion );
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const = 0;
   /**
    * @brief Create well separator
@@ -644,6 +644,14 @@ public:
    */
 
   void setThermal( bool isThermal )   {  m_isThermal=isThermal; }
+
+  /**
+   * @brief setter to activate mass formulation
+   * @param[in] useMass
+   */
+
+  void setUseMass( integer useMass )   {  m_useMass=useMass; }
+
   /**
    * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
@@ -946,6 +954,9 @@ protected:
 
   /// Name of the flow solver managing this well
   std::string m_flowSolverName;
+
+  /// flag indicating whether mass or molar formulation should be used
+  integer m_useMass;
 
   /// the max number of fluid phases
   integer m_numPhases;

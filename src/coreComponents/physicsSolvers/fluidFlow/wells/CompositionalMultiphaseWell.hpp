@@ -386,10 +386,6 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-
-  /// flag indicating whether mass or molar formulation should be used
-  integer m_useMass;
-
   /// flag indicating whether total mass equation should be used
   integer m_useTotalMassEquation;
 

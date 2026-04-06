@@ -137,6 +137,13 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to enable isothermal estimator prior to coupled reservoir and well solve." );
 
+  registerWrapper( viewKeyStruct::statusTableNameString(), &m_statusTableName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
+                    "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+
   registerGroup( viewKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
 
   addLogLevel< logInfo::WellControl >();
@@ -258,6 +265,16 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 
   registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
   registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
+
+  // If estimator is used including thermal effects set during constraint evaluation
+  // otherwise they are always included
+  if( isThermal() )
+  {
+    if( m_estimateSolution == 0 )
+    {
+      enableThermalEffects( true );
+    }
+  }
 }
 void WellControls::postInputInitialization()
 {
@@ -343,6 +360,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
           m_wellStatus =  WellControls::Status::CLOSED;
+          m_currentConstraint=nullptr;
           break;
         }
       }
@@ -355,6 +373,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
           m_wellStatus =  WellControls::Status::CLOSED;
+          m_currentConstraint=nullptr;
           break;
         }
       }
@@ -363,6 +382,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
     if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
     {
       m_wellStatus =  WellControls::Status::CLOSED;
+      m_currentConstraint=nullptr;
     }
   }
 }
@@ -658,7 +678,9 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     setWellState( 0 );
   }
 
-  bool useEstimator = m_estimateSolution && (coupledIterationNumber < m_wellNewtonSolver.getNumActiveCoupledIterations() );
+  bool useEstimator = coupledIterationNumber < estimateSolution();
+
+
 
   if( getWellState())
   {

@@ -786,6 +786,8 @@ public:
           // compute the phase flux and derivatives using upstream cell mobility
           eflux = resPhaseMobE * potDiff;
           real64 dEFlux[2][CP_Deriv::nDer]{};
+          dEFlux[TAG::WELL][CP_Deriv::dP] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dP];
+          dEFlux[TAG::WELL][CP_Deriv::dT] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dT];
           // Handles all dependencies
           for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
           {

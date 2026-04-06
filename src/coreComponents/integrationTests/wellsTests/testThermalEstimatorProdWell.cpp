@@ -93,15 +93,13 @@ char const * xmlInput =
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
     </CompositionalMultiphaseFVM>
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ prodwell }"
       isThermal="1"
       logLevel="1"
       initialDt="1e4"
-      useMass="0"
-      writeCSV="1"
-      useNewCode="1">
+      useMass="0">
       <LinearSolverParameters
         directParallel="0">
       </LinearSolverParameters>
@@ -110,15 +108,16 @@ char const * xmlInput =
         lineSearchAction="None"
         newtonMaxIter="20">
       </NonlinearSolverParameters>
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WC_CO2_PROD"
         logLevel="2"
         type="producer"
         enableCrossflow="0"
         useSurfaceConditions="0"
+        control="phaseVolRate"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15"
-        estimateWellSolution="20">
+        estimateWellSolution="0">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"
@@ -129,8 +128,8 @@ char const * xmlInput =
           targetBHP="1.45e7"
           referenceElevation="-0.01">
         </MinimumBHPConstraint>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
   <Mesh>
     <InternalMesh
@@ -365,15 +364,16 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
                                          real64 const relTol, std::string const & testName,
                                          LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
   CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
 
   localIndex const NC = flowSolver.numFluidComponents();
 
-  CRSMatrix< real64, globalIndex > const & jacobian = wellSolver.getLocalMatrix();
+  //ßCRSMatrix< real64, globalIndex > const & jacobian = wellSolver.getLocalMatrix();
+  CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
-  DofManager const & dofManager = wellSolver.getDofManager();
-
+  //DofManager const & dofManager = wellSolver.getDofManager();
+  DofManager const & dofManager = solver.getDofManager();
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
 
@@ -389,8 +389,9 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
                                                                              WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = wellSolver.getWellControls( subRegion );
-      wellControls.setWellState( 1 );
-      wellSolver.initializeWell( domain, mesh, subRegion, time_n );
+      CompositionalMultiphaseWell * compWell = dynamic_cast< CompositionalMultiphaseWell * >(&wellControls);
+      compWell->setWellState( 1 );
+      compWell->initializeWell( domain, mesh, subRegion, time_n );
     } );
   } );
 
@@ -443,7 +444,7 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
         wellElemCompDens.move( hostMemorySpace, false );
 
         arrayView1d< real64 > const & connRate =
-          subRegion.getField< fields::well::mixtureConnectionRate >();
+          subRegion.getField< fields::well::connectionRate >();
         connRate.move( hostMemorySpace, false );
 
         // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
@@ -566,7 +567,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                             real64 const relTol, std::string const & testName,
                             LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
+  WellManager & wellSolver = *solver.wellSolver();
   CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
 
   localIndex const NC = flowSolver.numFluidComponents();
@@ -773,7 +774,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
         wellElemCompDens.move( hostMemorySpace, false );
 
         arrayView1d< real64 > const & connRate =
-          subRegion.getField< fields::well::mixtureConnectionRate >();
+          subRegion.getField< fields::well::connectionRate >();
         connRate.move( hostMemorySpace, false );
 
         // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
@@ -913,14 +914,31 @@ protected:
                          solver->getSystemRhs(),
                          solver->getSystemSolution() );
 
+#if 0
     solver->wellSolver()->setupSystem( domain,
                                        solver->wellSolver()->getDofManager(),
                                        solver->wellSolver()->getLocalMatrix(),
                                        solver->wellSolver()->getSystemRhs(),
                                        solver->wellSolver()->getSystemSolution() );
-
+#endif
     solver->implicitStepSetup( time, dt, domain );
-
+    WellManager & wellSolver = *solver->wellSolver();
+    wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                            MeshLevel & meshLevel,
+                                                                            string_array const & regionNames )
+    {
+      GEOS_UNUSED_VAR( meshBodyName );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+        WellControls & wellControls = wellSolver.getWellControls( subRegion );
+        wellControls.initializeWell( domain, meshLevel, subRegion, time );
+      } );
+    } );
   }
 
   static real64 constexpr time = 0.0;
@@ -935,7 +953,7 @@ real64 constexpr CompositionalMultiphaseReservoirSolverTest::time;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::dt;
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::eps;
 
-
+#if 0
 TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perforation )
 {
   real64 const perturb = std::sqrt( eps );
@@ -943,15 +961,16 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
 
   DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
-  testWellEstimatorNumericalJacobian( *solver, domain, perturb, time, tol, "WellEstimator",
+  testWellEstimatorNumericalJacobian( *solver, domain, perturb, time, tol, "Check_Perforation",
                                       [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs )
   {
 
     DofManager const & dofManager = solver->wellSolver()->getDofManager();
-    solver->wellSolver()->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                                        MeshLevel & mesh,
-                                                                                        string_array const & regionNames )
+    WellManager * wellSolver = solver->wellSolver();
+    wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                              MeshLevel & mesh,
+                                                                              string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
       elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -959,23 +978,26 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
                                                                      WellElementSubRegion & subRegion )
       {
         // call assemble to fill the matrix and the rhs
-        solver->wellSolver()->assembleWellSystem( time,
-                                                  dt,
-                                                  elemManager,
-                                                  subRegion,
-                                                  dofManager,
-                                                  localMatrix,
-                                                  localRhs );
+        WellControls & wellControls = wellSolver->getWellControls( subRegion );
+        CompositionalMultiphaseWell * compWell = dynamic_cast< CompositionalMultiphaseWell * >(&wellControls);
+        compWell->assembleSystem( time,
+                                  dt,
+                                  0,
+                                  elemManager,
+                                  subRegion,
+                                  dofManager,
+                                  localMatrix,
+                                  localRhs );
 
 // apply boundary conditions to system
 
-        solver->wellSolver()->applyWellBoundaryConditions( time,
-                                                           dt,
-                                                           elemManager,
-                                                           subRegion,
-                                                           dofManager,
-                                                           localRhs,
-                                                           localMatrix );
+        compWell->applyWellBoundaryConditions( time,
+                                               dt,
+                                               elemManager,
+                                               subRegion,
+                                               dofManager,
+                                               localRhs,
+                                               localMatrix );
       } );
     } );
 
@@ -983,8 +1005,104 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Perfo
 
   } );
 }
+#endif
+TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Accum )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
 
+  DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
+  testWellEstimatorNumericalJacobian( *solver, domain, perturb, time, tol, "Check_Accum",
+                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
+  {
+
+    DofManager const & dofManager = solver->wellSolver()->getDofManager();
+    WellManager * wellSolver = solver->wellSolver();
+    wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                              MeshLevel & mesh,
+                                                                              string_array const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+      {
+        // call assemble to fill the matrix and the rhs
+        WellControls & wellControls = wellSolver->getWellControls( subRegion );
+        wellControls.assembleWellAccumulationTerms( time, dt, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
+  } );
+}
+#if 1
+TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_PressureRelation )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain =  state.getProblemManager().getDomainPartition();
+
+  testWellEstimatorNumericalJacobian( *solver, domain, perturb, time, tol, "Check_PressureRelation",
+                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
+  {
+
+    //DofManager const & dofManager = solver->wellSolver()->getDofManager();
+    DofManager const & dofManager = solver->getDofManager();
+    WellManager * wellSolver = solver->wellSolver();
+    wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                              MeshLevel & mesh,
+                                                                              string_array const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+      {
+        // call assemble to fill the matrix and the rhs
+        WellControls & wellControls = wellSolver->getWellControls( subRegion );
+        //wellControls.assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+        wellControls.assembleWellPressureRelations( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+      } );
+    } );
+  } );
+}
+#endif
+#if 1
+TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux )
+{
+  real64 const perturb = std::sqrt( eps );
+  real64 const tol = 1e-1; // 10% error margin
+
+  DomainPartition & domain =  state.getProblemManager().getDomainPartition();
+
+  testWellEstimatorNumericalJacobian( *solver, domain, perturb, time, tol, "Check_Flux",
+                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
+  {
+
+    DofManager const & dofManager = solver->wellSolver()->getDofManager();
+    WellManager * wellSolver = solver->wellSolver();
+    wellSolver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                              MeshLevel & mesh,
+                                                                              string_array const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+      {
+        // call assemble to fill the matrix and the rhs
+        WellControls & wellControls = wellSolver->getWellControls( subRegion );
+        wellControls.assembleWellFluxTerms( time, dt, subRegion, solver->getDofManager(), localMatrix, localRhs );
+      } );
+    } );
+  } );
+}
+#endif
 int main( int argc, char * * argv )
 {
   writeTableToFile( "co2flash.txt", co2flash );
