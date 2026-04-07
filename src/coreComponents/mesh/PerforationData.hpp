@@ -158,7 +158,7 @@ public:
   array1d< bool > & isReservoirElementFound() { return m_isReservoirElementFound; }
 
   /**
-   * @return an immutable accessor an array of booleans value of hasLocalPerforationInReservoir() 
+   * @return an immutable accessor an array of booleans value of hasLocalPerforationInReservoir()
    * per perforation.
    */
   arrayView1d< bool const > isReservoirElementFound() const { return m_isReservoirElementFound; }
