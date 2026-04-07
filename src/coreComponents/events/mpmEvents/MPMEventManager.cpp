@@ -33,7 +33,7 @@ MPMEventManager::MPMEventManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
-  setRestartFlags( RestartFlags::NO_WRITE );
+  setRestartFlags( RestartFlags::WRITE_AND_READ );
 }
 
 Group * MPMEventManager::createChild( string const & childKey, string const & childName )

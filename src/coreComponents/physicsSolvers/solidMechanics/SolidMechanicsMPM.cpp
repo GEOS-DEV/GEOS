@@ -590,11 +590,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
 
-  registerWrapper( "prescribedFTable", &m_prescribedFTable ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
-
   registerWrapper( "computeParticleSurfaceNormalsAndPositions", &m_computeParticleSurfaceNormalsAndPositions ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_computeParticleSurfaceNormalsAndPositions ).
@@ -697,23 +692,23 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "prescribedFTable", &m_prescribedFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether to have time-dependent boundary conditions described by a global background grid F" );
 
   registerWrapper( "fTableInterpType", &m_fTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setApplyDefaultValue( m_fTableInterpType ).
     setDescription( "The type of F table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "fTable", &m_fTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores time-dependent grid-aligned stretches interpreted as a gloabl background grid F read from the XML file." );
 
   registerWrapper( "enablePrescribedBoundaryTransverseVelocities", &m_enablePrescribedBoundaryTransverseVelocities ).
@@ -728,18 +723,18 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 
   registerWrapper( "stressControl", &m_stressControl ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether stress control using box averages is enabled" );
 
   registerWrapper( "stressTableInterpType", &m_stressTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setApplyDefaultValue( m_stressTableInterpType ).
     setDescription( "The type of stress table interpolation. Options are 0 (linear), 1 (cosine), 2 (quintic polynomial)." );
 
   registerWrapper( "stressTable", &m_stressTable ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array that stores the time-depended grid aligned stresses" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
@@ -1283,6 +1278,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
 void SolidMechanicsMPM::postRestartInitialization()
 {
   PhysicsSolverBase::postRestartInitialization();
+
+  // Check events
+  MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
+  eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
+  {
+    GEOS_LOG_RANK_0( event.getCatalogName() << ": " << event.getName() << " at " << event.getStartTime() << " -> " << event.getEndTime() << ", isComplete?: " << event.isComplete() << ", hasStarted?: " << event.hasStarted());
+  } );
 
   // Initialize friction coefficient table
   if( m_numContactGroups > 0 )

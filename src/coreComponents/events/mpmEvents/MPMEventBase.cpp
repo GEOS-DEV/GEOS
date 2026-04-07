@@ -39,33 +39,40 @@ MPMEventBase::MPMEventBase( string const & name,
   registerWrapper( viewKeyStruct::startTimeString(), &m_startTime ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_startTime ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Time at which event starts" );
 
   registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_endTime ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Time at which event ends" );
 
   registerWrapper( viewKeyStruct::delayString(), &m_delay ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_delay ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Delay between dependencies being complete and starting the event" );
 
   registerWrapper( viewKeyStruct::durationString(), &m_duration ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_duration ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Time at which event ends" );
 
   registerWrapper( viewKeyStruct::dependenciesString(), &m_dependencies ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "List of the names for event dependencies" );
 
   registerWrapper( viewKeyStruct::hasStartedString(), &m_hasStarted ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether event has started" );
 
   registerWrapper( viewKeyStruct::isCompleteString(), &m_isComplete ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag for whether event has been completed" );
 }
 
