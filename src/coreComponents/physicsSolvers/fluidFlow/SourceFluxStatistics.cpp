@@ -139,6 +139,14 @@ void SourceFluxStatsAggregator::registerDataOnMesh( Group & meshBodies )
       } );
     }
   } );
+
+  if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
+  {
+    std::ofstream outputFile( m_csvFilename );
+    TableCSVFormatter const tableStatFormatter( m_csvLayout );
+    outputFile << tableStatFormatter.headerToString();
+    outputFile.close();
+  }
 }
 
 void SourceFluxStatsAggregator::gatherStatsForLog( bool logLevelActive,
@@ -215,9 +223,9 @@ void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
 {
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
-    std::ofstream outputFile( m_csvFilename );
+    std::ofstream outputFile( m_csvFilename, std::ios::app );
     TableCSVFormatter const tableStatFormatter( m_csvLayout );
-    outputFile << tableStatFormatter.toString( csvData );
+    outputFile << tableStatFormatter.dataToString( csvData );
     outputFile.close();
     csvData.clear();
   }
@@ -241,19 +249,20 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
   {
     TableData logData;
     TableData csvData;
-    meshLevelStats.stats() = StatData();
+    meshLevelStats.stats().reset();
     forAllFluxStatsWrappers( meshLevel,
                              [&] ( MeshLevel &, WrappedStats & fluxStats )
     {
-      fluxStats.stats() = StatData();
+      fluxStats.stats().reset();
       forAllRegionStatsWrappers( meshLevel, fluxStats.getFluxName(),
                                  [&] ( ElementRegionBase & region, WrappedStats & regionStats )
       {
-        regionStats.stats() = StatData();
+        regionStats.stats().reset();
 
         forAllSubRegionStatsWrappers( region, regionStats.getFluxName(),
                                       [&] ( ElementSubRegionBase &, WrappedStats & subRegionStats )
         {
+          subRegionStats.stats().reset();
           subRegionStats.finalizePeriod();
           regionStats.stats().combine( subRegionStats.stats() );
         } );
