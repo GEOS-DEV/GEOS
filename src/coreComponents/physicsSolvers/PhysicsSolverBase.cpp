@@ -390,7 +390,7 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
 
   if( logMessage.rdbuf()->in_avail() == 0 )
     logMessage << "/";
-  
+
   logpart.addEndDescription( "- substep dts ", logMessage.str() );
   logpart.end();
 

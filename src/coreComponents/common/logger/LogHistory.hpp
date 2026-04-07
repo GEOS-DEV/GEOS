@@ -108,8 +108,8 @@ private:
   };
 
   /**
-  * @return The const historical diagnostic
-  */
+   * @return The const historical diagnostic
+   */
   auto const & getDiagnosticHistory() const
   { return m_diagnosticHistory; }
 
