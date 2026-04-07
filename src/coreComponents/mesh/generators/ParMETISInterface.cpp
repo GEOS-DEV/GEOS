@@ -28,7 +28,7 @@
 #define GEOS_PARMETIS_CHECK( call ) \
   do { \
     auto const ierr = call; \
-    GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
+    GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" #call ); \
   } while( false )
 
 namespace geos
@@ -58,23 +58,34 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
   idx_t * xadj;
   idx_t * adjncy;
 
+  // ParMETIS does not handle ranks with zero local elements (it crashes on NULL array pointers).
+  // We provide dummy non-NULL arrays for empty ranks so the collective call can proceed.
+  idx_t dummyOffset = 0;
+  idx_t dummyValue = 0;
+  idx_t * eptr = numElems > 0 ? const_cast< idx_t * >( elemToNodes.getOffsets() ) : &dummyOffset;
+  idx_t * eind = numElems > 0 ? const_cast< idx_t * >( elemToNodes.getValues() ) : &dummyValue;
+
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
   GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< idx_t * >( elemDist.data() ),
-                                              const_cast< idx_t * >( elemToNodes.getOffsets() ),
-                                              const_cast< idx_t * >( elemToNodes.getValues() ),
+                                              eptr,
+                                              eind,
                                               &numflag, &ncommonnodes, &xadj, &adjncy, &comm ) );
 
   ArrayOfArrays< idx_t, idx_t > graph;
-  graph.resizeFromOffsets( numElems, xadj );
 
-  // There is no way to direct-copy values into ArrayOfArrays without UB (casting away const)
-  forAll< parallelHostPolicy >( numElems, [xadj, adjncy, graph = graph.toView()]( localIndex const k )
+  if( numElems > 0 )
   {
-    graph.appendToArray( k, adjncy + xadj[k], adjncy + xadj[k+1] );
-  } );
+    graph.resizeFromOffsets( numElems, xadj );
 
-  METIS_Free( xadj );
-  METIS_Free( adjncy );
+    // There is no way to direct-copy values into ArrayOfArrays without UB (casting away const)
+    forAll< parallelHostPolicy >( numElems, [xadj, adjncy, graph = graph.toView()]( localIndex const k )
+    {
+      graph.appendToArray( k, adjncy + xadj[k], adjncy + xadj[k+1] );
+    } );
+
+    METIS_Free( xadj );
+    METIS_Free( adjncy );
+  }
 
   return graph;
 }
@@ -105,22 +116,32 @@ partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
   idx_t edgecut = 0;
   real_t ubvec = 1.05;
 
+  // ParMETIS does not handle ranks with zero local vertices (it crashes on NULL adjncy pointer).
+  // We provide dummy non-NULL pointers for empty ranks so the collective call can proceed.
+  idx_t dummyAdj = 0;
+  idx_t dummyPart = 0;
+  idx_t * xadj = const_cast< idx_t * >( graph.getOffsets() );
+  idx_t * adjncy = graph.size() > 0 && graph.getValues() != nullptr
+                   ? const_cast< idx_t * >( graph.getValues() )
+                   : &dummyAdj;
+  idx_t * partData = graph.size() > 0 ? part.data() : &dummyPart;
+
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
   GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
-                                             const_cast< idx_t * >( graph.getOffsets() ),
-                                             const_cast< idx_t * >( graph.getValues() ),
+                                             xadj,
+                                             adjncy,
                                              nullptr, nullptr, &wgtflag,
                                              &numflag, &ncon, &npart, tpwgts.data(),
-                                             &ubvec, options, &edgecut, part.data(), &comm ) );
+                                             &ubvec, options, &edgecut, partData, &comm ) );
 
   for( int iter = 0; iter < numRefinements; ++iter )
   {
     GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
-                                                 const_cast< idx_t * >( graph.getOffsets() ),
-                                                 const_cast< idx_t * >( graph.getValues() ),
+                                                 xadj,
+                                                 adjncy,
                                                  nullptr, nullptr, &wgtflag,
                                                  &numflag, &ncon, &npart, tpwgts.data(),
-                                                 &ubvec, options, &edgecut, part.data(), &comm ) );
+                                                 &ubvec, options, &edgecut, partData, &comm ) );
   }
 
   return part;

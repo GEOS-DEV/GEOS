@@ -150,6 +150,23 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
 
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::mgr &&
+      linParams.mgr.strategy == LinearSolverParameters::MGR::StrategyType::invalid )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: standalone solid mechanics does not define an MGR strategy; "
+                            "switching preconditionerType from `{}` to `{}`",
+                            getName(),
+                            linParams.preconditionerType,
+                            LinearSolverParameters::PreconditionerType::amg ) );
+
+    linParams.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+    if( linParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
+    {
+      linParams.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+    }
+  }
+
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
 }
 
@@ -293,13 +310,71 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
-                ": Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain",
+                getWrapperDataContext( viewKeyStruct::strainTheoryString() ) );
   }
 
   return rval;
 }
 
+void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion )
+{
+  NodeManager & nodes = mesh.getNodeManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
+
+  arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
+
+  SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion );
+  arrayView2d< real64 const > const rho = solid.getDensity();
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
+
+  finiteElement::FiniteElementBase const &
+  fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+  finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const element )
+  {
+    using FE_TYPE = TYPEOFREF( element );
+
+    typename FE_TYPE::template MeshData< CellElementSubRegion > meshData;
+    FE_TYPE::template fillMeshData< CellElementSubRegion >( nodes,
+                                                            mesh.getEdgeManager(),
+                                                            mesh.getFaceManager(),
+                                                            subRegion,
+                                                            meshData );
+    constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
+    constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const ei )
+    {
+      real64 N[ maxSupportPoints ];
+      real64 xLocal[ numNodesPerElem ][3];
+      real64 J[3][3];
+      real64 detJxW = 0.0;
+      typename FE_TYPE::StackVariables feStack;
+      element.template setup< FE_TYPE >( ei, meshData, feStack );
+      localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
+
+      for( localIndex a = 0; a < numSupportPoints; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes[ ei ][ a ];
+        for( int i = 0; i < 3; ++i )
+        {
+          xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        }
+      }
+
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+      {
+        FE_TYPE::calcN( q, feStack, N );
+        detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        for( localIndex a = 0; a < numSupportPoints; ++a )
+        {
+          mass[ elemsToNodes[ ei ][ a ] ] += rho[ ei ][ q ] * detJxW * N[ a ];
+        }
+      }
+    } );
+  } );
+}
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
@@ -339,8 +414,9 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     {
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
-        SolidBase & solid = getConstitutiveModel< SolidBase >( elementSubRegion );
-        arrayView2d< real64 const > const rho = solid.getDensity();
+        initializeMass( mesh, elementSubRegion );
+
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
         SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
@@ -356,49 +432,30 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
           + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
 
-        arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
-                                                                                 [&] ( auto const finiteElement )
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const element )
         {
-          using FE_TYPE = TYPEOFREF( finiteElement );
+          using FE_TYPE = TYPEOFREF( element );
           using SUBREGION_TYPE = TYPEOFREF( elementSubRegion );
 
           typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
-          finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
-                                                                                   edgeManager,
-                                                                                   faceManager,
-                                                                                   elementSubRegion,
-                                                                                   meshData );
+          FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
+                                                                   edgeManager,
+                                                                   faceManager,
+                                                                   elementSubRegion,
+                                                                   meshData );
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-          constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
-          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-          real64 N[maxSupportPoints];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
+
             typename FE_TYPE::StackVariables feStack;
-            finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numSupportPoints =
-              finiteElement.template numSupportPoints< FE_TYPE >( feStack );
-
-//#if ! defined( CALC_FEM_SHAPE_IN_KERNEL ) // we don't calculate detJ in this case
-            for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-            {
-              FE_TYPE::calcN( q, feStack, N );
-
-              for( localIndex a=0; a< numSupportPoints; ++a )
-              {
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
-              }
-            }
-//#endif
+            element.template setup< FE_TYPE >( k, meshData, feStack );
 
             bool isAttachedToGhostNode = false;
-            for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
               {
@@ -410,7 +467,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                 tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
               }
             }
-
             if( isAttachedToGhostNode )
             {
               tmpElemsAttachedToSendOrReceiveNodes.insert( k );
@@ -433,11 +489,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
         m_targetNodes = m_sendOrReceiveNodes;
         m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
                               m_nonSendOrReceiveNodes.end() );
-
-
       } );
     } );
-
   } );
 }
 
@@ -463,6 +516,18 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   {
     int const maxNumResolves = m_maxNumResolves;
     int globallyFractured = 0;
+
+    // Check if mesh was modified by an external event (e.g., SurfaceGen) before this solver step
+    // This ensures setupSystem is called before implicitStepSetup when topology changes occur
+    Timestamp const initialMeshModificationTimestamp = getMeshModificationTimestamp( domain );
+    MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName );
+    if( initialMeshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() )
+    {
+      m_dofManager.clear();
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, true );
+      setSystemSetupTimestamp( LvArray::math::max( initialMeshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
+    }
+
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves+1; ++solveIter )
     {
@@ -471,10 +536,10 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
       Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
       // Only build the sparsity pattern if the mesh has changed
-      if( meshModificationTimestamp > getSystemSetupTimestamp() || globallyFractured )
+      if( meshModificationTimestamp > getSystemSetupTimestamp() || meshLevel.getModificationTimestamp() > getSystemSetupTimestamp() || globallyFractured )
       {
         setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-        setSystemSetupTimestamp( meshModificationTimestamp );
+        setSystemSetupTimestamp( LvArray::math::max( meshModificationTimestamp, meshLevel.getModificationTimestamp() ) );
       }
 
       dtReturn = nonlinearImplicitStep( time_n,
@@ -575,7 +640,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -588,7 +654,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -710,17 +777,18 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     {
       char const bcLogMessage[] =
         "\nWarning!"
-        "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+        "\nThere is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
+      GEOS_UNUSED_VAR( bcLogMessage );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'x' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'y' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'z' ),
+                       getDataContext() );
     }
   }
 
@@ -760,6 +828,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
                  blockLocalDofNumber,
                  dofRankOffset,
                  faceManager,
+                 nodeManager.referencePosition(),
                  targetSet,
                  localRhs );
     } );
@@ -1351,12 +1420,15 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
                                                      ParallelMatrix & matrix,
                                                      ParallelVector & rhs,
-                                                     ParallelVector & solution )
+                                                     ParallelVector & solution,
+                                                     integer const cycleNumber,
+                                                     integer const nonlinearIteration )
 {
   // Flip system sign to ensure matrix is positive definite
   matrix.scale( -1.0 );
   rhs.scale( -1.0 );
-  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution,
+                                        cycleNumber, nonlinearIteration );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

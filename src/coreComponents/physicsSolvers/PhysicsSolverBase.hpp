@@ -543,6 +543,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param cycleNumber outer solver cycle associated with this linear solve
+   * @param nonlinearIteration nonlinear iteration associated with this linear solve
    *
    * This function calls the linear solver package to perform a single linear solve on the block
    * system. The derived physics solver is required to specify the call, as no default is provided.
@@ -554,7 +556,9 @@ public:
   solveLinearSystem( DofManager const & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
-                     ParallelVector & solution );
+                     ParallelVector & solution,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration );
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation
@@ -785,6 +789,13 @@ public:
    * @param[in] timestamp the new timestamp of system setup
    */
   void setSystemSetupTimestamp( Timestamp timestamp );
+
+  /**
+   * @brief Whether the standard GEOS linear-solver table should be suppressed
+   *        because hypredrive YAML logging is used instead.
+   * @return `true` when the standard table should be suppressed, `false` otherwise.
+   */
+  bool deferLinearSolverParametersPrint() const;
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -1267,8 +1278,9 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
 
   string & constitutiveName = subRegion.getReference< string >( wrapperName );
   constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
-  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
-                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{} constitutive model not found on subregion {}",
+                                                     constitutiveType, subRegion.getName() ),
+                 getDataContext() );
 }
 
 /**

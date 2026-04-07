@@ -136,12 +136,14 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
 
@@ -910,8 +912,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     {
       blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
-      // Using GEOSX implementation of Jacobi preconditioner
-      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
       // Using LAI implementation of Jacobi preconditioner
       LinearSolverParameters tracParams;
@@ -926,7 +926,9 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     }
     else
     {
-      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( GEOS_FMT( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option {} not supported",
+                            leadingBlockApproximation ),
+                  getDataContext() );
     }
 
     // Preconditioner for the leading block: tracPrecond
@@ -941,11 +943,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
                          std::move( mechPrecond ) );
 
     return precond;
-  }
-  else
-  {
-    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
-    //return SolverBase::createPreconditioner( domain );
   }
   return {};
 }
@@ -1321,8 +1318,9 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
   }
   else
   {
-    GEOS_ERROR( "SolidMechanicsLagrangeContact " << getDataContext() << ": face with " << numNodesPerFace <<
-                " nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported." );
+    GEOS_ERROR( GEOS_FMT( "Face with {} nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported.",
+                          numNodesPerFace ),
+                getDataContext() );
   }
 }
 
@@ -1829,8 +1827,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             realNodes++;
           }
         }
-        GEOS_ERROR_IF( realNodes != 2,
-                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes.",
+        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes.",
                        getDataContext() );
         edge.resize( realNodes );
 

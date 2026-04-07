@@ -175,6 +175,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp )
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
@@ -188,6 +189,14 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreVector.cpp )
 
     list( APPEND tplDependencyList hypre umpire )
+
+    if( ENABLE_HYPREDRV )
+        list( APPEND linearAlgebra_headers
+              interfaces/hypre/hypredrive.hpp )
+        list( APPEND linearAlgebra_sources
+              interfaces/hypre/hypredrive.cpp )
+        list( APPEND tplDependencyList HYPREDRV::HYPREDRV )
+    endif()
 
 endif()
 

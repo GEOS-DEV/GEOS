@@ -69,8 +69,18 @@ FaceManager::FaceManager( string const & name, Group * const parent ):
 
 }
 
+
+void FaceManager::reserve( localIndex const newSize )
+{
+  GEOS_MARK_FUNCTION;
+  ObjectManagerBase::reserve( newSize );
+  m_toNodesRelation.reserveValues( newSize * 2 * nodeMapOverallocation() );
+  m_toEdgesRelation.reserveValues( newSize * 2 * edgeMapOverallocation() );
+}
+
 void FaceManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
   m_toNodesRelation.resize( newSize, 2 * nodeMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * edgeMapOverallocation() );
   ObjectManagerBase::resize( newSize );
@@ -225,14 +235,18 @@ void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
 void FaceManager::computeGeometry( NodeManager const & nodeManager )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  arrayView1d< real64 > const faceArea = m_faceArea.toView();
+  arrayView2d< real64 > const faceCenter = m_faceCenter.toView();
+  arrayView2d< real64 > const faceNormal = m_faceNormal.toView();
+  ArrayOfArraysView< localIndex const > const toNodes = m_toNodesRelation.toViewConst();
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
-  forAll< parallelHostPolicy >( this->size(), [&]( localIndex const faceIndex )
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const faceIndex )
   {
-    m_faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( m_toNodesRelation[ faceIndex ],
-                                                                         X,
-                                                                         m_faceCenter[ faceIndex ],
-                                                                         m_faceNormal[ faceIndex ] );
+    faceArea[ faceIndex ] = computationalGeometry::centroid_3DPolygon( toNodes[ faceIndex ],
+                                                                       X,
+                                                                       faceCenter[ faceIndex ],
+                                                                       faceNormal[ faceIndex ] );
 
   } );
 }
@@ -276,8 +290,8 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     // The face should be connected to at least one element.
     if( facesToElements( faceIndex, 0 ) < 0 && facesToElements( faceIndex, 1 ) < 0 )
     {
-      GEOS_ERROR( getDataContext() << ": Face " << faceIndex <<
-                  " is not connected to any cell. You might have an invalid mesh." );
+      GEOS_ERROR( GEOS_FMT( "Face {} is not connected to any cell. You might have an invalid mesh.", faceIndex ),
+                  getDataContext()  );
     }
 
     // Take the first defined face-to-(elt/region/sub region) to sorting direction.
@@ -289,8 +303,8 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 
     if( er < 0 || esr < 0 || ei < 0 )
     {
-      GEOS_ERROR( GEOS_FMT( "{0}: Face {1} is connected to an invalid element ({2}/{3}/{4}).",
-                            getDataContext().toString(), faceIndex, er, esr, ei ) );
+      GEOS_ERROR( GEOS_FMT( "Face {} is connected to an invalid element ({}/{}/{}).",
+                            faceIndex, er, esr, ei ), getDataContext()  );
     }
 
     try
@@ -298,7 +312,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
     } catch( std::runtime_error const & e )
     {
-      ErrorLogger::global().currentErrorMsg()
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( getDataContext().toString() + ": " + e.what() )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
@@ -314,7 +328,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES,
                         GEOS_FMT( "The number of maximum nodes allocated per cell face has been reached "
                                   "at position {}.", elementCenter ),
-                        std::runtime_error );
+                        geos::RuntimeError );
 
   localIndex const firstNodeIndex = faceNodes[0];
 

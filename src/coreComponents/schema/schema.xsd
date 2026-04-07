@@ -5,167 +5,167 @@
 	</xsd:annotation>
 	<xsd:simpleType name="R1Tensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R1Tensor32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){2}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="R2SymTensor">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*){5}\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_dataRepository_PlotLevel">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupName">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[a-zA-Z0-9.\-_]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupNameRef">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[a-zA-Z0-9.\-_/*\[\]]*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[a-zA-Z0-9.\-_/*\[\]]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupNameRef_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([a-zA-Z0-9.\-_/*\[\]]*\s*,\s*)*[a-zA-Z0-9.\-_/*\[\]]*\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{([a-zA-Z0-9.\-_/*\[\], ]+)*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^*?&lt;>\|:&quot;;,\s]*\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[^*?&lt;>\|:&quot;;,\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*\s*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array4d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*,\s*)*\{\s*(\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*,\s*)*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[^,\{\}\s]*\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[^,\{\}\s]*\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([^,\{\}\s]+\s*,\s*)*[^,\{\}\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^,\{\}\s]+\s*,\s*)*\s*[^,\{\}\s]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -359,6 +359,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsConformingFractures" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALM" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="SolversCompositionalMultiphaseWellUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseWell" />
 					<xsd:field xpath="@name" />
@@ -413,6 +417,10 @@
 				</xsd:unique>
 				<xsd:unique name="SolversMultiphasePoromechanicsConformingFracturesUniqueName">
 					<xsd:selector xpath="MultiphasePoromechanicsConformingFractures" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversMultiphasePoromechanicsConformingFracturesALMUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsConformingFracturesALM" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="SolversMultiphasePoromechanicsReservoirUniqueName">
@@ -541,6 +549,10 @@
 					<xsd:selector xpath="CellToCellDataCollection" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksCompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitializationUniqueName">
+					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksCompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationUniqueName">
 					<xsd:selector xpath="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization" />
 					<xsd:field xpath="@name" />
@@ -553,8 +565,16 @@
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksFieldApplicatorUniqueName">
+					<xsd:selector xpath="FieldApplicator" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksHydrofractureInitializationUniqueName">
 					<xsd:selector xpath="HydrofractureInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksMultiphasePoromechanicsConformingFracturesALMInitializationUniqueName">
+					<xsd:selector xpath="MultiphasePoromechanicsConformingFracturesALMInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksMultiphasePoromechanicsConformingFracturesInitializationUniqueName">
@@ -607,6 +627,22 @@
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseStatisticsUniqueName">
 					<xsd:selector xpath="SinglePhaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsAugmentedLagrangianContactInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsAugmentedLagrangianContactInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsEmbeddedFracturesInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsEmbeddedFracturesInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsLagrangeContactInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsLagrangeContactInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsLagrangianFEMInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsLagrangianFEMInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSolidMechanicsStateResetUniqueName">
@@ -1836,6 +1872,8 @@ Information output from lower logLevels is added with the desired log level
 		</xsd:choice>
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="groupNameRef_array" use="required" />
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--elementTypes => Element types of each mesh block. Use "C3D8" for linear brick element. Possible values are: Vertex, BEAM, C2D3, C2D4, Polygon, C3D4, C3D5, C3D6, C3D8, PentagonalPrism, HexagonalPrism, HeptagonalPrism, OctagonalPrism, NonagonalPrism, DecagonalPrism, HendecagonalPrism, Polyhedron.-->
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
 		<!--nx => Number of elements in the x-direction within each mesh block-->
@@ -1969,6 +2007,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="cartesianMappingInnerRadius" type="real64" default="1e+99" />
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="groupNameRef_array" use="required" />
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--elementTypes => Element types of each mesh block. Use "C3D8" for linear brick element. Possible values are: Vertex, BEAM, C2D3, C2D4, Polygon, C3D4, C3D5, C3D6, C3D8, PentagonalPrism, HexagonalPrism, HeptagonalPrism, OctagonalPrism, NonagonalPrism, DecagonalPrism, HendecagonalPrism, Polyhedron.-->
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
 		<!--hardRadialCoords => Sets the radial spacing to specified values-->
@@ -2005,6 +2045,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParticleMeshType">
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--headerFile => path to the header file-->
 		<xsd:attribute name="headerFile" type="path" use="required" />
 		<!--particleBlockNames => Names of each particle block-->
@@ -2032,6 +2074,8 @@ Information output from lower logLevels is added with the desired log level
 				</xsd:unique>
 			</xsd:element>
 		</xsd:choice>
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--dataSourceName => Name of the VTK data source-->
 		<xsd:attribute name="dataSourceName" type="string" default="" />
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
@@ -2180,6 +2224,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
 		<!--directRowPerm => How to permute the rows. Available options are: ``none``, ``mc64``-->
 		<xsd:attribute name="directRowPerm" type="geos_LinearSolverParameters_Direct_RowPerm" default="mc64" />
+		<!--hypredriveInputFile => Optional authoritative hypredrive YAML file. When provided, hypredrive consumes this file as-is for solver/preconditioner options.-->
+		<xsd:attribute name="hypredriveInputFile" type="string" default="" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -2743,6 +2789,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanics" type="CompositionalMultiphaseReservoirPoromechanicsType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFractures" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesType" />
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALM" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType">
 				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsUniqueName">
 					<xsd:selector xpath="WellControls" />
@@ -2762,6 +2809,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFractures" type="MultiphasePoromechanicsConformingFracturesType" />
+			<xsd:element name="MultiphasePoromechanicsConformingFracturesALM" type="MultiphasePoromechanicsConformingFracturesALMType" />
 			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
 			<xsd:element name="OneWayCoupledFractureFlowContactMechanics" type="OneWayCoupledFractureFlowContactMechanicsType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
@@ -3533,6 +3581,58 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+ - Coupling information
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->
+		<xsd:attribute name="reservoirAndWellsSolverName" type="groupNameRef" use="required" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
+		<!--stabilizationType => StabilizationType. Options are:
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
+Local- Add jump stabilization on interior of macro elements-->
+		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -4401,6 +4501,58 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--flowSolverName => Name of the flow solver used by the coupled solver-->
+		<xsd:attribute name="flowSolverName" type="groupNameRef" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+ - Coupling information
+2
+ - The summary of declared fields and coupling-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
+		<xsd:attribute name="stabilizationMultiplier" type="real64" default="1" />
+		<!--stabilizationRegionNames => Regions where stabilization is applied.-->
+		<xsd:attribute name="stabilizationRegionNames" type="groupNameRef_array" default="{}" />
+		<!--stabilizationType => StabilizationType. Options are:
+None- Add no stabilization to mass equation 
+Global- Add jump stabilization to all faces 
+Local- Add jump stabilization on interior of macro elements-->
+		<xsd:attribute name="stabilizationType" type="geos_stabilization_StabilizationType" default="None" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
+		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
+		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -6109,10 +6261,13 @@ When set to `all` output both convergence & iteration information to a csv.-->
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="FieldApplicator" type="FieldApplicatorType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
+			<xsd:element name="MultiphasePoromechanicsConformingFracturesALMInitialization" type="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesInitialization" type="MultiphasePoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsInitialization" type="MultiphasePoromechanicsInitializationType" />
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
@@ -6126,6 +6281,10 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" type="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
+			<xsd:element name="SolidMechanicsAugmentedLagrangianContactInitialization" type="SolidMechanicsAugmentedLagrangianContactInitializationType" />
+			<xsd:element name="SolidMechanicsEmbeddedFracturesInitialization" type="SolidMechanicsEmbeddedFracturesInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangeContactInitialization" type="SolidMechanicsLagrangeContactInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangianFEMInitialization" type="SolidMechanicsLagrangianFEMInitializationType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
@@ -6146,6 +6305,21 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
@@ -6154,6 +6328,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6167,6 +6343,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6192,6 +6370,16 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="FieldApplicatorType">
+		<!--fieldSpecificationNames => Array containing the field specifications to apply to newly created elements-->
+		<xsd:attribute name="fieldSpecificationNames" type="groupNameRef_array" use="required" />
+		<!--solverName => Name of the flow solver to use for fluid state initialization (required for compositional flow)-->
+		<xsd:attribute name="solverName" type="groupNameRef" default="" />
+		<!--targetRegions => Target element regions to apply field specifications to. If empty, applies to all regions.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="HydrofractureInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
@@ -6200,6 +6388,23 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--poromechanicsSolverName => Name of the poromechanics solver-->
+		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6213,6 +6418,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6226,6 +6433,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6301,6 +6510,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6314,6 +6525,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6327,6 +6540,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6340,6 +6555,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6353,6 +6570,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6366,6 +6585,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6379,6 +6600,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6394,6 +6617,66 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsAugmentedLagrangianContactInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsEmbeddedFracturesInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsLagrangeContactInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsLagrangianFEMInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

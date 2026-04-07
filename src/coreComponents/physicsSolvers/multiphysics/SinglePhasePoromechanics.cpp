@@ -112,8 +112,9 @@ void SinglePhasePoromechanics<>::setMGRStrategy()
   {
     if( this->m_isThermal )
     {
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for thermal {}/{}",
-                            this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName() ));
+      GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for thermal {}/{}",
+                            this->getCatalogName(), this->flowSolver()->getCatalogName() ),
+                  getDataContext() );
     }
     else
     {
@@ -151,12 +152,16 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
 
   if( dynamic_cast< SinglePhaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for poromechanics {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for poromechanics {}/{}",
+                          this->getCatalogName(), this->flowSolver()->getCatalogName()),
+                getDataContext() );
   }
   else
   {
-    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+    linearSolverParameters.mgr.strategy =
+      this->m_isThermal
+      ? LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM
+      : LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
