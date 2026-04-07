@@ -66,13 +66,9 @@ public:
   virtual bool execute( real64 const time_n,
                         real64 const dt,
                         integer const cycleNumber,
-                        integer const GEOS_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition & domain ) override
-  {
-    solverStep( time_n, dt, cycleNumber, domain );
-    return false;
-  }
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
 
   virtual real64 solverStep( real64 const & time_n,
                              real64 const & dt,
@@ -254,6 +250,45 @@ private:
                                 stdVector< std::set< localIndex > > & edgesToRupturedFaces );
 
   /**
+   * @brief Group ruptured faces into disjoint fracture sets using connected-component analysis.
+   *
+   * Two ruptured faces belong to the same fracture set if they share at least one node.
+   * This uses a union-find (disjoint-set) algorithm on the face connectivity graph.
+   *
+   * @param[in] nodesToRupturedFaces  Per-node sets of ruptured parent-face indices.
+   * @param[in] nodeManager           Node manager for size information.
+   * @param[in] faceManager           Face manager (provides localToGlobalMap for
+   *            deterministic cross-rank ordering of the returned sets).
+   * @return A vector of fracture sets, where each set contains the parent-face indices
+   *         belonging to one connected fracture component.  The vector is sorted by the
+   *         minimum global face index in each set so that every MPI rank processes the
+   *         same fracture at the same loop iteration.
+   */
+  stdVector< std::set< localIndex > > groupRupturedFacesIntoSets(
+    stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
+    NodeManager const & nodeManager,
+    FaceManager const & faceManager ) const;
+
+  /**
+   * @brief Build filtered nodesToRupturedFaces and edgesToRupturedFaces maps
+   *        containing only faces that belong to the given fracture set.
+   *
+   * @param[in]  fractureSetFaces     The set of ruptured parent-face indices for one fracture.
+   * @param[in]  nodeManager          Node manager.
+   * @param[in]  edgeManager          Edge manager.
+   * @param[in]  faceManager          Face manager.
+   * @param[out] nodesToRupturedFaces Filtered per-node sets of ruptured faces.
+   * @param[out] edgesToRupturedFaces Filtered per-edge sets of ruptured faces.
+   */
+  void buildFilteredRuptureMaps(
+    std::set< localIndex > const & fractureSetFaces,
+    NodeManager const & nodeManager,
+    EdgeManager const & edgeManager,
+    FaceManager const & faceManager,
+    stdVector< std::set< localIndex > > & nodesToRupturedFaces,
+    stdVector< std::set< localIndex > > & edgesToRupturedFaces ) const;
+
+  /**
    *
    * @param elementManager
    * @param faceManager
@@ -372,50 +407,44 @@ private:
                             map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
 
   /**
-   * @brief function to set which side of the fracture plane all objects are on
-   * @param separationPathFaces
-   * @param elemManager
-   * @param faceManager
-   * @param nodeToElementMaps The vector is assumed not to contain any duplicate.
-   * @param localFacesToEdges
-   * @param edgeLocations
-   * @param faceLocations
-   * @param elemLocations
-   * @return
+   * @brief Assign fracture-plane sides to all elements, faces, and edges
+   *        around a splitting node using breadth-first-search (BFS).
+   *
+   * Starting from the first element in @p nodeToElementMaps (which is sorted
+   * by global index for determinism), the BFS assigns location 0 to that
+   * element and propagates through the face-to-element connectivity graph.
+   * When the traversal crosses a face in @p separationPathFaces the location
+   * flips from 0 to 1 (or vice-versa).
+   *
+   * Ghost-boundary faces (where the second element slot is -1 because the
+   * neighbor lives on a different MPI rank) are handled gracefully: the BFS
+   * simply does not cross those faces.  After the main BFS completes, a
+   * fallback sweep assigns any elements that were left unreached (INT_MIN)
+   * by finding a same-node neighbor that *has* been assigned and propagating
+   * through non-separation faces.
+   *
+   * @param[in]  separationPathFaces Set of face indices that define the
+   *             fracture plane.
+   * @param[in]  elemManager         Element region manager for subregion lookups.
+   * @param[in]  faceManager         Face manager for parent-index queries.
+   * @param[in]  nodeToElementMaps   Deterministically-sorted list of
+   *             (subRegion*, localElemIndex) pairs.
+   * @param[in]  localFacesToEdges   Map from face → (edge0, edge1) for the
+   *             two edges on the face that are attached to the splitting node.
+   * @param[out] edgeLocations       Assigned side for each edge (0, 1, or -1
+   *             for edges on the fracture plane).
+   * @param[out] faceLocations       Assigned side for each face (0, 1, or -1).
+   * @param[out] elemLocations       Assigned side for each element (0 or 1).
+   * @return @c true always (kept for API compatibility).
    */
-  bool setLocations( std::set< localIndex > const & separationPathFaces,
-                     ElementRegionManager const & elemManager,
-                     FaceManager const & faceManager,
-                     stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
-                     map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                     map< localIndex, int > & edgeLocations,
-                     map< localIndex, int > & faceLocations,
-                     map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
-
-  /**
-   * @brief function to set which side of the fracture plane all objects are on
-   * @param location
-   * @param elem
-   * @param separationPathFaces
-   * @param elemManager
-   * @param faceManager
-   * @param nodesToElements The vector is assumed not to contain any duplicate.
-   * @param localFacesToEdges
-   * @param edgeLocations
-   * @param faceLocations
-   * @param elemLocations
-   * @return
-   */
-  bool setElemLocations( int const location,
-                         std::pair< CellElementSubRegion const *, localIndex > const & elem,
-                         std::set< localIndex > const & separationPathFaces,
-                         ElementRegionManager const & elemManager,
-                         FaceManager const & faceManager,
-                         stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
-                         map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                         map< localIndex, int > & edgeLocations,
-                         map< localIndex, int > & faceLocations,
-                         map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+  bool assignLocationsBFS( std::set< localIndex > const & separationPathFaces,
+                           ElementRegionManager const & elemManager,
+                           FaceManager const & faceManager,
+                           stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
+                           map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
+                           map< localIndex, int > & edgeLocations,
+                           map< localIndex, int > & faceLocations,
+                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
 
   /**
    *
@@ -485,6 +514,25 @@ private:
 
 
   real64 calculateRuptureRate( SurfaceElementRegion & faceElementRegion );
+
+  /**
+   * @brief Check whether a face lies on a partition boundary with incomplete
+   *        element connectivity.
+   *
+   * On a partitioned mesh, an internal face shared between two MPI domains
+   * has its second element slot set to -1 on the rank that does not own the
+   * neighboring element.  All fracture-path and flood-fill algorithms must
+   * handle these faces gracefully (e.g. by skipping neighbor traversal)
+   * instead of blindly de-referencing the -1 indices.
+   *
+   * @param faceIndex The local index of the face (use the *virtual/parent*
+   *                  face index when working with split faces).
+   * @return @c true if the face has only one locally-known attached element.
+   */
+  bool isGhostBoundaryFace( localIndex const faceIndex ) const
+  {
+    return m_originalFacesToElemIndex( faceIndex, 1 ) == -1;
+  }
 
   real64 scalingToughness( R1Tensor const fractureOrigin,
                            real64 const (&faceCenter)[3],
@@ -577,6 +625,10 @@ private:
   SortedArray< localIndex > m_trailingFaces;
 
   SortedArray< localIndex > m_faceElemsRupturedThisSolve;
+
+  /// Number of locally-owned fracture elements at the start of the current solve step.
+  /// Used to compute "new fracture elements" = total_after - total_before.
+  localIndex m_numFractureElementsBefore = 0;
 
 };
 
