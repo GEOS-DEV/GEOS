@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3883 (2026-04-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3883-16244-87d56bf.tar.gz>
+=====================
+Move PVT Driver tests from unit tests to integrated tests
+
 PR #4007 (2026-04-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16213-67a3002.tar.gz>
 =====================
 Add XML input parameter: "hypredriveInputFile"
