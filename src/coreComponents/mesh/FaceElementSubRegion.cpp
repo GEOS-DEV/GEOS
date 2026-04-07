@@ -138,7 +138,8 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           return ElementType::Prism11;
         case 0:
           // In the case the fracture is empty (on this rank), then we default to hexahedron. Otherwise, there's something wrong
-          GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
+          GEOS_ERROR_IF_NE_MSG( num2dElements, 0,
+                                GEOS_FMT( "Could not determine the element type of the fracture \"{}\".", getName() ) );
           return ElementType::Hexahedron;
         default:
           GEOS_ERROR( "Unsupported type of elements during the face element sub region creation.", getDataContext() );
@@ -456,10 +457,11 @@ localIndex FaceElementSubRegion::unpackToFaceRelation( buffer_unit_type const * 
  * @param[in] elem2dToElems3d A mapping.
  * @param[in,out] elem2dToFaces This mapping will be corrected if needed to match @p elem2dToElems3d.
  */
-void fixNeighborMappingsInconsistency( string const & fractureName,
+void fixNeighborMappingsInconsistency( GEOS_MAYBE_UNUSED string const & fractureName,
                                        FixedToManyElementRelation const & elem2dToElems3d,
                                        FaceElementSubRegion::FaceMapType & elem2dToFaces )
 {
+  GEOS_MAYBE_UNUSED static constexpr std::string_view mappingInconsistency= "Mapping neighbor inconsistency detected for fracture {}.";
   {
     localIndex const num2dElems = elem2dToFaces.size( 0 );
     for( int e2d = 0; e2d < num2dElems; ++e2d )
@@ -493,9 +495,9 @@ void fixNeighborMappingsInconsistency( string const & fractureName,
         {
           std::swap( elem2dToFaces[e2d][0], elem2dToFaces[e2d][1] );
         }
-        else if( !matchStraight )
+        else
         {
-          GEOS_ERROR( "Mapping neighbor inconsistency detected for fracture " << fractureName );
+          GEOS_ERROR_IF( !matchStraight, GEOS_FMT( mappingInconsistency, fractureName ) );
         }
       }
     }
@@ -615,8 +617,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
   stdMap< std::pair< globalIndex, globalIndex >, std::set< localIndex > > collocatedEdgeBuckets;
   for( auto const & p: edgesIds )
   {
-    static constexpr auto nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
-    GEOS_UNUSED_VAR( nodeNotFound ); // Not used in GPU builds.
+    GEOS_MAYBE_UNUSED static constexpr auto nodeNotFound = "Internal error when trying to access the reference collocated node for global node {}.";
 
     std::pair< globalIndex, globalIndex > const & nodes = p.first;
     localIndex const & edge = p.second;
@@ -1096,7 +1097,9 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     }
   }
   GEOS_ERROR_IF( !isolatedFractureElements.empty(),
-                 "Fracture " << this->getName() << " has elements {" << stringutilities::join( isolatedFractureElements, ", " ) << "} with less than two neighbors." );
+                 GEOS_FMT( "Fracture {} has elements {{{}}} with less than two neighbors.",
+                           this->getName(),
+                           stringutilities::join( isolatedFractureElements, ", " ) ) );
 
   fillMissing2dElemToEdges( m_toNodesRelation.toViewConst(),
                             nodeManager.edgeList().toViewConst(),
@@ -1180,19 +1183,19 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
 void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager,
                                                        ElementRegionManager const & elemManager )
 {
-  arrayView2d< localIndex > const & elems2dToFaces = faceList().toView();
-  arrayView2d< localIndex const > const & faceToElementRegionIndex    = faceManager.elementRegionList();
-  arrayView2d< localIndex const > const & faceToElementSubRegionIndex = faceManager.elementSubRegionList();
-  arrayView2d< localIndex const > const & faceToElementIndex          = faceManager.elementList();
+  arrayView2d< localIndex > const elems2dToFaces = faceList().toView();
+  arrayView2d< localIndex const > const faceToElementRegionIndex    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const faceToElementSubRegionIndex = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const faceToElementIndex          = faceManager.elementList();
 
   arrayView2d< real64 const > const faceCenter = faceManager.faceCenter();
-  FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+  ArrayOfArraysView< localIndex > const faceToNodes = faceManager.nodeList().base().toView();
 
   auto elemCenter = elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   // We need to modify the normals and the nodes ordering to be consistent.
   arrayView2d< real64 > const faceNormal = faceManager.faceNormal();
-  forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
+  forAll< parallelHostPolicy >( this->size(), [=]( localIndex const kfe )
   {
     if( !( elems2dToFaces[kfe][0] == -1 || elems2dToFaces[kfe][1] == -1 ) )
     {
@@ -1209,30 +1212,159 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
       localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
       localIndex const ek1  = faceToElementIndex[f1][0];
 
-      real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
-      real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
-
-      LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
-      LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
-
-      // If the vector connecting the face center and the elem center is in the same
-      // direction as the unit normal, we flip the normal coz it should be pointing outward
-      // (i.e., towards the fracture element).
-      if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+      // Use element centers to orient each face normal outward (toward the fracture)
+      // only when valid element mappings are available.
+      // Ghost elements in MPI surface-generator workflows may have -1 indices.
+      if( er0 >= 0 && esr0 >= 0 && ek0 >= 0 &&
+          er1 >= 0 && esr1 >= 0 && ek1 >= 0 )
       {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0 ), getDataContext() );
-        LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
-        std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+        real64 f0e0vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f0] );
+        LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
+
+        // Step 1: correct f0 so its normal points outward from its neighboring 3D element
+        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
+        // anti-parallel to the outward normal, so if the dot product is positive the
+        // normal is already pointing inward and must be flipped.
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
+          std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
+        }
+
+        real64 f1e1vector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( faceCenter[f1] );
+        LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
+
+        // Step 2: correct f1 so its normal points outward from its neighboring 3D element
+        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
+        // anti-parallel to the outward normal, so if the dot product is positive the
+        // normal is already pointing inward and must be flipped.
+        if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
+        {
+          LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
+          std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
+        }
       }
-      if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
+
+      // Enforce the anti-parallel invariant: faceNormal[f0] and faceNormal[f1]
+      // must point in opposite directions so that
+      // Nbar = faceNormal[f0] - faceNormal[f1] is non-zero.
+      if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], faceNormal[f1] ) > 0.0 )
       {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1 ), getDataContext() );
         LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
         std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
       }
     }
   } );
 
+}
+
+void FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0( FaceManager & faceManager,
+                                                             NodeManager const & nodeManager )
+{
+  arrayView2d< localIndex const > const elems2dToFaces = faceList().toViewConst();
+  FaceManager::NodeMapType & faceToNodes = faceManager.nodeList();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
+
+  // Pre-check: ensure no face has more nodes than the fixed stack arrays allow.
+  // Using a serial loop here avoids stack overflows inside the parallel kernel.
+  constexpr localIndex MAX_FACE_NODES = 8;
+  for( localIndex kfe = 0; kfe < this->size(); ++kfe )
+  {
+    localIndex const kf0 = elems2dToFaces[kfe][0];
+    localIndex const kf1 = elems2dToFaces[kfe][1];
+    if( kf0 == -1 || kf1 == -1 )
+      continue;
+
+    localIndex const numNodes0 = faceToNodes.sizeOfArray( kf0 );
+    // We expect numNodes0 == numNodes1 in normal cases; check only one is sufficient here.
+    if( numNodes0 > MAX_FACE_NODES )
+    {
+      // General polyhedral faces are out of scope for this PR (only tetrahedra/hexahedra support intended).
+      GEOS_ERROR( GEOS_FMT( "FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0: found face with {} nodes (> {}).\n"
+                            "This code uses fixed-size stack arrays of length {} and cannot handle general polyhedral faces.\n"
+                            "Either reduce the face node count or extend the implementation to support general polyhedra.\n"
+                            "Fracture: {} faceElementIndex: {} faceIndex: {}",
+                            numNodes0, MAX_FACE_NODES, MAX_FACE_NODES, getName(), kfe, kf0 ), getDataContext() );
+    }
+  }
+
+  forAll< parallelHostPolicy >( this->size(), [=, &faceToNodes]( localIndex const kfe )
+  {
+    localIndex const kf0 = elems2dToFaces[kfe][0];
+    localIndex const kf1 = elems2dToFaces[kfe][1];
+
+    if( kf0 == -1 || kf1 == -1 )
+      return;
+
+    localIndex const numNodes0 = faceToNodes.sizeOfArray( kf0 );
+    localIndex const numNodes1 = faceToNodes.sizeOfArray( kf1 );
+
+    if( numNodes0 != numNodes1 || numNodes0 < 3 )
+      return;
+
+    // Triangle faces (3 nodes) don't need reordering because the linear shape
+    // functions on triangles yield identical nodal integrals (area/3) regardless
+    // of which vertex is at which position.  Only quadrilateral (and higher)
+    // faces have bilinear shape functions sensitive to the node-to-parent-coordinate
+    // assignment, so we restrict the fix to faces with 4+ nodes.
+    if( numNodes0 < 4 )
+      return;
+
+    // For each node in kf0, find the closest node in kf1 and build a reordering.
+    // After mesh splitting, collocated nodes are at (nearly) identical positions.
+    localIndex const numNodes = numNodes0;
+    // Use fixed-size stack arrays but ensure caller has been validated by the pre-check above.
+    localIndex reorderedKf1[MAX_FACE_NODES];
+    bool matched[MAX_FACE_NODES];
+
+    for( localIndex i = 0; i < numNodes; ++i )
+    {
+      matched[i] = false;
+    }
+
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      localIndex const n0 = faceToNodes( kf0, a );
+      real64 const x0 = X[n0][0];
+      real64 const y0 = X[n0][1];
+      real64 const z0 = X[n0][2];
+
+      real64 bestDist = LvArray::NumericLimits< real64 >::max;
+      localIndex bestB = -1;
+
+      for( localIndex b = 0; b < numNodes; ++b )
+      {
+        if( matched[b] )
+          continue;
+
+        localIndex const n1 = faceToNodes( kf1, b );
+        real64 const dx = X[n1][0] - x0;
+        real64 const dy = X[n1][1] - y0;
+        real64 const dz = X[n1][2] - z0;
+        real64 const dist = dx * dx + dy * dy + dz * dz;
+
+        if( dist < bestDist )
+        {
+          bestDist = dist;
+          bestB = b;
+        }
+      }
+
+      GEOS_ERROR_IF( bestB == -1,
+                     GEOS_FMT( "FaceElementSubRegion::orderKf1NodesConsistentlyWithKf0: "
+                               "Could not find matching kf1 node for kf0 node {} of face element {}.",
+                               a, kfe ) );
+
+      reorderedKf1[a] = faceToNodes( kf1, bestB );
+      matched[bestB] = true;
+    }
+
+    // Apply the reordering to kf1's node list
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      faceToNodes( kf1, a ) = reorderedKf1[a];
+    }
+  } );
 }
 
 } /* namespace geos */
