@@ -18,12 +18,15 @@ PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/base
 Fix 2D/3D cell co-location in parallel mesh redistribution
 
 PR #3986 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
+=====================
 Corrected traction boundary conditions
 
 PR #3970 (2026-02-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3970-15479-074f42a.tar.gz>
+=====================
 Bypass well residual calculation for closed wells
 
 PR #3964 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
+=====================
 Fix fracture state update for ALM solver
 
 PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
