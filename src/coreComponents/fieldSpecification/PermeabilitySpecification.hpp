@@ -134,7 +134,7 @@ public:
    * Accessor
    * @return const m_scales
    */
-  arrayView1d< real64 const > getScales() const
+  R1Tensor getScales() const
   {
     return m_scales;
   }
@@ -161,7 +161,7 @@ private:
   string m_functionName;
 
   /// The scale factors to use on the value of the boundary condition.
-  array1d< real64 > m_scales;
+  R1Tensor m_scales;
 
 };
 

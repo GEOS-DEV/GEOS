@@ -38,7 +38,7 @@ void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & s
 
   stdArray< string, 3 > suffixes = {{ "_x", "_y", "_z" }};
 
-  arrayView1d< real64 const > scales = ps->getScales();
+  R1Tensor scales = ps->getScales();
 
   for ( string const & regionName : ps->getRegionNames() )
   {

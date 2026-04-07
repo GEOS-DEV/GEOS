@@ -49,8 +49,8 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
     setDescription( "Name of function that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
-    // setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setApplyDefaultValue( { 0.0, 0.0, 0.0 } ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Apply a scaling factor for the value of the boundary condition." );
 }
 
@@ -60,12 +60,7 @@ PermeabilitySpecification::~PermeabilitySpecification()
 
 
 void PermeabilitySpecification::postInputInitialization()
-{
-  GEOS_THROW_IF( m_scales.size() != 3,
-                 getWrapperDataContext( viewKeyStruct::scalesString() ) << 
-                 ": expected 3 components, got " << m_scales.size(),
-                 InputError );
-}
+{}
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationABC, PermeabilitySpecification, string const &, Group * const )
