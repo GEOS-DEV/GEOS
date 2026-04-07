@@ -34,6 +34,111 @@ namespace constitutive
 namespace compositional
 {
 
+namespace negative_two_phase_flash_internal
+{
+
+/**
+ * @brief Run a short successive-substitution flash using K-values initialized at @p wilsonPressure,
+ *        while evaluating all fugacities at @p fugacityPressure (the true cell pressure).
+ * @return Equilibrium residual norm after the last (or converged) iteration.
+ */
+template< int USD2 >
+GEOS_HOST_DEVICE
+real64 probeEquilibriumResidual( integer const numComps,
+                                 real64 const wilsonPressure,
+                                 real64 const fugacityPressure,
+                                 real64 const temperature,
+                                 arraySlice1d< real64 const > const & composition,
+                                 ComponentProperties::KernelWrapper const & componentProperties,
+                                 FlashData const & flashData,
+                                 arraySlice1d< integer const > const & presentComponents,
+                                 real64 const flashTolerance,
+                                 integer const maxProbeIterations,
+                                 arraySlice1d< real64 > const & logLiquidFugacity,
+                                 arraySlice1d< real64 > const & logVapourFugacity,
+                                 arraySlice1d< real64 > const & fugacityRatios,
+                                 arraySlice1d< real64, USD2 > const & liquidComposition,
+                                 arraySlice1d< real64, USD2 > const & vapourComposition )
+{
+  constexpr integer maxNumComps = MultiFluidConstants::MAX_NUM_COMPONENTS;
+  StackArray< real64, 1, maxNumComps > kProbe( numComps );
+  if( flashData.liquidEos == EquationOfStateType::SoreideWhitson )
+  {
+    KValueInitialization::computeSoreideWhitsonKvalue( numComps,
+                                                       wilsonPressure,
+                                                       temperature,
+                                                       componentProperties,
+                                                       composition,
+                                                       kProbe.toSlice() );
+  }
+  else
+  {
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        wilsonPressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kProbe.toSlice() );
+  }
+  for( integer ic = 0; ic < numComps; ++ic )
+  {
+    liquidComposition[ic] = composition[ic];
+    vapourComposition[ic] = composition[ic];
+  }
+
+  real64 error = LvArray::NumericLimits< real64 >::max;
+  for( localIndex iterationCount = 0; iterationCount < maxProbeIterations; ++iterationCount )
+  {
+    real64 const vapourFrac = RachfordRice::solve( kProbe.toSliceConst(), composition, presentComponents );
+
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      liquidComposition[ic] = composition[ic] / ( 1.0 + vapourFrac * ( kProbe[ic] - 1.0 ) );
+      vapourComposition[ic] = kProbe[ic] * liquidComposition[ic];
+    }
+
+    normalizeComposition( numComps, liquidComposition );
+    normalizeComposition( numComps, vapourComposition );
+
+    FugacityCalculator::computeLogFugacity( numComps,
+                                            fugacityPressure,
+                                            temperature,
+                                            liquidComposition.toSliceConst(),
+                                            componentProperties,
+                                            flashData.liquidEos,
+                                            flashData,
+                                            logLiquidFugacity );
+    FugacityCalculator::computeLogFugacity( numComps,
+                                            fugacityPressure,
+                                            temperature,
+                                            vapourComposition.toSliceConst(),
+                                            componentProperties,
+                                            flashData.vapourEos,
+                                            flashData,
+                                            logVapourFugacity );
+
+    error = 0.0;
+    for( integer const ic : presentComponents )
+    {
+      fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
+      error += (fugacityRatios[ic]*fugacityRatios[ic]);
+    }
+    error = LvArray::math::sqrt( error );
+
+    if( error < flashTolerance )
+    {
+      break;
+    }
+
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      kProbe[ic] *= exp( fugacityRatios[ic] );
+    }
+  }
+  return error;
+}
+
+} // namespace negative_two_phase_flash_internal
+
 template< int USD1, int USD2 >
 GEOS_HOST_DEVICE
 bool NegativeTwoPhaseFlash::compute( integer const numComps,
@@ -73,59 +178,152 @@ bool NegativeTwoPhaseFlash::compute( integer const numComps,
   }
 
   bool converged = false;
-  for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
+  real64 lastInnerError = 0.0;
+  real64 errAfterWilsonAtPressure = 0.0;
+  bool haveErrAfterWilsonAtPressure = false;
+
+  integer constexpr numRecoveryPasses = 7;
+  integer const maxProbeIterations = LvArray::math::min( maxIterations, integer{ 25 } );
+
+  for( integer recoveryPass = 0; recoveryPass < numRecoveryPasses && !converged; ++recoveryPass )
   {
-    // Solve Rachford-Rice Equation
-    vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
-
-    // Assign phase compositions
-    for( integer ic = 0; ic < numComps; ++ic )
+    if( recoveryPass > 0 )
     {
-      liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
-      vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
+      real64 wilsonReferencePressure = pressure;
+
+      if( recoveryPass == 6 )
+      {
+        // Secant / Newton-style update of the Wilson reference pressure using finite differences.
+        // Fugacity evaluations remain at the true cell pressure.
+        real64 const relPerturbation = 5.0e-4;
+        real64 const wPlus = pressure * ( 1.0 + relPerturbation );
+        real64 const wMinus = pressure * ( 1.0 - relPerturbation );
+
+        real64 const errPlus = negative_two_phase_flash_internal::probeEquilibriumResidual(
+          numComps, wPlus, pressure, temperature, composition, componentProperties, flashData,
+          presentComponents, flashTolerance, maxProbeIterations,
+          logLiquidFugacity, logVapourFugacity, fugacityRatios,
+          liquidComposition, vapourComposition );
+
+        real64 const errMinus = negative_two_phase_flash_internal::probeEquilibriumResidual(
+          numComps, wMinus, pressure, temperature, composition, componentProperties, flashData,
+          presentComponents, flashTolerance, maxProbeIterations,
+          logLiquidFugacity, logVapourFugacity, fugacityRatios,
+          liquidComposition, vapourComposition );
+
+        real64 const denom = errPlus - errMinus;
+        wilsonReferencePressure = pressure;
+        if( haveErrAfterWilsonAtPressure &&
+            LvArray::math::abs( denom ) > flashTolerance * flashTolerance + pressure * LvArray::NumericLimits< real64 >::epsilon )
+        {
+          wilsonReferencePressure = pressure - errAfterWilsonAtPressure * ( wPlus - wMinus ) / denom;
+        }
+        wilsonReferencePressure = LvArray::math::min( LvArray::math::max( wilsonReferencePressure, 0.85 * pressure ), 1.15 * pressure );
+      }
+      else if( recoveryPass == 2 )
+      {
+        wilsonReferencePressure = pressure * 0.999;
+      }
+      else if( recoveryPass == 3 )
+      {
+        wilsonReferencePressure = pressure * 1.001;
+      }
+      else if( recoveryPass == 4 )
+      {
+        wilsonReferencePressure = pressure * 0.99;
+      }
+      else if( recoveryPass == 5 )
+      {
+        wilsonReferencePressure = pressure * 1.01;
+      }
+
+      if( flashData.liquidEos == EquationOfStateType::SoreideWhitson )
+      {
+        KValueInitialization::computeSoreideWhitsonKvalue( numComps,
+                                                           wilsonReferencePressure,
+                                                           temperature,
+                                                           componentProperties,
+                                                           composition,
+                                                           kVapourLiquid );
+      }
+      else
+      {
+        KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                            wilsonReferencePressure,
+                                                            temperature,
+                                                            componentProperties,
+                                                            kVapourLiquid );
+      }
+
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        liquidComposition[ic] = composition[ic];
+        vapourComposition[ic] = composition[ic];
+      }
     }
 
-    normalizeComposition( numComps, liquidComposition );
-    normalizeComposition( numComps, vapourComposition );
-
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            liquidComposition.toSliceConst(),
-                                            componentProperties,
-                                            flashData.liquidEos,
-                                            flashData,
-                                            logLiquidFugacity );
-    FugacityCalculator::computeLogFugacity( numComps,
-                                            pressure,
-                                            temperature,
-                                            vapourComposition.toSliceConst(),
-                                            componentProperties,
-                                            flashData.vapourEos,
-                                            flashData,
-                                            logVapourFugacity );
-
-    // Compute fugacity ratios and calculate the error
-    real64 error = 0.0;
-    for( integer const ic : presentComponents )
+    converged = false;
+    for( localIndex iterationCount = 0; iterationCount < maxIterations; ++iterationCount )
     {
-      fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
-      error += (fugacityRatios[ic]*fugacityRatios[ic]);
+      // Solve Rachford-Rice Equation
+      vapourPhaseMoleFraction = RachfordRice::solve( kVapourLiquid.toSliceConst(), composition, presentComponents );
+
+      // Assign phase compositions
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        liquidComposition[ic] = composition[ic] / ( 1.0 + vapourPhaseMoleFraction * ( kVapourLiquid[ic] - 1.0 ) );
+        vapourComposition[ic] = kVapourLiquid[ic] * liquidComposition[ic];
+      }
+
+      normalizeComposition( numComps, liquidComposition );
+      normalizeComposition( numComps, vapourComposition );
+
+      FugacityCalculator::computeLogFugacity( numComps,
+                                              pressure,
+                                              temperature,
+                                              liquidComposition.toSliceConst(),
+                                              componentProperties,
+                                              flashData.liquidEos,
+                                              flashData,
+                                              logLiquidFugacity );
+      FugacityCalculator::computeLogFugacity( numComps,
+                                              pressure,
+                                              temperature,
+                                              vapourComposition.toSliceConst(),
+                                              componentProperties,
+                                              flashData.vapourEos,
+                                              flashData,
+                                              logVapourFugacity );
+
+      // Compute fugacity ratios and calculate the error
+      real64 error = 0.0;
+      for( integer const ic : presentComponents )
+      {
+        fugacityRatios[ic] = ( logLiquidFugacity[ic] - logVapourFugacity[ic] ) + log( liquidComposition[ic] ) - log( vapourComposition[ic] );
+        error += (fugacityRatios[ic]*fugacityRatios[ic]);
+      }
+      error = LvArray::math::sqrt( error );
+      lastInnerError = error;
+
+      // Compute fugacity ratios and check convergence
+      converged = (error < flashTolerance);
+
+      if( converged )
+      {
+        break;
+      }
+
+      // Update K-values
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
+      }
     }
-    error = LvArray::math::sqrt( error );
 
-    // Compute fugacity ratios and check convergence
-    converged = (error < flashTolerance);
-
-    if( converged )
+    if( recoveryPass == 1 && !converged )
     {
-      break;
-    }
-
-    // Update K-values
-    for( integer ic = 0; ic < numComps; ++ic )
-    {
-      kVapourLiquid[ic] *= exp( fugacityRatios[ic] );
+      errAfterWilsonAtPressure = lastInnerError;
+      haveErrAfterWilsonAtPressure = true;
     }
   }
 
