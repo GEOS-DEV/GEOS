@@ -30,13 +30,6 @@
 namespace geos
 {
 
-// class EquilibriumInitialCondition;
-// class FunctionManager;
-// class FlowSolverBase;
-// class CompositionalMultiphaseBase;
-// class ElementSubRegionBase;
-
-
 /**
  * @class FieldApplicator
  * @brief Task to apply field specifications to elements during runtime.
