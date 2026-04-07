@@ -29,9 +29,9 @@
 #define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) EXPECT_LE( math::abs( ( L ) -( R ) ), EPSILON ) << \
     STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R );
 #else
-#define PORTABLE_EXPECT_EQ( L, R ) LVARRAY_ERROR_IF_NE( L, R )
-#define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) LVARRAY_ERROR_IF_GE_MSG( math::abs( ( L ) -( R ) ), EPSILON, \
-                                                                       STRINGIZE( L ) " = " << ( L ) << "\n" << STRINGIZE( R ) " = " << ( R ) );
+#define PORTABLE_EXPECT_EQ( L, R ) GEOS_ERROR_IF_NE( L, R )
+#define PORTABLE_EXPECT_NEAR( L, R, EPSILON ) GEOS_ERROR_IF_GE_MSG( math::abs( ( L ) -( R ) ), EPSILON, \
+                                                                    "Expected " STRINGIZE( L ) " and " STRINGIZE( R ) " to be within EPSILON." );
 #endif
 
 namespace geos

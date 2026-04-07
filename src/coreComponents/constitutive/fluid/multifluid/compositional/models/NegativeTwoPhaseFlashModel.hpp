@@ -29,6 +29,7 @@
 #include "constitutive/fluid/multifluid/compositional/functions/FlashData.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/StabilityTest.hpp"
 #include "constitutive/fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -82,9 +83,13 @@ public:
 
     StackArray< real64, 1, maxNumComps > incipientComposition( m_numComponents );
 
+    integer pureComponent = -1;
+    integer almostPureComponent = -1;
+    checkPureMixture( m_numComponents, compFraction, pureComponent, almostPureComponent );
+
     // Check if k-Values need to be initialised
     auto kVapourLiquid = kValues[0];
-    bool const needInitialisation = hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
+    bool const needInitialisation = (pureComponent < 0) && hasZero( m_numComponents, kVapourLiquid.toSliceConst() );
     if( needInitialisation )
     {
       if( m_flashData.liquidEos == EquationOfStateType::SoreideWhitson )
@@ -111,14 +116,10 @@ public:
     integer const stabilityIterations = m_discreteFlashParameters[FlashParameters::STABILITY_MAX_ITERATIONS];
 
     bool unstableMixture = false;
-    bool stabilityStatus = false;
+    bool stabilityStatus = (0 <= pureComponent);
     EquationOfStateType incipientEquationOfState = m_flashData.liquidEos;
 
-    integer pureComponent = -1;
-    integer almostPureComponent = -1;
-    checkPureMixture( m_numComponents, compFraction, pureComponent, almostPureComponent );
-
-    if( 0 < stabilityIterations || needInitialisation )
+    if( ((pureComponent < 0) && (0 < stabilityIterations)) || needInitialisation )
     {
       stabilityStatus = StabilityTest::compute( m_numComponents,
                                                 pressure,
@@ -132,6 +133,13 @@ public:
                                                 unstableMixture,
                                                 incipientEquationOfState,
                                                 incipientComposition.toSlice() );
+    }
+    else
+    {
+      for( integer ic = 0; ic < m_numComponents; ++ic )
+      {
+        incipientComposition[ic] = compFraction[ic];
+      }
     }
 
     // Pure mixtures are always stable
@@ -158,9 +166,16 @@ public:
                                                                phaseCompFraction.value[m_liquidIndex],
                                                                phaseCompFraction.value[m_vapourIndex] );
 
+#if defined(GEOS_DEVICE_COMPILE)
       GEOS_ERROR_IF( !flashStatus,
-                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition ",
-                               pressure, temperature ) << compFraction );
+                     "Negative two phase flash failed to converge." );
+#else
+      GEOS_ERROR_IF( !flashStatus,
+                     GEOS_FMT( "Negative two phase flash failed to converge at pressure {:.5e}, temperature {:.3f} and composition {}.",
+                               pressure,
+                               temperature,
+                               stringutilities::concat( "", compFraction ) ) );
+#endif
 
       // Calculate derivatives
       NegativeTwoPhaseFlash::computeDerivatives( m_numComponents,

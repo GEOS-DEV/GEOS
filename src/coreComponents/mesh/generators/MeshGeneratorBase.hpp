@@ -31,16 +31,34 @@
 namespace geos
 {
 
-// This forward declaration prevents from exposing the internals of the module,
-// which are only accessed through some private functions signatures.
-// In order to avoid this forward declaration, we could expose an ABC
-// instead of exposing the MeshGeneratorBase implementation.
+// Forward declarations
 class CellBlockManager;
+class NodeManager;
+class EdgeManager;
+class FaceManager;
+class ElementRegionManager;
+
+/**
+ * @brief Compute the Euler-Poincaré characteristic χ = V − E + F − C for the bulk mesh.
+ *
+ * Only `CellElementSubRegion` elements are counted (fracture / surface sub-regions are excluded).
+ * For a single, connected 3-D solid without interior voids χ = 1.
+ *
+ * @param nodeManager   Populated node manager.
+ * @param edgeManager   Populated edge manager.
+ * @param faceManager   Populated face manager.
+ * @param elemManager   Populated element region manager.
+ * @return χ = V − E + F − C as a signed integer (global value, same on all ranks).
+ */
+integer computeEulerCharacteristic( NodeManager const & nodeManager,
+                                    EdgeManager const & edgeManager,
+                                    FaceManager const & faceManager,
+                                    ElementRegionManager const & elemManager );
 
 /**
  *  @class MeshGeneratorBase
  *  @brief The MeshGeneratorBase class provides an abstract base class implementation for different mesh types.
- *	   The MeshGeneratorBase is the Group specialization for different type of mesh handling.
+ *     The MeshGeneratorBase is the Group specialization for different type of mesh handling.
  */
 class MeshGeneratorBase : public dataRepository::Group
 {
@@ -117,20 +135,33 @@ public:
    * @brief Get the name mapping between mesh volumic field names and internal GEOS volumic field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
+  stdMap< string, string > const & getVolumicFieldsMapping() const { return m_volumicFields; }
 
   /**
    * @brief Get the name mapping between mesh surfacic field names and internal GEOS surfacic field names.
    * @return The string to string mapping of field names.
    */
-  std::map< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
+  stdMap< string, string > const & getSurfacicFieldsMapping() const { return m_surfacicFields; }
+
+  /// Key for the checkEulerCharacteristic XML attribute
+  struct viewKeyStruct
+  {
+    /**
+     * @brief Get the XML attribute name for the Euler characteristic check flag.
+     * @return The string "checkEulerCharacteristic".
+     */
+    constexpr static char const * checkEulerCharacteristicString() { return "checkEulerCharacteristic"; }
+  };
+
+  /// When non-zero, compute χ = V − E + F − C after mesh loading and warn if χ ≠ 1.
+  integer m_checkEulerCharacteristic = 0;
 
 protected:
   /// Mapping from volumic field source to GEOS field.
-  std::map< string, string > m_volumicFields;
+  stdMap< string, string > m_volumicFields;
 
   /// Mapping from surfacic field source to GEOS field.
-  std::map< string, string > m_surfacicFields;
+  stdMap< string, string > m_surfacicFields;
 
 private:
   /**

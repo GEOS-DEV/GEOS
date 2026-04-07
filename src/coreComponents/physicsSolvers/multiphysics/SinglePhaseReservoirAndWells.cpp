@@ -43,14 +43,11 @@ SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
 SinglePhaseReservoirAndWells( const string & name,
                               Group * const parent )
   : Base( name, parent )
-{
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-}
+{ }
 
 template< typename RESERVOIR_SOLVER >
 SinglePhaseReservoirAndWells< RESERVOIR_SOLVER >::
-~SinglePhaseReservoirAndWells()
-{}
+~SinglePhaseReservoirAndWells() = default;
 
 template<>
 SinglePhaseBase *
@@ -87,9 +84,16 @@ setMGRStrategy()
   }
   else
   {
-    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+    if( isThermal() )
+    {
+      m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhaseReservoirFVM;
+    }
+    else
+    {
+      linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseReservoirFVM;
+    }
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -109,14 +113,18 @@ setMGRStrategy()
 
   if( dynamic_cast< SinglePhaseHybridFVM * >( this->flowSolver() ) )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for poromechanics {}/{}",
-                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()));
+    GEOS_ERROR( GEOS_FMT( "MGR strategy is not implemented for poromechanics {}/{}",
+                          this->getName(), this->getCatalogName(), this->flowSolver()->getCatalogName()),
+                getDataContext() );
   }
   else
   {
-    linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
+    linearSolverParameters.mgr.strategy =
+      wellSolver()->isThermal()
+      ? LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanicsReservoirFVM
+      : LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -248,12 +256,10 @@ assembleCouplingTerms( real64 const time_n,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
-
-
+  GEOS_UNUSED_VAR( time_n );
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
-                 GEOS_FMT( "{} {}: The well transmissibility has not been computed yet",
-                           this->getCatalogName(), this->getName() ),
-                 std::runtime_error );
+                 "The well transmissibility has not been computed yet",
+                 geos::RuntimeError, Base::getDataContext() );
 
   this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel const & mesh,
@@ -278,13 +284,13 @@ assembleCouplingTerms( real64 const time_n,
       PerforationData const * const perforationData = subRegion.getPerforationData();
 
       WellControls const & wellControls = Base::wellSolver()->getWellControls( subRegion );
-      bool const isProducer = wellControls.isProducer();
-      if( !wellControls.isWellOpen( time_n ) )
+      if( !wellControls.isWellOpen( ) )
       {
         return;
       }
-
+      bool const isProducer = wellControls.isProducer();
       areWellsShut = 0;
+
       if( Base::wellSolver()->isThermal() )
       {
         coupledReservoirAndSinglePhaseWellKernels::

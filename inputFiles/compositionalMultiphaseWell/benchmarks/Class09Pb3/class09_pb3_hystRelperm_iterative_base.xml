@@ -12,8 +12,8 @@
       initialDt="1e2"
       targetRegions="{ reservoir, wellRegion }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="40"/>
+        newtonTol="1.0e-3"
+        newtonMaxIter="12"/>
       <LinearSolverParameters
         solverType="fgmres"
         preconditionerType="mgr"
@@ -221,8 +221,8 @@
       voxelFile="tables/drainageRelPerm_gas.txt"/>
     <TableFunction
       name="imbibitionWaterRelativePermeabilityTable"
-      coordinateFiles="{ tables/drainagePhaseVolFraction_water.txt }"
-      voxelFile="tables/drainageRelPerm_water.txt"/>
+      coordinateFiles="{ tables/imbibitionPhaseVolFraction_water.txt }"
+      voxelFile="tables/imbibitionRelPerm_water.txt"/>
     <TableFunction
       name="imbibitionGasRelativePermeabilityTable"
       coordinateFiles="{ tables/imbibitionPhaseVolFraction_gas.txt }"

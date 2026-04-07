@@ -68,12 +68,6 @@ public:
    */
   SinglePhaseThermalConductivity( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "SinglePhaseThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -100,7 +94,7 @@ public:
     static constexpr char const * defaultThermalConductivityComponentsString() { return "defaultThermalConductivityComponents"; }
     static constexpr char const * thermalConductivityGradientComponentsString() { return "thermalConductivityGradientComponents"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
-  } viewKeys;
+  };
 
 protected:
 

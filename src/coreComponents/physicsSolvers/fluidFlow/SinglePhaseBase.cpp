@@ -28,7 +28,6 @@
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -40,11 +39,13 @@
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/MobilityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalHydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
@@ -73,8 +74,7 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
 
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::SourceFluxFailure >();
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 
@@ -163,14 +163,14 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.getCatalogName();
-        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( m_isThermal && ((fluidModelName != "ThermalCompressibleSinglePhaseFluid") && (fluidModelName != "ReactiveThermalCompressibleSinglePhaseFluid")),
                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
-        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+                                 fluid.getName() ),
+                       InputError, getDataContext(), fluid.getDataContext() );
+        GEOS_THROW_IF( !m_isThermal && ((fluidModelName == "ThermalCompressibleSinglePhaseFluid") || (fluidModelName == "ReactiveThermalCompressibleSinglePhaseFluid")),
                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
-                                 getDataContext(), fluid.getDataContext() ),
-                       InputError );
+                                 fluid.getName() ),
+                       InputError, getDataContext(), fluid.getDataContext() );
       } );
     } );
   } );
@@ -404,25 +404,44 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
     // collect all the equil name to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() << " " << getDataContext() <<
-                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                   ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                   "used in this simulation. To proceed, you can either: \n" <<
-                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+                   GEOS_FMT( "The gravity vector specified in this simulation ({} {} {}) is not aligned with the z-axis. \n"
+                             "This is incompatible with the {} {}used in this simulation. To proceed, you can either: \n"
+                             "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n"
+                             "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                             gravVector[0],
+                             gravVector[1],
+                             gravVector[2],
+                             bc.getCatalogName(),
+                             bc.getName() ),
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    // ensure that the temperature tables are defined for thermal simulations
+    GEOS_THROW_IF( m_isThermal && bc.getTemperatureVsElevationTableName().empty(),
+                   GEOS_FMT( "{} must be provided for a thermal simulation",
+                             EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString() ),
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    //ensure that compositions are empty
+    GEOS_THROW_IF( !bc.getComponentFractionVsElevationTableNames().empty(),
+                   GEOS_FMT( "{} must not be provided for a single phase simulation.",
+                             EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString() ),
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    GEOS_THROW_IF( !bc.getComponentNames().empty(),
+                   GEOS_FMT( "{} must not be provided for a single phase simulation.",
+                             EquilibriumInitialCondition::viewKeyStruct::componentNamesString() ),
+                   InputError, getDataContext(), bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -478,7 +497,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
     GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                         getCatalogName() << " " << getDataContext() <<
-                        ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
+                        "By looking at the elevation of the cell centers in this model, GEOS found that " <<
                         "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                         globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                         " was specified in the input file to equilibrate the model.\n " <<
@@ -493,6 +512,16 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
+
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    TableFunction::KernelWrapper tempTableWrapper;
+    // Creation of Wrapper in case of TemperatureVsElevationTableName
+    if( m_isThermal )
+    {
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      tempTableWrapper = tempTable.createKernelWrapper();
+    }
 
     // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
@@ -520,28 +549,40 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-      bool const equilHasConverged =
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
+      bool const equilHasConverged = m_isThermal ?
+                                     thermalSinglePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          tempTableWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() ) :
+                                     singlePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error );
+                     GEOS_FMT( "Hydrostatic pressure initialization failed to converge in region {}!",
+                               region.getName() ),
+                     geos::RuntimeError, getDataContext() );
     } );
 
     // Step 3.4: create hydrostatic pressure table
-
-    FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -554,14 +595,20 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
 
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy< > >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
+    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
+      if( m_isThermal )
+      {
+        temp[k] = tempTableWrapper.compute( &elevation );
+      }
       minPressure.min( pres[k] );
     } );
 
@@ -938,13 +985,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 
@@ -981,15 +1028,16 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                                     ElementSubRegionBase & subRegion,
                                                                     string const & )
     {
+      GEOS_UNUSED_VAR( setName );
       if( targetSet.size() == 0 )
       {
         return;
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }
@@ -1285,7 +1333,8 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
   GEOS_MARK_FUNCTION;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  integer numNegativePressures = 0;
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   real64 minPressure = 0.0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -1300,23 +1349,25 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-      auto const statistics =
-        singlePhaseBaseKernels::SolutionCheckKernel::
-          launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+      auto const statistics = singlePhaseBaseKernels::SolutionCheckKernel::
+                                launch< parallelDevicePolicy<> >( localSolution,
+                                                                  rankOffset,
+                                                                  dofNumber,
+                                                                  ghostRank,
+                                                                  pres,
+                                                                  scalingFactor,
+                                                                  negPresCollector );
 
-      numNegativePressures += statistics.first;
-      minPressure = std::min( minPressure, statistics.second );
+      minPressure = std::min( minPressure, statistics.minNegPres );
     } );
   } );
 
-  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+  rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                        "negative pressure", minPressure, units::Unit::Pressure );
 
-  if( numNegativePressures > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                                        getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
-
-  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+  return (m_allowNegativePressure || rankNegPressureIds.getSignaledElementsCount() == 0) ?  1 : 0;
 }
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
@@ -1326,17 +1377,6 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
   arrayView1d< real64 const > const mass = subRegion.template getField< flow::mass >();
   arrayView1d< real64 > const mass_n = subRegion.template getField< flow::mass_n >();
   mass_n.setValues< parallelDevicePolicy<> >( mass );
-}
-
-void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
-{
-  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
-  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    vol[ei] += dVol[ei];
-    dVol[ei] = 0.0;
-  } );
 }
 
 } /* namespace geos */

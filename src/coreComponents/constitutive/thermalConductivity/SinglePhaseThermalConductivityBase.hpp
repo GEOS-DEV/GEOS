@@ -96,8 +96,7 @@ public:
    */
   SinglePhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
@@ -146,18 +145,7 @@ public:
    */
   arrayView3d< real64 const > dEffectiveConductivity_dT() const { return m_dEffectiveConductivity_dT; }
 
-private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
 protected:
-
-  virtual void postInputInitialization() override;
 
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;

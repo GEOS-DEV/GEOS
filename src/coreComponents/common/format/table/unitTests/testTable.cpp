@@ -18,8 +18,6 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "dataRepository/Group.hpp"
-#include "common/DataTypes.hpp"
-#include "LvArray/src/MallocBuffer.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
@@ -64,13 +62,11 @@ TEST( testTable, tableEmptyRow )
                                   "CoordZ",
                                   "Prev\nelement",
                                   "Next\nelement"} );
-
   TableData tableData;
   tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
   tableData.addRow( "", " ", "", "", "" );
   tableData.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim.", "[30.21543]", "30.45465142",
                     787442, 10 );
-
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
@@ -218,7 +214,7 @@ TEST( testTable, tableHiddenColumn )
 TEST( testTable, tableMergeOverflowParadox )
 {
   string const title = "Lorem Ipsum";
-  TableLayout tableLayout( title,
+  TableLayout const tableLayout( title,
   {
     TableLayout::Column()
       .setName( "A" ),
@@ -229,13 +225,13 @@ TEST( testTable, tableMergeOverflowParadox )
     TableLayout::Column()
       .setName( "X" ),
     TableLayout::Column()
-      .setName( "A" ),
+      .setName( "D" ),
     TableLayout::Column()
-      .setName( "B" ),
+      .setName( "E" ),
     TableLayout::Column()
-      .setName( "C" ),
+      .setName( "F" ),
     TableLayout::Column()
-      .setName( "C" )
+      .setName( "G" )
   } );
 
   TableData tableData;
@@ -253,7 +249,7 @@ TEST( testTable, tableMergeOverflowParadox )
              "---------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                          Lorem Ipsum                                                          |\n"
              "|-------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|       A       |        B         |       C       |  X  |       A       |         B         |        C         |       C       |\n"
+             "|       A       |        B         |       C       |  X  |       D       |         E         |        F         |       G       |\n"
              "|---------------|------------------|---------------|-----|---------------|-------------------|------------------|---------------|\n"
              "|   0123456789  |      0123456789  |   0123456789  |  X  |   0123456789  |       0123456789  |      0123456789  |   0123456789  |\n"
              "|   0123456789  |  012345678901234567890123456789  |  X  |   0123456789  |       0123456789  |      0123456789  |   0123456789  |\n"
@@ -751,8 +747,8 @@ TEST( testTable, table2DMismatchingCoordValues )
                "|  Temperature = 7  |            12  |            13  |            14  |            15  |\n"
                "|---------------------------------------------------------------------------------------|\n"
                "|  Warning: Too much data for the number of columns & rows:                             |\n"
-               "|    - Expected Data may be missaligned values (16 columns x 4 rows),                   |\n"
-               "|    - Found 4 values                                                                   |\n"
+               "|    - Expected 16 values (4 columns x 4 rows),                                         |\n"
+               "|    - Found 25 values. Data may be misaligned                                          |\n"
                "-----------------------------------------------------------------------------------------\n" );
 
     EXPECT_EQ( csvFormatted,
@@ -860,6 +856,28 @@ TEST( testTable, tableSpecialsValues )
              );
 }
 
+TEST( testTable, testTitleWithNoColumnIndented )
+{
+  TableLayout const tableLayout = TableLayout().
+                                    setTitle( "Title" ).
+                                    setIndentation( 4 ).
+                                    setMargin( TableLayout::MarginValue::small );
+
+  TableData tableData;
+  tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
+  tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "    -------------------------------------------\n"
+             "    |                  Title                  |\n"
+             "    |-----------------------------------------|\n"
+             "    | Global Id |   1234 |  40 |   5678 |  60 |\n"
+             "    |  pressure | 0.1234 | 0.4 | 0.5678 | 0.6 |\n"
+             "    -------------------------------------------\n"
+             );
+}
 
 int main( int argc, char * * argv )
 {

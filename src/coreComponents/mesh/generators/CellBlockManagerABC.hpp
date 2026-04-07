@@ -124,7 +124,7 @@ public:
   /**
    * @return A map of the cellblocks list for each region attribute values.
    */
-  virtual std::map< integer, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
+  virtual stdMap< integer, std::set< string > > const & getRegionAttributesCellBlocks() const = 0;
 
   /**
    * @brief Total number of nodes across all the cell blocks.
@@ -211,13 +211,19 @@ public:
    * @brief Returns the node sets. Key of the map is the name of the set.
    * @return A reference to constant map.
    */
-  virtual std::map< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
+  virtual stdMap< string, SortedArray< localIndex > > const & getNodeSets() const = 0;
 
   /**
    * @brief Getter for the global length
    * @return the global length of the mesh
    */
   virtual real64 getGlobalLength() const = 0;
+
+  /**
+   * @brief Getter for the global offset
+   * @return the global offset of the mesh
+   */
+  virtual real64 getGlobalOffset() const = 0;
 
   /**
    * @brief Generates in place the high-order maps for this cell block manager.

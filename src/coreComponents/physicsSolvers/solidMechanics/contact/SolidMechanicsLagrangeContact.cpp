@@ -21,6 +21,7 @@
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/solid/SolidFields.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -32,6 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -64,13 +66,20 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilitzationScalingCoefficient ).
+  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilizationScalingCoefficient ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
 
-  addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::LinearSolverConfiguration >();
+  registerWrapper( viewKeyStruct::useLocalYieldAccelerationString(), &m_useLocalYieldAcceleration ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to enable local acceleration for yield (to accelerate configuration loop convergence)." );
+
+  registerWrapper( viewKeyStruct::localYieldAccelerationBufferString(), &m_localYieldAccelerationBuffer ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Buffer parameter for local yield acceleration." );
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
@@ -91,8 +100,8 @@ void SolidMechanicsLagrangeContact::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanics;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                          EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
@@ -127,14 +136,27 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( getName()).
         setDescription( "An array that holds the sliding tolerance." );
 
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      // Register pressure fields for sequential poromechanics coupling and stress initialization
+      // In coupled poromechanics, the flow solver will overwrite these with actual values
       subRegion.registerField< flow::pressure >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
       subRegion.registerField< flow::pressure_n >( getName() ).
+        setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName());
+
+      if( m_useLocalYieldAcceleration )
+      {
+        subRegion.registerField< contact::yield0 >( getName() );
+        subRegion.registerField< contact::yield1 >( getName() );
+        subRegion.registerField< contact::yield1_tilde >( getName() );
+        subRegion.registerField< contact::yield2 >( getName() );
+        subRegion.registerField< contact::yield2_tilde >( getName() );
+        subRegion.registerField< contact::relaxationFactor0 >( getName() );
+        subRegion.registerField< contact::relaxationFactor1 >( getName() );
+      }
 
     } );
 
@@ -186,27 +208,20 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
     } );
   }
 
+  if( m_useLocalYieldAcceleration )
+  {
+    GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver, GEOS_FMT( "{}: local yield acceleration enabled", getName() ) );
+  }
+
 }
 
-void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
-                                                 DofManager & dofManager,
-                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution,
-                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
+void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
+                                                        DofManager & dofManager,
+                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                        SparsityPattern< globalIndex > & pattern )
 {
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
-  // setup monolithic coupled system
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    createPreconditioner( domain );
-  }
+  // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
+  PhysicsSolverBase::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
@@ -282,15 +297,10 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
-    FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // Get the "face to element" map (valid for the entire mesh)
-    FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-    arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
-    arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
-    arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
 
     // Get the volume for all elements
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -301,10 +311,10 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
@@ -318,14 +328,15 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
         arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const & normalTractionTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
-        arrayView1d< real64 > const & normalDisplacementTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-        arrayView1d< real64 > const & slidingTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
+        FixedToManyElementRelation const & faceElementToElems = subRegion.getToCellRelation();
+        array2d< localIndex > const & faceElemToElemRegion = faceElementToElems.m_toElementRegion;
+        array2d< localIndex > const & faceElemToElemSubRegion = faceElementToElems.m_toElementSubRegion;
+        array2d< localIndex > const & faceElemToElemIndex = faceElementToElems.m_toElementIndex;
+
+        arrayView1d< real64 > const & normalTractionTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
+        arrayView1d< real64 > const & normalDisplacementTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+        arrayView1d< real64 > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
         RAJA::ReduceMin< ReducePolicy< parallelHostPolicy >, real64 > minSubRegionNormalTractionTolerance( 1e10 );
         RAJA::ReduceMax< ReducePolicy< parallelHostPolicy >, real64 > maxSubRegionNormalTractionTolerance( -1e10 );
@@ -350,10 +361,9 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
             for( localIndex i = 0; i < 2; ++i )
             {
-              localIndex const faceIndex = elemsToFaces[kfe][i];
-              localIndex const er = faceToElemRegion[faceIndex][0];
-              localIndex const esr = faceToElemSubRegion[faceIndex][0];
-              localIndex const ei = faceToElemIndex[faceIndex][0];
+              localIndex const er = faceElemToElemRegion[kfe][i];
+              localIndex const esr = faceElemToElemSubRegion[kfe][i];
+              localIndex const ei = faceElemToElemIndex[kfe][i];
 
               real64 const volume = elemVolume[er][esr][ei];
 
@@ -443,7 +453,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     } );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ContactTolerance,
                          GEOS_FMT( "{}: normal displacement tolerance = [{}, {}], sliding tolerance = [{}, {}], normal traction tolerance = [{}, {}]",
                                    getName(), minNormalDisplacementTolerance, maxNormalDisplacementTolerance,
                                    minSlidingTolerance, maxSlidingTolerance,
@@ -864,12 +874,20 @@ real64 SolidMechanicsLagrangeContact::calculateContactResidualNorm( DomainPartit
   openNormalizer = MpiWrapper::max( openNormalizer );
   openResidual = sqrt( openResidual ) / ( openNormalizer + 1.0 );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )", stickResidual, slipResidual, openResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rstick Rslip Ropen ) = ( {:15.6e} {:15.6e} {:15.6e} )",
+                                       stickResidual, slipResidual, openResidual ));
 
-  return sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  real64 totalResidualNorm = sqrt( stickResidual * stickResidual + slipResidual * slipResidual + openResidual * openResidual );
+
+  getConvergenceStats().setResidualValue( "Rstick", stickResidual );
+  getConvergenceStats().setResidualValue( "Rslip", slipResidual );
+  getConvergenceStats().setResidualValue( "Ropen", openResidual );
+  getConvergenceStats().setResidualValue( "RContact", totalResidualNorm );
+
+
+  return totalResidualNorm;
 }
 
 std::unique_ptr< PreconditionerBase< LAInterface > >
@@ -894,8 +912,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     {
       blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
       precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
-      // Using GEOSX implementation of Jacobi preconditioner
-      // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
       // Using LAI implementation of Jacobi preconditioner
       LinearSolverParameters tracParams;
@@ -910,7 +926,9 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     }
     else
     {
-      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( GEOS_FMT( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option {} not supported",
+                            leadingBlockApproximation ),
+                  getDataContext() );
     }
 
     // Preconditioner for the leading block: tracPrecond
@@ -925,11 +943,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
                          std::move( mechPrecond ) );
 
     return precond;
-  }
-  else
-  {
-    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
-    //return SolverBase::createPreconditioner( domain );
   }
   return {};
 }
@@ -1305,8 +1318,9 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
   }
   else
   {
-    GEOS_ERROR( "SolidMechanicsLagrangeContact " << getDataContext() << ": face with " << numNodesPerFace <<
-                " nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported." );
+    GEOS_ERROR( GEOS_FMT( "Face with {} nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported.",
+                          numNodesPerFace ),
+                getDataContext() );
   }
 }
 
@@ -1751,10 +1765,10 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
@@ -1813,8 +1827,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             realNodes++;
           }
         }
-        GEOS_ERROR_IF( realNodes != 2,
-                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes." );
+        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes.",
+                       getDataContext() );
         edge.resize( realNodes );
 
         // Compute nodal area factor
@@ -1924,7 +1938,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilitzationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilizationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
@@ -2208,7 +2222,8 @@ bool SolidMechanicsLagrangeContact::resetConfigurationToDefault( DomainPartition
   return false;
 }
 
-bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domain,
+                                                         integer const configurationLoopIter )
 {
   GEOS_MARK_FUNCTION;
 
@@ -2248,7 +2263,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
         using FrictionType = TYPEOFREF( castedFrictionLaw );
         typename FrictionType::KernelWrapper frictionWrapper = castedFrictionLaw.createKernelUpdates();
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, &subRegion] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2267,6 +2282,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
             else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
               fractureState[kfe] = FractureState::Open;
+
               if( getLogLevel() >= 10 )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: traction = {}, normalTractionTolerance = {}",
                                     kfe, originalFractureState, fractureState[kfe],
@@ -2280,6 +2296,9 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               real64 const limitTau =
                 frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                     dLimitTangentialTractionNorm_dTraction );
+
+              // store to use in acceleration when enabled
+              real64 const currentTau_unscaled = currentTau;
 
               if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
               {
@@ -2303,6 +2322,13 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
               else
               {
                 fractureState[kfe] = FractureState::Stick;
+
+                if( m_useLocalYieldAcceleration )
+                {
+                  tryLocalYieldAcceleration( subRegion, configurationLoopIter, kfe,
+                                             currentTau_unscaled, limitTau, currentTau,
+                                             fractureState[kfe] );
+                }
               }
               if( getLogLevel() >= 10 && fractureState[kfe] != originalFractureState )
                 GEOS_LOG( GEOS_FMT( "{}: {} -> {}: currentTau = {}, limitTau = {}",
@@ -2329,10 +2355,78 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // and total area of fracture elements
   totalArea = MpiWrapper::sum( totalArea );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics,
+                         GEOS_FMT( "  {}: changed area {} out of {} ({}%)", getName(), changedArea, totalArea, (changedArea / totalArea * 100.0) ) );
 
   // Assume converged if changed area is below certain fraction of total area
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
+}
+
+void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( FaceElementSubRegion & subRegion,
+                                                               integer const configurationLoopIter,
+                                                               localIndex const kfe,
+                                                               real64 const currentTau_unscaled,
+                                                               real64 const limitTau,
+                                                               real64 const currentTau,
+                                                               integer & fractureState )
+{
+  using namespace fields::contact;
+
+  arrayView1d< real64 > const & x0 = subRegion.getField< yield0 >();
+  arrayView1d< real64 > const & x1 = subRegion.getField< yield1 >();
+  arrayView1d< real64 > const & x2 = subRegion.getField< yield2 >();
+  arrayView1d< real64 > const & x1_tilde = subRegion.getField< yield1_tilde >();
+  arrayView1d< real64 > const & x2_tilde = subRegion.getField< yield2_tilde >();
+  arrayView1d< real64 > const & omega0 = subRegion.getField< relaxationFactor0 >();
+  arrayView1d< real64 > const & omega1 = subRegion.getField< relaxationFactor1 >();
+
+  if( configurationLoopIter == 0 )
+  {
+    x0[kfe] = currentTau_unscaled - limitTau;
+  }
+  else if( configurationLoopIter == 1 )
+  {
+    x1_tilde[kfe] = currentTau_unscaled - limitTau;
+    x1[kfe] = x1_tilde[kfe];
+    omega0[kfe] = 1.0;
+  }
+  else
+  {
+    // only apply acceleration if within a fraction of the limitTau
+    real64 const accelerationBuffer = (limitTau - currentTau) / limitTau;
+
+    if( accelerationBuffer > m_localYieldAccelerationBuffer / (configurationLoopIter - 1) )
+    {
+      // do not apply acceleration, just update previous values
+      x0[kfe] = x1_tilde[kfe];
+      x1_tilde[kfe] = currentTau_unscaled - limitTau;
+      x1[kfe] = x1_tilde[kfe];
+    }
+    else
+    {
+      // apply acceleration
+      x2_tilde[kfe] = currentTau_unscaled - limitTau;
+
+      omega1[kfe] = -omega0[kfe] * (x1_tilde[kfe] - x0[kfe]) / ((x1_tilde[kfe] - x0[kfe]) - (x2_tilde[kfe] - x1[kfe]));
+
+      x2[kfe] = (1.0 - omega1[kfe]) * x1[kfe] + omega1[kfe] * x2_tilde[kfe];
+
+      real64 const acc_currentTau_unscaled = x2[kfe] + limitTau;
+      real64 const acc_currentTau_scaled = acc_currentTau_unscaled * (1.0 - m_slidingCheckTolerance);
+
+      if( acc_currentTau_scaled > limitTau )
+      {
+        fractureState = FractureState::NewSlip;
+      }
+      else
+      {
+        x0[kfe] = x1[kfe];
+        x1[kfe] = x2[kfe];
+        x1_tilde[kfe] = x2_tilde[kfe];
+        omega0[kfe] = omega1[kfe];
+      }
+    }
+  }
 }
 
 bool SolidMechanicsLagrangeContact::isFractureAllInStickCondition( DomainPartition const & domain ) const

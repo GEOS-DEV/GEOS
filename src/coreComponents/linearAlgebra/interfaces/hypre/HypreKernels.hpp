@@ -36,25 +36,6 @@ namespace hypre
 
 /// @cond DO_NOT_DOCUMENT
 
-namespace ops
-{
-
-template< typename T >
-GEOS_HYPRE_HOST_DEVICE
-constexpr T identity( T const v )
-{
-  return v;
-}
-
-template< typename T >
-GEOS_HYPRE_HOST_DEVICE
-constexpr T plus( T const lhs, T const rhs )
-{
-  return lhs + rhs;
-}
-
-}
-
 template< bool CONST >
 struct CSRData
 {
@@ -94,25 +75,6 @@ real64 computeMaxNorm( hypre_CSRMatrix const * const mat,
                        arrayView1d< globalIndex const > const & rowIndices,
                        globalIndex const firstLocalRow );
 
-namespace internal
-{
-
-/// This type is needed because CUDA does not allow a local type to be captured in a device lambda.
-template< typename F, typename R >
-struct RowReducer
-{
-  F transform;
-  R reduce;
-
-  auto GEOS_HYPRE_HOST_DEVICE
-  operator()( double acc, double v ) const
-  {
-    return reduce( acc, transform( v ) );
-  }
-};
-
-} // namespace internal
-
 template< typename F, typename R >
 void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
                         arrayView1d< globalIndex const > const & rowIndices,
@@ -122,40 +84,39 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
   CSRData< false > diag{ hypre_ParCSRMatrixDiag( mat ) };
   CSRData< false > offd{ hypre_ParCSRMatrixOffd( mat ) };
   HYPRE_BigInt const firstLocalRow = hypre_ParCSRMatrixFirstRowIndex( mat );
-  internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( rowIndices.size(), [diag, offd, reducer, rowIndices, firstLocalRow] GEOS_HYPRE_HOST_DEVICE ( localIndex const i )
+  forAll< execPolicy >( rowIndices.size(), [diag, offd, transform, reduce, rowIndices, firstLocalRow] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
+    GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
+
+    HYPRE_Real scale = 0.0;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      scale = reduce( scale, transform( diag.values[k] ) );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
       {
-        HYPRE_Int const localRow = LvArray::integerConversion< HYPRE_Int >( rowIndices[i] - firstLocalRow );
-        GEOS_ASSERT( 0 <= localRow && localRow < diag.nrow );
+        scale = reduce( scale, transform( offd.values[k] ) );
+      }
+    }
 
-        HYPRE_Real scale = 0.0;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          scale = reducer( scale, diag.values[k] );
-        }
-        if( offd.ncol > 0 )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            scale = reducer( scale, offd.values[k] );
-          }
-        }
-
-        GEOS_ASSERT_MSG( !isZero( scale ), "Zero row sum in row " << rowIndices[i] );
-        scale = 1.0 / scale;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          diag.values[k] *= scale;
-        }
-        if( offd.ncol > 0 )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            offd.values[k] *= scale;
-          }
-        }
-      } );
+    GEOS_ASSERT_MSG( !isZero( scale ), GEOS_FMT( "Zero row sum in row {}", rowIndices[i] ) );
+    scale = 1.0 / scale;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      diag.values[k] *= scale;
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        offd.values[k] *= scale;
+      }
+    }
+  } );
 }
 
 template< typename F, typename R >
@@ -167,31 +128,30 @@ void computeRowsSums( hypre_ParCSRMatrix const * const mat,
   CSRData< true > const diag{ hypre_ParCSRMatrixDiag( mat ) };
   CSRData< true > const offd{ hypre_ParCSRMatrixOffd( mat ) };
   HYPRE_Real * const values = hypre_VectorData( hypre_ParVectorLocalVector( vec ) );
-  internal::RowReducer< F, R > reducer{ std::move( transform ), std::move( reduce ) };
 
-  forAll< execPolicy >( diag.nrow, [diag, offd, reducer, values] GEOS_HYPRE_HOST_DEVICE ( HYPRE_Int const localRow )
+  forAll< execPolicy >( diag.nrow, [diag, offd, transform, reduce, values] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
+  {
+    HYPRE_Real sum = 0.0;
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      sum = reduce( sum, transform( diag.values[k] ) );
+    }
+    if( offd.ncol )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
       {
-        HYPRE_Real sum = 0.0;
-        for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
-        {
-          sum = reducer( sum, diag.values[k] );
-        }
-        if( offd.ncol )
-        {
-          for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
-          {
-            sum = reducer( sum, offd.values[k] );
-          }
-        }
-        values[localRow] = sum;
-      } );
+        sum = reduce( sum, transform( offd.values[k] ) );
+      }
+    }
+    values[localRow] = sum;
+  } );
 }
 
 namespace internal
 {
 
 template< typename MAP >
-void GEOS_HYPRE_HOST_DEVICE
+void GEOS_HOST_DEVICE
 makeSortedPermutation( HYPRE_Int const * const indices,
                        HYPRE_Int const size,
                        HYPRE_Int * const perm,
@@ -201,7 +161,7 @@ makeSortedPermutation( HYPRE_Int const * const indices,
   {
     perm[i] = i; // std::iota
   }
-  auto const comp = [indices, map] GEOS_HYPRE_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
+  auto const comp = [indices, map] GEOS_HOST_DEVICE ( HYPRE_Int i, HYPRE_Int j )
   {
     return map( indices[i] ) < map( indices[j] );
   };
@@ -218,18 +178,18 @@ void addMatrixEntries( hypre_ParCSRMatrix const * const src,
   GEOS_LAI_ASSERT( src != nullptr );
   GEOS_LAI_ASSERT( dst != nullptr );
   KERNEL::launch( hypre_ParCSRMatrixDiag( src ),
-                  hypre::ops::identity< HYPRE_Int >,
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
                   hypre_ParCSRMatrixDiag( dst ),
-                  hypre::ops::identity< HYPRE_Int >,
+                  [] GEOS_HOST_DEVICE ( HYPRE_Int const x ){ return x; },
                   scale );
   if( hypre_CSRMatrixNumCols( hypre_ParCSRMatrixOffd( dst ) ) > 0 )
   {
     HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src );
     HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( dst );
     KERNEL::launch( hypre_ParCSRMatrixOffd( src ),
-                    [src_colmap] GEOS_HYPRE_DEVICE ( auto i ){ return src_colmap[i]; },
+                    [src_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return src_colmap[i]; },
                     hypre_ParCSRMatrixOffd( dst ),
-                    [dst_colmap] GEOS_HYPRE_DEVICE ( auto i ){ return dst_colmap[i]; },
+                    [dst_colmap] GEOS_HOST_DEVICE ( HYPRE_Int const i ){ return dst_colmap[i]; },
                     scale );
   }
 }
@@ -270,7 +230,7 @@ struct AddEntriesRestrictedKernel
                                   dst_colmap,
                                   scale,
                                   src_permutation,
-                                  dst_permutation ] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
+                                  dst_permutation ] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
     {
       HYPRE_Int const src_offset = src.rowptr[localRow];
       HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;
@@ -329,7 +289,7 @@ struct AddEntriesSamePatternKernel
 
     // Each thread adds one row of src into dst
     forAll< hypre::execPolicy >( dst.nrow,
-                                 [src, src_colmap, dst, dst_colmap, scale] GEOS_HYPRE_DEVICE ( HYPRE_Int const localRow )
+                                 [src, src_colmap, dst, dst_colmap, scale] GEOS_HOST_DEVICE ( HYPRE_Int const localRow )
     {
       HYPRE_Int const src_offset = src.rowptr[localRow];
       HYPRE_Int const src_length = src.rowptr[localRow + 1] - src_offset;

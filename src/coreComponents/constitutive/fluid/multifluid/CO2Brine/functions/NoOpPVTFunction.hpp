@@ -79,8 +79,6 @@ public:
     GEOS_UNUSED_VAR( brineFluidParameters, pvtOutputOpts );
   }
 
-  virtual ~NoOpPVTFunction() override = default;
-
   static string catalogName() { return "NoOpPVTFunction"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }

@@ -71,7 +71,7 @@ integer DofManager::getFieldIndex( string const & name ) const
 {
   auto const it = std::find_if( m_fields.begin(), m_fields.end(),
                                 [&]( FieldDescription const & f ) { return f.name == name; } );
-  GEOS_ERROR_IF( it == m_fields.end(), "DofManager: field does not exist: " << name );
+  GEOS_ERROR_IF( it == m_fields.end(), GEOS_FMT( "DofManager: field does not exist: {}", name ) );
   return std::distance( m_fields.begin(), it );
 }
 
@@ -135,6 +135,13 @@ array1d< integer > DofManager::numComponentsPerField() const
 {
   array1d< integer > ret( m_fields.size() );
   std::transform( m_fields.begin(), m_fields.end(), ret.begin(), std::mem_fn( &FieldDescription::numComponents ) );
+  return ret;
+}
+
+stdVector< string > DofManager::fieldNames() const
+{
+  stdVector< string > ret( m_fields.size() );
+  std::transform( m_fields.begin(), m_fields.end(), ret.begin(), std::mem_fn( &FieldDescription::name ) );
   return ret;
 }
 
@@ -623,7 +630,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    CouplingDescription & coupling = m_coupling.get_inserted( { rowFieldIndex, colFieldIndex } );
     coupling.connector = connectivity;
     if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
     {
@@ -641,8 +648,8 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
   else
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
-    addNewSupports( processSupportList, m_coupling[ { rowFieldIndex, colFieldIndex } ].support );
+    CouplingDescription & coupling = m_coupling.get_inserted( { rowFieldIndex, colFieldIndex } );
+    addNewSupports( processSupportList, coupling.support );
 
     // Set connectivity with active symmetry flag
     if( symmetric && colFieldIndex != rowFieldIndex )
@@ -660,7 +667,7 @@ void DofManager::addCoupling( string const & fieldName,
 
   GEOS_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
-  CouplingDescription & coupling = m_coupling[ {fieldIndex, fieldIndex} ];
+  CouplingDescription & coupling = m_coupling.get_inserted( { fieldIndex, fieldIndex} );
   coupling.connector = Connector::Stencil;
   coupling.support = field.support;
   coupling.stencils = &stencils;
@@ -1574,13 +1581,13 @@ void DofManager::reorderByRank()
 {
   GEOS_LAI_ASSERT( !m_reordered );
 
-  std::map< string, array1d< localIndex > > permutations;
+  stdMap< string, array1d< localIndex > > permutations;
 
   // First loop: compute the local permutation
   for( FieldDescription & field : m_fields )
   {
     // compute local permutation of dofs, if needed
-    permutations[ field.name ] = computePermutation( field );
+    permutations.insert( {field.name, computePermutation( field ) } );
   }
 
   // Second loop: compute the dof number array
@@ -1604,7 +1611,7 @@ void DofManager::reorderByRank()
   // (MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
-  std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
+  stdMap< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )
@@ -1627,12 +1634,14 @@ void DofManager::reorderByRank()
 
         if( field.location == FieldLocation::Elem )
         {
-          fieldsToBeSync[{ body.getName(), mesh.getName() }].addElementFields( {field.key}, regions );
+          fieldsToBeSync.get_inserted( { body.getName(), mesh.getName() } ).
+            addElementFields( {field.key}, regions );
 
         }
         else
         {
-          fieldsToBeSync[{ body.getName(), mesh.getName() }].addFields( field.location, {field.key} );
+          fieldsToBeSync.get_inserted( { body.getName(), mesh.getName() } ).
+            addFields( field.location, {field.key} );
         }
 
       } );
@@ -1856,7 +1865,8 @@ void DofManager::printFieldInfo( std::ostream & os ) const
           }
           default:
           {
-            GEOS_ERROR( "Invalid connector type: " << static_cast< int >( m_coupling.at( {i, j} ).connector ) );
+            GEOS_ERROR( GEOS_FMT( "Invalid connector type: {}",
+                                  static_cast< int >( m_coupling.at( {i, j} ).connector ) ) );
           }
         }
         if( j < numFields - 1 )

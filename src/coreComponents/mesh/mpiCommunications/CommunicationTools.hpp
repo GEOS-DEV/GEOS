@@ -73,7 +73,7 @@ public:
                                       std::set< localIndex > const & indexList );
 
   static void assignNewGlobalIndices( ElementRegionManager & elementManager,
-                                      std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
+                                      stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems );
 
   void setupGhosts( MeshLevel & meshLevel,
                     stdVector< NeighborCommunicator > & neighbors,
@@ -90,10 +90,21 @@ public:
                                           std::set< std::set< globalIndex > > const & collocatedNodesBuckets,
                                           std::set< globalIndex > const & requestedNodes );
 
+  void synchronizeFields( string_array const & fieldNames,
+                          ObjectManagerBase & manager,
+                          stdVector< NeighborCommunicator > & neighbors,
+                          bool onDevice );
+
   void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
-                          stdVector< NeighborCommunicator > & allNeighbors,
+                          stdVector< NeighborCommunicator > & neighbors,
                           bool onDevice );
+
+  void synchronizePackSendRecvSizes( string_array const & fieldNames,
+                                     ObjectManagerBase & manager,
+                                     stdVector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool onDevice );
 
   void synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                      MeshLevel & mesh,
@@ -101,11 +112,24 @@ public:
                                      MPI_iCommData & icomm,
                                      bool onDevice );
 
-  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
-                                MeshLevel & mesh,
-                                stdVector< NeighborCommunicator > & allNeighbors,
+  void synchronizePackSendRecv( string_array const & fieldNames,
+                                ObjectManagerBase & manager,
+                                stdVector< NeighborCommunicator > & neighbors,
                                 MPI_iCommData & icomm,
                                 bool onDevice );
+
+  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
+                                MeshLevel & mesh,
+                                stdVector< NeighborCommunicator > & neighbors,
+                                MPI_iCommData & icomm,
+                                bool onDevice );
+
+  void asyncPack( string_array const & fieldNames,
+                  ObjectManagerBase & manager,
+                  stdVector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
 
   void asyncPack( FieldIdentifiers const & fieldsToBeSync,
                   MeshLevel & mesh,
@@ -119,10 +143,21 @@ public:
                       bool onDevice,
                       parallelDeviceEvents & events );
 
+  void synchronizeUnpack( ObjectManagerBase & manager,
+                          stdVector< NeighborCommunicator > & neighbors,
+                          MPI_iCommData & icomm,
+                          bool onDevice );
+
   void synchronizeUnpack( MeshLevel & mesh,
                           stdVector< NeighborCommunicator > & neighbors,
                           MPI_iCommData & icomm,
                           bool onDevice );
+
+  bool asyncUnpack( ObjectManagerBase & manager,
+                    stdVector< NeighborCommunicator > & neighbors,
+                    MPI_iCommData & icomm,
+                    bool onDevice,
+                    parallelDeviceEvents & events );
 
   bool asyncUnpack( MeshLevel & mesh,
                     stdVector< NeighborCommunicator > & neighbors,
@@ -130,6 +165,12 @@ public:
                     bool onDevice,
                     parallelDeviceEvents & events,
                     MPI_Op op=MPI_REPLACE );
+
+  void finalizeUnpack( ObjectManagerBase & manager,
+                       stdVector< NeighborCommunicator > & neighbors,
+                       MPI_iCommData & icomm,
+                       bool onDevice,
+                       parallelDeviceEvents & events );
 
   void finalizeUnpack( MeshLevel & mesh,
                        stdVector< NeighborCommunicator > & neighbors,

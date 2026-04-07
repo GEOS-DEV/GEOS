@@ -78,8 +78,6 @@ public:
                         array1d< real64 > const & componentMolarWeight,
                         TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~FenghourCO2Viscosity() override = default;
-
   static string catalogName() { return "FenghourCO2Viscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }

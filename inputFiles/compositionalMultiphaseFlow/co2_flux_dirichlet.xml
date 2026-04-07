@@ -127,7 +127,6 @@
       objectPath="ElementRegions/region"
       fieldName="pressure"
       initialCondition="1"
-      logLevel="2"
       scale="1.1e6" />
     <FieldSpecification
       name="initial_temperature"
@@ -191,6 +190,7 @@
 
   </FieldSpecifications>
 
+  <!-- SPHINX_FIELD_CASE_CSV_OUTPUT -->
   <Tasks>
 
     <CompositionalMultiphaseStatistics
@@ -202,6 +202,7 @@
       computeRegionStatistics="1"/>
     
   </Tasks>
+  <!-- SPHINX_FIELD_CASE_CSV_OUTPUT_END -->
   
   <Functions>
     <TableFunction

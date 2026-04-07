@@ -23,7 +23,6 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
@@ -95,7 +94,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::transMultExpString(), &m_transMultExp ).
     setApplyDefaultValue( 1.0 ).
@@ -122,8 +121,6 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setDescription( "List of fluid phases" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::reactiveCompositionalMultiphaseOBL;
-
-  addLogLevel< logInfo::Convergence >();
 }
 
 void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
@@ -191,13 +188,13 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
   PhysicsSolverBase::postInputInitialization();
 
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
-                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
-                        InputError );
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
+                                  m_maxCompFracChange ),
+                        InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0",
-                                  getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
-                        InputError );
+                        GEOS_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0",
+                                  m_maxCompFracChange ),
+                        InputError, getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
@@ -208,20 +205,18 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
   GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver (at {}) has a value of {}, "
+                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver has a value of {}, "
                                   "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
                                   m_numDofPerCell, m_OBLOperatorsTable->numDims(),
                                   m_OBLOperatorsTableFile ),
-                        InputError );
+                        InputError, getWrapperDataContext( viewKeyStruct::elemDofFieldString() ) );
 
   GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                        GEOS_FMT( "The number of operators per cell used in the solver (at {}) has a value of {}, "
+                        GEOS_FMT( "The number of operators per cell used in the solver has a value of {}, "
                                   "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
                                   m_numDofPerCell, m_OBLOperatorsTable->numDims(),
                                   m_OBLOperatorsTableFile ),
-                        InputError );
+                        InputError, getWrapperDataContext( viewKeyStruct::elemDofFieldString() ) );
 
 }
 
@@ -348,7 +343,9 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+
+  getConvergenceStats().setResidualValue( "Rflow", residual );
 
   return residual;
 }
@@ -777,13 +774,13 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 
@@ -821,7 +818,7 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -966,13 +963,13 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  flow::pressure::key() ) );
+                                                  flow::pressure::key() ), getDataContext() );
       }
       if( comp < 0 || comp >= numComp )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        flow::globalCompFraction::key() ) );
+                                                        flow::globalCompFraction::key() ), getDataContext() );
         return; // can't check next part with invalid component id
       }
 
@@ -983,9 +980,10 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
+          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           flow::globalCompFraction::key() ) );
+                                                           flow::globalCompFraction::key() ), getDataContext() );
         } );
       }
       compMask.set( comp );
@@ -1069,7 +1067,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent, "inconsistent boundary conditions",
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1092,7 +1091,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -1134,7 +1133,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),

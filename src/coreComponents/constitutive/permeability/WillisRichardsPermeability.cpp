@@ -44,25 +44,18 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Effective normal stress causes 90% reduction in aperture." );
 
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dTraction >( &m_dPerm_dTraction );
 }
 
-std::unique_ptr< ConstitutiveBase >
-WillisRichardsPermeability::deliverClone( string const & name,
-                                          Group * const parent ) const
+void WillisRichardsPermeability::allocateConstitutiveData( Group & parent,
+                                                           localIndex const numPts )
 {
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
-{
-// NOTE: enforcing 1 quadrature point
+  // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
   m_dPerm_dTraction.resize( 0, 1, 3, 3 );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )

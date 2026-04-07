@@ -9,6 +9,8 @@ Contributing
 
    CodeStyle.rst
 
+   CodeRules.rst
+
    GitWorkflow.rst
 
    Sphinx.rst

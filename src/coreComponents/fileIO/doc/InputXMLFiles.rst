@@ -192,6 +192,74 @@ To do this, GEOS does the following:
   4) Define any expected deviations from the schema via ``ManagedGroup::SetSchemaDeviations()``.
 
 
+Units
+=================================
+
+GEOS Unit System Generalities
+------------------------------
+
+Typically, all operations within GEOS are conducted using SI units (International System of Units).
+If he wants to, the user can use any self-consistent unit system (in that case, every input value must be in that system).
+
+Physical Scales Default Units
+------------------------------
+
+.. list-table:: Physical Scale Default Unit
+  :widths: auto
+  :header-rows: 1
+
+  * - Physical scale
+    - Default Unit Formula
+    - Default Unit Description
+  * - pressure
+    - :math:`Pa`
+    - `pascal`
+  * - temperature
+    - :math:`K`
+    - `kelvin`
+  * - distance
+    - :math:`m`
+    - `meter`
+  * - time
+    - :math:`s`
+    - `second`
+  * - viscosity
+    - :math:`Pa \cdot s`
+    - `pascal-second`
+  * - enthalpy
+    - :math:`J/kg`
+    - `joule` per `kilogram`
+  * - density
+    - :math:`kg/m^3`
+    - `kilogram` per `cubic meter`
+  * - solubility
+    - :math:`g/L`
+    - `gram` per `liter`
+  * - mass
+    - :math:`kg`
+    - `kilogram`
+  * - mole
+    - :math:`mol`
+    - `mole`
+  * - mass rate
+    - :math:`kg/s`
+    - `kilogram` per `second`
+  * - mole rate
+    - :math:`mol/s`
+    - `mole` per `second`
+  * - transmissibility
+    - :math:`(Pa \cdot s \cdot rm^3)/Pa`
+    - `viscosity` times `reservoir cubic meter` per `pascal`
+  * - molar volume
+    - :math:`m^3/mol`
+    - `cubic meter` per `mole`
+  * - molar density
+    - :math:`mol/m^3`
+    - `mole` per `cubic meter`
+  * - permeability
+    - :math:`m^2`
+    - `square meter`
+
 .. _AdvancedXMLFeatures:
 
 Advanced XML Features
@@ -344,32 +412,30 @@ The following example uses parameters to set the root path for a table function,
 Any number of parameter overrides can be issued from the command line using the `-p name value` argument in the preprocessor script.
 Note that if the override value contains any spaces, it may need to be surrounded by quotation marks (`-p name "paramter with spaces"`).
 
-
-Units
+XML Preprocessor Unit Manager
 ------------------------------
 
-The units for any input values to GEOS can be in any self-consistent system.
-In many cases, it is useful to override this behavior by explicitly specifying the units of the input.
-These are specified by appending a valid number with a unit definition in square braces.
-During pre-processing, these units are converted into base-SI units (we plan to support other unit systems in the future).
+Users wishing to work with non-SI units for specific values can define these explicitly via XML parameters postfixes.
+The XML preprocessor ensures that any user-specified units within input files are converted into GEOS supported values prior to simulation.
+
+The user can specify units by appending a valid value with a unit definition in square braces.
 
 The unit manager supports most common units and SI prefixes, using both long- and abbreviated names (e.g.: c, centi, k, kilo, etc.).
 Units may include predefined composite units (dyne, N, etc.) or may be built up from sub-units using a python syntax (e.g.: [N], [kg*m/s**2]).
 Any (or no) amount of whitespace is allowed between the number and the unit bracket.
-The following shows a set of parameters with units specified:
+Here is a set of parameters with units specified:
 
 .. code-block:: xml
 
   <Parameters>
-    <Parameter name="paramter_a" value="2[m]"/>
-    <Parameter name="paramter_b" value="1.2 [cm]"/>
-    <Parameter name="paramter_c" value="1.23e4 [bbl/day]"/>
-    <Parameter name="paramter_d" value="1.23E-4 [km**2]"/>
+    <Parameter name="parameter_a" value="2[m]"/>
+    <Parameter name="parameter_b" value="1.2 [cm]"/>
+    <Parameter name="parameter_c" value="1.23e4 [bbl/day]"/>
+    <Parameter name="parameter_d" value="1.23E-4 [km**2]"/>
   </Parameters>
 
 
 Please note that the preprocessor currently does not check whether any user-specified units are appropriate for a given input or symbolic expression.
-
 
 Symbolic Expressions
 ------------------------------

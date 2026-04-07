@@ -59,36 +59,37 @@ void PressureTemperatureCoordinates::registerParametersImpl( MultiFluidBase * fl
 void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                                   ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( fluid );
   GEOS_UNUSED_VAR( componentProperties );
 
   if( !m_pressureCoordinates.empty())
   {
     // If coordinates are provided then there must be at least 2
     GEOS_THROW_IF_LT_MSG( m_pressureCoordinates.size(), 2,
-                          GEOS_FMT( "{}: invalid number of pressure coordinates provided in {}. "
-                                    "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
-                          InputError );
+                          GEOS_FMT( "invalid number of pressure coordinates provided in {}. "
+                                    "At least 2 values must be provided", viewKeyStruct::pressureCoordinatesString() ),
+                          InputError, fluid->getDataContext() );
 
     // Values must be strictly increasing
     GEOS_THROW_IF( !isStrictlyIncreasing( m_pressureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
-                             "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
-                   InputError );
+                   GEOS_FMT( "invalid values of pressure coordinates provided in {}. "
+                             "Values must be strictly increasing.", viewKeyStruct::pressureCoordinatesString() ),
+                   InputError, fluid->getDataContext() );
   }
 
   if( !m_temperatureCoordinates.empty())
   {
     // If coordinates are provided then there must be at least 2
     GEOS_THROW_IF_LT_MSG( m_temperatureCoordinates.size(), 2,
-                          GEOS_FMT( "{}: invalid number of temperature coordinates provided in {}. "
-                                    "At least 2 values must be provided", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
-                          InputError );
+                          GEOS_FMT( "invalid number of temperature coordinates provided in {}. "
+                                    "At least 2 values must be provided", viewKeyStruct::temperatureCoordinatesString() ),
+                          InputError, fluid->getDataContext() );
 
     // Values must be strictly increasing
     GEOS_THROW_IF( !isStrictlyIncreasing( m_temperatureCoordinates.toSliceConst()),
-                   GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
-                             "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
-                   InputError );
+                   GEOS_FMT( "invalid values of temperature coordinates provided in {}. "
+                             "Values must be strictly increasing.", viewKeyStruct::temperatureCoordinatesString() ),
+                   InputError, fluid->getDataContext() );
   }
 }
 

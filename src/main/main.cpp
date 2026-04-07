@@ -14,8 +14,8 @@
  */
 
 // Source includes
-#include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"
@@ -49,7 +49,7 @@ int main( int argc, char *argv[] )
       {
         state.applyInitialConditions();
         state.run();
-        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+        GEOS_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
       }
 
       initTime = state.getInitTime();
@@ -74,12 +74,23 @@ int main( int argc, char *argv[] )
     basicCleanup();
     return 0;
   }
-  catch( std::exception const & e )
-  {
-    GEOS_LOG( e.what() );
-    LvArray::system::callErrorHandler();
+  catch( geos::Exception & e )
+  { // GEOS generated exceptions management
+    ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup();
-    std::abort();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
+  }
+  catch( std::exception const & e )
+  { // native exceptions management
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
+                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                           .getDiagnosticMsg());
+    basicCleanup();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
   }
   return 0;
 }

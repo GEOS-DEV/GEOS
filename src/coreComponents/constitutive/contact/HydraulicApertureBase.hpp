@@ -48,11 +48,6 @@ public:
   HydraulicApertureBase( string const & name,
                          Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~HydraulicApertureBase() override;
-
 protected:
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct

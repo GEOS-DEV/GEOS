@@ -194,7 +194,8 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::timestepStabilityLimitString(), &m_timestepStabilityLimit ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Set to 1 to apply a stability limit to the simulation timestep. The timestep used is that given by the CFL condition times the cflFactor parameter." );
+    setDescription(
+    "Flag that indicates how to deal with timeStep: if it is set to 0 (default value) we do not compute the timeStep and use the one defined inside the xml, 1 means that we use a routine to compute the timeStep but only one time (even with Pygeos), 2 means that we compute the timeStep each time" );
 
   registerWrapper( viewKeyStruct::timeStepString(), &m_timeStep ).
     setInputFlag( InputFlags::FALSE ).
@@ -212,6 +213,21 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setSizedFromParent( 0 ).
     setDescription( "Element containing the receivers" );
+
+  registerWrapper( viewKeyStruct::useTaperString(), &m_useTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Flag to apply taper" );
+
+  registerWrapper( viewKeyStruct::reflectivityCoeffString(), &m_reflectivityCoeff ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.001 ).
+    setDescription( "Reflectivity coeff for taper" );
+
+  registerWrapper( viewKeyStruct::thicknessTaperString(), &m_thicknessTaper ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.0 ).
+    setDescription( "Size for the taper layer " );
 
   registerWrapper( viewKeyStruct::slsReferenceAngularFrequenciesString(), &m_slsReferenceAngularFrequencies ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -272,6 +288,10 @@ void WaveSolverBase::registerDataOnMesh( Group & meshBodies )
         nodeCoords32[i][j] = X[i][j];
       }
     }
+
+
+    nodeManager.registerField< fields::taperCoeff >( this->getName());
+
   } );
 }
 
@@ -316,9 +336,8 @@ void WaveSolverBase::postInputInitialization()
   {
     counter++;
   } );
-  GEOS_THROW_IF( counter > 1,
-                 getDataContext() << ": One single PML field specification is allowed",
-                 InputError );
+  GEOS_THROW_IF( counter > 1, "One single PML field specification is allowed",
+                 InputError, getDataContext() );
 
   m_usePML = counter;
 
@@ -367,7 +386,7 @@ void WaveSolverBase::postInputInitialization()
   {
     GEOS_THROW_IF( m_slsReferenceAngularFrequencies.size( 0 ) != m_slsAnelasticityCoefficients.size( 0 ),
                    "The number of attenuation anelasticity coefficients for the SLS model must be equal to the number of reference angular frequencies",
-                   InputError );
+                   InputError, getDataContext() );
     if( m_slsReferenceAngularFrequencies.size( 0 ) == 0 || m_slsAnelasticityCoefficients.size( 0 ) == 0 )
     {
       m_slsReferenceAngularFrequencies.resize( 1 );
@@ -381,11 +400,11 @@ void WaveSolverBase::postInputInitialization()
 
   GEOS_THROW_IF( m_sourceCoordinates.size( 0 ) > 0 && m_sourceCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the sources",
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_receiverCoordinates.size( 0 ) > 0 && m_receiverCoordinates.size( 1 ) != 3,
                  "Invalid number of physical coordinates for the receivers",
-                 InputError );
+                 InputError, getDataContext() );
 
   EventManager const & event = getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
@@ -401,7 +420,7 @@ void WaveSolverBase::postInputInitialization()
 
   GEOS_THROW_IF( m_sourceWaveletTableNames.size() > 0 && static_cast< localIndex >(m_sourceWaveletTableNames.size()) != m_sourceCoordinates.size( 0 ),
                  "Invalid number of source wavelet table names. The number of table functions must be equal to the number of sources",
-                 InputError );
+                 InputError, getDataContext() );
   m_useSourceWaveletTables = m_sourceWaveletTableNames.size() > 0;
 
 }
@@ -441,8 +460,8 @@ localIndex WaveSolverBase::getNumNodesPerElem()
   FiniteElementDiscretization const * const
   feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( m_discretizationName );
   GEOS_THROW_IF( feDiscretization == nullptr,
-                 getDataContext() << ": FE discretization not found: " << m_discretizationName,
-                 InputError );
+                 GEOS_FMT( "FE discretization not found: {}", m_discretizationName ),
+                 InputError, getDataContext() );
 
   localIndex numNodesPerElem = 0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(),

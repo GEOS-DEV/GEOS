@@ -23,10 +23,8 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -146,8 +144,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< physicsSolverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
-
-  addLogLevel< logInfo::Convergence >();
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -373,15 +369,17 @@ void FlowSolverBase::checkDiscretizationName() const
 
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
-                            getDataContext(), m_discretizationName, discretizationMethods,
-                            stringutilities::join( discretizationMethods, ", " )));
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
+                            m_discretizationName, discretizationMethods,
+                            stringutilities::join( discretizationMethods, ", " )),
+                  getDataContext());
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
-                            getDataContext(), m_discretizationName ));
+                            m_discretizationName ),
+                  getDataContext());
     }
   }
 }
@@ -583,6 +581,17 @@ void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, string_array
   } );
 }
 
+void FlowSolverBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
+{
+  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
+  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    vol[ei] += dVol[ei];
+    dVol[ei] = 0.0;
+  } );
+}
+
 void FlowSolverBase::saveInitialPressureAndTemperature( MeshLevel & mesh, string_array const & regionNames )
 {
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
@@ -640,7 +649,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-
     updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
@@ -648,7 +656,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 
 
 void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                                             std::map< string, localIndex > const & equilNameToEquilId,
+                                                             stdMap< string, localIndex > const & equilNameToEquilId,
                                                              arrayView1d< real64 > const & maxElevation,
                                                              arrayView1d< real64 > const & minElevation ) const
 {
@@ -701,7 +709,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                          real64 const & dt,
                                                          DomainPartition & domain, // cannot be const...
-                                                         std::map< string, localIndex > const & bcNameToBcId,
+                                                         stdMap< string, localIndex > const & bcNameToBcId,
                                                          arrayView1d< globalIndex > const & bcAllSetsSize ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -734,7 +742,6 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
           localSetSize += 1;
         }
       } );
-
       // increment the set size for this source flux boundary conditions
       bcAllSetsSize[bcNameToBcId.at( fs.getName())] += localSetSize.get();
     } );
@@ -768,12 +775,12 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
   // Step 1: count individual aquifers
 
-  std::map< string, localIndex > aquiferNameToAquiferId;
+  stdMap< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 
@@ -834,7 +841,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   {
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
 
-    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                     GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
                                               bc.getCatalogName(), bc.getName(),
                                               time + dt, dt * globalSumFluxes[aquiferIndex] ),

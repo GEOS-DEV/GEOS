@@ -40,9 +40,9 @@ DiffusionBase::DiffusionBase( string const & name, Group * const parent )
     setApplyDefaultValue( 1.0 ).
     setDescription( "List of phase diffusivity multipliers" );
 
-  registerField( fields::diffusion::diffusivity{}, &m_diffusivity );
-  registerField( fields::diffusion::dDiffusivity_dTemperature{}, &m_dDiffusivity_dTemperature );
-  registerField( fields::diffusion::phaseDiffusivityMultiplier{}, &m_phaseDiffusivityMultiplier );
+  registerField< fields::diffusion::diffusivity >( &m_diffusivity );
+  registerField< fields::diffusion::dDiffusivity_dTemperature >( &m_dDiffusivity_dTemperature );
+  registerField< fields::diffusion::phaseDiffusivityMultiplier >( &m_phaseDiffusivityMultiplier );
 }
 
 void DiffusionBase::postInputInitialization()
@@ -51,33 +51,31 @@ void DiffusionBase::postInputInitialization()
 
   integer const numPhases = numFluidPhases();
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
 
   GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
-                 GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
-                           getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
-                 InputError );
-
-  m_diffusivity.resize( 0, 0, 3 );
-  m_dDiffusivity_dTemperature.resize( 0, 0, 3 );
-  m_phaseDiffusivityMultiplier.resize( 0, 0, 3 );
+                 GEOS_FMT( "the arrays in `{}` and `{}` must have the same size",
+                           viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
+                 InputError,
+                 getWrapperDataContext( viewKeyStruct::phaseNamesString()),
+                 getWrapperDataContext( viewKeyStruct::defaultPhaseDiffusivityMultiplierString()),
+                 getDataContext() );
 }
 
-void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_diffusivity.resize( 0, 1, 3 );
   m_dDiffusivity_dTemperature.resize( 0, 1, 3 );
   m_phaseDiffusivityMultiplier.resize( 0, 1, 3 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -88,7 +86,6 @@ void DiffusionBase::allocateConstitutiveData( dataRepository::Group & parent,
       }
     }
   }
-
 }
 
 } // namespace constitutive

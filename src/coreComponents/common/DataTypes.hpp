@@ -78,7 +78,7 @@ namespace geos
 using size_t      = std::size_t;
 
 /// Signed integer type.
-using integer     = std::int32_t;
+using integer     = int;
 
 /// Local index type (for indexing objects within an MPI partition).
 using localIndex  = GEOS_LOCALINDEX_TYPE;

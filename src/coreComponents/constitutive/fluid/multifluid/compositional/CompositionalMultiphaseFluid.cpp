@@ -65,7 +65,7 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
-  registerField( fields::multifluid::kValues{}, &m_kValues );
+  registerField< fields::multifluid::kValues >( &m_kValues );
 
   // Link parameters specific to each model
   m_parameters->registerParameters( this );
@@ -100,12 +100,22 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializeState() const
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  // Zero k-Values to force re-initialisation
+  m_kValues.zero();
 
-  // Zero k-Values to force initialisation with Wilson k-Values
+  MultiFluidBase::initializeState();
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( Group & parent, localIndex const numPts )
+{
+  m_kValues.resize( 0, numPts, numFluidPhases()-1, numFluidComponents() );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
+
+  // Zero k-Values to force re-initialisation
   m_kValues.zero();
 }
 
@@ -118,9 +128,9 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
   integer const NP = numFluidPhases();
 
   GEOS_THROW_IF_NE_MSG( NP, NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases in '{}'. There should be {} phases",
-                                  getFullName(), viewKeyStruct::phaseNamesString(), NUM_PHASES ),
-                        InputError );
+                        GEOS_FMT( "invalid number of phases in '{}'. There should be {} phases",
+                                  viewKeyStruct::phaseNamesString(), NUM_PHASES ),
+                        InputError, getDataContext() );
 
   // Phase types should not be repeated
   auto const phaseTypes = getPhaseTypes();
@@ -129,17 +139,17 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
   {
     string const type_name = EnumStrings< compositional::PhaseType >::toString( static_cast< compositional::PhaseType >(phaseTypes[ip]));
     GEOS_THROW_IF ( uniquePhases.find( phaseTypes[ip] ) != uniquePhases.end(),
-                    GEOS_FMT( "{}: phase with name {} is of type {} which is repeated. "
-                              "Phase types should be unique.", getFullName(), m_phaseNames[ip],
-                              type_name ), InputError );
+                    GEOS_FMT( "phase with name {} is of type {} which is repeated. "
+                              "Phase types should be unique.", m_phaseNames[ip], type_name ),
+                    InputError, getDataContext() );
     uniquePhases.insert( phaseTypes[ip] );
   }
 
   auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext()  );
 
   };
   checkInputSize( m_componentProperties->m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
@@ -165,25 +175,25 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
 
   // Binary interaction coefficients should be symmetric and have zero diagonal
   GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 0 ), NC,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
-                        InputError );
+                        GEOS_FMT( "invalid number of values in attribute '{}'", viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 1 ), NC,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
-                        InputError );
+                        GEOS_FMT( "invalid number of values in attribute '{}'", viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError, getDataContext() );
   for( integer ic = 0; ic < NC; ++ic )
   {
     GEOS_THROW_IF_GT_MSG( LvArray::math::abs( componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
-                          GEOS_FMT( "{}: {} entry at ({},{}) is {}: should be zero", getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                          GEOS_FMT( "{} entry at ({},{}) is {}: should be zero", viewKeyStruct::componentBinaryCoeffString(),
                                     ic, ic, componentBinaryCoeff( ic, ic ) ),
-                          InputError );
+                          InputError, getDataContext() );
     for( integer jc = ic + 1; jc < NC; ++jc )
     {
       real64 const difference = LvArray::math::abs( componentBinaryCoeff( ic, jc )-componentBinaryCoeff( jc, ic ));
       GEOS_THROW_IF_GT_MSG( difference, MultiFluidConstants::epsilon,
-                            GEOS_FMT( "{}: {} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
-                                      getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                            GEOS_FMT( "{} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
+                                      viewKeyStruct::componentBinaryCoeffString(),
                                       ic, jc, componentBinaryCoeff( ic, jc ), jc, ic, componentBinaryCoeff( jc, ic ) ),
-                            InputError );
+                            InputError, getDataContext() );
     }
   }
 
@@ -197,14 +207,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 
   // Create the fluid models
   createModels();
-}
-
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
-{
-  MultiFluidBase::resizeFields( size, numPts );
-
-  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -315,6 +317,14 @@ template class CompositionalMultiphaseFluid<
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseConstantViscosity,
@@ -333,6 +343,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalThreePhaseLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalKValueLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalKValuePhillipsBrine,
                         string const &,
                         dataRepository::Group * const )
 

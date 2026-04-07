@@ -18,6 +18,7 @@
  */
 
 #include "ElasticIsotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,11 +27,7 @@ namespace constitutive
 {
 
 ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultBulkModulus(),
-  m_defaultShearModulus(),
-  m_bulkModulus(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).
@@ -52,17 +49,12 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Bulk Modulus Field" );
+  // register fields
 
-  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Shear Modulus Field" );
+  registerField< fields::solid::bulkModulus >( &m_bulkModulus );
+
+  registerField< fields::solid::shearModulus >( &m_shearModulus );
 }
-
-ElasticIsotropic::~ElasticIsotropic()
-{}
 
 void ElasticIsotropic::postInputInitialization()
 {
@@ -103,9 +95,11 @@ void ElasticIsotropic::postInputInitialization()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 getFullName() << ": A specific pair of elastic constants is required. " <<
-                 "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
-                 "You have specified " << errorCheck );
+                 GEOS_FMT( "A specific pair of elastic constants is required. "
+                           "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "
+                           "You have specified {}",
+                           errorCheck ),
+                 getDataContext() );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
@@ -139,15 +133,17 @@ void ElasticIsotropic::postInputInitialization()
   }
   else
   {
-    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants. " <<
-                errorCheck << " has been specified." );
+    GEOS_ERROR( GEOS_FMT( "Invalid specification for default elastic constants. {} has been specified.",
+                          errorCheck ),
+                getDataContext() );
   }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
+
+  getField< fields::solid::bulkModulus >().
     setApplyDefaultValue( m_defaultBulkModulus );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 }
 

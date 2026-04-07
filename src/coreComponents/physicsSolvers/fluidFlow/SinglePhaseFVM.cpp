@@ -28,8 +28,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
@@ -63,7 +62,9 @@ SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
   BASE( name, parent )
 {
-  BASE::template addLogLevel< logInfo::Convergence >();
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.multiscale.fieldName = BASE::viewKeyStruct::elemDofFieldString();
+  linParams.multiscale.label = "flow";
 }
 
 template< typename BASE >
@@ -124,9 +125,12 @@ std::unique_ptr< PreconditionerBase< LAInterface > >
 SinglePhaseFVM< BASE >::createPreconditioner( DomainPartition & domain ) const
 {
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
-  GEOS_UNUSED_VAR( domain );
   switch( linParams.preconditionerType )
   {
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
     default:
     {
       return PhysicsSolverBase::createPreconditioner( domain );
@@ -232,8 +236,10 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
-                                                               FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                                FlowSolverBase::coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+    BASE::getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", FlowSolverBase::coupledSolverAttributePrefix()), globalResidualNorm[0] );
+    BASE::getConvergenceStats().setResidualValue( "Renergy", globalResidualNorm[1] );
   }
   else
   {
@@ -247,8 +253,9 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
       physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
     }
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", FlowSolverBase::coupledSolverAttributePrefix(), residualNorm ));
+    BASE::getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", FlowSolverBase::coupledSolverAttributePrefix()), residualNorm );
   }
   return residualNorm;
 }
@@ -719,7 +726,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( faceBcLogMessage,
                                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                     setName, targetGroup.getName(), numTargetFaces ),
@@ -755,9 +762,9 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition, GEOS_FMT( faceBcLogMessage,
-                                                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                                                    setName, targetGroup.getName(), numTargetFaces ),
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
+                                                                                 this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                 setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -825,7 +832,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+          GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                           GEOS_FMT( faceBcLogMessage,
                                                     this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                     setName, targetGroup.getName(), numTargetFaces ),

@@ -26,6 +26,7 @@
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_IJ_mv.h>
+#include <algorithm>
 
 namespace geos
 {
@@ -196,36 +197,61 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                                 HypreVector & vec ) const
 {
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( vec.unwrapped() );
-  if( m_subComm != MPI_COMM_NULL )
-  {
-    hypre_Vector * wrapperVector{};
-    if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
-    {
-      GEOS_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
-      values.move( hostMemorySpace, false );
 
-      // HACK: create a hypre vector that points to local data; we have to use const_cast,
-      //       but this is ok because we don't modify the values, only scatter the vector.
-      wrapperVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( values.size() ) );
-      hypre_VectorOwnsData( wrapperVector ) = false;
-      hypre_VectorData( wrapperVector ) = const_cast< real64 * >( values.data() );
-      hypre_SeqVectorInitialize_v2( wrapperVector, HYPRE_MEMORY_HOST );
+  // Single-rank import: scatter the global vector from target rank to all ranks with rows
+  if( m_targetRank >= 0 && m_subComm != MPI_COMM_NULL )
+  {
+    int const subRank = MpiWrapper::commRank( m_subComm );
+    int const subSize = MpiWrapper::commSize( m_subComm );
+    int const parentRank = MpiWrapper::commRank( vec.comm() );
+
+    // Root of the sub-communicator must be the target rank (the constructor maps it to 0)
+    if( subRank == 0 )
+    {
+      GEOS_ERROR_IF( parentRank != m_targetRank,
+                     "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
     }
 
-    // scatter the data
-    hypre_ParVector * const parVector = hypre_VectorToParVector( m_subComm,
-                                                                 wrapperVector,
-                                                                 hypre_ParVectorPartitioning( vec.unwrapped() ) );
-    // copy local part of the data over to the output vector
+    // Build counts and displacements from actual local sizes
+    int const myLocal = LvArray::integerConversion< int >( vec.localSize() );
+    array1d< int > counts( subSize );
+    MPI_CHECK_ERROR( MpiWrapper::allgather( &myLocal, 1, counts.data(), 1, m_subComm ) );
+
+    array1d< int > displs( subSize );
+    displs[0] = 0;
+    for( int i = 1; i < subSize; ++i )
+    {
+      displs[i] = displs[i-1] + counts[i-1];
+    }
+
+    // Root validates buffer size and prepares send pointer
+    real64 const * sendBuf = nullptr;
+    if( subRank == 0 )
+    {
+      int const total = displs[subSize-1] + counts[subSize-1];
+      GEOS_ERROR_IF_NE( vec.globalSize(), total );
+      GEOS_ERROR_IF_NE( values.size(), vec.globalSize() );
+      values.move( hostMemorySpace, false );
+      sendBuf = values.data();
+    }
+
+    // Receive local chunk into host buffer and then copy to hypre local vector (host/device)
+    array1d< real64 > recvBuf( myLocal );
+
+    MPI_CHECK_ERROR( MpiWrapper::scatterv( sendBuf,
+                                           counts.data(),
+                                           displs.data(),
+                                           recvBuf.data(),
+                                           myLocal,
+                                           /*root*/ 0,
+                                           m_subComm ) );
+
     hypre_TMemcpy( hypre_VectorData( localVector ),
-                   hypre_VectorData( hypre_ParVectorLocalVector( parVector ) ),
+                   recvBuf.data(),
                    HYPRE_Real,
                    vec.localSize(),
                    hypre_VectorMemoryLocation( localVector ),
-                   hypre_ParVectorMemoryLocation( parVector ) );
-
-    GEOS_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
-    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
+                   HYPRE_MEMORY_HOST );
   }
   else
   {
@@ -233,6 +259,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                  values,
                  hypre_VectorData( localVector ) );
   }
+
   vec.touch();
 }
 

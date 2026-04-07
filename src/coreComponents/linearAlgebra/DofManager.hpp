@@ -360,6 +360,12 @@ public:
   array1d< integer > numComponentsPerField() const;
 
   /**
+   * @brief Return field names sorted by field registration order.
+   * @return field names
+   */
+  stdVector< string > fieldNames() const;
+
+  /**
    * @brief Fill a container with unique dof labels for each local dof.
    * @tparam CONTAINER type of container to fill
    * @param labels the container to fill
@@ -645,7 +651,7 @@ private:
   stdVector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::map< std::pair< integer, integer >, CouplingDescription > m_coupling;
+  stdMap< std::pair< integer, integer >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

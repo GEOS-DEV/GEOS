@@ -168,6 +168,15 @@ The user defines the pressure (in Pascal) and temperature (in Kelvin) axis of th
 | DensityFun | SpanWagnerCO2Density | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 
+**Parameter Descriptions**:
+
+- **p_min**: The minimum pressure value [Pa] for which the density table is defined. It sets the lower boundary of the pressure range.
+- **p_max**: The maximum pressure value [Pa] for the density table. It sets the upper boundary of the pressure range.
+- **Δp (Delta p)**: The increment in pressure [Pa] between successive values in the pressure axis of the table. It defines the resolution of the pressure dimension.
+- **T_min**: The minimum temperature value [K] for the density table. This sets the lower boundary of the temperature range.
+- **T_max**: The maximum temperature value [K] for the density table. It sets the upper boundary of the temperature range.
+- **ΔT (Delta T)**: The increment in temperature [K] between successive values in the temperature axis of the table. It defines the resolution of the temperature dimension.
+
 This correlation is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 1073.15 Kelvin.  
 Using these parameters, GEOS internally constructs a two-dimensional table storing the values of density as a function of pressure and temperature.
 This table is populated as explained in the work of Span and Wagner (1996) by solving the following nonlinear Helmholtz energy equation for each pair :math:`(p,T)` to obtain the value of density, :math:`\rho_{g}`:
@@ -185,6 +194,15 @@ The pressure and temperature axis of the viscosity table can be parameterized in
 +--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
 | ViscosityFun | FenghourCO2Viscosity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` |
 +--------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+
+
+**Parameter Descriptions**:
+
+- **p_min**: The minimum pressure value [Pa] for which the density table is defined. It sets the lower boundary of the pressure range.
+- **p_max**: The maximum pressure value [Pa] for the density table. It sets the upper boundary of the pressure range.
+- **Δp (Delta p)**: The increment in pressure [Pa] between successive values in the pressure axis of the table. It defines the resolution of the pressure dimension.
+- **T_min**: The minimum temperature value [K] for the density table. This sets the lower boundary of the temperature range.
+- **T_max**: The maximum temperature value [K] for the density table. It sets the upper boundary of the temperature range.
+- **ΔT (Delta T)**: The increment in temperature [K] between successive values in the temperature axis of the table. It defines the resolution of the temperature dimension.
 
 This correlation is valid for pressures less than :math:`3 \times 10^8` Pascal and temperatures less than 1493.15 Kelvin.  
 This table is populated as explained in the work of Fenghour and Wakeham (1998) by computing the CO2 phase viscosity, :math:`\mu_g`, as follows:
@@ -209,9 +227,18 @@ The user specifies the (constant) salinity and defines the pressure and temperat
 | DensityFun | PhillipsBrineDensity | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
 +------------+----------------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
 
+**Parameter Descriptions**:
+
+- **p_min**: The minimum pressure value [Pa] for which the density table is defined. It sets the lower boundary of the pressure range.
+- **p_max**: The maximum pressure value [Pa] for the density table. It sets the upper boundary of the pressure range.
+- **Δp (Delta p)**: The increment in pressure [Pa] between successive values in the pressure axis of the table. It defines the resolution of the pressure dimension.
+- **T_min**: The minimum temperature value [K] for the density table. This sets the lower boundary of the temperature range.
+- **T_max**: The maximum temperature value [K] for the density table. It sets the upper boundary of the temperature range.
+- **ΔT (Delta T)**: The increment in temperature [K] between successive values in the temperature axis of the table. It defines the resolution of the temperature dimension.
+- **Salinity**: Salinity is expressed in molality (moles of NaCl per kg of brine).
+
 The pressure must be in Pascal and must be less than :math:`5 \times 10^7` Pascal.
 The temperature must be in Kelvin and must be between 283.15 and 623.15 Kelvin.
-The salinity is a molality (moles of NaCl per kg of brine).
 Using these parameters, GEOS performs a preprocessing step to construct a two-dimensional table storing the brine density, :math:`\rho_{\ell,table}` for the specified salinity as a function of pressure and temperature using the expression:
 
 .. math::

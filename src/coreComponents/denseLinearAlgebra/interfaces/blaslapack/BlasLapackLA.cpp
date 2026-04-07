@@ -136,7 +136,7 @@ static real64 determinant( arraySlice2d< real64 const, USD > const & A )
       // LAPACK_ROW_MAJOR ordering.
       GEOS_dgetrf( &NN, &NN, LUFactor.data(), &NN, IPIV.data(), &INFO );
 
-      GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+      GEOS_ASSERT_MSG( INFO == 0, GEOS_FMT( "LAPACK dgetrf error code: {}", INFO ) );
 
       det = 1.0;
       for( int i = 0; i < NN; ++i )
@@ -269,7 +269,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
     int INFO;
     GEOS_dgetrf( &NN, &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), &INFO );
 
-    GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+    GEOS_ASSERT_MSG( INFO == 0, GEOS_FMT( "LAPACK dgetrf error code: {}", INFO ) );
 
     detA = 1.0;
     for( int i = 0; i < NN; ++i )
@@ -337,7 +337,7 @@ void matrixInverse( arraySlice2d< real64 const, USD > const & A,
       int INFO;
       GEOS_dgetri( &NN, Ainv.dataIfContiguous(), &NN, IPIV.data(), INV_WORK.data(), &NN, &INFO );
 
-      GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetri error code: " << INFO );
+      GEOS_ASSERT_MSG( INFO == 0, GEOS_FMT( "LAPACK dgetri error code: {}", INFO ) );
 
       break;
     }
@@ -461,7 +461,7 @@ void solveLinearSystem( arraySlice2d< T, USD > const & A,
 
   GEOS_dgetrf( &N, &N, matrixData, &N, IPIV.data(), &INFO );
 
-  GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrf error code: " << INFO );
+  GEOS_ASSERT_MSG( INFO == 0, GEOS_FMT( "LAPACK dgetrf error code: {}", INFO ) );
 
   if constexpr ( std::is_const< T >::value )
   {
@@ -492,7 +492,7 @@ void solveLinearSystem( arraySlice2d< T, USD > const & A,
 
   GEOS_dgetrs( &TRANS, &N, &M, matrixData, &N, IPIV.data(), solutionData, &N, &INFO );
 
-  GEOS_ASSERT_MSG( INFO == 0, "LAPACK dgetrs error code: " << INFO );
+  GEOS_ASSERT_MSG( INFO == 0, GEOS_FMT( "LAPACK dgetrs error code: {}", INFO ) );
 
   if constexpr ( USD == MatrixLayout::ROW_MAJOR )
   {

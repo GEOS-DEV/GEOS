@@ -57,6 +57,8 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -82,6 +84,8 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
+                               CompositionalKValuePhillipsBrine,
+                               CompositionalKValueLohrenzBrayClarkViscosity,
 #endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
@@ -116,7 +120,7 @@ struct ComponentSelector< camp::idx_seq< Is ... > >
 #pragma GCC diagnostic pop
 #endif
     GEOS_THROW_IF( !supported,
-                   "Unsupported number of components: " << numComps << " for fluid " << FluidType::catalogName(),
+                   GEOS_FMT( "Unsupported number of components: {} for fluid {}", numComps, FluidType::catalogName() ),
                    InputError );
   }
 };
@@ -139,7 +143,7 @@ void constitutiveComponentUpdatePassThru( constitutive::MultiFluidBase & fluidBa
     }
     else
     {
-      GEOS_THROW( "Unsupported thermal call for fluid " << FluidType::catalogName(),
+      GEOS_THROW( GEOS_FMT( "Unsupported thermal call for fluid {}", FluidType::catalogName() ),
                   InputError );
     }
   } );
