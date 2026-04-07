@@ -2836,10 +2836,12 @@ namespace
  * @brief Extract node indices from a binary mask array using parallel scan
  *
  * @tparam ValueType The underlying data type (vtkTypeUInt8, vtkTypeUInt16, vtkTypeUInt32, vtkTypeUInt64)
- * @param[in] rawData Pointer to the raw mask array data
+ * @param[in] rawData Pointer to the raw mask array data (values should be 0 or 1)
  * @param[in] numPoints Total number of points in the mesh
  * @param[out] targetNodeset The sorted array to populate with node indices
  *
+ * @note Input array should contain only 0 (not in set) or 1 (in set). Values other than
+ *       1 will be treated as 0.
  */
 template< typename ValueType >
 void extractNodesetFromMask( ValueType const * rawData,
@@ -2855,13 +2857,10 @@ void extractNodesetFromMask( ValueType const * rawData,
   // Allocate temporary array for positions (initially stores flags)
   array1d< localIndex > positions( numPoints );
 
-  // Bitmask for membership (Least Significant Bit)
-  constexpr ValueType mask = 1;
-
-  // Step 1: Extract binary flags from mask (parallel)
-  forAll< parallelHostPolicy >( numPoints, [rawData, &positions, mask]( localIndex const j )
+  // Step 1: Extract binary flags (0 or 1) from mask (parallel)
+  forAll< parallelHostPolicy >( numPoints, [rawData, &positions]( localIndex const j )
   {
-    positions[j] = rawData[j] & mask;
+    positions[j] = ( rawData[j] == 1 );  // Expect exactly 1 for membership
   } );
 
   // Save last flag value before scan overwrites it
@@ -2886,9 +2885,9 @@ void extractNodesetFromMask( ValueType const * rawData,
   array1d< localIndex > nodeIndices( count );
 
   // Step 5: Scatter flagged node indices to compacted array (parallel)
-  forAll< parallelHostPolicy >( numPoints, [rawData, &nodeIndices, &positions, mask]( localIndex const j )
+  forAll< parallelHostPolicy >( numPoints, [rawData, &nodeIndices, &positions]( localIndex const j )
   {
-    if( rawData[j] & mask )
+    if( rawData[j] == 1 )
     {
       nodeIndices[ positions[j] ] = j;
     }
