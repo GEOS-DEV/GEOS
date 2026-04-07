@@ -35,7 +35,7 @@ PermeabilitySpecification::PermeabilitySpecification( string const & name, Group
   registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "" );
+    setDescription( "Names of the regions that boundary condition is applied to." );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
