@@ -76,8 +76,6 @@ void StatsTask::postInputInitialization()
     GEOS_THROW( "The option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
                 InputError, getDataContext() );
   }
-
-  m_aggregator = std::make_unique< StatsAggregator >( getDataContext(), true );
 }
 
 void StatsTask::registerDataOnMesh( Group & meshBodies )
@@ -94,7 +92,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     CompositionalMultiphaseBase * castedSolver = dynamicCast< CompositionalMultiphaseBase * >( m_solver );
     GEOS_ERROR_IF_EQ_MSG( castedSolver, nullptr,
                           GEOS_FMT( "{} {}: Unexpected error (solver pointer changed?)", catalogName(), getDataContext() ) );
-    m_aggregator->initStatisticsAggregation( meshBodies, *castedSolver );
+    m_aggregator = std::make_unique< StatsAggregator >( getDataContext(), meshBodies, true );
+    m_aggregator->initStatisticsAggregation( *castedSolver );
   }
   else
   {

@@ -49,8 +49,6 @@ void StatsTask::postInputInitialization()
     GEOS_THROW( "Incompatible solver selected, a single-phase solver is expected",
                 InputError, getDataContext() );
   }
-
-  m_aggregator = std::make_unique< StatsAggregator >( getDataContext(), true );
 }
 
 void StatsTask::registerDataOnMesh( Group & meshBodies )
@@ -65,7 +63,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     SinglePhaseBase * castedSolver = dynamicCast< SinglePhaseBase * >( m_solver );
     GEOS_ERROR_IF_EQ_MSG( castedSolver, nullptr,
                           GEOS_FMT( "{} {}: Unexpected error (solver pointer changed?)", catalogName(), getDataContext() ) );
-    m_aggregator->initStatisticsAggregation( meshBodies, *castedSolver );
+    m_aggregator = std::make_unique< StatsAggregator >( getDataContext(), meshBodies, true );
+    m_aggregator->initStatisticsAggregation( *castedSolver );
   }
   else
   {
