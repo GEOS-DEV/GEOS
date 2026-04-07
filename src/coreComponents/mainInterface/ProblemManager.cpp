@@ -44,6 +44,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/MeshGeneratorBase.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -632,6 +633,7 @@ void ProblemManager::generateMesh()
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
       elemManager.generateWells( cellBlockManager, baseMesh );
+
     }
   } );
 
@@ -696,6 +698,33 @@ void ProblemManager::generateMesh()
   domain.setupCommunications( useNonblockingMPI );
   domain.outputPartitionInformation();
 
+  // Optionally validate the Euler-Poincaré characteristic χ = V − E + F − C.
+  // This must run AFTER setupCommunications() so that ghost cells and proper
+  // node ghost ranks are available.  The computation reconstructs V, E, F from
+  // cell-to-node maps (iterating owned + ghost cells) and uses a min-global-
+  // node ownership rule for MPI de-duplication.
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
+  {
+    MeshGeneratorBase const * const meshGen =
+      meshManager.getGroupPointer< MeshGeneratorBase >( meshBody.getName() );
+    if( meshGen != nullptr && meshGen->m_checkEulerCharacteristic )
+    {
+      MeshLevel & baseMesh = meshBody.getBaseDiscretization();
+      integer const chi = computeEulerCharacteristic( baseMesh.getNodeManager(),
+                                                      baseMesh.getEdgeManager(),
+                                                      baseMesh.getFaceManager(),
+                                                      baseMesh.getElemManager() );
+      GEOS_LOG_RANK_0_IF( chi != 1,
+                          "Mesh \"" << meshBody.getName() << "\": Euler-Poincaré characteristic "
+                                                             "χ = V − E + F − C = " << chi << " (expected 1 for a single connected "
+                                                                                              "solid without interior voids). The mesh may contain multiple disconnected "
+                                                                                              "bodies, interior voids, or non-manifold topology. "
+                                                                                              "The simulation will proceed." );
+      GEOS_LOG_RANK_0_IF( chi == 1,
+                          "Mesh \"" << meshBody.getName() << "\": Euler characteristic χ = 1 ✓" );
+    }
+  } );
+
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     if( meshBody.hasGroup( keys::particleManager ) )
@@ -728,6 +757,10 @@ void ProblemManager::generateMesh()
         // 3. We flip the face normals of faces adjacent to the faceElements if they are not pointing in the
         // direction of the fracture.
         subRegion.fixNeighboringFacesNormals( faceManager, elementManager );
+
+        //    faceToNodes(kf0, a) and faceToNodes(kf1, a) are geometrically paired (collocated) nodes.
+        //    This is required by the conforming contact kernels which assume this pairing.
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
       } );
 
       faceManager.setIsExternal();
