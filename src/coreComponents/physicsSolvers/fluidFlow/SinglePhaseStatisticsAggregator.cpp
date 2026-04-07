@@ -46,8 +46,9 @@ RegionStatistics::RegionStatistics( string const & name,
 {}
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
+                                  dataRepository::Group & meshBodies,
                                   bool const statsOutputEnabled ):
-  Base( ownerDataContext, statsOutputEnabled )
+  Base( ownerDataContext, meshBodies, statsOutputEnabled )
 {}
 
 void StatsAggregator::enableRegionStatisticsAggregation()

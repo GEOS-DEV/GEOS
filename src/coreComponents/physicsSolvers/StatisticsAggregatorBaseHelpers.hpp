@@ -46,21 +46,20 @@ inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
 
 template< typename Impl >
 StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
+                                                  dataRepository::Group & meshBodies,
                                                   bool const statsOutputEnabled ):
   m_ownerDataContext( ownerDataContext ),
-  m_statsOutputEnabled( statsOutputEnabled )
+  m_statsOutputEnabled( statsOutputEnabled ),
+  m_meshBodies( meshBodies )
 {}
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & meshBodies,
-                                                        SolverType & solver )
+StatsAggregatorBase< Impl >::initStatisticsAggregation( SolverType & solver )
 {
-  m_meshBodies = &meshBodies;
-
-  solver.forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                                           MeshLevel & mesh,
-                                                           string_array const & regionNames )
+  solver.forDiscretizationOnMeshTargets( m_meshBodies, [&] ( string const & meshBodyName,
+                                                             MeshLevel & mesh,
+                                                             string_array const & regionNames )
   {
     // getting the container of all requesters statistics groups (can be already initialized)
     dataRepository::Group * meshStatsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
@@ -76,7 +75,7 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
     meshStatsGroup->registerGroup( ownerName );
 
     // remembering the path of this discretization
-    MeshBody const & body = m_meshBodies->getGroup< MeshBody >( meshBodyName );
+    MeshBody const & body = m_meshBodies.getGroup< MeshBody >( meshBodyName );
     DiscretizationGroupPath const path {
       /* .m_meshBody = */ body.getIndexInParent(),
       /* .m_meshLevel = */ mesh.getIndexInParent(),
@@ -90,9 +89,6 @@ template< typename Impl >
 void
 StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc )
 {
-  if( m_meshBodies == nullptr )
-    return;
-
   integer regionCount = 0;
   integer subRegionCount = 0;
 
@@ -257,7 +253,7 @@ template< typename Impl >
 MeshLevel &
 StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationGroupPath const & path ) const
 {
-  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.m_meshBody );
+  MeshBody & body = m_meshBodies.getGroup< MeshBody >( path.m_meshBody );
   MeshLevel & mesh = body.getMeshLevel( path.m_meshLevel );
   return mesh;
 }

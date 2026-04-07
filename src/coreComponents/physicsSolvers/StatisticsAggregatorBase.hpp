@@ -116,8 +116,12 @@ public:
    * @brief Construct a new Stats Aggregator object
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
+   * @param meshBodies The Group containing the MeshBody objects
+   * @param statsOutputEnabled If true, the stats are saved in the output HDF5
+   *                           (through dataRepository::RestartFlags, but not functional for this output for now).
    */
   StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
+                       dataRepository::Group & meshBodies,
                        bool statsOutputEnabled );
 
   /**
@@ -126,10 +130,8 @@ public:
    * @param solver flow solver object to retrieve:
                    - the simulated regions,
                    - fields for statistics computation.
-   * @param meshBodies The Group containing the MeshBody objects
    */
-  void initStatisticsAggregation( dataRepository::Group & meshBodies,
-                                  SolverType & solver );
+  void initStatisticsAggregation( SolverType & solver );
 
   void forRegionStatistics( RegionStatsFunc< MeshLevel > const & functor ) const;
 
@@ -203,9 +205,10 @@ protected:
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
 
+  /// If true, the stats are to save in the output HDF5
   bool const m_statsOutputEnabled;
 
-  dataRepository::Group * m_meshBodies = nullptr;
+  dataRepository::Group & m_meshBodies;
 
   std::vector< DiscretizationGroupPath > m_discretizationsPaths;
 

@@ -226,8 +226,12 @@ public:
    * @brief Construct a new Stats Aggregator object
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
+   * @param meshBodies The Group containing the MeshBody objects
+   * @param statsOutputEnabled If true, the stats are saved in the output HDF5
+   *                           (through dataRepository::RestartFlags, but not functional for this output for now).
    */
   StatsAggregator( dataRepository::DataContext const & ownerDataContext,
+                   dataRepository::Group & meshBodies,
                    bool m_statsOutputEnabled );
 
   /**
@@ -236,10 +240,8 @@ public:
    * @param solver flow solver object to retrieve:
                    - the simulated regions,
                    - fields for statistics computation.
-   * @param meshBodies The Group containing the MeshBody objects
    */
-  void initStatisticsAggregation( dataRepository::Group & meshBodies,
-                                  CompositionalMultiphaseBase & solver );
+  void initStatisticsAggregation( CompositionalMultiphaseBase & solver );
 
   /**
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
