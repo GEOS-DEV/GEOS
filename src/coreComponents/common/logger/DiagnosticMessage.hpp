@@ -32,7 +32,7 @@ enum class MsgType
   ExternalError,
   Warning,
   Exception,
-  Undefined
+  Count // internal use, keep at last
 };
 
 /// Declare strings associated with output MsgType values.

@@ -166,7 +166,7 @@ void LogHistory::gatherRecordsRank0()
         {
           LogRecord unpackRecord;
           unpackRecord.deserialize( startGlobalRecord, rankEnd );
-          this->insertDiagnosticReport( unpackRecord );
+          insertDiagnosticReport( unpackRecord );
         }
       }
     }
@@ -178,13 +178,13 @@ void LogHistory::gatherRecordsRank0()
 template<>
 string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const
 {
-  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Count >;
 
   TableLayout tableLayout;
   tableLayout.addColumn( "Types" );
 
   // fill header
-  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Count; msgTypeIdx++ )
   {
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
