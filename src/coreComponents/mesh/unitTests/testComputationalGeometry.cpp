@@ -102,13 +102,13 @@ TEST( testComputationalGeometry, checkHighAspectRatio )
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
   auto faceArea = computationalGeometry::centroid_3DPolygon( indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, TOL );
 
-  constexpr real64 EXPECTED_AREA = 0.5*LvArray::math::sqrt( LvArray::math::square( xa*yb-ya*xb ) +
+  const real64 EXPECTED_AREA = 0.5*LvArray::math::sqrt( LvArray::math::square( xa*yb-ya*xb ) +
                                                   LvArray::math::square( ya*zb-za*yb ) +
                                                   LvArray::math::square( za*xb-xa*zb ) );
 
-  constexpr real64 EXPECTED_CENTER[3] = { 1.e6 + (xa+xb)/3, 1.e6 + (ya+yb)/3., 1.e6 + (za+zb)/3};
+  const real64 EXPECTED_CENTER[3] = { 1.e6 + (xa+xb)/3, 1.e6 + (ya+yb)/3., 1.e6 + (za+zb)/3};
 
-  constexpr real64 EXPECTED_NORMAL[3] = { (ya*zb-za*yb)/2/EXPECTED_AREA, (za*xb-xa*zb)/2/EXPECTED_AREA, (xa*yb-ya*xb)/2/EXPECTED_AREA};
+  const real64 EXPECTED_NORMAL[3] = { (ya*zb-za*yb)/2/EXPECTED_AREA, (za*xb-xa*zb)/2/EXPECTED_AREA, (xa*yb-ya*xb)/2/EXPECTED_AREA};
 
   EXPECT_LT( abs( faceArea - EXPECTED_AREA ), 1e-6 );
   EXPECT_LT( abs( faceNormal[0]-EXPECTED_NORMAL[0] ), 1e-6 );
