@@ -226,7 +226,7 @@ bool StatsTask::execute( real64 const time_n,
                          real64 const GEOS_UNUSED_PARAM( eventProgress ),
                          DomainPartition & domain )
 {
-  // current time is time_n + dt. TODO: verify implication of events ordering in 'time_n+dt' validity
+  // current statistics time is after solver resolution: time_n (timestep start) + dt
   real64 statsTime = time_n + dt;
 
   GEOS_ERROR_IF( !m_aggregator,
