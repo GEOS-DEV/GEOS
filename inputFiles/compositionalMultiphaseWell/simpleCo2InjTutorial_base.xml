@@ -86,7 +86,8 @@
       pressureCoordinates="{1.0e5, 7.5e7}"
       pressureInterval="1e5"
       temperatureCoordinates="{285.15, 395.15}"
-      temperatureInterval="5" />
+      temperatureInterval="5"
+      salinity="0" />
 
     <CompressibleSolidConstantPermeability
       name="rock"

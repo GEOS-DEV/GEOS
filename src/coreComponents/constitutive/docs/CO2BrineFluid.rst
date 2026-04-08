@@ -534,5 +534,5 @@ References
   2004
 
 - E. E. Michaelides, `Thermodynamic properties of geothermal fluids.
-<https://www.osti.gov/biblio/6760030>`__,
-Transactions - Geothermal Resources Council, vol. 5, pp. 361-364, 1981.
+  <https://www.osti.gov/biblio/6760030>`__,
+  Transactions - Geothermal Resources Council, vol. 5, pp. 361-364, 1981.
