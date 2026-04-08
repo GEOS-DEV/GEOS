@@ -56,12 +56,12 @@ public:
     float m_t_time_n;
     float m_t_stepDt;
     float m_t_step_no;
-    float m_shared_solution[2200]; // Example array to hold solution response data
-    float m_shared_dofXCoords[2200];
-    float m_shared_dofYCoords[2200];
-    float m_shared_dofZCoords[2200];
-    float m_shared_strainTrace[2200];
-    float m_shared_prevSolution[2200];
+    float m_shared_solution[640]; // Example array to hold solution response data
+    float m_shared_dofXCoords[640];
+    float m_shared_dofYCoords[640];
+    float m_shared_dofZCoords[640];
+    float m_shared_strainTrace[640];
+    float m_shared_prevSolution[640];
   };
   // TODO: Shared memory variables and sizes to be user defined or auto calculated according to the python server needs
   // TODO: The whole logic of shared memory management to be encapsulated, with help of DLSharedMemoryManager class
