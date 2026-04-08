@@ -565,6 +565,10 @@
 					<xsd:selector xpath="CompositionalMultiphaseStatistics" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksFieldApplicatorUniqueName">
+					<xsd:selector xpath="FieldApplicator" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksHydrofractureInitializationUniqueName">
 					<xsd:selector xpath="HydrofractureInitialization" />
 					<xsd:field xpath="@name" />
@@ -623,6 +627,22 @@
 				</xsd:unique>
 				<xsd:unique name="TasksSinglePhaseStatisticsUniqueName">
 					<xsd:selector xpath="SinglePhaseStatistics" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsAugmentedLagrangianContactInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsAugmentedLagrangianContactInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsEmbeddedFracturesInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsEmbeddedFracturesInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsLagrangeContactInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsLagrangeContactInitialization" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="TasksSolidMechanicsLagrangianFEMInitializationUniqueName">
+					<xsd:selector xpath="SolidMechanicsLagrangianFEMInitialization" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="TasksSolidMechanicsStateResetUniqueName">
@@ -1851,6 +1871,8 @@ Information output from lower logLevels is added with the desired log level
 		</xsd:choice>
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="groupNameRef_array" use="required" />
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--elementTypes => Element types of each mesh block. Use "C3D8" for linear brick element. Possible values are: Vertex, BEAM, C2D3, C2D4, Polygon, C3D4, C3D5, C3D6, C3D8, PentagonalPrism, HexagonalPrism, HeptagonalPrism, OctagonalPrism, NonagonalPrism, DecagonalPrism, HendecagonalPrism, Polyhedron.-->
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
 		<!--nx => Number of elements in the x-direction within each mesh block-->
@@ -1984,6 +2006,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="cartesianMappingInnerRadius" type="real64" default="1e+99" />
 		<!--cellBlockNames => Names of each mesh block-->
 		<xsd:attribute name="cellBlockNames" type="groupNameRef_array" use="required" />
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--elementTypes => Element types of each mesh block. Use "C3D8" for linear brick element. Possible values are: Vertex, BEAM, C2D3, C2D4, Polygon, C3D4, C3D5, C3D6, C3D8, PentagonalPrism, HexagonalPrism, HeptagonalPrism, OctagonalPrism, NonagonalPrism, DecagonalPrism, HendecagonalPrism, Polyhedron.-->
 		<xsd:attribute name="elementTypes" type="string_array" use="required" />
 		<!--hardRadialCoords => Sets the radial spacing to specified values-->
@@ -2020,6 +2044,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ParticleMeshType">
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--headerFile => path to the header file-->
 		<xsd:attribute name="headerFile" type="path" use="required" />
 		<!--particleBlockNames => Names of each particle block-->
@@ -2047,6 +2073,8 @@ Information output from lower logLevels is added with the desired log level
 				</xsd:unique>
 			</xsd:element>
 		</xsd:choice>
+		<!--checkEulerCharacteristic => When set to 1, compute the Euler-Poincaré characteristic χ = V − E + F − C after the mesh is loaded and issue a warning if χ ≠ 1. χ = 1 is expected for a single connected solid mesh without interior voids. Non-unity values may indicate multiple disconnected bodies, interior voids, or non-manifold topology. Default: 0 (disabled).-->
+		<xsd:attribute name="checkEulerCharacteristic" type="integer" default="0" />
 		<!--dataSourceName => Name of the VTK data source-->
 		<xsd:attribute name="dataSourceName" type="string" default="" />
 		<!--faceBlocks => For multi-block files, names of the face mesh block.-->
@@ -6234,6 +6262,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
+			<xsd:element name="FieldApplicator" type="FieldApplicatorType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesALMInitialization" type="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesInitialization" type="MultiphasePoromechanicsConformingFracturesInitializationType" />
@@ -6249,6 +6278,10 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" type="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
+			<xsd:element name="SolidMechanicsAugmentedLagrangianContactInitialization" type="SolidMechanicsAugmentedLagrangianContactInitializationType" />
+			<xsd:element name="SolidMechanicsEmbeddedFracturesInitialization" type="SolidMechanicsEmbeddedFracturesInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangeContactInitialization" type="SolidMechanicsLagrangeContactInitializationType" />
+			<xsd:element name="SolidMechanicsLagrangianFEMInitialization" type="SolidMechanicsLagrangianFEMInitializationType" />
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="SourceFluxStatistics" type="SourceFluxStatisticsType" />
@@ -6277,6 +6310,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6290,6 +6325,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6303,6 +6340,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6328,6 +6367,16 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="FieldApplicatorType">
+		<!--fieldSpecificationNames => Array containing the field specifications to apply to newly created elements-->
+		<xsd:attribute name="fieldSpecificationNames" type="groupNameRef_array" use="required" />
+		<!--solverName => Name of the flow solver to use for fluid state initialization (required for compositional flow)-->
+		<xsd:attribute name="solverName" type="groupNameRef" default="" />
+		<!--targetRegions => Target element regions to apply field specifications to. If empty, applies to all regions.-->
+		<xsd:attribute name="targetRegions" type="groupNameRef_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="HydrofractureInitializationType">
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
@@ -6336,6 +6385,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6349,6 +6400,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6362,6 +6415,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6375,6 +6430,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6450,6 +6507,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6463,6 +6522,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6476,6 +6537,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6489,6 +6552,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6502,6 +6567,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6515,6 +6582,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6528,6 +6597,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--poromechanicsSolverName => Name of the poromechanics solver-->
 		<xsd:attribute name="poromechanicsSolverName" type="groupNameRef" use="required" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
 		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics-->
 		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6543,6 +6614,66 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsAugmentedLagrangianContactInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsEmbeddedFracturesInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsLagrangeContactInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidMechanicsLagrangianFEMInitializationType">
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Information on solver initialization-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--reset_displacements => Flag to reset displacements (1: reset, 0: do not reset)-->
+		<xsd:attribute name="reset_displacements" type="integer" default="1" />
+		<!--solidMechanicsStatisticsName => Name of the solid mechanics statistics task-->
+		<xsd:attribute name="solidMechanicsStatisticsName" type="groupNameRef" default="" />
+		<!--solidSolverName => Name of the solid mechanics solver-->
+		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>

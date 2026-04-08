@@ -203,6 +203,14 @@ public:
 
   integer numberOfDofsPerCell() const { return m_numDofPerCell; }
 
+  /**
+   * @brief Apply the delta volume to the element volume and reset delta volume to zero
+   * @detail This is needed for newly created fracture elements that have a non-zero deltaVolume
+   *         (set by SurfaceGenerator) but zero element volume.
+   * @param[in/out] subRegion the element subRegion
+   */
+  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
+
 protected:
 
   /**

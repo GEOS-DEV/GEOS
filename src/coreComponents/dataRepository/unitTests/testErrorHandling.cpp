@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 #include <csignal>
 #include <filesystem>
+#include <signal.h>
 
 using namespace geos;
 using namespace dataRepository;

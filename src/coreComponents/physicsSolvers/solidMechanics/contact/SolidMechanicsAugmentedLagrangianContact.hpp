@@ -246,6 +246,23 @@ private:
 
   void computeTolerances( DomainPartition & domain ) const;
 
+  /**
+   * @brief Initialize the traction field from the stress in adjacent volume elements.
+   * @param domain The physical domain object
+   *
+   * This function computes the initial traction on each fracture element by:
+   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture)
+   * 2. Computing the traction vector as t = sigma * n (where n is the face normal) for each side
+   * 3. Averaging the tractions from both sides
+   * 4. Rotating the averaged traction to the local coordinate system of the fracture
+   * 5. Validating the traction against the Coulomb friction law and warning if inconsistent
+   *
+   * This initialization ensures that the ALM traction field starts with a physically
+   * consistent value rather than zero, which is important for proper convergence
+   * when the domain is under stress.
+   */
+  void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
+
   /// Finite element type to face element index map
   stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 

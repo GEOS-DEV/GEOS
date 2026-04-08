@@ -362,8 +362,6 @@ public:
                                             PhysicsSolverBase::MATRIX_VIEW const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) const;
 
-  void applyDeltaVolume( ElementSubRegionBase & subRegion ) const;
-
 protected:
 
   /**
