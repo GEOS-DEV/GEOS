@@ -71,57 +71,56 @@ TEST( testComputationalGeometry, checkCentroid3DPolygon )
   }
 }
 
-TEST( testComputationalGeometry, checkHighAspectRatio)
+TEST( testComputationalGeometry, checkHighAspectRatio )
 {
   constexpr localIndex numNodes = 3;
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > points;
-  points.resize(numNodes, 3);
-  array1d< localIndex > indices(3);
-  indices(0) = 0;
-  indices(1) = 1;
-  indices(2) = 2;
+  points.resize( numNodes, 3 );
+  array1d< localIndex > indices( 3 );
+  indices( 0 ) = 0;
+  indices( 1 ) = 1;
+  indices( 2 ) = 2;
 
   //mimic a perfect triangle but with huge offset
   constexpr real64 xa = 1.e4, ya = 1.e-2, za = 1.e0;
   constexpr real64 xb = 1.e-1, yb = 1.e2, zb = -1.e-2;
   constexpr real64 TOL = 1e-6;
 
-  points(0,0) = 1.e6;
-  points(0,1) = 1.e6;
-  points(0,2) = 1.e6;
-  
-  points(1,0) = 1.e6 + xa;
-  points(1,1) = 1.e6 + ya;
-  points(1,2) = 1.e6 + za;
+  points( 0, 0 ) = 1.e6;
+  points( 0, 1 ) = 1.e6;
+  points( 0, 2 ) = 1.e6;
 
-  points(2,0) = 1.e6 + xb;
-  points(2,1) = 1.e6 + yb;
-  points(2,2) = 1.e6 + zb;
+  points( 1, 0 ) = 1.e6 + xa;
+  points( 1, 1 ) = 1.e6 + ya;
+  points( 1, 2 ) = 1.e6 + za;
+
+  points( 2, 0 ) = 1.e6 + xb;
+  points( 2, 1 ) = 1.e6 + yb;
+  points( 2, 2 ) = 1.e6 + zb;
 
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
-  real64 faceCenterOld[ 3 ], faceNormalOld[ 3 ];
-  auto faceArea = computationalGeometry::centroid_3DPolygon(indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, TOL);
+  auto faceArea = computationalGeometry::centroid_3DPolygon( indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, TOL );
 
-  constexpr real64 EXPECTED_AREA = 0.5*std::sqrt(LvArray::math::square(xa*yb-ya*xb) + 
-                                                    LvArray::math::square(ya*zb-za*yb) +
-                                                    LvArray::math::square(za*xb-xa*zb) );
+  constexpr real64 EXPECTED_AREA = 0.5*std::sqrt( LvArray::math::square( xa*yb-ya*xb ) +
+                                                  LvArray::math::square( ya*zb-za*yb ) +
+                                                  LvArray::math::square( za*xb-xa*zb ) );
 
-  constexpr real64 EXPECTED_CENTER[3] = { 1.e6 + (xa+xb)/3 , 1.e6 + (ya+yb)/3. , 1.e6 + (za+zb)/3};
+  constexpr real64 EXPECTED_CENTER[3] = { 1.e6 + (xa+xb)/3, 1.e6 + (ya+yb)/3., 1.e6 + (za+zb)/3};
 
   constexpr real64 EXPECTED_NORMAL[3] = { (ya*zb-za*yb)/2/EXPECTED_AREA, (za*xb-xa*zb)/2/EXPECTED_AREA, (xa*yb-ya*xb)/2/EXPECTED_AREA};
 
-  EXPECT_LT( abs(faceArea - EXPECTED_AREA), 1e-6); 
-  EXPECT_LT( abs(faceNormal[0]-EXPECTED_NORMAL[0]), 1e-6);
-  EXPECT_LT( abs(faceNormal[1]-EXPECTED_NORMAL[1]), 1e-6);
-  EXPECT_LT( abs(faceNormal[2]-EXPECTED_NORMAL[2]), 1e-6);
-  EXPECT_LT( abs(faceCenter[0]-EXPECTED_CENTER[0]), 1e-6);
-  EXPECT_LT( abs(faceCenter[0]-EXPECTED_CENTER[0]), 1e-6);
-  EXPECT_LT( abs(faceCenter[1]-EXPECTED_CENTER[1]), 1e-6);
-  EXPECT_LT( abs(faceCenter[2]-EXPECTED_CENTER[2]), 1e-6);
+  EXPECT_LT( abs( faceArea - EXPECTED_AREA ), 1e-6 );
+  EXPECT_LT( abs( faceNormal[0]-EXPECTED_NORMAL[0] ), 1e-6 );
+  EXPECT_LT( abs( faceNormal[1]-EXPECTED_NORMAL[1] ), 1e-6 );
+  EXPECT_LT( abs( faceNormal[2]-EXPECTED_NORMAL[2] ), 1e-6 );
+  EXPECT_LT( abs( faceCenter[0]-EXPECTED_CENTER[0] ), 1e-6 );
+  EXPECT_LT( abs( faceCenter[0]-EXPECTED_CENTER[0] ), 1e-6 );
+  EXPECT_LT( abs( faceCenter[1]-EXPECTED_CENTER[1] ), 1e-6 );
+  EXPECT_LT( abs( faceCenter[2]-EXPECTED_CENTER[2] ), 1e-6 );
 
   real64 norm = LvArray::math::square( faceNormal[0] ) + LvArray::math::square( faceNormal[1] ) + LvArray::math::square( faceNormal[2] );
-  EXPECT_LT(abs( sqrt( norm ) - 1.0 ), 1e-6);
+  EXPECT_LT( abs( sqrt( norm ) - 1.0 ), 1e-6 );
 
 }
 

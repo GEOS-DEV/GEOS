@@ -215,7 +215,7 @@ real64 computeDiameter( POINT_COORDS_TYPE points,
 }
 
 /**
- * @brief Calculate the centroid of a convex 3D polygon as well as the normal. 
+ * @brief Calculate the centroid of a convex 3D polygon as well as the normal.
  * @tparam CENTER_TYPE The type of @p center.
  * @tparam NORMAL_TYPE The type of @p normal.
  * @param[in] pointsIndices list of index references for the points array in
@@ -248,14 +248,14 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   real64 current[ 3 ], next[ 3 ], origin[ 3 ], crossProduct[ 3 ];
 
   LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
-  LvArray::tensorOps::copy< 3>( origin, points[ pointsIndices[ 0 ]] );
+  LvArray::tensorOps::copy< 3 >( origin, points[ pointsIndices[ 0 ]] );
 
   for( localIndex a=0; a<numberOfPoints; )
   {
     LvArray::tensorOps::copy< 3 >( current, points[ pointsIndices[ a++ ]] );
-    LvArray::tensorOps::scaledAdd<3>(current, origin, -1.);
+    LvArray::tensorOps::scaledAdd< 3 >( current, origin, -1. );
     LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a % numberOfPoints ] ] );
-    LvArray::tensorOps::scaledAdd<3>(next, origin, -1.);
+    LvArray::tensorOps::scaledAdd< 3 >( next, origin, -1. );
 
     LvArray::tensorOps::crossProduct( crossProduct, current, next );
 
