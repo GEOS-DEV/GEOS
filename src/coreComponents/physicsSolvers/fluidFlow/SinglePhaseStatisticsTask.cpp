@@ -54,7 +54,7 @@ void StatsTask::postInputInitialization()
 void StatsTask::registerDataOnMesh( Group & meshBodies )
 {
   // for now, this guard is needed to avoid breaking the xml schema generation
-  if( m_solver == nullptr || m_aggregator == nullptr )
+  if( m_solver == nullptr )
     return;
 
   if( m_writeCSV || isLogLevelActive< logInfo::Statistics >( this->getLogLevel()) )
