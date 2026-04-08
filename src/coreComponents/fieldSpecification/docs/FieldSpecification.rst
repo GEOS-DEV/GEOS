@@ -9,4 +9,6 @@ Initial and Boundary Conditions
    EquilibriumInitialCondition
 
    AquiferBoundaryCondition
+   
+   PermeabilitySpecification
 
