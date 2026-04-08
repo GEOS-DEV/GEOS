@@ -39,7 +39,7 @@ The models that are used in steps 1) and 2) are reviewed in more details below.
 Step 1: Computation of the phase fractions and phase component fractions (flash)
 ================================================================================
 
-At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the CO2 phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of brine and for water this will be moles of H2O vapourised in the CO2 phase per kg of CO2.
+At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the gas phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of water and for water this will be moles of H2O vapourised in the CO2 phase per kg of CO2.
 
 There are 3 alternatives to providing solubility data for the phase partition calculation.
 
@@ -115,45 +115,104 @@ For systems with low solubility, activities can be approximated by mole fraction
    x_{CO2,\ell} = \frac{\Phi_{CO2}(1 - y_{H2O,g}) P}{55.508\, K_{CO2}(P_0, T)} 
    \exp\left( -\frac{(P - P_0) \bar{V}_{CO2}}{RT} \right)
 
-These expressions are used to compute the mole fractions :math:`y_{H2O,g}` and :math:`x_{CO2,\ell}` in the gas and liquid phases, respectively.
+These expressions are used to compute the mole fractions :math:`y_{H2O,g}` and :math:`x_{CO2,\ell}` in the gas and liquid phases, respectively. These are then converted to solubilities as
 
+.. math::
+
+   s_{CO2} = \frac{x_{CO2,\ell}}{1-x_{CO2,\ell}}M_{H2O}
+
+.. math::
+
+   s_{H2O} = \frac{y_{H2O,g}}{1-y_{H2O,g}}M_{CO2}
+
+where :math:`M_{H2O}` is the molecular weight of water and :math:`M_{CO2}` is the molecular weight of CO2. 
+
+Tabulated solubilities
+----------------------
+Alternatively, the user may provide solubility tables generated externally to GEOS. These must be supplied as two‑dimensional lookup tables (TableFunction) with pressure and temperature as the coordinate axes. A CO2 solubility table is required, while the water vaporization table is optional. If a water vaporization table is not provided, water vaporization is neglected (i.e., zero vaporization is assumed).
+
+For all tables, pressure must be specified in pascals (Pa), temperature in kelvin (K), and solubility as moles of solute per unit mass of solvent (mol/kg).
 
 Flash calculation
 -----------------
-During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, and H2O solubility :math:`s_{H2O}`, as a function of pressure and temperature. These are respectively in moles of CO2 per kg of brine and moles of water per kg of CO2 phase.
+The phase split calculation determines the equilibrium compositions of the two components in each of the two pgases of the fluid system. Given the overall mixture mole fractions :math:`z_{CO2}` and :math:`z_{H2O}`, the calculation isolates the liquid (brine) phase mole fractions, :math:`y_{CO2,\ell}` and :math:`y_{H2O,\ell}`, and the gas phase mole fractions, :math:`y_{CO2,g}` and :math:`y_{H2O,g}`. This flash formulation rigorously accounts for the mutual solubility of both components without assuming that either phase is predominantly a single component.
 
-The solubility values are converted into mole/mole values by multiplying by the molecular weight of each component. This gives the solubility of CO2 in water 
-a
-c
-(
-P
-,
-T
-)
- and vaporised water 
-a
-w
-(
-P
-,
-T
-)
- as functions of pressure and temperature.
-
-Then, we compute the phase fractions as:
+The given mutual solubility data, :math:`s_{CO2}` and :math:`s_{H2O}`, are initially provided in units of moles of solute per kilogram of solvent. The first step is to convert these values into molar ratios (moles of solute per mole of solvent) by multiplying them by the molar mass of the respective solvents, :math:`M_{H2O}` and :math:`M_{CO2}` (in kg/mol). This conversion yields the mole-to-mole solubilities :math:`S_{CO2}` and :math:`S_{H2O}`:
 
 .. math::
-   \nu_{\ell} &= \frac{1 + s_{CO2}}{1 + z_{CO2} / ( 1 - z_{CO2} ) } \\
-   \nu_{g} &= 1 - \nu_{\ell}
 
-We conclude Step 1 by computing the phase component fractions as:
+   S_{CO2} &= s_{CO2} \times M_{H2O} \\
+   S_{H2O} &= s_{H2O} \times M_{CO2}
+
+By considering a total system size of 1 mole, the overall mole fractions :math:`z_{CO2}` and :math:`z_{H2O}` are equivalent to the total moles of each component. Let :math:`n_{CO2,\ell}` and :math:`n_{H2O,\ell}` represent the moles of CO2 and H2O in the liquid phase, and :math:`n_{CO2,g}` and :math:`n_{H2O,g}` represent the moles in the gas phase. The overall material balances are:
 
 .. math::
-   y_{CO2,\ell} &= \frac{ s_{CO2} }{ 1 + s_{CO2} } \\
-   y_{H2O,\ell} &= 1 - y_{CO2,\ell} \\
-   y_{CO2,g} &= 1 \\
-   y_{H2O,g} &= 0 
-    
+
+   n_{CO2,\ell} + n_{CO2,g} &= z_{CO2} \\
+   n_{H2O,\ell} + n_{H2O,g} &= z_{H2O}
+
+The phase equilibrium is dictated by the molar solubility ratios:
+
+.. math::
+
+   n_{CO2,\ell} &= S_{CO2} \cdot n_{H2O,\ell} \\
+   n_{H2O,g} &= S_{H2O} \cdot n_{CO2,g}
+
+Substituting the material balances into the equilibrium relations produces a 2x2 linear system for the unknown moles of the solutes in their secondary phases, :math:`n_{CO2,\ell}` and :math:`n_{H2O,g}`:
+
+.. math::
+
+   n_{CO2,\ell} - S_{CO2} (z_{H2O} - n_{H2O,g}) &= 0 \\
+   n_{H2O,g} - S_{H2O} (z_{CO2} - n_{CO2,\ell}) &= 0
+
+Rearranging these equations reveals the standard 2x2 formulation for the flash calculation, which can be expressed in matrix form as:
+
+.. math::
+
+   \begin{bmatrix}
+   1 & S_{CO2} \\
+   S_{H2O} & 1
+   \end{bmatrix}
+   \begin{bmatrix}
+   n_{CO2,\ell} \\
+   n_{H2O,g}
+   \end{bmatrix}
+   =
+   \begin{bmatrix}
+   S_{CO2} \cdot z_{H2O} \\
+   S_{H2O} \cdot z_{CO2}
+   \end{bmatrix}
+
+Solving this 2x2 system provides analytical expressions for :math:`n_{CO2,\ell}` and :math:`n_{H2O,g}`. The determinant of this system is :math:`1 - S_{CO2} S_{H2O}`. The solutions are:
+
+.. math::
+
+   n_{CO2,\ell} &= \frac{S_{CO2} (z_{H2O} - S_{H2O} z_{CO2})}{1 - S_{CO2} S_{H2O}} \\
+   n_{H2O,g} &= S_{H2O} (z_{CO2} - n_{CO2,\ell})
+
+With :math:`n_{CO2,\ell}` and :math:`n_{H2O,g}` calculated, the remaining moles are immediately found using the material balance equations:
+
+.. math::
+
+   n_{H2O,\ell} &= z_{H2O} - n_{H2O,g} \\
+   n_{CO2,g} &= z_{CO2} - n_{CO2,\ell}
+
+Finally, the phase-specific mole fractions are determined by normalizing the moles in each phase by the total moles of that specific phase:
+
+.. math::
+
+   y_{CO2,\ell} &= \frac{n_{CO2,\ell}}{n_{CO2,\ell} + n_{H2O,\ell}} \\
+   y_{H2O,\ell} &= \frac{n_{H2O,\ell}}{n_{CO2,\ell} + n_{H2O,\ell}} \\
+   y_{CO2,g} &= \frac{n_{CO2,g}}{n_{CO2,g} + n_{H2O,g}} \\
+   y_{H2O,g} &= \frac{n_{H2O,g}}{n_{CO2,g} + n_{H2O,g}}
+
+The overall phase fractions for the liquid and gas phases, :math:`\nu_\ell` and :math:`\nu_g`, can be calculated by summing the moles of the individual components within each respective phase. Because the formulation assumes a total system size of 1 mole, the phase fractions are directly equal to these sums: :math:`\nu_\ell = n_{CO2,\ell} + n_{H2O,\ell}` and :math:`\nu_g = n_{CO2,g} + n_{H2O,g}`.
+
+.. note::
+   If any calculated mole fraction (or intermediate molar quantity) evaluates to a negative number or falls below the numerical minimum threshold, it implies that the corresponding component has been entirely depleted from that phase. When this occurs, the algorithm overrides the calculation and clamps the composition for that component to zero, effectively denoting the physical absence of that phase component.
+
+.. note::
+   If the determinant :math:`1 - S_{CO2} S_{H2O}` approaches zero or falls below a minimum threshold for division, the 2x2 system is considered not soluble (ill-conditioned or non-physical). In this scenario, the flash calculation cannot proceed safely, and the algorithm will throw an input error indicating a failure to calculate solubility at the given pressure and temperature.
    
 Step 2: Computation of the phase densities and phase viscosities
 ================================================================
