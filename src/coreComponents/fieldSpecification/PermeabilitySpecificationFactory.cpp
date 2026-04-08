@@ -44,9 +44,9 @@ void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & s
   {
     string const objectPath = "ElementRegions/" + regionName;
 
-    for ( int comp = 0; comp < 3; ++comp )
+    for ( integer comp = 0; comp < 3; ++comp )
     {
-      string const childName = ps->getName() + "_" + regionName  + suffixes[ comp ];
+      string const childName = ps->getName() + "_" + regionName + suffixes[ comp ];
 
       FieldSpecificationBase & fs = manager.registerGroup< FieldSpecificationBase >( childName );
       fs.setFieldName( ps->getFieldName() );
