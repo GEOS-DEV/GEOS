@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4007 (2026-04-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16213-67a3002.tar.gz>
+=====================
+Add XML input parameter: "hypredriveInputFile"
+
 PR #3957 (2026-03-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3957-16171-da51804.tar.gz>
 =====================
 Add checkEulerCharacteristic option, rebaseline due to new input.
@@ -13,7 +17,7 @@ PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Fix 2D/3D cell co-location in parallel mesh redistribution
 
-PR #3970 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
+PR #3986 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
 =====================
 Corrected traction boundary conditions
 
@@ -21,7 +25,7 @@ PR #3970 (2026-02-11) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Bypass well residual calculation for closed wells
 
-PR #3940 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
+PR #3964 (2026-02-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3964-15460-26718eb.tar.gz>
 =====================
 Fix fracture state update for ALM solver
 
@@ -35,7 +39,7 @@ MultiPhase Poromechanics ALM solver and a test with curved fractures
 
 PR #3634 (2025-12-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3634-15105-6ab70ef.tar.gz>
 =====================
-Add singlephase reactive transport solver integrated with HPCReact 
+Add singlephase reactive transport solver integrated with HPCReact
 
 PR #3795 (2025-12-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3795-15047-606f4ac.tar.gz>
 =====================
