@@ -188,8 +188,12 @@ public:
    * @brief Construct a new Stats Aggregator object
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
+   * @param meshBodies The Group containing the MeshBody objects
+   * @param statsOutputEnabled If true, the stats are saved in the output HDF5
+   *                           (through dataRepository::RestartFlags, but not functional for this output for now).
    */
   StatsAggregator( dataRepository::DataContext const & ownerDataContext,
+                   dataRepository::Group & meshBodies,
                    bool statsOutputEnabled );
 
   /**

@@ -139,9 +139,9 @@ struct StatisticsKernel
       // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
       real64 const uncompactedPoreVol = volume[ei] * refPorosity[ei];
       real64 const dynamicPoreVol = volume[ei] * porosity[ei][0];
-      
+
       subRegionElemCount += 1;
-      
+
       subRegionMinPres.min( pres[ei] );
       subRegionAvgPresNumerator += uncompactedPoreVol * pres[ei];
       subRegionMaxPres.max( pres[ei] );

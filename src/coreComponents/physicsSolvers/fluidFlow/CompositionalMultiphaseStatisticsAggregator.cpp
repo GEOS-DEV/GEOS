@@ -60,19 +60,19 @@ CFLStatistics::CFLStatistics( string const & name,
 }
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext,
+                                  dataRepository::Group & meshBodies,
                                   bool const dataOutputEnabled ):
-  Base( ownerDataContext, dataOutputEnabled ),
+  Base( ownerDataContext, meshBodies, dataOutputEnabled ),
   m_params()
 {}
 
-void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBodies,
-                                                 CompositionalMultiphaseBase & solver )
+void StatsAggregator::initStatisticsAggregation( CompositionalMultiphaseBase & solver )
 {
   m_solver = &solver;
   m_numPhases = solver.numFluidPhases();
   m_numComponents = solver.numFluidComponents();
 
-  Base::initStatisticsAggregation( meshBodies, solver );
+  Base::initStatisticsAggregation( solver );
 }
 
 void StatsAggregator::enableRegionStatisticsAggregation( string_array const & setNames )
@@ -99,7 +99,7 @@ void StatsAggregator::enableCFLStatistics()
   if( m_solver == nullptr )
     return;
 
-  m_solver->registerDataForCFL( *m_meshBodies );
+  m_solver->registerDataForCFL( m_meshBodies );
   for( auto const & path : m_discretizationsPaths )
   {
     MeshLevel & mesh = getMeshLevel( path );

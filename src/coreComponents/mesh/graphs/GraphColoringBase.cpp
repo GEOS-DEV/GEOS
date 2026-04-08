@@ -67,32 +67,28 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjn
                                          const int color,
                                          MPI_Comm comm )
 {
-  // Gather neighbor colors asynchronously
-  std::vector< int > neighborColors( adjncy.size());
-  std::vector< MPI_Request > requests( adjncy.size() * 2, MPI_REQUEST_NULL ); // Two requests per neighbor (send and receive)
-  for( size_t i = 0; i < adjncy.size(); ++i )
-  {
-    int const neighborRank = adjncy[i];
-    MpiWrapper::iSend( &color, 1, neighborRank, 0, comm, &requests[i * 2] );
-    MpiWrapper::iRecv( &neighborColors[i], 1, neighborRank, 0, comm, &requests[i * 2 + 1] );
-  }
+  // Use a collective allgather to retrieve every rank's color.
+  // The original point-to-point iSend/iRecv approach with a fixed tag is
+  // fragile in Release builds: messages from successive calls to getColor()
+  // (one per SurfaceGenerator time-step) can linger in the MPI queue and be
+  // matched by the wrong iRecv, producing false color conflicts.
+  // Allgather has no tag and is always safe.
+  int const size = MpiWrapper::commSize( comm );
+  std::vector< int > allColors( size );
+  MpiWrapper::allgather( &color, 1, allColors.data(), 1, comm );
 
-  // Wait for all asynchronous communications to complete
-  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
-
-
-  // Check for color conflicts
+  // Check for color conflicts with each listed neighbor.
   bool isLocalColoringValid = true;
-  for( const auto & neighborColor : neighborColors )
+  for( camp::idx_t const neighborRank : adjncy )
   {
-    if( color == neighborColor )
+    if( allColors[neighborRank] == color )
     {
       isLocalColoringValid = false;
       break;
     }
   }
 
-  // Get a consolidated isColoringValid
+  // Reduce to a single global answer.
   bool isColoringValid = MpiWrapper::allReduce( &isLocalColoringValid, MpiWrapper::Reduction::LogicalAnd, comm );
 
   return isColoringValid;

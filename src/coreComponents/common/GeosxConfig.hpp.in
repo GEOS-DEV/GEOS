@@ -86,6 +86,9 @@
 /// Enables use of Hypre library (CMake option ENABLE_HYPRE)
 #cmakedefine GEOS_USE_HYPRE
 
+/// Enables use of HYPREDRV library (CMake option ENABLE_HYPREDRV)
+#cmakedefine GEOS_USE_HYPREDRV
+
 /// Denotes HYPRE using CPU
 #define GEOS_USE_HYPRE_CPU 0
 /// Denotes HYPRE using CUDA

@@ -48,9 +48,11 @@ inline RegionStatisticsBase::RegionStatisticsBase( string const & targetName,
 
 template< typename Impl >
 StatsAggregatorBase< Impl >::StatsAggregatorBase( dataRepository::DataContext const & ownerDataContext,
+                                                  dataRepository::Group & meshBodies,
                                                   bool const dataOutputEnabled ):
   m_ownerDataContext( ownerDataContext ),
   m_dataOutputEnabled( dataOutputEnabled ),
+  m_meshBodies( meshBodies ),
   m_isAnySetsIntersecting( false )
 {}
 
@@ -79,14 +81,11 @@ StatsAggregatorBase< Impl >::getMeshLevelPartialSetNames( MeshLevel const & mesh
 
 template< typename Impl >
 void
-StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & meshBodies,
-                                                        SolverType & solver )
+StatsAggregatorBase< Impl >::initStatisticsAggregation( SolverType & solver )
 {
-  m_meshBodies = &meshBodies;
-
-  solver.forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                                           MeshLevel & mesh,
-                                                           string_array const & regionNames )
+  solver.forDiscretizationOnMeshTargets( m_meshBodies, [&] ( string const & meshBodyName,
+                                                             MeshLevel & mesh,
+                                                             string_array const & regionNames )
   {
     // getting the container of all requesters statistics groups (can be already initialized)
     dataRepository::Group * meshStatsGroup = mesh.getGroupPointer( string( ViewKeys::statisticsString()) );
@@ -101,7 +100,7 @@ StatsAggregatorBase< Impl >::initStatisticsAggregation( dataRepository::Group & 
                           m_ownerDataContext );
     meshStatsGroup->registerGroup( ownerName );
 
-    MeshBody const & body = m_meshBodies->getGroup< MeshBody >( meshBodyName );
+    MeshBody const & body = m_meshBodies.getGroup< MeshBody >( meshBodyName );
 
     /// finding all sets in this mesh level
     std::set< string > foundSetNames = getMeshLevelPartialSetNames( mesh, regionNames );
@@ -124,9 +123,6 @@ void
 StatsAggregatorBase< Impl >::enableRegionStatisticsAggregation( RegionStatsRegisterFunc && registerStatsFunc,
                                                                 string_array const & setNames )
 {
-  if( m_meshBodies == nullptr )
-    return;
-
   m_setNames.insert( setNames.begin(), setNames.end() );
   if( m_setNames.empty())
     m_setNames.emplace( "all" );
@@ -246,7 +242,7 @@ template< typename Impl >
 MeshLevel &
 StatsAggregatorBase< Impl >::getMeshLevel( DiscretizationSetPath const & path ) const
 {
-  MeshBody & body = m_meshBodies->getGroup< MeshBody >( path.m_meshBody );
+  MeshBody & body = m_meshBodies.getGroup< MeshBody >( path.m_meshBody );
   MeshLevel & mesh = body.getMeshLevel( path.m_meshLevel );
   return mesh;
 }

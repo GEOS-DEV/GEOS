@@ -373,8 +373,9 @@ void SinglePhaseWell::precomputeReferenceConditions( real64 const time_n,
       if( !m_reservoirStatsAggregator )
       { // lazily initialize the region statistics aggregator
         m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( wellControls.getDataContext(),
+                                                                          meshBodies,
                                                                           false );
-        m_reservoirStatsAggregator->initStatisticsAggregation( meshBodies, flowSolver );
+        m_reservoirStatsAggregator->initStatisticsAggregation( flowSolver );
         m_reservoirStatsAggregator->enableRegionStatisticsAggregation();
       }
 
