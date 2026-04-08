@@ -1,11 +1,9 @@
-<?xml version="1.0"?>
+<?xml version='1.0' encoding='utf-8'?>
 <VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
   <UnstructuredGrid>
     <Piece NumberOfPoints="125" NumberOfCells="64">
-      <PointData Scalars="f1_node_set">
-        <DataArray type="Int64" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAADoAwAAGQAAAA==eJxjYBjZgHGA1FEbjPqDMnXDHQAAFaAACg==
-        </DataArray>
+      <PointData>
+        <DataArray type="UInt8" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">AQAAAACAAAB9AAAAEgAAAA==eJxjYMAPGFEJSiQwAQACtAAK</DataArray>
       </PointData>
       <CellData>
       </CellData>
