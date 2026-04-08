@@ -102,7 +102,7 @@ TEST( testComputationalGeometry, checkHighAspectRatio )
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
   auto faceArea = computationalGeometry::centroid_3DPolygon( indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, TOL );
 
-  constexpr real64 EXPECTED_AREA = 0.5*std::sqrt( LvArray::math::square( xa*yb-ya*xb ) +
+  constexpr real64 EXPECTED_AREA = 0.5*LvArray::math::sqrt( LvArray::math::square( xa*yb-ya*xb ) +
                                                   LvArray::math::square( ya*zb-za*yb ) +
                                                   LvArray::math::square( za*xb-xa*zb ) );
 
