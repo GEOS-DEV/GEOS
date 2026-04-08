@@ -9,7 +9,7 @@ Summary
 =======
 
 The CO2-brine model implemented in GEOS includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
-We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
+We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in a supercritical, liquid, or gas state).
 Both the water component and the CO2 component can be present in the CO2 phase as well as in the brine phase depending on the solubility model selected.
 Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
@@ -23,13 +23,13 @@ The update of the fluid properties is done in two steps:
 
 1. The phase fractions (:math:`\nu_p`) and phase component fractions (:math:`y_{c,p}`) are computed as a function of pressure (:math:`p`), temperature (:math:`T`), overall component fractions (:math:`z_c`), and a constant salinity.
 
-2. Computation of the phase properties as functions of pressure, temperature, the updated phase component fractions, at a constant salinity.
+2. Computation of the phase properties as functions of pressure, temperature and the updated phase component fractions, at a constant salinity.
 
   a. Phase densities (:math:`\rho_p`) 
   b. Phase viscosities (:math:`\mu_p`) 
   c. Phase enthalpies (:math:`H_p`) for thermal models.
 
-Once the phase fractions, phase component fractions, phase densities, phase viscosities, phase enthalpies--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
+Once the phase fractions, phase component fractions, phase densities, phase viscosities and phase enthalpies--as well as their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
 
 .. note::
    The fluid model will always calculate the derivatives with respect to temperature irrespective of whether the flow solver is thermal or not. For isothermal simulations, the derivatives are ignored.
@@ -39,13 +39,13 @@ The models that are used in steps 1) and 2) are reviewed in more details below.
 Step 1: Computation of the phase fractions and phase component fractions (flash)
 ================================================================================
 
-At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the gas phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of water and for water this will be moles of H2O vapourised in the CO2 phase per kg of CO2.
+At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the gas phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of water and for water this will be moles of H2O vaporized in the CO2 phase per kg of CO2.
 
 There are 3 alternatives to providing solubility data for the phase partition calculation.
 
 Duan and Sun (2003) model
 -------------------------
-When the solubility model of Duan and Sun (2003) is selected the solubility of CO2 in brine is calculated while the vaporization of H2O into the gas phase is ignored (zero solubility of H2O in gas). Solubility values are tabulated for the selected pressure and temperature points using the Duan and Sun (2003) model calculates CO2 solubility by combining a thermodynamic framework for the liquid phase with an accurate equation of state for the vapor phase, enabling precise predictions across wide ranges of temperature, pressure, and salinity.
+When the solubility model of Duan and Sun (2003) is selected the solubility of CO2 in brine is calculated while the vaporization of H2O into the gas phase is ignored (zero solubility of H2O in gas). Solubility values are tabulated for the selected pressure and temperature points using the Duan and Sun (2003) model which calculates CO2 solubility by combining a thermodynamic framework for the liquid phase with an accurate equation of state for the vapor phase, enabling precise predictions across wide ranges of temperature, pressure, and salinity.
 
 Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
 
@@ -57,7 +57,7 @@ Specifically, we solve the following nonlinear CO2 equation of state (equation (
 
 where :math:`p_r = p / p_{crit}` and :math:`T_r = T / T_{crit}` are respectively the reduced pressure and the reduced temperature.
 We refer the reader to Table (A1) in Duan and Sun (2003) for the definition of the coefficients :math:`a_i` involved in the previous equation. 
-Using the reduced volume, :math:`V_r`, we compute the fugacity coefficient of CO2, :math:`\ln_{\phi}(p,T)`, using equation (A6) of Duan and Sun (2003).
+Using the reduced volume, :math:`V_r`, we compute the fugacity coefficient of CO2, :math:`{\phi}(p,T)`, using equation (A6) of Duan and Sun (2003).
 To conclude this preprocessing step, we use the fugacity coefficient of CO2 to compute and store the solubility of CO2 in brine, :math:`s_{CO2}`, using equation (6) of Duan and Sun (2003):
 
 .. math::
@@ -221,7 +221,7 @@ CO2 phase density, viscosity and enthalpy
 -----------------------------------------
 
 In GEOS, the computation of the CO2 phase density and viscosity is entirely based on look-up in precomputed tables.
-The user defines the pressure (in Pascal) and temperature (in Kelvin) axis of the density table to be internally generated.
+The user defines the pressure (in Pascal) and temperature (in Kelvin) bounds for the density table to be internally generated.
 
 A correlation due to Span and Wagner (1996) is used to populate the table of CO2 phase densities and is valid for pressures less than :math:`8 \times 10^8` Pascal and temperatures less than 1073.15 Kelvin. Using the user defined parameters, GEOS internally constructs a two-dimensional table storing the values of density as a function of pressure and temperature.
 As explained in the work of Span and Wagner (1996), the density is calculated by solving the following nonlinear Helmholtz energy equation for each pair :math:`(p,T)` to obtain the value of density, :math:`\rho_{g}`:
@@ -340,13 +340,13 @@ and :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
 Brine density and viscosity using Ezrokhi correlation
 -------------------------------------------------------
 
-Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi correlation presented in Zaytsev and Aseyev (1993):
+Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at the specified pressure and temperature corrected by the Ezrokhi correlation presented in Zaytsev and Aseyev (1993):
 
 .. math::
    log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) x_{CO2,\ell} \\
    A(T) &= a_0 + a_1T +  a_2T^2,
 
-where :math:`a_0, a_1, a_2` are correlation coefficients defined by the user, while :math:`x_{CO2,\ell}` is the mass fraction of the CO2 component in brine, computed from molar fractions as
+where :math:`a_0, a_1, a_2` are correlation coefficients defined by the user, while :math:`x_{CO2,\ell}` is the fraction of the CO2 component in brine, computed from molar fractions as
 
 .. math::
    x_{CO2,\ell} = \frac{M_{CO2}y_{CO2,\ell}}{M_{CO2}y_{CO2,\ell} + M_{H2O}y_{H2O,\ell}},
@@ -356,7 +356,7 @@ Pure water density is computed according to:
 .. math::
    \rho_w = \rho_{w,sat}(T) e^{c_w * (P-P_{w,sat}(T))},
 
-where :math:`c_w` is water compressibility provided by the user with a default value of :math:`4.5 \times 10^{-10} Pa^{-1}`, while :math:`\rho_{w,sat}(T)` and :math:`P_{w,sat}(T)` are density and pressure of saturated water at a given temperature.
+where :math:`c_w` is water compressibility provided by the user with a default value of :math:`4.5 \times 10^{-10} Pa^{-1}`, while :math:`\rho_{w,sat}(T)` and :math:`P_{w,sat}(T)` are the density and pressure of saturated water at a given temperature.
 Both are obtained through internally constructed tables tabulated as functions of temperature and filled with the steam table data from Engineering ToolBox (2003, 2004).
 
 Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`\mu_w` similarly:
@@ -367,12 +367,12 @@ Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`
 
 where :math:`b_0, b_1, b_2` are correlation coefficients defined by the user.
 
-Mass fraction of CO2 component in brine :math:`x_{CO2,\ell}` is exactly as in density calculation. The dependency of pure water viscosity from pressure is ignored, and it is approximated as saturated pure water viscosity:
+Mass fraction of the CO2 component in brine :math:`x_{CO2,\ell}` is computed exactly as in the density calculation. The dependency of pure water viscosity on pressure is ignored, and it is approximated as saturated pure water viscosity:
 
 .. math::
    \mu_w(P, T) = \mu_{w, sat} (T),
 
-which is tabulated using internal table as a function of temperature based on steam table data Engineering ToolBox (2004).
+which is tabulated using an internal table as a function of temperature based on steam table data Engineering ToolBox (2004).
 
 Enthalpy of brine
 -----------------
@@ -397,7 +397,7 @@ where :math:`C` is the composition fraction of the brine component. Depending on
 Parameters
 =========================
 
-The models are represented by in the input ``<CO2BrinePhillipsFluid>``, ``<CO2BrineEzrokhiFluid>`` nodes for the isothermal model and ``<CO2BrinePhillipsThermalFluid>`` and ``<CO2BrineEzrokhiThermalFluid>`` nodes for their thermal counterparts.
+The models are represented in the input by the ``<CO2BrinePhillipsFluid>`` and ``<CO2BrineEzrokhiFluid>`` nodes for the isothermal model and ``<CO2BrinePhillipsThermalFluid>`` and ``<CO2BrineEzrokhiThermalFluid>`` nodes for their thermal counterparts.
 
 The following attributes are supported:
 
@@ -422,6 +422,8 @@ water,liquid  Water component
 ============= ===============
 
 The salinity is specified in moles per kg of brine using the ``salinity`` attribute.
+
+The solubility model is selected using the ``solubilityModel`` attribute. If the solubility is set to ``Tables`` then user defined tables should be provided using the ``solubilityTableNames`` attribute. If a single table is provided, this will be treated as the CO2 solubility table while water vaporization will be zero. It 2 tables are provided, then the second table will be treated as the water vaporization table. Both values must give the names of ``<TableFunction>`` xml elements which define lookup tables for functions of pressure and temperature.
 
 These models utilize pre-computed lookup tables for fluid properties. These tables are constructed over defined two-dimensional grids of pressure and temperature. The user must specify the discretization of these grids using specific XML attributes.
 
@@ -528,10 +530,21 @@ References
   Coefficients <https://www.engineeringtoolbox.com/water-density-specific-weight-d_595.html>`__,
   2003
 
-
 - Engineering ToolBox, `Water - Dynamic (Absolute) and Kinematic Viscosity 
   <https://www.engineeringtoolbox.com/water-dynamic-kinematic-viscosity-d_596.html>`__,
   2004
+
+- N. Spycher, K. Pruess and J. Ennis-King, `CO2-H2O mixtures in the geological sequestration of CO2. I.
+  Assessment and calculation of mutual solubilities from 12 to 100°C and up to 600 bar
+  <https://doi.org/10.1016/S0016-7037(03)00273-4>`__,
+  Geochimica et Cosmochimica Acta,
+  vol. 67, pp. 3015-3031, 2003.
+
+- N. Spycher and K. Pruess, `CO2-H2O mixtures in the geological sequestration of CO2. II.
+  Partitioning in chloride brines at 12-100°C and up to 600 bar
+  <https://doi.org/10.1016/j.gca.2005.01.015>`__,
+  Geochimica et Cosmochimica Acta,
+  vol. 69, pp. 3309-3320, 2005.
 
 - E. E. Michaelides, `Thermodynamic properties of geothermal fluids.
   <https://www.osti.gov/biblio/6760030>`__,

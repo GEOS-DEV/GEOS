@@ -162,9 +162,6 @@ Under the **Constitutive** tag, four items can be found:
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-.. note::
-   It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified in the PVT files. GEOS will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and the quality of the results will likely be negatively impacted.
-
 The PVT data specified by **CO2BrinePhillipsFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
 We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
 The model is described in detail in  :ref:`CO2-EOS`.
