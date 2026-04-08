@@ -127,7 +127,12 @@ public:
                              this->getCatalogName(), this->getName(), this->flowSolver()->getCatalogName() ),
                    InputError );
 
-    setMGRStrategy();
+    // Sequential coupling uses the subsolver linear systems directly, so the
+    // coupled solver does not need a top-level MGR strategy.
+    if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      setMGRStrategy();
+    }
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
