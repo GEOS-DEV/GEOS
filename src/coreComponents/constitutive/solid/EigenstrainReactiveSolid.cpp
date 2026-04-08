@@ -20,8 +20,12 @@
 
 #include "EigenstrainReactiveSolid.hpp"
 #include "ElasticIsotropic.hpp"
+#include "Damage.hpp"
+#include "DamageSpectral.hpp"
+#include "DamageVolDev.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/DamagePermeability.hpp"
 
 namespace geos
 {
@@ -48,9 +52,16 @@ void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability > EigenStrainReactiveElasticIsotropicConstant;
 typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > EigenStrainReactiveElasticIsotropicCK;
 
+typedef EigenstrainReactiveSolid< Damage< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageDamagePermeability;
+// typedef EigenstrainReactiveSolid< DamageSpectral< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageSpectralDamagePermeability;
+typedef EigenstrainReactiveSolid< DamageVolDev< ElasticIsotropic >, DamagePermeability > EigenStrainReactiveDamageVolDevDamagePermeability;
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageDamagePermeability, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageSpectralDamagePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveDamageVolDevDamagePermeability, string const &, Group * const )
 
 
 }
