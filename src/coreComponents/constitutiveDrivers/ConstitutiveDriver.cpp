@@ -24,6 +24,7 @@
 
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/Path.hpp"
 #include "common/MpiWrapper.hpp"
 
 namespace geos
@@ -118,30 +119,36 @@ void ConstitutiveDriver::outputResults() const
 void ConstitutiveDriver::outputToFile() const
 {
   string const outputDir = TaskBase::getOutputDirectory();
-  string const outputPath = joinPath( outputDir, m_outputFile );
-  FILE * fp = fopen( outputPath.c_str(), "w" );
+  string const outputPath = outputDir.empty() ? m_outputFile : joinPath( outputDir, m_outputFile );
+
+  std::ofstream file( outputPath, std::ios_base::out );
+
+  GEOS_THROW_IF( !file,
+                 GEOS_FMT( "Failed to write to file {}.", outputPath ),
+                 RuntimeError );
 
   string_array columnNames;
   getColumnNames( columnNames );
   integer const numColumns = static_cast< integer >( columnNames.size() );
   for( integer col = 0; col < numColumns; ++col )
   {
-    fprintf( fp, "# column %d = %s\n", col+1, columnNames[col].c_str() );
+    file << "# column " << col+1 << " = " << columnNames[col] << "\n";
   }
 
   integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
-  string const format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
+  file << std::scientific << std::setprecision( precision );
+  integer const width =  precision+7;
 
   for( integer step = 0; step <= m_numSteps; ++step )
   {
     for( integer col = 0; col < numColumns; ++col )
     {
-      fprintf( fp, format.c_str(), m_table( step, col ) );
+      file << std::setw( width ) << m_table( step, col );
     }
-    fprintf( fp, "\n" );
+    file << "\n";
   }
 
-  fclose( fp );
+  file.close();
 }
 
 void ConstitutiveDriver::outputToConsole() const
@@ -210,7 +217,7 @@ void ConstitutiveDriver::outputToConsole() const
   TableLayout const tableLayout( tableTitle, columns );
   TableTextFormatter const tableText( tableLayout );
 
-  std::cout << tableText.toString( tableData ) << std::endl;
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, tableText.toString( tableData ) );
 }
 
 void ConstitutiveDriver::allocateTable( integer const numColumns,

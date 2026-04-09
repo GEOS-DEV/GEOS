@@ -29,7 +29,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="50"
-      output="testPVT_hydrogenMixtureB.txt"
+      output="testPVT_CO2.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -39,7 +39,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="50"
-      output="testPVT_hydrogenMixtureB.txt"
+      output="testPVT_Brine.txt"
       logLevel="1"/>
   </Tasks>
 
@@ -80,7 +80,7 @@
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
-      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
+      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt" />
 
     <CompositionalMultiphaseFluid
       name="hydrogenMixture"

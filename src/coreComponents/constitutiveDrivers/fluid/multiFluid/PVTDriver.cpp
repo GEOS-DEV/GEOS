@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geos
 {
