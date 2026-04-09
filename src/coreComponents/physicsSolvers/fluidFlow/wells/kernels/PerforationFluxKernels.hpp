@@ -476,11 +476,11 @@ public:
           m_dCompPerfRate[iperf][TAG::WELL][ic][CP_Deriv::dC+jc] += m_dWellElemCompFrac_dCompDens[iwelem][ic][jc] * flux;
         }
       }
-          } // end upstream
-      if constexpr ( IS_THERMAL )
-      {
+    }       // end upstream
+    if constexpr ( IS_THERMAL )
+    {
       fluxKernelOp( iwelem, er, esr, ei, potDiff, dPotDiff, flux, dFlux );
-      }
+    }
 
   }
   /**
@@ -796,21 +796,21 @@ public:
             m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = resPhaseMobE * dPotDiff[TAG::WELL][jc];
           }
           m_energyPerfFlux[iperf] +=   eflux;
-        // energy equation derivatives WRT res P & T
+          // energy equation derivatives WRT res P & T
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dEFlux[TAG::RES][CP_Deriv::dP] * resPhaseVolFrac +
                                                               eflux *   m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP];
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dEFlux[TAG::RES][CP_Deriv::dT] * resPhaseVolFrac +
                                                               eflux *m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dT];
-        real64 dProp_dC[numComp]{};
-        applyChainRule( NC,
-                        m_dResCompFrac_dCompDens[er][esr][ei],
+          real64 dProp_dC[numComp]{};
+          applyChainRule( NC,
+                          m_dResCompFrac_dCompDens[er][esr][ei],
                           m_dResPhaseFraction[er][esr][ei][0][ip],
-                        dProp_dC,
-                        Deriv::dC );
-        for( integer jc = 0; jc < NC; ++jc )
-        {
+                          dProp_dC,
+                          Deriv::dC );
+          for( integer jc = 0; jc < NC; ++jc )
+          {
             m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  dEFlux[TAG::RES][CP_Deriv::dC+jc];
-        }
+          }
 
         } // end resevoir is upstream phase loop
 

@@ -343,14 +343,14 @@ void printResiduals( array1d< real64 > const & rsd1,
 }
 template< typename LAMBDA >
 void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseBase > & solver,
-                                         DomainPartition & domain,
-                                         real64 const perturbParameter,
-                                         real64 const time_n,
-                                         real64 const relTol, bool diag_check, std::string const & testName,
-                                         LAMBDA && assembleFunction )
+                                DomainPartition & domain,
+                                real64 const perturbParameter,
+                                real64 const time_n,
+                                real64 const relTol, bool diag_check, std::string const & testName,
+                                LAMBDA && assembleFunction )
 {
   GEOS_UNUSED_VAR( time_n );
-  GEOS_UNUSED_VAR ( testName);
+  GEOS_UNUSED_VAR ( testName );
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
   CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
@@ -760,8 +760,8 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Syste
   DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
   testWellNumericalJacobian( *solver, domain, perturb, time, tol, false, "Check_System",
-                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+                             [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
   {
 
     solver->wellSolver()->assembleSystem( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
@@ -777,9 +777,9 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Accum
 
   DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
-  testWellNumericalJacobian( *solver, domain, perturb, time, tol,false, "Check_Accum",
-                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+  testWellNumericalJacobian( *solver, domain, perturb, time, tol, false, "Check_Accum",
+                             [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assembleAccumulationTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
@@ -792,9 +792,9 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Press
 
   DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
-  testWellNumericalJacobian( *solver, domain, perturb, time, tol, true,"Check_PressureRelation",
-                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+  testWellNumericalJacobian( *solver, domain, perturb, time, tol, true, "Check_PressureRelation",
+                             [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assemblePressureRelations( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
@@ -809,8 +809,8 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, jacobianNumericalCheck_Flux 
   DomainPartition & domain =  state.getProblemManager().getDomainPartition();
 
   testWellNumericalJacobian( *solver, domain, perturb, time, tol, true, "Check_Flux",
-                                      [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                            arrayView1d< real64 > const & localRhs )
+                             [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs )
   {
     solver->wellSolver()->assembleFluxTerms( time, dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
