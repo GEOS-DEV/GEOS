@@ -33,6 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -1064,8 +1065,9 @@ bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
   GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  integer numNegativePressures = 0;
-  real64 minPressure = 0.0;
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+  real64 minNegPres = 0.0;
 
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -1085,17 +1087,37 @@ bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
   numNegativePressures += statistics.first;
   minPressure = std::min( minPressure, statistics.second );
 
+    {
+      globalIndex const rankOffset = dofManager.rankOffset();
+      // get the degree of freedom numbers on well elements
+      arrayView1d< globalIndex const > const & dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-  numNegativePressures = MpiWrapper::sum( numNegativePressures );
+      // get a reference to the primary variables on well elements
+      arrayView1d< real64 const > const & pres =
+        subRegion.getField< well::pressure >();
 
-  if( numNegativePressures > 0 )
-  {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                     getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
-  }
+      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+      auto const results = singlePhaseBaseKernels::SolutionCheckKernel::
+                             launch< parallelDevicePolicy<> >( localSolution,
+                                                               rankOffset,
+                                                               dofNumber,
+                                                               ghostRank,
+                                                               pres,
+                                                               scalingFactor,
+                                                               negPresCollector );
+
+      minNegPres = std::min( minNegPres, results.minNegPres );
+    } );
+  } );
+
+  ElementsReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
+  rankNegPressureIdsOutput.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                               "negative pressure", minNegPres, units::Unit::Pressure );
+
+  return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }
 
 
