@@ -146,9 +146,36 @@ void sortAttributes( xmlWrapper::xmlNode node )
   }
 }
 
+void copySchemaToArchive( string const & archiveDir )
+{
+  std::error_code ec;
+  std::filesystem::path const exeDir = std::filesystem::read_symlink( "/proc/self/exe", ec ).parent_path();
+  if( ec )
   {
     return;
   }
+
+  std::filesystem::path const candidates[] = {
+    exeDir / "../share/geosx/schema/schema.xsd",
+    exeDir / "schema.xsd"
+  };
+
+  for( auto const & schemaSource : candidates )
+  {
+    if( std::filesystem::is_regular_file( schemaSource ) )
+    {
+      std::filesystem::path const schemaDest = std::filesystem::path( archiveDir ) / "schema.xsd";
+      std::filesystem::copy_file( schemaSource,
+                                  schemaDest,
+                                  std::filesystem::copy_options::overwrite_existing,
+                                  ec );
+      GEOS_LOG_IF( ec, GEOS_FMT( "Failed to copy schema to archive: {}", ec.message() ) );
+      break;
+    }
+  }
+}
+
+}
 
 
 string archiveInputDeck( string_array const & inputFileNames,
@@ -189,6 +216,8 @@ string archiveInputDeck( string_array const & inputFileNames,
   sortAttributes( root );
 
   flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
+
+  copySchemaToArchive( archiveDir );
 
   return archiveDir;
 }
