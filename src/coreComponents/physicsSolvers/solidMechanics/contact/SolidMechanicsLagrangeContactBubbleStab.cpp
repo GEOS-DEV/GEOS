@@ -253,6 +253,24 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
 {
   // setup monolithic coupled system
 
+  // Ensure kf1 node ordering is consistent with kf0 for conforming contact kernels.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      if( subRegion.size() > 0 )
+      {
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+      }
+    } );
+  } );
+
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
 
@@ -941,6 +959,11 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
+    // Ensure the stick/slip maps contain an entry for this mesh even when
+    // the fracture face type map is empty (no fracture elements).
+    this->m_faceTypesToFaceElementsStick.get_inserted( meshName );
+    this->m_faceTypesToFaceElementsSlip.get_inserted( meshName );
+
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -1031,6 +1054,16 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
+    // When there are no fracture face elements, insert empty lists so that
+    // downstream .at( meshName ) lookups do not throw.
+    if( subRegion.size() == 0 )
+    {
+      this->m_faceTypesToFaceElements.get_inserted( meshName );
+      return;
+    }
+
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1046,7 +1079,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
@@ -1106,6 +1139,13 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    // Nothing to do when there are no fracture face elements.
+    if( subRegion.size() == 0 )
+    {
+      return;
+    }
+
     // Array to store face indexes
     array1d< localIndex > tmpSpace( 2*subRegion.size());
     SortedArray< localIndex > faceIdList;
@@ -1126,6 +1166,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
     // Sort indexes to enable efficient searching using binary search.
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    // Move data back to host: after the device sort the buffer lives on the GPU,
+    // but SortedArray::insert is a host-only operation that dereferences the iterators.
+    tmpSpace_v.move( LvArray::MemorySpace::host );
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
 
     // Search for bubble element on each CellElementSubRegion and
@@ -1147,6 +1190,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
       arrayView1d< localIndex > const perms_v = perms.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
+      // Move faceIdList to device so that the SortedArrayView can be safely
+      // accessed inside the GPU kernel (faceIdList was populated on the host).
+      faceIdList.move( parallelDeviceMemorySpace );
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),
