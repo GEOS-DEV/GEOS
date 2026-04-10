@@ -257,8 +257,12 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
 
   domain.forMeshBodies( [&] ( MeshBody & meshBody )
   {
+    bool processMesh = true;
     meshBody.forMeshLevels( [&] ( MeshLevel & mesh )
     {
+      if( !processMesh )
+        return;
+      processMesh = false;
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       for( localIndex er = 0; er < elemManager.numRegions(); ++er )
@@ -349,7 +353,7 @@ void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,
 
               fillNumericalJacobian( residual.toViewConst(),
                                      residualOrig.toViewConst(),
-                                     dofNumber[ei],
+                                     dofNumber[ei]+1,
                                      dT,
                                      jacobianFD.toViewConstSizes() );
             }
@@ -528,6 +532,7 @@ protected:
                            [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
     {
+      solver->wellSolver()->assembleSystem( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
       solver->assembleCouplingTerms( TIME, DT, domain, solver->getDofManager(), localMatrix, localRhs );
     } );
   }

@@ -829,9 +829,8 @@ public:
           m_energyPerfFlux[iperf] += phaseFlux * wellelem_enthalpy;
 
           // energy equation derivatives WRT res P & T
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy;
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy;
-
+          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy * m_wellElemPhaseFrac[iwelem][0][iphase];
+          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy * m_wellElemPhaseFrac[iwelem][0][iphase];
           m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy
                                                                + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP];
 
