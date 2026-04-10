@@ -1100,7 +1100,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                         fs );
       }
 
-      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, 
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
                                                parallelDevicePolicy<> >( fs,
                                                                          targetSet,
                                                                          time + dt,
@@ -1118,7 +1118,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, 
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
                                                parallelDevicePolicy<> >( fs,
                                                                          targetSet,
                                                                          time + dt,
@@ -1146,7 +1146,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
                                         fs );
       }
 
-      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, 
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
                                                parallelDevicePolicy<> >( fs,
                                                                          targetSet,
                                                                          time + dt,

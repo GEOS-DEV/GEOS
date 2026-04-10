@@ -44,7 +44,7 @@ class Function;
  */
 class FieldSpecificationImpl
 {
-  public:
+public:
 
   /**
    * @brief Apply this field specification to the discretization
@@ -461,11 +461,11 @@ class FieldSpecificationImpl
         localIndex const a = targetSet[ i ];
         dof[ i ] = dofMap[ a ] + component;
         FIELD_OP::SpecifyFieldValue( dof[ i ],
-                                    dofRankOffset,
-                                    matrix,
-                                    rhsContribution[ i ],
-                                    value,
-                                    lambda( a ) );
+                                     dofRankOffset,
+                                     matrix,
+                                     rhsContribution[ i ],
+                                     value,
+                                     lambda( a ) );
       } );
     }
     else
@@ -483,11 +483,11 @@ class FieldSpecificationImpl
         localIndex const a = targetSet[ i ];
         dof[ i ] = dofMap[ a ] + component;
         FIELD_OP::SpecifyFieldValue( dof[ i ],
-                                    dofRankOffset,
-                                    matrix,
-                                    rhsContribution[ i ],
-                                    value * results[ i ],
-                                    lambda( a ) );
+                                     dofRankOffset,
+                                     matrix,
+                                     rhsContribution[ i ],
+                                     value * results[ i ],
+                                     lambda( a ) );
       } );
     }
   }

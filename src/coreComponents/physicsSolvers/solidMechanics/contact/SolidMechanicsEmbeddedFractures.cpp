@@ -535,7 +535,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, 
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
                                                parallelHostPolicy >( fs,
                                                                      targetSet,
                                                                      time_n+dt,
