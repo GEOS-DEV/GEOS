@@ -302,11 +302,11 @@ string buildMultipleInputXML( string_array const & inputFileList,
                               string const & outputDir = {} );
 
 /**
- * @brief Collect the absolute paths of XML files directly included 
+ * @brief Collect the absolute paths of XML files directly included
  *        by a given xml file
  * @param[in] filePath absolute path of the xml file to inspect
  * @param[inout] collection collection to append with absolute file paths
- * 
+ *
  * Only one level of inclusion is collected (files included by the included
  * files are not added). See collectIncludedRecursive if you want this behavior.
  * Duplicate entries are not inserted in @p collection
@@ -315,11 +315,11 @@ void collectIncluded( string const & filePath,
                       std::set< string > & collection );
 
 /**
- * @brief Collect the absolute paths of XML files directly included 
+ * @brief Collect the absolute paths of XML files directly included
  *        by a given xml file
  * @param[in] filePath absolute path of the xml file to inspect
  * @return a collection of absolute paths
- * 
+ *
  * Only one level of inclusion is collected (files included by the included
  * files are not added). See collectIncludedRecursive if you want this behavior.
  * Duplicate entries are not inserted in @p collection
@@ -340,7 +340,7 @@ void collectIncludedRecursive( string const & filePath,
  * @brief Recursively collect the absolute paths of an XML file and all XML
  *        files it includes
  * @param[in] filePath absolute path of the root XML file
- * @return a collection of absolute paths of every visited file (including 
+ * @return a collection of absolute paths of every visited file (including
  *         @p filePath itself)
  */
 std::set< string > collectIncludedRecursive( string const & filePath );

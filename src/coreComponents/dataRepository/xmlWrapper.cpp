@@ -281,9 +281,9 @@ void collectIncluded( string const & filePath,
 
   string const currentDir = splitPath( filePath ).first;
 
-  for ( auto & includedNode : rootNode.children( includedListTag ) )
+  for( auto & includedNode : rootNode.children( includedListTag ) )
   {
-    for ( auto & fileNode : includedNode.children( includedFileTag ) )
+    for( auto & fileNode : includedNode.children( includedFileTag ) )
     {
       string const fileName = fileNode.attribute( "name" ).value();
 
@@ -291,9 +291,9 @@ void collectIncluded( string const & filePath,
                      GEOS_FMT( "An included file entry in '{}' has an empty or missing 'name' attribute.", filePath ),
                      InputError );
 
-      string absolutePath = isAbsolutePath( fileName ) 
+      string absolutePath = isAbsolutePath( fileName )
                             ? getAbsolutePath( fileName )
-                            : getAbsolutePath( joinPath( currentDir, fileName ) );   
+                            : getAbsolutePath( joinPath( currentDir, fileName ) );
       collection.insert( absolutePath );
     }
   }
@@ -312,7 +312,7 @@ void collectIncludedRecursive( string const & filePath,
   // We want absolute paths
   string const absFilePath = getAbsolutePath( filePath );
 
-  if ( collection.count( absFilePath ) > 0 )
+  if( collection.count( absFilePath ) > 0 )
   {
     return;
   }
@@ -327,17 +327,20 @@ void collectIncludedRecursive( string const & filePath,
 
   string const currentDir = splitPath( filePath ).first;
 
-  for ( auto & includedNode : rootNode.children( includedListTag ) )
+  for( auto & includedNode : rootNode.children( includedListTag ) )
   {
-    for ( auto & fileNode : includedNode.children( includedFileTag ) )
+    for( auto & fileNode : includedNode.children( includedFileTag ) )
     {
       string const includedFilePath = fileNode.attribute( "name" ).value();
 
-      if ( includedFilePath.empty() ) { continue; }
+      if( includedFilePath.empty() )
+      {
+        continue;
+      }
 
-      string includedAbsPath = isAbsolutePath( includedFilePath ) 
+      string includedAbsPath = isAbsolutePath( includedFilePath )
                              ? getAbsolutePath( includedFilePath )
-                             : getAbsolutePath( joinPath(currentDir, includedFilePath) );
+                             : getAbsolutePath( joinPath( currentDir, includedFilePath ) );
       collectIncludedRecursive( includedAbsPath,
                                 collection );
     }

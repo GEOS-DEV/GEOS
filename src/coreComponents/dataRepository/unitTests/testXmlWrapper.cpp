@@ -601,7 +601,7 @@ TEST_F( CollectIncludedTest, collectIncluded_existingEntriesKept )
 
   xmlWrapper::collectIncluded( filePath( "base.xml" ), existingCollection );
 
-  EXPECT_NE( existingCollection.find( "/somewhere/thereisanalreadyexistingxmlfile.xml" ), 
+  EXPECT_NE( existingCollection.find( "/somewhere/thereisanalreadyexistingxmlfile.xml" ),
              existingCollection.end() );
 }
 
@@ -670,7 +670,7 @@ TEST_F( CollectIncludedTest, collectIncludedRecursive_simpleRecursive )
   auto result = xmlWrapper::collectIncludedRecursive( filePath( "base.xml" ) );
 
   EXPECT_NE( result.find( filePath( "middle.xml" ) ), result.end() );
-  EXPECT_NE( result.find( filePath( "child.xml" ) ),  result.end() );
+  EXPECT_NE( result.find( filePath( "child.xml" ) ), result.end() );
 }
 
 TEST_F( CollectIncludedTest, collectIncludedRecursive_cyclePrevention )
@@ -708,7 +708,7 @@ TEST_F( CollectIncludedTest, collectIncludedRecursive_existingEntriesKept )
 
   xmlWrapper::collectIncludedRecursive( filePath( "base.xml" ), existingCollection );
 
-  EXPECT_NE( existingCollection.find( "/somewhere/thereisanalreadyexistingxmlfile.xml" ), 
+  EXPECT_NE( existingCollection.find( "/somewhere/thereisanalreadyexistingxmlfile.xml" ),
              existingCollection.end() );
 }
 
