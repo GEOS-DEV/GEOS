@@ -104,17 +104,48 @@ void reorderTags( xmlWrapper::xmlNode rootNode, string_array const & tagOrder )
   }
 }
 
+void sortAttributes( xmlWrapper::xmlNode node )
+{
+  stdVector< std::pair< string, string > > attributes;
+  for( xmlWrapper::xmlAttribute attr = node.first_attribute();
+       attr;
+       attr = attr.next_attribute() )
+  {
+    attributes.emplace_back( attr.name(), attr.value() );
+  }
+
+  std::sort( attributes.begin(),
+             attributes.end(),
+             []( std::pair< string, string > const & a,
+                 std::pair< string, string > const & b )
+  {
+    // name attribute should be the first attribute, and not sorted alphabetically
+    bool const aIsName = ( a.first == "name" );
+    bool const bIsName = ( b.first == "name" );
+    if( aIsName != bIsName )
+    {
+      return aIsName;
     }
 
-    return prefix + relPath;
+    // other attributes are sorted alphabetically
+    return a.first < b.first;
+  } );
+
+  // pugi doesn't have any move_attribute method yet, so we have to
+  // copy and remove attributes
+  while( node.remove_attribute( node.first_attribute() ) )
+  {}
+  for( auto const & attr : attributes )
+  {
+    node.append_attribute( attr.first.c_str() ).set_value( attr.second.c_str() );
+  }
+
+  for( xmlWrapper::xmlNode child : node.children() )
+  {
+    sortAttributes( child );
+  }
 }
 
-}
-
-void archiveInputDeck( string_array const & inputFileNames,
-                       string const & outputDirectory )
-{
-  if ( inputFileNames.empty() )
   {
     return;
   }
@@ -155,6 +186,7 @@ string archiveInputDeck( string_array const & inputFileNames,
 
   stripMetadataAttributes( root );
   reorderTags( root, xmlTagOrder );
+  sortAttributes( root );
 
   flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
 
