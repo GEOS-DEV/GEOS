@@ -1549,7 +1549,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType" />
-	<xsd:complexType name="PVTDriverType" />
+	<xsd:complexType name="PVTDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="RelpermDriverType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
