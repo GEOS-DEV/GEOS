@@ -48,6 +48,17 @@ string makeTimestamp()
   return timestampStream.str();
 }
 
+void stripMetadataAttributes( xmlWrapper::xmlNode node )
+{
+  node.remove_attribute( xmlWrapper::filePathString );
+  node.remove_attribute( xmlWrapper::charOffsetString );
+
+  for( xmlWrapper::xmlNode child : node.children() )
+  {
+    stripMetadataAttributes( child );
+  }
+}
+
 void reorderTags( xmlWrapper::xmlNode rootNode, string_array const & tagOrder )
 {
   xmlWrapper::xmlNode lastInserted;
@@ -142,6 +153,7 @@ string archiveInputDeck( string_array const & inputFileNames,
     }
   }
 
+  stripMetadataAttributes( root );
   reorderTags( root, xmlTagOrder );
 
   flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
