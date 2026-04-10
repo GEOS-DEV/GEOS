@@ -167,7 +167,7 @@ public:
    * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
    *             application of the value.
    * @param[in] dataGroup the Group that contains the field to apply the value to.
-   * @param[in] fieldname the name of the field to apply the value to.
+   * @param[in] fieldName the name of the field to apply the value to.
    *
    * This function applies the value to a field variable. This function is typically
    * called from within the lambda to a call to FieldSpecificationManager::applyFieldValue().
