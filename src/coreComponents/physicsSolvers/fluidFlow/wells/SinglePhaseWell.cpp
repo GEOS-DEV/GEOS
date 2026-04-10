@@ -1060,67 +1060,44 @@ SinglePhaseWell::calculateWellResidualNorm( real64 const & time_n,
 bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
                                                DofManager const & dofManager,
                                                arrayView1d< real64 const > const & localSolution,
-                                               real64 const scalingFactor )
+                                               real64 const scalingFactor,
+                                               real64 & minPressure,
+                                               real64 & minDensity,
+                                               real64 & minTotalDensity,
+                                               ElementsReporterBuffer & negPressureIds,
+                                               ElementsReporterBuffer & negDensityIds,
+                                               ElementsReporterBuffer & negTotalDensityIds )
 {
   GEOS_MARK_FUNCTION;
 
-  string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
-  real64 minNegPres = 0.0;
+  GEOS_UNUSED_VAR( minDensity, minTotalDensity );
+  GEOS_UNUSED_VAR( negDensityIds, negTotalDensityIds );
 
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   // get the degree of freedom numbers on well elements
-  arrayView1d< globalIndex const > const & dofNumber =
-    subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+  arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
   arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
   // get a reference to the primary variables on well elements
-  arrayView1d< real64 const > const & pres =
-    subRegion.getField< well::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< well::pressure >();
+  auto const negPresCollector = negPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-  auto const statistics =
-    singlePhaseBaseKernels::SolutionCheckKernel::
-      launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+  using Kernel = singlePhaseBaseKernels::SolutionCheckKernel;
 
-  numNegativePressures += statistics.first;
-  minPressure = std::min( minPressure, statistics.second );
+  auto const results = Kernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 pressure,
+                                                                 scalingFactor,
+                                                                 negPresCollector );
 
-    {
-      globalIndex const rankOffset = dofManager.rankOffset();
-      // get the degree of freedom numbers on well elements
-      arrayView1d< globalIndex const > const & dofNumber =
-        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+  minPressure = std::min( minPressure, results.minNegPres );
 
-      // get a reference to the primary variables on well elements
-      arrayView1d< real64 const > const & pres =
-        subRegion.getField< well::pressure >();
-
-      auto const negPresCollector = rankNegPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
-
-      auto const results = singlePhaseBaseKernels::SolutionCheckKernel::
-                             launch< parallelDevicePolicy<> >( localSolution,
-                                                               rankOffset,
-                                                               dofNumber,
-                                                               ghostRank,
-                                                               pres,
-                                                               scalingFactor,
-                                                               negPresCollector );
-
-      minNegPres = std::min( minNegPres, results.minNegPres );
-    } );
-  } );
-
-  ElementsReporterOutput const rankNegPressureIdsOutput = rankNegPressureIds.createOutput();
-  rankNegPressureIdsOutput.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                               "negative pressure", minNegPres, units::Unit::Pressure );
-
-  return (m_allowNegativePressure || rankNegPressureIdsOutput.getRanksSignaledIdsCount() == 0) ? 1 : 0;
+  return (m_allowNegativePressure || 0.0 < results.minNegPres) ? 1 : 0;
 }
-
-
 
 void
 SinglePhaseWell::applyWellSystemSolution( DofManager const & dofManager,

@@ -188,7 +188,13 @@ public:
   checkWellSystemSolution( WellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            arrayView1d< real64 const > const & localSolution,
-                           real64 const scalingFactor ) override;
+                           real64 const scalingFactor,
+                           real64 & minPressure,
+                           real64 & minDensity,
+                           real64 & minTotalDensity,
+                           ElementsReporterBuffer & negPressureIds,
+                           ElementsReporterBuffer & negDensityIds,
+                           ElementsReporterBuffer & negTotalDensityIds ) override;
   /**
    * @copydoc WellControls::applyWellSystemSolution()
    */

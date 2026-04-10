@@ -47,6 +47,7 @@ static constexpr auto wellControls = "WellControls";
 }
 }
 
+class ElementsReporterBuffer;
 
 /**
  * @class WellControls
@@ -305,7 +306,13 @@ public:
   checkWellSystemSolution( WellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            arrayView1d< real64 const > const & localSolution,
-                           real64 const scalingFactor ) = 0;
+                           real64 const scalingFactor,
+                           real64 & minPressure,
+                           real64 & minDensity,
+                           real64 & minTotalDensity,
+                           ElementsReporterBuffer & negPressureIds,
+                           ElementsReporterBuffer & negDensityIds,
+                           ElementsReporterBuffer & negTotalDensityIds ) = 0;
 
   virtual void
   applyWellSystemSolution( DofManager const & dofManager,
