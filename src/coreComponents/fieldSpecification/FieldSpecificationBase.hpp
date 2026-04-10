@@ -506,7 +506,7 @@ public:
 
   /**
    * Mutator
-   * @param[in] component The component index 
+   * @param[in] component The component index
    */
   void setComponent( int component )
   {

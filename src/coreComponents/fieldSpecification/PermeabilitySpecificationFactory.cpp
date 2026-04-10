@@ -34,17 +34,17 @@ namespace geos
 void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & spec,
                                                  dataRepository::Group & manager ) const
 {
-  auto ps = dynamic_cast< PermeabilitySpecification const * >( &spec ); 
+  auto ps = dynamic_cast< PermeabilitySpecification const * >( &spec );
 
   stdArray< string, 3 > suffixes = {{ "_x", "_y", "_z" }};
 
   R1Tensor scales = ps->getScales();
 
-  for ( string const & regionName : ps->getRegionNames() )
+  for( string const & regionName : ps->getRegionNames() )
   {
     string const objectPath = "ElementRegions/" + regionName;
 
-    for ( integer comp = 0; comp < 3; ++comp )
+    for( integer comp = 0; comp < 3; ++comp )
     {
       string const childName = ps->getName() + "_" + regionName + suffixes[ comp ];
 
@@ -55,12 +55,12 @@ void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & s
       fs.initialCondition( true );
       fs.setComponent( comp );
 
-      for ( auto const & setName : ps->getSetNames() )
+      for( auto const & setName : ps->getSetNames() )
       {
         fs.addSetName( setName );
       }
 
-      if ( !ps->getFunctionName().empty() )
+      if( !ps->getFunctionName().empty() )
       {
         fs.setFunctionName( ps->getFunctionName() );
       }

@@ -83,7 +83,7 @@ void FieldSpecificationManager::postInputInitialization()
   forSubGroups< FieldSpecificationABC >( [&]( FieldSpecificationABC const & spec )
   {
     auto it = m_factories.find( spec.getCatalogName() );
-    if ( it != m_factories.end() )
+    if( it != m_factories.end() )
     {
       it->second->generate( spec, *this );
     }
