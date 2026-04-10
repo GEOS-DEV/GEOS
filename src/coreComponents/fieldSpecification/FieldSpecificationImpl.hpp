@@ -40,9 +40,7 @@ class Function;
 
 /**
  * @class FieldSpecificationImpl
- * @brief
- * 
- * 
+ * @brief Methods to apply field specifications
  */
 class FieldSpecificationImpl
 {
