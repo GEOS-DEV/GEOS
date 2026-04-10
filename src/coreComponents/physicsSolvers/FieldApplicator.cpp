@@ -16,7 +16,8 @@
 #include "FieldApplicator.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/FieldSpecificationBase.hpp"
+#include "fieldSpecification/FieldSpecification.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -95,7 +96,7 @@ FieldApplicator::
   {
     if( fsm.hasGroup( fsName ) )
     {
-      FieldSpecificationBase const & fs = fsm.getGroup< FieldSpecificationBase >( fsName );
+      FieldSpecification const & fs = fsm.getGroup< FieldSpecification >( fsName );
       if( dynamic_cast< EquilibriumInitialCondition const * >( &fs ) != nullptr )
       {
         hasEquilibriumIC = true;
@@ -163,7 +164,7 @@ FieldApplicator::
                              fsName ),
                    InputError, getWrapperDataContext( viewKeyStruct::fieldSpecificationNamesString() ) );
 
-    FieldSpecificationBase const & fs = fsm.getGroup< FieldSpecificationBase >( fsName );
+    FieldSpecification const & fs = fsm.getGroup< FieldSpecification >( fsName );
 
     for( auto & meshBodyPair : domain.getMeshBodies().getSubGroups() )
     {
@@ -173,12 +174,13 @@ FieldApplicator::
         {
           if( MeshLevel * const meshLevel = dynamic_cast< MeshLevel * >( meshLevelPair.second ) )
           {
-            fs.apply< ElementSubRegionBase >( *meshLevel,
-                                              [&]( FieldSpecificationBase const & bc,
-                                                   string const &,
-                                                   SortedArrayView< localIndex const > const & targetSet,
-                                                   ElementSubRegionBase & subRegion,
-                                                   string const fieldName )
+            FieldSpecificationImpl::apply< ElementSubRegionBase >( fs,
+                                                                   *meshLevel,
+                                                                   [&]( FieldSpecification const & bc,
+                                                                        string const &,
+                                                                        SortedArrayView< localIndex const > const & targetSet,
+                                                                        ElementSubRegionBase & subRegion,
+                                                                        string const fieldName )
             {
               // If targetRegions is specified, only apply to matching regions
               if( !m_targetRegions.empty() )
@@ -200,7 +202,7 @@ FieldApplicator::
               }
 
               string const targetFieldName = getTargetFieldName( fieldName );
-              bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, subRegion, targetFieldName );
+              FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual >( bc, targetSet, 0.0, subRegion, targetFieldName );
             } );
           }
         }
