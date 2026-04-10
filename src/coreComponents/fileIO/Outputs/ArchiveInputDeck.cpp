@@ -24,9 +24,9 @@
 #include "common/logger/Logger.hpp"
 #include "dataRepository/xmlWrapper.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
-
 
 namespace geos
 {
@@ -48,38 +48,51 @@ string makeTimestamp()
   return timestampStream.str();
 }
 
-std::set< string > collectAbsFilePaths( string_array const & fileNames )
+void reorderTags( xmlWrapper::xmlNode rootNode, string_array const & tagOrder )
 {
-  std::set< string > collection;
-  for ( string const & fileName : fileNames )
+  xmlWrapper::xmlNode lastInserted;
+  for( string const & tagName : tagOrder )
   {
-    xmlWrapper::collectIncludedRecursive( fileName, collection );
+    xmlWrapper::xmlNode tag = rootNode.child( tagName.c_str() );
+    if( !tag )
+    {
+      continue;
+    }
+
+    lastInserted ? rootNode.insert_move_after( tag, lastInserted )
+                  : rootNode.append_move( tag );
+
+    lastInserted = tag;
   }
-  return collection;
+
+  // ProblemManager's order list doesn't provide every XML tags available in GEOS
+  // so we put the missing ones below the ones it provides.
+  // And sort them alphabetically
+  stdVector< string > missingTags;
+
+  for( xmlWrapper::xmlNode const & tag : rootNode.children() )
+  {
+    string const & tagName = tag.name();
+
+    if( std::find( tagOrder.begin(), tagOrder.end(), tag.name() ) == tagOrder.end() )
+    {
+      missingTags.push_back( tagName );
+    }
+  }
+
+  std::sort( missingTags.begin(), missingTags.end() );
+
+  for( string const & tagName : missingTags )
+  {
+    xmlWrapper::xmlNode tag = rootNode.child( tagName.c_str() );
+
+    if( tag )
+    {
+      rootNode.append_move( tag );
+    }
+  }
 }
 
-/// @brief Prefixes a file path string if it is located "behind" the 
-///        specified directory
-/// @param absFilePath The absolute path to the file 
-/// @param absDirPath The absolute path to the directory
-/// @return A relative path of the file prefixed with "__" for every "../" 
-///         from the directory location
-///
-/// Example:
-/// @code
-///   std::string foo = prefixBackwardPath( "/usr/foo/file.txt", "/usr/bar/buzz" )
-///   assert( foo == "____foo/file.txt" )
-/// @endcode
-string prefixBackwardPath( string const & absFilePath, string const & absDirPath )
-{
-    string relPath = std::filesystem::relative( std::filesystem::path( absFilePath ), 
-                                                std::filesystem::path( absDirPath ) );
-
-    string prefix;
-    while( relPath.size() >= 3 && relPath.substr( 0, 3 ) == "../" )
-    {
-      prefix += "__";
-      relPath = relPath.substr( 3 );
     }
 
     return prefix + relPath;
@@ -95,34 +108,45 @@ void archiveInputDeck( string_array const & inputFileNames,
     return;
   }
 
-  if ( outputDirectory.empty() )
-  {
-    return;
-  }
 
+string archiveInputDeck( string_array const & inputFileNames,
+                         string const & outputDirectory,
+                         string_array const & xmlTagOrder )
+{
+  if( inputFileNames.empty() || outputDirectory.empty() )
+  {
+    return {};
+  }
 
   string const timestamp = makeTimestamp();
   string const archiveDir = joinPath( outputDirectory, "archive_inputFiles", timestamp );
   makeDirsForPath( archiveDir + "/" );
 
-  string const baseDir = splitPath( getAbsolutePath(inputFileNames[0]) ).first;
-  std::set< string > absFilePaths = collectAbsFilePaths( inputFileNames );
+  xmlWrapper::xmlDocument flatDoc;
+  xmlWrapper::xmlNode root = flatDoc.appendChild( "Problem" );
 
-  for ( string const & absFilePath : absFilePaths )
+  for( string const & fileName : inputFileNames )
   {
-    string const destPath = joinPath( archiveDir, prefixBackwardPath( absFilePath, baseDir ) );
-    makeDirsForPath( splitPath( destPath ).first + "/" );
+    xmlWrapper::xmlDocument doc;
+    xmlWrapper::xmlResult const result = doc.loadFile( fileName, true );
+    GEOS_THROW_IF( !result,
+                   GEOS_FMT( "Could not load XML file '{}': {}", fileName, result.description() ),
+                   InputError );
+    xmlWrapper::xmlNode docRoot = doc.getFirstChild();
 
-    std::error_code ec;
-    bool copied = std::filesystem::copy_file( absFilePath, 
-                                              destPath, 
-                                              std::filesystem::copy_options::overwrite_existing,
-                                              ec );
-    GEOS_LOG_IF( !copied,
-                 GEOS_FMT( "Failed to copy archive file '{}' into '{}': {}",
-                           absFilePath, destPath, ec.message() ) );
+    doc.addIncludedXML( docRoot );
+
+    for( xmlWrapper::xmlNode & node : docRoot.children() )
+    {
+      root.append_copy( node );
+    }
   }
 
+  reorderTags( root, xmlTagOrder );
+
+  flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
+
+  return archiveDir;
 }
 
 } /* namespace archiveInputDeck */

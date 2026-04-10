@@ -29,21 +29,17 @@ namespace archiveInputDeck
 {
 
 /**
- * @brief Copy XML input files into the output directory, preserving the
- *        folder structure
+ * @brief Copy XML input files as a flat XML file into the output directory
  * @param inputFileNames Container of XML file names to start the copy from
  * @param outputDirectory The output directory to copy files into
+ * @param xmlTagOrder The order of the XML tags in the XML archive file
  *
  * Copy XML input files and every included files they contain (specified in
- * the <Included> tag. This function creates a somewhat similar folder
- * structure to the actual structure in the disk.
- *
- * Note: XML files that are located "behind" the callpoint (the path to
- *       the first input file given as the -i parameter) will be prefixed
- *       with "__" for every "../" in the relative path from the callpoint.
+ * the <Included> tag) into a single flat file.
  */
-void archiveInputDeck( string_array const & inputFileNames,
-                       string const & outputDirectory );
+string archiveInputDeck( string_array const & inputFileNames,
+                         string const & outputDirectory,
+                         string_array const & xmlTagOrder );
 
 } /* namespace archiveInputDeck */
 

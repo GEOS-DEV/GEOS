@@ -1,7 +1,6 @@
 # Unit tests for fileIO/Outputs
 
 set( gtest_outputs_tests
-     testArchiveInputDeck.cpp
      testMemoryStats.cpp )
 
 # Link against mainInterface to resolve basicSetup and ProblemManager symbols

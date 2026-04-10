@@ -222,9 +222,11 @@ void ProblemManager::parseCommandLineInput()
     GEOS_LOG_RANK_0( "Opened XML file: " << absPath );
   }
 
-  if ( MpiWrapper::commRank() == 0 )
+  if( MpiWrapper::commRank() == 0 )
   {
-    archiveInputDeck::archiveInputDeck( opts.inputFileNames, outputDirectory );
+    string_array xmlTagOrder;
+    initializationOrder( xmlTagOrder );
+    archiveInputDeck::archiveInputDeck( opts.inputFileNames, outputDirectory, xmlTagOrder );
   }
 
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
