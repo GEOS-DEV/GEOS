@@ -359,6 +359,8 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
+  void checkEventCompletion( const real64 time_n );
+
   void performMaterialSwap( ParticleManager & particleManager,
                             string sourceRegionName,
                             string destinationRegionName );

@@ -3231,52 +3231,51 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
 
 
-  //Temporarily harcoded second event check for transform particles which needs to be done right before repartitioning master particles
-  MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
-  eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
-  {
-    real64 const startTime = event.getStartTime();
-    real64 const endTime = event.getEndTime();
+  // //Temporarily harcoded second event check for transform particles which needs to be done right before repartitioning master particles
+  // MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
+  // eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
+  // {
+  //   real64 const startTime = event.getStartTime();
+  //   real64 const endTime = event.getEndTime();
 
-    if( ( startTime - dt / 2 <= time_n && time_n <= endTime + dt/2 ) && !event.isComplete() )
-    {
-      if( event.getCatalogName() == "TransformParticles" )
-      {
-        real64 angle = 3.14159265359;
-        real64 R[3][3] = {};
-        R[0][0] =  LvArray::math::cos(angle);
-        R[0][1] = -LvArray::math::sin(angle);
-        R[0][2] = 0.0;
-        R[1][0] = LvArray::math::sin(angle);
-        R[1][1] = LvArray::math::cos(angle);
-        R[1][2] = 0.0;
-        R[2][0] = 0.0;
-        R[2][1] = 0.0;
-        R[2][2] = 1.0;
+  //   if( ( startTime - dt / 2 <= time_n && time_n <= endTime + dt/2 ) && !event.isComplete() )
+  //   {
+  //     if( event.getCatalogName() == "TransformParticles" )
+  //     {
+  //       real64 angle = 3.14159265359;
+  //       real64 R[3][3] = {};
+  //       R[0][0] =  LvArray::math::cos(angle);
+  //       R[0][1] = -LvArray::math::sin(angle);
+  //       R[0][2] = 0.0;
+  //       R[1][0] = LvArray::math::sin(angle);
+  //       R[1][1] = LvArray::math::cos(angle);
+  //       R[1][2] = 0.0;
+  //       R[2][0] = 0.0;
+  //       R[2][1] = 0.0;
+  //       R[2][2] = 1.0;
 
-        // Hardcoded rotate particles by 180 degrees around origin
-        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-        {
-          arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-          arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+  //       // Hardcoded rotate particles by 180 degrees around origin
+  //       particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  //       {
+  //         arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+  //         arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
 
-          SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
-          {
-            real64 pos[3] = {};
-            LvArray::tensorOps::copy< 3 >( pos, particlePosition[p] );
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particlePosition[p], R, pos);
+  //         SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+  //         forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+  //         {
+  //           real64 pos[3] = {};
+  //           LvArray::tensorOps::copy< 3 >( pos, particlePosition[p] );
+  //           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particlePosition[p], R, pos);
 
-            real64 F[3][3] = {};
-            LvArray::tensorOps::copy< 3, 3 >( F, particleDeformationGradient[p] );
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], R, F );
-          } );
-        } );
-        event.setIsComplete( 1 );
-      }
-    }
-  } );
-
+  //           real64 F[3][3] = {};
+  //           LvArray::tensorOps::copy< 3, 3 >( F, particleDeformationGradient[p] );
+  //           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], R, F );
+  //         } );
+  //       } );
+  //       event.setIsComplete( 1 );
+  //     }
+  //   }
+  // } );
 
   //#######################################################################################
   // Scale Jacobian to prevent overdensification if overlap correction type 2 is used.
@@ -3461,6 +3460,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
   //#######################################################################################
 
+
+  //#######################################################################################
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Check event completion" );
+  solverProfiling( "Check event completion" );
+  if( m_useEvents == 1 )
+  {
+    checkEventCompletion( time_n );
+  }
+  //#######################################################################################
+ 
 
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "End of explicitStep" );
@@ -6567,8 +6576,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
             } );
         } );
-
-        event.setIsComplete( 1 );
       }
 
       if( event.getCatalogName() == "FrictionCoefficientSwap" )
@@ -6684,8 +6691,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( event.getCatalogName() == "ResetDeformationGradient" )
       {
         m_resetDefGradForScaledSurfaceParticles = 1;
-
-        event.setIsComplete( 1 );
       }
 
       if( event.getCatalogName() == "TemperatureProfile" )
@@ -6733,8 +6738,45 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       if( event.getCatalogName() == "UpdateSurfaces" )
       {
         m_computeCZInterfacesFromDamage = 1;
-        event.setIsComplete( 1 );
       }
+    }
+  } );
+}
+
+// Start event complete check
+void SolidMechanicsMPM::checkEventCompletion( const real64 time_n )
+{
+  GEOS_MARK_FUNCTION;
+
+  //Iterate over every MPM Events to check if conditions are met and if so perform event
+  MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
+  eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
+  {
+    // Skip events that are already done
+    if( event.isComplete() || !event.hasStarted() )
+    {
+      return;
+    }
+
+    if( time_n > event.getEndTime() )
+    {
+      event.setIsComplete( 1 );
+      return;
+    }    
+
+    if( event.getCatalogName() == "MachineSample" )
+    {
+      event.setIsComplete( 1 );
+    }
+
+    if( event.getCatalogName() == "ResetDeformationGradient" )
+    {
+      event.setIsComplete( 1 );
+    }
+
+    if( event.getCatalogName() == "UpdateSurfaces" )
+    {
+      event.setIsComplete( 1 );
     }
   } );
 }
@@ -17620,7 +17662,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 18; ++i )
+  for( localIndex i = 0; i < 19; ++i )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
