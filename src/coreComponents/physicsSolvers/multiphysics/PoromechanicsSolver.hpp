@@ -121,7 +121,12 @@ public:
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError, this->solidMechanicsSolver()->getDataContext() );
 
-    setMGRStrategy();
+    // Sequential coupling uses the subsolver linear systems directly, so the
+    // coupled solver does not need a top-level MGR strategy.
+    if( this->getNonlinearSolverParameters().couplingType() != NonlinearSolverParameters::CouplingType::Sequential )
+    {
+      setMGRStrategy();
+    }
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
