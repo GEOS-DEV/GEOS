@@ -91,12 +91,12 @@ void PVTDriver::postInputInitialization()
   // Check that the functions exist
   FunctionManager & functionManager = FunctionManager::getInstance();
   GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_pressureFunctionName ),
-                 getWrapperDataContext( viewKeyStruct::pressureFunctionString() ) <<
-                 "Pressure function with name '" << m_pressureFunctionName << "' not found" );
+                 GEOS_FMT( "Pressure function with name '{}' not found", m_pressureFunctionName ),
+                 getWrapperDataContext( viewKeyStruct::pressureFunctionString() ) );
 
   GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( m_temperatureFunctionName ),
-                 getWrapperDataContext( viewKeyStruct::temperatureFunctionString() ) <<
-                 "Temperature function with name '" << m_temperatureFunctionName << "' not found" );
+                 GEOS_FMT( "Temperature function with name '{}' not found", m_temperatureFunctionName ),
+                 getWrapperDataContext( viewKeyStruct::temperatureFunctionString() ) );
 
   // get number of phases and components
   MultiFluidBase & baseFluid = getFluid();
@@ -105,9 +105,9 @@ void PVTDriver::postInputInitialization()
   m_numComponents = baseFluid.numFluidComponents();
 
   GEOS_ERROR_IF( m_feed.size() != m_numComponents,
-                 getWrapperDataContext( viewKeyStruct::feedString() ) <<
-                 "Feed must have the same number of components as the fluid. "
-                 "Feed has " << m_feed.size() << " and fluid has " << m_numComponents );
+                 GEOS_FMT( "Feed must have the same number of components as the fluid. Feed has {} and fluid has {}",
+                           m_feed.size(), m_numComponents ),
+                 getWrapperDataContext( viewKeyStruct::feedString() ) );
 
   string_array columnNames;
   getColumnNames( columnNames );
