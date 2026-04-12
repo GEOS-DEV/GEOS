@@ -68,11 +68,27 @@ on:
     secrets:
       SCCACHE_BUCKET:
         required: false
+      SCCACHE_GCS_BUCKET:
+        required: false
+      SCCACHE_ACCESS_KEY_ID:
+        required: false
+      SCCACHE_SECRET_ACCESS_KEY:
+        required: false
+      SCCACHE_REGION:
+        required: false
+      SCCACHE_S3_USE_SSL:
+        required: false
+      SCCACHE_GCS_CREDENTIALS_JSON:
+        required: false
+      SCCACHE_CONFIG_TOML:
+        required: false
       CLOUDFLARE_R2_ACCESS_KEY_ID:
         required: false
       CLOUDFLARE_R2_SECRET_ACCESS_KEY:
         required: false
       SCCACHE_ENDPOINT:
+        required: false
+      GOOGLE_CLOUD_GCP:
         required: false
 jobs:
   build_test_deploy:
@@ -111,43 +127,94 @@ jobs:
       name: Resolve sccache configuration
       env:
         SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+        SCCACHE_GCS_BUCKET: ${{ secrets.SCCACHE_GCS_BUCKET }}
+        SCCACHE_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID }}
+        SCCACHE_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY }}
+        SCCACHE_REGION: ${{ secrets.SCCACHE_REGION }}
+        SCCACHE_S3_USE_SSL: ${{ secrets.SCCACHE_S3_USE_SSL }}
+        SCCACHE_GCS_CREDENTIALS_JSON: ${{ secrets.SCCACHE_GCS_CREDENTIALS_JSON }}
+        SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
+        CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+        CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
         SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
       run: |
         set -euo pipefail
 
         use_sccache=false
+        sccache_backend=none
+        sccache_bucket=
+        sccache_endpoint=
+        sccache_region=
+        sccache_s3_use_ssl=
+        sccache_credentials_file=
+        sccache_config_file=
 
         if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
-          missing=()
+          resolved_access_key_id="${SCCACHE_ACCESS_KEY_ID:-${CLOUDFLARE_R2_ACCESS_KEY_ID:-}}"
+          resolved_secret_access_key="${SCCACHE_SECRET_ACCESS_KEY:-${CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}}"
+          resolved_gcs_credentials_json="${SCCACHE_GCS_CREDENTIALS_JSON:-${GOOGLE_CLOUD_GCP:-}}"
 
-          for var in SCCACHE_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY SCCACHE_ENDPOINT; do
-            if [[ -z "${!var:-}" ]]; then
-              missing+=("${var}")
-            fi
-          done
-
-          if (( ${#missing[@]} == 0 )); then
+          if [[ -n "${SCCACHE_CONFIG_TOML:-}" ]]; then
             use_sccache=true
+            sccache_backend=custom
+            sccache_config_file=".sccache-config-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.toml"
+            printf '%s' "${SCCACHE_CONFIG_TOML}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
+            chmod 600 "${GITHUB_WORKSPACE}/${sccache_config_file}"
+          elif [[ -n "${SCCACHE_BUCKET:-}" && -n "${resolved_access_key_id}" && -n "${resolved_secret_access_key}" ]]; then
+            use_sccache=true
+            sccache_backend=s3
+            sccache_bucket="${SCCACHE_BUCKET}"
+            sccache_endpoint="${SCCACHE_ENDPOINT}"
+            sccache_region="${SCCACHE_REGION:-auto}"
+            sccache_s3_use_ssl="${SCCACHE_S3_USE_SSL:-true}"
+          elif [[ -n "${resolved_gcs_credentials_json}" ]]; then
+            use_sccache=true
+            sccache_backend=gcs
+            sccache_bucket="${SCCACHE_GCS_BUCKET:-geos-dev}"
+            sccache_credentials_file=".sccache-gcs-creds-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+            printf '%s' "${resolved_gcs_credentials_json}" > "${GITHUB_WORKSPACE}/${sccache_credentials_file}"
+            chmod 600 "${GITHUB_WORKSPACE}/${sccache_credentials_file}"
           else
-            echo "::warning::Missing Cloudflare R2 sccache secrets (${missing[*]}); disabling sccache for this run."
+            missing=()
+
+            if [[ -z "${SCCACHE_CONFIG_TOML:-}" ]]; then
+              missing+=("SCCACHE_CONFIG_TOML (for custom backend)")
+            fi
+            if [[ -z "${SCCACHE_BUCKET:-}" || -z "${resolved_access_key_id}" || -z "${resolved_secret_access_key}" ]]; then
+              missing+=("S3 secrets (SCCACHE_BUCKET + ACCESS_KEY_ID + SECRET_ACCESS_KEY)")
+            fi
+            if [[ -z "${resolved_gcs_credentials_json}" ]]; then
+              missing+=("GCS credentials JSON")
+            fi
+
+            echo "::warning::Missing sccache configuration; expected one of: ${missing[*]}. Disabling sccache for this run."
           fi
+
         fi
 
-        echo "use_sccache=${use_sccache}" >> "$GITHUB_OUTPUT"
+        {
+          echo "use_sccache=${use_sccache}"
+          echo "sccache_backend=${sccache_backend}"
+          echo "sccache_bucket=${sccache_bucket}"
+          echo "sccache_endpoint=${sccache_endpoint}"
+          echo "sccache_region=${sccache_region}"
+          echo "sccache_s3_use_ssl=${sccache_s3_use_ssl}"
+          echo "sccache_credentials_file=${sccache_credentials_file}"
+          echo "sccache_config_file=${sccache_config_file}"
+        } >> "$GITHUB_OUTPUT"
 
     - name: Print environment
       run: printenv
 
     - name: Build, test, deploy.
       env:
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-        SCCACHE_S3_USE_SSL: "true"
-        SCCACHE_REGION: auto
+        SCCACHE_BUCKET: ${{ steps.sccache_config.outputs.sccache_bucket }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID || secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY || secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+        SCCACHE_ENDPOINT: ${{ steps.sccache_config.outputs.sccache_endpoint }}
+        SCCACHE_S3_USE_SSL: ${{ steps.sccache_config.outputs.sccache_s3_use_ssl }}
+        SCCACHE_REGION: ${{ steps.sccache_config.outputs.sccache_region }}
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -193,12 +260,31 @@ jobs:
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
         if [[ "${{ steps.sccache_config.outputs.use_sccache }}" == "true" ]]; then
-          docker_args+=(-e SCCACHE_BUCKET)
-          docker_args+=(-e AWS_ACCESS_KEY_ID)
-          docker_args+=(-e AWS_SECRET_ACCESS_KEY)
-          docker_args+=(-e SCCACHE_ENDPOINT)
-          docker_args+=(-e SCCACHE_S3_USE_SSL)
-          docker_args+=(-e SCCACHE_REGION)
+          if [[ -n "${SCCACHE_BUCKET}" ]]; then
+            docker_args+=(-e SCCACHE_BUCKET)
+          fi
+
+          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "s3" ]]; then
+            docker_args+=(-e AWS_ACCESS_KEY_ID)
+            docker_args+=(-e AWS_SECRET_ACCESS_KEY)
+            if [[ -n "${SCCACHE_ENDPOINT}" ]]; then
+              docker_args+=(-e SCCACHE_ENDPOINT)
+            fi
+            if [[ -n "${SCCACHE_S3_USE_SSL}" ]]; then
+              docker_args+=(-e SCCACHE_S3_USE_SSL)
+            fi
+            if [[ -n "${SCCACHE_REGION}" ]]; then
+              docker_args+=(-e SCCACHE_REGION)
+            fi
+          fi
+
+          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "gcs" ]]; then
+            script_args+=(--sccache-credentials "${{ steps.sccache_config.outputs.sccache_credentials_file }}")
+          fi
+
+          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "custom" ]]; then
+            script_args+=(--sccache-config "${{ steps.sccache_config.outputs.sccache_config_file }}")
+          fi
         fi
 
         # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
@@ -369,12 +455,12 @@ jobs:
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
 
     - name: Show sccache stats
-      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
+      if: ${{ always() && steps.sccache_config.outputs.sccache_backend == 's3' }}
       env:
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-        SCCACHE_S3_USE_SSL: "true"
-        SCCACHE_REGION: auto
+        SCCACHE_BUCKET: ${{ steps.sccache_config.outputs.sccache_bucket }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID || secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY || secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+        SCCACHE_ENDPOINT: ${{ steps.sccache_config.outputs.sccache_endpoint }}
+        SCCACHE_S3_USE_SSL: ${{ steps.sccache_config.outputs.sccache_s3_use_ssl }}
+        SCCACHE_REGION: ${{ steps.sccache_config.outputs.sccache_region }}
       run: command -v sccache >/dev/null && sccache --show-stats || true

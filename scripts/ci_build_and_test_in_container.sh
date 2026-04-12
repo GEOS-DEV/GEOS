@@ -66,6 +66,10 @@ Usage: $0
       Internal mountpoint where the geos repository will be available. 
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
+  --sccache-config config.toml
+      Basename of an sccache config file to use inside the container.
+  --sccache-credentials credentials.json
+      Basename of the json credentials file to connect to the sccache GCS cache.
   --test-code-style
   --test-documentation
   -h | --help
@@ -77,7 +81,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -135,6 +139,8 @@ do
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
+    --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
+    --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
     -h | --help)             usage;                      shift;;
@@ -174,7 +180,7 @@ else
   GEOS_LA_INTERFACE=Trilinos
 fi
 
-if [[ -n "${SCCACHE_BUCKET:-}" ]]; then
+if [[ -n "${SCCACHE_BUCKET:-}" || -n "${SCCACHE_CREDS:-}" || -n "${SCCACHE_CONFIG_FILE:-}" ]]; then
   SCCACHE_BIN=${SCCACHE:-$(command -v sccache || true)}
 
   if [[ -z "${SCCACHE_BIN}" ]]; then
@@ -182,7 +188,39 @@ if [[ -n "${SCCACHE_BUCKET:-}" ]]; then
     exit 1
   fi
 
-  # R2 is configured via the S3-compatible sccache environment variables passed through the workflow.
+  if [[ -n "${SCCACHE_CONFIG_FILE:-}" ]]; then
+    if [[ ! -f "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" ]]; then
+      echo "Unable to find requested sccache config file at ${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}."
+      exit 1
+    fi
+
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cp "${GEOS_SRC_DIR}/${SCCACHE_CONFIG_FILE}" "${HOME}/.config/sccache/config"
+  fi
+
+  if [[ -n "${SCCACHE_CREDS:-}" && -z "${SCCACHE_CONFIG_FILE:-}" ]]; then
+    if [[ -z "${SCCACHE_BUCKET:-}" ]]; then
+      echo "SCCACHE_BUCKET must be set when using --sccache-credentials."
+      exit 1
+    fi
+    if [[ ! -f "${GEOS_SRC_DIR}/${SCCACHE_CREDS}" ]]; then
+      echo "Unable to find requested sccache credentials file at ${GEOS_SRC_DIR}/${SCCACHE_CREDS}."
+      exit 1
+    fi
+
+    # The credential json file is mounted at the root of the repository by the workflow.
+    or_die mkdir -p ${HOME}/.config/sccache
+    or_die cat <<EOT > ${HOME}/.config/sccache/config
+[cache.gcs]
+rw_mode = "READ_WRITE"
+cred_path = "${GEOS_SRC_DIR}/${SCCACHE_CREDS}"
+bucket = "${SCCACHE_BUCKET}"
+key_prefix = "sccache"
+EOT
+  fi
+
+  # For S3-compatible backends (R2 and classic S3), configuration is carried in env variables.
+  # For GCS, the config file above is enough.
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
   case "$(hostname -f 2>/dev/null || hostname)" in
