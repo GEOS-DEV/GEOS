@@ -161,6 +161,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
+            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
@@ -170,12 +171,13 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
+            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2, +hypredrive)
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12-hypredrive
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12-hypredrive
+            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12-hypredrive
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -189,6 +191,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
+            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12
             HOST_CONFIG: /spack-generated.cmake
 
           #- name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
@@ -221,10 +224,18 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && 'CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "$UPLOAD_SRC" "$UPLOAD_DST"' || '' }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && 'if [[ -z "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" ]]; then echo "ARTIFACT_UPLOAD_CREDENTIALS_JSON is required when ARTIFACT_UPLOAD_BUCKET_PATH is set." >&2; exit 1; fi; CREDENTIALS_FILE="$RUNNER_TEMP/artifact-upload-gcp.json"; printf "%s" "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" > "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True' || '' }}
+      ARTIFACT_UPLOAD_URI_PREFIX: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && format('gs://{0}', matrix.ARTIFACT_UPLOAD_BUCKET_PATH) || '' }}
+      ARTIFACT_PUBLIC_URL_PREFIX: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && format('https://storage.googleapis.com/{0}', matrix.ARTIFACT_UPLOAD_BUCKET_PATH) || '' }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
-    secrets: inherit
+    secrets:
+      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
+      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
+      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
+      ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CLOUD_GCP }}
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
@@ -233,7 +244,11 @@ jobs:
       - is_not_draft_pull_request
       - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
+    secrets:
+      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
+      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
+      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
+      ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CLOUD_GCP }}
     with:
       BUILD_AND_TEST_CLI_ARGS: --build-exe-only
       BUILD_TYPE: integrated_tests
@@ -243,6 +258,10 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
+      ARTIFACT_UPLOAD_COMMAND: CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "$UPLOAD_SRC" "$UPLOAD_DST"
+      ARTIFACT_UPLOAD_PRE_COMMAND: if [[ -z "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" ]]; then echo "ARTIFACT_UPLOAD_CREDENTIALS_JSON is required when artifact upload is enabled." >&2; exit 1; fi; CREDENTIALS_FILE="$RUNNER_TEMP/artifact-upload-gcp.json"; printf "%s" "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" > "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+      ARTIFACT_UPLOAD_URI_PREFIX: gs://geosx/integratedTests
+      ARTIFACT_PUBLIC_URL_PREFIX: https://storage.googleapis.com/geosx/integratedTests
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
@@ -271,7 +290,9 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
+      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
+      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
+      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
     with:
       BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
       CMAKE_BUILD_TYPE: Debug

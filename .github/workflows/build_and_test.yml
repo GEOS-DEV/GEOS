@@ -65,32 +65,32 @@ on:
       GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
+      ARTIFACT_UPLOAD_COMMAND:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_UPLOAD_PRE_COMMAND:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_UPLOAD_URI_PREFIX:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_PUBLIC_URL_PREFIX:
+        required: false
+        type: string
+        default: ''
     secrets:
-      SCCACHE_BUCKET:
-        required: false
-      SCCACHE_GCS_BUCKET:
-        required: false
-      SCCACHE_ACCESS_KEY_ID:
-        required: false
-      SCCACHE_SECRET_ACCESS_KEY:
-        required: false
-      SCCACHE_REGION:
-        required: false
-      SCCACHE_S3_USE_SSL:
-        required: false
-      SCCACHE_GCS_CREDENTIALS_JSON:
-        required: false
       SCCACHE_CONFIG_TOML:
         required: false
-      CLOUDFLARE_R2_ACCESS_KEY_ID:
+      SCCACHE_ENV_VARS_JSON:
         required: false
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY:
+      SCCACHE_FILES_JSON:
         required: false
-      SCCACHE_ENDPOINT:
+      ARTIFACT_UPLOAD_CREDENTIALS_JSON:
         required: false
       CODECOV_TOKEN:
-        required: false
-      GOOGLE_CLOUD_GCP:
         required: false
 jobs:
   build_test_deploy:
@@ -128,103 +128,111 @@ jobs:
     - id: sccache_config
       name: Resolve sccache configuration
       env:
-        SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-        SCCACHE_GCS_BUCKET: ${{ secrets.SCCACHE_GCS_BUCKET }}
-        SCCACHE_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID }}
-        SCCACHE_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY }}
-        SCCACHE_REGION: ${{ secrets.SCCACHE_REGION }}
-        SCCACHE_S3_USE_SSL: ${{ secrets.SCCACHE_S3_USE_SSL }}
-        SCCACHE_GCS_CREDENTIALS_JSON: ${{ secrets.SCCACHE_GCS_CREDENTIALS_JSON }}
         SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-        CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-        GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
+        SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
+        SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
       run: |
         set -euo pipefail
 
         use_sccache=false
-        sccache_backend=none
-        sccache_bucket=
-        sccache_endpoint=
-        sccache_region=
-        sccache_s3_use_ssl=
-        sccache_credentials_file=
         sccache_config_file=
+        sccache_env_file=
+        sccache_runtime_dir=
 
         if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
-          resolved_access_key_id="${SCCACHE_ACCESS_KEY_ID:-${CLOUDFLARE_R2_ACCESS_KEY_ID:-}}"
-          resolved_secret_access_key="${SCCACHE_SECRET_ACCESS_KEY:-${CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}}"
-          resolved_gcs_credentials_json="${SCCACHE_GCS_CREDENTIALS_JSON:-${GOOGLE_CLOUD_GCP:-}}"
-
-          if [[ -n "${SCCACHE_CONFIG_TOML:-}" ]]; then
-            use_sccache=true
-            sccache_backend=custom
-            sccache_config_file=".sccache-config-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.toml"
-            printf '%s' "${SCCACHE_CONFIG_TOML}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
-            chmod 600 "${GITHUB_WORKSPACE}/${sccache_config_file}"
-          elif [[ -n "${SCCACHE_BUCKET:-}" && -n "${resolved_access_key_id}" && -n "${resolved_secret_access_key}" ]]; then
-            use_sccache=true
-            sccache_backend=s3
-            sccache_bucket="${SCCACHE_BUCKET}"
-            sccache_endpoint="${SCCACHE_ENDPOINT}"
-            sccache_region="${SCCACHE_REGION:-auto}"
-            sccache_s3_use_ssl="${SCCACHE_S3_USE_SSL:-true}"
-          elif [[ -n "${resolved_gcs_credentials_json}" ]]; then
-            use_sccache=true
-            sccache_backend=gcs
-            sccache_bucket="${SCCACHE_GCS_BUCKET:-geos-dev}"
-            sccache_credentials_file=".sccache-gcs-creds-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
-            printf '%s' "${resolved_gcs_credentials_json}" > "${GITHUB_WORKSPACE}/${sccache_credentials_file}"
-            chmod 600 "${GITHUB_WORKSPACE}/${sccache_credentials_file}"
+          # Generic payload contract:
+          # - SCCACHE_CONFIG_TOML: literal TOML contents for ~/.config/sccache/config
+          # - SCCACHE_ENV_VARS_JSON: JSON object of {"ENV_VAR":"value"}
+          # - SCCACHE_FILES_JSON: JSON object of {"relative/path":"file-content"}
+          if [[ -z "${SCCACHE_CONFIG_TOML:-}" && -z "${SCCACHE_ENV_VARS_JSON:-}" && -z "${SCCACHE_FILES_JSON:-}" ]]; then
+            echo "::warning::USE_SCCACHE=true but no sccache payload was provided (SCCACHE_CONFIG_TOML, SCCACHE_ENV_VARS_JSON, SCCACHE_FILES_JSON). Disabling sccache for this run."
           else
-            missing=()
+            use_sccache=true
+            sccache_runtime_dir=".sccache-runtime-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            runtime_path="${GITHUB_WORKSPACE}/${sccache_runtime_dir}"
+            mkdir -p "${runtime_path}"
 
-            if [[ -z "${SCCACHE_CONFIG_TOML:-}" ]]; then
-              missing+=("SCCACHE_CONFIG_TOML (for custom backend)")
-            fi
-            if [[ -z "${SCCACHE_BUCKET:-}" || -z "${resolved_access_key_id}" || -z "${resolved_secret_access_key}" ]]; then
-              missing+=("S3 secrets (SCCACHE_BUCKET + ACCESS_KEY_ID + SECRET_ACCESS_KEY)")
-            fi
-            if [[ -z "${resolved_gcs_credentials_json}" ]]; then
-              missing+=("GCS credentials JSON")
+            if [[ -n "${SCCACHE_CONFIG_TOML:-}" ]]; then
+              sccache_config_file="${sccache_runtime_dir}/config.toml"
+              printf '%s' "${SCCACHE_CONFIG_TOML}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
+              chmod 600 "${GITHUB_WORKSPACE}/${sccache_config_file}"
             fi
 
-            echo "::warning::Missing sccache configuration; expected one of: ${missing[*]}. Disabling sccache for this run."
+            if [[ -n "${SCCACHE_ENV_VARS_JSON:-}" ]]; then
+              echo "${SCCACHE_ENV_VARS_JSON}" | jq -e 'type == "object"' >/dev/null
+
+              sccache_env_file="${sccache_runtime_dir}/env.list"
+              : > "${GITHUB_WORKSPACE}/${sccache_env_file}"
+
+              while IFS=$'\t' read -r key value_b64; do
+                if [[ ! "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+                  echo "Invalid env var name in SCCACHE_ENV_VARS_JSON: ${key}" >&2
+                  exit 1
+                fi
+
+                value="$(printf '%s' "${value_b64}" | base64 --decode)"
+                if [[ "${value}" == *$'\n'* ]]; then
+                  echo "Multiline env values are not supported in SCCACHE_ENV_VARS_JSON for key ${key}." >&2
+                  exit 1
+                fi
+
+                printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_WORKSPACE}/${sccache_env_file}"
+              done < <(echo "${SCCACHE_ENV_VARS_JSON}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+
+              chmod 600 "${GITHUB_WORKSPACE}/${sccache_env_file}"
+            fi
+
+            if [[ -n "${SCCACHE_FILES_JSON:-}" ]]; then
+              echo "${SCCACHE_FILES_JSON}" | jq -e 'type == "object"' >/dev/null
+
+              while IFS=$'\t' read -r rel_path content_b64; do
+                if [[ ! "${rel_path}" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "${rel_path}" == /* ]] || [[ "${rel_path}" == *".."* ]]; then
+                  echo "Invalid file path in SCCACHE_FILES_JSON: ${rel_path}" >&2
+                  exit 1
+                fi
+
+                file_path="${runtime_path}/${rel_path}"
+                mkdir -p "$(dirname "${file_path}")"
+                printf '%s' "${content_b64}" | base64 --decode > "${file_path}"
+                chmod 600 "${file_path}"
+              done < <(echo "${SCCACHE_FILES_JSON}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+            fi
           fi
-
         fi
 
         {
           echo "use_sccache=${use_sccache}"
-          echo "sccache_backend=${sccache_backend}"
-          echo "sccache_bucket=${sccache_bucket}"
-          echo "sccache_endpoint=${sccache_endpoint}"
-          echo "sccache_region=${sccache_region}"
-          echo "sccache_s3_use_ssl=${sccache_s3_use_ssl}"
-          echo "sccache_credentials_file=${sccache_credentials_file}"
           echo "sccache_config_file=${sccache_config_file}"
+          echo "sccache_env_file=${sccache_env_file}"
+          echo "sccache_runtime_dir=${sccache_runtime_dir}"
         } >> "$GITHUB_OUTPUT"
 
     - name: Print environment
       run: printenv
 
     - name: Build, test, deploy.
-      env:
-        SCCACHE_BUCKET: ${{ steps.sccache_config.outputs.sccache_bucket }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID || secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY || secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        SCCACHE_ENDPOINT: ${{ steps.sccache_config.outputs.sccache_endpoint }}
-        SCCACHE_S3_USE_SSL: ${{ steps.sccache_config.outputs.sccache_s3_use_ssl }}
-        SCCACHE_REGION: ${{ steps.sccache_config.outputs.sccache_region }}
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
         HAS_DATA_EXCHANGE=false
+        HAS_UPLOAD_TARGET=false
         DATA_BASENAME=
         DATA_EXCHANGE_DIR=
+        ARTIFACT_UPLOAD_COMMAND="${{ inputs.ARTIFACT_UPLOAD_COMMAND }}"
+        ARTIFACT_UPLOAD_PRE_COMMAND="${{ inputs.ARTIFACT_UPLOAD_PRE_COMMAND }}"
+        ARTIFACT_UPLOAD_URI_PREFIX="${{ inputs.ARTIFACT_UPLOAD_URI_PREFIX }}"
+        ARTIFACT_PUBLIC_URL_PREFIX="${{ inputs.ARTIFACT_PUBLIC_URL_PREFIX }}"
+        ARTIFACT_UPLOAD_CREDENTIALS_JSON="${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}"
+
+        if [[ -n "${ARTIFACT_UPLOAD_COMMAND}" || -n "${ARTIFACT_UPLOAD_URI_PREFIX}" || -n "${ARTIFACT_PUBLIC_URL_PREFIX}" || -n "${ARTIFACT_UPLOAD_PRE_COMMAND}" ]]; then
+          if [[ -z "${ARTIFACT_UPLOAD_COMMAND}" || -z "${ARTIFACT_UPLOAD_URI_PREFIX}" ]]; then
+            echo "::error::ARTIFACT_UPLOAD_COMMAND and ARTIFACT_UPLOAD_URI_PREFIX must both be set when enabling artifact upload."
+            exit 1
+          fi
+          HAS_UPLOAD_TARGET=true
+        fi
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
@@ -241,12 +249,16 @@ jobs:
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
-        if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" ]]; then
+        if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" || "${HAS_UPLOAD_TARGET}" == "true" ]]; then
           HAS_DATA_EXCHANGE=true
 
-          DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
-          script_args+=(--run-integrated-tests)
-          
+          if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" ]]; then
+            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+            script_args+=(--run-integrated-tests)
+          else
+            DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
+          fi
+
           script_args+=(--data-basename ${DATA_BASENAME})
 
           DATA_EXCHANGE_DIR=${GITHUB_WORKSPACE}/geos-exchange  # Exchange folder outside of the container
@@ -262,30 +274,20 @@ jobs:
         script_args+=(${HOST_CONFIG:+"--host-config ${HOST_CONFIG}"})
 
         if [[ "${{ steps.sccache_config.outputs.use_sccache }}" == "true" ]]; then
-          if [[ -n "${SCCACHE_BUCKET}" ]]; then
-            docker_args+=(-e SCCACHE_BUCKET)
+          script_args+=(--use-sccache)
+
+          sccache_config_file="${{ steps.sccache_config.outputs.sccache_config_file }}"
+          if [[ -n "${sccache_config_file}" ]]; then
+            script_args+=(--sccache-config "${sccache_config_file}")
           fi
 
-          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "s3" ]]; then
-            docker_args+=(-e AWS_ACCESS_KEY_ID)
-            docker_args+=(-e AWS_SECRET_ACCESS_KEY)
-            if [[ -n "${SCCACHE_ENDPOINT}" ]]; then
-              docker_args+=(-e SCCACHE_ENDPOINT)
-            fi
-            if [[ -n "${SCCACHE_S3_USE_SSL}" ]]; then
-              docker_args+=(-e SCCACHE_S3_USE_SSL)
-            fi
-            if [[ -n "${SCCACHE_REGION}" ]]; then
-              docker_args+=(-e SCCACHE_REGION)
-            fi
-          fi
-
-          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "gcs" ]]; then
-            script_args+=(--sccache-credentials "${{ steps.sccache_config.outputs.sccache_credentials_file }}")
-          fi
-
-          if [[ "${{ steps.sccache_config.outputs.sccache_backend }}" == "custom" ]]; then
-            script_args+=(--sccache-config "${{ steps.sccache_config.outputs.sccache_config_file }}")
+          sccache_env_file="${{ steps.sccache_config.outputs.sccache_env_file }}"
+          if [[ -n "${sccache_env_file}" && -f "${GITHUB_WORKSPACE}/${sccache_env_file}" ]]; then
+            while IFS='=' read -r key value || [[ -n "${key}" ]]; do
+              [[ -z "${key}" ]] && continue
+              export "${key}=${value}"
+              docker_args+=(-e "${key}")
+            done < "${GITHUB_WORKSPACE}/${sccache_env_file}"
           fi
         fi
 
@@ -407,14 +409,49 @@ jobs:
         echo "Received exit status ${EXIT_STATUS} from the build process."
         set -e
 
+        artifact_upload_prepared=false
+        function upload_artifact () {
+          local source_file="$1"
+          local output_message="$2"
+
+          if [[ "${HAS_UPLOAD_TARGET}" != "true" ]]; then
+            return 0
+          fi
+          if [[ ! -f "${source_file}" ]]; then
+            return 0
+          fi
+
+          if [[ "${artifact_upload_prepared}" != "true" ]]; then
+            if [[ -n "${ARTIFACT_UPLOAD_PRE_COMMAND}" ]]; then
+              bash -euo pipefail -c "${ARTIFACT_UPLOAD_PRE_COMMAND}"
+            fi
+            artifact_upload_prepared=true
+          fi
+
+          artifact_name="$(basename "${source_file}")"
+          artifact_destination="${ARTIFACT_UPLOAD_URI_PREFIX%/}/${artifact_name}"
+          UPLOAD_SRC="${source_file}" \
+          UPLOAD_DST="${artifact_destination}" \
+          ARTIFACT_UPLOAD_CREDENTIALS_JSON="${ARTIFACT_UPLOAD_CREDENTIALS_JSON}" \
+          bash -euo pipefail -c "${ARTIFACT_UPLOAD_COMMAND}"
+
+          if [[ -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
+            echo "${output_message} ${ARTIFACT_PUBLIC_URL_PREFIX%/}/${artifact_name}"
+          else
+            echo "${output_message} ${artifact_destination}"
+          fi
+        }
+
         if [[ "${HAS_DATA_EXCHANGE}" == "true" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
             if [[ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]]; then
               echo "Generated artifact at ${DATA_EXCHANGE_DIR}/${DATA_BASENAME}"
+              upload_artifact "${DATA_EXCHANGE_DIR}/${DATA_BASENAME}" "Download the bundle at"
             fi
 
             if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
               echo "Generated integrated test logs at ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}"
+              upload_artifact "${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME}" "Download integrated test logs here:"
             fi
 
             if [ -f ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} ];then
@@ -434,9 +471,8 @@ jobs:
                 cp "${SOURCE_FILE}" "${TARGET_DIR}"
               fi
 
-              # 2. We push the baselines to the cloud
-              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
-              echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
+              # 2. We push the baselines to cloud storage if an upload backend is configured.
+              upload_artifact "${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME}" "Download test baselines here:"
               echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
             else
               echo "Baselines ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} were not uploaded. Likeyly because no rebaseline was necessary."
@@ -485,12 +521,14 @@ jobs:
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
 
     - name: Show sccache stats
-      if: ${{ always() && steps.sccache_config.outputs.sccache_backend == 's3' }}
-      env:
-        SCCACHE_BUCKET: ${{ steps.sccache_config.outputs.sccache_bucket }}
-        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_ACCESS_KEY_ID || secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_SECRET_ACCESS_KEY || secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
-        SCCACHE_ENDPOINT: ${{ steps.sccache_config.outputs.sccache_endpoint }}
-        SCCACHE_S3_USE_SSL: ${{ steps.sccache_config.outputs.sccache_s3_use_ssl }}
-        SCCACHE_REGION: ${{ steps.sccache_config.outputs.sccache_region }}
-      run: command -v sccache >/dev/null && sccache --show-stats || true
+      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
+      run: |
+        sccache_env_file="${{ steps.sccache_config.outputs.sccache_env_file }}"
+        if [[ -n "${sccache_env_file}" && -f "${GITHUB_WORKSPACE}/${sccache_env_file}" ]]; then
+          while IFS='=' read -r key value || [[ -n "${key}" ]]; do
+            [[ -z "${key}" ]] && continue
+            export "${key}=${value}"
+          done < "${GITHUB_WORKSPACE}/${sccache_env_file}"
+        fi
+
+        command -v sccache >/dev/null && sccache --show-stats || true
