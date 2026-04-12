@@ -39,7 +39,7 @@ Usage: $0
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
-      Either ON or OFF (default is ON). Build geos with bounds check. 
+      Either ON or OFF (default is ON). Build geos with bounds check.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -63,7 +63,7 @@ Usage: $0
   --nproc N
       Number of cores to use for the build.
   --repository /path/to/repository
-      Internal mountpoint where the geos repository will be available. 
+      Internal mountpoint where the geos repository will be available.
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
   --sccache-config config.toml
@@ -340,6 +340,7 @@ if [[ -n "${SCCACHE_BIN}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
+  export OMP_NUM_THREADS=1
   or_die cmake --build . --target coreComponents_coverage
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
 fi
@@ -373,7 +374,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt
   echo "Packing logs..."
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
-  
+
   echo "Checking results..."
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   cat $tempdir/log_check.txt
@@ -383,7 +384,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     INTEGRATED_TEST_EXIT_STATUS=0
   else
     echo "IntegratedTests failed. Rebaseline is required."
-   
+
     # Rebaseline and pack into an archive
     echo "Rebaselining..."
     integratedTests/geos_ats.sh -a rebaselinefailed
