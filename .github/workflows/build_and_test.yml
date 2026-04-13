@@ -65,11 +65,31 @@ on:
       GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
+      STORAGE_PROVIDER:
+        required: false
+        type: string
+        default: ''
+      SCCACHE_PROFILE:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_UPLOAD_BUCKET_PATH:
+        required: false
+        type: string
+        default: ''
       ARTIFACT_UPLOAD_COMMAND:
         required: false
         type: string
         default: ''
       ARTIFACT_UPLOAD_PRE_COMMAND:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_UPLOAD_URI_ROOT:
+        required: false
+        type: string
+        default: ''
+      ARTIFACT_PUBLIC_URL_ROOT:
         required: false
         type: string
         default: ''
@@ -88,7 +108,11 @@ on:
         required: false
       SCCACHE_FILES_JSON:
         required: false
+      SCCACHE_PROFILES_JSON:
+        required: false
       ARTIFACT_UPLOAD_CREDENTIALS_JSON:
+        required: false
+      ARTIFACT_PROVIDER_CREDENTIALS_JSON:
         required: false
       CODECOV_TOKEN:
         required: false
@@ -128,9 +152,13 @@ jobs:
     - id: sccache_config
       name: Resolve sccache configuration
       env:
-        SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-        SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
-        SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
+        INPUT_USE_SCCACHE: ${{ inputs.USE_SCCACHE }}
+        INPUT_SCCACHE_PROFILE: ${{ inputs.SCCACHE_PROFILE }}
+        INPUT_STORAGE_PROVIDER: ${{ inputs.STORAGE_PROVIDER }}
+        DIRECT_SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
+        DIRECT_SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
+        DIRECT_SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
+        SCCACHE_PROFILES_JSON: ${{ secrets.SCCACHE_PROFILES_JSON }}
       run: |
         set -euo pipefail
 
@@ -138,28 +166,56 @@ jobs:
         sccache_config_file=
         sccache_env_file=
         sccache_runtime_dir=
+        selected_sccache_config_toml=
+        selected_sccache_env_vars_json=
+        selected_sccache_files_json=
 
-        if [[ "${{ inputs.USE_SCCACHE }}" == "true" ]]; then
+        if [[ "${INPUT_USE_SCCACHE}" == "true" ]]; then
           # Generic payload contract:
           # - SCCACHE_CONFIG_TOML: literal TOML contents for ~/.config/sccache/config
           # - SCCACHE_ENV_VARS_JSON: JSON object of {"ENV_VAR":"value"}
           # - SCCACHE_FILES_JSON: JSON object of {"relative/path":"file-content"}
-          if [[ -z "${SCCACHE_CONFIG_TOML:-}" && -z "${SCCACHE_ENV_VARS_JSON:-}" && -z "${SCCACHE_FILES_JSON:-}" ]]; then
-            echo "::warning::USE_SCCACHE=true but no sccache payload was provided (SCCACHE_CONFIG_TOML, SCCACHE_ENV_VARS_JSON, SCCACHE_FILES_JSON). Disabling sccache for this run."
+          sccache_profile="${INPUT_SCCACHE_PROFILE:-${INPUT_STORAGE_PROVIDER}}"
+
+          if [[ -n "${DIRECT_SCCACHE_CONFIG_TOML:-}" || -n "${DIRECT_SCCACHE_ENV_VARS_JSON:-}" || -n "${DIRECT_SCCACHE_FILES_JSON:-}" ]]; then
+            selected_sccache_config_toml="${DIRECT_SCCACHE_CONFIG_TOML:-}"
+            selected_sccache_env_vars_json="${DIRECT_SCCACHE_ENV_VARS_JSON:-}"
+            selected_sccache_files_json="${DIRECT_SCCACHE_FILES_JSON:-}"
+          elif [[ -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
+            echo "${SCCACHE_PROFILES_JSON}" | jq -e 'type == "object"' >/dev/null
+
+            if jq -e --arg profile "${sccache_profile}" '.[$profile] != null' <<< "${SCCACHE_PROFILES_JSON}" >/dev/null; then
+              selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile]' <<< "${SCCACHE_PROFILES_JSON}")"
+              selected_sccache_config_toml="$(jq -r '.config_toml // ""' <<< "${selected_profile_json}")"
+              selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
+              selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
+            fi
+          fi
+
+          if [[ "${selected_sccache_env_vars_json:-}" == "{}" ]]; then
+            selected_sccache_env_vars_json=
+          fi
+
+          if [[ "${selected_sccache_files_json:-}" == "{}" ]]; then
+            selected_sccache_files_json=
+          fi
+
+          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" ]]; then
+            echo "::warning::USE_SCCACHE=true but no sccache payload was provided (direct SCCACHE_* secrets or a matching entry in SCCACHE_PROFILES_JSON). Disabling sccache for this run."
           else
             use_sccache=true
             sccache_runtime_dir=".sccache-runtime-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
             runtime_path="${GITHUB_WORKSPACE}/${sccache_runtime_dir}"
             mkdir -p "${runtime_path}"
 
-            if [[ -n "${SCCACHE_CONFIG_TOML:-}" ]]; then
+            if [[ -n "${selected_sccache_config_toml:-}" ]]; then
               sccache_config_file="${sccache_runtime_dir}/config.toml"
-              printf '%s' "${SCCACHE_CONFIG_TOML}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
+              printf '%s' "${selected_sccache_config_toml}" > "${GITHUB_WORKSPACE}/${sccache_config_file}"
               chmod 600 "${GITHUB_WORKSPACE}/${sccache_config_file}"
             fi
 
-            if [[ -n "${SCCACHE_ENV_VARS_JSON:-}" ]]; then
-              echo "${SCCACHE_ENV_VARS_JSON}" | jq -e 'type == "object"' >/dev/null
+            if [[ -n "${selected_sccache_env_vars_json:-}" ]]; then
+              echo "${selected_sccache_env_vars_json}" | jq -e 'type == "object"' >/dev/null
 
               sccache_env_file="${sccache_runtime_dir}/env.list"
               : > "${GITHUB_WORKSPACE}/${sccache_env_file}"
@@ -177,13 +233,13 @@ jobs:
                 fi
 
                 printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_WORKSPACE}/${sccache_env_file}"
-              done < <(echo "${SCCACHE_ENV_VARS_JSON}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+              done < <(echo "${selected_sccache_env_vars_json}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
 
               chmod 600 "${GITHUB_WORKSPACE}/${sccache_env_file}"
             fi
 
-            if [[ -n "${SCCACHE_FILES_JSON:-}" ]]; then
-              echo "${SCCACHE_FILES_JSON}" | jq -e 'type == "object"' >/dev/null
+            if [[ -n "${selected_sccache_files_json:-}" ]]; then
+              echo "${selected_sccache_files_json}" | jq -e 'type == "object"' >/dev/null
 
               while IFS=$'\t' read -r rel_path content_b64; do
                 if [[ ! "${rel_path}" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "${rel_path}" == /* ]] || [[ "${rel_path}" == *".."* ]]; then
@@ -195,7 +251,7 @@ jobs:
                 mkdir -p "$(dirname "${file_path}")"
                 printf '%s' "${content_b64}" | base64 --decode > "${file_path}"
                 chmod 600 "${file_path}"
-              done < <(echo "${SCCACHE_FILES_JSON}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+              done < <(echo "${selected_sccache_files_json}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
             fi
           fi
         fi
@@ -206,6 +262,50 @@ jobs:
           echo "sccache_env_file=${sccache_env_file}"
           echo "sccache_runtime_dir=${sccache_runtime_dir}"
         } >> "$GITHUB_OUTPUT"
+
+    - id: artifact_upload_credentials
+      name: Resolve artifact upload credentials
+      env:
+        INPUT_STORAGE_PROVIDER: ${{ inputs.STORAGE_PROVIDER }}
+        INPUT_ARTIFACT_UPLOAD_BUCKET_PATH: ${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}
+        DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}
+        ARTIFACT_PROVIDER_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_PROVIDER_CREDENTIALS_JSON }}
+      run: |
+        set -euo pipefail
+
+        credentials_file=
+        credentials_payload="${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON:-}"
+        storage_provider="${INPUT_STORAGE_PROVIDER}"
+
+        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" && -n "${ARTIFACT_PROVIDER_CREDENTIALS_JSON:-}" && -n "${storage_provider}" ]]; then
+          echo "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}" | jq -e 'type == "object"' >/dev/null
+
+          entry_type="$(jq -r --arg provider "${storage_provider}" '.[$provider] | type' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+          case "${entry_type}" in
+            string)
+              credentials_payload="$(jq -r --arg provider "${storage_provider}" '.[$provider]' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+              ;;
+            object|array)
+              credentials_payload="$(jq -c --arg provider "${storage_provider}" '.[$provider]' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+              ;;
+            null)
+              ;;
+            *)
+              echo "::error::Unsupported credential payload type '${entry_type}' for storage provider '${storage_provider}'."
+              exit 1
+              ;;
+          esac
+        fi
+
+        if [[ -n "${credentials_payload}" ]]; then
+          credentials_dir="${RUNNER_TEMP}/artifact-upload-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "${credentials_dir}"
+          credentials_file="${credentials_dir}/${storage_provider:-artifact}.json"
+          printf '%s' "${credentials_payload}" > "${credentials_file}"
+          chmod 600 "${credentials_file}"
+        fi
+
+        echo "credentials_file=${credentials_file}" >> "$GITHUB_OUTPUT"
 
     - name: Print environment
       run: printenv
@@ -220,13 +320,24 @@ jobs:
         HAS_UPLOAD_TARGET=false
         DATA_BASENAME=
         DATA_EXCHANGE_DIR=
+        ARTIFACT_UPLOAD_BUCKET_PATH="${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}"
         ARTIFACT_UPLOAD_COMMAND="${{ inputs.ARTIFACT_UPLOAD_COMMAND }}"
         ARTIFACT_UPLOAD_PRE_COMMAND="${{ inputs.ARTIFACT_UPLOAD_PRE_COMMAND }}"
+        ARTIFACT_UPLOAD_URI_ROOT="${{ inputs.ARTIFACT_UPLOAD_URI_ROOT }}"
+        ARTIFACT_PUBLIC_URL_ROOT="${{ inputs.ARTIFACT_PUBLIC_URL_ROOT }}"
         ARTIFACT_UPLOAD_URI_PREFIX="${{ inputs.ARTIFACT_UPLOAD_URI_PREFIX }}"
         ARTIFACT_PUBLIC_URL_PREFIX="${{ inputs.ARTIFACT_PUBLIC_URL_PREFIX }}"
-        ARTIFACT_UPLOAD_CREDENTIALS_JSON="${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}"
+        ARTIFACT_UPLOAD_CREDENTIALS_FILE="${{ steps.artifact_upload_credentials.outputs.credentials_file }}"
 
-        if [[ -n "${ARTIFACT_UPLOAD_COMMAND}" || -n "${ARTIFACT_UPLOAD_URI_PREFIX}" || -n "${ARTIFACT_PUBLIC_URL_PREFIX}" || -n "${ARTIFACT_UPLOAD_PRE_COMMAND}" ]]; then
+        if [[ -z "${ARTIFACT_UPLOAD_URI_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
+          ARTIFACT_UPLOAD_URI_PREFIX="${ARTIFACT_UPLOAD_URI_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
+        fi
+
+        if [[ -z "${ARTIFACT_PUBLIC_URL_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" && -n "${ARTIFACT_PUBLIC_URL_ROOT}" ]]; then
+          ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
+        fi
+
+        if [[ -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" || -n "${ARTIFACT_UPLOAD_URI_PREFIX}" || -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
           if [[ -z "${ARTIFACT_UPLOAD_COMMAND}" || -z "${ARTIFACT_UPLOAD_URI_PREFIX}" ]]; then
             echo "::error::ARTIFACT_UPLOAD_COMMAND and ARTIFACT_UPLOAD_URI_PREFIX must both be set when enabling artifact upload."
             exit 1
@@ -423,17 +534,20 @@ jobs:
 
           if [[ "${artifact_upload_prepared}" != "true" ]]; then
             if [[ -n "${ARTIFACT_UPLOAD_PRE_COMMAND}" ]]; then
-              bash -euo pipefail -c "${ARTIFACT_UPLOAD_PRE_COMMAND}"
+              eval "${ARTIFACT_UPLOAD_PRE_COMMAND}"
             fi
             artifact_upload_prepared=true
           fi
 
           artifact_name="$(basename "${source_file}")"
           artifact_destination="${ARTIFACT_UPLOAD_URI_PREFIX%/}/${artifact_name}"
-          UPLOAD_SRC="${source_file}" \
-          UPLOAD_DST="${artifact_destination}" \
-          ARTIFACT_UPLOAD_CREDENTIALS_JSON="${ARTIFACT_UPLOAD_CREDENTIALS_JSON}" \
-          bash -euo pipefail -c "${ARTIFACT_UPLOAD_COMMAND}"
+          (
+            set -euo pipefail
+            export UPLOAD_SRC="${source_file}"
+            export UPLOAD_DST="${artifact_destination}"
+            export ARTIFACT_UPLOAD_CREDENTIALS_FILE="${ARTIFACT_UPLOAD_CREDENTIALS_FILE}"
+            eval "${ARTIFACT_UPLOAD_COMMAND}"
+          )
 
           if [[ -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
             echo "${output_message} ${ARTIFACT_PUBLIC_URL_PREFIX%/}/${artifact_name}"

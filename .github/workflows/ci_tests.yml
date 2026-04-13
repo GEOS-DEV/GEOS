@@ -55,6 +55,92 @@ jobs:
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
+  # Resolve storage/cache provider settings once and keep the build jobs declarative.
+  # New providers can be added via vars.CI_PROVIDER_CONFIG_JSON without changing job call sites.
+  # Provider payloads are supplied generically through inherited secrets:
+  # - SCCACHE_PROFILES_JSON
+  # - ARTIFACT_PROVIDER_CREDENTIALS_JSON
+  # Direct one-off overrides remain available in the reusable workflow via SCCACHE_* and
+  # ARTIFACT_UPLOAD_CREDENTIALS_JSON.
+  resolve_ci_provider:
+    runs-on: ubuntu-22.04
+    outputs:
+      STORAGE_PROVIDER: ${{ steps.resolve.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ steps.resolve.outputs.SCCACHE_PROFILE }}
+      INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ steps.resolve.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_COMMAND }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
+      ARTIFACT_UPLOAD_URI_ROOT: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
+      ARTIFACT_PUBLIC_URL_ROOT: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
+    env:
+      CI_STORAGE_PROVIDER: ${{ vars.CI_STORAGE_PROVIDER || 'gcp' }}
+      CI_SCCACHE_PROFILE: ${{ vars.CI_SCCACHE_PROFILE || vars.CI_STORAGE_PROVIDER || 'gcp' }}
+      CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ vars.CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH || 'geosx/integratedTests' }}
+      CI_PROVIDER_CONFIG_JSON: ${{ vars.CI_PROVIDER_CONFIG_JSON || '' }}
+      CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE: ${{ vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE || vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_PREFIX || '' }}
+    steps:
+    - id: resolve
+      run: |
+        set -euo pipefail
+
+        STORAGE_PROVIDER="${CI_STORAGE_PROVIDER}"
+        SCCACHE_PROFILE="${CI_SCCACHE_PROFILE:-${STORAGE_PROVIDER}}"
+        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="${CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
+
+        DEFAULT_PROVIDER_CONFIG_JSON="$(jq -cn --arg cloudflare_artifact_public_url_base "${CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE}" '
+          {
+            gcp: {
+              artifact_upload_command: "CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead \"$UPLOAD_SRC\" \"$UPLOAD_DST\"",
+              artifact_upload_pre_command: "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True",
+              artifact_upload_uri_root: "gs://",
+              artifact_public_url_root: "https://storage.googleapis.com"
+            },
+            cloudflare: {
+              artifact_upload_command: "aws s3 cp --only-show-errors --acl public-read \"$UPLOAD_SRC\" \"$UPLOAD_DST\" --endpoint-url \"$ARTIFACT_UPLOAD_ENDPOINT\"",
+              artifact_upload_pre_command: "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; if ! command -v aws >/dev/null; then echo \"aws CLI is required for cloudflare artifact upload backend.\" >&2; exit 1; fi; ACCESS_KEY_ID=\"$(jq -er \".access_key_id\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; SECRET_ACCESS_KEY=\"$(jq -er \".secret_access_key\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; ENDPOINT=\"$(jq -er \".endpoint\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; export AWS_ACCESS_KEY_ID=\"$ACCESS_KEY_ID\"; export AWS_SECRET_ACCESS_KEY=\"$SECRET_ACCESS_KEY\"; export AWS_DEFAULT_REGION=\"${AWS_DEFAULT_REGION:-auto}\"; export AWS_EC2_METADATA_DISABLED=true; export ARTIFACT_UPLOAD_ENDPOINT=\"$ENDPOINT\"",
+              artifact_upload_uri_root: "s3://",
+              artifact_public_url_root: $cloudflare_artifact_public_url_base
+            }
+          }
+        ')"
+
+        CUSTOM_PROVIDER_CONFIG_JSON="${CI_PROVIDER_CONFIG_JSON:-}"
+        if [[ -n "${CUSTOM_PROVIDER_CONFIG_JSON}" ]]; then
+          echo "${CUSTOM_PROVIDER_CONFIG_JSON}" | jq -e 'type == "object"' >/dev/null
+        else
+          CUSTOM_PROVIDER_CONFIG_JSON='{}'
+        fi
+
+        PROVIDER_CONFIG_JSON="$(jq -cn \
+          --argjson defaults "${DEFAULT_PROVIDER_CONFIG_JSON}" \
+          --argjson custom "${CUSTOM_PROVIDER_CONFIG_JSON}" \
+          '$defaults * $custom'
+        )"
+
+        SELECTED_PROVIDER_JSON="$(jq -cer --arg provider "${STORAGE_PROVIDER}" '.[$provider]' <<< "${PROVIDER_CONFIG_JSON}")" || {
+          echo "::error::No provider configuration was found for '${STORAGE_PROVIDER}'."
+          exit 1
+        }
+
+        ARTIFACT_UPLOAD_COMMAND="$(jq -er '.artifact_upload_command' <<< "${SELECTED_PROVIDER_JSON}")"
+        ARTIFACT_UPLOAD_PRE_COMMAND="$(jq -er '.artifact_upload_pre_command // ""' <<< "${SELECTED_PROVIDER_JSON}")"
+        ARTIFACT_UPLOAD_URI_ROOT="$(jq -er '.artifact_upload_uri_root' <<< "${SELECTED_PROVIDER_JSON}")"
+        ARTIFACT_PUBLIC_URL_ROOT="$(jq -er '.artifact_public_url_root // ""' <<< "${SELECTED_PROVIDER_JSON}")"
+
+        {
+          echo "STORAGE_PROVIDER=${STORAGE_PROVIDER}"
+          echo "SCCACHE_PROFILE=${SCCACHE_PROFILE}"
+          echo "INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH=${INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
+          echo "ARTIFACT_UPLOAD_COMMAND<<__EOF__"
+          printf '%s\n' "${ARTIFACT_UPLOAD_COMMAND}"
+          echo "__EOF__"
+          echo "ARTIFACT_UPLOAD_PRE_COMMAND<<__EOF__"
+          printf '%s\n' "${ARTIFACT_UPLOAD_PRE_COMMAND}"
+          echo "__EOF__"
+          echo "ARTIFACT_UPLOAD_URI_ROOT=${ARTIFACT_UPLOAD_URI_ROOT}"
+          echo "ARTIFACT_PUBLIC_URL_ROOT=${ARTIFACT_PUBLIC_URL_ROOT}"
+        } >> "$GITHUB_OUTPUT"
+
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
   if_not_unassigned_pull_request:
@@ -116,7 +202,7 @@ jobs:
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
   cpu_builds:
     name: ${{ matrix.name }}
-    needs: [is_not_draft_pull_request]
+    needs: [is_not_draft_pull_request, resolve_ci_provider]
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
@@ -224,31 +310,27 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      ARTIFACT_UPLOAD_COMMAND: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && 'CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "$UPLOAD_SRC" "$UPLOAD_DST"' || '' }}
-      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && 'if [[ -z "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" ]]; then echo "ARTIFACT_UPLOAD_CREDENTIALS_JSON is required when ARTIFACT_UPLOAD_BUCKET_PATH is set." >&2; exit 1; fi; CREDENTIALS_FILE="$RUNNER_TEMP/artifact-upload-gcp.json"; printf "%s" "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" > "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True' || '' }}
-      ARTIFACT_UPLOAD_URI_PREFIX: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && format('gs://{0}', matrix.ARTIFACT_UPLOAD_BUCKET_PATH) || '' }}
-      ARTIFACT_PUBLIC_URL_PREFIX: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH && format('https://storage.googleapis.com/{0}', matrix.ARTIFACT_UPLOAD_BUCKET_PATH) || '' }}
+      STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
+      ARTIFACT_UPLOAD_BUCKET_PATH: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH || '' }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_COMMAND }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
+      ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
+      ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
-    secrets:
-      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
-      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
-      ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CLOUD_GCP }}
+    secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
   run_integrated_tests:
     needs:
       - is_not_draft_pull_request
+      - resolve_ci_provider
       - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
-    secrets:
-      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
-      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
-      ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CLOUD_GCP }}
+    secrets: inherit
     with:
       BUILD_AND_TEST_CLI_ARGS: --build-exe-only
       BUILD_TYPE: integrated_tests
@@ -258,10 +340,13 @@ jobs:
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
-      ARTIFACT_UPLOAD_COMMAND: CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead "$UPLOAD_SRC" "$UPLOAD_DST"
-      ARTIFACT_UPLOAD_PRE_COMMAND: if [[ -z "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" ]]; then echo "ARTIFACT_UPLOAD_CREDENTIALS_JSON is required when artifact upload is enabled." >&2; exit 1; fi; CREDENTIALS_FILE="$RUNNER_TEMP/artifact-upload-gcp.json"; printf "%s" "$ARTIFACT_UPLOAD_CREDENTIALS_JSON" > "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file "$CREDENTIALS_FILE"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
-      ARTIFACT_UPLOAD_URI_PREFIX: gs://geosx/integratedTests
-      ARTIFACT_PUBLIC_URL_PREFIX: https://storage.googleapis.com/geosx/integratedTests
+      STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
+      ARTIFACT_UPLOAD_BUCKET_PATH: ${{ needs.resolve_ci_provider.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_COMMAND }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
+      ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
+      ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
       RUNS_ON: streak2-32core
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
@@ -287,12 +372,9 @@ jobs:
   code_coverage:
     needs:
       - is_not_draft_pull_request
+      - resolve_ci_provider
     uses: ./.github/workflows/build_and_test.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SCCACHE_CONFIG_TOML: ${{ secrets.SCCACHE_CONFIG_TOML }}
-      SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
-      SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
+    secrets: inherit
     with:
       BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
       CMAKE_BUILD_TYPE: Debug
@@ -301,6 +383,7 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       RUNS_ON: streak2
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
@@ -324,6 +407,7 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
+      - resolve_ci_provider
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
@@ -413,6 +497,7 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
