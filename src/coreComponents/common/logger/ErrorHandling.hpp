@@ -424,31 +424,7 @@ private:
                                      std::string_view indent );
 };
 
-class ErrorHandler
-{
-public:
 
-  static ErrorHandler & instance();
-
-  void setProgramAborter( std::function< void() > const & abortingFunctor )
-  { m_abortingFunctor = abortingFunctor; }
-
-  /**
-   * @brief Post error-handling function that terminates the program.
-   */
-  void abortProgram()
-  { m_abortingFunctor(); }
-
-private:
-
-  std::function< void() > m_abortingFunctor;
-
-  /**
-   * @brief Static class, no public constructor
-   */
-  ErrorHandler();
-
-};
 
 } /* namespace geos */
 

@@ -70,9 +70,9 @@ void setupLogger()
 
   { // setup error handling (using LvArray helper system functions)
 
-    ///// set external error handling behaviour /////
     ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
 
+    ///// set external error handling behaviour /////
     ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
                                                            string_view detectionLocation )
     {
@@ -105,44 +105,25 @@ void setupLogger()
       // Disable signal handling to prevent catching exit signal (infinite loop)
       LvArray::system::setSignalHandling( nullptr );
 
-      // first of all, there can be external error that await to be output
+      // first of all, external error can await to be output, we must output them
       ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
       DiagnosticMsg diagnosticMsg;
-      DiagnosticMsgBuilder::init( diagnosticMsg,
-                                  MsgType::ExternalError, "",
-                                  ::geos::logger::internal::g_rank )
-        .addSignal( signal )
-        .addCallStackInfo( stackHistory );
-      ErrorLogger::global().flushErrorMsg( diagnosticMsg );
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                       MsgType::ExternalError, "",
+                                                                       ::geos::logger::internal::g_rank )
+                                             .addSignal( signal )
+                                             .addCallStackInfo( stackHistory )
+                                             .getDiagnosticMsg() );
 
       // call program termination
-      ErrorHandler::instance().abortProgram();
-    } );
-
-    ///// set LvArray to use the GEOS error behaviour in a way that can be traced /////
-    LvArray::system::setErrorHandler( []()
-    {
-      // first of all, there can be external error that await to be output
-      ExternalErrorHandler::instance().flush( "after LvArray error detection" );
-
-      // default error message output
-      DiagnosticMsg diagnosticMsg;
-      DiagnosticMsgBuilder::init( diagnosticMsg,
-                                  MsgType::ExternalError,
-                                  "LvArray Runtime Error",
-                                  ::geos::logger::internal::g_rank )
-        .addCallStackInfo( LvArray::system::stackTrace( true ) );
-      ErrorLogger::global().flushErrorMsg( diagnosticMsg );
-
-      // call program termination
-      ErrorHandler::instance().abortProgram();
+      LvArray::system::callErrorHandler();
     } );
 
     ///// set Post-Handled Error behaviour /////
-    ErrorHandler::instance().setProgramAborter( []()
+    LvArray::system::setErrorHandler( []()
     {
   #if defined( GEOS_USE_MPI )
       int mpi = 0;
