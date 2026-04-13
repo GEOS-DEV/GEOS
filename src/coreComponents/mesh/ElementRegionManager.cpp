@@ -231,79 +231,78 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   } );
 
-  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion )
+  {
     WellElementSubRegion const &
     wellSubRegion = wellRegion.getSubRegion< WellElementSubRegion >( wellRegion.getSubRegionName() );
-
-    PerforationData const * perforationData= wellSubRegion.getPerforationData();
-    arrayView2d< const real64 > wsrPerfLocation = perforationData->getLocation();
-    TableData localPerfoData;
-    for( globalIndex iperfLocal = 0; iperfLocal < perforationData->getNumPerforationsGlobal(); ++iperfLocal )
+    if( wellSubRegion.getPerforationData() != nullptr )
     {
-      arrayView1d< globalIndex const > const globalIperf =  perforationData->localToGlobalMap();
+      PerforationData const & perforationData = *wellSubRegion.getPerforationData();
+      arrayView1d< globalIndex const > const perfGlobalIdMap = perforationData.localToGlobalMap();
+      arrayView2d< const real64 > wsrPerfLocation = perforationData.getLocation();
+      TableData localPerfoData;
 
-      array1d< integer > localCoords;
-      bool const localResElementFound =  perforationData->hasLocalPerforationInReservoir( iperfLocal );
-      bool const globalResElemFound =(bool)MpiWrapper::allReduce(
-        (integer)localResElementFound, MpiWrapper::Reduction::LogicalOr );
-      if( !globalResElemFound )
+      globalIndex const numPerfsGlobal = perforationData.getNumPerforationsGlobal();
+      for( globalIndex iperfLocal = 0; iperfLocal < perfGlobalIdMap.size(); ++iperfLocal )
       {
-        if( MpiWrapper::commRank() == 0 )
-          localPerfoData.addRow( globalIperf[iperfLocal], "NONE", localCoords,
-                                 "NONE", "NONE", "NONE", rankId );
-      }
-      else if( localResElementFound )
-      {
+        globalIndex const iperfGlobal = perfGlobalIdMap[iperfLocal];
+        string_view perfName = perforationData.getPerfName()[iperfLocal];
+        arraySlice1d< real64 const > location = wsrPerfLocation[iperfLocal];
         integer const globalWellElemIndices = wellSubRegion.getGlobalWellElementIndex()[iperfLocal];
-        integer const cellId = perforationData->getReservoirElementGlobalIndex()[iperfLocal];
-        auto const & meshElems = perforationData->getMeshElements();
-        localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
-        localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
 
-        ElementRegionBase const & region =
-          meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+        bool const localResElementFound = perforationData.hasLocalPerforationInReservoir( iperfLocal );
+        if( !localResElementFound )
+        {
+          localPerfoData.addRow( perfName, iperfGlobal, globalWellElemIndices, location,
+                                 "NONE", "NONE", "NONE", rankId );
+        }
+        else
+        {
+          integer const cellId = perforationData.getReservoirElementGlobalIndex()[iperfLocal];
+          auto const & meshElems = perforationData.getMeshElements();
+          localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperfLocal];
+          localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperfLocal];
 
-        ElementSubRegionBase const & subRegion =
-          region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
-        localCoords.emplace_back( wsrPerfLocation[iperfLocal][0] );
-        localCoords.emplace_back( wsrPerfLocation[iperfLocal][1] );
-        localCoords.emplace_back( wsrPerfLocation[iperfLocal][2] );
-        localPerfoData.addRow( globalIperf[iperfLocal], globalWellElemIndices, localCoords,
-                               region.getName(), subRegion.getName(), cellId, rankId );
+          ElementRegionBase const & region =
+            meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+
+          ElementSubRegionBase const & subRegion =
+            region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
+          localPerfoData.addRow( perfName, iperfGlobal, globalWellElemIndices, location,
+                                 region.getName(), subRegion.getName(), cellId, rankId );
+        }
       }
 
-    }
+      integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
+      if( perfoDetected )
+      {
+        TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
+                                                        wellRegion.getWellGeneratorName()),
+          {
+            "Perforation", "Id", "Well element", "Coordinates",
+            "Cell region", "Cell sub-region", "Cell ID", "Rank"
+          } );
 
-    integer perfoDetected = MpiWrapper::max( localPerfoData.getCellsData().size() ) > 0;
+        TableMpiLayout mpiLayout;
+        TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
 
-    if( perfoDetected )
-    {
-      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table",
-                                                      wellRegion.getWellGeneratorName()),
-        {
-          "Perforation", "Well element", "Coordinates",
-          "Cell region", "Cell sub-region", "Cell ID", "Rank"
+        formatter.setSortingFunc(
+          []( std::vector< TableData::CellData > const & row1,
+              std::vector< TableData::CellData > const & row2 ) {
+          return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
         } );
 
-      TableMpiLayout mpiLayout;
-      TableTextMpiFormatter formatter = TableTextMpiFormatter( layoutPerforation, mpiLayout );
+        std::ostringstream outputStream;
+        formatter.toStream( outputStream, localPerfoData );
 
-      formatter.setSortingFunc(
-        []( std::vector< TableData::CellData > const & row1,
-            std::vector< TableData::CellData > const & row2 ) {
-        return tableDataSorting::positiveNumberStringComp( row1[0].value, row2[0].value );
-      } );
-
-      std::ostringstream outputStream;
-      formatter.toStream( outputStream, localPerfoData );
-
-      if( rankId == 0 )
-      {
-        TableTextFormatter const globalFormatter( layoutPerforation );
-        GEOS_LOG( outputStream.str());
+        if( rankId == 0 )
+        {
+          TableTextFormatter const globalFormatter( layoutPerforation );
+          GEOS_LOG( outputStream.str() );
+        }
       }
-    }
 
+    }
   } );
 
   // communicate to rebuild global node info since we modified global ordering
