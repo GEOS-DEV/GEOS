@@ -453,4 +453,14 @@ void ErrorLogger::flushCurrentExceptionMessage()
   }
 }
 
+ErrorHandler::ErrorHandler()
+  : m_abortingFunctor( []() { std::abort(); } )
+{}
+
+ErrorHandler & ErrorHandler::instance()
+{
+  static ErrorHandler s_instance;
+  return s_instance;
+}
+
 } /* namespace geos */

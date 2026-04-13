@@ -81,7 +81,7 @@ int main( int argc, char *argv[] )
   { // GEOS generated exceptions management
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
-    LvArray::system::callErrorHandler();
+    ErrorHandler::instance().abortProgram();
   }
   catch( std::exception const & e )
   { // native exceptions management
@@ -91,7 +91,7 @@ int main( int argc, char *argv[] )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .getDiagnosticMsg());
     basicCleanup( true );
-    LvArray::system::callErrorHandler();
+    ErrorHandler::instance().abortProgram();
   }
   return 0;
 }
