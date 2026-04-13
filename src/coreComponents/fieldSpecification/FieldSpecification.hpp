@@ -159,136 +159,105 @@ public:
    * @return const reference to m_function
    */
   string const & getFunctionName() const
-  {
-    return m_functionName;
-  }
+  { return m_functionName; }
 
   /**
    * Accessor
    * @return const reference to m_objectPath
    */
   virtual const string & getObjectPath() const
-  {
-    return m_objectPath;
-  }
+  { return m_objectPath; }
 
   /**
    * Accessor
    * @return const reference to m_fieldName
    */
   virtual const string & getFieldName() const
-  {
-    return m_fieldName;
-  }
+  { return m_fieldName; }
 
   /**
    * Accessing the considered component.
    * @return The component axis or a special value.
    */
   virtual int getComponent() const
-  {
-    return m_component;
-  }
+  { return m_component; }
 
   /**
    * Accessor
    * @return const reference to m_direction
    */
   virtual R1Tensor const & getDirection() const
-  {
-    GEOS_UNUSED_VAR( time );
-    return m_direction;
-  }
+  { return m_direction; }
 
   /**
    * Accessor
    * @return const m_beginTime
    */
   real64 getStartTime() const
-  {
-    return m_beginTime;
-  }
+  { return m_beginTime; }
 
   /**
    * Accessor
    * @return const m_endTime
    */
   real64 getEndTime() const
-  {
-    return m_endTime;
-  }
+  { return m_endTime; }
 
   /**
    * Accessor
    * @return const reference to m_setNames
    */
   string_array const & getSetNames() const
-  {
-    return m_setNames;
-  }
+  { return m_setNames; }
 
   /**
    * Accessor
    * @return const m_initialCondition
    */
   int initialCondition() const
-  {
-    return m_initialCondition;
-  }
+  { return m_initialCondition; }
 
   /**
    * Accessor
    * @return const m_scale
    */
   real64 getScale() const
-  {
-    return m_scale;
-  }
+  { return m_scale; }
 
   /**
    * Mutator
    * @param[in] fieldName The name of the field
    */
   void setFieldName( string const & fieldName )
-  {
-    m_fieldName = fieldName;
-  }
+  { m_fieldName = fieldName; }
 
   /**
    * Mutator
    * @param[in] objectPath The path for the object
    */
   void setObjectPath( string const & objectPath )
-  {
-    m_objectPath = objectPath;
-  }
+  { m_objectPath = objectPath; }
 
   /**
    * Mutator
    * @param[in] scale Scaling factor
    */
   void setScale( real64 const & scale )
-  {
-    m_scale = scale;
-  }
+  { m_scale = scale; }
 
   /**
    * Mutator
    * @param[in] isInitialCondition Logical value to indicate if it is an initial condition
    */
   void initialCondition( bool isInitialCondition )
-  {
-    m_initialCondition = isInitialCondition;
-  }
+  { m_initialCondition = isInitialCondition; }
 
   /**
    * Mutator
    * @param[in] setName The name of the set
    */
   void addSetName( string const & setName )
-  {
-    m_setNames.emplace_back( setName );
-  }
+  { m_setNames.emplace_back( setName ); }
 
   /**
    * @brief Set the Mesh Object Path object
@@ -303,9 +272,7 @@ public:
    * @return reference to const m_meshObjectPaths
    */
   MeshObjectPath const & getMeshObjectPaths() const
-  {
-    return *(m_meshObjectPaths.get());
-  }
+  { return *(m_meshObjectPaths.get()); }
 
 
 protected:
