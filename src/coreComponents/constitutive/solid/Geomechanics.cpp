@@ -410,7 +410,7 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
   m_bulkModulus.resize( 0 );
   m_shearModulus.resize( 0 );
   m_velocityGradient.resize( 0, 3, 3 );
-  m_materialDirection.resize( 0, 3 );
+  m_materialDirection.resize( 0, 3, 3 );
   m_deformationGradient.resize( 0, 3, 3);
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );

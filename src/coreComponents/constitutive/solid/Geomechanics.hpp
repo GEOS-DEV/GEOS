@@ -163,7 +163,7 @@ public:
                        arrayView1d< real64 > const bulkModulus,
                        arrayView1d< real64 > const shearModulus,
                        arrayView3d< real64 const > const velocityGradient,
-                       arrayView2d< real64 > const & materialDirection,
+                       arrayView3d< real64 > const & materialDirection,
                        arrayView3d< real64 > const & deformationGradient,
                        arrayView3d< real64 > const plasticStrain,
                        arrayView2d< real64 > const porosity,
@@ -622,7 +622,7 @@ private:
   arrayView3d< real64 const > const m_velocityGradient;
 
   /// A reference to the ArrayView holding the material direction for each element/particle.
-  arrayView2d< real64 > const m_materialDirection;
+  arrayView3d< real64 > const m_materialDirection;
 
   /// A reference to the ArrayView holding the deformation gradient for each element/particle.
   arrayView3d< real64 > const m_deformationGradient;
@@ -772,8 +772,12 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   // The deformation gradient and material direction are used to compute a direction
   // strain for use with a micro-structure buckling model
   // make sure material direction is normalized.
-  real64 materialDirection[3] = { 0 };
-  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+  //real64 materialDirection[3] = { 0 };
+  //LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+  //LvArray::tensorOps::normalize< 3 >( materialDirection );
+
+  real64 materialDirection[3] = {};
+  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
 
@@ -3081,7 +3085,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && isZero( m_stren ) && isZero( ySlope_h) )
   {// ----------------------------------------------Linear Drucker-Prager
-    std::cout << "Linear Drucker-Prager" << std::endl;
+    //std::cout << "Linear Drucker-Prager" << std::endl;
     a1 = peakI1_h * fSlope_h;
     a2 = 0.0;
     a3 = 0.0;
@@ -3089,7 +3093,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if ( isZero( fSlope_h ) && isZero( peakI1_h ) && stren_h > 0.0 && isZero( ySlope_h ) )
   { // ------------------------------------------------------- Von Mises
-    std::cout << "Von Mises" << std::endl;
+    //std::cout << "Von Mises" << std::endl;
 
     a1 = stren_h*nonlinearCoher;
     a2 = 0.0;
@@ -3098,7 +3102,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if ( fSlope_h > 0.0 && isZero( ySlope_h ) && stren_h > 0.0 && isZero( peakI1_h ) )
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    std::cout << "0 PeakI1 to vonMises" << std::endl;
+    //std::cout << "0 PeakI1 to vonMises" << std::endl;
 
     a1 = stren_h;
     a2 = fSlope_h / stren_h;
@@ -3107,7 +3111,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if (fSlope_h > ySlope_h && ySlope_h > 0.0 && stren_h > ySlope_h*peakI1_h && peakI1_h >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    std::cout << "Nonlinear Drucker-Prager" << std::endl;
+    //std::cout << "Nonlinear Drucker-Prager" << std::endl;
     a1 = stren_h;
     a2 = (fSlope_h-ySlope_h )/(stren_h - ySlope_h*peakI1_h);
     a3 = (stren_h-ySlope_h*peakI1_h)*std::exp(-a2*peakI1_h);
@@ -3756,7 +3760,7 @@ protected:
   array3d< real64 > m_velocityGradient;
 
   /// State variable: The material direction for each element/particle
-  array2d< real64 > m_materialDirection;
+  array3d< real64 > m_materialDirection;
 
   /// State variable: The deformation gradient values for each element/particle.
   array3d< real64 > m_deformationGradient;

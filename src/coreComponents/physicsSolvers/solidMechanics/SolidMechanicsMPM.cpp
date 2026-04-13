@@ -17164,7 +17164,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
-  for( localIndex i = 0; i < 18; ++i )
+  for( localIndex i = 0; i < 19; ++i )
   {
     real64 localSum = boxSums[i];
     real64 globalSum;
