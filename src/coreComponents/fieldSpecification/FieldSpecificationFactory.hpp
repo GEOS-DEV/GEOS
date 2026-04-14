@@ -30,6 +30,10 @@ namespace geos
 
 /**
  * @class FieldSpecificationFactory
+ *
+ * This class provides a way to create FieldSpecification objects using
+ * other type of specifications. One could think of those types of
+ * specification to blueprints or "high-level" specification
  */
 class FieldSpecificationFactory
 {

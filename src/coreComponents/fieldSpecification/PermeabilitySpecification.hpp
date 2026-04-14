@@ -31,6 +31,8 @@ namespace geos
 
 /**
  * @class PermeabilitySpecification
+ *
+ * Data class representing a permeability field specification
  */
 class PermeabilitySpecification : public FieldSpecificationABC
 {

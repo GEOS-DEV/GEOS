@@ -239,6 +239,11 @@ public:
     m_isSurfaceGenerationCase = isSurfaceGenerationCase;
   }
 
+  /**
+   * @brief Register a factory in the manager to create FieldSpecification
+   *        via "high-level" field specifications data
+   * @param factory The factory to add to the manager
+   */
   void registerFactory( std::unique_ptr< FieldSpecificationFactory > factory );
 
 

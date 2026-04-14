@@ -33,6 +33,8 @@ class Function;
 
 /**
  * @class FieldSpecificationABC
+ *
+ * Abstract Base Class grouping multiple types of field specifications.
  */
 class FieldSpecificationABC : public dataRepository::Group
 {

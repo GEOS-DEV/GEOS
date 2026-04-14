@@ -33,6 +33,9 @@ namespace geos
 
 /**
  * @class PermeabilitySpecificationFactory
+ *
+ * @copydoc geos::FieldSpecificationFactory
+ * Field specification factory implementation for the PermeabilitySpecification
  */
 class PermeabilitySpecificationFactory : public FieldSpecificationFactory
 {
