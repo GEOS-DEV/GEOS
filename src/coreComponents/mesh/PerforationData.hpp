@@ -145,7 +145,6 @@ public:
    */
   ToElementRelation< array1d< localIndex > > const & getMeshElements() const { return m_toMeshElements; }
 
-
   /**
    * @brief Get perforation-to-well-element connectivity.
    * @return list of well element index connected to each perforation

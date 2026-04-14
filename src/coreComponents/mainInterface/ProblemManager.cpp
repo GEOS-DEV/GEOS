@@ -288,7 +288,7 @@ void ProblemManager::problemSetup()
   logHypredriveInputs( *m_physicsSolverManager, getDomainPartition() );
 #endif
 
-  LogPart importFieldsLog( "Import Fields", MpiWrapper::commRank() == 0 );
+  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
   importFields();
   importFieldsLog.end();
