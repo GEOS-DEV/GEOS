@@ -16509,6 +16509,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleSurfacePosition[p], deformationGradient, particleReferenceSurfacePosition[p] );
 
           // Update the material direction, which is stored row-wise, so we have to take F*matDir^T, or Fc*matDir^T for the graphite type 
+          // and then it is the columns of this transformed matrix
           real64 materialBasis[3][3] = {};
           if( isFiber )
           {
@@ -16520,8 +16521,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           }
 
           for( int i  = 0; i < 3; ++i )
-          { // Normalize each material direction, which is a row of the materialBasis tensor.
-            real64 materialDirection[3] = { materialBasis[i][0], materialBasis[i][1], materialBasis[i][2]};
+          { // Normalize each material direction, which is a COLUMN of the materialBasis tensor, since this was computed
+            // from the inner product of F (or Fc) and the transpose of the row-wise matDir
+            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
             real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
             if( !isZero(norm) )
             {
@@ -16531,6 +16533,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             {
               zeroMagnitudeMaterialDirection = true;
             }
+            // Copy it back to the row-wise 3x3 to update particleMaterialDirection
             materialBasis[i][0] = materialDirection[0];
             materialBasis[i][1] = materialDirection[1];
             materialBasis[i][2] = materialDirection[2];
@@ -16599,7 +16602,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
 
           for( int i  = 0; i < 3; ++i )
           {
-            real64 materialDirection[3] = { materialBasis[i][0], materialBasis[i][1], materialBasis[i][2]};
+            // Normalize each material direction, which is a COLUMN of the materialBasis tensor, since this was computed
+            // from the inner product of F (or Fc) and the transpose of the row-wise matDir
+            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
             real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
             if( !isZero(norm) )
             {
@@ -16609,6 +16614,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             {
               zeroMagnitudeMaterialDirection = true;
             }
+            // Copy it back to the row-wise 3x3 to update particleMaterialDirection
             materialBasis[i][0] = materialDirection[0];
             materialBasis[i][1] = materialDirection[1];
             materialBasis[i][2] = materialDirection[2];
