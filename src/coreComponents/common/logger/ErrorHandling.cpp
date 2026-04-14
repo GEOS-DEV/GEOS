@@ -440,7 +440,7 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  loggerMsgReportData.recordDiagnostic( errMsg );
+  m_history.recordDiagnostic( errMsg );
   writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
@@ -450,7 +450,7 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushCurrentExceptionMessage()
 {
-  loggerMsgReportData.recordDiagnostic( m_getCurrentExceptionMsg );
+  m_history.recordDiagnostic( m_getCurrentExceptionMsg );
 
   writeToLogStream( m_getCurrentExceptionMsg );
   if( isOutputFileEnabled() )

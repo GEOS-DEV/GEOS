@@ -59,6 +59,13 @@ bool LogHistory::LogRecord::Key::operator==( Key const & rhs ) const
          this->m_lineId == rhs.m_lineId;
 }
 
+bool LogHistory::LocationKeyHash::operator()( LogRecord::Key const & key ) const
+{
+  size_t h1 = std::hash< string >{} (key.m_filename);
+  size_t h2 = std::hash< integer >{} (key.m_lineId);
+  return h1 ^ (h2 << 1);
+}
+
 void LogHistory::LogRecord::deserialize( buffer_unit_type const * & logRecordBytes, buffer_unit_type const * end )
 {
   basicSerialization::deserializeString( m_key.m_filename, logRecordBytes, end );
@@ -120,7 +127,6 @@ size_t LogHistory::LogRecord::getSerializedSize() const
 
 void LogHistory::gatherRecordsRank0()
 {
-  LogHistory & history = ErrorLogger::global().getLoggerReportData();
   stdVector< buffer_unit_type > localLogRecords( 0 );
   integer totalSize = 0;
 
@@ -160,23 +166,25 @@ void LogHistory::gatherRecordsRank0()
         {
           LogRecord unpackRecord;
           unpackRecord.deserialize( startGlobalRecord, rankEnd );
-          history.insertDiagnosticReport( unpackRecord );
+          insertDiagnosticReport( unpackRecord );
         }
       }
     }
   }
 }
 
+
+
 template<>
 string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const
 {
-  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Undefined >;
+  using CellRow  = stdArray< TableData::CellData, (size_t) MsgType::Count >;
 
   TableLayout tableLayout;
   tableLayout.addColumn( "Types" );
 
   // fill header
-  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+  for( size_t msgTypeIdx = 0; msgTypeIdx != (size_t)MsgType::Count; msgTypeIdx++ )
   {
     tableLayout.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
