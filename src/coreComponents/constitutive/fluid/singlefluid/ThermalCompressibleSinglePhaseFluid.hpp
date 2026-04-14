@@ -43,7 +43,7 @@ class ThermalCompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 public:
 
   using DensRelationType      = ExponentialRelation< real64, DENS_EAT, 3 >;
-  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT >;
+  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT, 3 >;
   using IntEnergyRelationType = ExponentialRelation< real64, INTENERGY_EAT >;
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
@@ -114,10 +114,9 @@ public:
                         real64 & dEnthalpy_dPressure,
                         real64 & dEnthalpy_dTemperature ) const override
   {
-    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
-    dViscosity_dTemperature = 0.0;
-
     m_densRelation.compute( pressure, temperature, density, dDensity_dPressure, dDensity_dTemperature );
+
+    m_viscRelation.compute( pressure, temperature, viscosity, dViscosity_dPressure, dViscosity_dTemperature );
 
     /// Compute the internal energy (only sensitive to temperature)
     m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature );
@@ -126,7 +125,6 @@ public:
     enthalpy = internalEnergy - m_refIntEnergy;
     dEnthalpy_dPressure = 0.0;
     dEnthalpy_dTemperature = dInternalEnergy_dTemperature;
-
   }
 
   GEOS_HOST_DEVICE
@@ -240,6 +238,7 @@ public:
   struct viewKeyStruct : public CompressibleSinglePhaseFluid::viewKeyStruct
   {
     static constexpr char const * thermalExpansionCoeffString() { return "thermalExpansionCoeff"; }
+    static constexpr char const * viscosityExpansivityString() { return "viscosityExpansivity"; }
     static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
@@ -254,6 +253,9 @@ private:
 
   /// scalar fluid thermal expansion coefficient
   real64 m_thermalExpansionCoeff;
+
+  /// scalar fluid viscosity thermal expansion coefficient
+  real64 m_viscosityExpansivity;
 
   /// scalar fluid volumetric heat capacity coefficient
   real64 m_specificHeatCapacity;
