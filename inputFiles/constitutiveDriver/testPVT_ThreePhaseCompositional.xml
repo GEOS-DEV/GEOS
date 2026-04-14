@@ -12,15 +12,26 @@
       outputMassDensity="1"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_ThreePhaseCompositional_blackOil.txt"
+      output="testPVT_ThreePhaseCompositional_blackOil.txt"
       logLevel="1"/>
   </Tasks>
+
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 
   <Events
     maxTime="1">
     <SoloEvent
       name="eventtestblackOil"
       target="/Tasks/testBlackOil"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
   </Events>
 
   <Constitutive>
@@ -59,25 +70,4 @@
       coordinates="{ 0.0, 1.0, 2.0 }"
       values="{ 553.15, 583.15, 583.15 }"/>
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ cellBlock01 }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>
