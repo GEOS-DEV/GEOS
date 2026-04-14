@@ -16,6 +16,7 @@
 // Source includes
 #include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
 #include "mainInterface/initialization.hpp"
@@ -56,7 +57,16 @@ int main( int argc, char *argv[] )
       runTime = state.getRunTime();
     }
 
-    basicCleanup();
+    MemoryLogging::getInstance().memoryStatsReport();
+
+    ErrorLogger::global().getLoggerHistory().gatherRecordsRank0();
+    if( MpiWrapper::commRank() == 0 )
+    {
+      TableTextFormatter tableReportFormatter;
+      GEOS_LOG( tableReportFormatter.toString< LogHistory >( ErrorLogger::global().getLoggerHistory() ));
+    }
+
+    basicCleanup( false );
 
     std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
     std::chrono::system_clock::duration totalTime = endTime - startTime;
@@ -71,14 +81,13 @@ int main( int argc, char *argv[] )
   // A NotAnError is thrown if "-h" or "--help" option is used.
   catch( NotAnError const & )
   {
-    basicCleanup();
+    basicCleanup( false );
     return 0;
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
     ErrorLogger::global().flushCurrentExceptionMessage();
-    basicCleanup();
-    // lvarray error handler is just program termination
+    basicCleanup( true );
     LvArray::system::callErrorHandler();
   }
   catch( std::exception const & e )
@@ -88,8 +97,7 @@ int main( int argc, char *argv[] )
                                            ::geos::logger::internal::g_rank )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .getDiagnosticMsg());
-    basicCleanup();
-    // lvarray error handler is just program termination
+    basicCleanup( true );
     LvArray::system::callErrorHandler();
   }
   return 0;
