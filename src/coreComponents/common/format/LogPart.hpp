@@ -142,7 +142,7 @@ private:
   /// minimal length of a log part
   size_t m_minWidth = 100;
   /// maximal length of a log part
-  size_t m_maxWidth = SIZE_MAX;
+  size_t m_maxWidth = 100;
   /// margin (left and right) between all descriptions and the log part borders
   static constexpr size_t m_borderMargin = 2;
   /// numbers of character used for the border
@@ -193,30 +193,33 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
                                        string_view name, Args const &... args )
 {
   stdVector< string > values;
-  size_t & maxValueSize = formattedDescription.m_maxValueWidth;
-  size_t & maxNameSize = formattedDescription.m_maxNameWidth;
+  size_t & formattedDescriptionMaxWidth = formattedDescription.m_maxValueWidth;
+  size_t & formattedDescriptionNameWidth = formattedDescription.m_maxNameWidth;
   ( [&] {
     static_assert( has_formatter_v< decltype(args) >,
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
-    stdVector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
-    values.insert( values.end(), splitValues.begin(), splitValues.end() );
+    stdVector< string_view > dividedDescriptionValues =
+      divideLines< string_view >( formattedDescriptionMaxWidth, value );
+    values.insert( values.end(), dividedDescriptionValues.begin(), dividedDescriptionValues.end() );
   } (), ...);
 
   description.m_values.push_back( values );
 
-  size_t lineWidth = 0;
-  stdVector< string > nameDivided = divideLines< string >( lineWidth, name );
-  if( lineWidth == 0 )
-    lineWidth = name.size();
-  maxNameSize = std::max( maxNameSize, lineWidth );
+  size_t nameWidth = 0;
+  stdVector< string > nameLines = divideLines< string >( nameWidth, name );
+  if( nameWidth == 0 )
+    nameWidth = name.size();
+  formattedDescriptionNameWidth = std::max( formattedDescriptionNameWidth, nameWidth );
 
-  description.m_names.push_back( nameDivided );
+  description.m_names.push_back( nameLines );
 
-  size_t const formattingCharSize = m_nbBorderChar * 2 + m_borderMargin * 2;
-  size_t const currentTotalWidth =  maxNameSize + maxValueSize + formattingCharSize;
-  m_width = std::max( m_width, currentTotalWidth );
+  size_t const totalDecorationWidth = m_nbBorderChar * 2 + m_borderMargin * 2;
+  size_t const logPartTotalWidth =  formattedDescriptionNameWidth +
+                                   formattedDescriptionMaxWidth +
+                                   totalDecorationWidth;
+  m_width = std::max( m_width, logPartTotalWidth );
   m_width = std::max( m_width, formattedDescription.m_title.size());
 }
 
