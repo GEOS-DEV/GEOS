@@ -21,7 +21,6 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/format/LogPart.hpp"
 #include "common/logger/LogHistory.hpp"
 #include <mutex>
 

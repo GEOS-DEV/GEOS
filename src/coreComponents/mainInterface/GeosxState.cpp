@@ -20,6 +20,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/Timer.hpp"
+#include "common/format/LogPart.hpp"
 
 // TPL includes
 #include <conduit.hpp>
