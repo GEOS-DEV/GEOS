@@ -221,9 +221,9 @@ void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
                                   getName(), globalNegativeNu ) );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "ElasticIsotropic '{}': per-cell E/nu conversion — "
-                                "{} converted, {} skipped (invalid E), {} skipped (invalid nu), "
-                                "{} with negative nu.",
-                                getName(), globalConverted, globalInvalidE, globalInvalidNu, globalNegativeNu ) );
+                               "{} converted, {} skipped (invalid E), {} skipped (invalid nu), "
+                               "{} with negative nu.",
+                               getName(), globalConverted, globalInvalidE, globalInvalidNu, globalNegativeNu ) );
   }
 
   // Back-compute E and nu for all cells from the final K/G so that output fields are meaningful
