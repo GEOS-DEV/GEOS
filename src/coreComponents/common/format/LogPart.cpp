@@ -191,10 +191,10 @@ string LogPart::outputTitle( LogPart::FormattedDescription & formattedDescriptio
 
 void LogPart::begin( std::ostream & os )
 {
+  ErrorLogger::global().setCurrentLogPart( m_formattedStartDescription.m_title );
+
   if( !m_enableOutput )
     return;
-
-  ErrorLogger::global().setCurrentLogPart( m_formattedStartDescription.m_title );
 
   if( !m_startDescription.m_names.empty())
   {
