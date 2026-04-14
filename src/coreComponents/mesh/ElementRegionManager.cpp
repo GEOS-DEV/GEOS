@@ -242,7 +242,6 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
       arrayView2d< const real64 > wsrPerfLocation = perforationData.getLocation();
       TableData localPerfoData;
 
-      globalIndex const numPerfsGlobal = perforationData.getNumPerforationsGlobal();
       for( globalIndex iperfLocal = 0; iperfLocal < perfGlobalIdMap.size(); ++iperfLocal )
       {
         globalIndex const iperfGlobal = perfGlobalIdMap[iperfLocal];
