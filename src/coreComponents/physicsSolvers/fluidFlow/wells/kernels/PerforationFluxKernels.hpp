@@ -709,7 +709,7 @@ public:
     {
       real64 dMob[CP_Deriv::nDer]{};
       GEOS_UNUSED_VAR( iwelem );
-      if( potDiff >= 0 )    // ** reservoir cell is upstream **
+      if( potDiff >= 0 )    // ** well cell is downstream **
       {
         real64 eflux = 0.0;
         // loop over phases, compute and upwind phase flux
@@ -811,12 +811,14 @@ public:
           {
             m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  dEFlux[TAG::RES][CP_Deriv::dC+jc];
           }
-
-        } // end resevoir is upstream phase loop
-
+        }
       }
-      else   // ** reservoir cell is downstream
+      else   // ** well is upstream **
       {
+        real64 dMult[CP_Deriv::nDer]{};
+        real64 totalEnthalpy=0;
+        dMult[CP_Deriv::dP] = 0;
+        // Compute total enthalpy in the well element and its derivatives, then use it to compute energy flux and derivatives
         for( integer iphase = 0; iphase < NP; ++iphase )
         {
           bool const phaseExists = (m_wellElemPhaseFrac[iwelem][0][iphase] > 0);
@@ -824,24 +826,9 @@ public:
           {
             continue;
           }
-          real64 const phaseFlux = m_wellElemPhaseFrac[iwelem][0][iphase] * flux;
-          real64 const wellelem_enthalpy = m_wellElemPhaseEnthalpy[iwelem][0][iphase];
-          m_energyPerfFlux[iperf] += phaseFlux * wellelem_enthalpy;
-
-          // energy equation derivatives WRT res P & T
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy * m_wellElemPhaseFrac[iwelem][0][iphase];
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy * m_wellElemPhaseFrac[iwelem][0][iphase];
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy
-                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP];
-
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy
-                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dT];
-
-          for( integer ic=0; ic<NC; ic++ )
-          {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * dFlux[TAG::WELL][CP_Deriv::dC+ic];
-          }
-          // energy equation enthalpy derivatives WRT well dens
+          totalEnthalpy += m_wellElemPhaseEnthalpy[iwelem][0][iphase] * m_wellElemPhaseFrac[iwelem][0][iphase];
+          dMult[CP_Deriv::dP] += m_wellElemPhaseEnthalpy[iwelem][0][iphase] * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dP] + m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP];
+          dMult[CP_Deriv::dT ] += m_wellElemPhaseEnthalpy[iwelem][0][iphase] * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dT] + m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dT];
           real64 dProp_dC[numComp]{};
           applyChainRule( NC,
                           m_dWellElemCompFrac_dCompDens[iwelem],
@@ -849,12 +836,26 @@ public:
                           dProp_dC,
                           Deriv::dC );
 
+          real64 dProp_dF[numComp]{};
+          applyChainRule( NC,
+                          m_dWellElemCompFrac_dCompDens[iwelem],
+                          m_dWellElemPhaseFrac[iwelem][0][iphase],
+                          dProp_dF,
+                          Deriv::dC );
+
           for( integer jc = 0; jc < NC; ++jc )
           {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+jc] += phaseFlux * dProp_dC[jc];
+            dMult[CP_Deriv::dC+jc] += m_wellElemPhaseFrac[iwelem][0][iphase] * dProp_dC[jc] + m_wellElemPhaseEnthalpy[iwelem][0][iphase] * dProp_dF[jc];
           }
         }
-
+        // compute energy flux and derivatives wrt to well and reservoir variables
+        m_energyPerfFlux[iperf] = flux * totalEnthalpy;
+        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+        {
+          m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = dFlux[TAG::WELL][jc] * totalEnthalpy + flux * dMult[jc];
+        }
+        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * totalEnthalpy;
+        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * totalEnthalpy;
       }
     } );
   }
