@@ -42,7 +42,7 @@ class PermeabilitySpecificationFactory : public FieldSpecificationFactory
 public:
 
   /// @copydoc geos::FieldSpecificationFactory::generate()
-  void generate( FieldSpecificationABC const & spec,
+  void generate( FieldSpecificationABC const & specification,
                  dataRepository::Group & manager ) const;
 
   /// @copydoc geos::FieldSpecificationFactory::getKey()

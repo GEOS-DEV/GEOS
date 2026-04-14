@@ -31,10 +31,10 @@ namespace geos
  * @class PermeabilitySpecificationFactory
  */
 
-void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & spec,
+void PermeabilitySpecificationFactory::generate( FieldSpecificationABC const & specification,
                                                  dataRepository::Group & manager ) const
 {
-  auto ps = dynamic_cast< PermeabilitySpecification const * >( &spec );
+  auto ps = dynamic_cast< PermeabilitySpecification const * >( &specification );
 
   stdArray< string, 3 > suffixes = {{ "_x", "_y", "_z" }};
 
