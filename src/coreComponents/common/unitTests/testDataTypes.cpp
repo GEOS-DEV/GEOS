@@ -22,7 +22,6 @@
 // // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
-#include <memory>
 
 using namespace geos;
 
