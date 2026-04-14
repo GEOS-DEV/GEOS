@@ -61,6 +61,35 @@ public:
   static void apply( BC_TYPE const & fs, MeshLevel & mesh, LAMBDA && lambda );
   
   /**
+   * @brief If applicable in the current time and field, apply this field specification 
+   *        to the discretization
+   *
+   * @tparam OBJECT_TYPE The type of discretization/mesh object that the
+   *   specification is being applied to.
+   * @tparam BC_TYPE The type of BC being applied
+   * @tparam LAMBDA
+   * @param fs The field specification data object
+   * @param mesh The MeshLevel that the specification is applied to
+   * @param lambda The being executed
+   * @param time The time at which the field will be evaluated. For instance if the
+   *             field is a time dependent function, this is the evaluation time.
+   * @param fieldName The name of the field/variable that the value will be applied to.
+   *                  It may not be necessary that this name is in the data repository, as the user
+   *                  supplied lambda may apply whatever it condition it would like. However, this
+   *                  name is used for comparing against the value given in the specification.
+
+   * This function checks if the field should be applied, and applies it. More specifically, 
+   * this function simply checks the values of fieldName against its FieldSpecification object 
+   * and decides on whether or not to call the user defined lambda.
+   */
+  template< typename OBJECT_TYPE, typename BC_TYPE = FieldSpecification, typename LAMBDA >
+  static void apply( BC_TYPE const & fs, 
+                     MeshLevel & mesh, 
+                     LAMBDA && lambda,
+                     real64 const & time,
+                     string const & fieldName );
+  
+  /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] fs the field specfication data object.
    * @param[in] field the field to apply the value to.
@@ -312,7 +341,7 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
 {
   MeshObjectPath const & meshObjectPaths = fs.getMeshObjectPaths();
   meshObjectPaths.forObjectsInPath< OBJECT_TYPE >( mesh,
-                                                    [&] ( OBJECT_TYPE & object )
+                                                   [&] ( OBJECT_TYPE & object )
   {
     {
       dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
@@ -327,6 +356,21 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
       }
     }
   } );
+}
+
+template< typename OBJECT_TYPE, typename BC_TYPE, typename LAMBDA >
+void FieldSpecificationImpl::apply( BC_TYPE const & fs,
+                                    MeshLevel & mesh,
+                                    LAMBDA && lambda,
+                                    real64 const & time,
+                                    string const & fieldName )
+{
+  integer const isInitialCondition = fs.initialCondition();
+  if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
+      ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
+  {
+    FieldSpecificationImpl::apply< OBJECT_TYPE >( fs, mesh, std::forward< LAMBDA >( lambda ) );
+  }
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >

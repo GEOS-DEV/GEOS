@@ -221,12 +221,7 @@ public:
     // loop over all FieldSpecification objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-      integer const isInitialCondition = fs.initialCondition();
-      if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
-          ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
-      {
-        FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs, mesh, std::forward< LAMBDA >( lambda ) );
-      }
+      FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs, mesh, std::forward< LAMBDA >( lambda ), time, fieldName );
     } );
   }
 
