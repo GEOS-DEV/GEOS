@@ -250,7 +250,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Material direction" );
+    setDescription( "Material direction - first row is used as graphite basal plane normal" );
 }
 
 

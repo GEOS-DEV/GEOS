@@ -11680,7 +11680,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         // This will need to be normalized by the material volume that is mapped.
         real64 particleDamageGradientNorm = LvArray::tensorOps::l2Norm< 3 >( particleDamageGradient[p] );
         real64 gridDamageGradientNorm = LvArray::tensorOps::l2Norm< 3 >( gridDamageGradient[mappedNode] );       
-        if( ( particleDamageGradientNorm > 0.0001/hEl[0] ) && ( particleDamageGradientNorm > 0.0001/m_hEl[0] ) )
+        if( ( particleDamageGradientNorm > 0.0001/hEl[0] ) && ( gridDamageGradientNorm > 0.0001/m_hEl[0] ) )
         {
           real64 damageGradientAlignment = LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( particleDamageGradient[p], gridDamageGradient[mappedNode] ) / particleDamageGradientNorm / gridDamageGradientNorm );
           particleContributionToGrid = particleVolume[p] * damageGradientAlignment * shapeFunctionValue ;
@@ -16508,20 +16508,20 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
 
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleSurfacePosition[p], deformationGradient, particleReferenceSurfacePosition[p] );
 
-          // Update the material direction
+          // Update the material direction, which is stored row-wise, so we have to take F*matDir^T, or Fc*matDir^T for the graphite type 
           real64 materialBasis[3][3] = {};
           if( isFiber )
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, deformationGradient, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, deformationGradient, particleReferenceMaterialDirection[p] );
           }
           else
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
           }
 
           for( int i  = 0; i < 3; ++i )
-          {
-            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
+          { // Normalize each material direction, which is a row of the materialBasis tensor.
+            real64 materialDirection[3] = { materialBasis[i][0], materialBasis[i][1], materialBasis[i][2]};
             real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
             if( !isZero(norm) )
             {
@@ -16531,9 +16531,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             {
               zeroMagnitudeMaterialDirection = true;
             }
-            materialBasis[0][i] = materialDirection[0];
-            materialBasis[1][i] = materialDirection[1];
-            materialBasis[2][i] = materialDirection[2];
+            materialBasis[i][0] = materialDirection[0];
+            materialBasis[i][1] = materialDirection[1];
+            materialBasis[i][2] = materialDirection[2];
           }
           LvArray::tensorOps::copy< 3, 3 >( particleMaterialDirection[p], materialBasis );
         }
@@ -16590,16 +16590,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           real64 materialBasis[3][3] = {};
           if( isFiber )
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, dF, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, dF, particleReferenceMaterialDirection[p] );
           }
           else
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, dcofF, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, dcofF, particleReferenceMaterialDirection[p] );
           }
 
           for( int i  = 0; i < 3; ++i )
           {
-            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
+            real64 materialDirection[3] = { materialBasis[i][0], materialBasis[i][1], materialBasis[i][2]};
             real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
             if( !isZero(norm) )
             {
@@ -16609,9 +16609,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             {
               zeroMagnitudeMaterialDirection = true;
             }
-            materialBasis[0][i] = materialDirection[0];
-            materialBasis[1][i] = materialDirection[1];
-            materialBasis[2][i] = materialDirection[2];
+            materialBasis[i][0] = materialDirection[0];
+            materialBasis[i][1] = materialDirection[1];
+            materialBasis[i][2] = materialDirection[2];
           }
           LvArray::tensorOps::copy< 3, 3 >( particleMaterialDirection[p], materialBasis );
         }

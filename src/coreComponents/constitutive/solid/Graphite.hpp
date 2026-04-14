@@ -566,8 +566,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 materialDirection[3] = {m_materialDirection[k][0][0],
                                  m_materialDirection[k][0][1],
                                  m_materialDirection[k][0][2]};
-  // LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
-  LvArray::tensorOps::normalize< 3 >( materialDirection );
+
+  // Should be normalized already:
+  // LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Unrotate material direction
   real64 unrotatedMaterialDirection[3] = {};
