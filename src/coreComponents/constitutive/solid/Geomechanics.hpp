@@ -1213,7 +1213,10 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                               shear
     );
 		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
-
+    
+    // MM: 2026 04 14: I think this should be 2. *  shear. 
+    //chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://courses.physics.illinois.edu/phys598ew/fa2015/Lecture2.pdf
+		//real64 elasticVMShearStrain = vonMisesStress_old / ( 2. * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
     //std::cout<<"vonMisesStress_old = "<<vonMisesStress_old<<", elasticVMShearStrain = "<<elasticVMShearStrain<<", c0 = "<<c0<<", c1 = "<<c1<<", c2 = "<<c2<<std::endl;
 
 		if ( ( elasticVMShearStrain > 1.e-12 ) && ( m_creepC2 > 1.e-16 ) )

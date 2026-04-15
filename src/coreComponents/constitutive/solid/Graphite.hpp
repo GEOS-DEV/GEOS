@@ -62,6 +62,7 @@ public:
    * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
    * @param[in] alphaT Thermal expansion transverse to crystal symmetry axis
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] fractureEnergyReleaseRate The fracutre energy release rat. 
    * @param[in] temperature The ArrayView holding the temperature for each element/particle.
    * @param[in] temperatureRate The ArrayView holding the temperature rate for each element/particle.
    * @param[in] jacobian The ArrayView holding the jacobian for each quardrature point.
@@ -91,6 +92,7 @@ public:
                    real64 const & alphaL,
                    real64 const & alphaT,
                    arrayView2d< real64 > const & damage,
+                   real64 const & fractureEnergyReleaseRate,
                    arrayView1d< real64 > const & temperature,
                    arrayView1d< real64 > const & temperatureRate,
                    arrayView2d< real64 > const & jacobian,
@@ -144,6 +146,7 @@ public:
     m_alphaL( alphaL ),
     m_alphaT( alphaT ),
     m_damage( damage ),
+    m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
     m_temperature( temperature ),
     m_temperatureRate( temperatureRate ),
     m_jacobian( jacobian ),
@@ -361,6 +364,9 @@ private:
 
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
+
+  // thermal expansion in direction transverse to crystal symmetry
+  real64 const m_fractureEnergyReleaseRate;
 
   /// A reference to the ArrayView holding the temperature for each quadrature point.
   arrayView1d< real64 > const m_temperature;
@@ -743,7 +749,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // real64 temp[3] = {};
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
-  real64 failureStrength = m_failureStrength * m_strengthScale[k];
+  //real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
   //DEBUG
   GEOS_ERROR_IF( !std::isfinite(m_crackSpeed) || m_crackSpeed <= 0.0,
@@ -751,19 +757,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   GEOS_ERROR_IF( !std::isfinite(m_lengthScale[k]) || m_lengthScale[k] <= 0.0,
                "Invalid lengthScale[" << k << "] = " << m_lengthScale[k] );
 
+  // MM 2026/04/13:  remove 
+  //// Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
+  //if( planeNormalStress > failureStrength )
+  //{
+  //  real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
+  //  m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+  //}
 
-  // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
-  if( planeNormalStress > failureStrength )
-  {
-    real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
-    m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
-  }
-
-  // If strain-softening is enabled, insert damage once max strain is reached.
-  if( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
-  {
-    m_damage[k][q] = 1.0;
-  }
+  //// If strain-softening is enabled, insert damage once max strain is reached.
+  //if( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
+  //{
+  //  m_damage[k][q] = 1.0;
+  //}
 
 
 
@@ -1014,7 +1020,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Copy the new stress
   LvArray::tensorOps::copy< 6 >( stress, newStress );
-
+  real64 plasticStrainIncrement[6] = {0};
   //////////////////////////////////////////////////////
   // Evolve state variables.
   //
@@ -1032,7 +1038,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     //                                      "coupledShearStress: " << coupledShearStress << " (" << coupledYieldStrength << ")");
 
     // increment plastic strain
-    real64 plasticStrainIncrement[6] = {0};
     computeTransverselyIsotropicPlasticStrainIncrement( unrotatedVelocityGradient,     // Velocity gradient tensor
                                                         oldStress,                     // Stress at start of step
                                                         stress,                        // Stress at end of step
@@ -1092,13 +1097,39 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // Assign new plastic strain to state variable
     LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
 
+    // Damage from plastic work, after plastic correction/state update
+    real64 avgStress[6] = {};
+    LvArray::tensorOps::copy< 6 >( avgStress, oldStress );
+    LvArray::tensorOps::add< 6 >( avgStress, stress );
+    LvArray::tensorOps::scale< 6 >( avgStress, 0.5 );
+  
+    real64 deltaW = LvArray::tensorOps::AiBi< 6 >( avgStress, plasticStrainIncrement );
+    deltaW = LvArray::math::max( 0.0, deltaW );
+
+    //have damage regularized with length scale
+    real64 damageDenom = m_fractureEnergyReleaseRate / m_lengthScale[k];
+  
+    GEOS_ERROR_IF( !std::isfinite( damageDenom ) || damageDenom <= 0.0,
+                   "Invalid damage regularization denominator = " << damageDenom
+                   << " particle=" << k << " q=" << q );
+    //clip damage between 0 and 1 
+    m_damage[k][q] = LvArray::math::max( 0.0,
+                  LvArray::math::min( 1.0, m_damage[k][q] + deltaW / damageDenom ) );
+
+
     // increment relaxation
     //For symmetric matrix need to double off diagonal elements for l2Norm?
-    plasticStrainIncrement[3] *= 1.41421356237;
-    plasticStrainIncrement[4] *= 1.41421356237;
-    plasticStrainIncrement[5] *= 1.41421356237;
-    m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
+    real64 plasticStrainForNorm[6] = {};
+    LvArray::tensorOps::copy< 6 >( plasticStrainForNorm, plasticStrainIncrement );
+    // adjust for Voigt representation - multiply by sqrt(2)
+    plasticStrainForNorm[3] *= 1.41421356237;
+    plasticStrainForNorm[4] *= 1.41421356237;
+    plasticStrainForNorm[5] *= 1.41421356237;
+
+    m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainForNorm ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
+  
+
   }
 }
 
@@ -1259,6 +1290,7 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
   plasticStrainIncrement[3] *= 2.0;
   plasticStrainIncrement[4] *= 2.0;
   plasticStrainIncrement[5] *= 2.0;
+
 }
 
 GEOS_HOST_DEVICE
@@ -1464,6 +1496,9 @@ public:
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
+    /// string/key for fracture energy release rate value
+    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
     /// string/key for quadrature point temperature value
     static constexpr char const * temperatureString() { return "temperature"; }
 
@@ -1565,6 +1600,7 @@ public:
                             m_alphaL,
                             m_alphaT,
                             m_damage,
+                            m_fractureEnergyReleaseRate,
                             m_temperature,
                             m_temperatureRate,
                             m_jacobian,
@@ -1625,6 +1661,7 @@ public:
                           m_alphaL,
                           m_alphaT,
                           m_damage,
+                          m_fractureEnergyReleaseRate,
                           m_temperature,
                           m_temperatureRate,
                           m_jacobian,
@@ -1846,6 +1883,9 @@ protected:
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
+
+  /// Fracture Energy Release rate Value
+  real64 m_fractureEnergyReleaseRate;
 
   /// State variable: The temperature values for each element/particle
   array1d< real64 > m_temperature;
