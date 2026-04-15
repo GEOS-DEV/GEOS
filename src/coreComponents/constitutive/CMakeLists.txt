@@ -366,6 +366,7 @@ set( constitutive_sources
      solid/StrainHardeningPolymer.cpp
      solid/Chiumenti.cpp
      solid/VonMisesJ.cpp
+     solid/MetalPlasticity.cpp
      solid/CeramicDamage.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp
