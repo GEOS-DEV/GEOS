@@ -16,7 +16,6 @@
 #include "FieldApplicator.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "common/FieldSpecificationOps.hpp"
 #include "mesh/DomainPartition.hpp"
