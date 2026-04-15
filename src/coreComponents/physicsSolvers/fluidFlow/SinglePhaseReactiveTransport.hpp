@@ -20,8 +20,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVETRANSPORT_HPP_
 
-#include "fieldSpecification/FieldSpecificationImpl.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransportFields.hpp"
@@ -243,23 +241,6 @@ public:
                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                     arrayView1d< real64 > const & localRhs ) const override;
 
-  /**
-   * @brief Utility function that encapsulates the call to FieldSpecificationImpl::applyFieldValue in BC application
-   * @param[in] time_n the time at the beginning of the step
-   * @param[in] dt the time step
-   * @param[in] mesh the mesh level object
-   * @param[in] logMessage the log message issued by the solver if the bc is called
-   * @param[in] fieldKey the key of the field specified in the xml file
-   * @param[in] boundaryFieldKey the key of the boundary field
-   */
-  template< typename OBJECT_TYPE >
-  void applyFieldValue( real64 const & time_n,
-                        real64 const & dt,
-                        MeshLevel & mesh,
-                        char const logMessage[],
-                        string const fieldKey,
-                        string const boundaryFieldKey ) const;
-
   virtual void
   applyAquiferBC( real64 const time,
                   real64 const dt,
@@ -335,42 +316,6 @@ private:
 
 };
 
-template< typename OBJECT_TYPE >
-void SinglePhaseReactiveTransport::applyFieldValue( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    MeshLevel & mesh,
-                                                    char const logMessage[],
-                                                    string const fieldKey,
-                                                    string const boundaryFieldKey ) const
-{
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  fsManager.apply< OBJECT_TYPE >( time_n + dt,
-                                  mesh,
-                                  fieldKey,
-                                  [&]( FieldSpecification const & fs,
-                                       string const & setName,
-                                       SortedArrayView< localIndex const > const & lset,
-                                       OBJECT_TYPE & targetGroup,
-                                       string const & )
-  {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOS_LOG_RANK_0( GEOS_FMT( logMessage,
-                                 getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                 setName, targetGroup.getName(), fs.getScale(), numTargetElems ) );
-    }
-
-    // Specify the bc value of the field
-    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
-                                             parallelDevicePolicy<> >( fs,
-                                                                       lset,
-                                                                       time_n + dt,
-                                                                       targetGroup,
-                                                                       boundaryFieldKey );
-  } );
-}
 
 } /* namespace geos */
 
