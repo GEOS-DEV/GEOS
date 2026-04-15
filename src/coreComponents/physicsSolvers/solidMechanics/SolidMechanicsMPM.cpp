@@ -840,6 +840,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
 
+  registerWrapper( "groupNormalPriority", &m_groupNormalPriority ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "List of group priorities for chosing surface normals in complex contact (highest number is prioritized)" );
+
   registerWrapper( "FSubcycles", &m_FSubcycles ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_FSubcycles ).
@@ -1324,7 +1329,6 @@ void SolidMechanicsMPM::postRestartInitialization()
 void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
                                                    xmlWrapper::xmlNode & targetNode )
 {
-  GEOS_LOG_RANK_0("void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument, xmlWrapper::xmlNode & targetNode )");
   PhysicsSolverBase::processInputFileRecursive( xmlDocument, targetNode );
 }
 
@@ -1332,13 +1336,10 @@ void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xml
                                 xmlWrapper::xmlNode & targetNode,
                                 xmlWrapper::xmlNodePos const & targetNodePos )
 {
-  GEOS_LOG_RANK_0("void SolidMechanicsMPM::processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument, xmlWrapper::xmlNode & targetNode, xmlWrapper::xmlNodePos const & targetNodePos )");
-  
   xmlWrapper::xmlNode regionsNode = targetNode.child( "CohesiveZoneRegions" );
   xmlWrapper::xmlNodePos regionsNodePos = xmlDocument.getNodePosition( regionsNode );
   std::set< string > regionNames;
 
-  GEOS_LOG_RANK_0("CohesiveZoneRegions:");
   CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
   for( xmlWrapper::xmlNode regionNode : regionsNode.children() )
   {
@@ -2460,6 +2461,23 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Total number of velocity fields:
   m_numVelocityFields = m_numContactGroups * m_numContactFlags;
+
+  // Initialize group priority
+  if( m_groupNormalPriority.size() == 0 )
+  {
+    // Set them all to 0
+    m_groupNormalPriority.resize( m_numContactGroups );
+    for( int i = 0; i < m_groupNormalPriority.size() ; ++i)
+    {
+      m_groupNormalPriority[i] = 0;
+    }
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_groupNormalPriority.size() != m_numContactGroups, "Group normal priority list must match number of contact groups!" );
+    
+    // Should we enforce that priority cannot be less than 0?
+  }
 
   // Resize grid field arrays
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridReferenceAreaVectorString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -5256,7 +5274,7 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
 
 
             real64 norm = LvArray::tensorOps::l2Norm< 3 >( gridBasedSurfaceNormal[mappedNode][fieldIndex] );
-            if( norm <  1e-20 )
+            if( isZero(norm) ) // <  1e-20 )
             {
               continue;
             }
@@ -5684,7 +5702,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       LvArray::tensorOps::fill< 3 >( particleCohesiveForce[p], 0.0 );
       LvArray::tensorOps::fill< 3 >( particleEstimatedSurfacePosition[p], 0.0 );
 
-      LvArray::tensorOps::fill< 3 >(particleDamageHessianL2Norm, 0.0);
+      particleDamageHessianL2Norm[p] = 0.0;
 
       LvArray::tensorOps::copy< 3 >( particleReferencePosition[p], particlePosition[p] );
       LvArray::tensorOps::copy< 3, 3 >( particleReferenceMaterialDirection[p], particleMaterialDirection[p] );
@@ -6623,9 +6641,9 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           // Use instantaneous domain values and start deformation from there
           if( deformationUpdate.getRelativeDeformation() )
           {
-            for( int j = 1; j < 4; ++j)
+            for( int j = 0; j < 3; ++j)
             {
-              m_fTable[i][j] *= m_domainF[j];
+              m_fTable[i][j+1] *= m_domainF[j];
             }   
           }  
         }
@@ -13566,6 +13584,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
 
+  arrayView1d< int const > const groupNormalPriority = m_groupNormalPriority;
+
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   for( int i = 0; i < numContactGroups; ++i )
   {
@@ -13621,8 +13641,10 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
     for( localIndex A = 0; A < numVelocityFields - 1; ++A )
     {
+      localIndex groupA = A % numVelocityFields;
       for( localIndex B = A + 1; B < numVelocityFields; ++B )
       {
+        localIndex groupB = B % numVelocityFields;
         // Make sure both fields in the pair are active
         bool active = ( gridMass[g][A] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 )
                       and
@@ -13691,108 +13713,126 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
           // Outward normal of field A with respect to field B.
           real64 nAB[3] = {};
 
-          // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
-          switch( contactNormalType )
+          // If group priorities are equal mix normals based on contact normal type, otherwise use normal with highest priority
+          int priorityA = groupNormalPriority[groupA];
+          int priorityB = groupNormalPriority[groupB];
+          if( priorityA == priorityB )
           {
-            case ContactNormalTypeOption::Difference:
-              LvArray::tensorOps::copy< 3 >( nAB, nA );
-              LvArray::tensorOps::subtract< 3 >( nAB, nB );
-              break;
-            case ContactNormalTypeOption::MassWeighted:
-              LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
-              LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
-              break;
-            case ContactNormalTypeOption::LargerMass:
-              if( mA > mB )
-              {
+            // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
+            switch( contactNormalType )
+            {
+              case ContactNormalTypeOption::Difference:
                 LvArray::tensorOps::copy< 3 >( nAB, nA );
-              }
-              else
-              {
-                LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
-              }
-              break;
-            case ContactNormalTypeOption::Mixed:
-              {
-                // If density is similar use mass weighted average
-                real64 rhoA = mA / VA;
-                real64 rhoB = mB / VB;
-                if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
+                LvArray::tensorOps::subtract< 3 >( nAB, nB );
+                break;
+              case ContactNormalTypeOption::MassWeighted:
+                LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+                LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+                break;
+              case ContactNormalTypeOption::LargerMass:
+                if( mA > mB )
                 {
-                  for( int i=0; i<3; ++i )
-                  {
-                    LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
-                    LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
-                  }
+                  LvArray::tensorOps::copy< 3 >( nAB, nA );
                 }
                 else
                 {
-                  // if one field is significantly more dense,
-                  // Use the surface normal for whichever field has higher density.
-                  // This should be good for corners against flat surfaces.
-                  if( rhoA > rhoB )
+                  LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+                }
+                break;
+              case ContactNormalTypeOption::Mixed:
+                {
+                  // If density is similar use mass weighted average
+                  real64 rhoA = mA / VA;
+                  real64 rhoB = mB / VB;
+                  if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
                   {
-                    LvArray::tensorOps::copy< 3 >( nAB, nA );
+                    for( int i=0; i<3; ++i )
+                    {
+                      LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+                      LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+                    }
                   }
                   else
                   {
-                    LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+                    // if one field is significantly more dense,
+                    // Use the surface normal for whichever field has higher density.
+                    // This should be good for corners against flat surfaces.
+                    if( rhoA > rhoB )
+                    {
+                      LvArray::tensorOps::copy< 3 >( nAB, nA );
+                    }
+                    else
+                    {
+                      LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+                    }
                   }
+                  break;
+                }
+              case ContactNormalTypeOption::Aligned:
+                {
+                  real64 tempA[3] = {};
+                  real64 tempB[3] = {};
+                  real64 wA = gridSurfaceNormalWeights[g][A];
+                  real64 wB = gridSurfaceNormalWeights[g][B];
+
+                  // LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, pow(wA, m_contactNormalExponent) );
+                  // LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, pow(wB, m_contactNormalExponent) );
+                  real64 threshold = 0.9;
+                  real64 xxA = LvArray::math::min( LvArray::math::max((wA-threshold)/threshold, 0.0 ), 1.0 );
+                  real64 xxB = LvArray::math::min( LvArray::math::max((wB-threshold)/threshold, 0.0 ), 1.0 );
+                  LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, 3*LvArray::math::pow( xxA, 2 )-2*LvArray::math::pow( xxA, 3 ));
+                  LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, 3*LvArray::math::pow( xxB, 2 )-2*LvArray::math::pow( xxB, 3 ));
+                  LvArray::tensorOps::copy< 3 >( nAB, tempA );
+                  LvArray::tensorOps::subtract< 3 >( nAB, tempB );
                 }
                 break;
-              }
-            case ContactNormalTypeOption::Aligned:
-              {
-                real64 tempA[3] = {};
-                real64 tempB[3] = {};
-                real64 wA = gridSurfaceNormalWeights[g][A];
-                real64 wB = gridSurfaceNormalWeights[g][B];
+              case ContactNormalTypeOption::LogisticRegression:
+                {
+                  real64 n0[3] = {};
+                  LvArray::tensorOps::scaledCopy< 3 >( n0, nA, mA );
+                  LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
 
-                // LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, pow(wA, m_contactNormalExponent) );
-                // LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, pow(wB, m_contactNormalExponent) );
-                real64 threshold = 0.9;
-                real64 xxA = LvArray::math::min( LvArray::math::max((wA-threshold)/threshold, 0.0 ), 1.0 );
-                real64 xxB = LvArray::math::min( LvArray::math::max((wB-threshold)/threshold, 0.0 ), 1.0 );
-                LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, 3*LvArray::math::pow( xxA, 2 )-2*LvArray::math::pow( xxA, 3 ));
-                LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, 3*LvArray::math::pow( xxB, 2 )-2*LvArray::math::pow( xxB, 3 ));
-                LvArray::tensorOps::copy< 3 >( nAB, tempA );
-                LvArray::tensorOps::subtract< 3 >( nAB, tempB );
-              }
-              break;
-            case ContactNormalTypeOption::LogisticRegression:
-              {
-                real64 n0[3] = {};
-                LvArray::tensorOps::scaledCopy< 3 >( n0, nA, mA );
-                LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
-
-                real64 dumby[3] = {};
-                logisticRegression( planeStrain,
-                                    numContactGroups,
-                                    damageFieldPartitioning,
-                                    maxLRIterations,
-                                    LRtolerance,
-                                    hEl,
-                                    A,
-                                    B,
-                                    numNeighborsAll[g],
-                                    neighborRegions[g],
-                                    neighborSubRegions[g],
-                                    neighborIndices[g],
-                                    particleGroupView,
-                                    particleDamageGradientView,
-                                    particleSurfaceNormalView,
-                                    particlePositionView,
-                                    gridPosition[g],
-                                    gridDamageGradient[g],
-                                    n0,
-                                    nAB,
-                                    dumby );
-              }
-              break;
-            default:
-              GEOS_ERROR( "Unrecognized contact normal type!" );
-              break;
+                  real64 dumby[3] = {};
+                  logisticRegression( planeStrain,
+                                      numContactGroups,
+                                      damageFieldPartitioning,
+                                      maxLRIterations,
+                                      LRtolerance,
+                                      hEl,
+                                      A,
+                                      B,
+                                      numNeighborsAll[g],
+                                      neighborRegions[g],
+                                      neighborSubRegions[g],
+                                      neighborIndices[g],
+                                      particleGroupView,
+                                      particleDamageGradientView,
+                                      particleSurfaceNormalView,
+                                      particlePositionView,
+                                      gridPosition[g],
+                                      gridDamageGradient[g],
+                                      n0,
+                                      nAB,
+                                      dumby );
+                }
+                break;
+              default:
+                GEOS_ERROR( "Unrecognized contact normal type!" );
+                break;
+            }
           }
+          else
+          {
+            if( priorityA > priorityB )
+            {
+              LvArray::tensorOps::copy< 3 >( nAB, nA );
+            }
+            else
+            {
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+            }
+          }
+          
 
           // Make sure the surface normal is a well-defined unit vector, consistent with plane strain assumption.
           real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
@@ -14425,6 +14465,8 @@ void SolidMechanicsMPM::stressControl( real64 dt,
                      boxMaterialVolume );
   // }
 
+  // GEOS_LOG_RANK_0("Target stress: " <<  m_domainStress[1] << ", currentStress: " << currentStress[1]);
+
 //=================================================================================vvv
 // MH: TODO: partial pseudocode for new option for stress control,
 // mimicking the response of a natural stress free boundary condition.
@@ -14656,6 +14698,10 @@ void SolidMechanicsMPM::stressControl( real64 dt,
 
   Lyy_max = m_cflFactor * ( m_hEl[1] / dt) / ( m_xGlobalMax[1] - m_xGlobalMin[1]);
   Lyy_min = -1.0 * Lyy_max;
+
+  // GEOS_LOG_RANK_0("m_hEl: " << m_hEl << ",  m_xGlobalMin" << m_xGlobalMin << ", m_xGlobalMax: " << m_xGlobalMax);
+  // GEOS_LOG_RANK_0("Lyy_new: " << L_new[1] << ", Lyy_max: " << Lyy_max << ", Lyy_min: " << Lyy_min);
+
   L_new[1] = LvArray::math::min( Lyy_max, LvArray::math::max( L_new[1], Lyy_min ) );
 
   Lzz_max = m_cflFactor * ( m_hEl[2] / dt) / ( m_xGlobalMax[2] - m_xGlobalMin[2]);
@@ -17074,12 +17120,14 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           real64 materialBasis[3][3] = {};
           if( isFiber )
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, deformationGradient, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, deformationGradient, particleReferenceMaterialDirection[p] );
           }
           else
           {
-            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( materialBasis, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
+            LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
           }
+
+          LvArray::tensorOps::transpose< 3 >( materialBasis ); // Potential inconsistency between material directions using full 3x3
 
           for( int i  = 0; i < 3; ++i )
           {
@@ -18065,7 +18113,7 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
     arrayView2d< real64 > particleReferenceSurfaceNormal;
     arrayView2d< real64 > particleReferenceSurfacePosition;
     arrayView2d< real64 > particleReferenceSurfaceTraction;
-    if( m_resetDefGradForScaledSurfaceParticles )
+    if( m_resetDefGradForScaledSurfaceParticles == 1 )
     {
       particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       particleSurfacePosition = subRegion.getParticleSurfacePosition();
@@ -18085,14 +18133,22 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        if( constitutiveModelName == "Gas" ||
-            ( ( ( ( particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ) && resetDefGradForScaledSurfaceParticles == 1 ) || particleDamage[p] > 0.9999999 ) && cpdiDomainScaling == 1 &&
-              particleDomainScaledFlag[p] == 1  ) )
+       
+    //    GEOS_LOG_RANK("p: " << p << ", deformed surface? " << ( ( particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ) && resetDefGradForScaledSurfaceParticles == 1 ) << ", " << 
+    //   " deformed damaged? " <<  ( particleDamage[p] > 0.9999999 && m_resetDefGradForFullyDamagedParticles == 1) << ", " << 
+    // "particle scaled? " << particleDomainScaledFlag[p]);
+        if( ( constitutiveModelName == "Gas" ||
+              ( ( particleSurfaceFlag[p] == 3 || particleSurfaceFlag[p] == 4 ) && resetDefGradForScaledSurfaceParticles == 1 ) || 
+              ( particleDamage[p] > 0.9999999 && m_resetDefGradForFullyDamagedParticles == 1) ) && 
+              cpdiDomainScaling == 1 &&
+              particleDomainScaledFlag[p] == 1 )
         {
           real64 rotation[3][3] = {};
           real64 deformationGradient[3][3] = {};
           LvArray::tensorOps::copy< 3, 3 >( deformationGradient, particleDeformationGradient[p] );
           LvArray::tensorOps::polarDecomposition< 3 >( rotation, deformationGradient );
+
+          GEOS_LOG_RANK("Reset F for particle " << p);
 
           real64 J = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
 
@@ -18126,9 +18182,18 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
             real64 invCofF[3][3] = {};
             LvArray::tensorOps::invert< 3 >( invCofF, cofF );
 
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceNormal[p], invCofF, particleSurfaceNormal[p] );
-            LvArray::tensorOps::normalize< 3 >( particleReferenceSurfaceNormal[p] );
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfacePosition[p], invF, particleSurfacePosition[p] );
+            real64 norm = LvArray::tensorOps::l2Norm< 3 >( particleSurfaceNormal[p] );
+            if( norm > 1e-16 )
+            {
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceNormal[p], invCofF, particleSurfaceNormal[p] );
+              LvArray::tensorOps::scale< 3 >( particleReferenceSurfaceNormal[p], 1/norm );
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfacePosition[p], invF, particleSurfacePosition[p] );
+            }
+            else
+            {
+              LvArray::tensorOps::fill< 3 >( particleReferenceSurfaceNormal[p], 0.0);
+              LvArray::tensorOps::fill< 3 >( particleReferenceSurfacePosition[p], 0.0);
+            }
           }
 
           LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], rotation, U );

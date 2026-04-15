@@ -1153,6 +1153,8 @@ protected:
   real64 m_thinFeatureDFGThreshold;
   int m_useDamageAsSurfaceFlag;
 
+  array1d< int > m_groupNormalPriority;
+
   // Contact options
   int m_enableContact;
   int m_hasContact;
