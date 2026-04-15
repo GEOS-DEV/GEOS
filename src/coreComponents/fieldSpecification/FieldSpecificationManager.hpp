@@ -127,8 +127,8 @@ public:
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
    * the time parameter falls within the beginTime and endTime of the FieldSpecification object,
    * and calls FieldSpecification::applyFieldValue(), and calls the lambda function
-   * to apply any operations required for completing the application of the value to the field in addition to
-   * setting the target field.
+   * to apply any operations required for completing the application of the value to the field in 
+   * addition to setting the target field.
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
@@ -221,7 +221,11 @@ public:
     // loop over all FieldSpecification objects
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
-      FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs, mesh, std::forward< LAMBDA >( lambda ), time, fieldName );
+      FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs,
+                                                                    mesh, 
+                                                                    std::forward< LAMBDA >( lambda ), 
+                                                                    time, 
+                                                                    fieldName );
     } );
   }
 
@@ -258,7 +262,11 @@ FieldSpecificationManager::
               Group & targetGroup,
               string const & targetField )
   {
-    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs, targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs,
+                                                                                targetSet,
+                                                                                time,
+                                                                                targetGroup,
+                                                                                targetField );
     lambda( fs, targetSet );
   } );
 }
@@ -282,7 +290,11 @@ FieldSpecificationManager::
               string const & targetField )
   {
     preLambda( fs, targetSet );
-    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs, targetSet, time, targetGroup, targetField );
+    FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual, POLICY >( fs,
+                                                                                targetSet,
+                                                                                time,
+                                                                                targetGroup,
+                                                                                targetField );
     postLambda( fs, targetSet );
   } );
 }

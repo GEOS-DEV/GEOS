@@ -294,7 +294,8 @@ public:
    * to the right-hand side.
    * The application of these rhs contributions is done in applyBoundaryConditionToSystem.
    *
-   * Why did we have to extract the computation of the rhs contributions from applyBoundaryConditionToSystem?
+   * Why did we have to extract the computation of the rhs contributions from 
+   * applyBoundaryConditionToSystem?
    * Because applyBoundaryConditionToSystem is not very well suited to apply the rhsContributions 
    * to the equation layout used in the compositional solvers.
    * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead 
@@ -350,7 +351,8 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
       {
         if( setGroup.hasWrapper( setName ) )
         {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+          SortedArrayView< localIndex const > const & targetSet = 
+            setGroup.getReference< SortedArray< localIndex > >( setName );
           lambda( fs, setName, targetSet, object, fs.getFieldName() );
         }
       }
@@ -367,7 +369,9 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
 {
   integer const isInitialCondition = fs.initialCondition();
   if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
-      ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && fieldName == fs.getFieldName() ) )
+      ( !isInitialCondition && time >= fs.getStartTime() 
+                            && time < fs.getEndTime() 
+                            && fieldName == fs.getFieldName() ) )
   {
     FieldSpecificationImpl::apply< OBJECT_TYPE >( fs, mesh, std::forward< LAMBDA >( lambda ) );
   }
@@ -406,12 +410,14 @@ applyFieldValueKernel( FieldSpecification const & fs,
       catch( std::exception const & e )
       {
         string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
-                                          fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() ) );
+                                          fs.getWrapperDataContext( FieldSpecification::
+                                                                    viewKeyStruct::
+                                                                    functionNameString() ) );
         ErrorLogger::global().modifyCurrentExceptionMessage()
           .addToMsg( errorMsg )
           .addContextInfo( fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() )
-                              .getContextInfo()
-                              .setPriority( 1 ) );
+                             .getContextInfo()
+                             .setPriority( 1 ) );
         throw InputError( e, errorMsg );
       }
     }();
@@ -461,7 +467,11 @@ applyFieldValue( FieldSpecification const & fs,
   {
     using ArrayType = camp::first< decltype( tupleOfTypes ) >;
     auto & wrapperT = dataRepository::Wrapper< ArrayType >::cast( wrapper );
-    applyFieldValueKernel< FIELD_OP, POLICY >( fs, wrapperT.reference().toView(), targetSet, time, dataGroup );
+    applyFieldValueKernel< FIELD_OP, POLICY >( fs,
+                                               wrapperT.reference().toView(),
+                                               targetSet,
+                                               time,
+                                               dataGroup );
   }, wrapper );
 }
 
@@ -610,9 +620,11 @@ computeRhsContribution( FieldSpecification const & fs,
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   // Compute the value of the rhs terms, and collect the dof numbers
-  // The rhs terms will be assembled in applyBoundaryConditionToSystem (or in the solver for CompositionalMultiphaseBase)
+  // The rhs terms will be assembled in applyBoundaryConditionToSystem 
+  // (or in the solver for CompositionalMultiphaseBase)
 
-  if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
+  if( functionName.empty() || 
+      functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
     real64 value = fs.getScale() * dt;
     if( !functionName.empty() )
@@ -622,7 +634,15 @@ computeRhsContribution( FieldSpecification const & fs,
     }
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, value, lambda] GEOS_HOST_DEVICE ( localIndex const i )
+                      [targetSet, 
+                       dof, 
+                       dofMap, 
+                       dofRankOffset, 
+                       component, 
+                       matrix, 
+                       rhsContribution, 
+                       value, 
+                       lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
@@ -644,7 +664,16 @@ computeRhsContribution( FieldSpecification const & fs,
     real64 const value = fs.getScale() * dt;
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOS_HOST_DEVICE ( localIndex const i )
+                      [targetSet,
+                      dof,
+                      dofMap,
+                      dofRankOffset,
+                      component,
+                      matrix,
+                      rhsContribution,
+                      results,
+                      value,
+                      lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
@@ -667,7 +696,8 @@ zeroSystemRowsForBoundaryCondition( FieldSpecification const & fs,
                                     CRSMatrixView< real64, globalIndex const > const & matrix )
 {
   integer const component = ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0;
-  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
+  forAll< POLICY >( targetSet.size(), 
+                    [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
     globalIndex const dof = dofMap[ a ] + component;
