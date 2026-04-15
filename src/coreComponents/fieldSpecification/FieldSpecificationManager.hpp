@@ -127,7 +127,7 @@ public:
    * file, checks if fieldName is equal to the fieldName specified in the input file, and check if
    * the time parameter falls within the beginTime and endTime of the FieldSpecification object,
    * and calls FieldSpecification::applyFieldValue(), and calls the lambda function
-   * to apply any operations required for completing the application of the value to the field in 
+   * to apply any operations required for completing the application of the value to the field in
    * addition to setting the target field.
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
@@ -222,9 +222,9 @@ public:
     this->forSubGroups< BCTYPE >( [&] ( BCTYPE const & fs )
     {
       FieldSpecificationImpl::apply< OBJECT_TYPE, BCTYPE, LAMBDA >( fs,
-                                                                    mesh, 
-                                                                    std::forward< LAMBDA >( lambda ), 
-                                                                    time, 
+                                                                    mesh,
+                                                                    std::forward< LAMBDA >( lambda ),
+                                                                    time,
                                                                     fieldName );
     } );
   }

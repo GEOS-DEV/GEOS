@@ -1060,7 +1060,7 @@ void FlowSolverBase::applyFieldValue( real64 const & time_n,
   } );
 }
 
-template void 
+template void
 FlowSolverBase::applyFieldValue< ElementSubRegionBase >( real64 const & time_n,
                                                          real64 const & dt,
                                                          MeshLevel & mesh,
@@ -1068,7 +1068,7 @@ FlowSolverBase::applyFieldValue< ElementSubRegionBase >( real64 const & time_n,
                                                          string const fieldKey,
                                                          string const boundaryFieldKey ) const;
 
-template void 
+template void
 FlowSolverBase::applyFieldValue< FaceManager >( real64 const & time_n,
                                                 real64 const & dt,
                                                 MeshLevel & mesh,

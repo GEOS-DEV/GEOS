@@ -59,9 +59,9 @@ public:
    */
   template< typename OBJECT_TYPE, typename BC_TYPE = FieldSpecification, typename LAMBDA >
   static void apply( BC_TYPE const & fs, MeshLevel & mesh, LAMBDA && lambda );
-  
+
   /**
-   * @brief If applicable in the current time and field, apply this field specification 
+   * @brief If applicable in the current time and field, apply this field specification
    *        to the discretization
    *
    * @tparam OBJECT_TYPE The type of discretization/mesh object that the
@@ -78,23 +78,23 @@ public:
    *                  supplied lambda may apply whatever it condition it would like. However, this
    *                  name is used for comparing against the value given in the specification.
 
-   * This function checks if the field should be applied, and applies it. More specifically, 
-   * this function simply checks the values of fieldName against its FieldSpecification object 
+   * This function checks if the field should be applied, and applies it. More specifically,
+   * this function simply checks the values of fieldName against its FieldSpecification object
    * and decides on whether or not to call the user defined lambda.
    */
   template< typename OBJECT_TYPE, typename BC_TYPE = FieldSpecification, typename LAMBDA >
-  static void apply( BC_TYPE const & fs, 
-                     MeshLevel & mesh, 
+  static void apply( BC_TYPE const & fs,
+                     MeshLevel & mesh,
                      LAMBDA && lambda,
                      real64 const & time,
                      string const & fieldName );
-  
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] fs the field specfication data object.
    * @param[in] field the field to apply the value to.
    * @param[in] targetSet the set of indices which the value will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as 
+   * @param[in] time The time at which any time dependent functions are to be evaluated as
    *                 part of the application of the value.
    * @param[in] dataGroup the Group that contains the field to apply the value to.
    *
@@ -106,7 +106,7 @@ public:
                                      SortedArrayView< localIndex const > const & targetSet,
                                      real64 const time,
                                      dataRepository::Group & dataGroup );
-  
+
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
    * @param[in] fs the field specification data object
@@ -128,7 +128,7 @@ public:
 
   /**
    * @brief Apply a boundary condition to a system of equations.
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on 
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on
    *                  the variables. Either \ref OpEqual or \ref OpAdd.
    * @tparam POLICY Execution policy to use when iterating over the target set.
    * @tparam T Data type of the field.
@@ -136,7 +136,7 @@ public:
    * @tparam USD Unit stride dimension of the field array.
    * @param fs The field specification data object.
    * @param targetSet The set of indices which the boundary condition will be applied.
-   * @param time The time at which any time dependent functions are to be evaluated as 
+   * @param time The time at which any time dependent functions are to be evaluated as
    *             part of the application of the boundary condition.
    * @param dataGroup The Group that contains the field to apply the boundary condition to.
    * @param dofMap The map from the local index of the primary field to the global degree of
@@ -146,11 +146,11 @@ public:
    * @param rhs Local part of the system rhs vector.
    * @param fieldView Array view of the field data.
    *
-   * @note This function is rarely used directly. More often it is called by 
+   * @note This function is rarely used directly. More often it is called by
    *       other ApplyBoundaryCondition functions.
    */
   template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
-  static void 
+  static void
   applyBoundaryConditionToSystemKernel( FieldSpecification const & fs,
                                         SortedArrayView< localIndex const > const & targetSet,
                                         real64 const time,
@@ -163,12 +163,12 @@ public:
 
   /**
    * @brief Apply a boundary condition to a system of equations.
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on 
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on
    *                  the variables. Either \ref OpEqual or \ref OpAdd.
    * @tparam POLICY Execution policy to use when iterating over target set.
    * @param[in] fs The field specification data object
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as 
+   * @param[in] time The time at which any time dependent functions are to be evaluated as
    *                 part of the application of the boundary condition.
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] fieldName The name of the field to apply the boundary condition to.
@@ -178,12 +178,12 @@ public:
    * @param[in,out] matrix Local part of the system matrix.
    * @param[in,out] rhs Local part of the system rhs vector.
    *
-   * This function applies the boundary condition to a linear system of equations. 
-   * This function is typically called from within the lambda to a call to 
+   * This function applies the boundary condition to a linear system of equations.
+   * This function is typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
   template< typename FIELD_OP, typename POLICY >
-  static void 
+  static void
   applyBoundaryConditionToSystem( FieldSpecification const & fs,
                                   SortedArrayView< localIndex const > const & targetSet,
                                   real64 const time,
@@ -196,13 +196,13 @@ public:
 
   /**
    * @brief Apply a boundary condition to a system of equations.
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on 
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on
    *                  the variables. Either \ref OpEqual or \ref OpAdd.
    * @tparam POLICY Execution policy to use when iterating over target set.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] fs The field specification data object.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as 
+   * @param[in] time The time at which any time dependent functions are to be evaluated as
    *                 part of the application of the boundary condition.
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMap The map from the local index of the primary field to the global degree of
@@ -210,10 +210,10 @@ public:
    * @param[in] dofRankOffset Offset of dof indices on current rank.
    * @param[inout] matrix Local part of the system matrix.
    * @param[inout] rhs Local part of the system rhs vector.
-   * @param[in] lambda A lambda function which defines how the value that is passed into 
+   * @param[in] lambda A lambda function which defines how the value that is passed into
    *                   the functions provided by the FIELD_OP templated type.
    *
-   * This function applies the boundary condition to a linear system of equations. 
+   * This function applies the boundary condition to a linear system of equations.
    * This function is typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
@@ -231,13 +231,13 @@ public:
 
   /**
    * @brief Apply a boundary condition to a system of equations.
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on 
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on
    *                  the variables. Either \ref OpEqual or \ref OpAdd.
    * @tparam POLICY Execution policy to use when iterating over target set.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] fs The field specification data object.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as 
+   * @param[in] time The time at which any time dependent functions are to be evaluated as
    *                 part of the application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
@@ -246,10 +246,10 @@ public:
    * @param[in] dofRankOffset Offset of dof indices on current rank.
    * @param[inout] matrix Local part of the system matrix.
    * @param[inout] rhs Local part of the system rhs vector.
-   * @param[in] lambda A lambda function which defines how the value that is passed into the 
+   * @param[in] lambda A lambda function which defines how the value that is passed into the
    *                   functions provided by the FIELD_OP templated type.
    *
-   * This function applies the boundary condition to a linear system of equations. 
+   * This function applies the boundary condition to a linear system of equations.
    * This function is typically called from within the lambda to a call to
    * BoundaryConditionManager::ApplyBoundaryCondition().
    */
@@ -267,15 +267,15 @@ public:
                                   LAMBDA && lambda );
 
   /**
-   * @brief Compute the contributions that will be added/enforced to the right-hand side, 
+   * @brief Compute the contributions that will be added/enforced to the right-hand side,
    *        and collect the corresponding dof numbers
-   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on 
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on
    *                  the variables. Either \ref OpEqual or \ref OpAdd.
    * @tparam POLICY Execution policy to use when iterating over target set.
    * @tparam LAMBDA The type of lambda function passed into the parameter list.
    * @param[in] fs The field specification data object.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
-   * @param[in] time The time at which any time dependent functions are to be evaluated as 
+   * @param[in] time The time at which any time dependent functions are to be evaluated as
    *                 part of the application of the boundary condition.
    * @param[in] dt time step size which is applied as a factor to bc values
    * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
@@ -283,23 +283,23 @@ public:
    *                   freedom number.
    * @param[in] dofRankOffset Offset of dof indices on current rank.
    * @param[inout] matrix Local part of the system matrix.
-   * @param[inout] dof array storing the degrees of freedom of the rhsContribution, to know where 
+   * @param[inout] dof array storing the degrees of freedom of the rhsContribution, to know where
    *                   in the rhs they will be added/enforced
-   * @param[inout] rhsContribution array storing the values that will be added/enforced to the 
+   * @param[inout] rhsContribution array storing the values that will be added/enforced to the
    *                               right-hand side
-   * @param[in] lambda A lambda function which defines how the value that is passed into the 
+   * @param[in] lambda A lambda function which defines how the value that is passed into the
    *                   functions provided by the FIELD_OP templated type.
    *
-   * Note that this function only computes the rhs contributions, but does not apply them 
+   * Note that this function only computes the rhs contributions, but does not apply them
    * to the right-hand side.
    * The application of these rhs contributions is done in applyBoundaryConditionToSystem.
    *
-   * Why did we have to extract the computation of the rhs contributions from 
+   * Why did we have to extract the computation of the rhs contributions from
    * applyBoundaryConditionToSystem?
-   * Because applyBoundaryConditionToSystem is not very well suited to apply the rhsContributions 
+   * Because applyBoundaryConditionToSystem is not very well suited to apply the rhsContributions
    * to the equation layout used in the compositional solvers.
-   * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead 
-   * call computeRhsContribution directly, and apply these rhs contributions "manually" according 
+   * Therefore, the compositional solvers do not call applyBoundaryConditionToSystem, but instead
+   * call computeRhsContribution directly, and apply these rhs contributions "manually" according
    * to the equation layout used in the solver
    */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
@@ -328,7 +328,7 @@ public:
    * This function zeroes the rows of the matrix that correspond to boundary conditions.
    */
   template< typename POLICY >
-  static void 
+  static void
   zeroSystemRowsForBoundaryCondition( FieldSpecification const & fs,
                                       SortedArrayView< localIndex const > const & targetSet,
                                       arrayView1d< globalIndex const > const & dofMap,
@@ -351,7 +351,7 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
       {
         if( setGroup.hasWrapper( setName ) )
         {
-          SortedArrayView< localIndex const > const & targetSet = 
+          SortedArrayView< localIndex const > const & targetSet =
             setGroup.getReference< SortedArray< localIndex > >( setName );
           lambda( fs, setName, targetSet, object, fs.getFieldName() );
         }
@@ -369,22 +369,22 @@ void FieldSpecificationImpl::apply( BC_TYPE const & fs,
 {
   integer const isInitialCondition = fs.initialCondition();
   if( ( isInitialCondition && fieldName=="") || // this only use case for this line is in the unit test for field specification
-      ( !isInitialCondition && time >= fs.getStartTime() 
-                            && time < fs.getEndTime() 
-                            && fieldName == fs.getFieldName() ) )
+      ( !isInitialCondition && time >= fs.getStartTime()
+        && time < fs.getEndTime()
+        && fieldName == fs.getFieldName() ) )
   {
     FieldSpecificationImpl::apply< OBJECT_TYPE >( fs, mesh, std::forward< LAMBDA >( lambda ) );
   }
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int N, int USD >
-void 
+void
 FieldSpecificationImpl::
-applyFieldValueKernel( FieldSpecification const & fs,
-                       ArrayView< T, N, USD > const & field,
-                       SortedArrayView< localIndex const > const & targetSet,
-                       real64 const time,
-                       dataRepository::Group & dataGroup )
+  applyFieldValueKernel( FieldSpecification const & fs,
+                         ArrayView< T, N, USD > const & field,
+                         SortedArrayView< localIndex const > const & targetSet,
+                         real64 const time,
+                         dataRepository::Group & dataGroup )
 {
   integer const component = fs.getComponent();
   string const & functionName = fs.getFunctionName();
@@ -411,8 +411,8 @@ applyFieldValueKernel( FieldSpecification const & fs,
       {
         string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                           fs.getWrapperDataContext( FieldSpecification::
-                                                                    viewKeyStruct::
-                                                                    functionNameString() ) );
+                                                                      viewKeyStruct::
+                                                                      functionNameString() ) );
         ErrorLogger::global().modifyCurrentExceptionMessage()
           .addToMsg( errorMsg )
           .addContextInfo( fs.getWrapperDataContext( FieldSpecification::viewKeyStruct::functionNameString() )
@@ -447,13 +447,13 @@ applyFieldValueKernel( FieldSpecification const & fs,
 }
 
 template< typename FIELD_OP, typename POLICY >
-void 
+void
 FieldSpecificationImpl::
-applyFieldValue( FieldSpecification const & fs,
-                 SortedArrayView< localIndex const > const & targetSet,
-                 real64 const time,
-                 dataRepository::Group & dataGroup,
-                 string const & fieldName )
+  applyFieldValue( FieldSpecification const & fs,
+                   SortedArrayView< localIndex const > const & targetSet,
+                   real64 const time,
+                   dataRepository::Group & dataGroup,
+                   string const & fieldName )
 {
   dataRepository::WrapperBase & wrapper = dataGroup.getWrapperBase( fieldName );
 
@@ -476,26 +476,26 @@ applyFieldValue( FieldSpecification const & fs,
 }
 
 template< typename FIELD_OP, typename POLICY, typename T, int NDIM, int USD >
-void 
+void
 FieldSpecificationImpl::
-applyBoundaryConditionToSystemKernel( FieldSpecification const & fs,
-                                      SortedArrayView< localIndex const > const & targetSet,
-                                      real64 const time,
-                                      dataRepository::Group const & dataGroup,
-                                      arrayView1d< globalIndex const > const & dofMap,
-                                      globalIndex const dofRankOffset,
-                                      CRSMatrixView< real64, globalIndex const > const & matrix,
-                                      arrayView1d< real64 > const & rhs,
-                                      ArrayView< T const, NDIM, USD > const & fieldView )
+  applyBoundaryConditionToSystemKernel( FieldSpecification const & fs,
+                                        SortedArrayView< localIndex const > const & targetSet,
+                                        real64 const time,
+                                        dataRepository::Group const & dataGroup,
+                                        arrayView1d< globalIndex const > const & dofMap,
+                                        globalIndex const dofRankOffset,
+                                        CRSMatrixView< real64, globalIndex const > const & matrix,
+                                        arrayView1d< real64 > const & rhs,
+                                        ArrayView< T const, NDIM, USD > const & fieldView )
 {
   integer const component = fs.getComponent();
   applyBoundaryConditionToSystem< FIELD_OP, POLICY >( fs,
-                                                      targetSet, 
-                                                      time, 
-                                                      dataGroup, 
-                                                      dofMap, 
-                                                      dofRankOffset, 
-                                                      matrix, 
+                                                      targetSet,
+                                                      time,
+                                                      dataGroup,
+                                                      dofMap,
+                                                      dofRankOffset,
+                                                      matrix,
                                                       rhs,
                                                       [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
   {
@@ -506,17 +506,17 @@ applyBoundaryConditionToSystemKernel( FieldSpecification const & fs,
 }
 
 template< typename FIELD_OP, typename POLICY >
-void 
+void
 FieldSpecificationImpl::
-applyBoundaryConditionToSystem( FieldSpecification const & fs,
-                                SortedArrayView< localIndex const > const & targetSet,
-                                real64 const time,
-                                dataRepository::Group const & dataGroup,
-                                string const & fieldName,
-                                string const & dofMapName,
-                                globalIndex const dofRankOffset,
-                                CRSMatrixView< real64, globalIndex const > const & matrix,
-                                arrayView1d< real64 > const & rhs )
+  applyBoundaryConditionToSystem( FieldSpecification const & fs,
+                                  SortedArrayView< localIndex const > const & targetSet,
+                                  real64 const time,
+                                  dataRepository::Group const & dataGroup,
+                                  string const & fieldName,
+                                  string const & dofMapName,
+                                  globalIndex const dofRankOffset,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  arrayView1d< real64 > const & rhs )
 {
   dataRepository::WrapperBase const & wrapper = dataGroup.getWrapperBase( fieldName );
   arrayView1d< globalIndex const > const & dofMap = dataGroup.getReference< array1d< globalIndex > >( dofMapName );
@@ -542,15 +542,15 @@ applyBoundaryConditionToSystem( FieldSpecification const & fs,
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationImpl::
-applyBoundaryConditionToSystem( FieldSpecification const & fs,
-                                SortedArrayView< localIndex const > const & targetSet,
-                                real64 const time,
-                                dataRepository::Group const & dataGroup,
-                                arrayView1d< globalIndex const > const & dofMap,
-                                globalIndex const dofRankOffset,
-                                CRSMatrixView< real64, globalIndex const > const & matrix,
-                                arrayView1d< real64 > const & rhs,
-                                LAMBDA && lambda )
+  applyBoundaryConditionToSystem( FieldSpecification const & fs,
+                                  SortedArrayView< localIndex const > const & targetSet,
+                                  real64 const time,
+                                  dataRepository::Group const & dataGroup,
+                                  arrayView1d< globalIndex const > const & dofMap,
+                                  globalIndex const dofRankOffset,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  arrayView1d< real64 > const & rhs,
+                                  LAMBDA && lambda )
 {
   return applyBoundaryConditionToSystem< FIELD_OP, POLICY >( fs,
                                                              targetSet,
@@ -567,16 +567,16 @@ applyBoundaryConditionToSystem( FieldSpecification const & fs,
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationImpl::
-applyBoundaryConditionToSystem( FieldSpecification const & fs,
-                                SortedArrayView< localIndex const > const & targetSet,
-                                real64 const time,
-                                real64 const dt,
-                                dataRepository::Group const & dataGroup,
-                                arrayView1d< globalIndex const > const & dofMap,
-                                globalIndex const dofRankOffset,
-                                CRSMatrixView< real64, globalIndex const > const & matrix,
-                                arrayView1d< real64 > const & rhs,
-                                LAMBDA && lambda )
+  applyBoundaryConditionToSystem( FieldSpecification const & fs,
+                                  SortedArrayView< localIndex const > const & targetSet,
+                                  real64 const time,
+                                  real64 const dt,
+                                  dataRepository::Group const & dataGroup,
+                                  arrayView1d< globalIndex const > const & dofMap,
+                                  globalIndex const dofRankOffset,
+                                  CRSMatrixView< real64, globalIndex const > const & matrix,
+                                  arrayView1d< real64 > const & rhs,
+                                  LAMBDA && lambda )
 {
   array1d< globalIndex > dofArray( targetSet.size() );
   arrayView1d< globalIndex > const & dof = dofArray.toView();
@@ -602,17 +602,17 @@ applyBoundaryConditionToSystem( FieldSpecification const & fs,
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationImpl::
-computeRhsContribution( FieldSpecification const & fs,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        real64 const time,
-                        real64 const dt,
-                        dataRepository::Group const & dataGroup,
-                        arrayView1d< globalIndex const > const & dofMap,
-                        globalIndex const dofRankOffset,
-                        CRSMatrixView< real64, globalIndex const > const & matrix,
-                        arrayView1d< globalIndex > const & dof,
-                        arrayView1d< real64 > const & rhsContribution,
-                        LAMBDA && lambda )
+  computeRhsContribution( FieldSpecification const & fs,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda )
 {
   integer const component = ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0;
   // string const & functionName = fs.getReference< string >( fs.viewKeyStruct::functionNameString() );
@@ -620,10 +620,10 @@ computeRhsContribution( FieldSpecification const & fs,
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   // Compute the value of the rhs terms, and collect the dof numbers
-  // The rhs terms will be assembled in applyBoundaryConditionToSystem 
+  // The rhs terms will be assembled in applyBoundaryConditionToSystem
   // (or in the solver for CompositionalMultiphaseBase)
 
-  if( functionName.empty() || 
+  if( functionName.empty() ||
       functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
     real64 value = fs.getScale() * dt;
@@ -634,24 +634,24 @@ computeRhsContribution( FieldSpecification const & fs,
     }
 
     forAll< POLICY >( targetSet.size(),
-                      [targetSet, 
-                       dof, 
-                       dofMap, 
-                       dofRankOffset, 
-                       component, 
-                       matrix, 
-                       rhsContribution, 
-                       value, 
+                      [targetSet,
+                       dof,
+                       dofMap,
+                       dofRankOffset,
+                       component,
+                       matrix,
+                       rhsContribution,
+                       value,
                        lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
       FIELD_OP::SpecifyFieldValue( dof[ i ],
-                                    dofRankOffset,
-                                    matrix,
-                                    rhsContribution[ i ],
-                                    value,
-                                    lambda( a ) );
+                                   dofRankOffset,
+                                   matrix,
+                                   rhsContribution[ i ],
+                                   value,
+                                   lambda( a ) );
     } );
   }
   else
@@ -665,24 +665,24 @@ computeRhsContribution( FieldSpecification const & fs,
 
     forAll< POLICY >( targetSet.size(),
                       [targetSet,
-                      dof,
-                      dofMap,
-                      dofRankOffset,
-                      component,
-                      matrix,
-                      rhsContribution,
-                      results,
-                      value,
-                      lambda] GEOS_HOST_DEVICE ( localIndex const i )
+                       dof,
+                       dofMap,
+                       dofRankOffset,
+                       component,
+                       matrix,
+                       rhsContribution,
+                       results,
+                       value,
+                       lambda] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
       dof[ i ] = dofMap[ a ] + component;
       FIELD_OP::SpecifyFieldValue( dof[ i ],
-                                    dofRankOffset,
-                                    matrix,
-                                    rhsContribution[ i ],
-                                    value * results[ i ],
-                                    lambda( a ) );
+                                   dofRankOffset,
+                                   matrix,
+                                   rhsContribution[ i ],
+                                   value * results[ i ],
+                                   lambda( a ) );
     } );
   }
 }
@@ -690,13 +690,13 @@ computeRhsContribution( FieldSpecification const & fs,
 template< typename POLICY >
 void
 FieldSpecificationImpl::
-zeroSystemRowsForBoundaryCondition( FieldSpecification const & fs,
-                                    SortedArrayView< localIndex const > const & targetSet,
-                                    arrayView1d< globalIndex const > const & dofMap,
-                                    CRSMatrixView< real64, globalIndex const > const & matrix )
+  zeroSystemRowsForBoundaryCondition( FieldSpecification const & fs,
+                                      SortedArrayView< localIndex const > const & targetSet,
+                                      arrayView1d< globalIndex const > const & dofMap,
+                                      CRSMatrixView< real64, globalIndex const > const & matrix )
 {
   integer const component = ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0;
-  forAll< POLICY >( targetSet.size(), 
+  forAll< POLICY >( targetSet.size(),
                     [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
   {
     localIndex const a = targetSet[ i ];
