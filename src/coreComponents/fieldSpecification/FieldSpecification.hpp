@@ -85,9 +85,7 @@ public:
    * @return the catalog name
    */
   virtual const string getCatalogName() const
-  {
-    return FieldSpecification::catalogName();
-  }
+  { return FieldSpecification::catalogName(); }
 
   /**
    * @}
