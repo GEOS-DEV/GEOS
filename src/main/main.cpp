@@ -18,6 +18,7 @@
 #include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
+#include "fileIO/Outputs/ArchiveInputDeck.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -36,6 +37,8 @@ int main( int argc, char *argv[] )
     std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
 
     outputVersionInfo();
+
+    archiveInputDeck::archiveInputDeck( *commandLineOptions );
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 

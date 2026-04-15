@@ -19,14 +19,21 @@
 
 #include "ArchiveInputDeck.hpp"
 
+#include "common/MpiWrapper.hpp"
 #include "common/Path.hpp"
 #include "common/format/Format.hpp"
+#include "common/initializeEnvironment.hpp"
 #include "common/logger/Logger.hpp"
+#include "dataRepository/Group.hpp"
 #include "dataRepository/xmlWrapper.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
+#include <conduit.hpp>
 
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
+#include <system_error>
 
 namespace geos
 {
@@ -146,55 +153,12 @@ void sortAttributes( xmlWrapper::xmlNode node )
   }
 }
 
-void copySchemaToArchive( string const & archiveDir )
+xmlWrapper::xmlDocument flattenXMLs( string_array const & fileNames )
 {
-  std::error_code ec;
-  std::filesystem::path const exeDir = std::filesystem::read_symlink( "/proc/self/exe", ec ).parent_path();
-  if( ec )
-  {
-    return;
-  }
-
-  std::filesystem::path const candidates[] = {
-    exeDir / "../share/geosx/schema/schema.xsd",
-    exeDir / "schema.xsd"
-  };
-
-  for( auto const & schemaSource : candidates )
-  {
-    if( std::filesystem::is_regular_file( schemaSource ) )
-    {
-      std::filesystem::path const schemaDest = std::filesystem::path( archiveDir ) / "schema.xsd";
-      std::filesystem::copy_file( schemaSource,
-                                  schemaDest,
-                                  std::filesystem::copy_options::overwrite_existing,
-                                  ec );
-      GEOS_LOG_IF( ec, GEOS_FMT( "Failed to copy schema to archive: {}", ec.message() ) );
-      break;
-    }
-  }
-}
-
-}
-
-
-string archiveInputDeck( string_array const & inputFileNames,
-                         string const & outputDirectory,
-                         string_array const & xmlTagOrder )
-{
-  if( inputFileNames.empty() || outputDirectory.empty() )
-  {
-    return {};
-  }
-
-  string const timestamp = makeTimestamp();
-  string const archiveDir = joinPath( outputDirectory, "archive_inputFiles", timestamp );
-  makeDirsForPath( archiveDir + "/" );
-
   xmlWrapper::xmlDocument flatDoc;
   xmlWrapper::xmlNode root = flatDoc.appendChild( "Problem" );
 
-  for( string const & fileName : inputFileNames )
+  for( string const & fileName : fileNames )
   {
     xmlWrapper::xmlDocument doc;
     xmlWrapper::xmlResult const result = doc.loadFile( fileName, true );
@@ -211,16 +175,57 @@ string archiveInputDeck( string_array const & inputFileNames,
     }
   }
 
+  return flatDoc;
+}
+
+
+}
+
+
+void archiveInputDeck( CommandLineOptions const & opts )
+{
+  if( opts.inputFileNames.empty() || opts.outputDirectory.empty() )
+  {
+    return;
+  }
+
+  if( MpiWrapper::commRank() != 0 )
+  {
+    return;
+  }
+
+  // Creates a temporary and isolated ProblemManager to generate the schema.xsd
+  // because ProblemManager::generateDocumentation() has unwanted side effects
+  conduit::Node tempRoot;
+  ProblemManager tempPM( tempRoot );
+
+  string_array xmlTagOrder;
+  tempPM.initializationOrder( xmlTagOrder );
+
+  string const timestamp = makeTimestamp();
+  string const archiveDir = joinPath( opts.outputDirectory, "archive_inputFiles", timestamp );
+  makeDirsForPath( archiveDir + "/" );
+
+  xmlWrapper::xmlDocument flatDoc = flattenXMLs( opts.inputFileNames );
+  xmlWrapper::xmlNode root = flatDoc.getFirstChild();
+
   stripMetadataAttributes( root );
   reorderTags( root, xmlTagOrder );
   sortAttributes( root );
 
   flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
 
-  copySchemaToArchive( archiveDir );
+  string const schemaPath = joinPath( archiveDir, "schema.xsd" );
 
-  return archiveDir;
+  dataRepository::Group & commandLine = tempPM.getGroup< dataRepository::Group >( tempPM.groupKeys.commandLine );
+  commandLine.getReference< string >( tempPM.viewKeys.schemaFileName ) = schemaPath;
+
+  tempPM.generateDocumentation();
+
+  std::error_code ec;
+  std::filesystem::remove( std::filesystem::path( schemaPath + ".other" ), ec );
 }
+
 
 } /* namespace archiveInputDeck */
 

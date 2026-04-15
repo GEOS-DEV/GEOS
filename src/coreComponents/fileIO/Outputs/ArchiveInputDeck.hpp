@@ -25,21 +25,20 @@
 namespace geos
 {
 
+struct CommandLineOptions;
+
 namespace archiveInputDeck
 {
 
 /**
- * @brief Copy XML input files as a flat XML file into the output directory
- * @param inputFileNames Container of XML file names to start the copy from
- * @param outputDirectory The output directory to copy files into
- * @param xmlTagOrder The order of the XML tags in the XML archive file
+ * @brief Copy the XML input files as a flat XML file into the output directory
+ * @param opts A reference to the command line options, used to retrieve the input
+ *             file names and the output directory to store the archive
  *
  * Copy XML input files and every included files they contain (specified in
  * the <Included> tag) into a single flat file.
  */
-string archiveInputDeck( string_array const & inputFileNames,
-                         string const & outputDirectory,
-                         string_array const & xmlTagOrder );
+void archiveInputDeck( CommandLineOptions const & opts );
 
 } /* namespace archiveInputDeck */
 
