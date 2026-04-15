@@ -18,7 +18,6 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/FieldSpecification.hpp"
 #include "dataRepository/Group.hpp"
 #include "dataRepository/DataContext.hpp"
 
