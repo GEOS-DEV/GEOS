@@ -135,8 +135,10 @@ void setupMPI( int argc, char * argv[] );
 
 /**
  * @brief Finalize MPI.
+ * @param inError inError Indicate if the simulation end with an exception.
+ * By default set to false
  */
-void finalizeMPI();
+void finalizeMPI( bool inError = false );
 
 /**
  * @brief Setup CUDA
@@ -153,8 +155,9 @@ void setupEnvironment( int argc, char * argv[] );
 
 /**
  * @brief Cleanup/finalize the environment.
+ * @param inError indicate if an exception occurred
  */
-void cleanupEnvironment();
+void cleanupEnvironment( bool inError = false );
 
 #if defined( GEOS_USE_CALIPER )
 

@@ -16,11 +16,22 @@
       logLevel="1" />
   </Tasks>
 
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
   <Events
     maxTime="1">
     <SoloEvent
       name="eventtestBrine"
       target="/Tasks/testBrine" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
   </Events>
 
   <Constitutive>

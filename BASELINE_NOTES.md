@@ -9,16 +9,22 @@ PR #3836 (2026-03-11) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Added statistics `Group` objects for each statistics `Task` instance
 
+PR #4021 (2026-04-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4021-16339-bb862da.tar.gz>
+=====================
+Add Young Modulus & Poisson import from VTK mesh
+
+PR #3883 (2026-04-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3883-16299-3037085.tar.gz>
+=====================
+Move PVT Driver tests from unit tests to integrated tests
+
 PR #4007 (2026-04-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16213-67a3002.tar.gz>
 =====================
 Add XML input parameter: "hypredriveInputFile"
 
 PR #3957 (2026-03-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3957-16171-da51804.tar.gz>
-=====================
 Add checkEulerCharacteristic option, rebaseline due to new input.
 
 PR #3967 (2026-03-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3967-16106-c0f34de.tar.gz>
-=====================
 Fix 2D/3D cell co-location in parallel mesh redistribution
 
 PR #3986 (2026-02-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3986-15734-7487221.tar.gz>
