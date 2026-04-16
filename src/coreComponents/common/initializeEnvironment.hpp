@@ -94,8 +94,8 @@ struct CommandLineOptions
   /// Print memory usage in data repository
   real64 printMemoryUsage = -1.0;
 
-  /// Archive the input deck and the XSD schema
-  bool archiveInputDeck = false;
+  /// Set the archiving level
+  integer archiveInputDeck = 0;
 };
 
 /**

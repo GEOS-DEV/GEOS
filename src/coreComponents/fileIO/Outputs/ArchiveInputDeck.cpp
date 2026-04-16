@@ -220,7 +220,10 @@ void archiveInputDeck( CommandLineOptions const & opts )
   dataRepository::Group & commandLine = tempPM.getGroup< dataRepository::Group >( tempPM.groupKeys.commandLine );
   commandLine.getReference< string >( tempPM.viewKeys.schemaFileName ) = schemaPath;
 
-  tempPM.generateDocumentation();
+  if( opts.archiveInputDeck >= 2 )
+  {
+    tempPM.generateDocumentation();
+  }
 
   std::error_code ec;
   std::filesystem::remove( std::filesystem::path( schemaPath + ".other" ), ec );
