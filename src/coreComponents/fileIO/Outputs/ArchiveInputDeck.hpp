@@ -36,7 +36,7 @@ namespace archiveInputDeck
  *             file names and the output directory to store the archive
  *
  * Copy XML input files and every included files they contain (specified in
- * the <Included> tag) into a single flat file.
+ * the Included tag) into a single flat file.
  */
 void archiveInputDeck( CommandLineOptions const & opts );
 
