@@ -288,7 +288,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( t
     string const thermalCondModelName = getConstitutiveName< SinglePhaseThermalConductivityBase >( fractureSubRegion );
     if( !thermalCondModelName.empty() )
     {
-      // if a thermal conductivity model exists we need to set the intial value to something meaningful
+      // if a thermal conductivity model exists we need to set the initial value to something meaningful
       SinglePhaseThermalConductivityBase & thermalCondModel = getConstitutiveModel< SinglePhaseThermalConductivityBase >( fractureSubRegion, thermalCondModelName );
       thermalCondModel.initializeState();
     }

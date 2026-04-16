@@ -138,9 +138,13 @@ void SinglePhaseThermalConductivity::initializeState( localIndex const size ) co
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      referenceThermalConductivity[ei][q][0] = defaultThermalConductivityComponents[0];
-      referenceThermalConductivity[ei][q][1] = defaultThermalConductivityComponents[1];
-      referenceThermalConductivity[ei][q][2] = defaultThermalConductivityComponents[2];
+      for( integer dim=0; dim < 3; ++dim )
+      {
+        if( referenceThermalConductivity[ei][q][dim] < 0 )
+        {
+          referenceThermalConductivity[ei][q][dim] = defaultThermalConductivityComponents[dim];
+        }
+      }
     }
   } );
 }
