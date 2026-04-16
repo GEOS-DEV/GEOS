@@ -38,7 +38,10 @@ int main( int argc, char *argv[] )
 
     outputVersionInfo();
 
-    archiveInputDeck::archiveInputDeck( *commandLineOptions );
+    if( commandLineOptions->archiveInputDeck )
+    {
+      archiveInputDeck::archiveInputDeck( *commandLineOptions );
+    }
 
     GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
 

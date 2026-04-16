@@ -106,6 +106,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     MEMORY_USAGE,
     PAUSE_FOR,
     ERRORSOUTPUT,
+    ARCHIVE,
   };
 
   const option::Descriptor usage[] =
@@ -130,6 +131,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { ERRORSOUTPUT, 0, "e", "errorsOutput", Arg::nonEmpty, "\t-e, --errors-output, \t Output path for the errors file (\".yaml\" supported)" },
+    { ARCHIVE, 0, "a", "archive", Arg::None, "\t-a, --archive, \t Archive the input deck and generate the XSD schema" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -264,6 +266,11 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
           ErrorLogger::global().setOutputFilename( filename );
         }
         ErrorLogger::global().createFile();
+      }
+      break;
+      case ARCHIVE:
+      {
+        commandLineOptions->archiveInputDeck = true;
       }
       break;
     }
