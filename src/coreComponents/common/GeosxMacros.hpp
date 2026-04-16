@@ -61,6 +61,31 @@
 ///@}
 
 /**
+ * @name NVCC diagnostic suppression helpers.
+ *
+ * Work around nvcc erroneously requiring device-compatible destructors for
+ * reference parameters of host lambdas that contain device kernel launches.
+ * Place GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS before the lambda and
+ * GEOS_NV_HOST_DEVICE_DIAG_DEFAULT after it to restore the default behavior.
+ * On non-NVCC compilers the macros expand to nothing.
+ */
+///@{
+
+#if defined(__NVCC__)
+/// Suppress nvcc diagnostics 20011/20014 (calling __host__ from __host__ __device__).
+#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS _Pragma("nv_diag_suppress 20011") _Pragma("nv_diag_suppress 20014")
+/// Restore nvcc diagnostics 20011/20014 to default.
+#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT  _Pragma("nv_diag_default 20011")  _Pragma("nv_diag_default 20014")
+#else
+/// @cond DO_NOT_DOCUMENT
+#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
+#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT
+/// @endcond
+#endif
+
+///@}
+
+/**
  * @name Unused variable markers.
  *
  * These macros are used to explicitly mark a variable/argument as unused

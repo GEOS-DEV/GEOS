@@ -133,7 +133,9 @@ public:
   virtual void solveLinearSystem( DofManager const & dofManager,
                                   ParallelMatrix & matrix,
                                   ParallelVector & rhs,
-                                  ParallelVector & solution ) override;
+                                  ParallelVector & solution,
+                                  integer const cycleNumber,
+                                  integer const nonlinearIteration ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,

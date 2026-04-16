@@ -138,6 +138,13 @@ array1d< integer > DofManager::numComponentsPerField() const
   return ret;
 }
 
+stdVector< string > DofManager::fieldNames() const
+{
+  stdVector< string > ret( m_fields.size() );
+  std::transform( m_fields.begin(), m_fields.end(), ret.begin(), std::mem_fn( &FieldDescription::name ) );
+  return ret;
+}
+
 FieldLocation DofManager::location( string const & fieldName ) const
 {
   return m_fields[getFieldIndex( fieldName )].location;

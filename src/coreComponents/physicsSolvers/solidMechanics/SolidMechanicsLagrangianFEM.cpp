@@ -153,6 +153,23 @@ void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
 
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::mgr &&
+      linParams.mgr.strategy == LinearSolverParameters::MGR::StrategyType::invalid )
+  {
+    GEOS_WARNING( GEOS_FMT( "{}: standalone solid mechanics does not define an MGR strategy; "
+                            "switching preconditionerType from `{}` to `{}`",
+                            getName(),
+                            linParams.preconditionerType,
+                            LinearSolverParameters::PreconditionerType::amg ) );
+
+    linParams.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
+    if( linParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
+    {
+      linParams.amg.nullSpaceType = LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes;
+    }
+  }
+
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
 }
 
@@ -1459,12 +1476,15 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
                                                      ParallelMatrix & matrix,
                                                      ParallelVector & rhs,
-                                                     ParallelVector & solution )
+                                                     ParallelVector & solution,
+                                                     integer const cycleNumber,
+                                                     integer const nonlinearIteration )
 {
   // Flip system sign to ensure matrix is positive definite
   matrix.scale( -1.0 );
   rhs.scale( -1.0 );
-  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution,
+                                        cycleNumber, nonlinearIteration );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
