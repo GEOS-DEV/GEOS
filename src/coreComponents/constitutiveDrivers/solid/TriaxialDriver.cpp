@@ -18,7 +18,7 @@
  */
 
 #include "TriaxialDriver.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 
 
 namespace geos
