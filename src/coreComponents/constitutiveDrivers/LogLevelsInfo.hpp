@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for PVT driver
+ * This file contains common log level informations for constitutive driver
  */
 
-#ifndef GEOS_CONSTITUTIVEDRIVERS_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP_
-#define GEOS_CONSTITUTIVEDRIVERS_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP_
+#ifndef GEOS_CONSTITUTIVEDRIVERS_LOGLEVELSINFO_HPP_
+#define GEOS_CONSTITUTIVEDRIVERS_LOGLEVELSINFO_HPP_
 
 #include "common/DataTypes.hpp"
 
@@ -49,4 +49,4 @@ struct LogOutput
 
 }
 
-#endif // GEOS_CONSTITUTIVEDRIVERS_FLUID_MULTIFLUID_LOGLEVELSINFO_HPP_
+#endif // GEOS_CONSTITUTIVEDRIVERS_LOGLEVELSINFO_HPP_
