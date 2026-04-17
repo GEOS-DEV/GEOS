@@ -699,7 +699,8 @@ public:
 
   void enforceCohesiveLaw( real64 dt,
                            ParticleManager & particleManager,
-                           NodeManager & nodeManager );
+                           NodeManager & nodeManager,
+                           SpatialPartition & partition );
 
   GEOS_HOST_DEVICE
   real64 computeDistanceToParticleSurface( real64 ( &normal )[3],

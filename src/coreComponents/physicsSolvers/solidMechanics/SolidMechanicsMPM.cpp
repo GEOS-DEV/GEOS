@@ -2943,7 +2943,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     solverProfiling( "Compute reactions due to cohesive laws" );
     enforceCohesiveLaw( dt,
                         particleManager,
-                        nodeManager );
+                        nodeManager,
+                        partition );
   }
   //#######################################################################################
 
@@ -11307,7 +11308,8 @@ real64 SolidMechanicsMPM::convexHullAreaIntegration( real64 const (& hEl)[3],
 
 void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt, 
                                             ParticleManager & particleManager,
-                                            NodeManager & nodeManager )
+                                            NodeManager & nodeManager,
+                                            SpatialPartition & partition )
 {
   GEOS_UNUSED_VAR( nodeManager );
 
@@ -11317,6 +11319,9 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
   int const numVelocityFields = m_numVelocityFields;
   int const preventCZInterpenetration = m_preventCZInterpenetration;
   real64 const smallMass = m_smallMass;
+  arrayView1d< int const > const periodic = partition.getPeriodic();
+  real64 domainExtent[3] = { };
+  LvArray::tensorOps::copy< 3 >( domainExtent, m_domainExtent );
 
   CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
   cohesiveZoneManager.forCohesiveZoneRegions< CohesiveZoneRegion >( [&]( CohesiveZoneRegion & czRegion )
@@ -11434,6 +11439,16 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
               real64 surfaceDisplacement[3] = {};
               LvArray::tensorOps::copy< 3 >( surfaceDisplacement, particlePosition[p] );
               LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, particleCohesiveReferencePosition[p] );
+
+              // If the domain is periodic need to correct particle displacement
+              for(localIndex i=0; i < numDims; ++i)
+              {
+                if( periodic[i] == 1 )
+                {
+                  surfaceDisplacement[i] = Mod(surfaceDisplacement[i], domainExtent[i]); 
+                }
+              }
+
               LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
               LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, referenceSurfacePoint );
 
