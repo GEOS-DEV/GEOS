@@ -56,6 +56,8 @@ jobs:
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
   # Resolve storage/cache provider settings once and keep the build jobs declarative.
+  # The repository owner selects the org profile; the org profile selects provider/profile.
+  # New orgs can be added via vars.CI_ORG_CONFIG_JSON without changing job call sites.
   # New providers can be added via vars.CI_PROVIDER_CONFIG_JSON without changing job call sites.
   # Provider payloads are supplied generically through inherited secrets:
   # - SCCACHE_PROFILES_JSON
@@ -73,9 +75,11 @@ jobs:
       ARTIFACT_UPLOAD_URI_ROOT: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
       ARTIFACT_PUBLIC_URL_ROOT: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
     env:
-      CI_STORAGE_PROVIDER: ${{ vars.CI_STORAGE_PROVIDER || 'gcp' }}
-      CI_SCCACHE_PROFILE: ${{ vars.CI_SCCACHE_PROFILE || vars.CI_STORAGE_PROVIDER || 'gcp' }}
-      CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ vars.CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH || 'geosx/integratedTests' }}
+      CI_REPOSITORY_OWNER: ${{ github.repository_owner }}
+      CI_ORG_CONFIG_JSON: ${{ vars.CI_ORG_CONFIG_JSON || '' }}
+      CI_STORAGE_PROVIDER: ${{ vars.CI_STORAGE_PROVIDER || '' }}
+      CI_SCCACHE_PROFILE: ${{ vars.CI_SCCACHE_PROFILE || '' }}
+      CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ vars.CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH || '' }}
       CI_PROVIDER_CONFIG_JSON: ${{ vars.CI_PROVIDER_CONFIG_JSON || '' }}
       CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE: ${{ vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE || vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_PREFIX || '' }}
     steps:
@@ -83,9 +87,60 @@ jobs:
       run: |
         set -euo pipefail
 
-        STORAGE_PROVIDER="${CI_STORAGE_PROVIDER}"
-        SCCACHE_PROFILE="${CI_SCCACHE_PROFILE:-${STORAGE_PROVIDER}}"
-        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="${CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
+        DEFAULT_ORG_CONFIG_JSON="$(jq -cn '
+          {
+            "GEOS-DEV": {
+              storage_provider: "gcp",
+              sccache_profile: "gcp",
+              integrated_tests_artifact_bucket_path: "geosx/integratedTests"
+            },
+            "EarthFlowAI": {
+              storage_provider: "cloudflare",
+              sccache_profile: "cloudflare",
+              integrated_tests_artifact_bucket_path: "geosx/integratedTests"
+            }
+          }
+        ')"
+
+        CUSTOM_ORG_CONFIG_JSON="${CI_ORG_CONFIG_JSON:-}"
+        if [[ -n "${CUSTOM_ORG_CONFIG_JSON}" ]]; then
+          echo "${CUSTOM_ORG_CONFIG_JSON}" | jq -e 'type == "object"' >/dev/null
+        else
+          CUSTOM_ORG_CONFIG_JSON='{}'
+        fi
+
+        ORG_CONFIG_JSON="$(jq -cn \
+          --argjson defaults "${DEFAULT_ORG_CONFIG_JSON}" \
+          --argjson custom "${CUSTOM_ORG_CONFIG_JSON}" \
+          '$defaults * $custom'
+        )"
+
+        NORMALIZED_ORG_CONFIG_JSON="$(jq -c '
+          to_entries
+          | reduce .[] as $entry ({}; .[$entry.key | ascii_downcase] = $entry.value)
+        ' <<< "${ORG_CONFIG_JSON}")"
+
+        SELECTED_ORG_JSON="$(jq -cer --arg owner "${CI_REPOSITORY_OWNER}" '.[$owner | ascii_downcase] // {}' <<< "${NORMALIZED_ORG_CONFIG_JSON}")"
+        SELECTED_ORG_STORAGE_PROVIDER="$(jq -r '.storage_provider // empty' <<< "${SELECTED_ORG_JSON}")"
+        SELECTED_ORG_SCCACHE_PROFILE="$(jq -r '.sccache_profile // empty' <<< "${SELECTED_ORG_JSON}")"
+        SELECTED_ORG_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="$(jq -r '.integrated_tests_artifact_bucket_path // empty' <<< "${SELECTED_ORG_JSON}")"
+
+        if [[ -z "${SELECTED_ORG_STORAGE_PROVIDER}" && -z "${CI_STORAGE_PROVIDER}" ]]; then
+          echo "::error::No CI organization configuration was found for repository owner '${CI_REPOSITORY_OWNER}'. Add it to CI_ORG_CONFIG_JSON or set CI_STORAGE_PROVIDER."
+          exit 1
+        fi
+
+        STORAGE_PROVIDER="${CI_STORAGE_PROVIDER:-${SELECTED_ORG_STORAGE_PROVIDER}}"
+
+        if [[ -n "${CI_SCCACHE_PROFILE}" ]]; then
+          SCCACHE_PROFILE="${CI_SCCACHE_PROFILE}"
+        elif [[ -n "${CI_STORAGE_PROVIDER}" ]]; then
+          SCCACHE_PROFILE="${STORAGE_PROVIDER}"
+        else
+          SCCACHE_PROFILE="${SELECTED_ORG_SCCACHE_PROFILE:-${STORAGE_PROVIDER}}"
+        fi
+
+        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="${CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH:-${SELECTED_ORG_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH:-geosx/integratedTests}}"
 
         DEFAULT_PROVIDER_CONFIG_JSON="$(jq -cn --arg cloudflare_artifact_public_url_base "${CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE}" '
           {
@@ -96,7 +151,7 @@ jobs:
               artifact_public_url_root: "https://storage.googleapis.com"
             },
             cloudflare: {
-              artifact_upload_command: "aws s3 cp --only-show-errors --acl public-read \"$UPLOAD_SRC\" \"$UPLOAD_DST\" --endpoint-url \"$ARTIFACT_UPLOAD_ENDPOINT\"",
+              artifact_upload_command: "aws s3 cp --only-show-errors \"$UPLOAD_SRC\" \"$UPLOAD_DST\" --endpoint-url \"$ARTIFACT_UPLOAD_ENDPOINT\"",
               artifact_upload_pre_command: "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; if ! command -v aws >/dev/null; then echo \"aws CLI is required for cloudflare artifact upload backend.\" >&2; exit 1; fi; ACCESS_KEY_ID=\"$(jq -er \".access_key_id\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; SECRET_ACCESS_KEY=\"$(jq -er \".secret_access_key\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; ENDPOINT=\"$(jq -er \".endpoint\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; export AWS_ACCESS_KEY_ID=\"$ACCESS_KEY_ID\"; export AWS_SECRET_ACCESS_KEY=\"$SECRET_ACCESS_KEY\"; export AWS_DEFAULT_REGION=\"${AWS_DEFAULT_REGION:-auto}\"; export AWS_EC2_METADATA_DISABLED=true; export ARTIFACT_UPLOAD_ENDPOINT=\"$ENDPOINT\"",
               artifact_upload_uri_root: "s3://",
               artifact_public_url_root: $cloudflare_artifact_public_url_base

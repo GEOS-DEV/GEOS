@@ -114,6 +114,16 @@ on:
         required: false
       ARTIFACT_PROVIDER_CREDENTIALS_JSON:
         required: false
+      GOOGLE_CLOUD_GCP:
+        required: false
+      SCCACHE_BUCKET:
+        required: false
+      SCCACHE_ENDPOINT:
+        required: false
+      CLOUDFLARE_R2_ACCESS_KEY_ID:
+        required: false
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY:
+        required: false
       CODECOV_TOKEN:
         required: false
 jobs:
@@ -159,6 +169,10 @@ jobs:
         DIRECT_SCCACHE_ENV_VARS_JSON: ${{ secrets.SCCACHE_ENV_VARS_JSON }}
         DIRECT_SCCACHE_FILES_JSON: ${{ secrets.SCCACHE_FILES_JSON }}
         SCCACHE_PROFILES_JSON: ${{ secrets.SCCACHE_PROFILES_JSON }}
+        LEGACY_SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
+        LEGACY_SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+        LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
       run: |
         set -euo pipefail
 
@@ -190,6 +204,23 @@ jobs:
               selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
               selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
             fi
+          elif [[ "${sccache_profile}" == "cloudflare" ]]; then
+            if [[ -n "${LEGACY_SCCACHE_BUCKET:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" && -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" ]]; then
+              selected_sccache_env_vars_json="$(jq -cn \
+                --arg bucket "${LEGACY_SCCACHE_BUCKET}" \
+                --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
+                --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
+                --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
+                '{
+                  SCCACHE_BUCKET: $bucket,
+                  AWS_ACCESS_KEY_ID: $access_key_id,
+                  AWS_SECRET_ACCESS_KEY: $secret_access_key,
+                  SCCACHE_ENDPOINT: $endpoint,
+                  SCCACHE_S3_USE_SSL: "true",
+                  SCCACHE_REGION: "auto"
+                }'
+              )"
+            fi
           fi
 
           if [[ "${selected_sccache_env_vars_json:-}" == "{}" ]]; then
@@ -204,8 +235,11 @@ jobs:
             echo "::warning::USE_SCCACHE=true but no sccache payload was provided (direct SCCACHE_* secrets or a matching entry in SCCACHE_PROFILES_JSON). Disabling sccache for this run."
           else
             use_sccache=true
-            sccache_runtime_dir=".sccache-runtime-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            # Keep the runtime directory stable so profile JSON can refer to helper files
+            # using a fixed path inside the mounted repository.
+            sccache_runtime_dir=".sccache-runtime"
             runtime_path="${GITHUB_WORKSPACE}/${sccache_runtime_dir}"
+            rm -rf "${runtime_path}"
             mkdir -p "${runtime_path}"
 
             if [[ -n "${selected_sccache_config_toml:-}" ]]; then
@@ -270,6 +304,10 @@ jobs:
         INPUT_ARTIFACT_UPLOAD_BUCKET_PATH: ${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}
         DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}
         ARTIFACT_PROVIDER_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_PROVIDER_CREDENTIALS_JSON }}
+        LEGACY_GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
+        LEGACY_SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
+        LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+        LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
       run: |
         set -euo pipefail
 
@@ -297,6 +335,28 @@ jobs:
           esac
         fi
 
+        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" ]]; then
+          case "${storage_provider}" in
+            gcp)
+              credentials_payload="${LEGACY_GOOGLE_CLOUD_GCP:-}"
+              ;;
+            cloudflare)
+              if [[ -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" ]]; then
+                credentials_payload="$(jq -cn \
+                  --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
+                  --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
+                  --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
+                  '{
+                    access_key_id: $access_key_id,
+                    secret_access_key: $secret_access_key,
+                    endpoint: $endpoint
+                  }'
+                )"
+              fi
+              ;;
+          esac
+        fi
+
         if [[ -n "${credentials_payload}" ]]; then
           credentials_dir="${RUNNER_TEMP}/artifact-upload-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p "${credentials_dir}"
@@ -320,6 +380,7 @@ jobs:
         HAS_UPLOAD_TARGET=false
         DATA_BASENAME=
         DATA_EXCHANGE_DIR=
+        STORAGE_PROVIDER="${{ inputs.STORAGE_PROVIDER }}"
         ARTIFACT_UPLOAD_BUCKET_PATH="${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}"
         ARTIFACT_UPLOAD_COMMAND="${{ inputs.ARTIFACT_UPLOAD_COMMAND }}"
         ARTIFACT_UPLOAD_PRE_COMMAND="${{ inputs.ARTIFACT_UPLOAD_PRE_COMMAND }}"
@@ -334,7 +395,21 @@ jobs:
         fi
 
         if [[ -z "${ARTIFACT_PUBLIC_URL_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" && -n "${ARTIFACT_PUBLIC_URL_ROOT}" ]]; then
-          ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
+          artifact_public_path="${ARTIFACT_UPLOAD_BUCKET_PATH}"
+          if [[ "${STORAGE_PROVIDER}" == "cloudflare" ]]; then
+            # Cloudflare public bucket URLs are already bucket-scoped, so the
+            # object key should not repeat the bucket name.
+            artifact_public_path="${ARTIFACT_UPLOAD_BUCKET_PATH#*/}"
+            if [[ "${artifact_public_path}" == "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
+              artifact_public_path=
+            fi
+          fi
+
+          if [[ -n "${artifact_public_path}" ]]; then
+            ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${artifact_public_path}"
+          else
+            ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}"
+          fi
         fi
 
         if [[ -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" || -n "${ARTIFACT_UPLOAD_URI_PREFIX}" || -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
