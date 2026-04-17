@@ -19,21 +19,13 @@
 
 #include "ArchiveInputDeck.hpp"
 
-#include "common/MpiWrapper.hpp"
 #include "common/Path.hpp"
 #include "common/format/Format.hpp"
-#include "common/initializeEnvironment.hpp"
 #include "common/logger/Logger.hpp"
-#include "dataRepository/Group.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-#include "mainInterface/ProblemManager.hpp"
-
-#include <conduit.hpp>
 
 #include <algorithm>
 #include <chrono>
-#include <filesystem>
-#include <system_error>
 
 namespace geos
 {
@@ -182,29 +174,20 @@ xmlWrapper::xmlDocument flattenXMLs( string_array const & fileNames )
 }
 
 
-void archiveInputDeck( CommandLineOptions const & opts )
+void archiveInputDeck( string_array const & inputFileNames,
+                       string const & outputDirectory,
+                       string_array const & xmlTagOrder )
 {
-  if( opts.inputFileNames.empty() || opts.outputDirectory.empty() )
+  if( inputFileNames.empty() || outputDirectory.empty() )
   {
     return;
   }
-
-  if( MpiWrapper::commRank() != 0 )
-  {
-    return;
-  }
-
-  conduit::Node tempRoot;
-  ProblemManager tempPM( tempRoot );
-
-  string_array xmlTagOrder;
-  tempPM.initializationOrder( xmlTagOrder );
 
   string const timestamp = makeTimestamp();
-  string const archiveDir = joinPath( opts.outputDirectory, "archive_inputFiles", timestamp );
+  string const archiveDir = joinPath( outputDirectory, "archive_inputFiles", timestamp );
   makeDirsForPath( archiveDir + "/" );
 
-  xmlWrapper::xmlDocument flatDoc = flattenXMLs( opts.inputFileNames );
+  xmlWrapper::xmlDocument flatDoc = flattenXMLs( inputFileNames );
   xmlWrapper::xmlNode root = flatDoc.getFirstChild();
 
   stripMetadataAttributes( root );
