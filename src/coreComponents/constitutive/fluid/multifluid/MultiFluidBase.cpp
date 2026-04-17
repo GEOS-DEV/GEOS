@@ -41,7 +41,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component molar weights" );
+    setDescription( "Component molar weights [kg/mol]" );
 
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
@@ -159,25 +159,25 @@ void MultiFluidBase::postInputInitialization()
   integer const numPhase = numFluidPhases();
 
   GEOS_THROW_IF_LT_MSG( numComp, 1,
-                        GEOS_FMT( "{}: invalid number of components", getFullName() ),
-                        InputError );
+                        "invalid number of components",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
-                        GEOS_FMT( "{}: invalid number of components", getFullName() ),
-                        InputError );
+                        "invalid number of components",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_LT_MSG( numPhase, 1,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
-                        InputError );
+                        GEOS_FMT( "invalid number of values in attribute '{}'", viewKeyStruct::componentMolarWeightString() ),
+                        InputError, getDataContext() );
   for( integer ic = 0; ic < numComp; ++ic )
   {
     GEOS_THROW_IF_LT_MSG( m_componentMolarWeight[ic], LvArray::NumericLimits< real64 >::epsilon,
-                          GEOS_FMT( "{}: zero molecular weight found for component {}", getFullName(), m_componentNames[ic] ),
-                          InputError );
+                          GEOS_FMT( "zero molecular weight found for component {}", m_componentNames[ic] ),
+                          InputError, getDataContext() );
   }
 
   // Make sure that phase names and component names are not repeated
@@ -186,8 +186,8 @@ void MultiFluidBase::postInputInitialization()
   {
     std::string const lowerCaseName = stringutilities::toLower( m_phaseNames[ip] );
     GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
-                    GEOS_FMT( "{}: phase name {} is repeated. "
-                              "Phase names should be unique.", getFullName(), m_phaseNames[ip] ), InputError );
+                    GEOS_FMT( "phase name {} is repeated. "
+                              "Phase names should be unique.", m_phaseNames[ip] ), InputError, getDataContext() );
     uniqueNames.insert( lowerCaseName );
   }
   uniqueNames.clear();
@@ -195,8 +195,8 @@ void MultiFluidBase::postInputInitialization()
   {
     std::string const lowerCaseName = stringutilities::toLower( m_componentNames[ic] );
     GEOS_THROW_IF ( uniqueNames.find( lowerCaseName ) != uniqueNames.end(),
-                    GEOS_FMT( "{}: component name {} is repeated. "
-                              "Component names should be unique.", getFullName(), m_componentNames[ic] ), InputError );
+                    GEOS_FMT( "component name {} is repeated. "
+                              "Component names should be unique.", m_componentNames[ic] ), InputError, getDataContext() );
     uniqueNames.insert( lowerCaseName );
   }
 

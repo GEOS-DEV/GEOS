@@ -26,7 +26,7 @@
 #include <_hypre_utilities.h>
 #include <_hypre_parcsr_ls.h>
 #include <_hypre_IJ_mv.h>
-#include <krylov.h>
+#include <HYPRE_krylov.h>
 
 namespace geos
 {
@@ -187,7 +187,7 @@ void createHypreKrylovSolver( LinearSolverParameters const & params,
     }
     default:
     {
-      GEOS_ERROR( "Solver type not supported in hypre interface: " << params.solverType );
+      GEOS_ERROR( GEOS_FMT( "Solver type not supported in hypre interface: {}", params.solverType ) );
     }
   }
 }

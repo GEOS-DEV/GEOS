@@ -135,7 +135,8 @@ Regex constructArrayRegex( string_view subPattern, string_view description, inte
 
     // finish by the original description
     GEOS_ERROR_IF( !stringutilities::startsWith( description, "Input value must " ),
-                   "Description \"" << description << "\" must start by \"Input value must \" to call constructArrayRegex() on it." );
+                   GEOS_FMT( "Description '{}' must start with 'Input value must ' to call constructArrayRegex() on it.",
+                             description ) );
     arrayDesc << description.substr( description.find( " must " ) );
   }
 
@@ -151,7 +152,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   // string_view const ru = "[\\d]+";// unused
 
   string_view const intDesc = "Input value must be a signed int (eg. -123, 455, +789, etc.)";
-  string_view const intRegex = "[+-]?[\\d]+";
+  string_view const intRegex = "\\s*[+-]?[\\d]+\\s*";
 
   // Explanation of parts:
   // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
@@ -160,7 +161,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   // ([eE][-+]?[\\d]+|\\s*)  matches an optional scientific notation number
   // Note: the xsd regex implementation does not allow an empty branch, so use allow whitespace at the end
   string_view const realDesc = "Input value must be a real number (eg. 1, .25, +2.3, -.4, 5.6e7, -8E-9, etc.)";
-  string_view const realRegex = "[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
+  string_view const realRegex = "\\s*[+-]?[\\d]*([\\d]\\.?|\\.[\\d])[\\d]*([eE][-+]?[\\d]+|\\s*)";
 
   string_view const R1Desc = "Input value must be a R1Tensor, an array of 3 real numbers surrounded by braces and separated by commas (eg.  \"{ 1, .25, +2.3}\", \"{ -.4, 5.6e7, -8E-9\", etc.) .";
   string const R1Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){2}" + string( realRegex ) + "\\s*\\}\\s*";
@@ -168,20 +169,23 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   string const R2Regex = "\\s*\\{\\s*(" + string( realRegex ) + "\\s*,\\s*){5}" + string( realRegex ) + "\\s*\\}\\s*";
 
   string_view const strDesc = "Input value must be a string that cannot be empty, contain any whitespaces nor the characters  , { }";
-  string_view const strRegex = "[^,\\{\\}\\s]+\\s*";
+  string_view const strRegex = "\\s*[^,\\{\\}\\s]+\\s*";
   string_view const strEDesc = "Input value must be a string that cannot contain any whitespaces nor the characters  , { }";
-  string_view const strERegex = "[^,\\{\\}\\s]*\\s*";
+  string_view const strERegex = "\\s*[^,\\{\\}\\s]*\\s*";
 
   string_view const pathDesc = "Input value must be a string that cannot be empty, contain any whitespaces nor the characters  * ? < > | : \" ";
-  string_view const pathRegex = "[^*?<>\\|:\";,\\s]+\\s*";
+  string_view const pathRegex = "\\s*[^*?<>\\|:\";,\\s]+\\s*";
   string_view const pathEDesc = "Input value must be a string that cannot contain any whitespaces nor the characters  * ? < > | : \" ";
-  string_view const pathERegex = "[^*?<>\\|:\";,\\s]*\\s*";
+  string_view const pathERegex = "\\s*[^*?<>\\|:\";,\\s]*\\s*";
 
   string_view const groupNameDesc = "Input value must be a string that cannot be empty and contains only upper/lower letters, digits, and the characters  . - _";
-  string_view const groupNameRegex = "[a-zA-Z0-9.\\-_]+";
+  string_view const groupNameRegex = "\\s*[a-zA-Z0-9.\\-_]+\\s*";
   // to reference groups, we need to support the / for paths, and * [ ] for fnmatch patterns.
   string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ / * [ ]";
-  string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/*\\[\\]]*";
+  string_view const groupNameRefRegex = "\\s*[a-zA-Z0-9.\\-_/*\\[\\]]*\\s*";
+  // to reference an array of groups, we need to support the / for paths, and * [ ] for fnmatch patterns.
+  string_view const groupNameRefArrayDesc = "Input value must be a list of strings that can contain only upper/lower letters, digits, and the characters  . - _ / * [ ]";
+  string_view const groupNameRefArrayRegex = "\\s*\\{([a-zA-Z0-9.\\-_/*\\[\\], ]+)*\\}\\s*";
 
 
   // Build master list of regexes
@@ -220,7 +224,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
     { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
     { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
     { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
-    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
+    { string( CustomTypes::groupNameRefArray ), Regex( groupNameRefArrayRegex, groupNameRefArrayDesc ) }
   };
   return regexMap;
 }

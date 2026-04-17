@@ -100,17 +100,21 @@ void Damage< BASE >::postInputInitialization()
   BASE::postInputInitialization();
 
   GEOS_ERROR_IF( m_extDrivingForceFlag != 0 && m_extDrivingForceFlag!= 1,
-                 BASE::getDataContext() << ": invalid external driving force flag option - must"
-                                           " be 0 or 1" );
+                 "invalid external driving force flag option - must"
+                 " be 0 or 1",
+                 this->getDataContext() );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
-                 BASE::getDataContext() << ": tensile strength must be input and positive when the"
-                                           " external driving force flag is turned on" );
+                 "tensile strength must be input and positive when the"
+                 " external driving force flag is turned on",
+                 this->getDataContext()  );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressiveStrength  <= 0.0,
-                 BASE::getDataContext() << ": compressive strength must be input and positive when the"
-                                           " external driving force flag is turned on" );
+                 "compressive strength must be input and positive when the"
+                 " external driving force flag is turned on",
+                 this->getDataContext()  );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
-                 BASE::getDataContext() << ": delta coefficient must be input and non-negative when the"
-                                           " external driving force flag is turned on" );
+                 "delta coefficient must be input and non-negative when the"
+                 " external driving force flag is turned on",
+                 this->getDataContext()  );
 
   // set results as array default values
   this->template getField< fields::solid::criticalFractureEnergy >().

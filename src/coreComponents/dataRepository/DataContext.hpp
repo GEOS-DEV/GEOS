@@ -24,6 +24,7 @@
 #include "common/logger/Logger.hpp"
 #include "xmlWrapper.hpp"
 #include "common/format/Format.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
@@ -59,6 +60,20 @@ public:
    * object comes from.
    */
   virtual string toString() const = 0;
+
+  /**
+   * @brief Returns contextual information, including the file name and the line number
+   * @return ErrorContext
+   */
+  virtual ErrorContext getContextInfo() const = 0;
+
+  /**
+   * @brief Conversion operator to ErrorContext
+   * @return ErrorContext
+   */
+  explicit operator ErrorContext() const {
+    return getContextInfo();
+  }
 
   /**
    * @return Get the target object name
@@ -154,6 +169,12 @@ public:
    * @return the target object name followed by the the file and line declaring it.
    */
   string toString() const override;
+
+  /**
+   * @brief Return contextual information (file and line of the input file where the error occured)
+   * @return ErrorContext ErrorLogger instance updated with context information
+   */
+  ErrorContext getContextInfo() const override;
 
   /**
    * @return the type name in the source file (XML node tag name / attribute name).

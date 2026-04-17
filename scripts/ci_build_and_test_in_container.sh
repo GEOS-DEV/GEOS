@@ -39,7 +39,7 @@ Usage: $0
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
-      Either ON or OFF (default is ON). Build geos with bounds check. 
+      Either ON or OFF (default is ON). Build geos with bounds check.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -63,7 +63,7 @@ Usage: $0
   --nproc N
       Number of cores to use for the build.
   --repository /path/to/repository
-      Internal mountpoint where the geos repository will be available. 
+      Internal mountpoint where the geos repository will be available.
   --run-integrated-tests
       Run the integrated tests. Then bundle and send the results to the cloud.
   --sccache-credentials credentials.json
@@ -152,6 +152,19 @@ if [[ -z "${GEOS_SRC_DIR}" ]]; then
   exit 1
 fi
 
+
+cleanup() {
+  echo "Container cleanup..."
+  rm -rf "${GEOS_SRC_DIR}/src/docs/sphinx/datastructure" || true
+
+  if [[ -n "${HOST_UID:-}" && -n "${HOST_GID:-}" ]]; then
+    chown -R "${HOST_UID}:${HOST_GID}" "${GEOS_SRC_DIR}" || true
+  fi
+}
+trap cleanup EXIT
+
+
+
 if [[ -z "${GEOS_DIR}" ]]; then
   echo "Installation folder undefined. Set to default value '/dev/null'. You can define it using '--install-dir-basename'."
   GEOS_DIR=/dev/null
@@ -180,19 +193,13 @@ EOT
   # The path to the `sccache` executable is available through the SCCACHE environment variable.
   SCCACHE_CMAKE_ARGS="-DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE}"
 
-  if [ -n "${DOCKER_CERTS_DIR}" ] && [ -n "${DOCKER_CERTS_UPDATE_COMMAND}" ]; then
-    echo "updating certificates."
-    for file in "${DOCKER_CERTS_DIR}"/llnl/*.crt.pem; do
-      if [ -f "$file" ]; then
-        filename=$(basename -- "$file")
-        filename_no_ext="${filename%.*}"
-        new_filename="${DOCKER_CERTS_DIR}/${filename_no_ext}.crt"
-        cp "$file" "$new_filename"
-        echo "Copied $filename to $new_filename"
-      fi
-    done
-    ${DOCKER_CERTS_UPDATE_COMMAND}
-  fi
+  case "$(hostname -f 2>/dev/null || hostname)" in
+    *.llnl.gov|streak2*|streak*)
+      export SSL_CERT_FILE=/certs/ca-bundle.crt
+      export CURL_CA_BUNDLE=/certs/ca-bundle.crt
+      export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
+      ;;
+  esac
 
   echo "sccache initial state"
   ${SCCACHE} --show-stats
@@ -207,7 +214,7 @@ echo "Using ${NPROC} cores."
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
-  or_die apt-get update
+  #or_die apt-get update
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
@@ -303,6 +310,7 @@ if [[ ! -z "${SCCACHE_CREDS}" ]]; then
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
+  export OMP_NUM_THREADS=1
   or_die cmake --build . --target coreComponents_coverage
   cp -r ${GEOS_BUILD_DIR}/coreComponents_coverage.info.cleaned ${GEOS_SRC_DIR}/geos_coverage.info.cleaned
 fi
@@ -336,7 +344,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   bin/geos_ats_process_tests_fails --directory integratedTests/TestResults &> integratedTests/TestResults/processedTestsLogs.txt
   echo "Packing logs..."
   tar -czf ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME_WE}.tar.gz integratedTests/TestResults
-  
+
   echo "Checking results..."
   bin/geos_ats_log_check integratedTests/TestResults/test_results.ini -y ${GEOS_SRC_DIR}/.integrated_tests.yaml &> $tempdir/log_check.txt
   cat $tempdir/log_check.txt
@@ -346,7 +354,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
     INTEGRATED_TEST_EXIT_STATUS=0
   else
     echo "IntegratedTests failed. Rebaseline is required."
-   
+
     # Rebaseline and pack into an archive
     echo "Rebaselining..."
     integratedTests/geos_ats.sh -a rebaselinefailed
@@ -368,10 +376,6 @@ or_die cmake --build . --target clean
 # Clean the repository
 or_die cd ${GEOS_SRC_DIR}/inputFiles
 find . -name *.pyc | xargs rm -f
-
-# Clean the rst files
-echo "Cleaning the rst files..."
-or_die rm -rf ${GEOS_SRC_DIR}/src/docs/sphinx/datastructure
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then

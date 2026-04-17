@@ -73,9 +73,8 @@ void CompositionalMultiphaseStatistics::postInputInitialization()
 
   if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
-                          catalogName(), getDataContext() ),
-                InputError );
+    GEOS_THROW( "The option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
+                InputError, getDataContext() );
   }
 }
 
@@ -153,16 +152,16 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
           string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
           TableLayout tableLayout( {
-              TableLayout::Column().setName( "Time [s]" ),
-              TableLayout::Column().setName( "Min pressure [Pa]" ),
-              TableLayout::Column().setName( "Average pressure [Pa]" ),
-              TableLayout::Column().setName( "Max pressure [Pa]" ),
-              TableLayout::Column().setName( "Min delta pressure [Pa]" ),
-              TableLayout::Column().setName( "Max delta pressure [Pa]" ),
-              TableLayout::Column().setName( "Min temperature [Pa]" ),
-              TableLayout::Column().setName( "Average temperature [Pa]" ),
-              TableLayout::Column().setName( "Max temperature [Pa]" ),
-              TableLayout::Column().setName( "Total dynamic pore volume [rm^3]" ),
+              TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
+              TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+              TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
+              TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
+              TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+              TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+              TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+              TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+              TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+              TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
             } );
 
           std::ostringstream statsLayout;

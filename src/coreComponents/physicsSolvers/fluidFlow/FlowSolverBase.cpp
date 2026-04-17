@@ -369,15 +369,17 @@ void FlowSolverBase::checkDiscretizationName() const
 
     if( !discretizationMethods.empty())
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
-                            getDataContext(), m_discretizationName, discretizationMethods,
-                            stringutilities::join( discretizationMethods, ", " )));
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\nFound discretization : {}",
+                            m_discretizationName, discretizationMethods,
+                            stringutilities::join( discretizationMethods, ", " )),
+                  getDataContext());
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{}: can not find discretization named '{}' in 'FiniteVolume'.\n" \
+      GEOS_ERROR( GEOS_FMT( "can not find discretization named '{}' in 'FiniteVolume'.\n" \
                             "No discretization found, check that you have correctly entered a numerical method",
-                            getDataContext(), m_discretizationName ));
+                            m_discretizationName ),
+                  getDataContext());
     }
   }
 }
@@ -576,6 +578,17 @@ void FlowSolverBase::initializeHydraulicAperture( MeshLevel & mesh, string_array
   {
     region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     { subRegion.getWrapper< real64_array >( flow::hydraulicAperture::key()).setApplyDefaultValue( region.getDefaultAperture()); } );
+  } );
+}
+
+void FlowSolverBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
+{
+  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
+  arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    vol[ei] += dVol[ei];
+    dVol[ei] = 0.0;
   } );
 }
 
