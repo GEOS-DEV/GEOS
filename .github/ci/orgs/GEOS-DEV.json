@@ -1,0 +1,12 @@
+{
+  "storage_provider": "gcp",
+  "sccache_profile": "gcp",
+  "integrated_tests_artifact_bucket_path": "geosx/integratedTests",
+  "runners": {
+    "default": "ubuntu-22.04",
+    "cpu_heavy": "streak2",
+    "integrated_tests": "streak2-32core",
+    "code_coverage": "streak2",
+    "cuda": "streak2"
+  }
+}
