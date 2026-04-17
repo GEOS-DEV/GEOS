@@ -176,6 +176,20 @@ jobs:
       run: |
         set -euo pipefail
 
+        validate_optional_json_object() {
+          local name="$1"
+          local json="${2:-}"
+          if [[ -z "${json}" ]]; then
+            printf '{}'
+            return 0
+          fi
+          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
+            echo "::error::Invalid JSON object in ${name}." >&2
+            exit 1
+          fi
+          printf '%s' "${json}"
+        }
+
         use_sccache=false
         sccache_config_file=
         sccache_env_file=
@@ -183,6 +197,8 @@ jobs:
         selected_sccache_config_toml=
         selected_sccache_env_vars_json=
         selected_sccache_files_json=
+        direct_sccache_env_vars_json=
+        direct_sccache_files_json=
 
         if [[ "${INPUT_USE_SCCACHE}" == "true" ]]; then
           # Generic payload contract:
@@ -191,15 +207,24 @@ jobs:
           # - SCCACHE_FILES_JSON: JSON object of {"relative/path":"file-content"}
           sccache_profile="${INPUT_SCCACHE_PROFILE:-${INPUT_STORAGE_PROVIDER}}"
 
-          if [[ -n "${DIRECT_SCCACHE_CONFIG_TOML:-}" || -n "${DIRECT_SCCACHE_ENV_VARS_JSON:-}" || -n "${DIRECT_SCCACHE_FILES_JSON:-}" ]]; then
-            selected_sccache_config_toml="${DIRECT_SCCACHE_CONFIG_TOML:-}"
-            selected_sccache_env_vars_json="${DIRECT_SCCACHE_ENV_VARS_JSON:-}"
-            selected_sccache_files_json="${DIRECT_SCCACHE_FILES_JSON:-}"
-          elif [[ -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
-            echo "${SCCACHE_PROFILES_JSON}" | jq -e 'type == "object"' >/dev/null
+          if [[ -n "${DIRECT_SCCACHE_ENV_VARS_JSON:-}" ]]; then
+            direct_sccache_env_vars_json="$(validate_optional_json_object "SCCACHE_ENV_VARS_JSON" "${DIRECT_SCCACHE_ENV_VARS_JSON}")"
+          fi
 
-            if jq -e --arg profile "${sccache_profile}" '.[$profile] != null' <<< "${SCCACHE_PROFILES_JSON}" >/dev/null; then
-              selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile]' <<< "${SCCACHE_PROFILES_JSON}")"
+          if [[ -n "${DIRECT_SCCACHE_FILES_JSON:-}" ]]; then
+            direct_sccache_files_json="$(validate_optional_json_object "SCCACHE_FILES_JSON" "${DIRECT_SCCACHE_FILES_JSON}")"
+          fi
+
+          if [[ -n "${DIRECT_SCCACHE_CONFIG_TOML:-}" || -n "${direct_sccache_env_vars_json}" || -n "${direct_sccache_files_json}" ]]; then
+            selected_sccache_config_toml="${DIRECT_SCCACHE_CONFIG_TOML:-}"
+            selected_sccache_env_vars_json="${direct_sccache_env_vars_json}"
+            selected_sccache_files_json="${direct_sccache_files_json}"
+          elif [[ -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
+            sccache_profiles_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON" "${SCCACHE_PROFILES_JSON}")"
+
+            selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile] // empty' <<< "${sccache_profiles_json}")"
+            if [[ -n "${selected_profile_json}" ]]; then
+              selected_profile_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON[${sccache_profile}]" "${selected_profile_json}")"
               selected_sccache_config_toml="$(jq -r '.config_toml // ""' <<< "${selected_profile_json}")"
               selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
               selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
@@ -249,7 +274,7 @@ jobs:
             fi
 
             if [[ -n "${selected_sccache_env_vars_json:-}" ]]; then
-              echo "${selected_sccache_env_vars_json}" | jq -e 'type == "object"' >/dev/null
+              selected_sccache_env_vars_json="$(validate_optional_json_object "selected sccache env vars" "${selected_sccache_env_vars_json}")"
 
               sccache_env_file="${sccache_runtime_dir}/env.list"
               : > "${GITHUB_WORKSPACE}/${sccache_env_file}"
@@ -267,13 +292,13 @@ jobs:
                 fi
 
                 printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_WORKSPACE}/${sccache_env_file}"
-              done < <(echo "${selected_sccache_env_vars_json}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_env_vars_json}")
 
               chmod 600 "${GITHUB_WORKSPACE}/${sccache_env_file}"
             fi
 
             if [[ -n "${selected_sccache_files_json:-}" ]]; then
-              echo "${selected_sccache_files_json}" | jq -e 'type == "object"' >/dev/null
+              selected_sccache_files_json="$(validate_optional_json_object "selected sccache files" "${selected_sccache_files_json}")"
 
               while IFS=$'\t' read -r rel_path content_b64; do
                 if [[ ! "${rel_path}" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "${rel_path}" == /* ]] || [[ "${rel_path}" == *".."* ]]; then
@@ -285,7 +310,7 @@ jobs:
                 mkdir -p "$(dirname "${file_path}")"
                 printf '%s' "${content_b64}" | base64 --decode > "${file_path}"
                 chmod 600 "${file_path}"
-              done < <(echo "${selected_sccache_files_json}" | jq -r 'to_entries[] | [.key, (.value | tostring | @base64)] | @tsv')
+              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_files_json}")
             fi
           fi
         fi
@@ -311,20 +336,52 @@ jobs:
       run: |
         set -euo pipefail
 
+        validate_optional_json() {
+          local name="$1"
+          local json="${2:-}"
+          if [[ -z "${json}" ]]; then
+            return 0
+          fi
+          if ! jq -e . <<< "${json}" >/dev/null 2>&1; then
+            echo "::error::Invalid JSON in ${name}." >&2
+            exit 1
+          fi
+        }
+
+        validate_optional_json_object() {
+          local name="$1"
+          local json="${2:-}"
+          if [[ -z "${json}" ]]; then
+            printf '{}'
+            return 0
+          fi
+          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
+            echo "::error::Invalid JSON object in ${name}." >&2
+            exit 1
+          fi
+          printf '%s' "${json}"
+        }
+
         credentials_file=
-        credentials_payload="${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON:-}"
+        credentials_payload=
         storage_provider="${INPUT_STORAGE_PROVIDER}"
+        provider_credentials_json=
+
+        if [[ -n "${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON:-}" ]]; then
+          validate_optional_json "ARTIFACT_UPLOAD_CREDENTIALS_JSON" "${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON}"
+          credentials_payload="${DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON}"
+        fi
 
         if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" && -n "${ARTIFACT_PROVIDER_CREDENTIALS_JSON:-}" && -n "${storage_provider}" ]]; then
-          echo "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}" | jq -e 'type == "object"' >/dev/null
+          provider_credentials_json="$(validate_optional_json_object "ARTIFACT_PROVIDER_CREDENTIALS_JSON" "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
 
-          entry_type="$(jq -r --arg provider "${storage_provider}" '.[$provider] | type' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+          entry_type="$(jq -r --arg provider "${storage_provider}" '(.[$provider] // null) | type' <<< "${provider_credentials_json}")"
           case "${entry_type}" in
             string)
-              credentials_payload="$(jq -r --arg provider "${storage_provider}" '.[$provider]' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+              credentials_payload="$(jq -r --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
               ;;
             object|array)
-              credentials_payload="$(jq -c --arg provider "${storage_provider}" '.[$provider]' <<< "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
+              credentials_payload="$(jq -c --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
               ;;
             null)
               ;;
@@ -358,6 +415,7 @@ jobs:
         fi
 
         if [[ -n "${credentials_payload}" ]]; then
+          validate_optional_json "resolved artifact upload credentials" "${credentials_payload}"
           credentials_dir="${RUNNER_TEMP}/artifact-upload-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -p "${credentials_dir}"
           credentials_file="${credentials_dir}/${storage_provider:-artifact}.json"
