@@ -208,7 +208,7 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  void computeMobilityandDeriv( localIndex const iperf, localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
+  void computeMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
                                 real64 & mob, real64 dMob[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
   {
     using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
@@ -259,7 +259,7 @@ public:
 
   GEOS_HOST_DEVICE
   inline
-  void computeDensityMobilityandDeriv( localIndex const iperf, localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
+  void computeDensityMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
 
                                        real64 & mob, real64 dMob[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
   {
@@ -350,8 +350,7 @@ public:
     real64 mob;
     real64 dMob[CP_Deriv::nDer]{};
 
-    //computeMobilityandDeriv( iperf, er, esr, ei, mob, dMob ,fluxKernelOp);
-    //computeDensityMobilityandDeriv( iperf, ip, er, esr, ei, mob, dMob, fluxKernelOp );
+    //computeDensityMobilityandDeriv( ip, er, esr, ei, mob, dMob, fluxKernelOp );
     real64 flux = 0.0;
     real64 dFlux[2][CP_Deriv::nDer]{};
     real64 dCompFrac[CP_Deriv::nDer]{};
@@ -373,7 +372,7 @@ public:
         }
 
 #if 1
-        computeDensityMobilityandDeriv( iperf, ip, er, esr, ei, mob, dMob );
+        computeDensityMobilityandDeriv( ip, er, esr, ei, mob, dMob );
         fluxKernelOp( ip, resPhaseVolFrac, mob, dMob );
         // compute the phase flux and derivatives using upstream cell mobility
         flux = mob * m_potDiff;
@@ -528,7 +527,7 @@ public:
         {
           continue;
         }
-        computeMobilityandDeriv( iperf, ip, er, esr, ei, mob, dMob );
+        computeMobilityandDeriv( ip, er, esr, ei, mob, dMob );
         resTotalMob     += mob;
         for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
@@ -879,7 +878,6 @@ public:
     }
     if( m_potDiff >= 0 )    // ** well is downstream **
     {
-      real64 emob;
       real64 dEmob[CP_Deriv::nDer]{};
       Base::computeFlux ( iperf, er, esr, ei, iwelem, [&]( localIndex const ip, real64 const resPhaseVolFrac, real64 const mob, real64 const (&dMob)[CP_Deriv::nDer] )
       {
@@ -930,6 +928,8 @@ public:
     {
       Base::computeFlux ( iperf, er, esr, ei, iwelem, [&]( localIndex const null1, real64 const null2, real64 const mob, real64 const (&dMob)[CP_Deriv::nDer] )
       {
+        GEOS_UNUSED_VAR( null1 );
+        GEOS_UNUSED_VAR( null2 );
         real64 dMult[CP_Deriv::nDer]{};
         real64 totalEnthalpy=0;
         dMult[CP_Deriv::dP] = 0;
