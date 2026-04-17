@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <deque>
+#include <limits>
 #include <stdio.h>
 #include <sstream>
 #include <unordered_map>
@@ -4149,7 +4150,7 @@ void SurfaceGenerator::markRuptureFaceFromNode( localIndex const nodeIndex,
           edgeManager.calculateCenter( edgeIndex, X, edgeCenter );
           LvArray::tensorOps::subtract< 3 >( direction, edgeCenter );
           LvArray::tensorOps::normalize< 3 >( direction );
-          faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[faceIndex] ));
+          faceToughness = std::fabs( LvArray::tensorOps::AiBi< 3 >( direction, KIC[faceIndex] )) + 1e-108;
 
           faceSIFToToughnessRatio.emplace_back( SIFonFace[faceIndex]/faceToughness );
           highestSIF = std::max( highestSIF, SIFonFace[faceIndex]/faceToughness );
