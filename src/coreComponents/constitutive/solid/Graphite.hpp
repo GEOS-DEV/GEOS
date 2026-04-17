@@ -61,6 +61,7 @@ public:
    * @param[in] strengthScale The ArrayView holding the strength scale for each element.
    * @param[in] failureStrength The failure strength.
    * @param[in] crackSpeed The crack speed velocity.
+   * @param[in] fractureEnergyReleaseRate Used to determine amount of plastic work needed to generate a damage surface
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
@@ -89,6 +90,7 @@ public:
                    arrayView1d< real64 > const & strengthScale,
                    real64 const & failureStrength,
                    real64 const & crackSpeed,
+                   real64 const & fractureEnergyReleaseRate,
                    real64 const & damagedMaterialFrictionalSlope,
                    real64 const & distortionShearResponseX2,
                    real64 const & distortionShearResponseY1,
@@ -142,6 +144,7 @@ public:
     m_strengthScale( strengthScale ),
     m_failureStrength( failureStrength ),
     m_crackSpeed( crackSpeed ),
+    m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
     m_damagedMaterialFrictionalSlope( damagedMaterialFrictionalSlope ),
     m_distortionShearResponseX2( distortionShearResponseX2 ),
     m_distortionShearResponseY1( distortionShearResponseY1 ),
@@ -373,6 +376,7 @@ private:
 
   // The time to failure
   real64 const m_crackSpeed;
+  real64 const m_fractureEnergyReleaseRate;
 
   // The damaged material frictional slope
   real64 const m_damagedMaterialFrictionalSlope;
@@ -700,14 +704,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
   }
 
-  // If strain-softening is enabled, insert damage once max strain is reached.
-  if( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
-  {
-    m_damage[k][q] = 1.0;
-  }
-
-
-
   // strength scale factor, combining plastic softening and damage
   real64 damageMultiplier = (1.0 - m_damage[k][q]);
 
@@ -998,6 +994,26 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     plasticStrainIncrement[5] *= 1.41421356237;
     m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
+
+    // Accumulated plastic work is used to evolve damage unless the plastic deformation happens
+    // at a high pressure (relative to the x2 value used to define the yield surface)
+    //
+    if( ( m_fractureEnergyReleaseRate < DBL_MAX ) and ( pressure < m_distortionShearResponseX2 ) )
+    { 
+      // I don't want to degrade strength or insert surfaces until the fracture energy threshold is met
+      // so I apply a nonlinear transformation to the damage evolution before and after the 
+      // work increment.  So damage is either 0 or 1 unless the tensile stress requirement from
+      // above is met.
+      m_damage[k][q] = pow( m_damage[k][q], 1./32. );
+      for ( int i = 0; i < 6; ++i )
+      {
+        m_damage[k][q] += plasticStrainIncrement[i]*newStress[i] / ( m_fractureEnergyReleaseRate / m_lengthScale[k] );
+      }
+      m_damage[k][q] = pow( m_damage[k][q], 32. );
+    }
+
+
+
   }
 }
 
@@ -1384,6 +1400,9 @@ public:
     /// string/key for crack speed
     static constexpr char const * crackSpeedString() { return "crackSpeed"; }
 
+    /// string/key for fractureEnergyReleaseRate
+    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+
     /// string/key for damaged material frictional slope
     static constexpr char const * damagedMaterialFrictionalSlopeString() { return "damagedMaterialFrictionalSlope"; }
 
@@ -1471,6 +1490,7 @@ public:
                             m_strengthScale,
                             m_failureStrength,
                             m_crackSpeed,
+                            m_fractureEnergyReleaseRate,
                             m_damagedMaterialFrictionalSlope,
                             m_distortionShearResponseX2,
                             m_distortionShearResponseY1,
@@ -1531,6 +1551,7 @@ public:
                           m_strengthScale,
                           m_failureStrength,
                           m_crackSpeed,
+                          m_fractureEnergyReleaseRate,
                           m_damagedMaterialFrictionalSlope,
                           m_distortionShearResponseX2,
                           m_distortionShearResponseY1,
@@ -1767,6 +1788,7 @@ protected:
 
   /// Material parameter: The value of crack speed
   real64 m_crackSpeed;
+  real64 m_fractureEnergyReleaseRate;
 
   /// Material parameter: The value of the damaged material frictional slope
   real64 m_damagedMaterialFrictionalSlope;

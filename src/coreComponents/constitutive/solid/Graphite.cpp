@@ -47,6 +47,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_strengthScale(),
   m_failureStrength(),
   m_crackSpeed(),
+  m_fractureEnergyReleaseRate(),
   m_damagedMaterialFrictionalSlope(),
   m_distortionShearResponseX2(),
   m_distortionShearResponseY1(),
@@ -111,8 +112,13 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setDescription( "Maximum theoretical strength" );
 
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
+    setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Crack speed" );
+
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "fracture Energy Release Rate" );
 
   registerWrapper( viewKeyStruct::damagedMaterialFrictionalSlopeString(), &m_damagedMaterialFrictionalSlope ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -320,6 +326,8 @@ void Graphite::postInputInitialization()
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
+
+  GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "Fracture Energy Release Rate must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 
