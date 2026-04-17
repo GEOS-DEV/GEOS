@@ -302,7 +302,6 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc11
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
@@ -312,13 +311,11 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2, +hypredrive)
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12-hypredrive
-            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12-hypredrive
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
@@ -332,7 +329,6 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            ARTIFACT_UPLOAD_BUCKET_PATH: geosx/ubuntu22.04-gcc12
             HOST_CONFIG: /spack-generated.cmake
 
           #- name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
@@ -367,11 +363,6 @@ jobs:
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
-      ARTIFACT_UPLOAD_BUCKET_PATH: ${{ matrix.ARTIFACT_UPLOAD_BUCKET_PATH || '' }}
-      ARTIFACT_UPLOAD_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_COMMAND }}
-      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
-      ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
-      ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
       RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
