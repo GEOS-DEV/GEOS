@@ -194,8 +194,6 @@ void archiveInputDeck( CommandLineOptions const & opts )
     return;
   }
 
-  // Creates a temporary and isolated ProblemManager to generate the schema.xsd
-  // because ProblemManager::generateDocumentation() has unwanted side effects
   conduit::Node tempRoot;
   ProblemManager tempPM( tempRoot );
 
@@ -214,19 +212,6 @@ void archiveInputDeck( CommandLineOptions const & opts )
   sortAttributes( root );
 
   flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
-
-  string const schemaPath = joinPath( archiveDir, "schema.xsd" );
-
-  dataRepository::Group & commandLine = tempPM.getGroup< dataRepository::Group >( tempPM.groupKeys.commandLine );
-  commandLine.getReference< string >( tempPM.viewKeys.schemaFileName ) = schemaPath;
-
-  if( opts.archiveInputDeck >= 2 )
-  {
-    tempPM.generateDocumentation();
-  }
-
-  std::error_code ec;
-  std::filesystem::remove( std::filesystem::path( schemaPath + ".other" ), ec );
 }
 
 
