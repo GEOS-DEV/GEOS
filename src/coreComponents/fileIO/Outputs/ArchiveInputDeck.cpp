@@ -194,7 +194,11 @@ void archiveInputDeck( string_array const & inputFileNames,
   reorderTags( root, xmlTagOrder );
   sortAttributes( root );
 
-  flatDoc.saveFile( joinPath( archiveDir, "input.xml" ) );
+  string const inputArchiveFile = joinPath( archiveDir, "input.xml" );
+  flatDoc.saveFile( inputArchiveFile );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "Archived XML inputs: {}",
+                             getAbsolutePath( inputArchiveFile ) ) );
 }
 
 
