@@ -142,6 +142,14 @@ public:
   void initializePerfRates( localIndex const iperf ) const
   {
     using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+    m_potDiff = 0.0;
+    for( integer i = 0; i < 2; ++i )
+    {
+      for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
+      {
+        m_dPotDiff[i][ic] = 0.0;
+      }
+    }
     for( integer ic = 0; ic < NC; ++ic )
     {
       m_compPerfRate[iperf][ic] = 0.0;
