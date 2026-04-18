@@ -7,6 +7,6 @@
     "cpu_heavy": "32core",
     "integrated_tests": "32core",
     "code_coverage": "32core",
-    "cuda": "earthFlow00"
+    "cuda": "thinkpad"
   }
 }
