@@ -134,17 +134,12 @@ jobs:
         shell: bash
     steps:
     - name: does_pr_have_necessary_labels
-      if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
+      if: ${{ inputs.REQUIRED_LABEL && github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, inputs.REQUIRED_LABEL) }}
       run: |
         set -euo pipefail
-
-        pr_json='${{ toJson(github.event.pull_request) }}'
-        LABELS=$(jq -crM '[.labels[].name]' <<< "${pr_json}")
-        echo " the labels are ${LABELS}"
-        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
-        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
-          exit 1
-        fi
+        echo "Required PR label '${{ inputs.REQUIRED_LABEL }}' was not found."
+        echo "PR labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
+        exit 1
 
     - name: 'Cleanup build folder'
       run: |
