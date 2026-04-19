@@ -76,10 +76,6 @@ TEST( BartonBandisPermeabilityTests, testNewAperture )
     normal[1] = 0.0;
     normal[2] = 1.0;
 
-    //localIndex const k = 0;
-    //localIndex const q = 0;
-    //cmw.updateFromPressureApertureAndNormal(k, q, referencePressure, 0.0, referenceAperture, normal, 0.0);
-
     real64 dAperture_dStress = -1.0;
     real64 newHydraulicAperture = cmw.computeHydraulicAperture(referencePressure, fractureStress, normal, dAperture_dStress, 0);
     
@@ -87,55 +83,3 @@ TEST( BartonBandisPermeabilityTests, testNewAperture )
   }
 }
 
-
-/*TEST( BartonBandisStressPathDrivenTests, testPressure )
-{
-  conduit::Node node;
-  dataRepository::Group rootGroup( "root", node );
-  ConstitutiveManager constitutiveManager( "constitutive", &rootGroup );
-
-  real64 constexpr referenceAperture = 1.0e-4; // in-situ
-  std::stringstream ss;
-  ss << std::scientific << std::setprecision(4) << referenceAperture;
-  
-  string const inputStream =
-    "<Constitutive>"
-    "   <BartonBandisStressPathDriven"
-    "      name=\"hApertureModel\" "
-    "      biot=\"1.0\" "
-    "      poisson=\"0.3\" "
-    "      normalStiffness=\"10.0e9\" "
-    "      referenceAperture=\"" + ss.str() + "\" "
-    "      referencePressure=\"1e5\" "
-    "      referenceTotalStress=\"{ 40.0e6, 40.0e6, 20.0e6 }\"/>"
-    "</Constitutive>";
-
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlWrapper::xmlResult xmlResult = xmlDocument.loadString( inputStream );
-  if( !xmlResult )
-  {
-    GEOS_LOG_RANK_0( "XML parsed with errors!" );
-    GEOS_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
-
-  xmlWrapper::xmlNode xmlConstitutiveNode = xmlDocument.getChild( "Constitutive" );
-  constitutiveManager.processInputFileRecursive( xmlDocument, xmlConstitutiveNode );
-  constitutiveManager.postInputInitializationRecursive();
-
-  BartonBandisStressPathDriven & cm = constitutiveManager.getConstitutiveRelation< BartonBandisStressPathDriven >( "hApertureModel" );
-
-  BartonBandisPermeability::KernelWrapper cmw = cm.createKernelWrapper();
-
-  {    
-    array1d < real64 > normal(3);
-    normal[0] = 0.0;
-    normal[1] = 0.0;
-    normal[2] = 1.0;
-    
-    real64 const newAperture = cmw.computeHydraulicAperture(13842265.4230671, normal);
-    EXPECT_DOUBLE_EQ( newAperture, 0.00022328650392488669 );
-  }
-  
-
-}*/

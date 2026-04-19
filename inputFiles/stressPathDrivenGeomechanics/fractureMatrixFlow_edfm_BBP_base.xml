@@ -92,13 +92,13 @@
       compressibility="0.0"/>
 
     <BartonBandisPermeability
-      name="fracturePerm"
-	  biot="1.0"
-	  poisson="0.3"
-	  normalStiffness="10.0e9"
-	  referenceAperture="1.0e-4"
-	  referencePressure="1e7"
-	  referenceTotalStress="{ 10.0e6, 10.0e6, 30.0e6 }"/>
+		name="fracturePerm"
+		biot="1.0" 
+		poisson="0.3"	
+		normalStiffness="10.0e9" 
+		referenceAperture="1.0e-4"
+		referencePressure="1e7" 
+		referenceTotalStress="{ 10.0e6, 10.0e6, 30.0e6 }"/>
     
   </Constitutive>
 

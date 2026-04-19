@@ -266,7 +266,7 @@ public:
                   arrayView1d< real64 > const & localRhs ) const = 0;
 
   virtual void
-  updateState ( DomainPartition & domain ) override;
+  updateState ( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
