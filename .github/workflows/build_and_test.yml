@@ -129,6 +129,9 @@ on:
 jobs:
   build_test_deploy:
     runs-on: ${{ inputs.RUNS_ON }}
+    defaults:
+      run:
+        shell: bash
     steps:
     - name: does_pr_have_necessary_labels
       if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}

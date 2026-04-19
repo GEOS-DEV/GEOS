@@ -20,6 +20,8 @@ Current runner keys used by the workflow:
 - `code_coverage`
 - `cuda`
 
+Each runner value must be a single runner label string, for example `"ubuntu-22.04"` or `"streak2"`.
+
 Selection order:
 
 1. Checked-in org config file in `.github/ci/orgs/`

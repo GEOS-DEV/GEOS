@@ -59,7 +59,8 @@ jobs:
   # Source of truth for organization-specific behavior:
   #   .github/ci/orgs/<github.repository_owner>.json
   # That file selects the storage provider, sccache profile, integrated-tests upload path,
-  # and runner labels used by the matrix jobs below.
+  # and runner labels used by the matrix jobs below. Each runner entry may be either a single
+  # label string or a full GitHub Actions runs-on label list.
   # Provider backend behavior can still be extended via vars.CI_PROVIDER_CONFIG_JSON.
   # Provider payloads are supplied generically through inherited secrets:
   # - SCCACHE_PROFILES_JSON
@@ -133,7 +134,7 @@ jobs:
           and (.runners.code_coverage | type == "string" and length > 0)
           and (.runners.cuda | type == "string" and length > 0)
         ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
-          echo "::error::${ORG_CONFIG_PATH} must define storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}."
+          echo "::error::${ORG_CONFIG_PATH} must define storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. Each runner value must be a non-empty string."
           exit 1
         fi
 
