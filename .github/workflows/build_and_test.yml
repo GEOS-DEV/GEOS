@@ -134,12 +134,17 @@ jobs:
         shell: bash
     steps:
     - name: does_pr_have_necessary_labels
-      if: ${{ inputs.REQUIRED_LABEL && github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, inputs.REQUIRED_LABEL) }}
+      if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
       run: |
         set -euo pipefail
-        echo "Required PR label '${{ inputs.REQUIRED_LABEL }}' was not found."
-        echo "PR labels: ${{ join(github.event.pull_request.labels.*.name, ', ') }}"
-        exit 1
+
+        pr_json='${{ toJson(github.event.pull_request) }}'
+        LABELS=$(jq -crM '[.labels[].name]' <<< "${pr_json}")
+        echo " the labels are ${LABELS}"
+        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
+        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
+          exit 1
+        fi
 
     - name: 'Cleanup build folder'
       run: |
@@ -174,13 +179,6 @@ jobs:
       run: |
         set -euo pipefail
 
-        require_python3() {
-          if ! command -v python3 >/dev/null 2>&1; then
-            echo "::error::python3 is required for JSON parsing in the sccache resolver." >&2
-            exit 1
-          fi
-        }
-
         validate_optional_json_object() {
           local name="$1"
           local json="${2:-}"
@@ -188,85 +186,12 @@ jobs:
             printf '{}'
             return 0
           fi
-          if ! python3 - <<'PY' <<< "${json}" >/dev/null 2>&1; then
-          import json
-          import sys
-
-          value = json.loads(sys.stdin.read())
-          if not isinstance(value, dict):
-              raise SystemExit(1)
-          PY
+          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
             echo "::error::Invalid JSON object in ${name}." >&2
             exit 1
           fi
           printf '%s' "${json}"
         }
-
-        json_get_compact_key() {
-          local json="$1"
-          local key="$2"
-          python3 - "$key" <<'PY' <<< "${json}"
-          import json
-          import sys
-
-          key = sys.argv[1]
-          value = json.loads(sys.stdin.read()).get(key)
-          if value is not None:
-              print(json.dumps(value, separators=(',', ':')))
-          PY
-        }
-
-        json_get_string_key() {
-          local json="$1"
-          local key="$2"
-          python3 - "$key" <<'PY' <<< "${json}"
-          import json
-          import sys
-
-          key = sys.argv[1]
-          value = json.loads(sys.stdin.read()).get(key, "")
-          if value is None:
-              value = ""
-          if isinstance(value, (dict, list)):
-              raise SystemExit(1)
-          print(str(value))
-          PY
-        }
-
-        json_get_object_key() {
-          local json="$1"
-          local key="$2"
-          python3 - "$key" <<'PY' <<< "${json}"
-          import json
-          import sys
-
-          key = sys.argv[1]
-          value = json.loads(sys.stdin.read()).get(key, {})
-          if value is None:
-              value = {}
-          if not isinstance(value, dict):
-              raise SystemExit(1)
-          print(json.dumps(value, separators=(',', ':')))
-          PY
-        }
-
-        json_emit_entries_tsv() {
-          local json="$1"
-          python3 - <<'PY' <<< "${json}"
-          import base64
-          import json
-          import sys
-
-          value = json.loads(sys.stdin.read())
-          if not isinstance(value, dict):
-              raise SystemExit(1)
-          for key, item in value.items():
-              encoded = base64.b64encode(str(item).encode()).decode()
-              print(f"{key}\t{encoded}")
-          PY
-        }
-
-        require_python3
 
         use_sccache=false
         sccache_config_file=
@@ -300,33 +225,28 @@ jobs:
           elif [[ -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
             sccache_profiles_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON" "${SCCACHE_PROFILES_JSON}")"
 
-            selected_profile_json="$(json_get_compact_key "${sccache_profiles_json}" "${sccache_profile}")"
+            selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile] // empty' <<< "${sccache_profiles_json}")"
             if [[ -n "${selected_profile_json}" ]]; then
               selected_profile_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON[${sccache_profile}]" "${selected_profile_json}")"
-              selected_sccache_config_toml="$(json_get_string_key "${selected_profile_json}" "config_toml")"
-              selected_sccache_env_vars_json="$(json_get_object_key "${selected_profile_json}" "env_vars")"
-              selected_sccache_files_json="$(json_get_object_key "${selected_profile_json}" "files")"
+              selected_sccache_config_toml="$(jq -r '.config_toml // ""' <<< "${selected_profile_json}")"
+              selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
+              selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
             fi
           elif [[ "${sccache_profile}" == "cloudflare" ]]; then
             if [[ -n "${LEGACY_SCCACHE_BUCKET:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" && -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" ]]; then
-              selected_sccache_env_vars_json="$(
-                LEGACY_SCCACHE_BUCKET="${LEGACY_SCCACHE_BUCKET}" \
-                LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID="${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
-                LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY="${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
-                LEGACY_SCCACHE_ENDPOINT="${LEGACY_SCCACHE_ENDPOINT}" \
-                python3 - <<'PY'
-                import json
-                import os
-
-                print(json.dumps({
-                    "SCCACHE_BUCKET": os.environ["LEGACY_SCCACHE_BUCKET"],
-                    "AWS_ACCESS_KEY_ID": os.environ["LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID"],
-                    "AWS_SECRET_ACCESS_KEY": os.environ["LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY"],
-                    "SCCACHE_ENDPOINT": os.environ["LEGACY_SCCACHE_ENDPOINT"],
-                    "SCCACHE_S3_USE_SSL": "true",
-                    "SCCACHE_REGION": "auto",
-                }, separators=(',', ':')))
-                PY
+              selected_sccache_env_vars_json="$(jq -cn \
+                --arg bucket "${LEGACY_SCCACHE_BUCKET}" \
+                --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
+                --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
+                --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
+                '{
+                  SCCACHE_BUCKET: $bucket,
+                  AWS_ACCESS_KEY_ID: $access_key_id,
+                  AWS_SECRET_ACCESS_KEY: $secret_access_key,
+                  SCCACHE_ENDPOINT: $endpoint,
+                  SCCACHE_S3_USE_SSL: "true",
+                  SCCACHE_REGION: "auto"
+                }'
               )"
             fi
           fi
@@ -375,7 +295,7 @@ jobs:
                 fi
 
                 printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_WORKSPACE}/${sccache_env_file}"
-              done < <(json_emit_entries_tsv "${selected_sccache_env_vars_json}")
+              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_env_vars_json}")
 
               chmod 600 "${GITHUB_WORKSPACE}/${sccache_env_file}"
             fi
@@ -393,7 +313,7 @@ jobs:
                 mkdir -p "$(dirname "${file_path}")"
                 printf '%s' "${content_b64}" | base64 --decode > "${file_path}"
                 chmod 600 "${file_path}"
-              done < <(json_emit_entries_tsv "${selected_sccache_files_json}")
+              done < <(jq -r 'to_entries[]? | [.key, (.value | tostring | @base64)] | @tsv' <<< "${selected_sccache_files_json}")
             fi
           fi
         fi
@@ -419,25 +339,13 @@ jobs:
       run: |
         set -euo pipefail
 
-        require_python3() {
-          if ! command -v python3 >/dev/null 2>&1; then
-            echo "::error::python3 is required for JSON parsing in the artifact credential resolver." >&2
-            exit 1
-          fi
-        }
-
         validate_optional_json() {
           local name="$1"
           local json="${2:-}"
           if [[ -z "${json}" ]]; then
             return 0
           fi
-          if ! python3 - <<'PY' <<< "${json}" >/dev/null 2>&1; then
-          import json
-          import sys
-
-          json.loads(sys.stdin.read())
-          PY
+          if ! jq -e . <<< "${json}" >/dev/null 2>&1; then
             echo "::error::Invalid JSON in ${name}." >&2
             exit 1
           fi
@@ -450,65 +358,12 @@ jobs:
             printf '{}'
             return 0
           fi
-          if ! python3 - <<'PY' <<< "${json}" >/dev/null 2>&1; then
-          import json
-          import sys
-
-          value = json.loads(sys.stdin.read())
-          if not isinstance(value, dict):
-              raise SystemExit(1)
-          PY
+          if ! jq -e 'type == "object"' <<< "${json}" >/dev/null 2>&1; then
             echo "::error::Invalid JSON object in ${name}." >&2
             exit 1
           fi
           printf '%s' "${json}"
         }
-
-        json_entry_type() {
-          local json="$1"
-          local key="$2"
-          python3 - "$key" <<'PY' <<< "${json}"
-          import json
-          import sys
-
-          key = sys.argv[1]
-          value = json.loads(sys.stdin.read()).get(key)
-          if value is None:
-              print("null")
-          elif isinstance(value, str):
-              print("string")
-          elif isinstance(value, dict):
-              print("object")
-          elif isinstance(value, list):
-              print("array")
-          elif isinstance(value, bool):
-              print("boolean")
-          elif isinstance(value, (int, float)):
-              print("number")
-          else:
-              print(type(value).__name__)
-          PY
-        }
-
-        json_entry_value() {
-          local json="$1"
-          local key="$2"
-          python3 - "$key" <<'PY' <<< "${json}"
-          import json
-          import sys
-
-          key = sys.argv[1]
-          value = json.loads(sys.stdin.read()).get(key)
-          if value is None:
-              raise SystemExit(0)
-          if isinstance(value, str):
-              print(value)
-          else:
-              print(json.dumps(value, separators=(',', ':')))
-          PY
-        }
-
-        require_python3
 
         credentials_file=
         credentials_payload=
@@ -523,13 +378,13 @@ jobs:
         if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" && -n "${ARTIFACT_PROVIDER_CREDENTIALS_JSON:-}" && -n "${storage_provider}" ]]; then
           provider_credentials_json="$(validate_optional_json_object "ARTIFACT_PROVIDER_CREDENTIALS_JSON" "${ARTIFACT_PROVIDER_CREDENTIALS_JSON}")"
 
-          entry_type="$(json_entry_type "${provider_credentials_json}" "${storage_provider}")"
+          entry_type="$(jq -r --arg provider "${storage_provider}" '(.[$provider] // null) | type' <<< "${provider_credentials_json}")"
           case "${entry_type}" in
             string)
-              credentials_payload="$(json_entry_value "${provider_credentials_json}" "${storage_provider}")"
+              credentials_payload="$(jq -r --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
               ;;
             object|array)
-              credentials_payload="$(json_entry_value "${provider_credentials_json}" "${storage_provider}")"
+              credentials_payload="$(jq -c --arg provider "${storage_provider}" '.[$provider]' <<< "${provider_credentials_json}")"
               ;;
             null)
               ;;
@@ -547,20 +402,15 @@ jobs:
               ;;
             cloudflare)
               if [[ -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" ]]; then
-                credentials_payload="$(
-                  LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID="${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
-                  LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY="${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
-                  LEGACY_SCCACHE_ENDPOINT="${LEGACY_SCCACHE_ENDPOINT}" \
-                  python3 - <<'PY'
-                  import json
-                  import os
-
-                  print(json.dumps({
-                      "access_key_id": os.environ["LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID"],
-                      "secret_access_key": os.environ["LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY"],
-                      "endpoint": os.environ["LEGACY_SCCACHE_ENDPOINT"],
-                  }, separators=(',', ':')))
-                  PY
+                credentials_payload="$(jq -cn \
+                  --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
+                  --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
+                  --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
+                  '{
+                    access_key_id: $access_key_id,
+                    secret_access_key: $secret_access_key,
+                    endpoint: $endpoint
+                  }'
                 )"
               fi
               ;;
