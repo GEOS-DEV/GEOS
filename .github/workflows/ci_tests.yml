@@ -56,17 +56,27 @@ jobs:
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
   # Resolve CI settings once and keep the build jobs declarative.
-  # Source of truth for organization-specific behavior:
+  #
+  # Two checked-in files drive behavior:
   #   .github/ci/orgs/<github.repository_owner>.json
-  # That file selects the storage provider, sccache profile, integrated-tests upload path,
-  # and runner labels used by the matrix jobs below. Each runner entry may be either a single
-  # label string or a full GitHub Actions runs-on label list.
-  # Provider backend behavior can still be extended via vars.CI_PROVIDER_CONFIG_JSON.
-  # Provider payloads are supplied generically through inherited secrets:
+  #     Per-org choices: storage provider name, sccache profile name, integrated-tests bucket
+  #     path, public URL base and bucket-scoping, runner labels, and per-runner CA bundle paths.
+  #     Every field is required; there are no defaults. See .github/ci/README.md for the schema.
+  #   .github/ci/providers/<storage_provider>.json
+  #     Provider-level CLI details: the shell commands that upload artifacts and the URI scheme.
+  #     Reused by any org that selects this provider. Every field is required.
+  #
+  # Provider payloads (credentials, sccache profiles) are supplied through inherited secrets:
   # - SCCACHE_PROFILES_JSON
   # - ARTIFACT_PROVIDER_CREDENTIALS_JSON
   # Direct one-off overrides remain available in the reusable workflow via SCCACHE_* and
   # ARTIFACT_UPLOAD_CREDENTIALS_JSON.
+  #
+  # SECURITY: the artifact_upload_command and artifact_upload_pre_command strings in each
+  # provider JSON file are passed to `eval` on the runner. A change to those strings is a
+  # change to executable shell, not a data-config tweak. Review edits to
+  # .github/ci/providers/*.json with the same scrutiny as workflow YAML. Do not populate
+  # those values from PR- or user-controllable sources.
   resolve_ci_provider:
     runs-on: ubuntu-22.04
     outputs:
@@ -79,19 +89,16 @@ jobs:
       ARTIFACT_UPLOAD_PRE_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
       ARTIFACT_UPLOAD_URI_ROOT: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
       ARTIFACT_PUBLIC_URL_ROOT: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
+      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}
     env:
       CI_REPOSITORY_OWNER: ${{ github.repository_owner }}
-      CI_STORAGE_PROVIDER: ${{ vars.CI_STORAGE_PROVIDER || '' }}
-      CI_SCCACHE_PROFILE: ${{ vars.CI_SCCACHE_PROFILE || '' }}
-      CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ vars.CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH || '' }}
-      CI_PROVIDER_CONFIG_JSON: ${{ vars.CI_PROVIDER_CONFIG_JSON || '' }}
-      CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE: ${{ vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE || vars.CLOUDFLARE_ARTIFACT_PUBLIC_URL_PREFIX || '' }}
     steps:
-    - name: Checkout CI org config
+    - name: Checkout CI config
       uses: actions/checkout@v4.2.2
       with:
         sparse-checkout: |
           .github/ci/orgs
+          .github/ci/providers
         sparse-checkout-cone-mode: false
         submodules: false
         lfs: false
@@ -100,6 +107,7 @@ jobs:
       run: |
         set -euo pipefail
 
+        # --- Locate the org config file. Owners are matched case-insensitively. ---
         REPOSITORY_OWNER_LOWER="$(printf '%s' "${CI_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
         ORG_CONFIG_PATH=''
         for candidate in \
@@ -124,12 +132,15 @@ jobs:
 
         ORG_CONFIG_JSON="$(jq -c . "${ORG_CONFIG_PATH}")"
 
+        # --- Validate the full org schema. Every field is required; there are no defaults. ---
         if ! jq -e '
           (.storage_provider | type == "string" and length > 0)
           and (.sccache_profile | type == "string" and length > 0)
           and (.integrated_tests_artifact_bucket_path | type == "string" and length > 0)
-          and ((.runner_ca_bundle_host_paths // {}) | type == "object")
-          and (((.runner_ca_bundle_host_paths // {}) | all(.[]; type == "string")))
+          and (.artifact_public_url_base | type == "string")
+          and (.artifact_public_url_bucket_scoped | type == "boolean")
+          and (.runner_ca_bundle_host_paths | type == "object")
+          and (.runner_ca_bundle_host_paths | all(.[]; type == "string"))
           and (.runners | type == "object")
           and (.runners.default | type == "string" and length > 0)
           and (.runners.cpu_heavy | type == "string" and length > 0)
@@ -137,15 +148,22 @@ jobs:
           and (.runners.code_coverage | type == "string" and length > 0)
           and (.runners.cuda | type == "string" and length > 0)
         ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
-          echo "::error::${ORG_CONFIG_PATH} must define storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. Each runner value must be a non-empty string. Optional runner_ca_bundle_host_paths values must be strings."
+          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
           exit 1
         fi
 
-        SELECTED_ORG_STORAGE_PROVIDER="$(jq -r '.storage_provider' <<< "${ORG_CONFIG_JSON}")"
-        SELECTED_ORG_SCCACHE_PROFILE="$(jq -r '.sccache_profile' <<< "${ORG_CONFIG_JSON}")"
-        SELECTED_ORG_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="$(jq -r '.integrated_tests_artifact_bucket_path' <<< "${ORG_CONFIG_JSON}")"
+        # --- Extract org values. ---
+        STORAGE_PROVIDER="$(jq -r '.storage_provider' <<< "${ORG_CONFIG_JSON}")"
+        SCCACHE_PROFILE="$(jq -r '.sccache_profile' <<< "${ORG_CONFIG_JSON}")"
+        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="$(jq -r '.integrated_tests_artifact_bucket_path' <<< "${ORG_CONFIG_JSON}")"
+        ARTIFACT_PUBLIC_URL_ROOT="$(jq -r '.artifact_public_url_base' <<< "${ORG_CONFIG_JSON}")"
+        ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="$(jq -r '.artifact_public_url_bucket_scoped' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_LABELS_JSON="$(jq -c '.runners' <<< "${ORG_CONFIG_JSON}")"
-        RUNNER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -c '.runner_ca_bundle_host_paths // {}' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -c '.runner_ca_bundle_host_paths' <<< "${ORG_CONFIG_JSON}")"
+
+        # --- Resolve per-runner-role CA bundle paths. ---
+        # Each runner role picks up the bundle path for its label; if no exact match,
+        # fall back to the prefix before the first '-' (so "streak2-32core" reuses "streak2").
         DOCKER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -cn \
           --argjson runners "${RUNNER_LABELS_JSON}" \
           --argjson cert_paths "${RUNNER_CA_BUNDLE_HOST_PATHS_JSON}" '
@@ -162,57 +180,38 @@ jobs:
           }'
         )"
 
-        STORAGE_PROVIDER="${CI_STORAGE_PROVIDER:-${SELECTED_ORG_STORAGE_PROVIDER}}"
-
-        if [[ -n "${CI_SCCACHE_PROFILE}" ]]; then
-          SCCACHE_PROFILE="${CI_SCCACHE_PROFILE}"
-        elif [[ -n "${CI_STORAGE_PROVIDER}" ]]; then
-          SCCACHE_PROFILE="${STORAGE_PROVIDER}"
-        else
-          SCCACHE_PROFILE="${SELECTED_ORG_SCCACHE_PROFILE:-${STORAGE_PROVIDER}}"
-        fi
-
-        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="${CI_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH:-${SELECTED_ORG_INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH:-geosx/integratedTests}}"
-
-        DEFAULT_PROVIDER_CONFIG_JSON="$(jq -cn --arg cloudflare_artifact_public_url_base "${CLOUDFLARE_ARTIFACT_PUBLIC_URL_BASE}" '
-          {
-            gcp: {
-              artifact_upload_command: "CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead \"$UPLOAD_SRC\" \"$UPLOAD_DST\"",
-              artifact_upload_pre_command: "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" || ! -f \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; if ! jq -e . \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" >/dev/null 2>&1; then echo \"::error::Invalid JSON in artifact upload credentials file.\" >&2; exit 1; fi; CLOUDSDK_PYTHON=python3 gcloud auth activate-service-account --key-file \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\"; CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True",
-              artifact_upload_uri_root: "gs://",
-              artifact_public_url_root: "https://storage.googleapis.com"
-            },
-            cloudflare: {
-              artifact_upload_command: "aws s3 cp --only-show-errors \"$UPLOAD_SRC\" \"$UPLOAD_DST\" --endpoint-url \"$ARTIFACT_UPLOAD_ENDPOINT\"",
-              artifact_upload_pre_command: "if [[ -z \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" || ! -f \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" ]]; then echo \"ARTIFACT_UPLOAD_CREDENTIALS_FILE is required when artifact upload is enabled.\" >&2; exit 1; fi; if ! command -v aws >/dev/null; then echo \"aws CLI is required for cloudflare artifact upload backend.\" >&2; exit 1; fi; if ! jq -e \"type == \\\"object\\\"\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\" >/dev/null 2>&1; then echo \"::error::Invalid JSON object in artifact upload credentials file.\" >&2; exit 1; fi; ACCESS_KEY_ID=\"$(jq -er \".access_key_id // empty\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; SECRET_ACCESS_KEY=\"$(jq -er \".secret_access_key // empty\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; ENDPOINT=\"$(jq -er \".endpoint // empty\" \"$ARTIFACT_UPLOAD_CREDENTIALS_FILE\")\"; if [[ -z \"$ACCESS_KEY_ID\" || -z \"$SECRET_ACCESS_KEY\" || -z \"$ENDPOINT\" ]]; then echo \"::error::Cloudflare artifact upload credentials must include access_key_id, secret_access_key, and endpoint.\" >&2; exit 1; fi; export AWS_ACCESS_KEY_ID=\"$ACCESS_KEY_ID\"; export AWS_SECRET_ACCESS_KEY=\"$SECRET_ACCESS_KEY\"; export AWS_DEFAULT_REGION=\"${AWS_DEFAULT_REGION:-auto}\"; export AWS_EC2_METADATA_DISABLED=true; export ARTIFACT_UPLOAD_ENDPOINT=\"$ENDPOINT\"",
-              artifact_upload_uri_root: "s3://",
-              artifact_public_url_root: $cloudflare_artifact_public_url_base
-            }
-          }
-        ')"
-
-        CUSTOM_PROVIDER_CONFIG_JSON="${CI_PROVIDER_CONFIG_JSON:-}"
-        if [[ -n "${CUSTOM_PROVIDER_CONFIG_JSON}" ]]; then
-          echo "${CUSTOM_PROVIDER_CONFIG_JSON}" | jq -e 'type == "object"' >/dev/null
-        else
-          CUSTOM_PROVIDER_CONFIG_JSON='{}'
-        fi
-
-        PROVIDER_CONFIG_JSON="$(jq -cn \
-          --argjson defaults "${DEFAULT_PROVIDER_CONFIG_JSON}" \
-          --argjson custom "${CUSTOM_PROVIDER_CONFIG_JSON}" \
-          '$defaults * $custom'
-        )"
-
-        SELECTED_PROVIDER_JSON="$(jq -cer --arg provider "${STORAGE_PROVIDER}" '.[$provider]' <<< "${PROVIDER_CONFIG_JSON}")" || {
-          echo "::error::No provider configuration was found for '${STORAGE_PROVIDER}'."
+        # --- Load and validate the provider file. ---
+        # storage_provider names a file under .github/ci/providers/.
+        # Restrict the allowed characters so the provider name cannot escape the directory.
+        if ! [[ "${STORAGE_PROVIDER}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+          echo "::error::storage_provider '${STORAGE_PROVIDER}' contains disallowed characters. Allowed: letters, digits, '_', '-'."
           exit 1
-        }
+        fi
+        PROVIDER_CONFIG_PATH="${GITHUB_WORKSPACE}/.github/ci/providers/${STORAGE_PROVIDER}.json"
+        if [[ ! -f "${PROVIDER_CONFIG_PATH}" ]]; then
+          echo "::error::No provider config file at ${PROVIDER_CONFIG_PATH} for storage_provider '${STORAGE_PROVIDER}' (selected in ${ORG_CONFIG_PATH})."
+          exit 1
+        fi
 
-        ARTIFACT_UPLOAD_COMMAND="$(jq -er '.artifact_upload_command' <<< "${SELECTED_PROVIDER_JSON}")"
-        ARTIFACT_UPLOAD_PRE_COMMAND="$(jq -er '.artifact_upload_pre_command // ""' <<< "${SELECTED_PROVIDER_JSON}")"
-        ARTIFACT_UPLOAD_URI_ROOT="$(jq -er '.artifact_upload_uri_root' <<< "${SELECTED_PROVIDER_JSON}")"
-        ARTIFACT_PUBLIC_URL_ROOT="$(jq -er '.artifact_public_url_root // ""' <<< "${SELECTED_PROVIDER_JSON}")"
+        if ! jq -e 'type == "object"' "${PROVIDER_CONFIG_PATH}" >/dev/null; then
+          echo "::error::Invalid JSON object in ${PROVIDER_CONFIG_PATH}."
+          exit 1
+        fi
+
+        PROVIDER_CONFIG_JSON="$(jq -c . "${PROVIDER_CONFIG_PATH}")"
+
+        if ! jq -e '
+          (.artifact_upload_command | type == "string" and length > 0)
+          and (.artifact_upload_pre_command | type == "string" and length > 0)
+          and (.artifact_upload_uri_root | type == "string" and length > 0)
+        ' <<< "${PROVIDER_CONFIG_JSON}" >/dev/null; then
+          echo "::error::${PROVIDER_CONFIG_PATH} must define artifact_upload_command, artifact_upload_pre_command, and artifact_upload_uri_root as non-empty strings."
+          exit 1
+        fi
+
+        ARTIFACT_UPLOAD_COMMAND="$(jq -r '.artifact_upload_command' <<< "${PROVIDER_CONFIG_JSON}")"
+        ARTIFACT_UPLOAD_PRE_COMMAND="$(jq -r '.artifact_upload_pre_command' <<< "${PROVIDER_CONFIG_JSON}")"
+        ARTIFACT_UPLOAD_URI_ROOT="$(jq -r '.artifact_upload_uri_root' <<< "${PROVIDER_CONFIG_JSON}")"
 
         {
           echo "STORAGE_PROVIDER=${STORAGE_PROVIDER}"
@@ -228,6 +227,7 @@ jobs:
           echo "__EOF__"
           echo "ARTIFACT_UPLOAD_URI_ROOT=${ARTIFACT_UPLOAD_URI_ROOT}"
           echo "ARTIFACT_PUBLIC_URL_ROOT=${ARTIFACT_PUBLIC_URL_ROOT}"
+          echo "ARTIFACT_PUBLIC_URL_BUCKET_SCOPED=${ARTIFACT_PUBLIC_URL_BUCKET_SCOPED}"
         } >> "$GITHUB_OUTPUT"
 
   # PR must be assigned to be merged.
@@ -237,14 +237,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: If this is a PR, Check that it is assigned
+      env:
+        PR_JSON: ${{ toJson(github.event.pull_request) }}
       run: |
         set -euo pipefail
 
-        if [[ ${{github.event_name}} != 'pull_request' ]]; then exit 0 ; fi
-        pr_json='${{ toJson(github.event.pull_request) }}'
-        NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${pr_json}")
+        if [[ "${{ github.event_name }}" != 'pull_request' ]]; then exit 0 ; fi
+        NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${PR_JSON}")
         echo "There are ${NUM_ASSIGNEES} assignees on this PR."
-        if [[ $NUM_ASSIGNEES == 0 ]]; then exit 1 ; fi
+        if [[ "${NUM_ASSIGNEES}" == 0 ]]; then exit 1 ; fi
 
   # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
@@ -411,6 +412,7 @@ jobs:
       ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
       ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
       ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
+      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}
       DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').integrated_tests || '' }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).integrated_tests }}
       NPROC: 32

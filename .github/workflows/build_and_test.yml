@@ -97,6 +97,18 @@ on:
         required: false
         type: string
         default: ''
+      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED:
+        description: >
+          When "true", ARTIFACT_PUBLIC_URL_ROOT is treated as already rooted
+          inside the bucket (e.g. R2 public dev URLs of the form
+          https://pub-<hash>.r2.dev, which always resolve to one bucket). The
+          first path segment of ARTIFACT_UPLOAD_BUCKET_PATH (the bucket name)
+          is stripped before concatenation to avoid doubling up the bucket in
+          the final URL. Any value other than the literal string "true" is
+          treated as false.
+        required: false
+        type: string
+        default: ''
       ARTIFACT_UPLOAD_URI_PREFIX:
         required: false
         type: string
@@ -139,14 +151,16 @@ jobs:
     steps:
     - name: does_pr_have_necessary_labels
       if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
+      env:
+        PR_JSON: ${{ toJson(github.event.pull_request) }}
+        REQUIRED_LABEL: ${{ inputs.REQUIRED_LABEL }}
       run: |
         set -euo pipefail
 
-        pr_json='${{ toJson(github.event.pull_request) }}'
-        LABELS=$(jq -crM '[.labels[].name]' <<< "${pr_json}")
+        LABELS=$(jq -crM '[.labels[].name]' <<< "${PR_JSON}")
         echo " the labels are ${LABELS}"
-        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
-        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
+        echo " the required label is ${REQUIRED_LABEL}"
+        if [[ "${LABELS}" != *"${REQUIRED_LABEL}"* ]]; then
           exit 1
         fi
 
@@ -337,9 +351,6 @@ jobs:
         DIRECT_ARTIFACT_UPLOAD_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_UPLOAD_CREDENTIALS_JSON }}
         ARTIFACT_PROVIDER_CREDENTIALS_JSON: ${{ secrets.ARTIFACT_PROVIDER_CREDENTIALS_JSON }}
         LEGACY_GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
-        LEGACY_SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-        LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
-        LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
       run: |
         set -euo pipefail
 
@@ -399,26 +410,24 @@ jobs:
           esac
         fi
 
+        # Legacy GCP fallback: the repo historically provided a single
+        # GOOGLE_CLOUD_GCP service-account JSON secret. It is kept so existing
+        # orgs do not have to migrate immediately. No equivalent Cloudflare
+        # fallback exists: new Cloudflare setups must provide credentials via
+        # ARTIFACT_PROVIDER_CREDENTIALS_JSON (or ARTIFACT_UPLOAD_CREDENTIALS_JSON
+        # for one-off overrides). Reusing SCCACHE_ENDPOINT as the R2 artifact
+        # endpoint is incorrect whenever cache and artifact buckets diverge.
         if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" ]]; then
           case "${storage_provider}" in
             gcp)
               credentials_payload="${LEGACY_GOOGLE_CLOUD_GCP:-}"
               ;;
-            cloudflare)
-              if [[ -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" ]]; then
-                credentials_payload="$(jq -cn \
-                  --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
-                  --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
-                  --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
-                  '{
-                    access_key_id: $access_key_id,
-                    secret_access_key: $secret_access_key,
-                    endpoint: $endpoint
-                  }'
-                )"
-              fi
-              ;;
           esac
+        fi
+
+        if [[ -n "${INPUT_ARTIFACT_UPLOAD_BUCKET_PATH}" && -z "${credentials_payload}" ]]; then
+          echo "::error::No artifact upload credentials resolved for storage provider '${storage_provider}'. Set ARTIFACT_PROVIDER_CREDENTIALS_JSON (keyed by provider) or ARTIFACT_UPLOAD_CREDENTIALS_JSON for a one-off override."
+          exit 1
         fi
 
         if [[ -n "${credentials_payload}" ]]; then
@@ -436,6 +445,8 @@ jobs:
       run: printenv
 
     - name: Build, test, deploy.
+      env:
+        INPUT_DOCKER_CA_BUNDLE_HOST_PATH: ${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}
       run: |
         # Those two bash arrays will be populated depending on the required options,
         # and expended as CLI arguments for the docker and scripts calls.
@@ -449,6 +460,7 @@ jobs:
         ARTIFACT_UPLOAD_BUCKET_PATH="${{ inputs.ARTIFACT_UPLOAD_BUCKET_PATH }}"
         ARTIFACT_UPLOAD_URI_ROOT="${{ inputs.ARTIFACT_UPLOAD_URI_ROOT }}"
         ARTIFACT_PUBLIC_URL_ROOT="${{ inputs.ARTIFACT_PUBLIC_URL_ROOT }}"
+        ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="${{ inputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}"
         ARTIFACT_UPLOAD_URI_PREFIX="${{ inputs.ARTIFACT_UPLOAD_URI_PREFIX }}"
         ARTIFACT_PUBLIC_URL_PREFIX="${{ inputs.ARTIFACT_PUBLIC_URL_PREFIX }}"
         ARTIFACT_UPLOAD_CREDENTIALS_FILE="${{ steps.artifact_upload_credentials.outputs.credentials_file }}"
@@ -465,19 +477,33 @@ jobs:
           ARTIFACT_UPLOAD_URI_PREFIX="${ARTIFACT_UPLOAD_URI_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
         fi
 
-        if [[ -z "${ARTIFACT_PUBLIC_URL_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" && -n "${ARTIFACT_PUBLIC_URL_ROOT}" ]]; then
-          artifact_public_path="${ARTIFACT_UPLOAD_BUCKET_PATH}"
-          if [[ "${STORAGE_PROVIDER}" == "cloudflare" ]]; then
-            # Cloudflare public bucket URLs are already bucket-scoped, so the
-            # object key should not repeat the bucket name.
-            artifact_public_path="${ARTIFACT_UPLOAD_BUCKET_PATH#*/}"
-            if [[ "${artifact_public_path}" == "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
-              artifact_public_path=
+        # The org config's artifact_public_url_base (propagated as
+        # ARTIFACT_PUBLIC_URL_ROOT) must already be rooted wherever the bucket
+        # is publicly served from. We simply append the bucket path.
+        #
+        # Exception: when ARTIFACT_PUBLIC_URL_BUCKET_SCOPED=="true" the root is
+        # already rooted *inside* the bucket (e.g. R2 public dev URLs of the
+        # form https://pub-<hash>.r2.dev, which always resolve to one bucket).
+        # In that case the leading path segment of ARTIFACT_UPLOAD_BUCKET_PATH
+        # is the bucket name and must be stripped before concatenation,
+        # otherwise we would double up the bucket in the final URL.
+        if [[ -z "${ARTIFACT_PUBLIC_URL_PREFIX}" && -n "${ARTIFACT_PUBLIC_URL_ROOT}" ]]; then
+          if [[ -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
+            PUBLIC_URL_BUCKET_PATH="${ARTIFACT_UPLOAD_BUCKET_PATH}"
+            if [[ "${ARTIFACT_PUBLIC_URL_BUCKET_SCOPED}" == "true" ]]; then
+              # Strip the first segment (the bucket name) and any leading slash.
+              PUBLIC_URL_BUCKET_PATH="${PUBLIC_URL_BUCKET_PATH#/}"
+              if [[ "${PUBLIC_URL_BUCKET_PATH}" == */* ]]; then
+                PUBLIC_URL_BUCKET_PATH="${PUBLIC_URL_BUCKET_PATH#*/}"
+              else
+                PUBLIC_URL_BUCKET_PATH=''
+              fi
             fi
-          fi
-
-          if [[ -n "${artifact_public_path}" ]]; then
-            ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${artifact_public_path}"
+            if [[ -n "${PUBLIC_URL_BUCKET_PATH}" ]]; then
+              ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}/${PUBLIC_URL_BUCKET_PATH}"
+            else
+              ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}"
+            fi
           else
             ARTIFACT_PUBLIC_URL_PREFIX="${ARTIFACT_PUBLIC_URL_ROOT%/}"
           fi
@@ -502,12 +528,12 @@ jobs:
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
 
-        if [[ -n "${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}" ]]; then
-          if [[ ! -f "${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}" ]]; then
-            echo "::error::Configured DOCKER_CA_BUNDLE_HOST_PATH does not exist: ${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}"
+        if [[ -n "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
+          if [[ ! -f "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
+            echo "::error::Configured DOCKER_CA_BUNDLE_HOST_PATH does not exist: ${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}"
             exit 1
           fi
-          docker_args+=(--volume=${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}:/certs/ca-bundle.crt:ro)
+          docker_args+=("--volume=${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}:/certs/ca-bundle.crt:ro")
           docker_args+=(-e SSL_CERT_FILE=/certs/ca-bundle.crt)
           docker_args+=(-e REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt)
           docker_args+=(-e CURL_CA_BUNDLE=/certs/ca-bundle.crt)
