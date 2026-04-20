@@ -9,8 +9,7 @@ Overview
 
 This model represents a compressible single-phase fluid with constant compressibility
 and pressure-dependent viscosity.
-For thermal simulations, the model density and viscosity have a temperature dependency
-expressed as a constant thermal expansion coefficient.
+For thermal simulations, fluid density and viscosity are temperature-dependent, governed by a constant thermal expansion coefficient.
 These assumptions are valid for slightly compressible fluids, such as water, and some
 types of oil with negligible amounts of dissolved gas.
 
