@@ -40,7 +40,10 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_alphaL(),
   m_alphaT(),
   m_damage(),
-  m_fractureEnergyReleaseRate(),
+  m_fractureEnergyReleaseRateModeI(),
+  m_fractureEnergyReleaseRateModeII(),
+  m_damagePowerVal(),  
+  m_damageDrivingEnergy(),
   m_temperature(),
   m_temperatureRate(),
   m_jacobian(),
@@ -215,10 +218,25 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
-  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateModeIString(), &m_fractureEnergyReleaseRateModeI ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "fractureEnergyReleaseRate value" );    
+    setDescription( "fractureEnergyReleaseRate for tensile cracking value" );    
+
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateModeIIString(), &m_fractureEnergyReleaseRateModeII ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "fractureEnergyReleaseRate for shear cracking value" );    
+
+  registerWrapper( viewKeyStruct::damagePowerValString(), &m_damagePowerVal ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "damage power (k) value" );    
+
+  registerWrapper( viewKeyStruct::damageDrivingEnergyString(), &m_damageDrivingEnergy ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "accumulated damage history" );      
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setApplyDefaultValue( 300.0 ).
@@ -275,6 +293,7 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
+  m_damageDrivingEnergy.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_lengthScale.resize( 0 );
@@ -328,7 +347,9 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
-  GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fratureEnergyReleaseRate must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_fractureEnergyReleaseRateModeI <= 0.0, "The tensile Fracture Energy Release Rate (G_f) must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_fractureEnergyReleaseRateModeII <= 0.0, "The shear Fracture Energy Release Rate (G_f) must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_damagePowerVal < 0.0, "The power value for damage should be must be >= 0 ", InputError );  
   GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
