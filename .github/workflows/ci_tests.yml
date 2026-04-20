@@ -73,6 +73,7 @@ jobs:
       STORAGE_PROVIDER: ${{ steps.resolve.outputs.STORAGE_PROVIDER }}
       SCCACHE_PROFILE: ${{ steps.resolve.outputs.SCCACHE_PROFILE }}
       INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ steps.resolve.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      DOCKER_CA_BUNDLE_HOST_PATHS_JSON: ${{ steps.resolve.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON }}
       RUNNER_LABELS_JSON: ${{ steps.resolve.outputs.RUNNER_LABELS_JSON }}
       ARTIFACT_UPLOAD_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_COMMAND }}
       ARTIFACT_UPLOAD_PRE_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
@@ -381,7 +382,7 @@ jobs:
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
-      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON)[matrix.RUNNER_KEY || 'default'] || '' }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}')[matrix.RUNNER_KEY || 'default'] || '' }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON)[matrix.RUNNER_KEY || 'default'] }}
     secrets: inherit
 
@@ -410,7 +411,7 @@ jobs:
       ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
       ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
       ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
-      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON).integrated_tests || '' }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').integrated_tests || '' }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).integrated_tests }}
       NPROC: 32
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g"
@@ -449,7 +450,7 @@ jobs:
       ENABLE_TRILINOS: OFF
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).code_coverage }}
-      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON).code_coverage || '' }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').code_coverage || '' }}
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
       NPROC: 8
@@ -566,7 +567,7 @@ jobs:
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
-      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON)[matrix.RUNNER_KEY || 'default'] || '' }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}')[matrix.RUNNER_KEY || 'default'] || '' }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON)[matrix.RUNNER_KEY || 'default'] }}
       REQUIRED_LABEL: "ci: run CUDA builds"
     secrets: inherit
