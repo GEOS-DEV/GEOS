@@ -74,6 +74,22 @@ DECLARE_FIELD( shearModulus,
                WRITE_AND_READ,
                "Shear modulus" );
 
+DECLARE_FIELD( youngModulus,
+               "youngModulus",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)" );
+
+DECLARE_FIELD( poissonRatio,
+               "poissonRatio",
+               array1d< real64 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)" );
+
 DECLARE_FIELD( biotCoefficient,
                "biotCoefficient",
                array1d< real64 >,
