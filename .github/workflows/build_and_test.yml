@@ -29,6 +29,10 @@ on:
       DOCKER_RUN_ARGS:
         required: false
         type: string
+      DOCKER_CA_BUNDLE_HOST_PATH:
+        required: false
+        type: string
+        default: ''
       ENABLE_HYPRE:
         required: false
         type: string
@@ -497,6 +501,17 @@ jobs:
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
+
+        if [[ -n "${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}" ]]; then
+          if [[ ! -f "${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}" ]]; then
+            echo "::error::Configured DOCKER_CA_BUNDLE_HOST_PATH does not exist: ${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}"
+            exit 1
+          fi
+          docker_args+=(--volume=${{ inputs.DOCKER_CA_BUNDLE_HOST_PATH }}:/certs/ca-bundle.crt:ro)
+          docker_args+=(-e SSL_CERT_FILE=/certs/ca-bundle.crt)
+          docker_args+=(-e REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt)
+          docker_args+=(-e CURL_CA_BUNDLE=/certs/ca-bundle.crt)
+        fi
 
         COMMIT=${{ github.event.pull_request.head.sha }}
         SHORT_COMMIT=${COMMIT:0:7}

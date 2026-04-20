@@ -12,6 +12,18 @@ Each org JSON file must define:
 - `integrated_tests_artifact_bucket_path`
 - `runners`
 
+Optional org JSON fields:
+
+- `runner_ca_bundle_host_paths`
+  A map keyed by runner label, not by workflow role. Each value is a host-side certificate bundle path
+  to bind into the container as `/certs/ca-bundle.crt`.
+  Example:
+  `{"streak2": "/etc/pki/tls/certs/ca-bundle.crt"}`
+  The resolver first looks for an exact runner-label match. If none is found, it falls back to the
+  prefix before the first `-`, so a runner label like `streak2-32core` will reuse the `streak2` entry.
+  Use this only for runners that need an LLNL-style outbound cert bundle; leave it empty or omit it for
+  machines that do not.
+
 Current runner keys used by the workflow:
 
 - `default`

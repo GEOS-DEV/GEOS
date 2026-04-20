@@ -282,13 +282,11 @@ if [[ "${USE_SCCACHE}" == true ]]; then
   # Backend-specific credentials and endpoints are injected through the environment and/or config file.
   SCCACHE_CMAKE_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CXX_COMPILER_LAUNCHER=${SCCACHE_BIN} -DCMAKE_CUDA_COMPILER_LAUNCHER=${SCCACHE_BIN}"
 
-  case "$(hostname -f 2>/dev/null || hostname)" in
-    *.llnl.gov|streak2*|streak*)
-      export SSL_CERT_FILE=/certs/ca-bundle.crt
-      export CURL_CA_BUNDLE=/certs/ca-bundle.crt
-      export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
-      ;;
-  esac
+  if [[ -f /certs/ca-bundle.crt ]]; then
+    export SSL_CERT_FILE=/certs/ca-bundle.crt
+    export CURL_CA_BUNDLE=/certs/ca-bundle.crt
+    export REQUESTS_CA_BUNDLE=/certs/ca-bundle.crt
+  fi
 
   echo "sccache initial state"
   ${SCCACHE_BIN} --show-stats || true
