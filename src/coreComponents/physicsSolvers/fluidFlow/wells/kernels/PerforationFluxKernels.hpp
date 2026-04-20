@@ -389,7 +389,6 @@ public:
           continue;
         }
 
-#if 1
         computeDensityMobilityandDeriv( ip, er, esr, ei, mob, dMob );
         fluxKernelOp( ip, resPhaseVolFrac, mob, dMob );
         // compute the phase flux and derivatives using upstream cell mobility
@@ -424,107 +423,10 @@ public:
             m_dCompPerfRate[iperf][TAG::WELL][ic][jc] += dFlux[TAG::WELL][jc] *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
           }
         }
-#else
-        // density
-        real64 const resDens = m_resPhaseDens[er][esr][ei][0][ip];
-        real64 dDens[CP_Deriv::nDer]{};
-
-        dDens[CP_Deriv::dP]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dP];
-        if constexpr ( IS_THERMAL )
-        {
-          dDens[CP_Deriv::dT]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dT];
-        }
-        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseDens[er][esr][ei][0][ip],
-                        &dDens[CP_Deriv::dC],
-                        Deriv::dC );
-        // viscosity
-        real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
-        real64 dVisc[CP_Deriv::nDer]{};
-        dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
-        if constexpr ( IS_THERMAL )
-        {
-          dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
-        }
-
-        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseVisc[er][esr][ei][0][ip],
-                        &dVisc[CP_Deriv::dC],
-                        Deriv::dC );
-
-        // relative permeability
-        real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
-        real64 dRelPerm[CP_Deriv::nDer]{};
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dRelPerm[jc]=0;
-        }
-        for( integer jp = 0; jp < NP; ++jp )
-        {
-          real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-          if constexpr ( IS_THERMAL )
-          {
-            dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
-          }
-          for( integer jc = 0; jc < NC; ++jc )
-          {
-            dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-          }
-        }
-
-        // compute the reservoir phase mobility, including phase density
-        real64 const resPhaseMob = resDens * resRelPerm / resVisc;
-
-        // Handles all dependencies
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dMob[jc] = dRelPerm[jc] * resDens / resVisc
-                     + resPhaseMob * (dDens[jc] / resDens - dVisc[jc] / resVisc);
-        }
-        // compute the phase flux and derivatives using upstream cell mobility
-        flux = resPhaseMob * potDiff;
-        // Handles all dependencies
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMob * dPotDiff[TAG::RES][jc];
-          dFlux[TAG::WELL][jc] = resPhaseMob * dPotDiff[TAG::WELL][jc];
-        }
-
-        // increment component fluxes
-        for( integer ic = 0; ic < NC; ++ic )
-        {
-          m_compPerfRate[iperf][ic] += flux *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
-          dCompFrac[CP_Deriv::dP] = m_dResPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dP];
-          if constexpr (IS_THERMAL)
-          {
-            dCompFrac[CP_Deriv::dT] = m_dResPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dT];
-          }
-
-          applyChainRule( NC,
-                          m_dResCompFrac_dCompDens[er][esr][ei],
-                          m_dResPhaseCompFrac[er][esr][ei][0][ip][ic],
-                          &dCompFrac[CP_Deriv::dC],
-                          Deriv::dC );
-
-          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-          {
-            m_dCompPerfRate[iperf][TAG::RES][ic][jc]  += dFlux[TAG::RES][jc] *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
-            m_dCompPerfRate[iperf][TAG::RES][ic][jc]  += flux * dCompFrac[jc];
-            m_dCompPerfRate[iperf][TAG::WELL][ic][jc] += dFlux[TAG::WELL][jc] *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
-          }
-        }
-#endif
-
       }  // end resevoir is upstream phase loop
-      //if constexpr ( IS_THERMAL )
-      //{
-      //  fluxKernelOp( 0.0, dMob );
-      //}
     }
     else // ** well is upstream **
     {
-
       real64 resTotalMob     = 0.0;
       real64 dResTotalMob[CP_Deriv::nDer]{};
       // we re-compute here the total mass (when useMass == 1) or molar (when useMass == 0) density
@@ -569,17 +471,16 @@ public:
       }
       for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
-        dMult[TAG::RES][jc] = wellElemTotalDens * dMob[jc];
+        dMult[TAG::RES][jc] = wellElemTotalDens * dResTotalMob[jc];
       }
-
 
       // compute the volumetric flux and derivatives using upstream cell mobility
       flux = mult * stack.m_potDiff;
-
       for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
       {
         dFlux[TAG::RES][ic]  = dMult[TAG::RES][ic] * stack.m_potDiff + mult * stack.m_dPotDiff[TAG::RES][ic];
         dFlux[TAG::WELL][ic] = dMult[TAG::WELL][ic] * stack.m_potDiff + mult * stack.m_dPotDiff[TAG::WELL][ic];
+
       }
       // compute component fluxes
       for( integer ic = 0; ic < NC; ++ic )
