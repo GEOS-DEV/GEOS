@@ -158,8 +158,15 @@ jobs:
       # call below always returns current state, which is required for
       # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
       # builds"). Do not replace with github.event.pull_request.labels.
+      # The Authorization header is required for private repos/forks;
+      # GITHUB_TOKEN is provided automatically to every workflow run.
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
-        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        pr_json=$(curl --fail --silent --show-error \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
         LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
         echo " the labels are ${LABELS}"
         echo " the required label is ${{inputs.REQUIRED_LABEL}}"
