@@ -807,8 +807,8 @@ public:
         GEOS_UNUSED_VAR( null1 );
         GEOS_UNUSED_VAR( null2 );
         real64 dMult[CP_Deriv::nDer]{};
+        real64 dProp_dC[NC]{};
         real64 totalEnthalpy=0;
-        dMult[CP_Deriv::dP] = 0;
 
         arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_wellElemPhaseVolFrac[iwelem];
         arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dWellElemPhaseVolFrac[iwelem];
@@ -831,27 +831,30 @@ public:
           dMult[CP_Deriv::dT ] += phaseEnthalpy[iphase] * dPhaseVolFrac[iphase][Deriv::dT] * phaseDens[iphase] +
                                   dPhaseEnthalpy[iphase][Deriv::dT] *phaseVolFrac[iphase] * phaseDens[iphase]+
                                   phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dPhaseDens[iphase][Deriv::dT];
-          real64 dProp_dC[numComp]{};
-          applyChainRule( NC,
-                          m_dWellElemCompFrac_dCompDens[iwelem],
-                          dPhaseEnthalpy[iphase],
-                          dProp_dC,
-                          Deriv::dC );
-
-          real64 dProp_dD[numComp]{};
-          applyChainRule( NC,
-                          m_dWellElemCompFrac_dCompDens[iwelem],
-                          dPhaseDens[iphase],
-                          dProp_dD,
-                          Deriv::dC );
 
           for( integer jc = 0; jc < NC; ++jc )
           {
-            dMult[CP_Deriv::dC+jc] += phaseVolFrac[iphase]    * phaseDens[iphase] * dProp_dC[jc]
-                                      +  phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dProp_dD[jc]
-                                      +  phaseEnthalpy[iphase] * phaseDens[iphase] * dPhaseVolFrac[iphase][Deriv::dC+jc];
+            dProp_dC[jc] += phaseVolFrac[iphase]    * phaseDens[iphase] * dPhaseEnthalpy[iphase][Deriv::dC+jc]
+                            + phaseVolFrac[iphase]    * dPhaseDens[iphase][Deriv::dC+jc] * phaseEnthalpy[iphase];
+            dMult[CP_Deriv::dC+jc] +=   phaseEnthalpy[iphase] * phaseDens[iphase] * dPhaseVolFrac[iphase][Deriv::dC+jc];
           }
         }
+
+        real64 dProp_dD[numComp]{};
+        applyChainRule( NC,
+                        m_dWellElemCompFrac_dCompDens[iwelem],
+                        dProp_dC,
+                        dProp_dD,
+                        0 );
+        for( integer iphase=0; iphase < NP; ++iphase )
+        {
+          for( integer jc = 0; jc < NC; ++jc )
+          {
+            dMult[CP_Deriv::dC+jc] += phaseVolFrac[iphase]    * phaseDens[iphase] * dProp_dD[jc]
+                                      +  phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dProp_dD[jc];
+          }
+        }
+
         real64 eflux =  mob * totalEnthalpy*stack.m_potDiff;
         m_energyPerfFlux[iperf] = eflux;
         for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
