@@ -98,6 +98,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numKineticReactions = 0;
       break;
 
+    case ChemicalSystemType::forge:
+      m_numPrimarySpecies = 10;
+      m_numSecondarySpecies = 19;
+      m_numKineticReactions = 5;
+      break;
+
     case ChemicalSystemType::chainSerialAllKinetic:
       m_numPrimarySpecies = 3;
       m_numSecondarySpecies = 0;

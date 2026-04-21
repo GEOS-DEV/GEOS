@@ -1366,7 +1366,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
                                                       getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
-  
+
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min pressure scaling factor = {}", getName(), minPresScalingFactor ) );
 
   if( m_isThermal )
@@ -1376,7 +1376,7 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
                                                         getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
-    
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Min temperature scaling factor = {}", getName(), minTempScalingFactor ) );
   }
 

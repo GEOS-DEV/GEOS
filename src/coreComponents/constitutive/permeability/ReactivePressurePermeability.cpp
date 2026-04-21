@@ -14,10 +14,10 @@
  */
 
 /**
- * @file PressurePermeability.cpp
+ * @file ReactivePressurePermeability.cpp
  */
 
-#include "PressurePermeability.hpp"
+#include "ReactivePressurePermeability.hpp"
 
 namespace geos
 {
@@ -28,7 +28,7 @@ namespace constitutive
 {
 
 
-PressurePermeability::PressurePermeability( string const & name, Group * const parent ):
+ReactivePressurePermeability::ReactivePressurePermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::referencePermeabilityComponentsString(), &m_referencePermeabilityComponents ).
@@ -53,10 +53,23 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Reference permeability field" );
 
+  registerWrapper( viewKeyStruct::defaultReferencePorosityString(), &m_defaultReferencePorosity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default reference porosity" );
+
+  registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
+    setApplyDefaultValue( -1.0 ).
+    setDescription( "Reference porosity [Pa]" );
+
   registerWrapper( viewKeyStruct::maxPermeabilityString(), &m_maxPermeability ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Max. permeability can be reached." );
+
+  registerWrapper( viewKeyStruct::minPermeabilityString(), &m_minPermeability ).
+    setApplyDefaultValue( 1e-20 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Min. permeability can be reached." );
 
   registerWrapper( viewKeyStruct::pressureModelTypeString(), &m_presModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -69,7 +82,7 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setDescription( "The flag for explicit update. " );
 }
 
-void PressurePermeability::postInputInitialization()
+void ReactivePressurePermeability::postInputInitialization()
 {
   for( localIndex i=0; i < 3; i++ )
   {
@@ -82,10 +95,13 @@ void PressurePermeability::postInputInitialization()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
     setApplyDefaultValue( m_defaultReferencePressure );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePorosityString() ).
+    setApplyDefaultValue( m_defaultReferencePorosity );
 }
 
-void PressurePermeability::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numPts )
+void ReactivePressurePermeability::allocateConstitutiveData( Group & parent,
+                                                             localIndex const numPts )
 {
   m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
 
@@ -104,7 +120,7 @@ void PressurePermeability::allocateConstitutiveData( Group & parent,
   }
 }
 
-void PressurePermeability::initializeState() const
+void ReactivePressurePermeability::initializeState() const
 {
   localIndex const numE = m_permeability.size( 0 );
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
@@ -132,7 +148,7 @@ void PressurePermeability::initializeState() const
   } );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PressurePermeability, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactivePressurePermeability, string const &, Group * const )
 
 }
 } /* namespace geos */

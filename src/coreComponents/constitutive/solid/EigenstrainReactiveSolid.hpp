@@ -73,6 +73,9 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n,
                                         mineralReactionMolarIncrements );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
   }
 
   GEOS_HOST_DEVICE
@@ -103,8 +106,18 @@ public:
     {
       real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
       real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
-                       * pow( porosity / initialPorosity, 2.0/3.0 );
+      // surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+      //                  * pow( porosity / initialPorosity, 2.0/3.0 );
+
+      if( volumeFraction_r - initialVolumeFraction_r < 0 ) // dissolution
+      {
+        surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+                         * pow( porosity / initialPorosity, 2.0/3.0 );
+      }
+      else // precipitation
+      {
+        surfaceArea[r] = initialSurfaceArea[r] * pow( porosity / initialPorosity, 6. );
+      }
     }
   }
 

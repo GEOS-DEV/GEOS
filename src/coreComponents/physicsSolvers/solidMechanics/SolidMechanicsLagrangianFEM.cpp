@@ -1138,7 +1138,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
+    if( m_isFixedStressPoromechanicsUpdate || (m_performStressInitialization && !m_isExplicitChemomechanicsUpdate) )
     {
       set< string > poromechanicsRegions;
       set< string > mechanicsRegions;

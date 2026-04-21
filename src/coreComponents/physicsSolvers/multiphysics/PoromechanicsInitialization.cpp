@@ -151,6 +151,7 @@ typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFracturesALM< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures > SinglePhasePoromechanicsEmbeddedFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReactiveTransport > > SinglePhaseReactiveTransportPoromechanicsInitialization;
 typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics<> > > HydrofractureInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
@@ -165,6 +166,7 @@ REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesALM
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsEmbeddedFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReactiveTransportPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, HydrofractureInitialization, string const &, Group * const )
 }
 

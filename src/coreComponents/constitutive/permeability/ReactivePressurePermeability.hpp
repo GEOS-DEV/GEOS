@@ -14,13 +14,14 @@
  */
 
 /**
- * @file PressurePermeability.hpp
+ * @file ReactivePressurePermeability.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_PRESSUREPERMEABILITY_HPP_
-#define GEOS_CONSTITUTIVE_PERMEABILITY_PRESSUREPERMEABILITY_HPP_
+#ifndef GEOS_CONSTITUTIVE_PERMEABILITY_REACTIVEPRESSUREPERMEABILITY_HPP_
+#define GEOS_CONSTITUTIVE_PERMEABILITY_REACTIVEPRESSUREPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PressurePermeability.hpp"
 
 
 namespace geos
@@ -28,53 +29,55 @@ namespace geos
 namespace constitutive
 {
 
-enum class PressureModelType : integer
-{
-  Exponential,
-  Hyperbolic
-};
-
-ENUM_STRINGS( PressureModelType,
-              "Exponential",
-              "Hyperbolic" );
-
-class PressurePermeabilityUpdate : public PermeabilityBaseUpdate
+class ReactivePressurePermeabilityUpdate : public PermeabilityBaseUpdate
 {
 public:
 
-  PressurePermeabilityUpdate( PressureModelType const & presModelType,
-                              R1Tensor const pressureDependenceConstants,
-                              arrayView1d< real64 const > const & referencePressure,
-                              real64 const & maxPermeability,
-                              arrayView3d< real64 const > const & referencePermeability,
-                              arrayView3d< real64 > const & permeability,
-                              arrayView3d< real64 const > const & permeability_n,
-                              arrayView3d< real64 > const & dPerm_dPressure,
-                              integer const & explicitFlag )
+  ReactivePressurePermeabilityUpdate( PressureModelType const & presModelType,
+                                      R1Tensor const pressureDependenceConstants,
+                                      arrayView1d< real64 const > const & referencePressure,
+                                      real64 const & maxPermeability,
+                                      real64 const & minPermeability,
+                                      arrayView3d< real64 const > const & referencePermeability,
+                                      arrayView1d< real64 const > const & referencePorosity,
+                                      arrayView3d< real64 > const & permeability,
+                                      arrayView3d< real64 const > const & permeability_n,
+                                      arrayView3d< real64 > const & dPerm_dPressure,
+                                      integer const & explicitFlag )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_presModelType( presModelType ),
     m_pressureDependenceConstants( pressureDependenceConstants ),
     m_referencePressure( referencePressure ),
     m_maxPermeability( maxPermeability ),
+    m_minPermeability( minPermeability ),
     m_referencePermeability( referencePermeability ),
+    m_referencePorosity( referencePorosity ),
     m_permeability_n( permeability_n ),
     m_explicitFlag( explicitFlag )
   {}
 
   GEOS_HOST_DEVICE
-  void compute( real64 const & deltaPressure,
-                R1Tensor const pressureDependenceConstants,
-                real64 const (&referencePermeability)[3],
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPressure ) const;
+  void computePressure( real64 const & deltaPressure,
+                        R1Tensor const pressureDependenceConstants,
+                        real64 const (&referencePermeability)[3],
+                        arraySlice1d< real64 > const & permeability,
+                        arraySlice1d< real64 > const & dPerm_dPressure ) const;
 
   GEOS_HOST_DEVICE
-  void compute( real64 const & deltaPressure,
-                R1Tensor const pressureDependenceConstants,
-                real64 const (&referencePermeability)[3],
-                real64 const maxPermeability,
-                arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPressure ) const;
+  void computePressure( real64 const & deltaPressure,
+                        R1Tensor const pressureDependenceConstants,
+                        real64 const (&referencePermeability)[3],
+                        real64 const maxPermeability,
+                        arraySlice1d< real64 > const & permeability,
+                        arraySlice1d< real64 > const & dPerm_dPressure ) const;
+
+  GEOS_HOST_DEVICE
+  void computeWithPorosity( real64 const & porosity,
+                            real64 const & minPermeability,
+                            real64 const & referencePorosity,
+                            real64 const (&referencePermeability)[3],
+                            arraySlice1d< real64 > const & permeability,
+                            arraySlice1d< real64 > const & dPerm_dPressure ) const;
 
   GEOS_HOST_DEVICE
   virtual void updateFromPressureAndPorosity( localIndex const k,
@@ -83,7 +86,7 @@ public:
                                               real64 const & pressure_n,
                                               real64 const & porosity ) const override
   {
-    GEOS_UNUSED_VAR( q, porosity );
+    GEOS_UNUSED_VAR( q );
 
     real64 deltaPressure = (m_explicitFlag)? (pressure_n - m_referencePressure[k]):(pressure - m_referencePressure[k]);
 
@@ -103,11 +106,15 @@ public:
     {
       case PressureModelType::Exponential:
       {
-        compute( deltaPressure,
-                 m_pressureDependenceConstants,
-                 referencePermeability,
-                 m_permeability[k][0],
-                 m_dPerm_dPressure[k][0] );
+        // Step 1: Update with pressure
+        computePressure( deltaPressure,
+                         m_pressureDependenceConstants,
+                         referencePermeability,
+                         m_permeability[k][0],
+                         m_dPerm_dPressure[k][0] );
+
+        // Step 2: Update with reactive porosity
+        computeWithPorosity( porosity, m_minPermeability, m_referencePorosity[k], referencePermeability, m_permeability[k][0], m_dPerm_dPressure[k][0] );
 
         if( m_explicitFlag )
         {
@@ -139,12 +146,16 @@ public:
       }
       case PressureModelType::Hyperbolic:
       {
-        compute( deltaPressure,
-                 m_pressureDependenceConstants,
-                 referencePermeability,
-                 m_maxPermeability,
-                 m_permeability[k][0],
-                 m_dPerm_dPressure[k][0] );
+        // Step 1: Update with pressure
+        computePressure( deltaPressure,
+                         m_pressureDependenceConstants,
+                         referencePermeability,
+                         m_maxPermeability,
+                         m_permeability[k][0],
+                         m_dPerm_dPressure[k][0] );
+
+        // Step 2: Update with reactive porosity
+        computeWithPorosity( porosity, m_minPermeability, m_referencePorosity[k], referencePermeability, m_permeability[k][0], m_dPerm_dPressure[k][0] );
 
         if( m_explicitFlag )
         {
@@ -180,10 +191,12 @@ private:
   /// Reference pressure in the model
   arrayView1d< real64 const >  const m_referencePressure;
 
-  /// Maximum permeability
+  /// Maximum and minimum permeability
   real64 const m_maxPermeability;
+  real64 const m_minPermeability;
 
   arrayView3d< real64 const > const m_referencePermeability;
+  arrayView1d< real64 const > const m_referencePorosity;
 
   arrayView3d< real64 const > const m_permeability_n;
 
@@ -192,13 +205,13 @@ private:
 };
 
 
-class PressurePermeability : public PermeabilityBase
+class ReactivePressurePermeability : public PermeabilityBase
 {
 public:
 
-  PressurePermeability( string const & name, dataRepository::Group * const parent );
+  ReactivePressurePermeability( string const & name, dataRepository::Group * const parent );
 
-  static string catalogName() { return "PressurePermeability"; }
+  static string catalogName() { return "ReactivePressurePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -206,7 +219,7 @@ public:
                                          localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
-  using KernelWrapper = PressurePermeabilityUpdate;
+  using KernelWrapper = ReactivePressurePermeabilityUpdate;
 
   /**
    * @brief Create an update kernel wrapper.
@@ -218,7 +231,9 @@ public:
                           m_pressureDependenceConstants,
                           m_referencePressure,
                           m_maxPermeability,
+                          m_minPermeability,
                           m_referencePermeability,
+                          m_referencePorosity,
                           m_permeability,
                           m_permeability_n,
                           m_dPerm_dPressure,
@@ -232,7 +247,10 @@ public:
     static constexpr char const * defaultReferencePressureString() { return "defaultReferencePressure"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
+    static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
+    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * maxPermeabilityString() { return "maxPermeability"; }
+    static constexpr char const * minPermeabilityString() { return "minPermeability"; }
     static constexpr char const * pressureModelTypeString() { return "pressureModelType"; }
     static constexpr char const * explicitUpdateFlagString() { return "explicitUpdateFlag"; }
   };
@@ -248,6 +266,8 @@ private:
   /// Permeability components at the reference pressure
   R1Tensor m_referencePermeabilityComponents;
 
+  real64 m_defaultReferencePorosity;
+
   /// Pressure dependent coefficients for each permeability component
   R1Tensor m_pressureDependenceConstants;
 
@@ -255,10 +275,12 @@ private:
   real64 m_defaultReferencePressure;
   array1d< real64 > m_referencePressure;
 
-  /// Maximum permeability
+  /// Maximum and minimum permeability
   real64 m_maxPermeability;
+  real64 m_minPermeability;
 
   array3d< real64 > m_referencePermeability;
+  array1d< real64 > m_referencePorosity;
 
   /// Pressure dependence model type
   PressureModelType m_presModelType;
@@ -270,11 +292,11 @@ private:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
-                                          R1Tensor const pressureDependenceConstants,
-                                          real64 const (&referencePermeability)[3],
-                                          arraySlice1d< real64 > const & permeability,
-                                          arraySlice1d< real64 > const & dPerm_dPressure ) const
+void ReactivePressurePermeabilityUpdate::computePressure( real64 const & deltaPressure,
+                                                          R1Tensor const pressureDependenceConstants,
+                                                          real64 const (&referencePermeability)[3],
+                                                          arraySlice1d< real64 > const & permeability,
+                                                          arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
   for( localIndex i=0; i < permeability.size(); i++ )
   {
@@ -287,12 +309,12 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
-                                          R1Tensor const pressureDependenceConstants,
-                                          real64 const (&referencePermeability)[3],
-                                          real64 const maxPermeability,
-                                          arraySlice1d< real64 > const & permeability,
-                                          arraySlice1d< real64 > const & dPerm_dPressure ) const
+void ReactivePressurePermeabilityUpdate::computePressure( real64 const & deltaPressure,
+                                                          R1Tensor const pressureDependenceConstants,
+                                                          real64 const (&referencePermeability)[3],
+                                                          real64 const maxPermeability,
+                                                          arraySlice1d< real64 > const & permeability,
+                                                          arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
   for( localIndex i=0; i < permeability.size(); i++ )
   {
@@ -304,9 +326,30 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
   }
 }
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ReactivePressurePermeabilityUpdate::computeWithPorosity( real64 const & porosity,
+                                                              real64 const & minPermeability,
+                                                              real64 const & referencePorosity,
+                                                              real64 const (&referencePermeability)[3],
+                                                              arraySlice1d< real64 > const & permeability,
+                                                              arraySlice1d< real64 > const & dPerm_dPressure ) const
+{
+  for( localIndex i=0; i < permeability.size(); i++ )
+  {
+    real64 const permScale = (minPermeability + ( referencePermeability[i] - minPermeability ) * pow( porosity/referencePorosity, 6 )) / referencePermeability[i];
+
+    real64 const perm = permeability[i];
+    permeability[i] = perm * permScale;
+
+    real64 const dPerm_dPres = dPerm_dPressure[i];
+    dPerm_dPressure[i] = dPerm_dPres * permScale;
+  }
+}
+
 }/* namespace constitutive */
 
 } /* namespace geos */
 
 
-#endif //GEOS_CONSTITUTIVE_PERMEABILITY_PRESSUREPERMEABILITY_HPP_
+#endif //GEOS_CONSTITUTIVE_PERMEABILITY_REACTIVEPRESSUREPERMEABILITY_HPP_

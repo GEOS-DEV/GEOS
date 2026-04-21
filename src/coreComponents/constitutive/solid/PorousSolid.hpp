@@ -70,7 +70,7 @@ public:
                                         pressure, pressure_k, pressure_n,
                                         temperature, temperature_k, temperature_n );
 
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q ); // this porosity is actually not being used 
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q ); // this porosity is actually not being used
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
   }
 
@@ -122,7 +122,7 @@ public:
                      dPorosity_dPressure,
                      dPorosity_dTemperature );
 
-    // Compute permeability 
+    // Compute permeability
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
 
     // skip porosity update when doing poromechanics initialization

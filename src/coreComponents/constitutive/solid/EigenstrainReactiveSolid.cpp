@@ -22,6 +22,8 @@
 #include "ElasticIsotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/PressurePermeability.hpp"
+#include "constitutive/permeability/ReactivePressurePermeability.hpp"
 
 namespace geos
 {
@@ -47,10 +49,14 @@ void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 // Register all EigenstrainReactiveSolid model types.
 typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability > EigenStrainReactiveElasticIsotropicConstant;
 typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > EigenStrainReactiveElasticIsotropicCK;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, PressurePermeability > EigenStrainReactiveElasticIsotropicPressure;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, ReactivePressurePermeability > EigenStrainReactiveElasticIsotropicReactivePressure;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicReactivePressure, string const &, Group * const )
 
 
 }

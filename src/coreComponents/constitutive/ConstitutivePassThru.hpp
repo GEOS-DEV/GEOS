@@ -53,6 +53,7 @@
 #include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/PressurePermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
+#include "permeability/ReactivePressurePermeability.hpp"
 #include "permeability/SlipDependentPermeability.hpp"
 #include "permeability/WillisRichardsPermeability.hpp"
 #include "contact/CoulombFriction.hpp"
@@ -375,8 +376,10 @@ struct ConstitutivePassThru< EigenstrainReactiveSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
-                                 EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > >::execute( constitutiveRelation,
-                                                                                                                    std::forward< LAMBDA >( lambda ) );
+                                 EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, PressurePermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, ReactivePressurePermeability > >::execute( constitutiveRelation,
+                                                                                                                        std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -500,6 +503,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
                                  EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, PressurePermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, ReactivePressurePermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,
@@ -546,6 +551,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
                                  EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
                                  EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, PressurePermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, ReactivePressurePermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,

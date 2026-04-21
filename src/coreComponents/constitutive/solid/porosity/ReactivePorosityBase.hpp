@@ -140,9 +140,9 @@ public:
                           + reactionPorosityIncrement;
     // + m_meanEffectiveStressIncrement_k[k][q]/m_bulkModulus[k];
 
-    if( m_newPorosity[k][q] < 0 )
+    if( m_newPorosity[k][q] < 9e-4 )
     {
-      m_newPorosity[k][q] = 0;
+      m_newPorosity[k][q] = 9e-4;
     }
     else if( m_newPorosity[k][q] > 1.0 )
     {

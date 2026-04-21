@@ -175,6 +175,8 @@
       "CONSTITUTIVE_TYPE": [
         "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability>",
         "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, PressurePermeability>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, ReactivePressurePermeability>",
         "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>"
       ],
