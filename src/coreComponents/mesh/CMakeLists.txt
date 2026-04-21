@@ -214,6 +214,7 @@ if( ENABLE_VTK )
          generators/VTKHierarchicalDataSource.hpp
          generators/VTKMeshGenerator.hpp
          generators/VTKMeshGeneratorTools.hpp
+         generators/VTKMeshScattering.hpp
          generators/VTKWellGenerator.hpp
          generators/VTKUtilities.hpp
          )
@@ -223,6 +224,7 @@ if( ENABLE_VTK )
          generators/VTKHierarchicalDataSource.cpp
          generators/VTKMeshGenerator.cpp
          generators/VTKMeshGeneratorTools.cpp
+         generators/VTKMeshScattering.cpp
          generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
          )
@@ -268,3 +270,7 @@ if( GEOS_ENABLE_TESTS )
     add_subdirectory( unitTests )
 endif( )
 
+# Add benchmarks subdirectory
+if( ENABLE_VTK )
+    add_subdirectory( benchmarks )
+endif()

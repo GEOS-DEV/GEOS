@@ -21,6 +21,7 @@
 #define GEOS_MESH_GENERATORS_VTKMESHGENERATOR_HPP
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
+#include "mesh/generators/VTKMeshScattering.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -114,6 +115,7 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * scatterMethodString() { return "scatterMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
   };
@@ -166,6 +168,9 @@ private:
 
   /// Method (library) used to partition the mesh
   vtk::PartitionMethod m_partitionMethod = vtk::PartitionMethod::parmetis;
+
+  /// Method used for initial mesh scatter from rank 0
+  vtk::ScatterMethod m_scatterMethod = vtk::ScatterMethod::kdtree;
 
   /// Lists of VTK cell ids, organized by element type, then by region
   vtk::CellMapType m_cellMap;

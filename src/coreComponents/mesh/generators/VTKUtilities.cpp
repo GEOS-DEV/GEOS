@@ -48,7 +48,6 @@
 #include <vtkPolyDataReader.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRectilinearGridReader.h>
-#include <vtkRedistributeDataSetFilter.h>
 #include <vtkStructuredGrid.h>
 #include <vtkStructuredGridReader.h>
 #include <vtkStructuredPoints.h>
@@ -752,113 +751,6 @@ redistributeByCellGraph( AllMeshes & input,
 }
 
 
-/**
- * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
- *
- * @param[in] mesh a vtk grid
- * @return the vtk grid redistributed
- */
-vtkSmartPointer< vtkDataSet >
-scatterByBlock( vtkDataSet & mesh )
-{
-  GEOS_MARK_FUNCTION;
-
-  int const rank = MpiWrapper::commRank();
-  int const size = MpiWrapper::commSize();
-
-  // Count total cells across all ranks
-  vtkIdType localCells = mesh.GetNumberOfCells();
-  vtkIdType totalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  // Handle edge cases
-  if( totalCells == 0 )
-  {
-    vtkNew< vtkUnstructuredGrid > emptyMesh;
-    return emptyMesh;
-  }
-
-  if( size == 1 )
-  {
-    vtkNew< vtkUnstructuredGrid > copy;
-    copy->DeepCopy( &mesh );
-    return copy;
-  }
-
-  // Verify rank 0 has the complete mesh for redistribution
-  if( rank == 0 && localCells != totalCells )
-  {
-    GEOS_ERROR( GEOS_FMT( "Rank 0 must have the complete mesh. Rank 0 has {} cells but total is {}",
-                          localCells,
-                          totalCells ) );
-  }
-
-  // Scatter cells by contiguous blocks
-  vtkIdType cellsPerRank = totalCells / size;
-  vtkIdType remainder = totalCells % size;
-
-  // Create partitioned dataset
-  vtkNew< vtkPartitionedDataSet > localParts;
-  if( rank == 0 )
-  {
-    // Rank 0 has the full mesh, extract cells for each rank
-    for( int r = 0; r < size; ++r )
-    {
-      vtkIdType rankStart = r * cellsPerRank + std::min( (vtkIdType)r, remainder );
-      vtkIdType rankEnd = rankStart + cellsPerRank + (r < remainder ? 1 : 0);
-
-      // Validate cell range
-      GEOS_ERROR_IF( rankStart< 0 || rankEnd > totalCells,
-                     GEOS_FMT( "Invalid cell range for rank {}: [{}, {}) with total cells {}",
-                               r,
-                               rankStart,
-                               rankEnd,
-                               totalCells ) );
-
-      if( rankEnd > rankStart )
-      {
-        // Add cells for this rank
-        vtkNew< vtkExtractCells > extractor;
-        extractor->SetInputDataObject( &mesh );
-        extractor->AddCellRange( rankStart, rankEnd - 1 );
-        extractor->Update();
-        vtkUnstructuredGrid * extracted = extractor->GetOutput();
-        localParts->SetPartition( r, extracted );
-      }
-      else
-      {
-        // Create empty partition for ranks with no cells
-        vtkNew< vtkUnstructuredGrid > emptyPartition;
-        localParts->SetPartition( r, emptyPartition );
-      }
-    }
-  }
-  else
-  {
-    // Other ranks have an empty mesh, but we still need to create the
-    // partitioned data set structure.
-    localParts->SetNumberOfPartitions( size );
-    for( int r = 0; r < size; ++r )
-    {
-      vtkNew< vtkUnstructuredGrid > emptyPartition;
-      localParts->SetPartition( r, emptyPartition );
-    }
-  }
-
-  //Send cells to appropriate ranks
-  vtkSmartPointer< vtkUnstructuredGrid > result = vtk::redistribute( *localParts, MPI_COMM_GEOS );
-
-  // Final validation
-  vtkIdType finalLocalCells = result->GetNumberOfCells();
-  vtkIdType finalTotalCells = MpiWrapper::allReduce( finalLocalCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  GEOS_ERROR_IF( finalTotalCells != totalCells,
-                 GEOS_FMT( "Block redistribution lost cells: started with {}, ended with {}",
-                           totalCells,
-                           finalTotalCells ) );
-
-  return result;
-}
-
 
 /**
  * @brief Classify cells by dimension
@@ -1399,45 +1291,6 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   return AllMeshes( vtk::redistribute( *splitMesh, MPI_COMM_GEOS ), {} );
 }
 
-/**
- * @brief Redistributes the mesh using a Kd-Tree
- *
- * @param[in] mesh a vtk grid
- * @return the vtk grid redistributed
- */
-vtkSmartPointer< vtkDataSet >
-redistributeByKdTree( vtkDataSet & mesh )
-{
-  GEOS_MARK_FUNCTION;
-
-  // Count input cells for verification
-  vtkIdType localInputCells = mesh.GetNumberOfCells();
-  vtkIdType globalInputCells = MpiWrapper::allReduce( localInputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  // Use a VTK filter which employs a kd-tree partition internally
-  vtkNew< vtkRedistributeDataSetFilter > rdsf;
-  rdsf->SetInputDataObject( &mesh );
-  rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  rdsf->Update();
-
-  vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
-
-  // Verify we didn't lose any cells
-  vtkIdType localOutputCells = result->GetNumberOfCells();
-  vtkIdType globalOutputCells = MpiWrapper::allReduce( localOutputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
-
-  if( globalOutputCells != globalInputCells )
-  {
-    if( MpiWrapper::commRank() == 0 )
-    {
-      GEOS_WARNING( GEOS_FMT( "VTK KdTree redistribution lost {} elements! Falling back to block redistribution.",
-                              globalInputCells - globalOutputCells ) );
-    }
-    return scatterByBlock( mesh );
-  }
-
-  return result;
-}
 
 stdVector< int >
 findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
@@ -1654,15 +1507,18 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
+                    ScatterMethod const scatterMethod,
+                    arrayView1d< int const > partitions,
                     PartitionMethod const method,
                     int const partitionRefinement,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName,
-                    int const numPartZ )
+                    string const & structuredIndexAttributeName )
 {
   GEOS_MARK_FUNCTION;
   int const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
+
+  int const numPartZ = structuredIndexAttributeName.empty() ? 1 : partitions[2];
 
   stdVector< vtkSmartPointer< vtkDataSet > > fractures;
   for( auto & nameToFracture: namesToFractures )
@@ -1702,8 +1558,8 @@ redistributeMeshes( integer const logLevel,
     // Extract 3D cells for initial redistribution
     vtkSmartPointer< vtkUnstructuredGrid > cells3D = extractCellsByIndices( *mesh, cells3DIndices.toViewConst() );
 
-    // Redistribute the 3D mesh over all ranks using simple octree partitions
-    vtkSmartPointer< vtkDataSet > redistributed3D = redistributeByKdTree( *cells3D );
+    // Scatter the 3D mesh over all ranks using the selected method
+    vtkSmartPointer< vtkDataSet > redistributed3D = scatterMesh( scatterMethod, *cells3D, partitions, comm );
 
     // Check if a rank does not have a cell after the redistribution
     if( MpiWrapper::min( redistributed3D->GetNumberOfCells(), comm ) == 0 )

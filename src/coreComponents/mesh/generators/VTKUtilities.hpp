@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/generators/VTKMeshScattering.hpp"
 
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
@@ -150,11 +151,12 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitioning method
+ * @param[in] scatterMethod the initial scatter method
+ * @param[in] partitions the -x/-y/-z partition counts (used for cartesian scatter and structured index)
+ * @param[in] method the partitioning method for refinement
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
- * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
  * @return the vtk grid redistributed
  */
 AllMeshes
@@ -162,11 +164,12 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
+                    ScatterMethod const scatterMethod,
+                    arrayView1d< int const > partitions,
                     PartitionMethod const method,
                     int const partitionRefinement,
                     int const useGlobalIds,
-                    string const & structuredIndexAttributeName,
-                    int const numPartZ );
+                    string const & structuredIndexAttributeName );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
