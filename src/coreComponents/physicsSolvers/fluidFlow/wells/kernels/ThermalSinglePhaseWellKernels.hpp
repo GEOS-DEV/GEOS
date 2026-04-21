@@ -122,7 +122,8 @@ public:
       real64 localEnergyAccum;
       real64 localEnergyAccumDP;
       real64 localEnergyAccumDT;
-      if( iwelem == m_iwelemControl && !m_isProducer )
+      // if( iwelem == m_iwelemControl && !m_isProducer )
+      if( 1 )
       {
         // For top segment energy balance eqn replaced with  T(n+1) - T = 0
         // No other energy balance derivatives
@@ -327,7 +328,8 @@ public:
           localEnergyFluxJacobian_dQ[0] =   -m_dt *m_enthalpy[iwelem][0];
           localEnergyFluxJacobian[FLUID_PROP_COFFSET::dP] =  -m_dt  * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dP];
           localEnergyFluxJacobian[FLUID_PROP_COFFSET::dT] =  -m_dt  * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dT];
-          if( !m_isProducer && m_globalWellElementIndex[iwelem] == 0 )
+          // if( !m_isProducer && m_globalWellElementIndex[iwelem] == 0 )
+          if( 1 )
           {
             localEnergyFlux[0]= 0.0;
             localEnergyFluxJacobian_dQ[0]  = 0.0;
@@ -373,7 +375,8 @@ public:
         real64 dprop_dp =  m_dt * currentConnRate  *m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dP];
         real64 dprop_dt =  m_dt * currentConnRate * m_dEnthalpy[iwelem][0][FLUID_PROP_COFFSET::dT];
 
-        if( !m_isProducer  && m_globalWellElementIndex[iwelemNext] == 0 )
+        // if( !m_isProducer  && m_globalWellElementIndex[iwelemNext] == 0 )
+        if( 1 )
         {
           localEnergyFlux[TAG::NEXT   ]   =   0.0;
           localEnergyFluxJacobian_dQ [TAG::NEXT   ][0]  =   0.0;
@@ -387,10 +390,14 @@ public:
           localEnergyFluxJacobian[TAG::NEXT ][FLUID_PROP_COFFSET::dP] = dprop_dp;
           localEnergyFluxJacobian[TAG::NEXT][FLUID_PROP_COFFSET::dT]  = dprop_dt;
         }
-        localEnergyFlux[TAG::CURRENT  ] = -eflux * currentConnRate;
-        localEnergyFluxJacobian_dQ [TAG::CURRENT][0]  =  -eflux_dq;
-        localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dP] = -dprop_dp;
-        localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dT] = -dprop_dt;
+        // localEnergyFlux[TAG::CURRENT  ] = -eflux * currentConnRate;
+        // localEnergyFluxJacobian_dQ [TAG::CURRENT][0]  =  -eflux_dq;
+        // localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dP] = -dprop_dp;
+        // localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dT] = -dprop_dt;
+        localEnergyFlux[TAG::CURRENT  ] = 0.0;
+        localEnergyFluxJacobian_dQ [TAG::CURRENT][0]  =  0.0;
+        localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dP] = 0.0;
+        localEnergyFluxJacobian[TAG::CURRENT][FLUID_PROP_COFFSET::dT] = 0.0;
 
         // Note this updates diag and offdiag
         for( integer i = 0; i < 2; ++i )

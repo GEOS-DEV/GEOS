@@ -371,7 +371,9 @@ public:
       // the well-side energy flux. However, we still assemble the
       // reservoir-side energy flux so the reservoir cell receives the correct
       // enthalpy from the injected mass.
-      bool const isTopInjectorElement = !m_isProducer && m_globalWellElementIndex[iwelem] == 0;
+      // bool const isTopInjectorElement = !m_isProducer && m_globalWellElementIndex[iwelem] == 0;
+      GEOS_UNUSED_VAR( iwelem );
+      bool const isTopInjectorElement = 1;
 
       // local working variables and arrays
       stackArray1d< localIndex, 2 > eqnRowIndices( 2 );

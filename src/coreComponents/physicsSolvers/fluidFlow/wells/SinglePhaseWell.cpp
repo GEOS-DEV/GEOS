@@ -98,7 +98,7 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       if( isThermal() )
       {
         subRegion.registerField< well::temperatureScalingFactor >( getName() );
-        
+
         perforationData.registerField< well::energyPerforationFlux >( getName() );
         perforationData.registerField< well::dEnergyPerforationFlux >( getName() ).
           reference().resizeDimension< 1, 2 >( 2, 2 );
@@ -1193,19 +1193,19 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                       real64 const dt,
                                       DomainPartition & domain )
 {
-  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( dt, scalingFactor );
   DofManager::CompMask pressureMask( m_numDofPerWellElement, 0, 1 );
   DofManager::CompMask connRateMask( m_numDofPerWellElement, 1, 2 );
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                well::pressure::key(),
-                               scalingFactor,
+                               well::pressureScalingFactor::key(),
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
                                well::connectionRate::key(),
-                               scalingFactor,
+                               well::pressureScalingFactor::key(),
                                connRateMask );
 
   if( isThermal() )
@@ -1215,7 +1215,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
     dofManager.addVectorToField( localSolution,
                                  wellElementDofName(),
                                  fields::well::temperature::key(),
-                                 scalingFactor,
+                                 well::temperatureScalingFactor::key(),
                                  temperatureMask );
 
   }
