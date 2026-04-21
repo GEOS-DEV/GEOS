@@ -151,28 +151,19 @@ jobs:
     steps:
     - name: does_pr_have_necessary_labels
       if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
-      env:
-        # NOTE: labels are fetched live from the GitHub API (not read from
-        # github.event.pull_request.labels). The event payload is a snapshot
-        # frozen at the time the workflow was originally triggered, so if a
-        # label is added after the first run it will not be visible to a
-        # re-run. The REST call below always returns current state.
-        GH_REPO: ${{ github.repository }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        REQUIRED_LABEL: ${{ inputs.REQUIRED_LABEL }}
-        GITHUB_TOKEN: ${{ github.token }}
+      # Fetch labels live from the GitHub REST API rather than reading
+      # github.event.pull_request.labels. The event payload is a snapshot
+      # frozen at the time the workflow was first triggered, so labels
+      # added after that first run are invisible to re-runs. The curl
+      # call below always returns current state, which is required for
+      # CI re-runs to pick up newly added labels (e.g. "ci: run CUDA
+      # builds"). Do not replace with github.event.pull_request.labels.
       run: |
-        set -euo pipefail
-
-        PR_JSON=$(curl --fail --silent --show-error \
-          -H "Accept: application/vnd.github+json" \
-          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          "https://api.github.com/repos/${GH_REPO}/pulls/${PR_NUMBER}")
-        LABELS=$(jq -crM '[.labels[].name]' <<< "${PR_JSON}")
+        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
         echo " the labels are ${LABELS}"
-        echo " the required label is ${REQUIRED_LABEL}"
-        if [[ "${LABELS}" != *"${REQUIRED_LABEL}"* ]]; then
+        echo " the required label is ${{inputs.REQUIRED_LABEL}}"
+        if [[ "${LABELS}" != *"${{inputs.REQUIRED_LABEL}}"* ]]; then
           exit 1
         fi
 
