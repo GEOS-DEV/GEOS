@@ -231,7 +231,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   void computeMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
-                                real64 & mob, real64 dMob[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
+                                real64 & mob, real64 (& dMob)[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
   {
     using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
     using Deriv = constitutive::multifluid::DerivativeOffset;
@@ -272,10 +272,11 @@ public:
       }
     }
     // compute mobility kr/mu
-    mob = resRelPerm / resVisc;
+    mob += resRelPerm / resVisc;
     for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
     {
-      dMob[jc] = dRelPerm[jc]  / resVisc  - mob * dVisc[jc] /resVisc;
+      dMob[jc] += (dRelPerm[jc] *resVisc -  resRelPerm * dVisc[jc] )
+                  / ( resVisc * resVisc);
     }
   }
 
@@ -283,7 +284,7 @@ public:
   inline
   void computeDensityMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
 
-                                       real64 & mob, real64 dMob[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
+                                       real64 & mob, real64 (& dMob)[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
   {
     using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
     using Deriv = constitutive::multifluid::DerivativeOffset;
@@ -439,7 +440,6 @@ public:
       // first, compute the reservoir total mobility (excluding phase density)
       for( integer ip = 0; ip < NP; ++ip )
       {
-
         // skip the rest of the calculation if the phase is absent
         // or if crossflow is disabled for non-injectors aka producers
         bool const phaseExists = (m_resPhaseVolFrac[er][esr][ei][ip] > 0);
@@ -447,12 +447,7 @@ public:
         {
           continue;
         }
-        computeMobilityandDeriv( ip, er, esr, ei, mob, dMob );
-        resTotalMob     += mob;
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dResTotalMob[jc] += dMob[jc];
-        }
+        computeMobilityandDeriv( ip, er, esr, ei, resTotalMob, dResTotalMob );
       } // end well is upstream phase loop
 
       // compute a potdiff multiplier = wellElemTotalDens * resTotalMob
