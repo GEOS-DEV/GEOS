@@ -91,7 +91,6 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
-  using ElasticIsotropicUpdates::smallStrainUpdate_thermal;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -116,15 +115,6 @@ public:
                                               real64 const ( &strainIncrement )[6],
                                               real64 ( &stress )[6],
                                               real64 ( &stiffness )[6][6] ) const override;
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( &stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( &dStress_dTemperature )[6] ) const;
 
   GEOS_HOST_DEVICE
   inline
@@ -372,29 +362,6 @@ void DruckerPragerExtendedUpdates::smallStrainUpdate( localIndex const k,
                                                       DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
-}
-
-GEOS_HOST_DEVICE
-inline
-void DruckerPragerExtendedUpdates::smallStrainUpdate_thermal( localIndex const k,
-                                                              localIndex const q,
-                                                              real64 const & timeIncrement,
-                                                              real64 const ( &strainIncrementNoThermalStrain )[6],
-                                                              real64 ( & stress )[6],
-                                                              DiscretizationOps & stiffness,
-                                                              real64 ( & dStress_dTemperature )[6] ) const
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-  real64 const ( &stiffnessTensor )[6][6] = stiffness.m_c;
-
-  for( int i=0; i<6; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      dStress_dTemperature[i] += stiffnessTensor[i][j];
-    }
-  }
 }
 
 /**

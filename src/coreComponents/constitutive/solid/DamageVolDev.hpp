@@ -60,7 +60,6 @@ public:
   using DiscretizationOps = typename DamageUpdates< UPDATE_BASE >::DiscretizationOps;
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
-  using DamageUpdates< UPDATE_BASE >::smallStrainUpdate_thermal;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
 
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
@@ -152,27 +151,6 @@ public:
     {
       m_strainEnergyDensity( k, q ) = sed;
     }
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( & stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( & dStress_dTemperature )[6] ) const final
-  {
-    smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-    real64 const bulkMod = stiffness.m_bulkModulus;
-
-    dStress_dTemperature[0] = 3 * bulkMod;
-    dStress_dTemperature[1] = 3 * bulkMod;
-    dStress_dTemperature[2] = 3 * bulkMod;
-    dStress_dTemperature[3] = 0;
-    dStress_dTemperature[4] = 0;
-    dStress_dTemperature[5] = 0;
   }
 
   GEOS_HOST_DEVICE

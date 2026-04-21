@@ -108,7 +108,6 @@ public:
 
   using UPDATE_BASE::smallStrainNoStateUpdate;
   using UPDATE_BASE::smallStrainUpdate;
-  using UPDATE_BASE::smallStrainUpdate_thermal;
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
   using UPDATE_BASE::saveConvergedState;
@@ -292,27 +291,6 @@ public:
     LvArray::tensorOps::scale< 6 >( stress, factor );
 
     stiffness.scaleParams( factor );
-  }
-
-  GEOS_HOST_DEVICE
-  void smallStrainUpdate_thermal( localIndex const k,
-                                  localIndex const q,
-                                  real64 const & timeIncrement,
-                                  real64 const ( &strainIncrementNoThermalStrain )[6],
-                                  real64 ( & stress )[6],
-                                  DiscretizationOps & stiffness,
-                                  real64 ( & dStress_dTemperature )[6] ) const override
-  {
-    this->smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-    real64 const bulkMod = stiffness.m_bulkModulus;
-
-    dStress_dTemperature[0] = 3 * bulkMod;
-    dStress_dTemperature[1] = 3 * bulkMod;
-    dStress_dTemperature[2] = 3 * bulkMod;
-    dStress_dTemperature[3] = 0;
-    dStress_dTemperature[4] = 0;
-    dStress_dTemperature[5] = 0;
   }
 
   // TODO: The code below assumes the strain energy density will never be

@@ -60,7 +60,6 @@ public:
 
   using UPDATE_BASE::smallStrainUpdate;
   //using UPDATE_BASE::smallStrainUpdate_ElasticOnly;
-  using UPDATE_BASE::smallStrainUpdate_thermal;
   using UPDATE_BASE::saveConvergedState;
 
   using UPDATE_BASE::viscousStateUpdate;
@@ -123,28 +122,6 @@ public:
                                   DiscretizationOps & stiffness ) const override final
   {
     this->smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
-  }
-
-  GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( & stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( & dStress_dTemperature )[6] ) const override final
-  {
-    this->smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-    real64 const ( &stiffnessTensor )[6][6] = stiffness.m_c;
-
-    for( int i=0; i<6; ++i )
-    {
-      for( int j=0; j<3; ++j )
-      {
-        dStress_dTemperature[i] += stiffnessTensor[i][j];
-      }
-    }
   }
 
   real64 const m_relaxationTime;

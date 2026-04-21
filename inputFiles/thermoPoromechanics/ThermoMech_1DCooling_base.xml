@@ -13,6 +13,7 @@
     targetRegions="{ Domain }">
     <NonlinearSolverParameters
       couplingType="FullyImplicit"
+      lineSearchAction="None"
       newtonMaxIter="200"/>
     <LinearSolverParameters
       directParallel="0"/>

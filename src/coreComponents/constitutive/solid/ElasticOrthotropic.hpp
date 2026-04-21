@@ -148,15 +148,6 @@ public:
                                   DiscretizationOps & stiffness ) const final;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( &stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( &dStress_dTemperature )[6] ) const final;
-
-  GEOS_HOST_DEVICE
   virtual void getElasticStrain( localIndex const k,
                                  localIndex const q,
                                  real64 ( &elasticStrain )[6] ) const override final;
@@ -403,30 +394,6 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_c44 = m_c44[k];
   stiffness.m_c55 = m_c55[k];
   stiffness.m_c66 = m_c66[k];
-}
-
-GEOS_HOST_DEVICE
-inline
-void ElasticOrthotropicUpdates::smallStrainUpdate_thermal( localIndex const k,
-                                                           localIndex const q,
-                                                           real64 const & timeIncrement,
-                                                           real64 const ( &strainIncrementNoThermalStrain )[6],
-                                                           real64 ( & stress )[6],
-                                                           DiscretizationOps & stiffness,
-                                                           real64 ( & dStress_dTemperature )[6] ) const
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-  real64 stiffnessTensor[6][6] = {{}};
-  getElasticStiffness( k, q, stiffnessTensor );
-
-  for( int i=0; i<6; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      dStress_dTemperature[i] += stiffnessTensor[i][j];
-    }
-  }
 }
 
 /**

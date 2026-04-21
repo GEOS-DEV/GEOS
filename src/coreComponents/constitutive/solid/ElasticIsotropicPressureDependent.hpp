@@ -106,15 +106,6 @@ public:
                                   DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( &stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( &dStress_dTemperature )[6] ) const;
-
-  GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
@@ -474,30 +465,6 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   saveStress( k, q, stress );
   stiffness.m_bulkModulus = bulkModulus;
   stiffness.m_shearModulus = m_shearModulus[k];
-}
-
-GEOS_HOST_DEVICE
-inline
-void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate_thermal( localIndex const k,
-                                                                          localIndex const q,
-                                                                          real64 const & timeIncrement,
-                                                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                                                          real64 ( & stress )[6],
-                                                                          DiscretizationOps & stiffness,
-                                                                          real64 ( & dStress_dTemperature )[6] ) const
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-  real64 stiffnessTensor[6][6] = {{}};
-  getElasticStiffness( k, q, stiffnessTensor );
-
-  for( int i=0; i<6; ++i )
-  {
-    for( int j=0; j<3; ++j )
-    {
-      dStress_dTemperature[i] += stiffnessTensor[i][j];
-    }
-  }
 }
 
 GEOS_HOST_DEVICE

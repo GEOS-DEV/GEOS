@@ -290,13 +290,14 @@ private:
     strainIncrementNoThermalStrain[5] = strainIncrement[5];
 
     // Compute total stress increment and its derivative w.r.t. pressure
-    m_solidUpdate.smallStrainUpdate_thermal( k,
-                                             q,
-                                             timeIncrement,
-                                             strainIncrementNoThermalStrain,
-                                             totalStress, // first effective stress increment accumulated
-                                             stiffness,
-                                             dTotalStress_dTemperature );
+    m_solidUpdate.smallStrainUpdate( k,
+                                     q,
+                                     timeIncrement,
+                                     strainIncrementNoThermalStrain,
+                                     totalStress,
+                                     stiffness );
+
+    stiffness.computeTemperatureDerivative( thermalExpansionCoefficient, dTotalStress_dTemperature );
 
     // Add the contributions of pressure and temperature to the total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
@@ -312,8 +313,6 @@ private:
     dTotalStress_dPressure[3] = 0;
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
-
-    LvArray::tensorOps::scale< 6 >( dTotalStress_dTemperature, -thermalExpansionCoefficient );
   }
 
 };

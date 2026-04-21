@@ -126,15 +126,6 @@ public:
                                   DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
-  virtual void smallStrainUpdate_thermal( localIndex const k,
-                                          localIndex const q,
-                                          real64 const & timeIncrement,
-                                          real64 const ( &strainIncrementNoThermalStrain )[6],
-                                          real64 ( &stress )[6],
-                                          DiscretizationOps & stiffness,
-                                          real64 ( &dStress_dTemperature )[6] ) const;
-
-  GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
                                     localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
@@ -370,26 +361,6 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
   stiffness.m_bulkModulus = m_bulkModulus[k];
   stiffness.m_shearModulus = m_shearModulus[k];
-}
-
-GEOS_HOST_DEVICE
-inline
-void ElasticIsotropicUpdates::smallStrainUpdate_thermal( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const & timeIncrement,
-                                                         real64 const ( &strainIncrementNoThermalStrain )[6],
-                                                         real64 ( & stress )[6],
-                                                         DiscretizationOps & stiffness,
-                                                         real64 ( & dStress_dTemperature )[6] ) const
-{
-  smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
-
-  dStress_dTemperature[0] = 3 * m_bulkModulus[k];
-  dStress_dTemperature[1] = 3 * m_bulkModulus[k];
-  dStress_dTemperature[2] = 3 * m_bulkModulus[k];
-  dStress_dTemperature[3] = 0;
-  dStress_dTemperature[4] = 0;
-  dStress_dTemperature[5] = 0;
 }
 
 GEOS_HOST_DEVICE
