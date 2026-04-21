@@ -2932,6 +2932,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Grid MPI operations" );
   solverProfiling( "Grid MPI operations" );
+  
+  // Fields requiring additive sync
   stdVector< std::string > fieldNames1 = { viewKeyStruct::gridMassString(),
                                            viewKeyStruct::gridDamageString(),
                                            viewKeyStruct::gridMaterialVolumeString(),
@@ -2946,8 +2948,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     fieldNames1.push_back( viewKeyStruct::gridSurfacePositionString() );
   }
   syncGridFields( fieldNames1, domain, nodeManager, mesh, MPI_SUM );
+
+  // Fields requiring "max" sync
   stdVector< std::string > fieldNames2 = { viewKeyStruct::gridMaxDamageString() };
   syncGridFields( fieldNames2, domain, nodeManager, mesh, MPI_MAX );
+  
   //#######################################################################################
 
 
@@ -11904,8 +11909,8 @@ void SolidMechanicsMPM::particleToGrid_noAtomics( real64 const time_n,
           {
             localIndex voigt = voigtMap[k][i];
             gridInternalForce[mappedNode][fieldIndex][i] +=
-              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity *
-                 (k == i) ) * shapeFunctionGradientValues[g][k] * particleVolume[p];
+              -( ( particleStress[p][voigt] - gridBackgroundStress[mappedNode][voigt] ) - particleArtificialViscosity[p] * useArtificialViscosity * (k == i) )
+               * shapeFunctionGradientValues[g][k] * particleVolume[p];
           }
         }
       }
