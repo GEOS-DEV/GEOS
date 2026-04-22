@@ -235,7 +235,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::damageDrivingEnergyString(), &m_damageDrivingEnergy ).
     setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "accumulated damage history" );      
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
@@ -286,6 +286,7 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
 
   m_effectiveBulkModulus.resize( 0 );
   m_effectiveShearModulus.resize( 0 );

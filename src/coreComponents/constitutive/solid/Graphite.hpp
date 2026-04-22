@@ -555,6 +555,30 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                real64 const ( &endRotation )[3][3],
                                                real64 ( & stress )[6] ) const
 {
+
+
+
+  GEOS_ERROR_IF( !std::isfinite( m_jacobian[k][q] ),
+               "bad jacobian, k=" << k << " q=" << q );
+
+  for( int a = 0; a < 6; ++a )
+  {
+    GEOS_ERROR_IF( !std::isfinite( m_oldStress[k][q][a] ),
+                   "bad oldStress, k=" << k << " q=" << q << " a=" << a );
+  }
+  
+  //MM debug: 04/22/26
+  //GEOS_ERROR_IF( !std::isfinite( m_damage[k][q] ),
+  //               "bad damage, k=" << k << " q=" << q );
+  //
+  //GEOS_ERROR_IF( !std::isfinite( m_damageDrivingEnergy[k][q] ),
+  //               "bad damageDrivingEnergy, k=" << k << " q=" << q );
+  //
+  //GEOS_ERROR_IF( !std::isfinite( m_relaxation[k][q] ),
+  //               "bad relaxation, k=" << k << " q=" << q );
+  //
+  //GEOS_ERROR_IF( !std::isfinite( m_lengthScale[k] ) || m_lengthScale[k] <= 0.0,
+  //               "bad lengthScale, k=" << k << " value=" << m_lengthScale[k] );
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ", Stress in: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", "
   // << stress[4] << ", " << stress[5] << "}" );
@@ -753,11 +777,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   //real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
   //DEBUG
-  GEOS_ERROR_IF( !std::isfinite(m_crackSpeed) || m_crackSpeed <= 0.0,
-               "Invalid crackSpeed = " << m_crackSpeed );
-  GEOS_ERROR_IF( !std::isfinite(m_lengthScale[k]) || m_lengthScale[k] <= 0.0,
-               "Invalid lengthScale[" << k << "] = " << m_lengthScale[k] );
-
   // MM 2026/04/13:  remove 
   //// Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
   //if( planeNormalStress > failureStrength )
@@ -771,8 +790,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   //{
   //  m_damage[k][q] = 1.0;
   //}
-
-
 
   // strength scale factor, combining plastic softening and damage
   real64 damageMultiplier = (1.0 - m_damage[k][q]);
@@ -846,18 +863,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
 
-    //DEBUG
-  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
-               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
-               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
-                 "Degenerate slopePoint0 inputs: y1=" << y1
-                 << " y2=" << y2
-                 << " particle=" << k << " q=" << q );
-
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
   if( pressure < x1 )
@@ -889,18 +894,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
 
-  //DEBUG
-  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
-               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
-               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
-                 "Degenerate slopePoint0 inputs: y1=" << y1
-                 << " y2=" << y2
-                 << " particle=" << k << " q=" << q );
-                 
+ 
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
   if( pressure<x1 )
@@ -932,17 +926,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   y2 *= strainHardeningMultiplier;
   m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
 
-  //DEBUG
-  GEOS_ERROR_IF( !std::isfinite(x2) || x2 <= x1,
-               "Invalid shear response x-range: x1=" << x1 << " x2=" << x2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite(y1) || !std::isfinite(y2),
-               "Non-finite y1/y2: y1=" << y1 << " y2=" << y2
-               << " particle=" << k << " q=" << q );
-  GEOS_ERROR_IF( !std::isfinite( y1 ) || !std::isfinite( y2 ) || std::abs( y1 - y2 ) < 1e-20,
-                 "Degenerate slopePoint0 inputs: y1=" << y1
-                 << " y2=" << y2
-                 << " particle=" << k << " q=" << q );
+
 
   m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) );   // Ensure convexity
 
@@ -1052,7 +1036,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                         timeIncrement,                 // timeStep
                                                         plasticStrainIncrement );
 
+
     // Unrotate old plastic strain
+    //real64 oldPlasticStrain[6] = {};
+    //LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
+
     real64 oldPlasticStrain[6] = {};
     LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
     oldPlasticStrain[3] *= 0.5;
@@ -1095,14 +1083,19 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     newPlasticStrain[4] *= 2.0;
     newPlasticStrain[5] *= 2.0;
 
+
     // Assign new plastic strain to state variable
+    //LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+
+
     LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
 
+
     //// Damage from plastic work, after plastic correction/state update
-    //real64 avgStress[6] = {};
-    //LvArray::tensorOps::copy< 6 >( avgStress, oldStress );
-    //LvArray::tensorOps::add< 6 >( avgStress, stress );
-    //LvArray::tensorOps::scale< 6 >( avgStress, 0.5 );
+    real64 avgStress[6] = {};
+    LvArray::tensorOps::copy< 6 >( avgStress, oldStress );
+    LvArray::tensorOps::add< 6 >( avgStress, stress );
+    LvArray::tensorOps::scale< 6 >( avgStress, 0.5 );
   
     //real64 deltaW = LvArray::tensorOps::AiBi< 6 >( avgStress, plasticStrainIncrement );
     //deltaW = LvArray::math::max( 0.0, deltaW );
@@ -1121,9 +1114,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     plasticStrainForNorm[4] *= 1.41421356237;
     plasticStrainForNorm[5] *= 1.41421356237;
     
-    real64 plasticStrainMagnitude = LvArray::tensorOps::l2Norm< 6 >( plasticStrainForNorm );
+    real64 deltaWModeII =
+     LvArray::math::max( 0.0, LvArray::tensorOps::AiBi< 6 >( avgStress, plasticStrainIncrement ) );
+    //real64 plasticStrainMagnitude = LvArray::tensorOps::l2Norm< 6 >( plasticStrainForNorm );
 
-    if( plasticStrainMagnitude >  m_distortionShearResponseX2)
+    if( pressure <  m_distortionShearResponseX2)
     {
       real64 tempVec[3] = {};
       LvArray::tensorOps::Ri_eq_symAijBj< 3 >( tempVec, plasticStrainIncrement, unrotatedMaterialDirection );
@@ -1137,37 +1132,35 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
         LvArray::math::max( 0.0, avgPlaneNormalStress * plasticNormalStrainIncrement );
 
 
+
+      //real64 stressIncrementModeII[6] = {};
+      //  LvArray::tensorOps::copy< 6 >( stressIncrementModeII, stress );
+      //  LvArray::tensorOps::subtract< 6 >( stressIncrementModeII, oldStress );
         
-      real64 stressIncrementModeII[6] = {};
-        LvArray::tensorOps::copy< 6 >( stressIncrementModeII, stress );
-        LvArray::tensorOps::subtract< 6 >( stressIncrementModeII, oldStress );
-        
-      real64 deltaWModeII =
-        LvArray::math::max( 0.0, LvArray::tensorOps::AiBi< 6 >( stressIncrementModeII, plasticStrainIncrement ) );  
+      //real64 deltaWModeII =
+      //  LvArray::math::max( 0.0, LvArray::tensorOps::AiBi< 6 >( stressIncrementModeII, plasticStrainIncrement ) );  
       //real64 deltaWModeII =
       //  LvArray::math::max( 0.0, LvArray::tensorOps::AiBi< 6 >( sigma5, plasticStrainIncrement ) );
+
+      //real64 deltaWModeII =
+      //  LvArray::math::max( 0.0, LvArray::tensorOps::AiBi< 6 >( avgStress, plasticStrainIncrement ) );
     
       real64 gcIReg = m_fractureEnergyReleaseRateModeI / m_lengthScale[k];
       real64 gcIIReg = m_fractureEnergyReleaseRateModeII / m_lengthScale[k];
-    
-      GEOS_ERROR_IF( !std::isfinite( gcIReg ) || gcIReg <= 0.0,
-                     "Invalid Mode I damage denominator = " << gcIReg
-                     << " particle=" << k << " q=" << q );
-    
-      GEOS_ERROR_IF( !std::isfinite( gcIIReg ) || gcIIReg <= 0.0,
-                     "Invalid Mode II damage denominator = " << gcIIReg
-                     << " particle=" << k << " q=" << q );
+
     
       real64 deltaDrive =
           deltaWModeI  / gcIReg +
           deltaWModeII / gcIIReg;
-    
+
+
       m_damageDrivingEnergy[k][q] += LvArray::math::max( 0.0, deltaDrive );
     
       m_damage[k][q] =
         LvArray::math::max( 0.0,
           LvArray::math::min( 1.0,
             LvArray::math::pow( m_damageDrivingEnergy[k][q], m_damagePowerVal ) ) );
+
     }
 
     // increment relaxation

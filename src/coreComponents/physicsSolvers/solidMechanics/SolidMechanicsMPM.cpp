@@ -16886,19 +16886,36 @@ void SolidMechanicsMPM::updateStress( real64 dt,
       hyperelasticUpdate = 1;
     }
 
+    //// Call constitutive model
+    //ConstitutivePassThruMPM< ContinuumBase >::execute( constitutiveModel, [&] ( auto & castedConstitutiveModel )
+    //{
+    //  using SolidType = TYPEOFREF( castedConstitutiveModel );
+    //  typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
+    //  solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
+    //                                                                                         constitutiveModelWrapper,
+    //                                                                                         dt,
+    //                                                                                         hyperelasticUpdate,
+    //                                                                                         particleDeformationGradient,
+    //                                                                                         particleFDot,
+    //                                                                                         particleVelocityGradient,
+    //                                                                                         particleStress );
+    //} );
+
     // Call constitutive model
-    ConstitutivePassThruMPM< ContinuumBase >::execute( constitutiveModel, [&] ( auto & castedConstitutiveModel )
-    {
-      using SolidType = TYPEOFREF( castedConstitutiveModel );
-      typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
-      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
-                                                                                             constitutiveModelWrapper,
-                                                                                             dt,
-                                                                                             hyperelasticUpdate,
-                                                                                             particleDeformationGradient,
-                                                                                             particleFDot,
-                                                                                             particleVelocityGradient,
-                                                                                             particleStress );
+ConstitutivePassThruMPM< ContinuumBase >::execute( constitutiveModel, [&] ( auto & castedConstitutiveModel )
+{
+  using SolidType = TYPEOFREF( castedConstitutiveModel );
+  typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
+
+  solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >(
+    subRegion.activeParticleIndices(),
+    constitutiveModelWrapper,
+    dt,
+    hyperelasticUpdate,
+    particleDeformationGradient,
+    particleFDot,
+    particleVelocityGradient,
+    particleStress );
     } );
   } );
 }
