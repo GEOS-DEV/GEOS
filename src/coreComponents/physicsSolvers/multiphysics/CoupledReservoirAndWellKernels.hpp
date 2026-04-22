@@ -274,7 +274,7 @@ protected:
 
   // RHS and Jacobian
   arrayView1d< real64 > const m_localRhs;
-  MATRIX_VIEW  m_localMatrix;
+  MATRIX_VIEW m_localMatrix;
 
   bool const m_detectCrossflow;
   integer & m_numCrossFlowPerforations;

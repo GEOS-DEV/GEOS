@@ -49,9 +49,9 @@ template< integer NUM_SPECIES,
           typename BASE_FLUID_TYPE,
           typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN,
-                                                                                               NUM_DOF,
-                                                                                               FLUIDWRAPPER,
-                                                                                               MATRIX_VIEW >
+                                                                                             NUM_DOF,
+                                                                                             FLUIDWRAPPER,
+                                                                                             MATRIX_VIEW >
 {
 public:
   /// Compile time value for the number of primary species

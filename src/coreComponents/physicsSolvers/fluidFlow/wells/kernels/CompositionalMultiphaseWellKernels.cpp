@@ -233,9 +233,9 @@ ControlEquationHelper::
   localRhs[eqnRowIndex] += controlEqn;
 
   localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                            dofColIndices,
-                                                            dControlEqn,
-                                                            COFFSET_WJ::nDer );
+                                                                     dofColIndices,
+                                                                     dControlEqn,
+                                                                     COFFSET_WJ::nDer );
 
 
 }
@@ -440,9 +440,9 @@ PressureRelationKernel::
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                          dofColIndices,
-                                                                          localPresRelJacobian,
-                                                                          2 * (NC+1+IS_THERMAL) );
+                                                                                   dofColIndices,
+                                                                                   localPresRelJacobian,
+                                                                                   2 * (NC+1+IS_THERMAL) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
@@ -454,22 +454,22 @@ PressureRelationKernel::
   template \
   void PressureRelationKernel:: \
     launch< NC, IS_THERMAL, DefaultGlobalMatrixView >( localIndex const size, \
-                              globalIndex const rankOffset, \
-                              bool const isLocallyOwned, \
-                              localIndex const iwelemControl, \
-                              integer const targetPhaseIndex, \
-                              WellControls const & wellControls, \
-                              real64 const & time, \
-                              arrayView1d< integer const > const elemStatus, \
-                              arrayView1d< globalIndex const > const & wellElemDofNumber, \
-                              arrayView1d< real64 const > const & wellElemGravCoef, \
-                              arrayView1d< localIndex const > const & nextWellElemIndex, \
-                              arrayView1d< real64 const > const & wellElemPressure, \
-                              arrayView1d< real64 const > const & wellElemTotalMassDens, \
-                              arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens, \
-                              bool & controlHasSwitched, \
-                              DefaultGlobalMatrixView const & localMatrix, \
-                              arrayView1d< real64 > const & localRhs )
+                                                       globalIndex const rankOffset, \
+                                                       bool const isLocallyOwned, \
+                                                       localIndex const iwelemControl, \
+                                                       integer const targetPhaseIndex, \
+                                                       WellControls const & wellControls, \
+                                                       real64 const & time, \
+                                                       arrayView1d< integer const > const elemStatus, \
+                                                       arrayView1d< globalIndex const > const & wellElemDofNumber, \
+                                                       arrayView1d< real64 const > const & wellElemGravCoef, \
+                                                       arrayView1d< localIndex const > const & nextWellElemIndex, \
+                                                       arrayView1d< real64 const > const & wellElemPressure, \
+                                                       arrayView1d< real64 const > const & wellElemTotalMassDens, \
+                                                       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens, \
+                                                       bool & controlHasSwitched, \
+                                                       DefaultGlobalMatrixView const & localMatrix, \
+                                                       arrayView1d< real64 > const & localRhs )
 
 INST_PressureRelationKernel( 1, 0 );
 INST_PressureRelationKernel( 1, 1 );

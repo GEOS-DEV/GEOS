@@ -229,7 +229,7 @@ protected:
   arrayView1d< localIndex const > const m_resElementIndex;
 
   // RHS and Jacobian
-  MATRIX_VIEW  m_localMatrix;
+  MATRIX_VIEW m_localMatrix;
   arrayView1d< real64 > const m_localRhs;
 
 };

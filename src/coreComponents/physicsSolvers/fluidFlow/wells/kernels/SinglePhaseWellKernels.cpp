@@ -149,9 +149,9 @@ ControlEquationHelper::
 
   localRhs[eqnRowIndex] += controlEqn;
   localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                            dofColIndices,
-                                                            dControlEqn,
-                                                            COFFSET_WJ::nDer );
+                                                                     dofColIndices,
+                                                                     dControlEqn,
+                                                                     COFFSET_WJ::nDer );
 }
 
 /******************************** FluxKernel ********************************/
@@ -160,13 +160,13 @@ ControlEquationHelper::
   void  \
   FluxKernel::  \
     launch< IS_THERMAL, DefaultGlobalMatrixView >( localIndex const size,  \
-                          globalIndex const rankOffset,  \
-                          arrayView1d< globalIndex const > const & wellElemDofNumber,  \
-                          arrayView1d< localIndex const > const & nextWellElemIndex,  \
-                          arrayView1d< real64 const > const & connRate,  \
-                          real64 const & dt,  \
-                          DefaultGlobalMatrixView const & localMatrix,  \
-                          arrayView1d< real64 > const & localRhs )
+                                                   globalIndex const rankOffset,  \
+                                                   arrayView1d< globalIndex const > const & wellElemDofNumber,  \
+                                                   arrayView1d< localIndex const > const & nextWellElemIndex,  \
+                                                   arrayView1d< real64 const > const & connRate,  \
+                                                   real64 const & dt,  \
+                                                   DefaultGlobalMatrixView const & localMatrix,  \
+                                                   arrayView1d< real64 > const & localRhs )
 
 INST_FluxKernel( 0 );
 INST_FluxKernel( 1 );
@@ -217,9 +217,9 @@ FluxKernel::
       if( oneSidedEqnRowIndex >= 0 && oneSidedEqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.template addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndex,
-                                                      &oneSidedDofColIndex_dRate,
-                                                      &oneSidedLocalFluxJacobian_dRate,
-                                                      1 );
+                                                               &oneSidedDofColIndex_dRate,
+                                                               &oneSidedLocalFluxJacobian_dRate,
+                                                               1 );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndex], oneSidedLocalFlux );
       }
     }
@@ -248,9 +248,9 @@ FluxKernel::
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
         {
           localMatrix.template addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                        &dofColIndex_dRate,
-                                                        &localFluxJacobian_dRate[i],
-                                                        1 );
+                                                                 &dofColIndex_dRate,
+                                                                 &localFluxJacobian_dRate[i],
+                                                                 1 );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
         }
       }
@@ -265,19 +265,19 @@ FluxKernel::
   localIndex \
   PressureRelationKernel:: \
     launch< IS_THERMAL, DefaultGlobalMatrixView >( localIndex const size, \
-                          globalIndex const rankOffset, \
-                          bool const isLocallyOwned, \
-                          localIndex const iwelemControl, \
-                          WellControls const & wellControls, \
-                          real64 const & timeAtEndOfStep, \
-                          arrayView1d< globalIndex const > const & wellElemDofNumber, \
-                          arrayView1d< real64 const > const & wellElemGravCoef, \
-                          arrayView1d< localIndex const > const & nextWellElemIndex, \
-                          arrayView1d< real64 const > const & wellElemPressure, \
-                          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity, \
-                          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity, \
-                          DefaultGlobalMatrixView const & localMatrix, \
-                          arrayView1d< real64 > const & localRhs )
+                                                   globalIndex const rankOffset, \
+                                                   bool const isLocallyOwned, \
+                                                   localIndex const iwelemControl, \
+                                                   WellControls const & wellControls, \
+                                                   real64 const & timeAtEndOfStep, \
+                                                   arrayView1d< globalIndex const > const & wellElemDofNumber, \
+                                                   arrayView1d< real64 const > const & wellElemGravCoef, \
+                                                   arrayView1d< localIndex const > const & nextWellElemIndex, \
+                                                   arrayView1d< real64 const > const & wellElemPressure, \
+                                                   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity, \
+                                                   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity, \
+                                                   DefaultGlobalMatrixView const & localMatrix, \
+                                                   arrayView1d< real64 > const & localRhs )
 
 INST_PressureRelationKernel( 0 );
 INST_PressureRelationKernel( 1 );
@@ -399,9 +399,9 @@ PressureRelationKernel::
       if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
       {
         localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                          dofColIndices,
-                                                                          localPresRelJacobian,
-                                                                          2 * (1+IS_THERMAL) );
+                                                                                   dofColIndices,
+                                                                                   localPresRelJacobian,
+                                                                                   2 * (1+IS_THERMAL) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
       }
     }
@@ -450,15 +450,15 @@ template
 void
 AccumulationKernel::
   launch< DefaultGlobalMatrixView >( localIndex const size,
-          globalIndex const rankOffset,
-          arrayView1d< globalIndex const > const & wellElemDofNumber,
-          arrayView1d< integer const > const & wellElemGhostRank,
-          arrayView1d< real64 const > const & wellElemVolume,
-          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
-          arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
-          arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
-          DefaultGlobalMatrixView const & localMatrix,
-          arrayView1d< real64 > const & localRhs );
+                                     globalIndex const rankOffset,
+                                     arrayView1d< globalIndex const > const & wellElemDofNumber,
+                                     arrayView1d< integer const > const & wellElemGhostRank,
+                                     arrayView1d< real64 const > const & wellElemVolume,
+                                     arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity,
+                                     arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dWellElemDensity,
+                                     arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & wellElemDensity_n,
+                                     DefaultGlobalMatrixView const & localMatrix,
+                                     arrayView1d< real64 > const & localRhs );
 
 
 /******************************** PressureInitializationKernel ********************************/

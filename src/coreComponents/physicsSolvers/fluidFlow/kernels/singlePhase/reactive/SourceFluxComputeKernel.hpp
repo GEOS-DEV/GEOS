@@ -302,8 +302,9 @@ public:
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 1+NS();
 
-      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW > kernel( rankOffset, dofNumber, elemGhostRank, rhsContributionArrayView, sizeScalingFactor, fluid, localMatrix, localRhs,
-                                                                                             massProd );
+      SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW > kernel( rankOffset, dofNumber, elemGhostRank, rhsContributionArrayView, sizeScalingFactor, fluid, localMatrix,
+                                                                                            localRhs,
+                                                                                            massProd );
       SourceFluxComputeKernel< NUM_DOF, NUM_SPECIES, BASE_FLUID_TYPE, MATRIX_VIEW >::template launch< POLICY >( targetSet, kernel );
     } );
   }

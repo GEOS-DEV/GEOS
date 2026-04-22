@@ -1022,9 +1022,9 @@ public:
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.template addToRow< serialAtomic >( stack.localRow + i,
-                                                        stack.dofIndices,
-                                                        stack.localJacobian[i],
-                                                        numDof );
+                                                       stack.dofIndices,
+                                                       stack.localJacobian[i],
+                                                       numDof );
     }
   }
 

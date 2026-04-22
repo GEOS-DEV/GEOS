@@ -592,8 +592,8 @@ void DofManagerSparsityTest< LAI >::test( stdVector< FieldDesc > fields,
   }
 
   DefaultGlobalMatrix localPatternExpected( numLocalDof,
-                                                         dofManager.numGlobalDofs(),
-                                                         27 * numCompTotal );
+                                            dofManager.numGlobalDofs(),
+                                            27 * numCompTotal );
   Matrix patternExpected;
 
   for( FieldDesc const & f : fields )

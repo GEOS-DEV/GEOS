@@ -52,8 +52,13 @@ class PhysicsSolverBase : public ExecutableGroup
 {
 public:
 
+  /// Type alias for the sparse global matrix
   using MATRIX = DefaultGlobalMatrix;
+
+  /// Type alias for the sparse global matrix view
   using MATRIX_VIEW = DefaultGlobalMatrixView;
+
+  /// Type alias for the const sparse global matrix view
   using CONST_MATRIX_VIEW = DefaultGlobalConstMatrixView;
 
   /**

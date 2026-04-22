@@ -634,9 +634,9 @@ public:
       if( oneSidedEqnRowIndex >= 0 && oneSidedEqnRowIndex < m_localMatrix.numRows() )
       {
         m_localMatrix.template addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndex,
-                                                        &oneSidedDofColIndex_dRate,
-                                                        &oneSidedLocalFluxJacobian_dRate,
-                                                        1 );
+                                                                 &oneSidedDofColIndex_dRate,
+                                                                 &oneSidedLocalFluxJacobian_dRate,
+                                                                 1 );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[oneSidedEqnRowIndex], oneSidedLocalFlux );
       }
     }
@@ -665,9 +665,9 @@ public:
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
           m_localMatrix.template addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                          &dofColIndex_dRate,
-                                                          &localFluxJacobian_dRate[i],
-                                                          1 );
+                                                                   &dofColIndex_dRate,
+                                                                   &localFluxJacobian_dRate[i],
+                                                                   1 );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localFlux[i] );
         }
       }

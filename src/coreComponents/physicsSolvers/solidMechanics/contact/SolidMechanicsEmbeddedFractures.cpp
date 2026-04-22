@@ -702,7 +702,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    DefaultGlobalMatrix  voidMatrix;
+    DefaultGlobalMatrix voidMatrix;
     array1d< real64 > voidRhs;
 
     solidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,

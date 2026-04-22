@@ -40,10 +40,10 @@ template< typename SUBREGION_TYPE,
           typename BASE_FLUID_TYPE,
           typename MATRIX_VIEW >
 class AccumulationKernel : public singlePhaseReactiveBaseKernels::AccumulationKernel< SUBREGION_TYPE,
-                                                                                       NUM_DOF,
-                                                                                       NUM_SPECIES,
-                                                                                       BASE_FLUID_TYPE,
-                                                                                       MATRIX_VIEW >
+                                                                                      NUM_DOF,
+                                                                                      NUM_SPECIES,
+                                                                                      BASE_FLUID_TYPE,
+                                                                                      MATRIX_VIEW >
 {
 
 public:

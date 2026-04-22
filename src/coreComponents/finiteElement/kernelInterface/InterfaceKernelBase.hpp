@@ -82,9 +82,9 @@ public:
   using type = std::conditional_t< isConstructible,
                                    Type0,
                                    typename FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
-                                                                                CONSTITUTIVE_TYPE,
-                                                                                FE_TYPE,
-                                                                                TYPES ... >::type >;
+                                                                               CONSTITUTIVE_TYPE,
+                                                                               FE_TYPE,
+                                                                               TYPES ... >::type >;
 };
 
 }
@@ -176,6 +176,11 @@ template< template< typename ... > class KERNEL_TYPE,
           typename ... ARGS >
 class InterfaceKernelFactory;
 
+/**
+ * @brief Specialization of #::geos::finiteElement::InterfaceKernelFactory for the case where the kernel template has 4 template parameters.
+ * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel with 4 template parameters.
+ *   Most likely derives from InterfaceKernelBase.
+ */
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
           typename ... ARGS >
@@ -283,9 +288,9 @@ public:
     using Kernel = KERNEL_TYPE< CONSTITUTIVE_TYPE,
                                 FE_TYPE,
                                 typename internal::FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
-                                                                                        CONSTITUTIVE_TYPE,
-                                                                                        FE_TYPE,
-                                                                                        ARGS ... >::type >;
+                                                                                      CONSTITUTIVE_TYPE,
+                                                                                      FE_TYPE,
+                                                                                      ARGS ... >::type >;
 
     camp::tuple< NodeManager &,
                  EdgeManager const &,

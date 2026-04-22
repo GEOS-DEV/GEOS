@@ -231,30 +231,30 @@ AquiferBCKernel::
   template \
   void AquiferBCKernel:: \
     launch< NC, DefaultGlobalMatrixView >( integer const numPhases, \
-                  integer const ipWater, \
-                  bool const allowAllPhasesIntoAquifer, \
-                  integer const useTotalMassEquation, \
-                  BoundaryStencil const & stencil, \
-                  globalIndex const rankOffset, \
-                  ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
-                  AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper, \
-                  real64 const aquiferWaterPhaseDens, \
-                  arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac, \
-                  ElementViewConst< arrayView1d< integer const > > const & ghostRank, \
-                  ElementViewConst< arrayView1d< real64 const > > const & pres, \
-                  ElementViewConst< arrayView1d< real64 const > > const & dPres, \
-                  ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
-                  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
-                  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac, \
-                  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
-                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac, \
-                  real64 const timeAtBeginningOfStep, \
-                  real64 const dt, \
-                  DefaultGlobalMatrixView const & localMatrix, \
-                  arrayView1d< real64 > const & localRhs )
+                                           integer const ipWater, \
+                                           bool const allowAllPhasesIntoAquifer, \
+                                           integer const useTotalMassEquation, \
+                                           BoundaryStencil const & stencil, \
+                                           globalIndex const rankOffset, \
+                                           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber, \
+                                           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper, \
+                                           real64 const aquiferWaterPhaseDens, \
+                                           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac, \
+                                           ElementViewConst< arrayView1d< integer const > > const & ghostRank, \
+                                           ElementViewConst< arrayView1d< real64 const > > const & pres, \
+                                           ElementViewConst< arrayView1d< real64 const > > const & dPres, \
+                                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef, \
+                                           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac, \
+                                           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac, \
+                                           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
+                                           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
+                                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
+                                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
+                                           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac, \
+                                           real64 const timeAtBeginningOfStep, \
+                                           real64 const dt, \
+                                           DefaultGlobalMatrixView const & localMatrix, \
+                                           arrayView1d< real64 > const & localRhs )
 
 INST_AquiferBCKernel( 1 );
 INST_AquiferBCKernel( 2 );

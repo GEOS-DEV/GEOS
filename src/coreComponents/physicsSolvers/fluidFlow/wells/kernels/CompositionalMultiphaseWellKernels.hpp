@@ -1156,9 +1156,9 @@ public:
     {
       m_localRhs[stack.eqnRowIndices[i]]  += stack.localResidual[i];
       m_localMatrix.template addToRow< serialAtomic >( stack.eqnRowIndices[i],
-                                              stack.dofColIndices,
-                                              stack.localJacobian[i],
-                                              numComp+1+ IS_THERMAL );
+                                                       stack.dofColIndices,
+                                                       stack.localJacobian[i],
+                                                       numComp+1+ IS_THERMAL );
     }
 
   }
@@ -1490,13 +1490,13 @@ public:
         if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < m_localMatrix.numRows() )
         {
           m_localMatrix.template addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
-                                                          &oneSidedDofColIndices_dRate,
-                                                          stack.localFluxJacobian_dQ[i],
-                                                          1 );
+                                                                   &oneSidedDofColIndices_dRate,
+                                                                   stack.localFluxJacobian_dQ[i],
+                                                                   1 );
           m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
-                                                                              oneSidedDofColIndices_dPresCompTempUp,
-                                                                              stack.localFluxJacobian[i],
-                                                                              CP_Deriv::nDer );
+                                                                                       oneSidedDofColIndices_dPresCompTempUp,
+                                                                                       stack.localFluxJacobian[i],
+                                                                                       CP_Deriv::nDer );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[oneSidedEqnRowIndices[i]], stack.localFlux[i] );
         }
       }
@@ -1546,13 +1546,13 @@ public:
         if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
         {
           m_localMatrix.template addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                          &dofColIndices_dRate,
-                                                          stack.localFluxJacobian_dQ[i],
-                                                          1 );
+                                                                   &dofColIndices_dRate,
+                                                                   stack.localFluxJacobian_dQ[i],
+                                                                   1 );
           m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices_dPresCompUp,
-                                                                              stack.localFluxJacobian[i],
-                                                                              CP_Deriv::nDer );
+                                                                                       dofColIndices_dPresCompUp,
+                                                                                       stack.localFluxJacobian[i],
+                                                                                       CP_Deriv::nDer );
           RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], stack.localFlux[i] );
 
         }

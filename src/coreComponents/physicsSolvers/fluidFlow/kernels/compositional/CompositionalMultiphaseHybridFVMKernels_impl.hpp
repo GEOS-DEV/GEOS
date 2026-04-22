@@ -839,9 +839,9 @@ AssemblerKernelHelper::
     }
 
     localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
-                                                              compactElemDofs,
-                                                              compactElemDerivs,
-                                                              compactIdx );
+                                                                       compactElemDofs,
+                                                                       compactElemDerivs,
+                                                                       compactIdx );
 
     // jacobian -- derivatives wrt face centered vars (only non-boundary faces)
     // Need to compact the derivatives array to only include non-boundary faces
@@ -857,9 +857,9 @@ AssemblerKernelHelper::
       }
 
       localMatrix.template addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
-                                                                &dofColIndicesFaceVars[0],
-                                                                compactFaceDerivs,
-                                                                numNonBoundaryFaces );
+                                                                         &dofColIndicesFaceVars[0],
+                                                                         compactFaceDerivs,
+                                                                         numNonBoundaryFaces );
     }
   }
 }
@@ -1079,15 +1079,15 @@ AssemblerKernelHelper::
 
     // jacobian -- derivatives wrt elem-centered terms
     localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
-                                                                      &dofColIndicesElemVars[0],
-                                                                      &dFlux_dElemVars[0],
-                                                                      NDOF );
+                                                                               &dofColIndicesElemVars[0],
+                                                                               &dFlux_dElemVars[0],
+                                                                               NDOF );
 
     // jacobian -- derivatives wrt face pressure terms
     localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnLocalRowIndex,
-                                                                      &dofColIndicesFaceVars[0],
-                                                                      &dFlux_dFaceVars[0],
-                                                                      NF );
+                                                                               &dofColIndicesFaceVars[0],
+                                                                               &dFlux_dFaceVars[0],
+                                                                               NF );
   }
 }
 
@@ -1631,9 +1631,9 @@ DirichletFluxKernel::
       }
 
       localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                        dofColIndices,
-                                                                        localFluxJacobian[ic],
-                                                                        NC+1 );
+                                                                                 dofColIndices,
+                                                                                 localFluxJacobian[ic],
+                                                                                 NC+1 );
 
       // Add contributions from face pressure derivatives
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
@@ -1655,9 +1655,9 @@ DirichletFluxKernel::
         }
 
         localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
-                                                                          &faceDof,
-                                                                          &facePressureJacobian,
-                                                                          1 );
+                                                                                   &faceDof,
+                                                                                   &facePressureJacobian,
+                                                                                   1 );
       }
 
     }

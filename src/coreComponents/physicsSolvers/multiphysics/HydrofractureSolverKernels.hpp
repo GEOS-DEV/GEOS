@@ -263,9 +263,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
       if( rowNumber >= 0  && rowNumber < localMatrix.numRows() )
       {
         localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                                    nodeDOF,
-                                                                                    dRdU.data(),
-                                                                                    2 * numNodesPerFace * 3 );
+                                                                                   nodeDOF,
+                                                                                   dRdU.data(),
+                                                                                   2 * numNodesPerFace * 3 );
       }
 //
       if( useQuasiNewton == 0 ) // when Quasi Newton is not enabled - add flux derivatives
@@ -290,9 +290,9 @@ struct FluidMassResidualDerivativeAssemblyKernel
           if( rowNumber >= 0 && rowNumber < localMatrix.numRows() )
           {
             localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( rowNumber,
-                                                                                        nodeDOF,
-                                                                                        dRdU.data(),
-                                                                                        2 * numNodesPerFace * 3 );
+                                                                                       nodeDOF,
+                                                                                       dRdU.data(),
+                                                                                       2 * numNodesPerFace * 3 );
           }
         }
       }

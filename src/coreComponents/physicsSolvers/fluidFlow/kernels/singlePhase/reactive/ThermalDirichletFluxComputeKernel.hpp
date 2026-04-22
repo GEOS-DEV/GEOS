@@ -49,11 +49,11 @@ template< integer NUM_SPECIES,
           typename BASE_FLUID_TYPE,
           typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES,
-                                                                                                       NUM_EQN,
-                                                                                                       NUM_DOF,
-                                                                                                       FLUIDWRAPPER,
-                                                                                                       BASE_FLUID_TYPE,
-                                                                                                       MATRIX_VIEW >
+                                                                                                     NUM_EQN,
+                                                                                                     NUM_DOF,
+                                                                                                     FLUIDWRAPPER,
+                                                                                                     BASE_FLUID_TYPE,
+                                                                                                     MATRIX_VIEW >
 {
 public:
 

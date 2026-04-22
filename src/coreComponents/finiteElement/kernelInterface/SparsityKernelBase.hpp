@@ -188,6 +188,11 @@ private:
 template< template< typename ... > class KERNEL_TEMPLATE >
 class SparsityKernelFactory;
 
+/**
+ * @brief Specialization of #::geos::finiteElement::SparsityKernelFactory for the case where the kernel template has 3 template parameters.
+ * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel with 3 template parameters.
+ *   Most likely derives from SparsityKernelBase.
+ */
 template< template< typename,
                     typename,
                     typename > class KERNEL_TEMPLATE >
@@ -260,6 +265,12 @@ private:
   SparsityPattern< globalIndex > & m_inputSparsityPattern;
 };
 
+
+/**
+ * @brief Specialization of #::geos::finiteElement::SparsityKernelFactory for the case where the kernel template has 5 template parameters.
+ * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel with 5 template parameters.
+ *   Most likely derives from SparsityKernelBase.
+ */
 template< template< typename,
                     typename,
                     typename,

@@ -44,9 +44,9 @@ template< integer NUM_EQN,
           typename FLUIDWRAPPER,
           typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN,
-                                                                                               NUM_DOF,
-                                                                                               FLUIDWRAPPER,
-                                                                                               MATRIX_VIEW >
+                                                                                             NUM_DOF,
+                                                                                             FLUIDWRAPPER,
+                                                                                             MATRIX_VIEW >
 {
 public:
 

@@ -49,9 +49,9 @@ template< integer NUM_EQN,
           typename FLUIDWRAPPER,
           typename MATRIX_VIEW >
 class DirichletFluxComputeKernel : public singlePhaseFVMKernels::FluxComputeKernel< NUM_EQN,
-                                                                                      NUM_DOF,
-                                                                                      BoundaryStencilWrapper,
-                                                                                      MATRIX_VIEW >
+                                                                                    NUM_DOF,
+                                                                                    BoundaryStencilWrapper,
+                                                                                    MATRIX_VIEW >
 {
 public:
   using Deriv = constitutive::singlefluid::DerivativeOffset;
