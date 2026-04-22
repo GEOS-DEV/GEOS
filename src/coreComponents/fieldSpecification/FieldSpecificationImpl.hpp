@@ -91,7 +91,7 @@ public:
 
   /**
    * @tparam FIELD_OP type that contains static functions to apply the value to the field
-   * @param[in] fs the field specfication data object.
+   * @param[in] fs the field specification data object.
    * @param[in] field the field to apply the value to.
    * @param[in] targetSet the set of indices which the value will be applied.
    * @param[in] time The time at which any time dependent functions are to be evaluated as
