@@ -618,6 +618,8 @@ public:
 
 protected:
 
+  virtual void postInputInitialization() override;
+
 
 private:
 

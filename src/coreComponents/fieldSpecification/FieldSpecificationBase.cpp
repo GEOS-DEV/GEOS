@@ -15,6 +15,7 @@
 
 #include "FieldSpecificationBase.hpp"
 
+#include "common/logger/Logger.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
 namespace geos
@@ -122,6 +123,37 @@ FieldSpecificationBase::getCatalog()
 }
 
 
+void FieldSpecificationBase::postInputInitialization()
+{
+  GEOS_THROW_IF( !m_functionNames.empty() &&
+                 m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
+                 GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
+                            "Either leave '{}' empty or size it exactly like '{}'",
+                            viewKeyStruct::functionNameString(), m_functionNames.size(),
+                            viewKeyStruct::scalesString(), m_scales.size(),
+                            viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
+                 InputError,
+                 getDataContext() );
+
+  if( isVectorMode() )
+  {
+    GEOS_THROW_IF( m_component != -1,
+                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one entry",
+                              viewKeyStruct::componentString(),
+                              viewKeyStruct::scalesString() ),
+                   InputError,
+                   getDataContext() );
+
+    GEOS_THROW_IF( !m_functionName.empty(),
+                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one entry. "
+                              "Use '{}' to provide one function per component instead",
+                              viewKeyStruct::functionNameString(),
+                              viewKeyStruct::scalesString(),
+                              viewKeyStruct::functionNamesString() ),
+                   InputError,
+                   getDataContext() );
+  }
+}
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 {
