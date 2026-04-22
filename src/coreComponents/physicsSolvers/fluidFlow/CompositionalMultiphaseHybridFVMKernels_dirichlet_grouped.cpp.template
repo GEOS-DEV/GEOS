@@ -66,7 +66,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 2, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 1, 2, QuasiTPFAInnerProduct >(
@@ -96,7 +96,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 2, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 1, 2, BdVLMInnerProduct >(
@@ -126,7 +126,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 2, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 2, TPFAInnerProduct >(
@@ -156,7 +156,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 2, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 2, QuasiTPFAInnerProduct >(
@@ -186,7 +186,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 2, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 2, BdVLMInnerProduct >(
@@ -216,7 +216,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 2, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 2, TPFAInnerProduct >(
@@ -246,7 +246,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 2, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 2, QuasiTPFAInnerProduct >(
@@ -276,7 +276,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 2, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 2, BdVLMInnerProduct >(
@@ -306,7 +306,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 2, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 2, TPFAInnerProduct >(
@@ -336,7 +336,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 2, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 2, QuasiTPFAInnerProduct >(
@@ -366,7 +366,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 2, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 2, BdVLMInnerProduct >(
@@ -396,7 +396,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 2, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 2, TPFAInnerProduct >(
@@ -426,7 +426,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 2, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 2, QuasiTPFAInnerProduct >(
@@ -456,7 +456,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 2, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 2, BdVLMInnerProduct >(
@@ -486,7 +486,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 2, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 // ---- NF=@NFACES@, NP=3 -------------------------------------------------------
@@ -518,7 +518,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 3, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 1, 3, QuasiTPFAInnerProduct >(
@@ -548,7 +548,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 3, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 1, 3, BdVLMInnerProduct >(
@@ -578,7 +578,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 1, 3, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 3, TPFAInnerProduct >(
@@ -608,7 +608,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 3, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 3, QuasiTPFAInnerProduct >(
@@ -638,7 +638,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 3, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 2, 3, BdVLMInnerProduct >(
@@ -668,7 +668,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 2, 3, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 3, TPFAInnerProduct >(
@@ -698,7 +698,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 3, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 3, QuasiTPFAInnerProduct >(
@@ -728,7 +728,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 3, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 3, 3, BdVLMInnerProduct >(
@@ -758,7 +758,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 3, 3, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 3, TPFAInnerProduct >(
@@ -788,7 +788,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 3, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 3, QuasiTPFAInnerProduct >(
@@ -818,7 +818,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 3, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 4, 3, BdVLMInnerProduct >(
@@ -848,7 +848,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 4, 3, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 3, TPFAInnerProduct >(
@@ -878,7 +878,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 3, TPFAInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 3, QuasiTPFAInnerProduct >(
@@ -908,7 +908,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 3, QuasiTPFAInnerProduct
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void DirichletFluxKernel::launch< @NFACES@, 5, 3, BdVLMInnerProduct >(
@@ -938,7 +938,7 @@ template void DirichletFluxKernel::launch< @NFACES@, 5, 3, BdVLMInnerProduct >(
   DirichletFluxKernel::CompFlowAccessors const & compFlowAccessors,
   DirichletFluxKernel::MultiFluidAccessors const & multiFluidAccessors,
   DirichletFluxKernel::ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 } // namespace compositionalMultiphaseHybridFVMKernels

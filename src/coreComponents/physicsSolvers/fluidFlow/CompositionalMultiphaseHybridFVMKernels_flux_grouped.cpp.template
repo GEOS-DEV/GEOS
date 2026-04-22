@@ -70,7 +70,7 @@ template void FluxKernel::launch< @NFACES@, 1, 2, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 1, 2, QuasiTPFAInnerProduct >(
@@ -104,7 +104,7 @@ template void FluxKernel::launch< @NFACES@, 1, 2, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 1, 2, BdVLMInnerProduct >(
@@ -138,7 +138,7 @@ template void FluxKernel::launch< @NFACES@, 1, 2, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 2, TPFAInnerProduct >(
@@ -172,7 +172,7 @@ template void FluxKernel::launch< @NFACES@, 2, 2, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 2, QuasiTPFAInnerProduct >(
@@ -206,7 +206,7 @@ template void FluxKernel::launch< @NFACES@, 2, 2, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 2, BdVLMInnerProduct >(
@@ -240,7 +240,7 @@ template void FluxKernel::launch< @NFACES@, 2, 2, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 2, TPFAInnerProduct >(
@@ -274,7 +274,7 @@ template void FluxKernel::launch< @NFACES@, 3, 2, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 2, QuasiTPFAInnerProduct >(
@@ -308,7 +308,7 @@ template void FluxKernel::launch< @NFACES@, 3, 2, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 2, BdVLMInnerProduct >(
@@ -342,7 +342,7 @@ template void FluxKernel::launch< @NFACES@, 3, 2, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 2, TPFAInnerProduct >(
@@ -376,7 +376,7 @@ template void FluxKernel::launch< @NFACES@, 4, 2, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 2, QuasiTPFAInnerProduct >(
@@ -410,7 +410,7 @@ template void FluxKernel::launch< @NFACES@, 4, 2, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 2, BdVLMInnerProduct >(
@@ -444,7 +444,7 @@ template void FluxKernel::launch< @NFACES@, 4, 2, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 2, TPFAInnerProduct >(
@@ -478,7 +478,7 @@ template void FluxKernel::launch< @NFACES@, 5, 2, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 2, QuasiTPFAInnerProduct >(
@@ -512,7 +512,7 @@ template void FluxKernel::launch< @NFACES@, 5, 2, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 2, BdVLMInnerProduct >(
@@ -546,7 +546,7 @@ template void FluxKernel::launch< @NFACES@, 5, 2, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 // ---- NF=@NFACES@, NP=3 -------------------------------------------------------
@@ -582,7 +582,7 @@ template void FluxKernel::launch< @NFACES@, 1, 3, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 1, 3, QuasiTPFAInnerProduct >(
@@ -616,7 +616,7 @@ template void FluxKernel::launch< @NFACES@, 1, 3, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 1, 3, BdVLMInnerProduct >(
@@ -650,7 +650,7 @@ template void FluxKernel::launch< @NFACES@, 1, 3, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 3, TPFAInnerProduct >(
@@ -684,7 +684,7 @@ template void FluxKernel::launch< @NFACES@, 2, 3, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 3, QuasiTPFAInnerProduct >(
@@ -718,7 +718,7 @@ template void FluxKernel::launch< @NFACES@, 2, 3, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 2, 3, BdVLMInnerProduct >(
@@ -752,7 +752,7 @@ template void FluxKernel::launch< @NFACES@, 2, 3, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 3, TPFAInnerProduct >(
@@ -786,7 +786,7 @@ template void FluxKernel::launch< @NFACES@, 3, 3, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 3, QuasiTPFAInnerProduct >(
@@ -820,7 +820,7 @@ template void FluxKernel::launch< @NFACES@, 3, 3, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 3, 3, BdVLMInnerProduct >(
@@ -854,7 +854,7 @@ template void FluxKernel::launch< @NFACES@, 3, 3, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 3, TPFAInnerProduct >(
@@ -888,7 +888,7 @@ template void FluxKernel::launch< @NFACES@, 4, 3, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 3, QuasiTPFAInnerProduct >(
@@ -922,7 +922,7 @@ template void FluxKernel::launch< @NFACES@, 4, 3, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 4, 3, BdVLMInnerProduct >(
@@ -956,7 +956,7 @@ template void FluxKernel::launch< @NFACES@, 4, 3, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 3, TPFAInnerProduct >(
@@ -990,7 +990,7 @@ template void FluxKernel::launch< @NFACES@, 5, 3, TPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 3, QuasiTPFAInnerProduct >(
@@ -1024,7 +1024,7 @@ template void FluxKernel::launch< @NFACES@, 5, 3, QuasiTPFAInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 template void FluxKernel::launch< @NFACES@, 5, 3, BdVLMInnerProduct >(
@@ -1058,7 +1058,7 @@ template void FluxKernel::launch< @NFACES@, 5, 3, BdVLMInnerProduct >(
   real64 const lengthTolerance,
   real64 const dt,
   integer const useTotalMassEquation,
-  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+  DefaultGlobalMatrixView const & localMatrix,
   arrayView1d< real64 > const & localRhs );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
