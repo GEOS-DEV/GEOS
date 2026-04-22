@@ -21,7 +21,11 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/StdContainerWrappers.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/format/Format.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
@@ -266,26 +270,39 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       if( m_writeCSV > 0 && subRegion.isLocallyOwned() )
       {
         string const fileName = GEOS_FMT( "{}/{}.csv", m_ratesOutputDir, wellControls.getName() );
+        // string const massUnit = m_useMass ? units::getSymbol( units::Unit::Mass ) : units::getSymbol( units::Unit::Mole );
         string const massUnit = m_useMass ? "kg" : "mol";
         integer const useSurfaceConditions = wellControls.useSurfaceConditions();
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
         integer const numPhase = m_numPhases;
         integer const numComp = m_numComponents;
-        // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         makeDirsForPath( m_ratesOutputDir );
         GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
-        std::ofstream outputFile( fileName );
-        outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+        // format: time,dt,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
+        stdVector< TableLayout::Column > columns;
+        columns.reserve( 5 + numPhase + numComp );
+        columns.insert( columns.end(),
+          {
+            TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) ),
+            TableLayout::Column().setName( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) ),
+            TableLayout::Column().setName( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
+            TableLayout::Column().setName( GEOS_FMT( "Total rate [{}]", massUnit ) ),
+            TableLayout::Column().setName( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) )
+          }
+                        );
         for( integer ip = 0; ip < numPhase; ++ip )
         {
-          outputFile << ",Phase" << ip << " " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
+          columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) ) );
         }
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          outputFile << ",Component" << ic << " rate [" << massUnit << "/s]";
+          columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) ) );
         }
-        outputFile << std::endl;
+        TableLayout const tableLayout( columns );
+        TableCSVFormatter const csvFormatter( tableLayout );
+        std::ofstream outputFile( fileName );
+        csvFormatter.headerToStream( outputFile );
         outputFile.close();
       }
     } );
@@ -2224,30 +2241,44 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
       string const wellControlsName = wellControls.getName();
 
-      // format: time,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
-      std::ofstream outputFile;
-      if( m_writeCSV > 0 )
+      auto const buildRow = [&]( real64 const bhp,
+                                 real64 const totalRate,
+                                 real64 const totalVolRate,
+                                 auto const & phaseVolRates,
+                                 auto const & compRates )
       {
-        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
-        outputFile << time_n << "," << dt;
-      }
+        stdVector< TableData::CellData > row;
+        row.reserve( 5 + numPhase + numComp );
+        row.push_back( { CellType::Value, GEOS_FMT( "{}", time_n ) } );
+        row.push_back( { CellType::Value, GEOS_FMT( "{}", dt ) } );
+        row.push_back( { CellType::Value, GEOS_FMT( "{}", bhp ) } );
+        row.push_back( { CellType::Value, GEOS_FMT( "{}", totalRate ) } );
+        row.push_back( { CellType::Value, GEOS_FMT( "{}", totalVolRate ) } );
+        for( integer ip = 0; ip < numPhase; ++ip )
+        {
+          row.push_back( { CellType::Value, GEOS_FMT( "{}", phaseVolRates[ ip ] ) } );
+        }
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          row.push_back( { CellType::Value, GEOS_FMT( "{}", compRates[ ic ] ) } );
+        }
+        return row;
+      };
 
       if( wellControls.getWellStatus() == WellControls::Status::CLOSED )
       {
         GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
-        if( outputFile.is_open())
+        if( m_writeCSV > 0 )
         {
-          // print all zeros in the rates file
-          outputFile << ",0.0,0.0,0.0";
-          for( integer ip = 0; ip < numPhase; ++ip )
-          {
-            outputFile << ",0.0";
-          }
-          for( integer ic = 0; ic < numComp; ++ic )
-          {
-            outputFile << ",0.0";
-          }
-          outputFile << std::endl;
+          stdVector< real64 > const zeroesNumPhase( numPhase, 0.0 );
+          stdVector< real64 > const zeroesNumComp( numComp, 0.0 );
+          TableData ratesTableData;
+
+          ratesTableData.addRow( buildRow( 0.0, 0.0, 0.0, zeroesNumPhase, zeroesNumComp ) );
+
+          std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+          TableCSVFormatter const csvFormatter;
+          csvFormatter.dataToStream( outputFile, ratesTableData );
           outputFile.close();
         }
         return;
@@ -2270,6 +2301,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       real64 const & currentTotalVolRate =
         wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
 
+      TableData ratesTableData;
+
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [&numPhase,
                                   &numComp,
@@ -2282,7 +2315,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                   &iwelemRef,
                                   &wellControlsName,
                                   &massUnit,
-                                  &outputFile] ( localIndex const )
+                                  &ratesTableData,
+                                  &buildRow] ( localIndex const )
       {
         string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
         string const unitKey = useSurfaceConditions ? "s" : "r";
@@ -2295,22 +2329,16 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         for( integer ip = 0; ip < numPhase; ++ip )
           GEOS_LOG( GEOS_FMT( "{}: Phase {} {} volumetric rate: {} {}m3/s",
                               wellControlsName, ip, conditionKey, currentPhaseVolRate[ip], unitKey ) );
-        if( outputFile.is_open())
-        {
-          outputFile << "," << currentBHP;
-          outputFile << "," << currentTotalRate << "," << currentTotalVolRate;
-          for( integer ip = 0; ip < numPhase; ++ip )
-          {
-            outputFile << "," << currentPhaseVolRate[ip];
-          }
-          for( integer ic = 0; ic < numComp; ++ic )
-          {
-            outputFile << "," << compRate[ic];
-          }
-          outputFile << std::endl;
-          outputFile.close();
-        }
+        ratesTableData.addRow( buildRow( currentBHP, currentTotalRate, currentTotalVolRate, currentPhaseVolRate, compRate ) );
       } );
+
+      if( m_writeCSV > 0 )
+      {
+        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+        TableCSVFormatter const csvFormatter;
+        csvFormatter.dataToStream( outputFile, ratesTableData );
+        outputFile.close();
+      }
     } );
   } );
 }
