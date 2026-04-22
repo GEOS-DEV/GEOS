@@ -5,8 +5,56 @@
     <File name="./ThermoMech_1DCooling_base.xml" />
   </Included>
 
+  <Solvers
+  gravityVector="{ 0.0, 0.0, 0.0 }">  
+ 
+  <SinglePhasePoromechanics
+    name="thermoPoroSolver"
+    solidSolverName="solidMechSolver"
+    flowSolverName="flowSolver"
+    isThermal="1"
+    logLevel="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      couplingType="Sequential"
+      lineSearchAction="None"
+      subcycling="1"
+      newtonMaxIter="200"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhasePoromechanics>
+  
+  <SolidMechanicsLagrangianFEM
+    name="solidMechSolver"
+    logLevel="1"
+    discretization="FE1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      newtonMaxIter="100"
+      newtonMinIter="0"
+      newtonTol="1.0e-6"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SolidMechanicsLagrangianFEM>
+
+  <SinglePhaseFVM
+    name="flowSolver"
+    logLevel="1"
+    discretization="tpfaFlow"
+    temperature="273.0"
+    isThermal="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      newtonMaxIter="100"
+      newtonMinIter="0"
+      newtonTol="1.0e-6"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhaseFVM>   
+ </Solvers>
+
   <Constitutive>
-    <PorousDruckerPrager
+    <PorousElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
@@ -14,15 +62,11 @@
       solidInternalEnergyModelName="rockInternalEnergy"
     />
 
-    <DruckerPrager 
+    <ElasticIsotropic 
       name="rockSolid"
       defaultDensity="2700"
       defaultBulkModulus="0.5e9"
       defaultShearModulus="0.3e9"
-      defaultCohesion="5e3"
-      defaultFrictionAngle="15.27"
-      defaultDilationAngle="0.0"
-      defaultHardeningRate="0.0"
       defaultDrainedLinearTEC="3e-7"/> 
 
     <BiotPorosity

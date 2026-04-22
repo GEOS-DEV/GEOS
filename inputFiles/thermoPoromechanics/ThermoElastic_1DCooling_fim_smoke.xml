@@ -5,6 +5,46 @@
     <File name="./ThermoMech_1DCooling_base.xml" />
   </Included>
 
+  <Solvers
+  gravityVector="{ 0.0, 0.0, 0.0 }">  
+ 
+  <SinglePhasePoromechanics
+    name="thermoPoroSolver"
+    solidSolverName="solidMechSolver"
+    flowSolverName="flowSolver"
+    isThermal="1"
+    logLevel="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      couplingType="FullyImplicit"
+      lineSearchAction="None"
+      newtonMaxIter="200"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhasePoromechanics>
+  
+  <SolidMechanicsLagrangianFEM
+    name="solidMechSolver"
+    logLevel="1"
+    discretization="FE1"
+    targetRegions="{ Domain }"/>
+
+  <SinglePhaseFVM
+    name="flowSolver"
+    logLevel="1"
+    discretization="tpfaFlow"
+    temperature="273.0"
+    isThermal="1"
+    targetRegions="{ Domain }">
+    <NonlinearSolverParameters
+      newtonMaxIter="100"
+      newtonMinIter="0"
+      newtonTol="1.0e-6"/>
+    <LinearSolverParameters
+      directParallel="0"/>
+  </SinglePhaseFVM>   
+ </Solvers>
+
   <Constitutive>
     <PorousElasticIsotropic
       name="rock"

@@ -1,46 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-  gravityVector="{ 0.0, 0.0, 0.0 }">  
- 
-  <SinglePhasePoromechanics
-    name="thermoPoroSolver"
-    solidSolverName="solidMechSolver"
-    flowSolverName="flowSolver"
-    isThermal="1"
-    logLevel="1"
-    targetRegions="{ Domain }">
-    <NonlinearSolverParameters
-      couplingType="FullyImplicit"
-      lineSearchAction="None"
-      newtonMaxIter="200"/>
-    <LinearSolverParameters
-      directParallel="0"/>
-  </SinglePhasePoromechanics>
-  
-  <SolidMechanicsLagrangianFEM
-    name="solidMechSolver"
-    logLevel="1"
-    discretization="FE1"
-    targetRegions="{ Domain }"/>
-
-  <SinglePhaseFVM
-    name="flowSolver"
-    logLevel="1"
-    discretization="tpfaFlow"
-    temperature="273.0"
-    isThermal="1"
-    targetRegions="{ Domain }">
-    <NonlinearSolverParameters
-      newtonMaxIter="100"
-      newtonMinIter="0"
-      newtonTol="1.0e-6"/>
-    <LinearSolverParameters
-      directParallel="0"/>
-  </SinglePhaseFVM>   
- </Solvers>
-
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -128,7 +88,7 @@
     <PackCollection
       name="stressCollection"
       objectPath="ElementRegions/Domain/cb1"
-      fieldName="rockSolid_stress"/>
+      fieldName="averageStress"/>
     <PackCollection
       name="displacementCollection"
       objectPath="nodeManager"
@@ -139,7 +99,7 @@
   <Outputs>
     <VTK
       name="thermoPoroVTKOutput"
-      plotFileRoot="thermoPoro_1DCool_fim"/>
+      plotFileRoot="thermoPoro_1DCool"/>
 
     <TimeHistory
       name="stressHistoryOutput"
