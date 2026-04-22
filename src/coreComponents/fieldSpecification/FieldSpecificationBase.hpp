@@ -606,6 +606,15 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
+  /**
+   * @brief Query whether this field specification uses non-scalar scales
+   * @return true if @p m_scales holds more than one entry
+   */
+  bool isVectorMode() const
+  {
+    return m_scales.size() > 1;
+  }
+
 
 protected:
 
@@ -668,25 +677,28 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
                                                     real64 const time,
                                                     Group & dataGroup ) const
 {
-  integer const component = getComponent();
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  if( m_functionName.empty() )
+  auto applyOneComponent = [&]( integer const component,
+                                real64 const scale,
+                                string const & functionName )
   {
-    real64 const value = m_scale;
-    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    if( functionName.empty() )
     {
-      localIndex const a = targetSet[ i ];
-      FIELD_OP::SpecifyFieldValue( field, a, component, value );
-    } );
-  }
-  else
-  {
+      real64 const value = scale;
+      forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        FIELD_OP::SpecifyFieldValue( field, a, component, value );
+      } );
+      return;
+    }
+
     FunctionBase const & function = [&]() -> FunctionBase const &
     {
       try
       {
-        return functionManager.getGroup< FunctionBase >( m_functionName );
+        return functionManager.getGroup< FunctionBase >( functionName );
       }
       catch( std::exception const & e )
       {
@@ -702,7 +714,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
 
     if( function.isFunctionOfTime()==2 )
     {
-      real64 const value = m_scale * function.evaluate( &time );
+      real64 const value = scale * function.evaluate( &time );
       forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
@@ -714,13 +726,27 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       real64_array result( static_cast< localIndex >( targetSet.size() ) );
       function.evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result.toViewConst();
-      real64 const scale = m_scale;
+      real64 const localScale = scale;
       forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
-        FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
+        FIELD_OP::SpecifyFieldValue( field, a, component, localScale * resultView[i] );
       } );
     }
+  };
+
+  if( isVectorMode() )
+  {
+    localIndex const numComponents = m_scales.size();
+    for( localIndex c = 0; c < numComponents; ++c )
+    {
+      string const & compFunctionName = m_functionNames.empty() ? string{} : m_functionNames[ c ];
+      applyOneComponent( c, m_scales[ c ], compFunctionName );
+    }
+  }
+  else
+  {
+    applyOneComponent( getComponent(), m_scale, m_functionName );
   }
 }
 
