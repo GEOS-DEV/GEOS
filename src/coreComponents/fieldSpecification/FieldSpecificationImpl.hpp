@@ -615,7 +615,6 @@ FieldSpecificationImpl::
                           LAMBDA && lambda )
 {
   integer const component = ( fs.getComponent() >= 0 ) ? fs.getComponent() : 0;
-  // string const & functionName = fs.getReference< string >( fs.viewKeyStruct::functionNameString() );
   string const & functionName = fs.getFunctionName();
   FunctionManager & functionManager = FunctionManager::getInstance();
 
