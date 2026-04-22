@@ -177,9 +177,10 @@ template< template< typename ... > class KERNEL_TYPE,
 class InterfaceKernelFactory;
 
 /**
- * @brief Specialization of #::geos::finiteElement::InterfaceKernelFactory for the case where the kernel template has 4 template parameters.
- * @tparam KERNEL_TEMPLATE Templated class that defines the physics kernel with 4 template parameters.
+ * @brief Specialization of #::geos::finiteElement::InterfaceKernelFactory for the case where the kernel template has 2 template parameters (CONSTITUTIVE_TYPE, FE_TYPE).
+ * @tparam KERNEL_TYPE Templated class that defines the physics kernel with 2 template parameters.
  *   Most likely derives from InterfaceKernelBase.
+ * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
  */
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
@@ -245,6 +246,16 @@ private:
   camp::tuple< ARGS ... > m_args;
 };
 
+/**
+ * @brief Specialization of #::geos::finiteElement::InterfaceKernelFactory for the case where the kernel template has 3 or more template parameters, including a MATRIX_VIEW (CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW, ...).
+ * @tparam KERNEL_TYPE Templated class that defines the physics kernel and is parameterized on a global matrix view.
+ *   Most likely derives from InterfaceKernelBase.
+ * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
+ *
+ * @details The MATRIX_VIEW slot is deduced via internal::FirstInterfaceMatrixViewOrDefault, which selects the first
+ *   matching matrix-view type from @c ARGS or falls back to a default. This allows interface kernels that operate on
+ *   a sparse global matrix view to share the same factory machinery as the 2-parameter specialization.
+ */
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE,
                     typename MATRIX_VIEW,

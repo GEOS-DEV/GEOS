@@ -336,6 +336,12 @@ template< template< typename ... > class KERNEL_TYPE,
           typename ... ARGS >
 class KernelFactory;
 
+/**
+ * @brief Specialization of #::geos::finiteElement::KernelFactory for the case where the kernel template has 3 template parameters (SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE).
+ * @tparam KERNEL_TYPE Templated class that defines the physics kernel with 3 template parameters.
+ *   Most likely derives from KernelBase.
+ * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
+ */
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE > class KERNEL_TYPE,
@@ -401,6 +407,16 @@ private:
   camp::tuple< ARGS ... > m_args;
 };
 
+/**
+ * @brief Specialization of #::geos::finiteElement::KernelFactory for the case where the kernel template has 4 or more template parameters, including a MATRIX_VIEW (SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW, ...).
+ * @tparam KERNEL_TYPE Templated class that defines the physics kernel and is parameterized on a global matrix view.
+ *   Most likely derives from KernelBase.
+ * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
+ *
+ * @details The MATRIX_VIEW slot is deduced via internal::FirstMatrixViewOrDefault, which selects the first matching
+ *   matrix-view type from @c ARGS or falls back to a default. This allows kernels that operate on a sparse global
+ *   matrix view to share the same factory machinery as the 3-parameter specialization.
+ */
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE,
@@ -431,7 +447,8 @@ public:
    * @param elementSubRegion The subregion to execute on.
    * @param finiteElementSpace The finite element space.
    * @param inputConstitutiveType The constitutive relation.
-   * @return A new kernel constructed with the given arguments and @c ARGS.
+   * @return A new kernel constructed with the given arguments and @c ARGS. The kernel's MATRIX_VIEW
+   *   template parameter is deduced from @c ARGS via internal::FirstMatrixViewOrDefault.
    */
   template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
   auto createKernel(
