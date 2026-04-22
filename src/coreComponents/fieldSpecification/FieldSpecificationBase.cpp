@@ -61,6 +61,13 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of function that specifies variation of the boundary condition." );
 
+  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Names of per-component functions that specifies variation of the boundary condition.\n"
+                    "Either left empty or sized exactly like 'scales'.\n" );
+
   registerWrapper( viewKeyStruct::bcApplicationTableNameString(), &m_bcApplicationFunctionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -70,6 +77,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Apply a scaling factor for the value of the boundary condition." );
+
+  registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
+    setDescription( "Apply scaling factors for the values of every component of the boundary condition.\n" );
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).

@@ -394,8 +394,12 @@ public:
     constexpr static char const * bcApplicationTableNameString() { return "bcApplicationTableName"; }
     /// @return The key for scale
     constexpr static char const * scaleString() { return "scale"; }
+    /// @return The key for scales
+    constexpr static char const * scalesString() { return "scales"; }
     /// @return The key for functionName
     constexpr static char const * functionNameString() { return "functionName"; }
+    /// @return The key for functionNames
+    constexpr static char const * functionNamesString() { return "functionNames"; }
     /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
     /// @return The key for beginTime
@@ -413,6 +417,15 @@ public:
   string const & getFunctionName() const
   {
     return m_functionName;
+  }
+
+  /**
+   * Accessor
+   * @return const reference to m_functionNames
+   */
+  string_array const & getFunctionNames() const
+  {
+    return m_functionNames;
   }
 
   /**
@@ -498,6 +511,15 @@ public:
   }
 
   /**
+   * Accessor
+   * @return const m_scales
+   */
+  array1d< real64 > getScales() const
+  {
+    return m_scales;
+  }
+
+  /**
    * Mutator
    * @param[in] fieldName The name of the field
    */
@@ -522,6 +544,31 @@ public:
   void setScale( real64 const & scale )
   {
     m_scale = scale;
+  }
+
+  /**
+   * Mutator
+   * @brief Set the per-component scale factors
+   * @param[in] scales The tensor-valued scale
+   */
+  void setScales( arrayView1d< real64 const > const & scales )
+  {
+    m_scales.resize( scales.size() );
+    for( localIndex comp = 0; comp < scales.size(); ++comp )
+    {
+      m_scales[ comp ] = scales[ comp ];
+    }
+  }
+
+  /**
+   * Mutator
+   * @brief Set the per-component function names
+   * @param[in] functionNames The per-component function names. Must have the same
+   *                          size as @p m_scales or be empty.
+   */
+  void setFunctionNames( string_array const & functionNames )
+  {
+    m_functionNames = functionNames;
   }
 
   /**
@@ -591,8 +638,15 @@ private:
   /// The name of the function used to generate values for application.
   string m_functionName;
 
+  /// Per-component function names used when @p m_scales.size() > 1
+  /// Either empty or sized exactly like @p m_scales
+  string_array m_functionNames;
+
   /// The scale factor to use on the value of the boundary condition.
   real64 m_scale;
+
+  /// Per-component scale factors
+  array1d< real64 > m_scales;
 
   /// Time after which the bc is allowed to be applied
   real64 m_beginTime;
