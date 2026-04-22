@@ -134,13 +134,15 @@ void SinglePhaseThermalConductivity::initializeState( localIndex const size ) co
   arrayView3d< real64 > referenceThermalConductivity = m_referenceThermalConductivity.toView();
   R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
 
+  real64 constexpr threshold = LvArray::NumericLimits< real64 >::epsilon;
+
   forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
       for( integer dim=0; dim < 3; ++dim )
       {
-        if( referenceThermalConductivity[ei][q][dim] < 0 )
+        if( referenceThermalConductivity[ei][q][dim] < threshold )
         {
           referenceThermalConductivity[ei][q][dim] = defaultThermalConductivityComponents[dim];
         }
