@@ -23,8 +23,6 @@
 #include "FieldSpecification.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TypeDispatch.hpp"
-#include "codingUtilities/traits.hpp"
-#include "codingUtilities/Utilities.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/FunctionBase.hpp"
 #include "common/FieldSpecificationOps.hpp"

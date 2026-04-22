@@ -19,6 +19,8 @@
 
 #include "AquiferBoundaryCondition.hpp"
 
+#include "functions/FunctionManager.hpp"
+
 namespace geos
 {
 

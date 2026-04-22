@@ -22,16 +22,9 @@
 
 
 #include "common/DataTypes.hpp"
-#include "common/TypeDispatch.hpp"
-#include "codingUtilities/traits.hpp"
-#include "codingUtilities/Utilities.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
-#include "functions/FunctionBase.hpp"
-#include "common/FieldSpecificationOps.hpp"
-#include "mesh/ObjectManagerBase.hpp"
 #include "mesh/MeshObjectPath.hpp"
-#include "functions/FunctionManager.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
 {

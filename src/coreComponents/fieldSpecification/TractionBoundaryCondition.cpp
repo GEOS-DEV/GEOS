@@ -21,6 +21,7 @@
 
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
+#include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos

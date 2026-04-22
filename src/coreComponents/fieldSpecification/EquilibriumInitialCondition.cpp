@@ -19,6 +19,7 @@
 
 #include "EquilibriumInitialCondition.hpp"
 
+#include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geos

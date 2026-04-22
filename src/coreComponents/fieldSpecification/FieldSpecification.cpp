@@ -15,8 +15,6 @@
 
 #include "FieldSpecification.hpp"
 
-#include "fieldSpecification/FieldSpecificationManager.hpp"
-
 namespace geos
 {
 using namespace dataRepository;
