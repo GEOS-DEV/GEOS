@@ -49,7 +49,7 @@ decks = [
         name="thermalViscosity_1d",
         description='Thermal problem with temperature dependent viscosity',
         partitions=((1, 1, 1),),
-        restart_step=1,
+        restart_step=0,
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
 ]
