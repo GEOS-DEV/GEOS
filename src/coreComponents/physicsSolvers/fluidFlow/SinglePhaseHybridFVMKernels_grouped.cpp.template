@@ -43,48 +43,48 @@ using namespace mimeticInnerProduct;
 
 // ---- NF=@NFACES@, TPFAInnerProduct ------------------------------------------
 
-template class ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct >;
-template void ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct >::launch<
+template class ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct, DefaultGlobalMatrixView >;
+template void ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct, DefaultGlobalMatrixView >::launch<
   ElementBasedAssemblyKernelPolicy,
-  ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct > >(
+  ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct, DefaultGlobalMatrixView > >(
   localIndex const,
-  ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct > const & );
+  ElementBasedAssemblyKernel< @NFACES@, TPFAInnerProduct, DefaultGlobalMatrixView > const & );
 
 // ---- NF=@NFACES@, QuasiTPFAInnerProduct -------------------------------------
 
-template class ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct >;
-template void ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct >::launch<
+template class ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct, DefaultGlobalMatrixView >;
+template void ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct, DefaultGlobalMatrixView >::launch<
   ElementBasedAssemblyKernelPolicy,
-  ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct > >(
+  ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct, DefaultGlobalMatrixView > >(
   localIndex const,
-  ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct > const & );
+  ElementBasedAssemblyKernel< @NFACES@, QuasiTPFAInnerProduct, DefaultGlobalMatrixView > const & );
 
 // ---- NF=@NFACES@, QuasiRTInnerProduct ---------------------------------------
 
-template class ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct >;
-template void ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct >::launch<
+template class ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct, DefaultGlobalMatrixView >;
+template void ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct, DefaultGlobalMatrixView >::launch<
   ElementBasedAssemblyKernelPolicy,
-  ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct > >(
+  ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct, DefaultGlobalMatrixView > >(
   localIndex const,
-  ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct > const & );
+  ElementBasedAssemblyKernel< @NFACES@, QuasiRTInnerProduct, DefaultGlobalMatrixView > const & );
 
 // ---- NF=@NFACES@, SimpleInnerProduct ----------------------------------------
 
-template class ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct >;
-template void ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct >::launch<
+template class ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct, DefaultGlobalMatrixView >;
+template void ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct, DefaultGlobalMatrixView >::launch<
   ElementBasedAssemblyKernelPolicy,
-  ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct > >(
+  ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct, DefaultGlobalMatrixView > >(
   localIndex const,
-  ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct > const & );
+  ElementBasedAssemblyKernel< @NFACES@, SimpleInnerProduct, DefaultGlobalMatrixView > const & );
 
 // ---- NF=@NFACES@, BdVLMInnerProduct -----------------------------------------
 
-template class ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct >;
-template void ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct >::launch<
+template class ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct, DefaultGlobalMatrixView >;
+template void ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct, DefaultGlobalMatrixView >::launch<
   ElementBasedAssemblyKernelPolicy,
-  ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct > >(
+  ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct, DefaultGlobalMatrixView > >(
   localIndex const,
-  ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct > const & );
+  ElementBasedAssemblyKernel< @NFACES@, BdVLMInnerProduct, DefaultGlobalMatrixView > const & );
 
 } // namespace singlePhaseHybridFVMKernels
 } // namespace geos
