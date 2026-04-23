@@ -254,10 +254,6 @@ public:
     // relative permeability
     real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
     real64 dRelPerm[CP_Deriv::nDer]{};
-    for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-    {
-      dRelPerm[jc]=0;
-    }
     for( integer jp = 0; jp < NP; ++jp )
     {
       real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
