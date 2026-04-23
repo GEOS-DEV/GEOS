@@ -50,6 +50,8 @@ public:
    * @param[in] velocityGradient The ArrayView holding the velocity gradient for each element/particle.
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] relaxation The ArrayView holding the relaxation for each quadrature point.
+   * @param[in] basalPlanePlasticWork The ArrayView holding the basal-plane plastic work for each quadrature point.
+   * @param[in] plasticWork The ArrayView holding the total plastic work for each quadrature point.
    * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
    * @param[in] alphaT Thermal expansion transverse to crystal symmetry axis
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
@@ -60,8 +62,8 @@ public:
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
    * @param[in] strengthScale The ArrayView holding the strength scale for each element.
    * @param[in] failureStrength The failure strength.
-   * @param[in] crackSpeed The crack speed velocity.
-   * @param[in] fractureEnergyReleaseRate Used to determine amount of plastic work needed to generate a damage surface
+   * @param[in] basalPlaneFractureEnergyReleaseRate Fracture energy release rate for basal plane separation 
+   * @param[in] totalFractureEnergyReleaseRate Used to determine amount of plastic work needed to generate a damage surface
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
@@ -80,6 +82,8 @@ public:
                    arrayView3d< real64 > const & velocityGradient,
                    arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
+                   arrayView2d< real64 > const & basalPlanePlasticWork,
+                   arrayView2d< real64 > const & plasticWork,
                    real64 const & alphaL,
                    real64 const & alphaT,
                    arrayView2d< real64 > const & damage,
@@ -89,8 +93,8 @@ public:
                    arrayView1d< real64 > const & lengthScale,
                    arrayView1d< real64 > const & strengthScale,
                    real64 const & failureStrength,
-                   real64 const & crackSpeed,
-                   real64 const & fractureEnergyReleaseRate,
+                   real64 const & basalPlaneFractureEnergyReleaseRate,
+                   real64 const & totalFractureEnergyReleaseRate,
                    real64 const & damagedMaterialFrictionalSlope,
                    real64 const & distortionShearResponseX2,
                    real64 const & distortionShearResponseY1,
@@ -134,6 +138,8 @@ public:
     m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
+    m_basalPlanePlasticWork( basalPlanePlasticWork ),
+    m_plasticWork( plasticWork ),
     m_alphaL( alphaL ),
     m_alphaT( alphaT ),
     m_damage( damage ),
@@ -143,8 +149,8 @@ public:
     m_lengthScale( lengthScale ),
     m_strengthScale( strengthScale ),
     m_failureStrength( failureStrength ),
-    m_crackSpeed( crackSpeed ),
-    m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
+    m_basalPlaneFractureEnergyReleaseRate( basalPlaneFractureEnergyReleaseRate ),
+    m_totalFractureEnergyReleaseRate( totalFractureEnergyReleaseRate ),
     m_damagedMaterialFrictionalSlope( damagedMaterialFrictionalSlope ),
     m_distortionShearResponseX2( distortionShearResponseX2 ),
     m_distortionShearResponseY1( distortionShearResponseY1 ),
@@ -347,6 +353,10 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_relaxation;
 
+  // A reference to the ArrayView holding the accumulated plastic work for each quadrature point.
+  arrayView2d< real64 > const m_basalPlanePlasticWork;
+  arrayView2d< real64 > const m_plasticWork;
+
   // thermal expansion in direction lateral to crystal symmetry
   real64 const m_alphaL;
 
@@ -375,8 +385,8 @@ private:
   real64 const m_failureStrength;
 
   // The time to failure
-  real64 const m_crackSpeed;
-  real64 const m_fractureEnergyReleaseRate;
+  real64 const m_basalPlaneFractureEnergyReleaseRate;
+  real64 const m_totalFractureEnergyReleaseRate;
 
   // The damaged material frictional slope
   real64 const m_damagedMaterialFrictionalSlope;
@@ -582,7 +592,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 temp[3] = {};
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, unrotatedMaterialDirection );
-  real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );    // CC: Unused?
+  real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );    // Used (sometimes) to integrate plastic work for damage criteria
 
   // Beginning of step pressure to compute pressure-dependence of elastic moduli
   real64 oldPressure = (-1.0/3.0)*( oldStress[0] + oldStress[1] + oldStress[2] );   // CC: Unused?
@@ -697,12 +707,25 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
-  // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
+  
+  int basalModeIFracture = 0;
+  // Increment damage based on max plane-normal stress subject to energy normalization.
   if( planeNormalStress > failureStrength )
-  {
-    real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
-    m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+  { // Mode I basal plane fracture
+    basalModeIFracture = 1;
   }
+
+  // Test if damage is 0 but there is significant accumulated plastic work.  
+  // This should only occur if the damage has been healed by an event in the solver, 
+  // in which case we need to also reset the accumulated plastic work so it
+  // doesn't immediately re-damage.
+  //
+  if ( isZero( m_damage[k][q] ) && ( (m_plasticWork[k][q] > ( 1.e-3*m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) || 
+                                    (m_basalPlanePlasticWork[k][q] > ( 1.e-3*m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) ) )
+                                    {
+                                      m_plasticWork[k][q] = 0.0;
+                                      m_basalPlanePlasticWork[k][q] = 0.0;
+                                    }
 
   // strength scale factor, combining plastic softening and damage
   real64 damageMultiplier = (1.0 - m_damage[k][q]);
@@ -995,25 +1018,59 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
 
-    // Accumulated plastic work is used to evolve damage unless the plastic deformation happens
-    // at a high pressure (relative to the x2 value used to define the yield surface)
+
     //
-    if( ( m_fractureEnergyReleaseRate < DBL_MAX ) and ( pressure < m_distortionShearResponseX2 ) )
+
+        real64 timeToFailure = m_lengthScale[k] / m_basalPlaneFractureEnergyReleaseRate;
+    m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+
+    // If we have exceeded the tensile strength for normal stress, incement the plane-normal plastic
+    // work that is used to compute damage.
+    if ( m_basalPlaneFractureEnergyReleaseRate < DBL_MAX ) 
     { 
-      // I don't want to degrade strength or insert surfaces until the fracture energy threshold is met
-      // so I apply a nonlinear transformation to the damage evolution before and after the 
-      // work increment.  So damage is either 0 or 1 unless the tensile stress requirement from
-      // above is met.
-      m_damage[k][q] = pow( m_damage[k][q], 1./32. );
+      if ( basalModeIFracture == 1 )
+      {
+      // Mode I basal plane fracture:
+      real64 dEpsilonIJnJ[3] = {};
+      LvArray::tensorOps::Ri_eq_symAijBj< 3 >(dEpsilonIJnJ, plasticStrainIncrement, unrotatedMaterialDirection);
+      real64 plasticNormalStrainIncrement = LvArray::tensorOps::AiBi< 3 >(unrotatedMaterialDirection, dEpsilonIJnJ );
+      real64 avePlaneNormalStress = 0.5*( planeNormalStress + oldPlaneNormalStress );
+      m_basalPlanePlasticWork[k][q] += LvArray::math::max( 0.0 , plasticNormalStrainIncrement*avePlaneNormalStress );  // Should be non-negative, max may not be needed.
+      }
+
+      // Increment in basal plane shear work:
       for ( int i = 0; i < 6; ++i )
       {
-        m_damage[k][q] += plasticStrainIncrement[i]*newStress[i] / ( m_fractureEnergyReleaseRate / m_lengthScale[k] );
+        m_basalPlanePlasticWork[k][q] += plasticStrainIncrement[i]*sigma5[i];
       }
-      m_damage[k][q] = pow( m_damage[k][q], 32. );
+
+      // Compare accumulated work to specified effective fracture energy release rate normalized by length scale
+      // The power will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( LvArray::math::min( 1.0 , 
+        m_basalPlanePlasticWork[k][q] / ( m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) , 32. ) );
+
+      
     }
 
+    // Compute total plastic work and compare to the effective value for the fracture energy release
+    // rate (which should be defined to account for the fraction of inelastic dissipation that creates
+    // new fracture surfaces).  Only evolve damage if pressure is below a brittle-ductile limit
+    // defined as the X2 parameters for the distortion shear response.
+    if( ( m_totalFractureEnergyReleaseRate < DBL_MAX ) and ( pressure < m_distortionShearResponseX2 ) )
+    { 
+      // Increment in total plastic work.
+      for ( int i = 0; i < 6; ++i )
+      {
+        // Here the stress is what's left after subtracting off the basal stress plane normal
+        // and shear stress
+        m_plasticWork[k][q] += plasticStrainIncrement[i]*(newStress[i] - sigma5[i] - sigma1[i]);
+      }
 
-
+      // Damage is ( Wp/(Gf/l) )^k, where k=32, and we allow only increase in damage.
+      // This will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( LvArray::math::min( 1.0 , 
+        m_plasticWork[k][q] / ( m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ), 32. ) );
+    }
   }
 }
 
@@ -1370,6 +1427,10 @@ public:
     /// string/key for quadrature point relaxation value
     static constexpr char const * relaxationString() { return "relaxation"; }
 
+    /// string/key for quadrature point accumulated plastic work value
+    static constexpr char const * basalPlanePlasticWorkString() { return "basalPlanePlasticWork"; }
+    static constexpr char const * plasticWorkString() { return "plasticWork"; }
+
     /// constant for thermal expansion lateral to symmetry axis
     static constexpr char const * alphaLString() { return "alphaL"; }
 
@@ -1398,10 +1459,10 @@ public:
     static constexpr char const * failureStrengthString() { return "failureStrength"; }
 
     /// string/key for crack speed
-    static constexpr char const * crackSpeedString() { return "crackSpeed"; }
+    static constexpr char const * basalPlaneFractureEnergyReleaseRateString() { return "basalPlaneFractureEnergyReleaseRate"; }
 
-    /// string/key for fractureEnergyReleaseRate
-    static constexpr char const * fractureEnergyReleaseRateString() { return "fractureEnergyReleaseRate"; }
+    /// string/key for totalFractureEnergyReleaseRate
+    static constexpr char const * totalFractureEnergyReleaseRateString() { return "totalFractureEnergyReleaseRate"; }
 
     /// string/key for damaged material frictional slope
     static constexpr char const * damagedMaterialFrictionalSlopeString() { return "damagedMaterialFrictionalSlope"; }
@@ -1480,6 +1541,8 @@ public:
                             m_velocityGradient,
                             m_plasticStrain,
                             m_relaxation,
+                            m_basalPlanePlasticWork,
+                            m_plasticWork,
                             m_alphaL,
                             m_alphaT,
                             m_damage,
@@ -1489,8 +1552,8 @@ public:
                             m_lengthScale,
                             m_strengthScale,
                             m_failureStrength,
-                            m_crackSpeed,
-                            m_fractureEnergyReleaseRate,
+                            m_basalPlaneFractureEnergyReleaseRate,
+                            m_totalFractureEnergyReleaseRate,
                             m_damagedMaterialFrictionalSlope,
                             m_distortionShearResponseX2,
                             m_distortionShearResponseY1,
@@ -1541,6 +1604,8 @@ public:
                           m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
+                          m_basalPlanePlasticWork,
+                          m_plasticWork,
                           m_alphaL,
                           m_alphaT,
                           m_damage,
@@ -1550,8 +1615,8 @@ public:
                           m_lengthScale,
                           m_strengthScale,
                           m_failureStrength,
-                          m_crackSpeed,
-                          m_fractureEnergyReleaseRate,
+                          m_basalPlaneFractureEnergyReleaseRate,
+                          m_totalFractureEnergyReleaseRate,
                           m_damagedMaterialFrictionalSlope,
                           m_distortionShearResponseX2,
                           m_distortionShearResponseY1,
@@ -1758,6 +1823,10 @@ protected:
   /// State variable: The relaxation values for each quadrature point
   array2d< real64 > m_relaxation;
 
+  /// State variable: The accumulated plastic work values for each quadrature point
+  array2d< real64 > m_basalPlanePlasticWork;
+  array2d< real64 > m_plasticWork;
+
   /// Material parameter: lateral thermal expansion coefficient
   real64 m_alphaL;
 
@@ -1787,8 +1856,8 @@ protected:
   real64 m_failureStrength;
 
   /// Material parameter: The value of crack speed
-  real64 m_crackSpeed;
-  real64 m_fractureEnergyReleaseRate;
+  real64 m_basalPlaneFractureEnergyReleaseRate;
+  real64 m_totalFractureEnergyReleaseRate;
 
   /// Material parameter: The value of the damaged material frictional slope
   real64 m_damagedMaterialFrictionalSlope;

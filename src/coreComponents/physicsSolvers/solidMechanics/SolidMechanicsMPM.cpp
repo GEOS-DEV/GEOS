@@ -303,6 +303,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_numberOfSubRegions( 0 ),
   m_smallMass( DBL_MAX ),
   m_solverProfiling( 0 ),
+  m_logMomentum( 0 ),
   m_logStartCycle( 0 ),
   m_profilingTimes(),
   m_profilingLabels(),
@@ -444,7 +445,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for timing subroutines in the solver" );
 
-  registerWrapper( "logStartCycle", &m_logStartCycle ).
+  registerWrapper( "logMomentum", &m_logMomentum ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag for logging momentum balance." );
+
+    registerWrapper( "logStartCycle", &m_logStartCycle ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Cycle to start logging output for debugging" );
@@ -2884,6 +2890,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // particleColorSort( particleManager );
   // //#######################################################################################
 
+  logMomentumSum( "before P2G" , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Particle-to-grid interpolation" );
@@ -2926,6 +2933,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       break;
   }
 
+  logMomentumSum( "after P2G" , particleManager, nodeManager); // Output momentum sums for debugging.
+
   //#######################################################################################
 
 
@@ -2955,6 +2964,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   
   //#######################################################################################
 
+  logMomentumSum( "after P2G MPI Sync " , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Enforce boundary symmetry and normalize relevant grid fields" );
@@ -2976,12 +2986,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   normalizeGridSurfaceNormalsAndPositions( nodeManager );
   //#######################################################################################
 
+  logMomentumSum( "after enforceGridVectorFieldSymmetryBC ", particleManager, nodeManager); // Output momentum sums for debugging.
+
 
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   solverProfiling( "Determine trial momenta and velocities based on acceleration due to internal and external forces, but before contact enforcement" );
   gridTrialUpdate( dt, nodeManager );
   //#######################################################################################
+
+  logMomentumSum( "after gridTrialUpdate ", particleManager, nodeManager); // Output momentum sums for debugging.
 
 
   //#######################################################################################
@@ -2997,6 +3011,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                     );
   }
   //#######################################################################################
+
+  logMomentumSum( "after Contact enforcement " , particleManager, nodeManager); // Output momentum sums for debugging.
 
 
   //#######################################################################################
@@ -3087,6 +3103,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   applyEssentialBCs( dt, time_n, nodeManager );
   //#######################################################################################
 
+  logMomentumSum( "After applyEssentialBCs" , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   if( m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) ) )
@@ -3120,6 +3137,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   gridToParticle( dt, particleManager, nodeManager, domain, mesh );
   //#######################################################################################
 
+  logMomentumSum( "After Grid-to-particle interpolation" , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   if( m_prescribedFTable == 1 )
@@ -3642,6 +3660,107 @@ real64 SolidMechanicsMPM::kernel( real64 const & r ) // distance from particle t
                        m_planeStrain );
 }
 
+
+void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code location of output
+                                          ParticleManager & particleManager,
+                                          NodeManager & nodeManager )
+{
+  if (m_logMomentum > 0)
+  {
+    int rank = 0;
+    MPI_Comm_rank( MPI_COMM_GEOS, &rank );
+    localIndex const numVelocityFields = m_numVelocityFields;
+
+    // Sum particle momentum for debugging.   
+    real64 partitionParticleMomentumSum[3] = {};
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();  
+      arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+
+      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      forAll< serialPolicy >( activeParticleIndices.size(), [&] ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        for (int i=0; i<3; ++i )
+          {
+            partitionParticleMomentumSum[i] += particleMass[p]*particleVelocity[p][i];
+          } 
+      } ); // particle loop     
+    });
+
+    // GEOS_LOG_RANK( label<<" - Rank: "<<rank<<" partition particle momentum sum = [ "<<partitionParticleMomentumSum[0]<<", "<<partitionParticleMomentumSum[1]<<", "<<partitionParticleMomentumSum[2]<<"]" );
+
+    // Do an MPI sync to total these values
+    real64 globalParticleMomentumSum[3] = {};
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      real64 localSum = partitionParticleMomentumSum[i];
+      real64 globalSum;
+      MPI_Allreduce( &localSum,
+                    &globalSum,
+                    1,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    MPI_COMM_GEOS );
+      globalParticleMomentumSum[i] = globalSum;
+    }
+    if(rank == 0)
+    {
+      GEOS_LOG_RANK(label<<" GLOBAL particle momentum sum = [ "<<globalParticleMomentumSum[0]<<", "<<globalParticleMomentumSum[1]<<", "<<globalParticleMomentumSum[2]<<"]");
+    }
+
+    // Sum grid momentum for debugging.   
+    real64 partitionGridMomentumSum[6] = {};
+    arrayView3d< real64 const > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+    arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+
+    arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
+    
+    localIndex const numNodes = nodeManager.size();
+    forAll< serialPolicy >( numNodes, [&] ( localIndex const g )  
+    { // Loop over velocity fields
+      for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
+      {
+        for( localIndex i=0; i < 3; ++i )
+        {
+          if( gridGhostRank[g] <= -1 )
+          {
+            partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
+            if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
+            {
+              partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
+            }
+          }
+        }
+      }
+    });
+
+    //GEOS_LOG_RANK(label<<" - Rank: "<<rank<<" partition grid momentum sum = [ "<<partitionGridMomentumSum[0]<<", "<<partitionGridMomentumSum[1]<<", "<<partitionGridMomentumSum[2]<<"]");
+    //GEOS_LOG_RANK(label<<" - Rank: "<<rank<<" partition grid thresholded momentum sum = [ "<<partitionGridMomentumSum[3]<<", "<<partitionGridMomentumSum[4]<<", "<<partitionGridMomentumSum[5]<<"]");
+    
+    // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
+    // so file is directly plottable in excel as CSV or something.
+    real64 globalGridMomentumSum[6] = {};
+    for( localIndex i = 0; i < 6; ++i )
+    {
+      real64 localSum = partitionGridMomentumSum[i];
+      real64 globalSum;
+      MPI_Allreduce( &localSum,
+                    &globalSum,
+                    1,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    MPI_COMM_GEOS );
+      globalGridMomentumSum[i] = globalSum;
+    }
+    if(rank == 0)
+    {
+      GEOS_LOG_RANK(label<<" GLOBAL grid momentum sum = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL thresholded grid momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
+    }
+  }
+}
 
 real64 SolidMechanicsMPM::kernelDevice( real64 const & r, // distance from particle to query point.
                                         real64 const & neighborRadius,
@@ -11555,6 +11674,12 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   arrayView2d< real64 > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
   arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
 
+
+
+
+      
+
+
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -12864,6 +12989,14 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
                                                                                          // for XPIC update, CC: TODO clean up this code to
                                                                                          // avoid redundant operations
           gridVelocity[g][fieldIndex][i] = gridMomentum[g][fieldIndex][i] / gridMass[g][fieldIndex];
+        }
+      }
+      else
+      {
+        for( localIndex i=0; i < numDims; ++i )
+        {
+          real64 contactForce = gridContactForce[g][fieldIndex][i];
+          gridMomentum[g][fieldIndex][i] += contactForce * dt;
         }
       }
     }

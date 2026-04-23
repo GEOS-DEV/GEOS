@@ -395,6 +395,11 @@ public:
                           const real64 time_n,
                           NodeManager & nodeManager );
 
+  void logMomentumSum( std::string label, // For tagging code location of output
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+                                       
+
   void applySuperimposedVelocityGradient( const real64 dt,
                                           ParticleManager & particleManager,
                                           SpatialPartition & partition );
@@ -1039,7 +1044,9 @@ protected:
   int m_logStartCycle;
   stdVector< real64 > m_profilingTimes;
   stdVector< std::string > m_profilingLabels;
-
+  
+  int m_logMomentum;
+  
   // Plotting options
   int m_plotGridFields;
   string_array m_plottableFields;
