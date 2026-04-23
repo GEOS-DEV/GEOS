@@ -26,7 +26,7 @@ class FrictionDriver : public TaskBase
 
 public:
   FrictionDriver( const string & name,
-                 Group * const parent );
+                  Group * const parent );
 
   static string catalogName()
   { return "FrictionDriver"; }
@@ -89,15 +89,15 @@ private:
     constexpr static char const * numStepsString()
     { return "steps"; }
 
-    constexpr static char const * jumpFunctionString() 
+    constexpr static char const * jumpFunctionString()
     { return "jumpControl"; }
 
-    constexpr static char const * tractionFunctionString() 
+    constexpr static char const * tractionFunctionString()
     { return "tractionControl"; }
 
     constexpr static char const * thetaString()
     { return "xTiltAngle";}
-    
+
     constexpr static char const * phiString()
     { return "yTiltAngle";}
 
@@ -113,8 +113,8 @@ private:
   static integer const m_numColumns = 9;    ///< Number of columns in dat
   enum columnKeys { TIME, NJUMP, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
 
-  string m_jumpFunctionName; ///<  
-  string m_tractionFunctionName; ///< 
+  string m_jumpFunctionName; ///<
+  string m_tractionFunctionName; ///<
 
   float m_theta, m_phi;///< x- and y-tilt of fault
 

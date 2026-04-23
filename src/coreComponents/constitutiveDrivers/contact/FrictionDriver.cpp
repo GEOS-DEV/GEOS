@@ -26,14 +26,15 @@
 
 #include "FrictionDriver.hpp"
 
-namespace geos {
+namespace geos
+{
 
 using namespace dataRepository;
 using namespace constitutive;
 
-FrictionDriver::FrictionDriver(const string& name, Group * const parent)
-:
-TaskBase(name, parent)
+FrictionDriver::FrictionDriver( const string & name, Group * const parent )
+  :
+  TaskBase( name, parent )
 {
   registerWrapper( viewKeyStruct::frictionNameString(), &m_frictionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -50,14 +51,14 @@ TaskBase(name, parent)
 
   registerWrapper( viewKeyStruct::tractionFunctionString(), &m_tractionFunctionName ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the input function representing traction function along world x-axis");
-  
+    setDescription( "Name of the input function representing traction function along world x-axis" );
+
   registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of increment step to take in both jumps and traction increments" );
-  
+
   registerWrapper( viewKeyStruct::phiString(), &m_phi ).
-    setInputFlag( InputFlags::INVALID).
+    setInputFlag( InputFlags::INVALID ).
     setDescription( "Number of increment step to take in both jumps and traction increments" );
 
   registerWrapper( viewKeyStruct::outputString(), &m_outputFile ).
@@ -78,7 +79,7 @@ void FrictionDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(), GEOS_FMT( "Can't seem to open the baseline file ", m_baselineFile ), InputError );
 
   // discard file header
 
@@ -100,21 +101,23 @@ void FrictionDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", InputError );
       file >> value;
-    
+
       error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                          << " (row " << row+10 << " with header)"
-                                                                                          << " and column " << col+1, std::runtime_error );
-      
+      GEOS_THROW_IF( error > m_baselineTol, GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                                                      row+1,
+                                                      row+10,
+                                                      col+1 ),
+                     InputError );
+
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", InputError );
 
   // success
 
@@ -132,9 +135,9 @@ void FrictionDriver::outputResults()
 
   fprintf( fp, "# column 1 = index \n" );
   fprintf( fp, "# column 2-3 = normal and in-plane displacement jump\n" );
-  fprintf( fp, "# columns 5-7 = normal and in-place tractions\n");
-  fprintf( fp, "# columns 8 = fracture state (0:Stick,1-2:[new]Slip,3:Open)\n");
-  fprintf( fp, "# columns 9 = tau lim\n");
+  fprintf( fp, "# columns 5-7 = normal and in-place tractions\n" );
+  fprintf( fp, "# columns 8 = fracture state (0:Stick,1-2:[new]Slip,3:Open)\n" );
+  fprintf( fp, "# columns 9 = tau lim\n" );
 
   for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
@@ -151,26 +154,26 @@ void FrictionDriver::outputResults()
 
 void FrictionDriver::postInputInitialization()
 {
-  ConstitutiveManager
-  & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  FrictionBase& baseFriction = constitutiveManager.getGroup< FrictionBase >( m_frictionName );
+//   ConstitutiveManager
+//   & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+//   FrictionBase& baseFriction = constitutiveManager.getGroup< FrictionBase >( m_frictionName );
 
-//   m_numPhases = baseFriction.numSubGroups();
+// //   m_numPhases = baseFriction.numSubGroups();
 
 }
 
 
 bool FrictionDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
-                             const geos::real64 GEOS_UNUSED_PARAM( dt ),
-                             const geos::integer GEOS_UNUSED_PARAM( cycleNumber ),
-                             const geos::integer GEOS_UNUSED_PARAM( eventCounter ),
-                             const geos::real64 GEOS_UNUSED_PARAM( eventProgress ),
-                             geos::DomainPartition &
-                             GEOS_UNUSED_PARAM( domain ) )
+                              const geos::real64 GEOS_UNUSED_PARAM( dt ),
+                              const geos::integer GEOS_UNUSED_PARAM( cycleNumber ),
+                              const geos::integer GEOS_UNUSED_PARAM( eventCounter ),
+                              const geos::real64 GEOS_UNUSED_PARAM( eventProgress ),
+                              geos::DomainPartition &
+                              GEOS_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "FrictionDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "FrictionDriver should only be run in serial", geos::RuntimeError );
 
 
   ConstitutiveManager
@@ -241,26 +244,26 @@ void FrictionDriver::resizeTables()
   real64 const minTime = coordinates[0][0];
   real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
   real64 const dt = (maxTime-minTime) / m_numSteps;
-  
+
   // set input columns
   resizeTable< FRICTION_TYPE >();
-  
+
   // set time column
   for( integer k=0; k<m_numSteps+1; ++k )
-  for( integer n=0; n<m_numSteps+1; ++n )
-  {
-    m_table( n + k*(m_numSteps+1), TIME ) = minTime + n*dt;
-  }
+    for( integer n=0; n<m_numSteps+1; ++n )
+    {
+      m_table( n + k*(m_numSteps+1), TIME ) = minTime + n*dt;
+    }
 
 
   //TODO Somewhere ALM.updateConfiguration(domain, dummy);
 
-  real64 cohesion = 0.;  
-  real64 frictionCoeff = 0.; 
-  if constexpr ( std::is_same_v< CoulombFriction, FRICTION_TYPE> ) {
-  
-    cohesion = dynamic_cast<CoulombFriction*>(&baseFriction)->getCohesion();
-    frictionCoeff = dynamic_cast<CoulombFriction*>(&baseFriction)->getFrictionCoeff();
+  real64 cohesion = 0.;
+  real64 frictionCoeff = 0.;
+  if constexpr ( std::is_same_v< CoulombFriction, FRICTION_TYPE > ) {
+
+    cohesion = dynamic_cast< CoulombFriction * >(&baseFriction)->getCohesion();
+    frictionCoeff = dynamic_cast< CoulombFriction * >(&baseFriction)->getFrictionCoeff();
   }
 
   //All variation
@@ -269,23 +272,23 @@ void FrictionDriver::resizeTables()
     for( integer nj = 0; nj < m_numSteps+1; ++nj )
     {
 
-      integer index = nt * (m_numSteps+1) + nj;    
-      m_table( index, NTRAC ) =  tractionFunction.evaluate(&m_table(nt,TIME))*sin(m_theta * M_PI/180);
-      m_table( index, STRAC0 ) = tractionFunction.evaluate(&m_table(nt,TIME))*cos(m_theta * M_PI/180);
-      m_table( index, STRAC1 ) = tractionFunction.evaluate(&m_table(nt,TIME))*cos(m_theta * M_PI/180);
-      
-      m_table( index, NJUMP ) = jumpFunction.evaluate(&m_table(nj,TIME))*sin(m_theta * M_PI/180);
-      m_table( index, SLIP0 ) = jumpFunction.evaluate(&m_table(nj,TIME))*cos(m_theta * M_PI/180);
-      m_table( index, SLIP1 ) = jumpFunction.evaluate(&m_table(nj,TIME))*cos(m_theta * M_PI/180);
+      integer index = nt * (m_numSteps+1) + nj;
+      m_table( index, NTRAC ) =  tractionFunction.evaluate( &m_table( nt, TIME ))*sin( m_theta * M_PI/180 );
+      m_table( index, STRAC0 ) = tractionFunction.evaluate( &m_table( nt, TIME ))*cos( m_theta * M_PI/180 );
+      m_table( index, STRAC1 ) = tractionFunction.evaluate( &m_table( nt, TIME ))*cos( m_theta * M_PI/180 );
+
+      m_table( index, NJUMP ) = jumpFunction.evaluate( &m_table( nj, TIME ))*sin( m_theta * M_PI/180 );
+      m_table( index, SLIP0 ) = jumpFunction.evaluate( &m_table( nj, TIME ))*cos( m_theta * M_PI/180 );
+      m_table( index, SLIP1 ) = jumpFunction.evaluate( &m_table( nj, TIME ))*cos( m_theta * M_PI/180 );
 
       m_table( index, FS ) = fields::contact::FractureState::Stick;
 
       //Only for Coulomb
-      m_table( index, TLIM ) = cohesion - m_table(index, NTRAC) * frictionCoeff;
+      m_table( index, TLIM ) = cohesion - m_table( index, NTRAC ) * frictionCoeff;
 
     }
   }
-  
+
 }
 
 //TODO updateConfig proxy

@@ -28,22 +28,22 @@ namespace geos
 template< typename FRICTION_TYPE >
 void
 FrictionDriver::runTest( FRICTION_TYPE & friction,
-                        const arrayView2d< real64 > & table )
+                         const arrayView2d< real64 > & table )
 {
 
   array2d< real64 > jumps, tractions;
-  jumps.resize(table.size(0),3);
-  tractions.resize(table.size(0),3);
+  jumps.resize( table.size( 0 ), 3 );
+  tractions.resize( table.size( 0 ), 3 );
 
-  for( integer n = 0; n < table.size(0); ++n)
+  for( integer n = 0; n < table.size( 0 ); ++n )
   {
-    jumps[n][0] = table(n,NJUMP);
-    jumps[n][1] = table(n,SLIP0);
-    jumps[n][2] = table(n,SLIP1);
+    jumps[n][0] = table( n, NJUMP );
+    jumps[n][1] = table( n, SLIP0 );
+    jumps[n][2] = table( n, SLIP1 );
 
-    tractions[n][0] = table(n,NTRAC);
-    tractions[n][1] = table(n,STRAC0);
-    tractions[n][2] = table(n,STRAC1);
+    tractions[n][0] = table( n, NTRAC );
+    tractions[n][1] = table( n, STRAC0 );
+    tractions[n][2] = table( n, STRAC1 );
 
   }
 
@@ -52,17 +52,18 @@ FrictionDriver::runTest( FRICTION_TYPE & friction,
   typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
   forAll< parallelDevicePolicy<> >( 1,
-                                    [ kernelWrapper, table, jumps, tractions ] 
-                                    GEOS_HOST_DEVICE ( integer const ei )
+                                    [ kernelWrapper, table, jumps, tractions ]
+                                    GEOS_HOST_DEVICE ( integer const GEOS_UNUSED_PARAM( ei ) )
   {
-    for( integer i = 1; i < table.size(0) ; ++i )
+
+    for( integer i = 1; i < table.size( 0 ); ++i )
     {
       integer fs = fields::contact::FractureState::Stick;
       kernelWrapper.updateFractureState( jumps[i],
                                          tractions[i],
                                          fs );
 
-      table(i,FS) = fs;
+      table( i, FS ) = fs;
     }
   } );
 
