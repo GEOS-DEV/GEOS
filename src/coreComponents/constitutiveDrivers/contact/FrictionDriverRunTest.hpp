@@ -20,56 +20,42 @@
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 
-
 namespace geos
 {
-
 
 template< typename FRICTION_TYPE >
 void
 FrictionDriver::runTest( FRICTION_TYPE & friction,
                          const arrayView2d< real64 > & table )
 {
-
-  array2d< real64 > jumps, tractions;
-  jumps.resize( table.size( 0 ), 3 );
-  tractions.resize( table.size( 0 ), 3 );
-
-  for( integer n = 0; n < table.size( 0 ); ++n )
-  {
-    jumps[n][0] = table( n, NJUMP );
-    jumps[n][1] = table( n, SLIP0 );
-    jumps[n][2] = table( n, SLIP1 );
-
-    tractions[n][0] = table( n, NTRAC );
-    tractions[n][1] = table( n, STRAC0 );
-    tractions[n][2] = table( n, STRAC1 );
-
-  }
-
-
-  // create kernel wrapper
+  // Create kernel wrapper
   typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
-  forAll< parallelDevicePolicy<> >( 1,
-                                    [ kernelWrapper, table, jumps, tractions ]
-                                    GEOS_HOST_DEVICE ( integer const GEOS_UNUSED_PARAM( ei ) )
+  integer const numRows = m_table.size( 0 );
+  forAll< parallelDevicePolicy<> >( numRows,
+                                    [ kernelWrapper, table ]
+                                    GEOS_HOST_DEVICE ( integer const ei )
   {
+    stackArray1d< real64, 3 > jump( 3 );
+    stackArray1d< real64, 3 > traction( 3 );
 
-    for( integer i = 1; i < table.size( 0 ); ++i )
-    {
-      integer fs = fields::contact::FractureState::Stick;
-      kernelWrapper.updateFractureState( jumps[i],
-                                         tractions[i],
-                                         fs );
+    jump[0] = table( ei, NJUMP );
+    jump[1] = table( ei, SLIP0 );
+    jump[2] = table( ei, SLIP1 );
 
-      table( i, FS ) = fs;
-    }
+    traction[0] = table( ei, NTRAC );
+    traction[1] = table( ei, STRAC0 );
+    traction[2] = table( ei, STRAC1 );
+
+    integer fracture_state = fields::contact::FractureState::Stick;
+    kernelWrapper.updateFractureState( jump.toSliceConst(),
+                                       traction.toSliceConst(),
+                                       fracture_state );
+
+    table( ei, FS ) = fracture_state;
   } );
-
 }
 
 }
-
 
 #endif //GEOS_FRICTIONDRIVERRUNTEST_HPP_

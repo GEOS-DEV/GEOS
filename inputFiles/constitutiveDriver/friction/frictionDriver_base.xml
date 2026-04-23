@@ -1,12 +1,24 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  
   <!-- SPHINX_EVENTS -->
   <Events
     maxTime="1">
     <SoloEvent
       name="frictionDriver"
+      targetTime="0"
       target="/Tasks/frictionDriver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>          
   </Events>
   <!-- SPHINX_EVENTS_END -->
 
@@ -37,26 +49,4 @@
       voxelFile="tables/tractions.geos"/>
   </Functions>
   <!-- SPHINX_FUNCTION_END -->
-
-  <!-- SPHINX_MESH -->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
-  <!-- SPHINX_MESH_END -->
 </Problem>

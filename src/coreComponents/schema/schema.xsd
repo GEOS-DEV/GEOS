@@ -569,6 +569,10 @@
 					<xsd:selector xpath="FieldApplicator" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="TasksFrictionDriverUniqueName">
+					<xsd:selector xpath="FrictionDriver" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="TasksHydrofractureInitializationUniqueName">
 					<xsd:selector xpath="HydrofractureInitialization" />
 					<xsd:field xpath="@name" />
@@ -6266,6 +6270,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="FieldApplicator" type="FieldApplicatorType" />
+			<xsd:element name="FrictionDriver" type="FrictionDriverType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesALMInitialization" type="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesInitialization" type="MultiphasePoromechanicsConformingFracturesInitializationType" />
@@ -6377,6 +6382,29 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="solverName" type="groupNameRef" default="" />
 		<!--targetRegions => Target element regions to apply field specifications to. If empty, applies to all regions.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="FrictionDriverType">
+		<!--friction => Friction model to test-->
+		<xsd:attribute name="friction" type="groupNameRef" use="required" />
+		<!--jumpControl => Name of the input function representing jump function along world x-axis-->
+		<xsd:attribute name="jumpControl" type="string" use="required" />
+		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
+Information output from lower logLevels is added with the desired log level
+1
+ - Enable log output-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" default="" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
+		<!--steps => Number of sample step to take in both jumps and traction increments-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--tractionControl => Name of the input function representing traction function along world x-axis-->
+		<xsd:attribute name="tractionControl" type="string" use="required" />
+		<!--xTiltAngle => Number of increment step to take in both jumps and traction increments-->
+		<xsd:attribute name="xTiltAngle" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
