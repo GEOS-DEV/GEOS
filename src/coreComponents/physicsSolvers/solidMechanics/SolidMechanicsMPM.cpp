@@ -3329,9 +3329,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Update global-to-local map" );
-  solverProfiling( "Update global-to-local map" );
-  flagOutOfRangeParticles( particleManager );
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Flag out-of-range particles" );
+  solverProfiling( "Flag out-of-range particles" );
+  flagOutOfRangeParticles( particleManager, partition );
   //#######################################################################################
 
 
@@ -3341,6 +3341,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   deleteBadParticles( particleManager );
   //#######################################################################################
 
+  logMomentumSum( "Before Repartition and Active Indiced" , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
@@ -3366,6 +3367,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     }
   }
   //#######################################################################################
+
+    logMomentumSum( "After Repartition and Active Indiced" , particleManager, nodeManager); // Output momentum sums for debugging.
+
 
 
   //#######################################################################################
@@ -3727,8 +3731,9 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
           if( gridGhostRank[g] <= -1 )
           {
             partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
-            if( gridMass[g][fieldIndex] > m_smallMass ) // small mass threshold
-            {
+            if( gridMass[g][fieldIndex] > m_smallMass )
+            { // This stores the momentum mapped skipping small mass ndoes so we can compare
+              // and compute the momentium lost due to the small mass threshold
               partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
             }
           }
@@ -3757,7 +3762,7 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     if(rank == 0)
     {
       GEOS_LOG_RANK(label<<" GLOBAL grid momentum sum = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL thresholded grid momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL mass-thresholded grid momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
     }
   }
 }
@@ -12938,7 +12943,13 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
           gridAcceleration[g][fieldIndex][i] = 0.0;
           gridDVelocity[g][fieldIndex][i] = 0.0;
           gridVelocity[g][fieldIndex][i] = 0.0;
-          gridMomentum[g][fieldIndex][i] = 0.0;
+
+          // Compute the momentium for small mass nodes, to allow conservation checks.
+          // This shouldn't actually be used to compute velocity since we don't want divide by m<smallMass
+          real64 totalForce = gridInternalForce[g][fieldIndex][i] + gridExternalForce[g][fieldIndex][i];
+          gridMomentum[g][fieldIndex][i] += totalForce * dt;
+          // gridMomentum[g][fieldIndex][i] = 0.0;
+
           gridCenterOfVolume[g][fieldIndex][i] = 0.0;
           gridCenterOfMass[g][fieldIndex][i] = 0.0;
         }
@@ -12995,6 +13006,8 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
       {
         for( localIndex i=0; i < numDims; ++i )
         {
+          // Compute the momentium update for small mass nodes, to allow conservation checks.
+          // This shouldn't actually be used to compute velocity since we don't want divide by m<smallMass
           real64 contactForce = gridContactForce[g][fieldIndex][i];
           gridMomentum[g][fieldIndex][i] += contactForce * dt;
         }
@@ -17444,12 +17457,26 @@ void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
 
 // All master particles should have centers inside the domain if particleCenters are corrected correctly during repartitioning
 // CPDI: Edge case, corner of large or long particle beyond ghost cells but center is still inside domain?
-void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManager )
+void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManager,
+                                                 SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
 
+  // With periodic Boundary conditions we can have a particle that is out of the global domain in the periodic direction
+  // but will be repartitioned to bee back in the global domain after the periodic position update.  
+  //
+  // Currently I have it set to not flag particles that are out of domain in the periodic direction.  Assuming we are using
+  // CPDI domain scaling and time step control, this should be fine.  (but that should keep us from having to delete
+  // anything except at an outflow boundary) If a CPDI domain is streched and the particle center is near the e.g. +x side
+  // of a cell at the +x boundary (PBC in x), a corner might be out of the global domain..but after perioid update it wouldn't be
+  //. So keeping the skip of deletion for PBC, but if there are segfault due to particles being out of domain and trying to
+  // map to nodes that don't exist, we may need to revisit.
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
+    
+    arrayView1d< int const > const periodic = partition.getPeriodic();
+
     // Identify global domain bounds
     real64 globalMin[3] = { }; // including buffer cells
     real64 globalMax[3] = { }; // including buffer cells
@@ -17481,7 +17508,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           localIndex const p = activeParticleIndices[pp];
           for( int i=0; i<3; ++i )
           {
-            if( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] )
+            if( !periodic[i] && ( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] ) )
             {
               particleDeleteFlag[p] = 1;
               break;   // TODO: if this doesn't work, just modify "i"
@@ -17510,7 +17537,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
             {
               real64 cornerPositionComponent = particlePosition[p][i] + signs[cornerIndex][0] * particleRVectors[p][0][i] + signs[cornerIndex][1] * particleRVectors[p][1][i] + signs[cornerIndex][2] *
                                                particleRVectors[p][2][i];
-              if( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent )
+              if(  !periodic[i] && ( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent ) )
               {
                 particleDeleteFlag[p] = 1;
                 break;

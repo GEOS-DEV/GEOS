@@ -879,7 +879,8 @@ public:
                                      arraySlice1d< real64 const > const xB,
                                      real64 const & surfaceQuality );
 
-  void flagOutOfRangeParticles( ParticleManager & particleManager );
+  void flagOutOfRangeParticles( ParticleManager & particleManager,
+                                SpatialPartition & partition );
 
   void computeRVectors( ParticleManager & particleManager );
 
@@ -1041,11 +1042,12 @@ protected:
 
   // Debugging / Profiling options
   int m_solverProfiling;
+  int m_logMomentum;
   int m_logStartCycle;
   stdVector< real64 > m_profilingTimes;
   stdVector< std::string > m_profilingLabels;
   
-  int m_logMomentum;
+
   
   // Plotting options
   int m_plotGridFields;

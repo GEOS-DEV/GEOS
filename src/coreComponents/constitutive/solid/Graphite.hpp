@@ -1021,8 +1021,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     //
 
-        real64 timeToFailure = m_lengthScale[k] / m_basalPlaneFractureEnergyReleaseRate;
-    m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+    //real64 timeToFailure = m_lengthScale[k] / m_basalPlaneFractureEnergyReleaseRate;
+    //m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
 
     // If we have exceeded the tensile strength for normal stress, incement the plane-normal plastic
     // work that is used to compute damage.
@@ -1046,10 +1046,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
       // Compare accumulated work to specified effective fracture energy release rate normalized by length scale
       // The power will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( LvArray::math::min( 1.0 , 
-        m_basalPlanePlasticWork[k][q] / ( m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) , 32. ) );
-
-      
+      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32 ) );      
     }
 
     // Compute total plastic work and compare to the effective value for the fracture energy release
@@ -1068,8 +1066,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
       // Damage is ( Wp/(Gf/l) )^k, where k=32, and we allow only increase in damage.
       // This will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( LvArray::math::min( 1.0 , 
-        m_plasticWork[k][q] / ( m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ), 32. ) );
+      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32 ) );      
     }
   }
 }
