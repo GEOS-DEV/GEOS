@@ -382,6 +382,8 @@ public:
     constexpr static char const * constitutivePathString() { return "constitutivePath"; }
     /// @return The key for objectPath
     constexpr static char const * objectPathString() { return "objectPath"; }
+    /// @return The key for regionNames
+    constexpr static char const * regionNamesString() { return "regionNames"; }
     /// @return The key for fieldName
     constexpr static char const * fieldNameString() { return "fieldName"; }
     /// @return The key for dataType
@@ -435,6 +437,15 @@ public:
   virtual const string & getObjectPath() const
   {
     return m_objectPath;
+  }
+
+  /**
+   * Accessor
+   * @return const reference to m_regionNames
+   */
+  string_array const & getRegionNames() const
+  {
+    return m_regionNames;
   }
 
   /**
@@ -631,6 +642,9 @@ private:
   string m_objectPath;
 
   std::unique_ptr< MeshObjectPath > m_meshObjectPaths;
+
+  /// the region names where the field specification is applied
+  string_array m_regionNames;
 
   /// the name of the field the boundary condition is applied to or a key string to use for
   /// determining whether or not to apply the boundary condition.

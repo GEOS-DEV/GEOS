@@ -15,6 +15,7 @@
 
 #include "FieldSpecificationBase.hpp"
 
+#include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
@@ -39,6 +40,11 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Path to the target field" );
+
+  registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of the regions where the field specification is applied." );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -152,6 +158,18 @@ void FieldSpecificationBase::postInputInitialization()
                               viewKeyStruct::functionNamesString() ),
                    InputError,
                    getDataContext() );
+  }
+
+  if( !m_regionNames.empty() )
+  {
+    GEOS_THROW_IF( !m_objectPath.empty(),
+                   GEOS_FMT ( "'{}' must not be set when '{}' is set. ",
+                              viewKeyStruct::objectPathString(),
+                              viewKeyStruct::regionNamesString() ),
+                   InputError,
+                   getDataContext() );
+
+    m_objectPath = "ElementRegions/{" + stringutilities::join( m_regionNames, ' ' ) + "}";
   }
 }
 
