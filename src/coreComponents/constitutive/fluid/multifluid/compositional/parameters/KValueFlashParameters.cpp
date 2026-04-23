@@ -28,6 +28,7 @@
 #endif
 
 #include "common/Units.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -381,7 +382,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
         }
         hasAtLeastOneNegative = hasAtLeastOneNegative || hasNegative;
         hasAtLeastOneOneSided = hasAtLeastOneOneSided || (allMoreThanUnity || allLessThanUnity);
-        if( (allMoreThanUnity || allLessThanUnity || hasNegative) && tableData.getTableDataRows().size() < 5 )
+        if( (allMoreThanUnity || allLessThanUnity || hasNegative) && tableData.getCellsData().size() < 5 )
         {
           tableRow[0].value = phaseNames[phaseIndex+1];
           tableRow[1].value = GEOS_FMT( "{0:.3e}", m_pressureValues[0][pressureIndex] );
@@ -397,7 +398,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
     }
   }
 
-  if( !tableData.getTableDataRows().empty())
+  if( !tableData.getCellsData().empty())
   {
     std::vector< TableLayout::Column > columns;
     columns.emplace_back( TableLayout::Column().setName( "Phase" ).setValuesAlignment( TableLayout::Alignment::left ) );
@@ -423,8 +424,9 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
     }
 
     string const fluidName = fluid->getFullName();
-    GEOS_WARNING( GEOS_FMT( "{}: {}\n{}",
-                            fluidName, message, tableText.toString( tableData ) ));
+    GEOS_WARNING_IF( MpiWrapper::commRank() == 0,
+                     GEOS_FMT( "{}: {}\n{}",
+                               fluidName, message, tableText.toString( tableData ) ));
 
     GEOS_THROW_IF( hasAtLeastOneNegative, "negative k-value found. ",
                    InputError, fluid->getDataContext() );

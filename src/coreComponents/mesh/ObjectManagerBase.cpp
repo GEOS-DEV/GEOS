@@ -100,7 +100,8 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size( 0 ) != numObjects, "Size mismatch. " << map.size( 0 ) << " != " << numObjects );
+  GEOS_ERROR_IF( map.size( 0 ) != numObjects,
+                 GEOS_FMT( "Size mismatch. {} != {}", map.size( 0 ), numObjects ) );
 
   if( setName == "all" )
   {
@@ -132,7 +133,8 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
   newset.clear();
 
   localIndex const numObjects = size();
-  GEOS_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOS_ERROR_IF( map.size() != numObjects,
+                 GEOS_FMT( "Size mismatch. {} != {}", map.size(), numObjects ) );
 
   if( setName == "all" )
   {
@@ -269,7 +271,10 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( reqNotAvail, reqNotAvail.end() ) );
     if( !reqNotAvail.empty() )
     {
-      GEOS_ERROR( "Wrapper(s) \"" << stringutilities::join( reqNotAvail, ", " ) << "\" was (were) requested from \"" << getName() << "\" but is (are) not available.", getDataContext() );
+      GEOS_ERROR( GEOS_FMT( "Wrapper(s) \"{}\" was (were) requested from \"{}\" but is (are) not available.",
+                            stringutilities::join( reqNotAvail, ", " ),
+                            getName() ),
+                  getDataContext() );
     }
     // From now on all the requested wrappers are guarantied to be available.
 
@@ -430,7 +435,9 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     string shouldBeParentIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeParentIndexString );
     GEOS_ERROR_IF( shouldBeParentIndexString != fields::parentIndex::key(),
-                   "value read from buffer is:" << shouldBeParentIndexString << ". It should be " << fields::parentIndex::key() );
+                   GEOS_FMT( "value read from buffer is: {}. It should be {}",
+                             shouldBeParentIndexString,
+                             fields::parentIndex::key() ) );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -444,7 +451,9 @@ localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & 
     string shouldBeChildIndexString;
     unpackedSize += bufferOps::Unpack( buffer, shouldBeChildIndexString );
     GEOS_ERROR_IF( shouldBeChildIndexString != fields::childIndex::key(),
-                   "value read from buffer is:" << shouldBeChildIndexString << ". It should be " << fields::childIndex::key() );
+                   GEOS_FMT( "value read from buffer is: {}. It should be {}",
+                             shouldBeChildIndexString,
+                             fields::childIndex::key() ) );
     unpackedSize += bufferOps::Unpack( buffer,
                                        childIndex,
                                        packList,
@@ -774,6 +783,8 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
                                         int const GEOS_UNUSED_PARAM( rank ),
                                         localIndex & newIndex )
 {
+  GEOS_MARK_FUNCTION;
+
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 

@@ -19,6 +19,7 @@
 
 #include "ElasticIsotropic.hpp"
 #include "SolidFields.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geos
 {
@@ -54,6 +55,10 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerField< fields::solid::bulkModulus >( &m_bulkModulus );
 
   registerField< fields::solid::shearModulus >( &m_shearModulus );
+
+  registerField< fields::solid::youngModulus >( &m_youngModulus );
+
+  registerField< fields::solid::poissonRatio >( &m_poissonRatio );
 }
 
 void ElasticIsotropic::postInputInitialization()
@@ -95,9 +100,10 @@ void ElasticIsotropic::postInputInitialization()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 "A specific pair of elastic constants is required. " <<
-                 "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
-                 "You have specified " << errorCheck,
+                 GEOS_FMT( "A specific pair of elastic constants is required. "
+                           "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). "
+                           "You have specified {}",
+                           errorCheck ),
                  getDataContext() );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
@@ -132,8 +138,8 @@ void ElasticIsotropic::postInputInitialization()
   }
   else
   {
-    GEOS_ERROR( "Invalid specification for default elastic constants. " <<
-                errorCheck << " has been specified.",
+    GEOS_ERROR( GEOS_FMT( "Invalid specification for default elastic constants. {} has been specified.",
+                          errorCheck ),
                 getDataContext() );
   }
 
@@ -144,6 +150,89 @@ void ElasticIsotropic::postInputInitialization()
 
   getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
+}
+
+void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
+{
+  SolidBase::initializePostInitialConditionsPreSubGroups();
+
+  // If per-cell Young's modulus and Poisson's ratio were imported from an external mesh
+  // convert them to bulk and shear modulus on a cell-by-cell basis.
+  arrayView1d< real64 const > const youngMod = m_youngModulus;
+  arrayView1d< real64 const > const nu       = m_poissonRatio;
+  arrayView1d< real64 > const bulkMod        = m_bulkModulus;
+  arrayView1d< real64 > const shearMod       = m_shearModulus;
+
+  localIndex numConverted   = 0;
+  localIndex numInvalidE    = 0;
+  localIndex numInvalidNu   = 0;
+  localIndex numNegativeNu  = 0;
+
+  for( localIndex k = 0; k < m_youngModulus.size(); ++k )
+  {
+    // youngModulus default is 0: negative values are invalid, zero means not imported
+    if( youngMod[k] < 0.0 )
+    {
+      ++numInvalidE;
+      continue;
+    }
+
+    // youngModulus default is 0: not imported — skip silently
+    if( !( youngMod[k] > 0.0 ) )
+      continue;
+
+    // E was imported and is positive: nu must also be valid
+    if( nu[k] <= -0.5 || nu[k] >= 0.5 )
+    {
+      ++numInvalidNu;
+      continue;
+    }
+
+    // Count negative Poisson's ratio (physically unusual but not always invalid)
+    if( nu[k] < 0.0 )
+      ++numNegativeNu;
+
+    bulkMod[k]  = conversions::youngModAndPoissonRatio::toBulkMod( youngMod[k], nu[k] );
+    shearMod[k] = conversions::youngModAndPoissonRatio::toShearMod( youngMod[k], nu[k] );
+    ++numConverted;
+  }
+
+  // Aggregate counters across all MPI ranks to report global totals
+  localIndex const globalConverted  = MpiWrapper::sum( numConverted );
+  localIndex const globalInvalidE   = MpiWrapper::sum( numInvalidE );
+  localIndex const globalInvalidNu  = MpiWrapper::sum( numInvalidNu );
+  localIndex const globalNegativeNu = MpiWrapper::sum( numNegativeNu );
+
+  if( globalConverted + globalInvalidE + globalInvalidNu > 0 )
+  {
+    GEOS_LOG_RANK_0_IF( globalInvalidE > 0,
+                        GEOS_FMT( "ElasticIsotropic '{}': {} element(s) had negative Young's modulus "
+                                  "and were skipped (default bulk/shear modulus used).",
+                                  getName(), globalInvalidE ) );
+
+    GEOS_LOG_RANK_0_IF( globalInvalidNu > 0,
+                        GEOS_FMT( "ElasticIsotropic '{}': {} element(s) had Poisson's ratio outside "
+                                  "(-0.5, 0.5) and were skipped (default bulk/shear modulus used).",
+                                  getName(), globalInvalidNu ) );
+
+    GEOS_LOG_RANK_0_IF( globalNegativeNu > 0,
+                        GEOS_FMT( "ElasticIsotropic '{}': {} element(s) have a negative Poisson's ratio. "
+                                  "Please verify your input data.",
+                                  getName(), globalNegativeNu ) );
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "ElasticIsotropic '{}': per-cell E/nu conversion — "
+                               "{} converted, {} skipped (invalid E), {} skipped (invalid nu), "
+                               "{} with negative nu.",
+                               getName(), globalConverted, globalInvalidE, globalInvalidNu, globalNegativeNu ) );
+  }
+
+  // Back-compute E and nu for all cells from the final K/G so that output fields are meaningful
+  // for both imported and default cells.
+  for( localIndex k = 0; k < m_bulkModulus.size(); ++k )
+  {
+    m_youngModulus[k] = conversions::bulkModAndShearMod::toYoungMod( bulkMod[k], shearMod[k] );
+    m_poissonRatio[k] = conversions::bulkModAndShearMod::toPoissonRatio( bulkMod[k], shearMod[k] );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElasticIsotropic, string const &, Group * const )
