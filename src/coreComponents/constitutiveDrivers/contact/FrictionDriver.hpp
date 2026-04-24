@@ -13,17 +13,20 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#ifndef GEOS_frictionDRIVER_HPP_
-#define GEOS_frictionDRIVER_HPP_
+#ifndef GEOS_CONSTITUTIVEDRIVERS_CONTACT_FRICTIONDRIVER_HPP
+#define GEOS_CONSTITUTIVEDRIVERS_CONTACT_FRICTIONDRIVER_HPP
 
-#include "events/tasks/TaskBase.hpp"
+#include "constitutiveDrivers/ConstitutiveDriver.hpp"
 
 namespace geos
 {
-
-class FrictionDriver : public TaskBase
+namespace constitutive
 {
+class FrictionBase;
+}
 
+class FrictionDriver : public ConstitutiveDriver
+{
 public:
   FrictionDriver( const string & name,
                   Group * const parent );
@@ -33,61 +36,31 @@ public:
 
   void postInputInitialization() override;
 
-  virtual bool execute( real64 const GEOS_UNUSED_PARAM( time_n ),
-                        real64 const GEOS_UNUSED_PARAM( dt ),
-                        integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                        integer const GEOS_UNUSED_PARAM( eventCounter ),
-                        real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                        DomainPartition &
-                        GEOS_UNUSED_PARAM( domain ) ) override;
+  bool execute() override;
 
-  // /**
-  //  * @brief Run test using loading protocol in table
-  //  * @param i friction constitutive model
-  //  * @param table Table with input/output time history
-  //  */
-  // template< typename friction_TYPE >
-  // std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, friction_TYPE >::value, void >
-  // runTest( friction_TYPE & friction,
-  //          const arrayView2d< real64, 1 > & table );
+  void getColumnNames( string_array & columnNames ) const override;
 
   template< typename FRICTION_TYPE >
   void
   runTest( FRICTION_TYPE & friction,
            const arrayView2d< real64, 1 > & table );
 
-  /**
-   * @brief Ouput table to file for easy plotting
-   */
-  void outputResults();
-
-  /**
-   * @brief Read in a baseline table from file and compare with computed one (for unit testing purposes)
-   */
-  void compareWithBaseline();
-
 private:
+  /**
+   * @brief Get the friction model from the catalog
+   */
+  constitutive::FrictionBase & getFriction();
+  constitutive::FrictionBase const & getFriction() const;
 
-  template< typename FRICTION_TYPE >
-  void resizeTable();
-
-  template< typename FRICTION_TYPE >
-  void resizeTables();
-
-  // template< typename friction_TYPE >
-  // std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, friction_TYPE >::value, void >
-  // resizeTable();
+  void initializeTable();
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
    */
-  struct viewKeyStruct
+  struct viewKeyStruct : ConstitutiveDriver::viewKeyStruct
   {
     constexpr static char const * frictionNameString()
     { return "friction"; }
-
-    constexpr static char const * numStepsString()
-    { return "steps"; }
 
     constexpr static char const * jumpFunctionString()
     { return "jumpControl"; }
@@ -100,36 +73,20 @@ private:
 
     constexpr static char const * phiString()
     { return "yTiltAngle";}
-
-    constexpr static char const * outputString()
-    { return "output"; }
-
-    constexpr static char const * baselineString()
-    { return "baseline"; }
-
   };
 
-  integer m_numSteps;      ///< Number of load steps
-  static integer const m_numColumns = 9;    ///< Number of columns in dat
-  enum columnKeys { TIME, NJUMP, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
+  // Time is defined in base class
+  enum columnKeys { NJUMP = 1, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
 
   string m_jumpFunctionName; ///<
   string m_tractionFunctionName; ///<
 
-  float m_theta, m_phi;///< x- and y-tilt of fault
+  real64 m_theta{0.0}; ///< x-tilt of fault
+  real64 m_phi{0.0};  ///< y-tilt of fault
 
   string m_frictionName;               ///< frictionType identifier
-  string m_outputFile;              ///< Output file (optional, no output if not specified)
-
-  array2d< real64 > m_table; ///< Table storing time-history of input/output
-
-  Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
-
-
-  static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };
-
 
 }
 
-#endif //GEOS_FRICTIONDRIVER_HPP_
+#endif //GEOS_CONSTITUTIVEDRIVERS_CONTACT_FRICTIONDRIVER_HPP

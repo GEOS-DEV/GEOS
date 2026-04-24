@@ -37,6 +37,8 @@ set( constitutiveDrivers_headers
 #
 set( constitutiveDrivers_sources
      ConstitutiveDriver.cpp
+     contact/FrictionDriver.cpp
+     contact/FrictionDriverRunTest.cpp
      fluid/multiFluid/PVTDriver.cpp
      fluid/multiFluid/constant/PVTDriverRunTestInvariantImmiscibleFluid.cpp
      fluid/multiFluid/blackOil/PVTDriverRunTestDeadOilFluid.cpp
@@ -59,8 +61,6 @@ set( constitutiveDrivers_sources
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/TriaxialDriver.cpp
-     contact/FrictionDriver.cpp
-     contact/FrictionDriverRunTest.cpp
    )
 
 set( dependencyList ${parallelDeps} constitutive events )

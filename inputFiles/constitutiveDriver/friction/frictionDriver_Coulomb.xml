@@ -9,8 +9,8 @@
       jumpControl="jFunction"
       xTiltAngle="80"
       tractionControl="tFunction"
-      steps="10" 
-      output="FrictionDriver.txt" />
+      steps="10"
+      output="frictionDriver_Coulomb.txt" />
   </Tasks>
   <!-- SPHINX_TASK_END -->
 
