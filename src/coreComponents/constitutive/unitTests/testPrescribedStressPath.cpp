@@ -75,6 +75,8 @@ TEST( BartonBandisPermeabilityTests, testNewAperture )
     normal[0] = 0.0;
     normal[1] = 0.0;
     normal[2] = 1.0;
+    //real64 const normal[ 3 ] = {0.0, 0.0, 1.0};
+    
 
     real64 dAperture_dStress = -1.0;
     real64 newHydraulicAperture = cmw.computeHydraulicAperture(referencePressure, fractureStress, normal, dAperture_dStress, 0);

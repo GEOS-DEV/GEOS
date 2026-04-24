@@ -70,7 +70,7 @@ public:
                                                     real64 const & pressure,
                                                     real64 const & oldHydraulicAperture,
                                                     real64 const & newHydraulicAperture,
-                                                    array1d< real64 > const & normal,
+                                                    arraySlice1d< real64 const > const & normal,
                                                     real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
     GEOS_UNUSED_VAR( q, pressure, normal );

@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_PERMEABILITY_BARTONBANDISPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 
 
 namespace geos
@@ -70,24 +71,9 @@ public:
 
     for( int dim=0; dim < m_numDimensionsToUpdate; dim++ )
     {
-      permeability[dim]        = perm;
+      permeability[dim] = perm;
     }
   }
-
-  /*GEOS_HOST_DEVICE
-  virtual void updateFromAperture( localIndex const k,
-                                   localIndex const q,
-                                   real64 const & oldHydraulicAperture,
-                                   real64 const & newHydraulicAperture,
-                                   real64 const & dHydraulicAperture_dNormalJump ) const override final
-  {
-    GEOS_UNUSED_VAR( q );
-    compute( oldHydraulicAperture,
-             newHydraulicAperture,
-             dHydraulicAperture_dNormalJump,
-             m_permeability[k][0],
-             m_dPerm_dDispJump[k][0] );
-  }*/
 
   GEOS_HOST_DEVICE
   virtual void updateFromPressureApertureAndNormal( localIndex const k,
@@ -95,7 +81,7 @@ public:
                                                     real64 const & pressure,
                                                     real64 const & oldHydraulicAperture,
                                                     real64 const & newHydraulicAperture,
-                                                    array1d< real64 > const & normal,
+                                                    arraySlice1d< real64 const > const & normal,
                                                     real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
     GEOS_UNUSED_VAR( q, dHydraulicAperture_dNormalJump);
@@ -122,6 +108,43 @@ public:
 
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 computeHydraulicAperture( real64 const pressure, real64 const normalComponentOfStressOnFracture, 
+                                   arraySlice1d< real64 const > const & normal, real64 & dAperture_dStress, int k ) const
+  {
+    real64 const referenceTotalStress[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (m_referenceTotalStress); 
+    real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
+
+    // Computation of maximum fracture closure (Barton-Bandis parameter)
+    // Fracture traction via Terzaghi's Principle
+    real64 sigma_c0[3] = {0.0};
+    LvArray::tensorOps::hadamardProduct< 3 >( sigma_c0, referenceTotalStress, normal );
+    LvArray::tensorOps::scaledAdd< 3 >(sigma_c0, normal, -biot_pressure);
+    
+    real64 const sigma_n0 = LvArray::tensorOps::AiBi< 3 >( sigma_c0, normal );
+
+    // \dfrac{-K_{ni}a_0 + \sqrt{(K_{ni}a_0)^2 + 4K_{ni}a_0\sigma_{n0}}}{2K_{ni}}.
+    real64 const normalStiffApertureProduct = m_normalStiffness * m_aperture0;
+    real64 const sqrtTerm = normalStiffApertureProduct * (normalStiffApertureProduct + 4.0*sigma_n0) ;
+    real64 const g0 = ( -normalStiffApertureProduct + std::sqrt(sqrtTerm) ) / (2.0 * m_normalStiffness);
+
+    real64 const maximumFractureClosure = g0 + m_aperture0; // V_m or a_m -> aperture at stress-free state
+
+    // Normal effective stress on the fracture
+    // g_n(\sigma_n) = \dfrac{\sigma_n * V_m}{K_{ni} * V_m + \sigma_n}
+    real64 const fractureClosure = (normalComponentOfStressOnFracture*maximumFractureClosure) / (m_normalStiffness*maximumFractureClosure + normalComponentOfStressOnFracture); 
+
+    real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
+
+    // derivative
+    // \frac{da}{d\sigma}(\sigma) = -\dfrac{K_{ni} V_m^2}{(K_{ni} V_m + \sigma)^2}
+    real64 const normalStiffMaxClosureProduct = m_normalStiffness*maximumFractureClosure;
+    real64 const denom = normalStiffMaxClosureProduct + normalComponentOfStressOnFracture;
+    dAperture_dStress = -(normalStiffMaxClosureProduct*maximumFractureClosure) / (denom * denom);
+
+    return newHydraulicAperture;
+  }
+  /*GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 computeHydraulicAperture( real64 const pressure, real64 const normalComponentOfStressOnFracture, 
                                    array1d< real64 > const & normal, real64 & dAperture_dStress, int k ) const
@@ -155,7 +178,7 @@ public:
     dAperture_dStress = -(Kni_apert*maximumFractureClosure) / (Kni_aper_stress * Kni_aper_stress);
 
     return newHydraulicAperture;
-  }
+  }*/
 
 private:
 
@@ -173,6 +196,29 @@ private:
   R1Tensor m_referenceEffectiveStress; // sigma_0
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 computeFractureStress( real64 const pressure, arraySlice1d< real64 const > const & normal, real64 & dStress_dPressure ) const
+  {  
+    //real64 const normal[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (normal_);
+    
+    real64 const deltaSigmaZ = m_biot * (pressure - m_referencePressure);
+    real64 const poisson_deltaSigma = deltaSigmaZ * m_poisson/(1.0 - m_poisson);
+    // sigma: matrix diagonal
+    real64 effectiveStress[3] = { m_referenceEffectiveStress[0] - poisson_deltaSigma,
+                                  m_referenceEffectiveStress[1] - poisson_deltaSigma,
+                                  m_referenceEffectiveStress[2] - deltaSigmaZ };
+    real64 effectiveStressOnFracture[3] = {0.0}; // sigma_c
+    LvArray::tensorOps::hadamardProduct< 3 >( effectiveStressOnFracture, normal, effectiveStress );
+    real64 const normalComponentOfStressOnFracture = LvArray::tensorOps::AiBi< 3 >(effectiveStressOnFracture, normal); // sigmaN_N
+    
+    // derivative 
+    dStress_dPressure = -m_biot;
+
+    return normalComponentOfStressOnFracture;
+  }
+
+  
+ /*GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 computeFractureStress( real64 const pressure, array1d< real64 > const & normal, real64 & dStress_dPressure ) const
   {  
@@ -197,7 +243,8 @@ private:
     dStress_dPressure = -m_biot;
 
     return normalComponentOfStressOnFracture;
-  }
+  }*/
+    
 
 };
 
@@ -253,8 +300,6 @@ protected:
   virtual void postInputInitialization() override;
 
 private:
-
-  //array3d< real64 > m_dPerm_dAperture;
 
   real64 m_transversalPermeability;
 

@@ -104,7 +104,7 @@
 
     <Restart
       name="sidreRestart"/>
-	  
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_TIMEHISTORY -->
     <TimeHistory
       name="pressureHistoryOutput"
       sources="{/Tasks/pressureCollection}"
@@ -117,5 +117,6 @@
       name="permeabilityHistoryOutput"
       sources="{/Tasks/permeabilityCollection}"
       filename="fracPermeability_history" />
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_TIMEHISTORY_END -->
   </Outputs>
 </Problem>

@@ -47,8 +47,6 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
-//#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
-
 namespace geos
 {
 

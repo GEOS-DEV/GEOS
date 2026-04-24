@@ -23,12 +23,6 @@ set( CMAKE_ENABLE_EXPORTS ON )
 # populated by `geos_add_test` (private list of all geos tests, keep in sync with the macro definition)
 set_property( GLOBAL PROPERTY geos_tests_exe_list )
 
-set(ENABLE_PYGEOSX ON CACHE BOOL "")
-set(Python3_EXECUTABLE "/home/lilianera/miniconda3/envs/PYGEOS312/bin/python")
-set(Python3_INCLUDE_DIRS "/home/lilianera/miniconda3/envs/PYGEOS312/include/python3.12")
-set(Python3_LIBRARIES "/home/lilianera/miniconda3/envs/PYGEOS312/lib")
-
-
 ################################
 # Include blt
 ################################
@@ -298,10 +292,6 @@ endif()
 if (NOT DEFINED ENABLE_ATS)
     set( ENABLE_ATS true CACHE BOOL "")
 endif()
-
-message(STATUS "********************************** " ${ENABLE_ATS})
-message(STATUS "********************************** " ${ATS_WORKING_DIR})
-message(STATUS "********************************** " ${ATS_BASELINE_DIR}) 
 
 if ( ENABLE_ATS )
     if (NOT DEFINED ATS_WORKING_DIR)

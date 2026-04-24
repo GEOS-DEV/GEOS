@@ -86,6 +86,15 @@ void updatePorosityAndPermeabilityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
   } );
 }
 
+void nada(arraySlice1d< real64 const > const & normal)
+{
+  GEOS_LOG_RANK_0("nada normal "<<normal[0]<<" "<<normal[1]<<" "<<normal[2] );
+  
+  real64 sigma_c0[3] = {0.0};
+  real64 referenceTotalStress[3] = {0.0};
+  LvArray::tensorOps::hadamardProduct< 3 >( sigma_c0, referenceTotalStress, normal );
+}
+
 template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_TYPE porousWrapper,
                                                            SurfaceElementSubRegion & subRegion,
@@ -96,17 +105,13 @@ void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_T
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
-    array1d < real64 > normal(3);
-    normal[0] = normalVector[k][0];
-    normal[1] = normalVector[k][1];
-    normal[2] = normalVector[k][2];
     for( localIndex q = 0; q < porousWrapper.numGauss(); ++q )
     {
        porousWrapper.updateStateFromPressureApertureAndNormal( k, q,
                                                                pressure[k],
                                                                oldHydraulicAperture[k],
                                                                newHydraulicAperture[k],
-                                                               normal );
+                                                               normalVector[k] );
     }
   } );
 }
@@ -633,7 +638,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   GEOS_MARK_FUNCTION;
 
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
-  arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hp
+  arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
 

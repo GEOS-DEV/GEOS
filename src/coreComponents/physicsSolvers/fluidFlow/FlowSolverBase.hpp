@@ -82,7 +82,7 @@ public:
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
-    //static constexpr char const * stressPathNamesString() { return "stressPathNames"; }
+    
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }

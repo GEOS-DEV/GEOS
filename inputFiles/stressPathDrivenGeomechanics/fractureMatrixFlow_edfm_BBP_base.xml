@@ -1,6 +1,7 @@
 <?xml version="1.0" ?> 
   
 <Problem>
+  <!-- SPHINX_TUT_STRESS_PATH_DRIVEN -->
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
@@ -14,6 +15,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_END -->
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
@@ -90,15 +92,16 @@
       defaultReferencePorosity="1.00"
       referencePressure="0.0"
       compressibility="0.0"/>
-
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_LAW -->
     <BartonBandisPermeability
-		name="fracturePerm"
-		biot="1.0" 
-		poisson="0.3"	
-		normalStiffness="10.0e9" 
-		referenceAperture="1.0e-4"
-		referencePressure="1e7" 
-		referenceTotalStress="{ 10.0e6, 10.0e6, 30.0e6 }"/>
+      name="fracturePerm"
+      biot="1.0" 
+      poisson="0.3"	
+      normalStiffness="10.0e9" 
+      referenceAperture="1.0e-4"
+      referencePressure="1e7" 
+      referenceTotalStress="{ 10.0e6, 10.0e6, 30.0e6 }"/>
+	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_LAW_END -->
     
   </Constitutive>
 

@@ -333,7 +333,7 @@ SurfaceElementStencilWrapper::
       localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
       localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
       localIndex const ei1  =  m_elementIndices[iconn][k[1]];
-      //                                         m_permeability
+      
       real64 const t0 = m_weights[iconn][k[0]] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][k[1]] * coefficient[er1][esr1][ei1][0][0];
 
