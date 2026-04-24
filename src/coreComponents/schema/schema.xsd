@@ -6484,18 +6484,20 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="RelpermDriverType">
-		<!--baseline => Baseline file-->
-		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--historicalSaturations => Historical saturations for each phase.-->
+		<xsd:attribute name="historicalSaturations" type="real64_array" default="{0}" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
  - Enable log output-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
-		<!--relperm => Relperm model to test-->
+		<xsd:attribute name="output" type="string" default="" />
+		<!--precision => The precision to use to data out to files-->
+		<xsd:attribute name="precision" type="integer" default="4" />
+		<!--relperm => Relative permeability model to test-->
 		<xsd:attribute name="relperm" type="groupNameRef" use="required" />
-		<!--steps => Number of saturation steps to take-->
+		<!--steps => Number of steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />

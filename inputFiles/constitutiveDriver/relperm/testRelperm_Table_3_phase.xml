@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <RelpermDriver
+      name="test_3_phase_hysteresis"
+      relperm="3_phase_hysteresis"
+      steps="15"
+      logLevel="1" />
+  </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="event_3_phase_hysteresis"
+      target="/Tasks/test_3_phase_hysteresis" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <Constitutive>
+    <TableRelativePermeabilityHysteresis
+      name="3_phase_hysteresis"
+      phaseNames="{ gas, water }"
+      drainageWettingNonWettingRelPermTableNames="{ KRW_D1, KRG_D1 }"
+      imbibitionNonWettingRelPermTableName="KRG_I1"      
+      imbibitionWettingRelPermTableName="KRW_I1" />
+  </Constitutive>
+
+  <Functions>
+  </Functions>
+</Problem>
