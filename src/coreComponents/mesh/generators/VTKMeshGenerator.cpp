@@ -42,7 +42,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
   : ExternalMeshGeneratorBase( name, parent ),
   m_dataSource( nullptr )
 {
-  getWrapperBase( ExternalMeshGeneratorBase::viewKeyStruct::filePathString()).
+  getWrapperBase( viewKeyStruct::filePathString()).
     setInputFlag( InputFlags::OPTIONAL );
 
   registerWrapper( viewKeyStruct::regionAttributeString(), &m_regionAttributeName ).
@@ -101,20 +101,26 @@ void VTKMeshGenerator::postInputInitialization()
 {
   ExternalMeshGeneratorBase::postInputInitialization();
 
-  GEOS_ERROR_IF( !this->m_filePath.empty() && !m_dataSourceName.empty(),
-                 getDataContext() << ": Access to the mesh via file or data source are mutually exclusive. "
-                                     "You can't set " << viewKeyStruct::dataSourceString() << " or " << viewKeyStruct::meshPathString() << " and " <<
-                 ExternalMeshGeneratorBase::viewKeyStruct::filePathString() );
+  GEOS_ERROR_IF( m_filePath.empty() && m_dataSourceName.empty(),
+                 GEOS_FMT( "Either {} or {} must be specified.",
+                           viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ),
+                 getDataContext() );
+
+  GEOS_ERROR_IF( !m_filePath.empty() && !m_dataSourceName.empty(),
+                 GEOS_FMT( "Access to the mesh via file and data source are mutually exclusive. "
+                           "You can't set both {} and {} at the same time.",
+                           viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ),
+                 getDataContext() );
 
   if( !m_dataSourceName.empty())
   {
-    ExternalDataSourceManager & externalDataManager = this->getGroupByPath< ExternalDataSourceManager >( "/Problem/ExternalDataSource" );
+    ExternalDataSourceManager & externalDataManager = getGroupByPath< ExternalDataSourceManager >( "/Problem/ExternalDataSource" );
 
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 
     GEOS_THROW_IF( m_dataSource == nullptr,
-                   getDataContext() << ": VTK Data Object Source not found: " << m_dataSourceName,
-                   InputError );
+                   GEOS_FMT( "VTK Data Object Source not found: {}", m_dataSourceName ),
+                   InputError, getDataContext() );
 
     m_dataSource->open();
   }
@@ -150,9 +156,9 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
         stdVector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
         vtkNew< vtkAppendFilter > appender;
         appender->MergePointsOn();
-        for( auto & [key, value] : this->getSubGroups())
+        for( auto & [key, value] : getSubGroups())
         {
-          Region const & region = this->getGroup< Region >( key );
+          Region const & region = getGroup< Region >( key );
 
           string path = region.getWrapper< string >( Region::viewKeyStruct::pathInRepositoryString()).reference();
           integer region_id = region.getWrapper< integer >( Region::viewKeyStruct::idString()).reference();
@@ -220,7 +226,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_regionAttributeName );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing nodes...", catalogName(), getName() ) );
-  writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
+  writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, m_translate, m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, m_structuredIndexAttributeName, cellBlockManager );
@@ -276,7 +282,8 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
     }
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+  GEOS_ERROR( GEOS_FMT( "Could not import field \"{}\" from cell block \"{}\".", meshFieldName, cellBlockName ),
+              getDataContext()  );
 }
 
 
@@ -302,7 +309,8 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
     return vtk::importRegularField( vtkArray, wrapper );
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+  GEOS_ERROR( GEOS_FMT( "Could not import field \"{}\" from face block \"{}\".", meshFieldName, faceBlockName ),
+              getDataContext()  );
 }
 
 

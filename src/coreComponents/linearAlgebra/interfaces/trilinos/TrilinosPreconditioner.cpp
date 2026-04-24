@@ -82,19 +82,20 @@ namespace
 
 string getMLCycleType( LinearSolverParameters::AMG::CycleType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CycleType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CycleType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, "MGV" },
     { LinearSolverParameters::AMG::CycleType::W, "MGW" },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML cycle option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML cycle option: {}", value ) );
   return optionMap.at( value );
 }
 
 string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::SmootherType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, "Chebyshev" },
     { LinearSolverParameters::AMG::SmootherType::jacobi, "Jacobi" },
@@ -109,13 +110,14 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
     { LinearSolverParameters::AMG::SmootherType::ilut, "ILUT" },
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoother option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML smoother option: {}", value ) );
   return optionMap.at( value );
 }
 
 string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
 {
-  static std::map< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::CoarseType, string > const optionMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, "Amesos-KLU" },
     { LinearSolverParameters::AMG::CoarseType::jacobi, "Jacobi" },
@@ -128,20 +130,22 @@ string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
     { LinearSolverParameters::AMG::CoarseType::direct, "Amesos-KLU"},
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML coarse solver option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML coarse solver option: {}", value ) );
   return optionMap.at( value );
 }
 
 string getMLPreOrPostSmoothingType( LinearSolverParameters::AMG::PreOrPost const & value )
 {
-  static std::map< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
+  static stdMap< LinearSolverParameters::AMG::PreOrPost, string > const optionMap =
   {
     { LinearSolverParameters::AMG::PreOrPost::pre, "pre" },
     { LinearSolverParameters::AMG::PreOrPost::post, "post" },
     { LinearSolverParameters::AMG::PreOrPost::both, "both" }
   };
 
-  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0, "Unsupported Trilinos/ML smoothing direction option: " << value );
+  GEOS_LAI_ASSERT_MSG( optionMap.count( value ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/ML smoothing direction option: {}", value ) );
   return optionMap.at( value );
 }
 
@@ -184,7 +188,7 @@ createMLOperator( LinearSolverParameters const & params,
 
 Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
@@ -200,14 +204,13 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
     { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/Ifpack preconditioner option: {}", type ) );
   return typeMap.at( type );
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
-  // Trilinos does not implement l1 smoother variants, so we map them to regular
-  // smoothers for compatibility with input files designed for hypre.
-  static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
     { LinearSolverParameters::PreconditionerType::l1jacobi, "Jacobi" },
@@ -217,7 +220,8 @@ string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const
     { LinearSolverParameters::PreconditionerType::l1sgs, "symmetric Gauss-Seidel" },
   };
 
-  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
+  GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0,
+                       GEOS_FMT( "Unsupported Trilinos/Ifpack preconditioner option: {}", type ) );
   return typeMap.at( type );
 }
 
@@ -328,7 +332,7 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
     }
     default:
     {
-      GEOS_ERROR( "Preconditioner type not supported in Trilinos interface: " << m_params.preconditionerType );
+      GEOS_ERROR( GEOS_FMT( "Preconditioner type not supported in Trilinos interface: {}", m_params.preconditionerType ) );
     }
   }
 }

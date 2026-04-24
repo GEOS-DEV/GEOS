@@ -19,6 +19,7 @@
 
 #include "SinglePhaseHybridFVM.hpp"
 
+#include "common/logger/Logger.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -94,18 +95,16 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   SinglePhaseBase::initializePreSubGroups();
 
   GEOS_THROW_IF( m_isThermal,
-                 GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
-                           getCatalogName(), getDataContext().toString() ),
-                 InputError );
+                 "The thermal option is not supported by SinglePhaseHybridFVM",
+                 InputError, getDataContext() );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 getCatalogName() << " " << getDataContext() <<
-                 ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
-                 InputError );
+                 "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                 InputError, getDataContext() );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -139,16 +138,16 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     } );
 
     GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                          getCatalogName() << " " << getDataContext() <<
                           "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                          std::runtime_error );
+                          geos::RuntimeError, getDataContext() );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() <<
-                       "The aquifer boundary condition " << bc.getDataContext() << " was requested in the XML file. \n" <<
-                       "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+      GEOS_UNUSED_VAR( bc );
+      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n"
+                    "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored",
+                    getDataContext(), bc.getDataContext() );
     } );
   } );
 }

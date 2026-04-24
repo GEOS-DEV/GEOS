@@ -35,6 +35,6 @@ Welcome to the GEOS user guide.
 
    /coreComponents/mesh/mpiCommunications/docs/SpatialPartition.rst
 
-   /coreComponents/fileIO/doc/Outputs.rst
+   /coreComponents/fileIO/doc/Index.rst
 
    /pygeosx/pygeosx_documentation.rst

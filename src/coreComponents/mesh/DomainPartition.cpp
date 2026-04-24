@@ -247,9 +247,10 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
         {
           NodeManager & nodeManager = meshLevel.getNodeManager();
           FaceManager & faceManager = meshLevel.getFaceManager();
+          ElementRegionManager & elemManager = meshLevel.getElemManager();
 
           CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
-          faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+          faceManager.sortAllFaceNodes( nodeManager, elemManager );
           faceManager.computeGeometry( nodeManager );
         }
         else if( !meshLevel.isShallowCopyOf( meshBody.getMeshLevels().getGroup< MeshLevel >( 0 )) )

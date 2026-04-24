@@ -20,6 +20,7 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 #define GEOS_CONSTITUTIVE_FLUID_SINGLEFLUID_SINGLEFLUIDBASE_HPP
 
+#include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidUtils.hpp"
@@ -131,6 +132,41 @@ public:
                           dViscosity_dPressure );
   }
 
+  template< typename FLUIDWRAPPER >
+  GEOS_HOST_DEVICE
+  static void computeThermalValues( FLUIDWRAPPER const fluidWrapper,
+                                    real64 const pressure,
+                                    real64 const temperature,
+                                    real64 & density,
+                                    real64 & viscosity )
+  {
+    real64 dDensity_dPressure = 0.0;
+    real64 dViscosity_dPressure = 0.0;
+    real64 dDensity_dTemperature = 0.0;
+    real64 dViscosity_dTemperature = 0.0;
+    real64 internalEnergy = 0.0;
+    real64 dInternalEnergy_dPressure = 0.0;
+    real64 dInternalEnergy_dTemperature = 0.0;
+    real64 enthalpy = 0.0;
+    real64 dEnthalpy_dPressure = 0.0;
+    real64 dEnthalpy_dTemperature = 0.0;
+
+    fluidWrapper.compute( pressure,
+                          temperature,
+                          density,
+                          dDensity_dPressure,
+                          dDensity_dTemperature,
+                          viscosity,
+                          dViscosity_dPressure,
+                          dViscosity_dTemperature,
+                          internalEnergy,
+                          dInternalEnergy_dPressure,
+                          dInternalEnergy_dTemperature,
+                          enthalpy,
+                          dEnthalpy_dPressure,
+                          dEnthalpy_dTemperature );
+  }
+
 //START_SPHINX_INCLUDE_02
 private:
   /**
@@ -204,6 +240,21 @@ private:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature ) const = 0;
+
+  /**
+   * @brief Update fluid state at a single point.
+   * @param[in] k           element index
+   * @param[in] q           gauss point index
+   * @param[in] pressure    the target pressure value
+   * @param[in] temperature the target temperature value
+   * @param[in] logPrimaryConcentration the target logPrimaryConc value
+   */
+  GEOS_HOST_DEVICE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimaryConcentration ) const = 0;
 
 };
 //END_SPHINX_INCLUDE_02

@@ -32,7 +32,6 @@ namespace constitutive
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   CompressibleSinglePhaseFluid( name, parent )
 {
-  m_densityModelType = ExponentApproximationType::Full;
   m_numDOF=2;
   registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
     setApplyDefaultValue( 0.0 ).
@@ -76,8 +75,8 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
 
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
@@ -85,13 +84,14 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
-  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
-    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
-                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
-                   InputError );
+    GEOS_THROW_IF( value != expectedValue,
+                   GEOS_FMT( "invalid model type in attribute '{}' (only {} currently supported)",
+                             attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
+                   InputError, getDataContext() );
   };
-  checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
+  checkModelType( m_internalEnergyModelType, ExponentApproximationType::Linear, viewKeyStruct::internalEnergyModelTypeString() );
 }
 
 ThermalCompressibleSinglePhaseFluid::KernelWrapper

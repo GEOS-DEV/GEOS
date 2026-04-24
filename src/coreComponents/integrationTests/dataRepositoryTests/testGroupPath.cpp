@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -104,16 +105,34 @@ TEST( testGroupPath, testGlobalPaths )
   {
     problem.getGroupByPath( "/Mesh/mesh2" );
   }
-  catch( const std::domain_error & e )
+  catch( geos::Exception & e )
   {
-    static constexpr auto expectedMsg = "***** Controlling expression (should be false): child == nullptr\n"
-                                        "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
-                                        "The children of Mesh are: { mesh1 }";
-    // checks if the exception contains the expected message
-    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg );
+    string const errorMsg = e.what();
+
+    // Check only stable error-message parts; exact formatting can vary (quotes around child name, list rendering, stack depth).
+    auto const assertContains = [&]( string const & expected )
+    {
+      GEOS_ERROR_IF_EQ_MSG( errorMsg.find( expected ), string::npos,
+                            GEOS_FMT( "The error message was missing an expected token.\n"
+                                      "  Error message :\n{}"
+                                      "  expected token :\n{}",
+                                      errorMsg,
+                                      expected ) );
+    };
+
+    assertContains( "***** Error cause: child == nullptr" );
+    assertContains( "***** Message from Mesh (CodeIncludedXML0, l.10):" );
+    assertContains( "The children of Mesh are:" );
+    assertContains( "mesh1" );
+
+    bool const hasMissingChildMsg =
+      ( errorMsg.find( "No child named mesh2 found." ) != string::npos ) ||
+      ( errorMsg.find( "No child named 'mesh2' found." ) != string::npos );
+
+    GEOS_ERROR_IF_EQ_MSG( hasMissingChildMsg, false,
+                          GEOS_FMT( "The error message was not containing any expected missing-child phrase.\n"
+                                    "  Error message :\n{}",
+                                    errorMsg ) );
     trowHappened = true;
   }
   // checks if the exception has been thrown as expected

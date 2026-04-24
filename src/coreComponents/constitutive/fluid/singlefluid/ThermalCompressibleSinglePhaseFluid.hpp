@@ -165,6 +165,30 @@ public:
              m_dEnthalpy[k][q][DerivOffset::dT] );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+  {
+    compute( pressure,
+             temperature,
+             m_density[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
+             m_dDensity[k][q][DerivOffset::dT],
+             m_viscosity[k][q],
+             m_dViscosity[k][q][DerivOffset::dP],
+             m_dViscosity[k][q][DerivOffset::dT],
+             m_internalEnergy[k][q],
+             m_dInternalEnergy[k][q][DerivOffset::dP],
+             m_dInternalEnergy[k][q][DerivOffset::dT],
+             m_enthalpy[k][q],
+             m_dEnthalpy[k][q][DerivOffset::dP],
+             m_dEnthalpy[k][q][DerivOffset::dT] );
+  }
+
 private:
 
   /// Fluid internal energy and derivatives
@@ -204,7 +228,7 @@ public:
 
   using CompressibleSinglePhaseFluid::m_densityModelType;
 
-  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
+  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT combinations, not just this combination)
   using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**

@@ -142,7 +142,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeIterationStatsToTable()
 {
-  if( m_numTimeSteps == 0 || !m_csvOutputEnabled )
+  if( m_numTimeSteps == 0 || !m_logOutputRequest )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -156,12 +156,12 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_setupTime,
                           m_solveTime );
 
-  if( !m_csvOutputOpened )
+  if( !m_CSVOutputOpened )
   {
     m_logStream.open( m_iterationsFilename );
     m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
     m_logStream << m_iterationCSVFormatter->headerToString( );
-    m_csvOutputOpened  = true;
+    m_CSVOutputOpened  = true;
   }
 
   m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
@@ -174,7 +174,7 @@ void IterationsStatistics::writeIterationStatsToTable()
 void IterationsStatistics::outputStatistics() const
 {
   // no statistics to output when no time steps have been recorded
-  if( m_numTimeSteps == 0 || !m_logOutput )
+  if( m_numTimeSteps == 0 || !m_logOutputRequest )
     return;
 
   TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
@@ -204,7 +204,7 @@ ConvergenceStatistics::ConvergenceStatistics():
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
-  if( !m_csvOutputEnabled )
+  if( !m_CSVOutputRequest )
     return;
   stdVector< TableData::CellData > residualsNormCells;
 
@@ -228,7 +228,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   m_convergenceData.addRow( residualsNormCells );
 
-  if( !m_csvOutputOpened )
+  if( !m_CSVOutputOpened )
   {
     string_array header = {"Cycle number", "time_n (s)", "dt (s)", "iteration"};
     for( auto const & residual : m_residuals )
@@ -240,7 +240,7 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
     m_logStream.open( m_convergenceFilename );
     m_convergenceFormatter = std::make_unique< TableCSVFormatter >( m_convergenceLayout );
     m_logStream << m_convergenceFormatter->headerToString( );
-    m_csvOutputOpened  = true;
+    m_CSVOutputOpened  = true;
   }
 
   m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );

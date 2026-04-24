@@ -143,7 +143,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       if( close_perf )
       {
         m_localPerfStatus[iperf] = PerforationStatus::CLOSED;
-        WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+        GEOS_MAYBE_UNUSED WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
         GEOS_LOG_RANK( "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
                        " is defined with a zero transmissibility.\n" <<
                        "The simulation is going to proceed with this zero transmissibility,\n" <<
@@ -169,9 +169,9 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( dx <= 0 || dy <= 0 || dz <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_THROW( "The reservoir element dimensions (dx, dy, and dz) should be positive in " <<
-                  wellRegion.getWellGeneratorName(),
-                  InputError );
+      GEOS_THROW( GEOS_FMT( "The reservoir element dimensions (dx, dy, and dz) should be positive in {}",
+                            wellRegion.getWellGeneratorName() ),
+                  InputError, getDataContext() );
     }
 
     real64 d1 = 0;
@@ -220,10 +220,11 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( rEq < wellElemRadius[wellElemIndex] )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_THROW( "The equivalent radius r_eq = " << rEq <<
-                  " is smaller than the well radius (r = " << wellElemRadius[wellElemIndex] <<
-                  ") in " << wellRegion.getWellGeneratorName(),
-                  InputError );
+      GEOS_THROW( GEOS_FMT( "The equivalent radius r_eq = {} is smaller than the well radius (r = {}) in {}",
+                            rEq,
+                            wellElemRadius[wellElemIndex],
+                            wellRegion.getWellGeneratorName() ),
+                  InputError, getDataContext() );
     }
 
     // compute the well Peaceman index
@@ -232,9 +233,9 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
     if( m_wellTransmissibility[iperf] <= 0 )
     {
       WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_THROW( "The well index is negative or equal to zero in " <<
-                  wellRegion.getWellGeneratorName(),
-                  InputError );
+      GEOS_THROW( GEOS_FMT( "The well index is negative or equal to zero in {}",
+                            wellRegion.getWellGeneratorName() ),
+                  InputError, getDataContext() );
     }
   }
 }
@@ -246,23 +247,40 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
-  CellElementRegion const & region = elemManager.getRegion< CellElementRegion >( er );
-  CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion >( esr );
+  ElementRegionBase const & region = elemManager.getRegion< ElementRegionBase >( er );
+  ElementSubRegionBase const & subRegionBase = region.getSubRegion< ElementSubRegionBase >( esr );
 
-  // compute the bounding box of the element
-  real64 boxDims[ 3 ];
-  computationalGeometry::getBoundingBox( ei,
-                                         subRegion.nodeList(),
-                                         nodeManager.referencePosition(),
-                                         boxDims );
+  region.applyLambdaToContainer< CellElementSubRegion, SurfaceElementSubRegion >( subRegionBase, [&]( auto const & subRegion )
+  {
+    // compute the bounding box of the element
+    real64 boxDims[ 3 ];
+    computationalGeometry::getBoundingBox( ei,
+                                           subRegion.nodeList(),
+                                           nodeManager.referencePosition(),
+                                           boxDims );
 
-  // dx and dz from bounding box
-  dx = boxDims[ 0 ];
-  dy = boxDims[ 1 ];
+    // dx and dz from bounding box
+    dx = boxDims[ 0 ];
+    dy = boxDims[ 1 ];
+    dz = boxDims[ 2 ];
 
-  // dz is computed as vol / (dx * dy)
-  dz  = subRegion.getElementVolume()[ei];
-  dz /= dx * dy;
+    if( isZero( dx ) )
+    {
+      dx  = subRegion.getElementVolume()[ei];
+      dx /= dy * dz;
+    }
+    else if( isZero( dy ) )
+    {
+      dy  = subRegion.getElementVolume()[ei];
+      dy /= dx * dz;
+    }
+    else
+    {
+      // dz is computed as vol / (dx * dy)
+      dz  = subRegion.getElementVolume()[ei];
+      dz /= dx * dy;
+    }
+  } );
 }
 
 void PerforationData::connectToWellElements( LineBlockABC const & lineBlock,

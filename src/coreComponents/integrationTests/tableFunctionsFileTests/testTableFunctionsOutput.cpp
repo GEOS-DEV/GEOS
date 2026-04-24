@@ -130,7 +130,6 @@ char const * xmlInput =
         <Perforation
           name="injector1_perf1"
           distanceFromHead="0.75"/>
-
       </InternalWell>
     </InternalMesh>
 
@@ -139,10 +138,8 @@ char const * xmlInput =
   <Geometry>
     <Box
       name="sink"
-      xMin="{ 89.99, 89.99, -0.01 }"
+      xMin="{ 49.99, 49.99, -0.01 }"
       xMax="{ 101.01, 101.01, 1.01 }"/>
-
-    
   </Geometry>
 
   <Events

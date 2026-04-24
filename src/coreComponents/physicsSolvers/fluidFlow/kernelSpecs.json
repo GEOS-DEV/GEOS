@@ -24,125 +24,6 @@
                    "generation call). Duplicate entries are unified internally" ]
   },
 
-  "SinglePhaseHybridFVMKernels": {
-    "vars": [
-      "NAME",
-      "NFACES",
-      "IP"
-    ],
-    "constants": [
-      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
-    ],
-    "combinations": {
-      "NAME": [
-        "ElementBasedAssemblyKernel"
-      ],
-      "NFACES": [
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11,
-        12,
-        13
-      ],
-      "IP": [
-        "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::QuasiTPFAInnerProduct",
-        "mimeticInnerProduct::QuasiRTInnerProduct",
-        "mimeticInnerProduct::SimpleInnerProduct",
-        "mimeticInnerProduct::BdVLMInnerProduct"
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_upwinding": {
-    "vars": [
-      "NCOMPS",
-      "NPHASES"
-    ],
-    "constants": [],
-    "combinations": {
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_assembly": {
-    "vars": [
-      "NFACES",
-      "NCOMPS",
-      "NPHASES"
-    ],
-    "constants": [],
-    "combinations": {
-      "NFACES": [
-        4,
-        5,
-        6
-      ],
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ]
-    },
-    "explicit": []
-  },
-
-  "CompositionalMultiphaseHybridFVMKernels_flux": {
-    "vars": [
-      "NFACES",
-      "NCOMPS",
-      "NPHASES",
-      "IP_TYPE"
-    ],
-    "constants": [],
-    "combinations": {
-      "NFACES": [
-        4,
-        5,
-        6
-      ],
-      "NCOMPS": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "NPHASES": [
-        2,
-        3
-      ],
-      "IP_TYPE": [
-        "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::BdVLMInnerProduct"
-      ]
-    },
-    "explicit": []
-  },
-
   "ReactiveCompositionalMultiphaseOBLKernels": {
     "vars": [
       "NAME",
@@ -243,6 +124,50 @@
         "constitutive::CO2BrineEzrokhiFluid",
         "constitutive::CO2BrinePhillipsThermalFluid"
       ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_flux_grouped": {
+    "vars": [
+      "NFACES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped": {
+    "vars": [
+      "NFACES"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
+    },
+    "explicit": []
+  },
+
+  "CompositionalMultiphaseHybridFVMKernels_bcprops": {
+    "vars": [
+      "BCPROPS_STUB"
+    ],
+    "constants": [],
+    "combinations": {},
+    "explicit": [ "single" ]
+  },
+
+  "SinglePhaseHybridFVMKernels_grouped": {
+    "vars": [
+      "NFACES"
+    ],
+    "constants": [
+      [ "ElementBasedAssemblyKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
     },
     "explicit": []
   }

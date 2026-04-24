@@ -90,7 +90,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
 }
 
 void ImmiscibleMultiphaseFlow::postInputInitialization()
@@ -143,9 +143,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
         string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
         GEOS_THROW_IF( capPresName.empty(),
-                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                       GEOS_FMT( "Capillary pressure model not found on subregion {}",
+                                 subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
@@ -723,13 +723,15 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  fields::flow::pressure::key() ) );
+                                                  fields::flow::pressure::key() ),
+                      getDataContext() );
       }
       if( comp < 0 || comp >= m_numPhases )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
+                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ),
+                      getDataContext() );
         return; // can't check next part with invalid component id
       }
 
@@ -740,9 +742,11 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
         fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
         {
           string_array const & componentNames = bc.getComponentNames();
+          GEOS_UNUSED_VAR( componentNames );
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
+                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() )
+                        , getDataContext() );
         } );
       }
       compMask.set( comp );
@@ -793,7 +797,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "ImmiscibleMultiphaseFlow {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent, "ImmiscibleMultiphaseFlow : inconsistent boundary conditions", getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -896,13 +900,13 @@ void ImmiscibleMultiphaseFlow::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

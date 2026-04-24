@@ -13,6 +13,10 @@ or by importing meshes from various common mesh file formats.
 This latter options allows one to work with more complex geometries,
 such as unstructured meshes comprised of a variety of element types (polyhedral elements).
 
+.. note::
+  GEOS uses a right-handed Cartesian coordinate system (X: right, Y: forward, Z: upward) that is consistently applied throughout the mesh definition and discretization processes. 
+  This convention affects mesh topology, and finite element / volume computations. 
+
 ************************
 Internal Mesh Generation
 ************************

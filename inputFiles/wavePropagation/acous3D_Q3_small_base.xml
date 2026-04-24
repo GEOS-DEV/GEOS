@@ -80,6 +80,7 @@
       name="zposFreeSurface"
       objectPath="mesh/FE2/faceManager"
       fieldName="FreeSurface"
+      errorSetMode="silent"
       scale="0.0"
       setNames="{ zpos }"/>
   </FieldSpecifications>

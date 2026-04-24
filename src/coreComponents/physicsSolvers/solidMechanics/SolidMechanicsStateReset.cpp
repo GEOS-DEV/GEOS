@@ -65,9 +65,8 @@ void SolidMechanicsStateReset::postInputInitialization()
   Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
-                 GEOS_FMT( "Task {}: physics solver named {} not found",
-                           getDataContext(), m_solidSolverName ),
-                 InputError );
+                 GEOS_FMT( "physics solver named {} not found", m_solidSolverName ),
+                 InputError, getDataContext() );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
@@ -104,8 +103,8 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
-        subRegion.getField< solidMechanics::strain >().zero();
-        subRegion.getField< solidMechanics::plasticStrain >().zero();
+        subRegion.getField< solidMechanics::averageStrain >().zero();
+        subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       } );
 
     }

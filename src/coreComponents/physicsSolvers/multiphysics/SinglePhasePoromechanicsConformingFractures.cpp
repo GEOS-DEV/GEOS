@@ -225,6 +225,23 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
   } );
 }
 
+template<>
+void SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >::
+assembleSystem( real64 const time_n,
+                real64 const dt,
+                DomainPartition & domain,
+                DofManager const & dofManager,
+                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
+  // assemble well contributions
+  flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+}
 
 template class SinglePhasePoromechanicsConformingFractures<>;
 template class SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> >;

@@ -53,6 +53,14 @@ class PhysicsSolverBase : public ExecutableGroup
 public:
 
   /**
+   * @brief Type of the stat output
+   */
+  enum class StatsOutputType : integer
+  {
+    none, iteration, convergence, all
+  };
+
+  /**
    * @brief Constructor for PhysicsSolverBase
    * @param name the name of this instantiation of PhysicsSolverBase
    * @param parent the parent group of this instantiation of PhysicsSolverBase
@@ -535,6 +543,8 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
+   * @param cycleNumber outer solver cycle associated with this linear solve
+   * @param nonlinearIteration nonlinear iteration associated with this linear solve
    *
    * This function calls the linear solver package to perform a single linear solve on the block
    * system. The derived physics solver is required to specify the call, as no default is provided.
@@ -546,7 +556,9 @@ public:
   solveLinearSystem( DofManager const & dofManager,
                      ParallelMatrix & matrix,
                      ParallelVector & rhs,
-                     ParallelVector & solution );
+                     ParallelVector & solution,
+                     integer const cycleNumber,
+                     integer const nonlinearIteration );
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation
@@ -777,6 +789,13 @@ public:
    * @param[in] timestamp the new timestamp of system setup
    */
   void setSystemSetupTimestamp( Timestamp timestamp );
+
+  /**
+   * @brief Whether the standard GEOS linear-solver table should be suppressed
+   *        because hypredrive YAML logging is used instead.
+   * @return `true` when the standard table should be suppressed, `false` otherwise.
+   */
+  bool deferLinearSolverParametersPrint() const;
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -1153,9 +1172,8 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv files containing iterations & convergence information
-  integer m_writeStatisticsCSV;
+  /// Parameter for outputing statistics information
+  StatsOutputType m_writeStatisticsCSV;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
@@ -1176,7 +1194,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  stdMap< std::string, std::chrono::system_clock::duration > m_timers;
 
   /// History of the solution vector, used for oscillation detection
   ArrayOfArrays< real64 > m_solutionHistory;
@@ -1260,9 +1278,19 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
 
   string & constitutiveName = subRegion.getReference< string >( wrapperName );
   constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
-  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
-                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{} constitutive model not found on subregion {}",
+                                                     constitutiveType, subRegion.getName() ),
+                 getDataContext() );
 }
+
+/**
+ * @brief String for the stats output type
+ */
+ENUM_STRINGS( PhysicsSolverBase::StatsOutputType,
+              "none",
+              "iteration",
+              "convergence",
+              "all" );
 
 } // namespace geos
 

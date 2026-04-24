@@ -50,6 +50,10 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   real64 solverStep( real64 const & time_n,
@@ -132,8 +136,8 @@ public:
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
-    std::map< string,
-              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+    stdMap< string,
+            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
@@ -157,7 +161,7 @@ public:
   {
     bool const isStickState = true;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -201,6 +205,12 @@ public:
 
 private:
   /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
+
+  /**
    * @brief add the number of non-zero elements induced by the coupling between
    *   nodal and bubble displacement.
    * @param domain the physical domain object
@@ -222,16 +232,16 @@ private:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
   /// Finite element type to face element index map
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElements;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 
   /// Finite element type to face element index map (stick mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
 
   /// Finite element type to face element index map (slip mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
 
   /// Finite element type to finite element object map
-  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+  stdMap< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {

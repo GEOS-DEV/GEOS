@@ -194,8 +194,8 @@ static PyObject * PyGroup_getGroup( PyGroup * const self, PyObject * const args 
   {
     return createNewPyGroup( self->group->getGroupByPath( path ) );
   }
-  // If the path isn't valid then getGroupByPath will throw a std::domain_error
-  catch( std::domain_error const & e )
+  // If the path isn't valid then getGroupByPath will throw a geos::DomainError
+  catch( geos::DomainError const & e )
   {
     // If no default return value was specified then this results in a Python exception.
     if( defaultReturnValue == nullptr )
@@ -259,8 +259,8 @@ static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const arg
     dataRepository::WrapperBase & wrapper = group.getWrapperBase( wrapperName );
     return createNewPyWrapper( wrapper );
   }
-  // If the path isn't valid then either getGroupByPath or getWrapperBase will throw a std::domain_error
-  catch( std::domain_error const & e )
+  // If the path isn't valid then either getGroupByPath or getWrapperBase will throw a geos::DomainError
+  catch( geos::DomainError const & e )
   {
     // If no default return value was specified then this results in a Python exception.
     if( defaultReturnValue == nullptr )

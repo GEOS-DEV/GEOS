@@ -56,7 +56,7 @@ public:
     Base::setupCoupling( domain, dofManager );
 
     // 2. Traction - pressure coupling in the fracture
-    dofManager.addCoupling( getFlowDofKey(),
+    dofManager.addCoupling( this->getFlowDofKey(),
                             fields::contact::traction::key(),
                             DofManager::Connector::Elem );
   }
@@ -175,7 +175,7 @@ protected:
     {
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
-      string const flowDofKey = dofManager.getKey( getFlowDofKey() );
+      string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
       globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -251,7 +251,7 @@ protected:
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
       string const dispDofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-      string const flowDofKey = dofManager.getKey( getFlowDofKey() );
+      string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
       arrayView1d< globalIndex const > const &
       dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -268,7 +268,7 @@ protected:
         fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
 
       GEOS_ERROR_IF( !fractureSubRegion.hasWrapper( fields::flow::pressure::key() ),
-                     this->getDataContext() << ": The fracture subregion must contain pressure field." );
+                     "The fracture subregion must contain pressure field.", this->getDataContext() );
 
       arrayView2d< localIndex const > const elem2dToFaces = fractureSubRegion.faceList().toViewConst();
 
@@ -474,7 +474,7 @@ protected:
     arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
     string const & dispDofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    string const & flowDofKey = dofManager.getKey( getFlowDofKey() );
+    string const & flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
     arrayView1d< globalIndex const > const &
     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -660,8 +660,6 @@ protected:
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
-
-  virtual string getFlowDofKey() const = 0;
 
   virtual integer numFluidComponents() const = 0;
 

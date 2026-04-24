@@ -42,7 +42,7 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference pressure for the pressure permeability model" );
+    setDescription( "Reference pressure for the pressure permeability model [Pa]" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
     setApplyDefaultValue( 0.0 ).
@@ -65,7 +65,10 @@ void PressurePermeability::postInputInitialization()
   for( localIndex i=0; i < 3; i++ )
   {
     GEOS_ERROR_IF( std::abs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
-                   getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model." );
+                   GEOS_FMT( "The pressure dependent constant at component {} is too close to zero, "
+                             "which is not allowed for the hyperbolic model.",
+                             i ),
+                   getDataContext() );
   }
 }
 

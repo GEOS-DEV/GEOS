@@ -196,7 +196,7 @@ public:
   static int init( int * argc, char * * * argv );
 
   /**
-   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * @brief Finalize the MPI environment and free MPI-managed resources.
    * Please note that once called, MPI functions, communicators and resources can no longer be used.
    */
   static void finalize();
@@ -318,9 +318,9 @@ public:
   ///@}
 
 #if !defined(GEOS_USE_MPI)
-  static std::map< int, std::pair< int, void * > > & getTagToPointersMap()
+  static stdMap< int, std::pair< int, void * > > & getTagToPointersMap()
   {
-    static std::map< int, std::pair< int, void * > > tagToPointers;
+    static stdMap< int, std::pair< int, void * > > tagToPointers;
     return tagToPointers;
   }
 #endif
@@ -1330,8 +1330,8 @@ int MpiWrapper::iRecv( T * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
@@ -1427,8 +1427,8 @@ int MpiWrapper::iSend( T const * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
