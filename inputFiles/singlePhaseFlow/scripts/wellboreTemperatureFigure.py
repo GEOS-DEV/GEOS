@@ -9,7 +9,7 @@ and the GEOS XML input files.
 Produces a 2x2 subplot figure comparing:
   - GEOS results (from model-results.txt)
   - FDM non-linear reference
-  - Linear analytic solution (Wang & Papamichos 1994)
+  - Linear analytic solution for infinite domain(Wang & Papamichos 1994)
   - Steady-state log solution
 
 Supports three test cases via xmlFilePrefix:
@@ -197,7 +197,7 @@ def main(xmlFilePrefix=''):
         ax.plot(r_cells, temperature_geos, 'k+',  label='GEOS')
         if isNonLinear:
             ax.plot(r_cells, T_fdm,        'g-',  label='FDM Non-Linear')
-        ax.plot(r_cells, T_linear,         'r-',  label='Analytic, infinite domain')
+        ax.plot(r_cells, T_linear,         'r-',  label='Analytic Linear, infinite domain')
         ax.plot(r_cells, T_ss,             'b-',  label='Steady State')
 
         if chart_idx == 1:
