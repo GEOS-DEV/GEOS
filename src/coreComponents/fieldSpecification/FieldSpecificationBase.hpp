@@ -550,6 +550,16 @@ public:
 
   /**
    * Mutator
+   * @param[in] regionNames The region names
+   */
+  void setRegionNames( string_array const & regionNames )
+  {
+    setObjectPath( "ElementRegions/{" + stringutilities::join( regionNames, ' ' ) + "}" );
+    m_regionNames = regionNames;
+  }
+
+  /**
+   * Mutator
    * @param[in] scale Scaling factor
    */
   void setScale( real64 const & scale )
