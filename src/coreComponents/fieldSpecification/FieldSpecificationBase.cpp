@@ -135,7 +135,7 @@ void FieldSpecificationBase::postInputInitialization()
                  m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
                  GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
                             "Either leave '{}' empty or size it exactly like '{}'",
-                            viewKeyStruct::functionNameString(), m_functionNames.size(),
+                            viewKeyStruct::functionNamesString(), m_functionNames.size(),
                             viewKeyStruct::scalesString(), m_scales.size(),
                             viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
                  InputError,
