@@ -44,7 +44,7 @@ def steadyState(Tin, Tout, Rin, Rout, r):
 def transientTemperature(Tin, Tout, Rin, r, thermalDiffusivity, t):
     """Approximate transient radial temperature (Wang & Papamichos 1994).
 
-    Valid for an infinite domain (Rout → ∞) in the early-time regime.
+    Valid for an infinite domain in the early-time regime.
 
     Reference
     ---------
@@ -132,7 +132,7 @@ def effectiveVolumetricHeatCapacity(c0, c_gradient, T, Tref, porosity):
 
 
 # ---------------------------------------------------------------------------
-# Non-linear FD solver  (non-uniform radial stencil, implicit, lagged coefficients)
+# Non-linear FD solver
 # ---------------------------------------------------------------------------
 
 def _buildMatrix(lam, cap, r, dt, N):
@@ -163,11 +163,11 @@ def _buildMatrix(lam, cap, r, dt, N):
         S    = dr_L + dr_R
         r_i  = r[i]
 
-        alpha_i   = lam[i] / cap[i]                          # thermal diffusivity
-        dlambda_i = (lam[i + 1] - lam[i - 1]) / S            # dλ/dr (lagged)
+        alpha_i   = lam[i] / cap[i]
+        dlambda_i = (lam[i + 1] - lam[i - 1]) / S
         beta_i    = dlambda_i / cap[i]
 
-        fd1 = (alpha_i / r_i + beta_i) / S                   # first-derivative coefficient
+        fd1 = (alpha_i / r_i + beta_i) / S
 
         A[i, i - 1] = -dt * (2.0 * alpha_i / (S * dr_L) - fd1)
         A[i, i    ] =  1.0 + dt * 2.0 * alpha_i / (dr_L * dr_R)
@@ -187,7 +187,7 @@ def solveRadialDiffusion(r_cells, Rin, Rout, tmax, dt,
 
     The computational grid augments the GEOS cell centres with the actual
     boundary faces so that Dirichlet conditions are imposed at the correct
-    radial positions (not at the first/last cell centres).
+    radial positions.
 
     Parameters
     ----------

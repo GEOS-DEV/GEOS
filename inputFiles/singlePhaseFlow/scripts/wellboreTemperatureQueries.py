@@ -3,19 +3,14 @@ wellboreTemperatureQueries.py
 
 Query script for the wellbore thermal diffusion validation tests.
 
-Reads the VTK output produced by GEOS, extracts radial temperature profiles at selected timesteps, 
-and writes a lightweight text file (model-results.txt) that can be committed to the
-repository and read by wellboreTemperatureFigure.py without access to the
-VTK output directory.
+Reads GEOS VTK output, extracts radial temperature profiles at selected timesteps, 
+and writes model-results.txt that can be read by wellboreTemperatureFigure.py.
 
-Usage (run from the target doc directory after the GEOS simulation):
+Usage:
     python wellboreTemperatureQueries.py --outputDir /path/to/vtkOutput [--snapshotIndices 1 2 5 10]
 
 Output: model-results.txt with columns:
     time   r   temperature
-
-One row per (timestep, radial cell). Blocks for different timesteps are
-contiguous; they are distinguished by the value in the time column.
 """
 
 import os
@@ -66,11 +61,7 @@ def _readVTU(vtuPath):
 
 
 def readVTMData(vtmPath):
-    """Read all VTU pieces in a VTM file; return one cell per radial ring.
-
-    Uses the cell closest to θ = 45° for each unique radius, giving a clean
-    1-D radial profile for the radially-symmetric wellbore problem.
-    """
+    """Read all VTU pieces in a VTM file; return one cell (closest to θ = 45°) per radial ring."""
     tree   = ElementTree.parse(vtmPath)
     vtmDir = os.path.dirname(vtmPath)
 

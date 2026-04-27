@@ -1,12 +1,8 @@
 """
 wellboreTemperatureFigure.py
 
-Shared figure script for wellbore thermal diffusion validation tests.
-
-Reads the committed model-results.txt (produced by wellboreTemperatureQueries.py)
-and the GEOS XML input files.
-
-Produces a 2x2 subplot figure comparing:
+Reads GEOS results (produced by wellboreTemperatureQueries.py)
+and produces a 2x2 subplot figure comparing at 4 time steps:
   - GEOS results (from model-results.txt)
   - FDM non-linear reference
   - Linear analytic solution for infinite domain(Wang & Papamichos 1994)
@@ -18,7 +14,7 @@ Supports three test cases via xmlFilePrefix:
   - 'thermalCompressible_temperatureDependentSinglePhaseThermalConductivity'
 
 Usage:
-    python wellboreTemperatureFigure.py --xmlFilePrefix <prefix> [--geosDir /path/to/GEOS]
+    python wellboreTemperatureFigure.py --xmlFilePrefix <prefix> [--geosDir /path/to/GEOS] [--savePng]
 """
 
 import os
@@ -126,7 +122,7 @@ def getParametersFromXML(xmlPath, xmlFilePrefix):
 # Main
 # ---------------------------------------------------------------------------
 
-def main(xmlFilePrefix=''):
+def main(xmlFilePrefix='', outputDir=None):
     _scripts_dir      = os.path.dirname(os.path.abspath(__file__))
     _default_geos_dir = os.path.normpath(os.path.join(_scripts_dir, '..', '..', '..'))
 
@@ -136,6 +132,10 @@ def main(xmlFilePrefix=''):
                         help='Path to the GEOS repository root')
     parser.add_argument('--xmlFilePrefix', default='',
                         help='Test-case XML prefix')
+    parser.add_argument('--outputDir', default=outputDir if outputDir is not None else '.',
+                        help='Path to the directory containing model-results.txt and where the figure is saved')
+    parser.add_argument('--savePng', action='store_true',
+                        help='Save PNG to outputDir using <xmlFilePrefix>.png')
     args = parser.parse_args()
 
     if not xmlFilePrefix:
@@ -161,9 +161,10 @@ def main(xmlFilePrefix=''):
     thermalDiffusivity = lambda0 / effectiveRefCap
 
     # -----------------------------------------------------------------------
-    # Load committed results
+    # Load results
     # -----------------------------------------------------------------------
-    data = np.loadtxt('model-results.txt', skiprows=1)
+    dataPath = os.path.join(args.outputDir, 'model-results.txt')
+    data     = np.loadtxt(dataPath, skiprows=1)
     # columns: time, r, temperature
     unique_times = np.unique(data[:, 0])
 
@@ -178,7 +179,7 @@ def main(xmlFilePrefix=''):
         r_cells          = data[mask, 1]
         temperature_geos = data[mask, 2]
 
-        # FDM non-linear reference (only meaningful when λ or c depends on T)
+        # FDM non-linear reference (only when λ or c depends on T)
         if isNonLinear:
             T_fdm = wts.solveRadialDiffusion(
                 r_cells, Rin, Rout,
@@ -213,10 +214,11 @@ def main(xmlFilePrefix=''):
         ax.grid(True)
 
     plt.tight_layout()
-
-    pngName = xmlFilePrefix + '.png'
-    plt.savefig(pngName, dpi=150)
-    print(f'Saved {pngName}')
+    if args.savePng:
+        pngName = xmlFilePrefix + '.png'
+        pngPath = os.path.join(args.outputDir, pngName)
+        plt.savefig(pngPath, dpi=150)
+        print(f'Saved {pngPath}')
     plt.show()
 
 
