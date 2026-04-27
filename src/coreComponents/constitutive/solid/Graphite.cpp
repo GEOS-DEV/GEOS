@@ -40,14 +40,17 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_alphaL(),
   m_alphaT(),
   m_damage(),
-  m_fractureEnergyReleaseRate(),
   m_temperature(),
   m_temperatureRate(),
   m_jacobian(),
   m_lengthScale(),
   m_strengthScale(),
   m_failureStrength(),
-  m_crackSpeed(),
+  m_basalPlanePlasticWork(),
+  m_nonBasalPlanePlasticWork(),
+  m_basalPlaneFractureEnergyReleaseRate(),
+  m_nonBasalPlaneFractureEnergyReleaseRate(),
+  m_damagePowerVal(),  
   m_damagedMaterialFrictionalSlope(),
   m_distortionShearResponseX2(),
   m_distortionShearResponseY1(),
@@ -111,9 +114,30 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum theoretical strength" );
 
-  registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Crack speed" );
+  registerWrapper( viewKeyStruct::basalPlanePlasticWorkString(), &m_basalPlanePlasticWork ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "plastic work for tensile cracking value" );    
+
+  registerWrapper( viewKeyStruct::nonBasalPlanePlasticWorkString(), &m_nonBasalPlanePlasticWork ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "plastic work for non-tensile cracking value" );    
+
+  registerWrapper( viewKeyStruct::basalPlaneFractureEnergyReleaseRateString(), &m_basalPlaneFractureEnergyReleaseRate ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "fractureEnergyReleaseRate for tensile cracking value" );    
+
+  registerWrapper( viewKeyStruct::nonBasalPlaneFractureEnergyReleaseRateString(), &m_nonBasalPlaneFractureEnergyReleaseRate ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "fractureEnergyReleaseRate for non-tensile cracking value" );    
+
+  registerWrapper( viewKeyStruct::damagePowerValString(), &m_damagePowerVal ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "damage power (k) value" );    
 
   registerWrapper( viewKeyStruct::damagedMaterialFrictionalSlopeString(), &m_damagedMaterialFrictionalSlope ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -215,11 +239,6 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
-  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "fractureEnergyReleaseRate value" );    
-
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
     setApplyDefaultValue( 300.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -256,7 +275,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Material direction" );
+    setDescription( "Material direction - first row is used as graphite basal plane normal" );
 }
 
 
@@ -269,6 +288,7 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+
   m_effectiveBulkModulus.resize( 0 );
   m_effectiveShearModulus.resize( 0 );
   m_materialDirection.resize( 0, 3, 3 );
@@ -276,6 +296,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_basalPlanePlasticWork.resize( 0, numConstitutivePointsPerParentIndex );
+  m_nonBasalPlanePlasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_lengthScale.resize( 0 );
   m_strengthScale.resize( 0 );
@@ -313,12 +335,23 @@ void Graphite::postInputInitialization()
   //                  "max ep: " << m_maximumPlasticStrain );
 
   // Add elastic constants check
+  GEOS_THROW_IF( m_defaultYoungModulusAxial < 0.0, "defaultYoungModulusAxial must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransverse < 0.0, "defaultYoungModulusTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransverse < 0.0, "defaultShearModulusAxialTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusAxialPressureDerivative < 0.0, "defaultYoungModulusAxialPressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransversePressureDerivative < 0.0, "defaultYoungModulusTransversePressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransversePressureDerivative < 0.0, "defaultShearModulusAxialTransversePressureDerivative must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse < -0.499999,  "defaultPoissonRatioAxialTransverse must be > -0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioAxialTransverse > 0.499999,  "defaultPoissonRatioAxialTransverse must be < 0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioTransverse < -0.499999,  "defaultPoissonRatioTransverse must be > -0.5 ", InputError );
+  GEOS_THROW_IF( m_defaultPoissonRatioTransverse > 0.499999,  "defaultPoissonRatioTransverse must be < 0.5 ", InputError );
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
-  GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
-  GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fratureEnergyReleaseRate must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_basalPlaneFractureEnergyReleaseRate <= 0.0, "The tensile Fracture Energy Release Rate (G_f) must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_nonBasalPlaneFractureEnergyReleaseRate <= 0.0, "The non-tensile Fracture Energy Release Rate (G_f) must be > 0 for Graphite", InputError );
+  GEOS_THROW_IF( m_damagePowerVal < 0.0, "The power value for damage should be must be >= 0 ", InputError );  
   GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
