@@ -668,7 +668,7 @@ void SinglePhaseWell::assembleWellConstraintTerms( real64 const & time_n,
     return;
   }
   {
-    forSubGroups< BHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
+    forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
     {
       if( constraint.getName() == getCurrentConstraint()->getName())
       {

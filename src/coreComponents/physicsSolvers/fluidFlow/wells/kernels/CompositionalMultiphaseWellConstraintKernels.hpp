@@ -41,12 +41,13 @@ namespace wellConstraintKernels
 //template< integer NC, integer IS_THERMAL, typname S, typename T  >
 //struct ConstraintHelper< NC, IS_THERMAL   > {};
 
-template< integer NC, integer IS_THERMAL, typename CONSTRAINT = BHPConstraint >
+template< integer NC, integer IS_THERMAL, typename CONSTRAINT = BHPConstraint< BHPConstraintTypeId::MIN > >
 struct ConstraintHelper
 {
+  template< BHPConstraintTypeId I >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          BHPConstraint & constraint,
+                                          BHPConstraint< I > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

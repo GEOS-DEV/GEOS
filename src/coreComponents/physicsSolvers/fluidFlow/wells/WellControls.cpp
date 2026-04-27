@@ -134,13 +134,13 @@ Group * WellControls::createChild( string const & childKey, string const & child
   Group * constraint = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
-    MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
+    BHPConstraint< BHPConstraintTypeId::MIN > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MIN > >( childName );
     m_minBHPConstraint =   &bhpConstraint;
     constraint = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
   {
-    MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
+    BHPConstraint< BHPConstraintTypeId::MAX > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MAX > >( childName );
     m_maxBHPConstraint =  &bhpConstraint;
     constraint = &bhpConstraint;
   }
@@ -591,7 +591,7 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
     wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
   } );
 
-  forSubGroups< BHPConstraint >( [&]( auto & constraint )
+  forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
   {
     // set the reference well element where the BHP control is applied
     real64 const refElev1 = constraint.getReferenceElevation();

@@ -74,8 +74,9 @@ public:
    * @return a string that contains the catalog name of the derived class
    */
   virtual string getCatalogName() const = 0;
+
   /**
-   * @name Constructor / Destructor
+   * @name Getters / Setters
    */
   ///@{
 

@@ -809,10 +809,10 @@ public:
   /**
    * @brief Getters for constraints
    */
-  MinimumBHPConstraint * getMinBHPConstraint() { return m_minBHPConstraint; };
-  MinimumBHPConstraint * getMinBHPConstraint() const { return m_minBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() { return m_maxBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
 
   /**
    * @brief Getters for constraint lists
@@ -902,8 +902,8 @@ protected:
   WellConstraintBase * m_currentConstraint;
 
   // Minimum and maximum BHP and WHP constraints
-  MinimumBHPConstraint *  m_minBHPConstraint;
-  MaximumBHPConstraint * m_maxBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MIN > *  m_minBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraint;
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;

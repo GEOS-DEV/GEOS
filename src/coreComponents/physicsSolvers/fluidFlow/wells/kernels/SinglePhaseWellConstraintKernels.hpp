@@ -42,9 +42,10 @@ namespace singlePhaseWellConstraintKernels
 template< integer IS_THERMAL >
 struct ConstraintHelper
 {
+  template< BHPConstraintTypeId I >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          BHPConstraint & constraint,
+                                          BHPConstraint< I > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

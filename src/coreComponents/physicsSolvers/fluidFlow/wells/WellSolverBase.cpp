@@ -389,7 +389,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
       } );
 
-      wellControls.forSubGroups< BHPConstraint >( [&]( auto & constraint )
+      wellControls.forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
       {
         // set the reference well element where the BHP control is applied
         real64 const refElev1 = constraint.getReferenceElevation();
