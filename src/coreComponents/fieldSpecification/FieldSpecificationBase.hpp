@@ -372,6 +372,25 @@ public:
                                            CRSMatrixView< real64, globalIndex const > const & matrix ) const;
 
   /**
+   *
+   */
+  template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+  void
+  computeRhsContribution( integer const component,
+                          real64 const scale,
+                          string const & functionName,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const;
+
+  /**
    * @brief View keys
    */
   struct viewKeyStruct
@@ -625,11 +644,29 @@ public:
 
   /**
    * @brief Query whether this field specification uses non-scalar scales
-   * @return true if @p m_scales holds more than one entry
    */
   bool isVectorMode() const
   {
-    return m_scales.size() > 1;
+    return !m_scales.empty();
+  }
+
+  template< typename LAMBDA >
+  void forEachComponent( LAMBDA && lambda ) const
+  {
+    if( isVectorMode() )
+    {
+      localIndex const numComponents = m_scales.size();
+      for( localIndex comp = 0; comp < numComponents; ++comp )
+      {
+        string const & functionName = m_functionName.empty() ? string{}
+                                                             : m_functionNames[ comp ];
+        lambda( comp, m_scales[ comp ], functionName );
+      }
+    }
+    else
+    {
+      lambda( getComponent(), m_scale, m_functionName );
+    }
   }
 
 
@@ -701,9 +738,9 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  auto applyOneComponent = [&]( integer const component,
-                                real64 const scale,
-                                string const & functionName )
+  forEachComponent( [&]( integer const component,
+                         real64 const scale,
+                         string const & functionName )
   {
     if( functionName.empty() )
     {
@@ -755,21 +792,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
         FIELD_OP::SpecifyFieldValue( field, a, component, localScale * resultView[i] );
       } );
     }
-  };
-
-  if( isVectorMode() )
-  {
-    localIndex const numComponents = m_scales.size();
-    for( localIndex c = 0; c < numComponents; ++c )
-    {
-      string const & compFunctionName = m_functionNames.empty() ? string{} : m_functionNames[ c ];
-      applyOneComponent( c, m_scales[ c ], compFunctionName );
-    }
-  }
-  else
-  {
-    applyOneComponent( getComponent(), m_scale, m_functionName );
-  }
+  } );
 }
 
 
@@ -805,13 +828,38 @@ void FieldSpecificationBase::applyBoundaryConditionToSystemKernel( SortedArrayVi
                                                                    arrayView1d< real64 > const & rhs,
                                                                    ArrayView< T const, NDIM, USD > const & fieldView ) const
 {
-  integer const component = getComponent();
-  this->applyBoundaryConditionToSystem< FIELD_OP, POLICY >( targetSet, time, dataGroup, dofMap, dofRankOffset, matrix, rhs,
-                                                            [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
+  forEachComponent( [&]( integer const component,
+                         real64 const scale,
+                         string const & functionName )
   {
-    real64 value = 0.0;
-    FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
-    return value;
+    integer const comp = ( component >= 0 ) ? component : 0;
+
+    array1d< globalIndex > dofArray( targetSet.size() );
+    arrayView1d< globalIndex > const & dof = dofArray.toView();
+
+    array1d< real64 > rhsContributionArray( targetSet.size() );
+    arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
+
+    computeRhsContribution< FIELD_OP, POLICY >( comp,
+                                                scale,
+                                                functionName,
+                                                targetSet,
+                                                time,
+                                                1.0,
+                                                dataGroup,
+                                                dofMap,
+                                                dofRankOffset,
+                                                matrix,
+                                                dof,
+                                                rhsContribution,
+                                                [fieldView, component] GEOS_HOST_DEVICE ( localIndex const a )
+    {
+      real64 value = 0.0;
+      FieldSpecificationEqual::readFieldValue( fieldView, a, component, value );
+      return value;
+    } );
+
+    FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
   } );
 }
 
@@ -881,30 +929,43 @@ FieldSpecificationBase::
                                   arrayView1d< real64 > const & rhs,
                                   LAMBDA && lambda ) const
 {
-  array1d< globalIndex > dofArray( targetSet.size() );
-  arrayView1d< globalIndex > const & dof = dofArray.toView();
+  forEachComponent( [&]( integer const component,
+                         real64 const scale,
+                         string const & functionName )
+  {
+    integer const comp = ( component >= 0 ) ? component : 0;
 
-  array1d< real64 > rhsContributionArray( targetSet.size() );
-  arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
+    array1d< globalIndex > dofArray( targetSet.size() );
+    arrayView1d< globalIndex > const & dof = dofArray.toView();
 
-  computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( targetSet,
-                                                      time,
-                                                      dt,
-                                                      dataGroup,
-                                                      dofMap,
-                                                      dofRankOffset,
-                                                      matrix,
-                                                      dof,
-                                                      rhsContribution,
-                                                      std::forward< LAMBDA >( lambda ) );
+    array1d< real64 > rhsContributionArray( targetSet.size() );
+    arrayView1d< real64 > const & rhsContribution = rhsContributionArray.toView();
 
-  FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
+    computeRhsContribution< FIELD_OP, POLICY >( comp,
+                                                scale,
+                                                functionName,
+                                                targetSet,
+                                                time,
+                                                dt,
+                                                dataGroup,
+                                                dofMap,
+                                                dofRankOffset,
+                                                matrix,
+                                                dof,
+                                                rhsContribution,
+                                                lambda );
+
+    FIELD_OP::template prescribeRhsValues< POLICY >( rhs, dof, dofRankOffset, rhsContribution );
+  } );
 }
 
 template< typename FIELD_OP, typename POLICY, typename LAMBDA >
 void
 FieldSpecificationBase::
-  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+  computeRhsContribution( integer const component,
+                          real64 const scale,
+                          string const & functionName,
+                          SortedArrayView< localIndex const > const & targetSet,
                           real64 const time,
                           real64 const dt,
                           dataRepository::Group const & dataGroup,
@@ -915,8 +976,6 @@ FieldSpecificationBase::
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  string const & functionName = getReference< string >( viewKeyStruct::functionNameString() );
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   // Compute the value of the rhs terms, and collect the dof numbers
@@ -924,7 +983,7 @@ FieldSpecificationBase::
 
   if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
   {
-    real64 value = m_scale * dt;
+    real64 value = scale * dt;
     if( !functionName.empty() )
     {
       FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
@@ -951,7 +1010,7 @@ FieldSpecificationBase::
     real64_array resultsArray( targetSet.size() );
     function.evaluate( dataGroup, time, targetSet, resultsArray );
     arrayView1d< real64 const > const & results = resultsArray.toViewConst();
-    real64 const value = m_scale * dt;
+    real64 const value = scale * dt;
 
     forAll< POLICY >( targetSet.size(),
                       [targetSet, dof, dofMap, dofRankOffset, component, matrix, rhsContribution, results, value, lambda] GEOS_HOST_DEVICE (
@@ -969,6 +1028,36 @@ FieldSpecificationBase::
   }
 }
 
+template< typename FIELD_OP, typename POLICY, typename LAMBDA >
+void
+FieldSpecificationBase::
+  computeRhsContribution( SortedArrayView< localIndex const > const & targetSet,
+                          real64 const time,
+                          real64 const dt,
+                          dataRepository::Group const & dataGroup,
+                          arrayView1d< globalIndex const > const & dofMap,
+                          globalIndex const dofRankOffset,
+                          CRSMatrixView< real64, globalIndex const > const & matrix,
+                          arrayView1d< globalIndex > const & dof,
+                          arrayView1d< real64 > const & rhsContribution,
+                          LAMBDA && lambda ) const
+{
+  computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( ( getComponent() >= 0 ) ? getComponent() : 0,
+                                                      m_scale,
+                                                      m_functionName,
+                                                      targetSet,
+                                                      time,
+                                                      dt,
+                                                      dataGroup,
+                                                      dofMap,
+                                                      dofRankOffset,
+                                                      matrix,
+                                                      dof,
+                                                      rhsContribution,
+                                                      std::forward< LAMBDA >( lambda ) );
+
+}
+
 
 template< typename POLICY >
 void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
@@ -976,19 +1065,25 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
                                                                  CRSMatrixView< real64, globalIndex const > const & matrix ) const
 
 {
-  integer const component = ( getComponent() >=0 ) ? getComponent() : 0;
-  forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
+  forEachComponent( [&]( integer const component,
+                         real64 const scale,
+                         string const & functionName )
   {
-    localIndex const a = targetSet[ i ];
-    globalIndex const dof = dofMap[ a ] + component;
-
-    arraySlice1d< real64 > const entries = matrix.getEntries( dof );
-    localIndex const numEntries = matrix.numNonZeros( dof );
-
-    for( localIndex j = 0; j < numEntries; ++j )
+    GEOS_UNUSED_VAR( scale, functionName );
+    integer const comp = ( component >= 0 ) ? component : 0;
+    forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      entries[ j ] = 0;
-    }
+      localIndex const a = targetSet[ i ];
+      globalIndex const dof = dofMap[ a ] + component;
+
+      arraySlice1d< real64 > const entries = matrix.getEntries( dof );
+      localIndex const numEntries = matrix.numNonZeros( dof );
+
+      for( localIndex j = 0; j < numEntries; ++j )
+      {
+        entries[ j ] = 0;
+      }
+    } );
   } );
 }
 
