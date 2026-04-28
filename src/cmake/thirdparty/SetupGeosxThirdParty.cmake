@@ -897,6 +897,7 @@ else()
     set(ENABLE_PETSC OFF CACHE BOOL "" FORCE)
     message(STATUS "Not using PETSc")
 endif()
+
 ################################
 # VTK
 ################################
@@ -935,6 +936,41 @@ else()
     message(STATUS "Not using VTK")
 endif()
 
+################################
+# CPPTRACE
+################################
+if( DEFINED CPPTRACE_DIR )
+    message( STATUS "CPPTRACE_DIR = ${CPPTRACE_DIR}" )
+
+    if( DEFINED ZSTD_DIR )
+        message( STATUS "ZSTD_DIR = ${ZSTD_DIR}" )
+        list( PREPEND CMAKE_PREFIX_PATH "${ZSTD_DIR}" )
+    endif()
+    if( DEFINED LIBDWARF_DIR )
+        message( STATUS "LIBDWARF_DIR = ${LIBDWARF_DIR}" )
+        list( PREPEND CMAKE_PREFIX_PATH "${LIBDWARF_DIR}" )
+    endif()
+
+    find_package( cpptrace REQUIRED
+                  PATHS ${CPPTRACE_DIR}
+                  NO_DEFAULT_PATH )
+
+    if( DEFINED cpptrace_VERSION )
+        message( " ----> cpptrace_VERSION=${cpptrace_VERSION}")
+    endif()
+
+    blt_convert_to_system_includes( TARGET cpptrace::cpptrace )
+
+    set( ENABLE_CPPTRACE ON CACHE BOOL "" )
+    set( thirdPartyLibs ${thirdPartyLibs} cpptrace::cpptrace )
+else()
+    if( ENABLE_CPPTRACE )
+        message( WARNING "ENABLE_CPPTRACE is ON but CPPTRACE_DIR isn't defined." )
+    endif()
+
+    set( ENABLE_CPPTRACE OFF CACHE BOOL "" )
+    message( STATUS "Not using cpptrace" )
+endif()
 
 ################################
 # uncrustify
