@@ -2209,26 +2209,22 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
       string const unitKey = useSurfaceConditions ? "s" : "r";
 
-      stdVector< TableLayout::Column > columns;
-      columns.reserve( 5 + numPhase + numComp );
-      columns.insert( columns.end(),
-        {
-          TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "Total rate [{}]", massUnit ) ),
-          TableLayout::Column().setName( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) )
-        }
-      );
+      stdVector< string > columnNames;
+      columnNames.reserve( 5 + numPhase + numComp );
+      columnNames.emplace_back( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) );
+      columnNames.emplace_back( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) );
+      columnNames.emplace_back( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) );
+      columnNames.emplace_back( GEOS_FMT( "Total rate [{}]", massUnit ) );
+      columnNames.emplace_back( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) );
       for( integer ip = 0; ip < numPhase; ++ip )
       {
-        columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) ) );
+        columnNames.emplace_back( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) );
       }
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) ) );
+        columnNames.emplace_back( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) );
       }
-      size_t const numColumns = columns.size();
+      size_t const numColumns = columnNames.size();
 
       auto const buildRow = [&]( real64 const bhp,
                                  real64 const totalRate,
@@ -2263,7 +2259,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         if( !std::filesystem::exists( fileName ) )
         {
           makeDirsForPath( m_ratesOutputDir );
-          TableLayout const tableLayout( columns );
+          TableLayout const tableLayout( columnNames );
           TableCSVFormatter const csvFormatter( tableLayout );
           std::ofstream outputFile( fileName );
           csvFormatter.headerToStream( outputFile );

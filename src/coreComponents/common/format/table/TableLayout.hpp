@@ -593,6 +593,16 @@ private:
   }
 
   /**
+   * @brief Construct a new Table Layout object
+   * @param args An initializer_list containing string / column
+   */
+  TableLayout( stdVector< string > const & args )
+  {
+    setMargin( MarginValue::medium );
+    addColumns( args );
+  }
+
+  /**
    * @return The columns list
    */
   ColumnsList const & getColumns() const

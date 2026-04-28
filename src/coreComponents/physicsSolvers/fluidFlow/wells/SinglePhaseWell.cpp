@@ -1247,17 +1247,12 @@ void SinglePhaseWell::printRates( real64 const & time_n,
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
       string const unitKey = useSurfaceConditions ? "s" : "r";
 
-      stdVector< TableLayout::Column > columns;
-      columns.reserve( 4 );
-      columns.insert( columns.end(),
-        {
-          TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "Total rate [{}/{}]", units::getSymbol( units::Unit::Mass ),
-                                                                         units::getSymbol( units::Unit::Time ) ) ),
-          TableLayout::Column().setName( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) )
-        }
-      );
+      stdVector< string > columnNames = {
+        GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ),
+        GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ),
+        GEOS_FMT( "Total rate [{}/{}]", units::getSymbol( units::Unit::Mass ), units::getSymbol( units::Unit::Time ) ),
+        GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey )
+      };
 
       string const fileName = m_ratesOutputDir + "/" + wellControlsName + ".csv";
 
@@ -1266,7 +1261,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         if( !std::filesystem::exists( fileName ) )
         {
           makeDirsForPath( m_ratesOutputDir );
-          TableLayout const tableLayout( columns );
+          TableLayout const tableLayout( columnNames );
           TableCSVFormatter const csvFormatter( tableLayout );
           std::ofstream outputFile( fileName );
           csvFormatter.headerToStream( outputFile );
