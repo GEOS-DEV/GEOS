@@ -114,6 +114,8 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 
 void AquiferBoundaryCondition::postInputInitialization()
 {
+  FieldSpecificationBase::postInputInitialization();
+
   GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
                         "The aquifer permeability cannot be equal to zero or negative",
                         InputError, getDataContext() );

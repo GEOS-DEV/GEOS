@@ -96,6 +96,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
 
 void EquilibriumInitialCondition::postInputInitialization()
 {
+  FieldSpecificationBase::postInputInitialization();
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
