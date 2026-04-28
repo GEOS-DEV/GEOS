@@ -168,26 +168,27 @@ void FieldSpecificationBase::postInputInitialization()
                               viewKeyStruct::regionNamesString() ),
                    InputError,
                    getDataContext() );
-
-    m_objectPath = "ElementRegions/{" + stringutilities::join( m_regionNames, ' ' ) + "}";
   }
 }
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 {
+  string const path = m_regionNames.empty()
+                      ? m_objectPath
+                      : "ElementRegions/{" + stringutilities::join( m_regionNames, ' ' ) + "}";
   try
   {
-    m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
+    m_meshObjectPaths = std::make_unique< MeshObjectPath >( path, meshBodies );
   }
   catch( std::exception const & e )
   {
     ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
-                 " is a wrong objectPath: " + m_objectPath + "\n" )
+                 " is a wrong objectPath: " + path + "\n" )
       .addContextInfo( getWrapperDataContext( viewKeyStruct::objectPathString() ).getContextInfo()
                          .setPriority( 2 ) );
     throw InputError( e, getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
-                      " is a wrong objectPath: " + m_objectPath + "\n" );
+                      " is a wrong objectPath: " + path + "\n" );
   }
 }
 

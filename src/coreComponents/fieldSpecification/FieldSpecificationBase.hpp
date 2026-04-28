@@ -573,7 +573,6 @@ public:
    */
   void setRegionNames( string_array const & regionNames )
   {
-    setObjectPath( "ElementRegions/{" + stringutilities::join( regionNames, ' ' ) + "}" );
     m_regionNames = regionNames;
   }
 
