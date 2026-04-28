@@ -37,6 +37,8 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_velocityGradient(),
   m_plasticStrain(),
   m_relaxation(),
+  m_basalPlanePlasticWork(),
+  m_plasticWork(),
   m_alphaL(),
   m_alphaT(),
   m_damage(),
@@ -46,7 +48,8 @@ Graphite::Graphite( string const & name, Group * const parent ):
   m_lengthScale(),
   m_strengthScale(),
   m_failureStrength(),
-  m_crackSpeed(),
+  m_basalPlaneFractureEnergyReleaseRate(),
+  m_totalFractureEnergyReleaseRate(),
   m_damagedMaterialFrictionalSlope(),
   m_distortionShearResponseX2(),
   m_distortionShearResponseY1(),
@@ -110,9 +113,14 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum theoretical strength" );
 
-  registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
+  registerWrapper( viewKeyStruct::basalPlaneFractureEnergyReleaseRateString(), &m_basalPlaneFractureEnergyReleaseRate ).
+    setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Crack speed" );
+
+  registerWrapper( viewKeyStruct::totalFractureEnergyReleaseRateString(), &m_totalFractureEnergyReleaseRate ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "fracture Energy Release Rate" );
 
   registerWrapper( viewKeyStruct::damagedMaterialFrictionalSlopeString(), &m_damagedMaterialFrictionalSlope ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -201,6 +209,16 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Relaxation" );
 
+  registerWrapper( viewKeyStruct::basalPlanePlasticWorkString(), &m_basalPlanePlasticWork ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Basal Plane Plastic Work" );
+  
+  registerWrapper( viewKeyStruct::plasticWorkString(), &m_plasticWork ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Plastic Work" );
+
   registerWrapper( viewKeyStruct::alphaLString(), &m_alphaL ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "constant for thermal expansion lateral to symmetry axis" );
@@ -250,7 +268,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Material direction" );
+    setDescription( "Material direction - first row is used as graphite basal plane normal" );
 }
 
 
@@ -269,6 +287,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_relaxation.resize( 0, numConstitutivePointsPerParentIndex );
+  m_basalPlanePlasticWork.resize( 0, numConstitutivePointsPerParentIndex );
+  m_plasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_lengthScale.resize( 0 );
@@ -291,7 +311,7 @@ void Graphite::postInputInitialization()
   //                  "dEpdp: " << m_defaultYoungModulusTransversePressureDerivative << "\n" <<
   //                  "dGzpdp: " << m_defaultShearModulusAxialTransversePressureDerivative << "\n" <<
   //                  "sigmaFail: " << m_failureStrength << "\n" <<
-  //                  "crackSpeed: " << m_crackSpeed << "\n" <<
+  //                  "basalPlaneFractureEnergyReleaseRate: " << m_basalPlaneFractureEnergyReleaseRate << "\n" <<
   //                  "ds X2: " << m_distortionShearResponseX2 << "\n" <<
   //                  "ds Y1: " << m_distortionShearResponseY1 << "\n" <<
   //                  "ds Y2: " << m_distortionShearResponseY2 << "\n" <<
@@ -319,7 +339,9 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_defaultPoissonRatioTransverse > 0.499999,  "defaultPoissonRatioTransverse must be < 0.5 ", InputError );
 
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
-  GEOS_THROW_IF( m_crackSpeed <= 0.0, "Crack speed must be a positive number.", InputError );
+  GEOS_THROW_IF( m_basalPlaneFractureEnergyReleaseRate <= 0.0, "Basal plane fracture energy release rate must be a positive number.", InputError );
+
+  GEOS_THROW_IF( m_totalFractureEnergyReleaseRate <= 0.0, "Total Fracture Energy Release Rate must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 

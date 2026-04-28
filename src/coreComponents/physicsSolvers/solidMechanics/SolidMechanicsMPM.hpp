@@ -153,6 +153,7 @@ public:
     Off,
     NormalForce,
     SPH,
+    Volume
   };
 
 
@@ -301,6 +302,7 @@ public:
     static constexpr char const * gridDamageString() { return "gridDamage"; }
     static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
+    static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
 
     static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
     static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
@@ -388,6 +390,11 @@ public:
   void applyEssentialBCs( const real64 dt,
                           const real64 time_n,
                           NodeManager & nodeManager );
+
+  void logMomentumSum( std::string label, // For tagging code location of output
+                         ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+                                       
 
   void applySuperimposedVelocityGradient( const real64 dt,
                                           ParticleManager & particleManager,
@@ -873,9 +880,11 @@ public:
                                      real64 const & maxDamageB,
                                      arraySlice1d< real64 const > const damageGradient,
                                      arraySlice1d< real64 const > const xA,
-                                     arraySlice1d< real64 const > const xB );
+                                     arraySlice1d< real64 const > const xB,
+                                     real64 const & surfaceQuality );
 
-  void flagOutOfRangeParticles( ParticleManager & particleManager );
+  void flagOutOfRangeParticles( ParticleManager & particleManager,
+                                SpatialPartition & partition );
 
   void computeRVectors( ParticleManager & particleManager );
 
@@ -1044,10 +1053,13 @@ protected:
 
   // Debugging / Profiling options
   int m_solverProfiling;
+  int m_logMomentum;
   int m_logStartCycle;
   stdVector< real64 > m_profilingTimes;
   stdVector< std::string > m_profilingLabels;
+  
 
+  
   // Plotting options
   int m_plotGridFields;
   string_array m_plottableFields;
@@ -1150,6 +1162,7 @@ protected:
   int m_numContactFlags;
   int m_numVelocityFields;
   real64 m_separabilityMinDamage;
+  real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
   int m_treatFullyDamagedAsSingleField;
   real64 m_thinFeatureDFGThreshold;
   int m_useDamageAsSurfaceFlag;
@@ -1296,7 +1309,8 @@ ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
 ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",
               "NormalForce",
-              "SPH" );
+              "SPH",
+              "Volume" );
 
 ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
               "Uncoupled",

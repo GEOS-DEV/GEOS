@@ -1175,7 +1175,9 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                               bulk,
                               shear
     );
-		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); // This is equivalent to sqrt(2/3) * J2 invariant of sigma_dev/(2*shear)
+    // Von Mises equivalent elastic shear strain: 
+    // gamma_e = sqrt( 2/3 * epsilon_dev : epsilon_dev ) = sqrt( 2/3 * S/(2G) : S/(2G) ) = 1/(3G)*sqrt( 3/2 * S:S) = sigma_vm / 3G 
+		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); 
 
     //std::cout<<"vonMisesStress_old = "<<vonMisesStress_old<<", elasticVMShearStrain = "<<elasticVMShearStrain<<", c0 = "<<c0<<", c1 = "<<c1<<", c2 = "<<c2<<std::endl;
 
