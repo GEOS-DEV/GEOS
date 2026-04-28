@@ -34,10 +34,7 @@ using namespace geos;
 
 int main( int argc, char *argv[] )
 {
-#ifdef GEOS_USE_CPPTRACE
-  cpptrace::try_catch
-  (
-  [&]
+  auto runMain = [&]
   {
     std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
 
@@ -75,106 +72,55 @@ int main( int argc, char *argv[] )
     GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
+  };
 
-    // don't return with cpptrace (Windows limitation)
-  },
+  // A NotAnError is thrown if "-h" or "--help" option is used.
+  auto onNotAnError = [&]( NotAnError const & )
+  {
+    basicCleanup( false );
+  };
+
+  auto onGeosException = [&]( geos::Exception & e )
+  { // GEOS generated exceptions management
+    ErrorLogger::global().flushCurrentExceptionMessage();
+    basicCleanup( true );
+    LvArray::system::callErrorHandler();
+  };
+
+  auto onStdException = [&]( std::exception const & e )
+  { // native exceptions management
+#ifdef GEOS_USE_CPPTRACE
+    std::string const stacktrace = cpptrace::from_current_exception().to_string();
+#else
+    std::string const stacktrace = LvArray::system::stackTrace( true );
+#endif
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
+                                           .addCallStackInfo( stacktrace )
+                                           .getDiagnosticMsg());
+    basicCleanup( true );
+    LvArray::system::callErrorHandler();
+  };
+
+#ifdef GEOS_USE_CPPTRACE
+  cpptrace::try_catch( runMain, onNotAnError, onGeosException, onStdException );
 #else
   try
   {
-    std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
-
-    std::unique_ptr< CommandLineOptions > commandLineOptions = basicSetup( argc, argv, true );
-
-    outputVersionInfo();
-
-    GEOS_LOG_RANK_0( GEOS_FMT( "Started at {:%Y-%m-%d %H:%M:%S}", startTime ) );
-
-    std::chrono::system_clock::duration initTime;
-    std::chrono::system_clock::duration runTime;
-    {
-      GeosxState state( std::move( commandLineOptions ) );
-
-      bool const problemToRun = state.initializeDataRepository();
-      if( problemToRun )
-      {
-        state.applyInitialConditions();
-        state.run();
-        GEOS_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
-      }
-
-      initTime = state.getInitTime();
-      runTime = state.getRunTime();
-    }
-
-    MemoryLogging::getInstance().memoryStatsReport();
-
-    basicCleanup( false );
-
-    std::chrono::system_clock::time_point endTime = std::chrono::system_clock::now();
-    std::chrono::system_clock::duration totalTime = endTime - startTime;
-
-    GEOS_LOG_RANK_0( GEOS_FMT( "Finished at {:%Y-%m-%d %H:%M:%S}", endTime ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
-
-    return 0;
+    runMain();
   }
-#endif
-
-#ifdef GEOS_USE_CPPTRACE
-  // A NotAnError is thrown if "-h" or "--help" option is used.
-  [&]( NotAnError const & )
+  catch( NotAnError const & e )
   {
-    basicCleanup( false );
-  },
-#else
-  // A NotAnError is thrown if "-h" or "--help" option is used.
-  catch( NotAnError const & )
-  {
-    basicCleanup( false );
-    return 0;
+    onNotAnError( e );
   }
-#endif
-
-#ifdef GEOS_USE_CPPTRACE
-  [&]( geos::Exception & e )
-  { // GEOS generated exceptions management
-    ErrorLogger::global().flushCurrentExceptionMessage();
-    basicCleanup( true );
-    LvArray::system::callErrorHandler();
-  },
-#else
   catch( geos::Exception & e )
-  { // GEOS generated exceptions management
-    ErrorLogger::global().flushCurrentExceptionMessage();
-    basicCleanup( true );
-    LvArray::system::callErrorHandler();
+  {
+    onGeosException( e );
   }
-#endif
-
-#ifdef GEOS_USE_CPPTRACE
-  [&]( std::exception const & e )
-  { // native exceptions management
-    cpptrace::stacktrace const trace = cpptrace::from_current_exception();
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
-                                           MsgType::Exception, e.what(),
-                                           ::geos::logger::internal::g_rank )
-                                           .addCallStackInfo( trace.to_string() )
-                                           .getDiagnosticMsg());
-    basicCleanup( true );
-    LvArray::system::callErrorHandler();
-  } );
-#else
   catch( std::exception const & e )
-  { // native exceptions management
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
-                                           MsgType::Exception, e.what(),
-                                           ::geos::logger::internal::g_rank )
-                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                           .getDiagnosticMsg());
-    basicCleanup( true );
-    LvArray::system::callErrorHandler();
+  {
+    onStdException( e );
   }
 #endif
 
