@@ -21,11 +21,14 @@
 
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
+#include "common/Path.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/format/Format.hpp"
+#include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
+#include "common/logger/Logger.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
@@ -54,6 +57,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
+#include <filesystem>
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -264,47 +268,6 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
-
-      // write rates output header
-      // the rank that owns the reference well element is responsible
-      if( m_writeCSV > 0 && subRegion.isLocallyOwned() )
-      {
-        string const fileName = GEOS_FMT( "{}/{}.csv", m_ratesOutputDir, wellControls.getName() );
-        // string const massUnit = m_useMass ? units::getSymbol( units::Unit::Mass ) : units::getSymbol( units::Unit::Mole );
-        string const massUnit = m_useMass ? "kg" : "mol";
-        integer const useSurfaceConditions = wellControls.useSurfaceConditions();
-        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
-        string const unitKey = useSurfaceConditions ? "s" : "r";
-        integer const numPhase = m_numPhases;
-        integer const numComp = m_numComponents;
-        makeDirsForPath( m_ratesOutputDir );
-        GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
-        // format: time,dt,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
-        stdVector< TableLayout::Column > columns;
-        columns.reserve( 5 + numPhase + numComp );
-        columns.insert( columns.end(),
-          {
-            TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) ),
-            TableLayout::Column().setName( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) ),
-            TableLayout::Column().setName( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-            TableLayout::Column().setName( GEOS_FMT( "Total rate [{}]", massUnit ) ),
-            TableLayout::Column().setName( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) )
-          }
-                        );
-        for( integer ip = 0; ip < numPhase; ++ip )
-        {
-          columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) ) );
-        }
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) ) );
-        }
-        TableLayout const tableLayout( columns );
-        TableCSVFormatter const csvFormatter( tableLayout );
-        std::ofstream outputFile( fileName );
-        csvFormatter.headerToStream( outputFile );
-        outputFile.close();
-      }
     } );
   } );
 
@@ -2240,6 +2203,32 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       }
 
       string const wellControlsName = wellControls.getName();
+      // string const massUnit = m_useMass ? units::getSymbol( units::Unit::Mass ) : units::getSymbol( units::Unit::Mole );
+      string const massUnit = m_useMass ? "kg" : "mol";
+      integer const useSurfaceConditions = wellControls.useSurfaceConditions();
+      string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
+      string const unitKey = useSurfaceConditions ? "s" : "r";
+
+      stdVector< TableLayout::Column > columns;
+      columns.reserve( 5 + numPhase + numComp );
+      columns.insert( columns.end(),
+        {
+          TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) ),
+          TableLayout::Column().setName( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) ),
+          TableLayout::Column().setName( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
+          TableLayout::Column().setName( GEOS_FMT( "Total rate [{}]", massUnit ) ),
+          TableLayout::Column().setName( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) )
+        }
+      );
+      for( integer ip = 0; ip < numPhase; ++ip )
+      {
+        columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Phase {} {} volumetric rate [{}m3/s]", ip, conditionKey, unitKey ) ) );
+      }
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        columns.emplace_back( TableLayout::Column().setName( GEOS_FMT( "Component {} rate [{}/s]", ic, massUnit ) ) );
+      }
+      size_t const numColumns = columns.size();
 
       auto const buildRow = [&]( real64 const bhp,
                                  real64 const totalRate,
@@ -2248,7 +2237,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                  auto const & compRates )
       {
         stdVector< TableData::CellData > row;
-        row.reserve( 5 + numPhase + numComp );
+        row.reserve( numColumns );
         row.push_back( { CellType::Value, GEOS_FMT( "{}", time_n ) } );
         row.push_back( { CellType::Value, GEOS_FMT( "{}", dt ) } );
         row.push_back( { CellType::Value, GEOS_FMT( "{}", bhp ) } );
@@ -2262,7 +2251,29 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         {
           row.push_back( { CellType::Value, GEOS_FMT( "{}", compRates[ ic ] ) } );
         }
+        GEOS_ERROR_IF_NE_MSG( row.size(), numColumns,
+                              "CSV rates row size does not match header size for " << wellControlsName );
         return row;
+      };
+
+      string const fileName = m_ratesOutputDir + "/" + wellControlsName + ".csv";
+
+      auto const writeCSVRow = [&]( TableData const & data )
+      {
+        if( !std::filesystem::exists( fileName ) )
+        {
+          makeDirsForPath( m_ratesOutputDir );
+          TableLayout const tableLayout( columns );
+          TableCSVFormatter const csvFormatter( tableLayout );
+          std::ofstream outputFile( fileName );
+          csvFormatter.headerToStream( outputFile );
+          outputFile.close();
+          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+        }
+        std::ofstream outputFile( fileName, std::ios_base::app );
+        TableCSVFormatter const csvFormatter;
+        csvFormatter.dataToStream( outputFile, data );
+        outputFile.close();
       };
 
       if( wellControls.getWellStatus() == WellControls::Status::CLOSED )
@@ -2273,26 +2284,18 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           stdVector< real64 > const zeroesNumPhase( numPhase, 0.0 );
           stdVector< real64 > const zeroesNumComp( numComp, 0.0 );
           TableData ratesTableData;
-
           ratesTableData.addRow( buildRow( 0.0, 0.0, 0.0, zeroesNumPhase, zeroesNumComp ) );
-
-          std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
-          TableCSVFormatter const csvFormatter;
-          csvFormatter.dataToStream( outputFile, ratesTableData );
-          outputFile.close();
+          writeCSVRow( ratesTableData );
         }
         return;
       }
 
       localIndex const iwelemRef = subRegion.getTopWellElementIndex();
-      string const massUnit = m_useMass ? "kg" : "mol";
 
       // subRegion data
 
       arrayView1d< real64 const > const & connRate =
         subRegion.getField< well::mixtureConnectionRate >();
-
-      integer const useSurfaceConditions = wellControls.useSurfaceConditions();
 
       real64 const & currentBHP =
         wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
@@ -2305,8 +2308,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [&numPhase,
-                                  &numComp,
-                                  &useSurfaceConditions,
                                   &currentBHP,
                                   connRate,
                                   &currentTotalVolRate,
@@ -2315,12 +2316,11 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
                                   &iwelemRef,
                                   &wellControlsName,
                                   &massUnit,
+                                  &conditionKey,
+                                  &unitKey,
                                   &ratesTableData,
                                   &buildRow] ( localIndex const )
       {
-        string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
-        string const unitKey = useSurfaceConditions ? "s" : "r";
-
         real64 const currentTotalRate = connRate[iwelemRef];
         GEOS_LOG( GEOS_FMT( "{}: BHP (at the specified reference elevation): {} Pa",
                             wellControlsName, currentBHP ) );
@@ -2334,10 +2334,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
       if( m_writeCSV > 0 )
       {
-        std::ofstream outputFile( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
-        TableCSVFormatter const csvFormatter;
-        csvFormatter.dataToStream( outputFile, ratesTableData );
-        outputFile.close();
+        writeCSVRow( ratesTableData );
       }
     } );
   } );
