@@ -355,24 +355,38 @@ public:
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const;
 
-
   /**
-   * @brief Function to zero matrix rows to apply boundary conditions
-   * @tparam POLICY the execution policy to use when zeroing rows
+   * @brief Compute the contributions that will be added/enforced to the right-hand side,
+   *        and collect the corresponding dof numbers
+   * @tparam FIELD_OP A wrapper struct to define how the boundary condition operates on the variables.
+   *                  Either \ref OpEqual or \ref OpAdd.
+   * @tparam POLICY Execution policy to use when iterating over target set.
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param[in] component The field component to apply the boundary condition to.
+   * @param[in] scale The scale factor to apply to the boundary condition value.
+   * @param[in] functionName The name of the function used to evaluate the boundary condition value.
    * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] time The time at which any time dependent functions are to be evaluated as part of the
+   *             application of the boundary condition.
+   * @param[in] dt time step size which is applied as a factor to bc values
+   * @param[in] dataGroup The Group that contains the field to apply the boundary condition to.
    * @param[in] dofMap The map from the local index of the primary field to the global degree of
    *                   freedom number.
-   * @param[inout] matrix the local system matrix
+   * @param[in] dofRankOffset Offset of dof indices on current rank.
+   * @param[inout] matrix Local part of the system matrix.
+   * @param[inout] dof array storing the degrees of freedom of the rhsContribution, to know where
+   *                   in the rhs they will be added/enforced
+   * @param[inout] rhsContribution array storing the values that will be added/enforced to the right-hand side
+   * @param[in] lambda A lambda function which defines how the value that is passed into the functions
+   *                   provided by the FIELD_OP templated type.
    *
-   * This function zeroes the rows of the matrix that correspond to boundary conditions.
-   */
-  template< typename POLICY >
-  void zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
-                                           arrayView1d< globalIndex const > const & dofMap,
-                                           CRSMatrixView< real64, globalIndex const > const & matrix ) const;
-
-  /**
+   * This overload behaves like the legacy computeRhsContribution, but takes the component, scale
+   * and functionName as explicit arguments rather than reading them from the corresponding members.
+   * This is the variant called when using non-scalar valued field specifications/boundary conditions,
+   * where each component is applied in turn.
    *
+   * Note that this function only computes the rhs contributions, but does not apply them to the right-hand side.
+   * The application of these rhs contributions is done in applyBoundaryConditionToSystem.
    */
   template< typename FIELD_OP, typename POLICY, typename LAMBDA >
   void
@@ -389,6 +403,22 @@ public:
                           arrayView1d< globalIndex > const & dof,
                           arrayView1d< real64 > const & rhsContribution,
                           LAMBDA && lambda ) const;
+
+  /**
+   * @brief Function to zero matrix rows to apply boundary conditions
+   * @tparam POLICY the execution policy to use when zeroing rows
+   * @param[in] targetSet The set of indices which the boundary condition will be applied.
+   * @param[in] dofMap The map from the local index of the primary field to the global degree of
+   *                   freedom number.
+   * @param[inout] matrix the local system matrix
+   *
+   * This function zeroes the rows of the matrix that correspond to boundary conditions.
+   */
+  template< typename POLICY >
+  void zeroSystemRowsForBoundaryCondition( SortedArrayView< localIndex const > const & targetSet,
+                                           arrayView1d< globalIndex const > const & dofMap,
+                                           CRSMatrixView< real64, globalIndex const > const & matrix ) const;
+
 
   /**
    * @brief View keys
