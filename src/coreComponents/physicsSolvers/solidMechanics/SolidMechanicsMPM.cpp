@@ -2191,42 +2191,56 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridPosition = nodeManager.referencePosition();
 
+  // Messed with determining element size differently for debugging
+  m_hEl.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
+  for( int g=0; g<numNodes-1; ++g )
+  {
+    for( int i=0; i<3; ++i )
+    {
+      real64 test = LvArray::math::abs(gridPosition[g+1][i] - gridPosition[g][i]);
+      m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
+    }
+  }
+  GEOS_LOG_RANK("m_hEl: " << m_hEl);
+
+  // Currently in GEOS there is an issue with the ghost nodes of the positive periodic boundary positions being overriden during  
+  // setup of the neighbors in spatial partition. We currently have a stop gap fix to check if the partition is on the boundary and it is periodic
+  // that we manually set the nodal positions back to their correct location for particle to grid mapping
+  // This was done in the solver temporarily to avoid creating issues for other solvers in the larger code
   for( int i =0; i < 3; ++i )
   {
     if( periodic[i] && (partition.getCoords()[i] == 0 || partition.getCoords()[i] == partition.getPartitions()[i]-1) )
-    {
+    {   
+      GEOS_LOG_RANK("Correcting high side periodic boundary node positions after neighbor setup");
+
       real64 xExtent = partition.getGlobalMax()[i] - partition.getGlobalMin()[i];
-      for( int g=0; g<nodeManager.size(); ++g )
+      
+      GEOS_LOG_RANK("i: " << i << ", xExtent: " << xExtent << ", partition.getGlobalMin()[i]" << partition.getGlobalMin()[i] << ", partition.getGlobalMax()[i]" << partition.getGlobalMax()[i]);
+      for( int g=0; g < nodeManager.size(); ++g )
       {
-        // if (gridPosition[g][i] < partition.getLocalMin()[i] && gridPosition[g][i] > partition.getLocalMax()[i] ){
         //Partition is on positive face
         if( partition.getCoords()[i] == partition.getPartitions()[i]-1 )  // CC: Does this need to be toleranced?
         {
           if( gridPosition[g][i] < partition.getLocalMin()[i] - xExtent/2 )
           {
-            gridPosition[g][i] += xExtent;   //Do I nee to subtract two cells that are ghost? Shouldn't have those if periodic boundaries
-                                             // are on
+            gridPosition[g][i] += xExtent;
           }
         }
 
-        //Partition is on negative face
+        // Partition is on negative face
         if( partition.getCoords()[i] == 0 )
         {
           if( gridPosition[g][i] > partition.getLocalMax()[i] + xExtent/2 ) // CC: Does this need to be toleranced?
           {
-            gridPosition[g][i] -= xExtent;   //Do I nee to subtract two cells that are ghost? Shouldn't have those if periodic boundaries
-                                             // are on
+            gridPosition[g][i] -= xExtent;
           }
         }
-        // }
-
       }
     }
   }
 
-  // GEOS_LOG_RANK_0( "Fix periodic nodes");
-
-  // Get local domain extent
+  // Get local domain extent including ghost nodes
   m_xLocalMin.resize( 3 );
   LvArray::tensorOps::fill< 3 >( m_xLocalMin, DBL_MAX );
   m_xLocalMax.resize( 3 );
@@ -2240,11 +2254,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     }
   }
 
-  // m_xLocalMin0.resize( 3 );
-  // LvArray::tensorOps::copy< 3 >( m_xLocalMin0, m_xLocalMin);
-  // m_xLocalMax0.resize( 3 );
-  // LvArray::tensorOps::copy< 3 >( m_xLocalMax0, m_xLocalMax);
-
   m_xLocalMinNoGhost.resize( 3 );
   m_xLocalMaxNoGhost.resize( 3 );
   m_partitionExtent.resize( 3 );
@@ -2255,26 +2264,22 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
-  // CC: why not compute element size directly from domain extent and number of cpps across direction?
-  // Get element size
-  m_hEl.resize( 3 );
-  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
-  for( int g=0; g<numNodes; ++g )
-  {
-    for( int i=0; i<3; ++i )
-    {
-      real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
-                                                         // should only be those on the local partition
-      if( test > 0.0 ) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite
-                       // precision bug.
-      {
-        m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
-      }
-    }
-  }
-
-  // m_hEl0.resize( 0 );
-  // LvArray::tensorOps::copy< 3 >( m_hEl0, m_hEl);
+  // // Get element size
+  // m_hEl.resize( 3 );
+  // LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
+  // for( int g=0; g<numNodes; ++g )
+  // {
+  //   for( int i=0; i<3; ++i )
+  //   {
+  //     real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
+  //                                                        // should only be those on the local partition
+  //     if( test > 0.0 ) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite
+  //                      // precision bug.
+  //     {
+  //       m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
+  //     }
+  //   }
+  // }
 
   // Set SPH neighbor radius if necessary
   if( m_neighborRadius <= 0.0 )
@@ -2305,6 +2310,14 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     m_domainExtent[i] = m_xGlobalMax[i] - m_xGlobalMin[i];
   }
+
+  
+  GEOS_LOG_RANK( "xLocalMin: " << m_xLocalMin << ", " << 
+                 "xLocalMax: " << m_xLocalMax << ", " << 
+                 "xLocalMinNoGhost: " << m_xLocalMinNoGhost << ", " << 
+                 "xLocalMaxNoGhost: " << m_xLocalMaxNoGhost << ", " << 
+                 "xGlobalMin: " << m_xGlobalMin << ", " << 
+                 "xGlobalMax: " << m_xGlobalMax);
 
   // Get number of elements in each direction
   m_nEl.resize( 3 );
