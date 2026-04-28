@@ -59,7 +59,7 @@ struct ConstraintHelper
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
     arrayView1d< real64 const > const & totalMassDens = subRegion.getField< fields::well::totalMassDensity >();
-    arrayView2d< real64 const > const & dTotalMassDens = subRegion.getField< fields::well::dTotalMassDensity >();
+    arrayView2d< real64 const, compflow::USD_COMP_DC > const & dTotalMassDens = subRegion.getField< fields::well::dTotalMassDensity >();
     arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
     // setup row/column indices for constraint equation
