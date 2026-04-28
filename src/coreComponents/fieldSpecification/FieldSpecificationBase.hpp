@@ -525,9 +525,9 @@ public:
    * Accessor
    * @return const m_scales
    */
-  array1d< real64 > getScales() const
+  arrayView1d< real64 const > getScales() const
   {
-    return m_scales;
+    return m_scales.toViewConst();
   }
 
   /**
@@ -572,13 +572,9 @@ public:
    * @brief Set the per-component scale factors
    * @param[in] scales The tensor-valued scale
    */
-  void setScales( arrayView1d< real64 const > const & scales )
+  void setScales( array1d< real64 > const & scales )
   {
-    m_scales.resize( scales.size() );
-    for( localIndex comp = 0; comp < scales.size(); ++comp )
-    {
-      m_scales[ comp ] = scales[ comp ];
-    }
+    m_scales = scales;
   }
 
   /**
