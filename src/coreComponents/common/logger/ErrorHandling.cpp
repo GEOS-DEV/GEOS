@@ -203,20 +203,25 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
 
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
 {
+  m_errorMsg.m_sourceCallStack.clear();
+  m_errorMsg.m_isValidStackTrace = false;
+
   std::string str = std::string( ossStackTrace );
   std::istringstream iss( str );
   std::string stackLine;
   std::size_t index;
 
-  std::regex pattern( R"(Frame \d+: \S+)" );
+  std::regex lvArrayPattern( R"(Frame \d+: \S+)" );
+  std::regex cpptracePattern( R"(^\s*#\d+\s+)" );
 
   while( std::getline( iss, stackLine ) )
   {
-    if( std::regex_search( stackLine, pattern ))
+    std::smatch m;
+    if( std::regex_search( stackLine, m, lvArrayPattern ) ||
+        std::regex_search( stackLine, m, cpptracePattern ) )
     {
       m_errorMsg.m_isValidStackTrace = true;
-      index = stackLine.find( ':' );
-      m_errorMsg.m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+      m_errorMsg.m_sourceCallStack.push_back( stackLine.substr( m.position() + m.length() ) );
     }
   }
 
