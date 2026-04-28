@@ -164,7 +164,7 @@ int main( int argc, char *argv[] )
                                            .getDiagnosticMsg());
     basicCleanup( true );
     LvArray::system::callErrorHandler();
-  },
+  } );
 #else
   catch( std::exception const & e )
   { // native exceptions management
