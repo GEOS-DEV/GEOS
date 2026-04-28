@@ -25,7 +25,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/version.hpp"
 #ifdef GEOS_USE_CPPTRACE
-#include "<cpptrace/from_current.hpp>"
+#include <cpptrace/from_current.hpp>
 #endif
 
 
