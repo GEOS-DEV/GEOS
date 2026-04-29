@@ -17553,11 +17553,19 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
           localIndex const p = activeParticleIndices[pp];
           for( int i=0; i<3; ++i )
           {
-            if( !periodic[i] && ( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] ) )
+            if( !periodic[i] && ( 
+              ( particlePosition[p][i] < globalMin[i] + tolerance[i] ) || 
+              ( globalMax[i] - tolerance[i] < particlePosition[p][i] ) ) )
             {
               particleDeleteFlag[p] = 1;
-              GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle");
-              break;   // TODO: if this doesn't work, just modify "i"
+              // Delete regardless but only log if we aren't at a non-periodic outflow boundary condition
+              // So outflow deletions shouldn't be logged.
+              if ( ( m_boundaryConditionTypes[2*i] != 0 && particlePosition[p][i] < globalMin[i] + tolerance[i] ) ||
+                   ( m_boundaryConditionTypes[2*i + 1] != 0 && particlePosition[p][i] > globalMax[i] - tolerance[i] ) )
+                   {
+                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle");
+                   }
+              break;
             }
           }
         } );
@@ -17583,15 +17591,22 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
             {
               real64 cornerPositionComponent = particlePosition[p][i] + signs[cornerIndex][0] * particleRVectors[p][0][i] + signs[cornerIndex][1] * particleRVectors[p][1][i] + signs[cornerIndex][2] *
                                                particleRVectors[p][2][i];
-              if(  !periodic[i] && ( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent ) )
+              if( ( (particleDeleteFlag[p] == 0 ) && ( !periodic[i] ) ) && ( cornerPositionComponent < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < cornerPositionComponent ) )
               {
+                // Delete regardless but only log if we aren't at a non-periodic outflow boundary condition
+                // So outflow deletions shouldn't be logged.
+                if ( ( m_boundaryConditionTypes[2*i] != 0 && cornerPositionComponent < globalMin[i] + tolerance[i] ) ||
+                   ( m_boundaryConditionTypes[2*i + 1] != 0 && cornerPositionComponent > globalMax[i] - tolerance[i] ) )
+                   {
+                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle CPDI Domain Corner");
+                   }
+
                 particleDeleteFlag[p] = 1;
                 break;
               }
             }
             if( particleDeleteFlag[p] == 1 )
             {
-              GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle CPDI Domain Corner");
               break;
             }
           }
