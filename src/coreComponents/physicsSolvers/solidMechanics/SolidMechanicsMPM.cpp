@@ -16719,23 +16719,19 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( materialBasis, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
           }
 
+          LvArray::tensorOps::transpose< 3 >( materialBasis ); // Potential inconsistency between material directions using full 3x3
+
           for( int i  = 0; i < 3; ++i )
-          { // Normalize each material direction, which is a COLUMN of the materialBasis tensor, since this was computed
-            // from the inner product of F (or Fc) and the transpose of the row-wise matDir
-            real64 materialDirection[3] = { materialBasis[0][i], materialBasis[1][i], materialBasis[2][i]};
-            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+          {
+            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialBasis[i] );
             if( !isZero(norm) )
             {
-              LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+              LvArray::tensorOps::scale< 3 >( materialBasis[i], 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
             }
             else
             {
               zeroMagnitudeMaterialDirection = true;
             }
-            // Copy it back to the row-wise 3x3 to update particleMaterialDirection
-            materialBasis[i][0] = materialDirection[0];
-            materialBasis[i][1] = materialDirection[1];
-            materialBasis[i][2] = materialDirection[2];
           }
           LvArray::tensorOps::copy< 3, 3 >( particleMaterialDirection[p], materialBasis );
         }
@@ -16773,7 +16769,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::scaledCopy< 3, 3 >( dF, particleDeformationGradient[p], dt );
 
           // Update quantities
-          real64 temp[3]= { 0.0 };
+          real64 temp[3]= {};
 
           // Particle surface normal
           LvArray::tensorOps::copy< 3 >( temp, particleSurfaceNormal[p] );
@@ -16830,7 +16826,6 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
       }
       else
       {
-        GEOS_LOG_RANK("Setting Particle Delete Flags in Kinematic Update");
         particleDeleteFlag[p] = 1;
         particleVolume[p] = particleReferenceVolume[p];
         particleDensity[p] = particleMass[p] / particleReferenceVolume[p];
@@ -16847,9 +16842,13 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   int numParticlesOverMaxVelocityGlobal = MpiWrapper::sum( numParticlesOverMaxVelocity.get() );
 
   GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection, "At least one particle material direction had zero magnitude during kinematic update!" );
-  GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0, "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<    ") for deletion!" );
+
+  GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0,
+                      "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<
+    ") for deletion!" );
   GEOS_LOG_RANK_0_IF( numParticlesVelocityOverflowedGlobal > 0, "Flagged " << numParticlesVelocityOverflowedGlobal << " particles velocity squared overflow for deletion!" );
-  GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0, "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
+  GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0,
+                      "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
 
   // Compute particles R vectors
   computeRVectors( particleManager );
