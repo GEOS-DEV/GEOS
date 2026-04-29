@@ -282,6 +282,15 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
   return false;
 }
 
+void SourceFluxStatsAggregator::cleanup( real64 const time_n,
+                                         integer const cycleNumber,
+                                         integer const eventCounter,
+                                         real64 const eventProgress,
+                                         DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+}
+
 
 
 void SourceFluxStatsAggregator::StatData::allocate( integer phaseCount )

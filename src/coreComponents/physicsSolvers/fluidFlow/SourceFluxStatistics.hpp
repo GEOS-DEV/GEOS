@@ -224,6 +224,15 @@ private:
                         DomainPartition & domain ) override;
 
   /**
+   * @copydoc ExecutableGroup::cleanup()
+   */
+  virtual void cleanup( real64 const time_n,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
+
+  /**
    * @brief Apply a functor to WrappedStats that combines all stats for each target solver
    *        discretization mesh levels.
    * @param domain   the domain for which we want the statistics

@@ -93,6 +93,14 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
   } );
   return false;
 }
+void SolidMechanicsStatistics::cleanup( real64 const time_n,
+                                        integer const cycleNumber,
+                                        integer const eventCounter,
+                                        real64 const eventProgress,
+                                        DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+}
 
 void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 const time ) const
 {

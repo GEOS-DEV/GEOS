@@ -215,6 +215,16 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
   return false;
 }
 
+void CompositionalMultiphaseStatistics::cleanup( real64 const time_n,
+                                                 integer const cycleNumber,
+                                                 integer const eventCounter,
+                                                 real64 const eventProgress,
+                                                 DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+}
+
+
 void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames ) const
