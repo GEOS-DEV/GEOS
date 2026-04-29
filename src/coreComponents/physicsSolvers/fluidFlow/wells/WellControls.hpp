@@ -47,6 +47,7 @@ static constexpr auto wellControls = "WellControls";
 }
 }
 
+class ElementsReporterBuffer;
 
 /**
  * @class WellControls
@@ -342,7 +343,13 @@ public:
   checkWellSystemSolution( WellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            arrayView1d< real64 const > const & localSolution,
-                           real64 const scalingFactor ) = 0;
+                           real64 const scalingFactor,
+                           real64 & minPressure,
+                           real64 & minDensity,
+                           real64 & minTotalDensity,
+                           ElementsReporterBuffer & negPressureIds,
+                           ElementsReporterBuffer & negDensityIds,
+                           ElementsReporterBuffer & negTotalDensityIds ) = 0;
 
   virtual void
   applyWellSystemSolution( DofManager const & dofManager,
@@ -896,10 +903,10 @@ public:
   /**
    * @brief Getters for constraints
    */
-  MinimumBHPConstraint * getMinBHPConstraint() { return m_minBHPConstraint; };
-  MinimumBHPConstraint * getMinBHPConstraint() const { return m_minBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() { return m_maxBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
 
   /**
    * @brief Getters for constraint lists
@@ -1023,8 +1030,8 @@ protected:
   WellConstraintBase * m_currentConstraint;
 
   // Minimum and maximum BHP and WHP constraints
-  MinimumBHPConstraint *  m_minBHPConstraint;
-  MaximumBHPConstraint * m_maxBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MIN > *  m_minBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraint;
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;

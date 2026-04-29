@@ -33,6 +33,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
@@ -666,7 +667,7 @@ void SinglePhaseWell::assembleWellConstraintTerms( real64 const & time_n,
     return;
   }
   {
-    forSubGroups< BHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
+    forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
     {
       if( constraint.getName() == getCurrentConstraint()->getName())
       {
@@ -1058,46 +1059,44 @@ SinglePhaseWell::calculateWellResidualNorm( real64 const & time_n,
 bool SinglePhaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
                                                DofManager const & dofManager,
                                                arrayView1d< real64 const > const & localSolution,
-                                               real64 const scalingFactor )
+                                               real64 const scalingFactor,
+                                               real64 & minPressure,
+                                               real64 & minDensity,
+                                               real64 & minTotalDensity,
+                                               ElementsReporterBuffer & negPressureIds,
+                                               ElementsReporterBuffer & negDensityIds,
+                                               ElementsReporterBuffer & negTotalDensityIds )
 {
   GEOS_MARK_FUNCTION;
 
-  string const wellDofKey = dofManager.getKey( wellElementDofName() );
-  integer numNegativePressures = 0;
-  real64 minPressure = 0.0;
+  GEOS_UNUSED_VAR( minDensity, minTotalDensity );
+  GEOS_UNUSED_VAR( negDensityIds, negTotalDensityIds );
 
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   // get the degree of freedom numbers on well elements
-  arrayView1d< globalIndex const > const & dofNumber =
-    subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+  arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
   arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
   // get a reference to the primary variables on well elements
-  arrayView1d< real64 const > const & pres =
-    subRegion.getField< well::pressure >();
+  arrayView1d< real64 const > const & pressure = subRegion.getField< well::pressure >();
+  auto const negPresCollector = negPressureIds.createCollector( subRegion.localToGlobalMap().toViewConst() );
 
-  auto const statistics =
-    singlePhaseBaseKernels::SolutionCheckKernel::
-      launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
+  using Kernel = singlePhaseBaseKernels::SolutionCheckKernel;
 
-  numNegativePressures += statistics.first;
-  minPressure = std::min( minPressure, statistics.second );
+  auto const results = Kernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 pressure,
+                                                                 scalingFactor,
+                                                                 negPresCollector );
 
+  minPressure = std::min( minPressure, results.minNegPres );
 
-  numNegativePressures = MpiWrapper::sum( numNegativePressures );
-
-  if( numNegativePressures > 0 )
-  {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative pressure values: {}, minimum value: {} Pa",
-                                     getName(), numNegativePressures, fmt::format( "{:.{}f}", minPressure, 3 ) ) );
-  }
-
-  return (m_allowNegativePressure || numNegativePressures == 0) ?  1 : 0;
+  return (m_allowNegativePressure || 0.0 < results.minNegPres) ? 1 : 0;
 }
-
-
 
 void
 SinglePhaseWell::applyWellSystemSolution( DofManager const & dofManager,

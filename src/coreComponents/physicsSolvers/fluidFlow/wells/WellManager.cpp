@@ -29,6 +29,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
@@ -754,8 +755,16 @@ WellManager::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer globalCheck = 1;
+
+  real64 minPressure = 0.0, minDensity = 0.0, minTotalDensity = 0.0;
+
+  bool const solutionLogActive = isLogLevelActive< logInfo::Solution >( getLogLevel() );
+  bool const solutionDetailsLogActive = isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() );
+  ElementsReporterBuffer rankNegPressureIds{ solutionLogActive, solutionDetailsLogActive ? 16 : 0 };
+  ElementsReporterBuffer rankNegDensityIds{ solutionLogActive, solutionDetailsLogActive ? 16 : 0 };
+  // output only total density sum, not cell details
+  ElementsReporterBuffer rankTotalNegDensityIds{ solutionLogActive, 0 };
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -768,12 +777,36 @@ WellManager::checkSystemSolution( DomainPartition & domain,
                                                                    WellElementSubRegion & subRegion )
 
     {
-
       WellControls & wellControls = getWellControls( subRegion );
-      integer localCheck = wellControls.checkWellSystemSolution( subRegion, dofManager, localSolution, scalingFactor );
-      globalCheck =  MpiWrapper::min( localCheck );
+      integer localCheck = wellControls.checkWellSystemSolution( subRegion,
+                                                                 dofManager,
+                                                                 localSolution,
+                                                                 scalingFactor,
+                                                                 minPressure,
+                                                                 minDensity,
+                                                                 minTotalDensity,
+                                                                 rankNegPressureIds,
+                                                                 rankNegDensityIds,
+                                                                 rankTotalNegDensityIds );
+      globalCheck = MpiWrapper::min( localCheck );
     } );
   } );
+
+  minPressure  = MpiWrapper::min( minPressure );
+  minDensity = MpiWrapper::min( minDensity );
+  minTotalDensity = MpiWrapper::min( minTotalDensity );
+
+  units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
+  rankNegPressureIds.createOutput()
+    .outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                         "negative pressure", minPressure, units::Unit::Pressure );
+  rankNegDensityIds.createOutput()
+    .outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                         "negative component density", minDensity, massUnit );
+  rankTotalNegDensityIds.createOutput()
+    .outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                         "negative components total density", minTotalDensity, massUnit );
+
   return globalCheck;
 }
 

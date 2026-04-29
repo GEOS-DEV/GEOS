@@ -64,6 +64,7 @@ void BrineSalinity::registerParametersImpl( MultiFluidBase * fluid )
 void BrineSalinity::postInputInitializationImpl( MultiFluidBase const * fluid,
                                                  ComponentProperties const & componentProperties )
 {
+  GEOS_UNUSED_VAR( fluid );
   GEOS_UNUSED_VAR( componentProperties );
 
   real64 constexpr epsilon = MultiFluidConstants::epsilon;

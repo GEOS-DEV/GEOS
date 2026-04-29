@@ -33,6 +33,8 @@
 #include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "common/Timer.hpp"
 #include <limits>
 
@@ -826,7 +828,15 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
         GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                                GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
 
-      if( !well.checkWellSystemSolution( subRegion, m_dofManager, m_solution.values(), scaleFactor ) )
+      real64 minPressure = 0.0, minDensity = 0.0, minTotalDensity = 0.0;
+      bool const solutionLogActive = isLogLevelActive< logInfo::Solution >( getLogLevel() );
+      bool const solutionDetailsLogActive = isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() );
+      ElementsReporterBuffer rankNegPressureIds{ solutionLogActive, solutionDetailsLogActive ? 16 : 0 };
+      ElementsReporterBuffer rankNegDensityIds{ solutionLogActive, solutionDetailsLogActive ? 16 : 0 };
+      // output only total density sum, not cell details
+      ElementsReporterBuffer rankTotalNegDensityIds{ solutionLogActive, 0 };
+      if( !well.checkWellSystemSolution( subRegion, m_dofManager, m_solution.values(), scaleFactor, minPressure, minDensity, minTotalDensity, rankNegPressureIds, rankNegDensityIds,
+                                         rankTotalNegDensityIds ) )
       {
 // TODO try chopping (similar to line search)
         if( m_nonlinearSolverParameters.getLogLevel() > 4 )

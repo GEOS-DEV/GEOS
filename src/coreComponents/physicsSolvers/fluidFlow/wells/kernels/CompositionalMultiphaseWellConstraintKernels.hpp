@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINTKERNELS_HPP
 
 #include "codingUtilities/Utilities.hpp"
+#include "common/DataLayouts.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
 
@@ -41,12 +42,13 @@ namespace wellConstraintKernels
 //template< integer NC, integer IS_THERMAL, typname S, typename T  >
 //struct ConstraintHelper< NC, IS_THERMAL   > {};
 
-template< integer NC, integer IS_THERMAL, typename CONSTRAINT = BHPConstraint >
+template< integer NC, integer IS_THERMAL, typename CONSTRAINT = BHPConstraint< BHPConstraintTypeId::MIN > >
 struct ConstraintHelper
 {
+  template< BHPConstraintTypeId I >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          BHPConstraint & constraint,
+                                          BHPConstraint< I > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -58,7 +60,7 @@ struct ConstraintHelper
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< real64 const > const & pres = subRegion.getField< fields::well::pressure >();
     arrayView1d< real64 const > const & totalMassDens = subRegion.getField< fields::well::totalMassDensity >();
-    arrayView2d< real64 const > const & dTotalMassDens = subRegion.getField< fields::well::dTotalMassDensity >();
+    arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & dTotalMassDens = subRegion.getField< fields::well::dTotalMassDensity >();
     arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
 
     // setup row/column indices for constraint equation

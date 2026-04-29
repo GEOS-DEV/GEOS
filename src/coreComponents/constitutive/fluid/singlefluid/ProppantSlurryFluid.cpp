@@ -75,23 +75,23 @@ void ProppantSlurryFluid::postInputInitialization()
   SlurryFluidBase::postInputInitialization();
 
   GEOS_ERROR_IF_LT_MSG( m_compressibility, 0.0,
-                        "invalid value of " << viewKeyStruct::compressibilityString(),
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::compressibilityString() ),
                         getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_referenceDensity, 0.0,
-                        "invalid value of " << viewKeyStruct::referenceDensityString(),
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::referenceDensityString() ),
                         getDataContext() );
 
   GEOS_ERROR_IF_LT_MSG( m_referenceViscosity, 0.0,
-                        "invalid value of " << viewKeyStruct::referenceViscosityString(),
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::referenceViscosityString() ),
                         getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_maxProppantConcentration, 0.0,
-                        "invalid value of " << viewKeyStruct::maxProppantConcentrationString(),
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::maxProppantConcentrationString() ),
                         getDataContext() );
 
   GEOS_ERROR_IF_GT_MSG( m_maxProppantConcentration, 1.0,
-                        "invalid value of " << viewKeyStruct::maxProppantConcentrationString(),
+                        GEOS_FMT( "invalid value of {}", viewKeyStruct::maxProppantConcentrationString() ),
                         getDataContext() );
 }
 

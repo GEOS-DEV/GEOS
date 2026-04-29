@@ -41,12 +41,6 @@ public:
   /// Type of aligment for a column
   enum Alignment { right, left, center };
 
-  /// default value for columns header cells alignement
-  static constexpr Alignment defaultHeaderAlignment = Alignment::center;
-
-  /// default value for data cells alignement
-  static constexpr Alignment defaultValueAlignment = Alignment::right;
-
   /// Space to apply between all data and border
   enum MarginValue : integer
   {
@@ -67,9 +61,9 @@ public:
   struct ColumnAlignement
   {
     /// Alignment for column name. By default aligned to center
-    Alignment headerAlignment = defaultHeaderAlignment;
+    Alignment headerAlignment = Alignment::center;
     /// Alignment for column values. By default aligned to right side
-    Alignment valueAlignment = defaultValueAlignment;
+    Alignment valueAlignment = Alignment::right;
   };
 
   /**
@@ -619,6 +613,18 @@ private:
   { return m_tableTitleStr; }
 
   /**
+   * @return the default value for columns header cells alignement. Used with column-free layout.
+   */
+  Alignment getDefaultHeaderAlignment() const
+  { return m_defaultHeaderAlignment; }
+
+  /**
+   * @return the default value for data cells alignement. Used with column-free layout.
+   */
+  Alignment getDefaultValueAlignment() const
+  { return m_defaultValueAlignment; }
+
+  /**
    * @param title The table title
    * @return The tableLayout reference
    */
@@ -644,6 +650,27 @@ private:
    * @return The tableLayout reference
    */
   TableLayout & setMaxColumnWidth( size_t width );
+
+  /**
+   * @brief Set the indentation of the whole table.
+   * @param spacesCount The number of indentation spaces.
+   * @return the TableLayout instance, for builder pattern
+   */
+  TableLayout & setIndentation( size_t spacesCount );
+
+  /**
+   * @brief Sets the default value for columns header cells alignement. Used with column-free layout.
+   * @param alignment The desired alignment
+   * @return the TableLayout instance, for builder pattern
+   */
+  TableLayout & setDefaultHeaderAlignment( Alignment alignment );
+
+  /**
+   * @brief Sets the default value for data cells alignement. Used with column-free layout.
+   * @param alignment The desired alignment
+   * @return the TableLayout instance, for builder pattern
+   */
+  TableLayout & setDefaultValueAlignment( Alignment alignment );
 
   /**
    * @brief check if a column max width has been set
@@ -682,28 +709,45 @@ private:
   { return m_maxColumnWidth; }
 
   /**
+   * @return The number of spaces at the left of the table.
+   */
+  size_t const & getIndentation() const
+  { return m_indentation; }
+
+  /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columnNames The columns name
+   * @return the TableLayout instance, for builder pattern
    */
-  void addColumns( stdVector< TableLayout::Column > const & columnNames );
+  TableLayout & addColumns( stdVector< Column > const & columnNames );
 
   /**
    * @brief Create and add columns to the columns vector given a string vector
    * @param columns The columns list
+   * @return the TableLayout instance, for builder pattern
    */
-  void addColumns( stdVector< string > const & columns );
+  TableLayout & addColumns( stdVector< string > const & columns );
+
+  /**
+   * @brief Create and add columns to the columns vector given a string and/or columns
+   * @param columns brace enclosed parameters, consisting of column names or Column instances
+   * @return the TableLayout instance, for builder pattern
+   */
+  TableLayout & addColumns( TableLayoutArgs columns );
 
   /**
    * @brief Create and add a column to the columns vector given a string
    * @param columnName The column name
+   * @return the TableLayout instance, for builder pattern
    */
-  void addColumn( string_view columnName );
+  TableLayout & addColumn( string_view columnName );
 
   /**
    * @brief Create and add a column to the columns vector given a Column
    * @param column Vector containing addition information on the column
+   * @return the TableLayout instance, for builder pattern
    */
-  void addColumn( TableLayout::Column const & column );
+  TableLayout & addColumn( Column const & column );
 
 protected:
 
@@ -755,6 +799,15 @@ protected:
 
   /// The number of margin spaces around contents.
   integer m_marginValue;
+
+  /// The number of spaces at the left of the table.
+  size_t m_indentation = 0;
+
+  /// default value for columns header cells alignement.
+  Alignment m_defaultHeaderAlignment = Alignment::center;
+
+  /// default value for data cells alignement.
+  Alignment m_defaultValueAlignment = Alignment::right;
 
 };
 
@@ -814,6 +867,12 @@ public:
   size_t getTotalLowermostColumnCount() const
   { return m_totalLowermostColumnCount; }
 
+  /**
+   * @return A string with the correct indentation space count to precede each lines of the formatted table.
+   */
+  string_view getIndentationStr() const
+  { return m_indentationStr; }
+
 private:
 
   // Number of column layers that a table layout has, default is 1;
@@ -822,6 +881,8 @@ private:
   size_t m_totalLowermostColumnCount;
 // Numbers of lower most column that are visible
   size_t m_visibleLowermostColumnCount;
+
+  string m_indentationStr;
 
   /**
    * @brief Recursive part of column layout preparation, see constructor documentation.

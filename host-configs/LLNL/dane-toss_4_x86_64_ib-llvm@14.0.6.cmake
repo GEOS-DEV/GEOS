@@ -3,7 +3,7 @@
 #################################################################################
 #--------------------------------------------------------------------------------
 # SYS_TYPE: toss_4_x86_64_ib
-# Compiler Spec: llvm@14.0.6/ul5bul3z5rs5ykers5jxmtuyaovscvqr
+# Compiler Spec: llvm@14.0.6/6hueebr6kxrx6r2je7lfkrj7gk6sdghn
 # CMake executable path: /usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/cmake-3.26.3-nz532rvfpaf5lf74zxmplgiobuhol7lu/bin/cmake
 #--------------------------------------------------------------------------------
 
@@ -65,15 +65,15 @@ set(ENABLE_HIP OFF CACHE BOOL "")
 
 set(ENABLE_CHAI ON CACHE BOOL "")
 
-set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/chai-git.4b9060b18b9bec1167026cfb3132bd540c4bd56b_develop-ewcgvgen5mhjtlv5t72hsbowups3gwod" CACHE PATH "")
+set(CHAI_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/chai-2025.12.0-pvwccufebbexz5j5332lq7jq7ynwhv3y" CACHE PATH "")
 
-set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/raja-git.1d70abf171474d331f1409908bdf1b1c3fe19222_develop-lccqdgiel6mdrobnw4uostmqhxnwimdx" CACHE PATH "")
+set(RAJA_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/raja-2025.12.0-s45pq56nd5qutsia5icxw7c7odt4wngp" CACHE PATH "")
 
 set(ENABLE_UMPIRE ON CACHE BOOL "")
 
-set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/umpire-git.1ed0669c57f041baa1f1070693991c3a7a43e7ee_develop-awpfyiuugwt4ipecza6uzlarwpzty2rl" CACHE PATH "")
+set(UMPIRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/umpire-2025.12.0-62eh5t3wbqm3skcy5sl7d744mdrmpi2j" CACHE PATH "")
 
-set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/camp-git.ee0a3069a7ae72da8bcea63c06260fad34901d43_main-aogjkuwlentfqtaukh2k3hvjw2y6y6jl" CACHE PATH "")
+set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/camp-2025.12.0-agkxhbph6l3wdetnbv5mrmq5chogauge" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # IO TPLs
@@ -81,23 +81,23 @@ set(CAMP_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/
 
 set(ENABLE_CALIPER ON CACHE BOOL "")
 
-set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-p5aeqjrvvexyrdal4epo7it2fbdgzzxk" CACHE PATH "")
+set(CALIPER_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/caliper-2.14.0-oahv5uuriqn2vyqbzespzkrfsghxjfew" CACHE PATH "")
 
-set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/adiak-0.4.0-7fjc7gjmpgx4jytzryqlsg2anuv27xcg" CACHE PATH "")
+set(ADIAK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/adiak-0.4.0-iitjnfmanurcrmlyau4qm7kpep6q6vxt" CACHE PATH "")
 
 set(ZLIB_DIR "/usr" CACHE PATH "")
 
-set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/hdf5-1.14.6-n4d653mlykuikmfab3ss6ruvejw24dml" CACHE PATH "")
+set(HDF5_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/hdf5-1.14.6-ottiokh52c2uvkujg6s4yc63afy24e7d" CACHE PATH "")
 
-set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-l4n3oasabottshhvnmpynvnr5qv4m5ym" CACHE PATH "")
+set(CONDUIT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/conduit-0.9.5-y5dwa2wdrmelzcpyx7yzayckzo3gpgrm" CACHE PATH "")
 
-set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/silo-4.12.0-m72pwkottbfattkmfy5et4y2zexnt3hv" CACHE PATH "")
+set(SILO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/silo-4.12.0-24vfiuq62fnn5ui6uqdhvouz65zytin2" CACHE PATH "")
 
-set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/pugixml-1.13-qnpx3zh4q3eouffejz63xhyrdjvjkitl" CACHE PATH "")
+set(PUGIXML_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/pugixml-1.13-rd24lxieweuz24w7ycbaryfyk6lbznmb" CACHE PATH "")
 
-set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/vtk-9.4.2-fqjvu6cakp4mkhr7s5ypn5f2ftbka5hg" CACHE PATH "")
+set(VTK_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/vtk-9.4.2-fnpua5soyrcqbkrqnnh4zqt6yn5hem5e" CACHE PATH "")
 
-set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/fmt-10.0.0-qbvletrbia2c5guh6kzewyt6i5ua4q22" CACHE PATH "")
+set(FMT_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/fmt-11.0.2-voxs6pm2ttqbwt3gszcbvcb2xmugiosj" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # System Math Libraries
@@ -111,19 +111,21 @@ set(LAPACK_LIBRARIES /usr/lib64/libopenblas.so CACHE STRING "")
 # Math TPLs
 #--------------------------------------------------------------------------------
 
-set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/metis-5.1.0-y7tsdri3aun762o4qjxji66y6ud4yjsk" CACHE PATH "")
+set(METIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/metis-5.1.0-7ultypmkrm5nnur3o6ntl557ut4zpi3a" CACHE PATH "")
 
-set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/parmetis-4.0.3-uvoynbg75vl2fda5gupkf572btgexrw7" CACHE PATH "")
+set(PARMETIS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/parmetis-4.0.3-l7zdwdi3icsmd2ei7lmnytikc4kitsrf" CACHE PATH "")
 
-set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/scotch-7.0.8-5utttqumhe2j2kb2swrnxt6iebuectv4" CACHE PATH "")
+set(SCOTCH_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/scotch-7.0.8-kfvnwp3qofbqvm4duccjctx23zsjfyj3" CACHE PATH "")
 
-set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/superlu-dist-9.2.1-la2ltj5isheee7yzd24krgjrixlqoj7r" CACHE PATH "")
+set(SUPERLU_DIST_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/superlu-dist-9.2.1-ft373aafcmpgtywcvvti4taddmsbqn2r" CACHE PATH "")
 
-set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/suite-sparse-5.10.1-dccejparafjkgc4jjp2bl3hwhvjz4xtg" CACHE PATH "")
+set(SUITESPARSE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/suite-sparse-5.10.1-6s5wuk2jv66hevvxm4tjnrxmad6cuqw3" CACHE PATH "")
 
-set(TRILINOS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/trilinos-16.1.0-oouxqanvjkbleahqbwwkslj55tpjygym" CACHE PATH "")
+set(TRILINOS_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/trilinos-16.1.0-ugaxqluqwxpbnupdzgkjqjcjx42k5d4n" CACHE PATH "")
 
-set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/hypre-git.804c217767f8e5371c6db34328e5945e40fbcb5c_master-jqrd4v72sd2ewlxs2v4d22dkeerphfol" CACHE PATH "")
+set(HYPRE_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/hypre-git.8b0093306228fef1b92384d9face7fbe5a63b460_master-lb2bbdvaubmyonpm4cecnwyclpp2nt7g" CACHE PATH "")
+
+set(ENABLE_HYPREDRV OFF CACHE BOOL "")
 
 set(ENABLE_PETSC OFF CACHE BOOL "")
 
@@ -147,7 +149,7 @@ set(ENABLE_PYGEOSX ON CACHE BOOL "")
 
 set(SPHINX_EXECUTABLE "/usr/gapps/GEOSX/thirdPartyLibs/python/quartz-gcc-python/python/bin/sphinx-build" CACHE PATH "")
 
-set(DOXYGEN_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/doxygen-1.8.20-iiqc2a7ephqjgr2ebn26km7s2h6y2ylg/bin/doxygen" CACHE PATH "")
+set(DOXYGEN_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/doxygen-1.8.20-r35mgsl7acmueg3o7lu4sm436u6lmeye/bin/doxygen" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # Development tools
@@ -155,7 +157,7 @@ set(DOXYGEN_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/ll
 
 set(ENABLE_UNCRUSTIFY ON CACHE BOOL "")
 
-set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-hbngzkhzopjokqkoxm4tnv2thpmuopuz/bin/uncrustify" CACHE PATH "")
+set(UNCRUSTIFY_EXECUTABLE "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/uncrustify-git.401a4098bce9dcc47e024987403f2d59d9ba7bd2_0.70.1-git.319-rmqswrm2hqjas6bshjhhf6vljdk3c663/bin/uncrustify" CACHE PATH "")
 
 #--------------------------------------------------------------------------------
 # addr2line
@@ -171,7 +173,7 @@ set(ADDR2LINE_EXEC  "/usr/bin/addr2line" CACHE PATH "")
 
 set(ENABLE_MATHPRESSO ON CACHE BOOL "")
 
-set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-01-28/dane-llvm-14_tpls/llvm-14.0.6/mathpresso-geos-4npqxs2paek425irgmzf2s5bniqoqkg2" CACHE PATH "")
+set(MATHPRESSO_DIR "/usr/WS1/GEOS/GEOSX/TPLs_2026-04-03/dane-llvm-14_tpls/llvm-14.0.6/mathpresso-geos-kxwkykrmexwzjykwccwn3p4hl54nsmym" CACHE PATH "")
 
 set(ENABLE_XML_UPDATES ON CACHE BOOL "")
 

@@ -159,13 +159,13 @@ Group * WellControls::createChild( string const & childKey, string const & child
   Group * child = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
-    MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
+    BHPConstraint< BHPConstraintTypeId::MIN > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MIN > >( childName );
     m_minBHPConstraint =   &bhpConstraint;
     child = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
   {
-    MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
+    BHPConstraint< BHPConstraintTypeId::MAX > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MAX > >( childName );
     m_maxBHPConstraint =  &bhpConstraint;
     child = &bhpConstraint;
   }
@@ -303,20 +303,20 @@ void WellControls::postInputInitialization()
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
-                 "You have to control an injector with "
-                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
+                 GEOS_FMT( "You have to control an injector with {}",
+                           EnumStrings< Control >::toString( Control::TOTALVOLRATE ) ),
                  InputError, getDataContext() );
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
-                 "You have to control an injector with "
-                 << EnumStrings< Control >::toString( Control::MASSRATE ),
+                 GEOS_FMT( "You have to control an injector with {}",
+                           EnumStrings< Control >::toString( Control::MASSRATE ) ),
                  InputError, getDataContext() );
 
   // 8) Make sure that the initial pressure coefficient is positive
   GEOS_THROW_IF( m_initialPressureCoefficient < 0,
-                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
-                 ": This tuning coefficient is negative",
+                 GEOS_FMT( "{}This tuning coefficient is negative",
+                           viewKeyStruct::initialPressureCoefficientString() ),
                  InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
 
 
@@ -339,8 +339,9 @@ void WellControls::postInputInitialization()
     m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
 
     GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "The interpolation method for the time-dependent status table "
-                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   GEOS_FMT( "The interpolation method for the time-dependent status table {} "
+                             "should be TableFunction::InterpolationType::Lower",
+                             m_statusTable->getName() ),
                    InputError, getDataContext() );
   }
 
@@ -641,7 +642,7 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
     wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
   } );
 
-  forSubGroups< BHPConstraint >( [&]( auto & constraint )
+  forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
   {
     // set the reference well element where the BHP control is applied
     real64 const refElev1 = constraint.getReferenceElevation();
