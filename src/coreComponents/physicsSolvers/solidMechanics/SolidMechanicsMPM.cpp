@@ -2489,6 +2489,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   NodeManager & nodeManager = mesh.getNodeManager();
   //#######################################################################################
 
+  logMomentumSum( "-------- Start Of Step" , particleManager, nodeManager); // Output momentum sums for debugging.
+
   //#######################################################################################
   if( cycleNumber == 0 )
   {
@@ -2667,8 +2669,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   //#######################################################################################
-  if( m_cpdiDomainScaling == 1 )
-  {
+  if( m_cpdiDomainScaling == 1 && cycleNumber == 0)
+  { // Normally we will CPDI domain scale after the particle kinematic update, but we'll
+    // do it here for cycle 0 in case there were particle initialization that will lead
+    // do out-of-domain CPDI particle corners.
     GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Perform r-vector scaling (CPDI domain scaling)" );
     solverProfiling( "Perform r-vector scaling (CPDI domain scaling)" );
     cpdiDomainScaling( particleManager );
@@ -3327,6 +3331,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   }
   //#######################################################################################
 
+    //#######################################################################################
+  if( m_cpdiDomainScaling == 1 )
+  { // Scale CPDI integration domains based on updates particle kinematics and grid size
+    // to make sure that for any particle whose center is in the domain, all CPDI domain corners
+    // will be within the ghost boundary.  
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Perform r-vector scaling (CPDI domain scaling)" );
+    solverProfiling( "Perform r-vector scaling (CPDI domain scaling)" );
+    cpdiDomainScaling( particleManager );
+  }
+  //#######################################################################################
+
 
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "Flag out-of-range particles" );
@@ -3341,7 +3356,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   deleteBadParticles( particleManager );
   //#######################################################################################
 
-  logMomentumSum( "Before Repartition and Active Indiced" , particleManager, nodeManager); // Output momentum sums for debugging.
 
   //#######################################################################################
   if( MpiWrapper::commSize( MPI_COMM_GEOS ) > 1 )
@@ -3401,6 +3415,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     printProfilingResults();
   }
   //#######################################################################################
+
+  logMomentumSum( "End of Step" , particleManager, nodeManager); // Output momentum sums for debugging.
+
 
 
   // Return stable time step
@@ -3676,7 +3693,7 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     localIndex const numVelocityFields = m_numVelocityFields;
 
     // Sum particle momentum for debugging.   
-    real64 partitionParticleMomentumSum[3] = {};
+    real64 partitionParticleMomentumSum[8] = {};
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();  
@@ -3686,18 +3703,32 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
       forAll< serialPolicy >( activeParticleIndices.size(), [&] ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
+        partitionParticleMomentumSum[3] += particleMass[p];
         for (int i=0; i<3; ++i )
           {
             partitionParticleMomentumSum[i] += particleMass[p]*particleVelocity[p][i];
           } 
-      } ); // particle loop     
+      } ); // particle loop          
+
+      SortedArrayView< localIndex const > const inactiveParticleIndices = subRegion.inactiveParticleIndices();
+      forAll< serialPolicy >( inactiveParticleIndices.size(), [&] ( localIndex const pp )
+      {
+        localIndex const p = inactiveParticleIndices[pp];
+        partitionParticleMomentumSum[7] += particleMass[p];
+        for (int i=0; i<3; ++i )
+          {
+            partitionParticleMomentumSum[i+4] += particleMass[p]*particleVelocity[p][i];
+          } 
+      } ); // particle loop    
+
+
     });
 
     // GEOS_LOG_RANK( label<<" - Rank: "<<rank<<" partition particle momentum sum = [ "<<partitionParticleMomentumSum[0]<<", "<<partitionParticleMomentumSum[1]<<", "<<partitionParticleMomentumSum[2]<<"]" );
 
     // Do an MPI sync to total these values
-    real64 globalParticleMomentumSum[3] = {};
-    for( localIndex i = 0; i < 3; ++i )
+    real64 globalParticleMomentumSum[8] = {};
+    for( localIndex i = 0; i < 8; ++i )
     {
       real64 localSum = partitionParticleMomentumSum[i];
       real64 globalSum;
@@ -3712,13 +3743,16 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     if(rank == 0)
     {
       GEOS_LOG_RANK(label<<" GLOBAL particle momentum sum = [ "<<globalParticleMomentumSum[0]<<", "<<globalParticleMomentumSum[1]<<", "<<globalParticleMomentumSum[2]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL particle mass sum.    = "<<globalParticleMomentumSum[3]);
+      GEOS_LOG_RANK(label<<" GLOBAL inactive particle momentum sum = [ "<<globalParticleMomentumSum[4]<<", "<<globalParticleMomentumSum[5]<<", "<<globalParticleMomentumSum[6]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL inactive particle mass sum.    = "<<globalParticleMomentumSum[7]);
     }
 
     // Sum grid momentum for debugging.   
-    real64 partitionGridMomentumSum[6] = {};
+    real64 partitionGridMomentumSum[10] = {};
     arrayView3d< real64 const > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
     arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-
+    arrayView3d< real64 > const & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
     arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
     
     localIndex const numNodes = nodeManager.size();
@@ -3730,14 +3764,22 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
         {
           if( gridGhostRank[g] <= -1 )
           {
+            // Total momentum
             partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
+            // Momentum excluding small mass nodes
             if( gridMass[g][fieldIndex] > m_smallMass )
             { // This stores the momentum mapped skipping small mass ndoes so we can compare
               // and compute the momentium lost due to the small mass threshold
               partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
             }
+            // Internal Force
+            partitionGridMomentumSum[i+6] += gridInternalForce[g][fieldIndex][i];
           }
         }
+        if( gridGhostRank[g] <= -1 )
+          {
+            partitionGridMomentumSum[9] += gridMass[g][fieldIndex];
+          }
       }
     });
 
@@ -3746,8 +3788,8 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     
     // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
     // so file is directly plottable in excel as CSV or something.
-    real64 globalGridMomentumSum[6] = {};
-    for( localIndex i = 0; i < 6; ++i )
+    real64 globalGridMomentumSum[10] = {};
+    for( localIndex i = 0; i < 10; ++i )
     {
       real64 localSum = partitionGridMomentumSum[i];
       real64 globalSum;
@@ -3761,8 +3803,11 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     }
     if(rank == 0)
     {
-      GEOS_LOG_RANK(label<<" GLOBAL grid momentum sum = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
-      GEOS_LOG_RANK(label<<" GLOBAL mass-thresholded grid momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL nodal momentum sum                  = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL nodal mass-thresholded momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL nodal internal force sum            = [ "<<globalGridMomentumSum[6]<<", "<<globalGridMomentumSum[7]<<", "<<globalGridMomentumSum[8]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL nodal mass sum                      = "<<globalGridMomentumSum[9]);
+
     }
   }
 }
@@ -6466,6 +6511,8 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
 
       if( event.getCatalogName() == "MachineSample" )
       {
+        GEOS_LOG_RANK("Setting Particle Delete Flags for Machine Sample");
+
         MachineSampleMPMEvent & machineSample = dynamicCast< MachineSampleMPMEvent & >( event );
 
         real64 hEl[3] = { };
@@ -6518,6 +6565,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                     if( distSqr  > gaugeRadius * gaugeRadius )
                     {
                       particleDeleteFlag[p] = 1;
+                      
                     }
                   }
                   //Check if particle is outside of fillet radius
@@ -16782,6 +16830,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
       }
       else
       {
+        GEOS_LOG_RANK("Setting Particle Delete Flags in Kinematic Update");
         particleDeleteFlag[p] = 1;
         particleVolume[p] = particleReferenceVolume[p];
         particleDensity[p] = particleMass[p] / particleReferenceVolume[p];
@@ -16798,13 +16847,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   int numParticlesOverMaxVelocityGlobal = MpiWrapper::sum( numParticlesOverMaxVelocity.get() );
 
   GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection, "At least one particle material direction had zero magnitude during kinematic update!" );
-
-  GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0,
-                      "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<
-    ") for deletion!" );
+  GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0, "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<    ") for deletion!" );
   GEOS_LOG_RANK_0_IF( numParticlesVelocityOverflowedGlobal > 0, "Flagged " << numParticlesVelocityOverflowedGlobal << " particles velocity squared overflow for deletion!" );
-  GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0,
-                      "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
+  GEOS_LOG_RANK_0_IF( numParticlesOverMaxVelocityGlobal > 0, "Flagged " << numParticlesOverMaxVelocityGlobal << " particles with unreasonable velocity (v " << m_maxParticleVelocity << ") for deletion!" );
 
   // Compute particles R vectors
   computeRVectors( particleManager );
@@ -17511,6 +17556,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
             if( !periodic[i] && ( particlePosition[p][i] < globalMin[i] + tolerance[i] || globalMax[i] - tolerance[i] < particlePosition[p][i] ) )
             {
               particleDeleteFlag[p] = 1;
+              GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle");
               break;   // TODO: if this doesn't work, just modify "i"
             }
           }
@@ -17545,6 +17591,7 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
             }
             if( particleDeleteFlag[p] == 1 )
             {
+              GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle CPDI Domain Corner");
               break;
             }
           }
@@ -17587,6 +17634,7 @@ void SolidMechanicsMPM::deleteBadParticles( ParticleManager & particleManager )
       {
         if( particleDeleteFlag[p] == 1 )
         {
+          GEOS_LOG_RANK("Erasing particle with particle delete flag set");
           indicesToErase.insert( p );
         }
       } );
