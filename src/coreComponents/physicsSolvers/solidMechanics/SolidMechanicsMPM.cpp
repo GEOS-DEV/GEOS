@@ -2209,18 +2209,18 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridPosition = nodeManager.referencePosition();
 
-  // Messed with determining element size differently for debugging
-  m_hEl.resize( 3 );
-  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
-  for( int g=0; g<numNodes-1; ++g )
-  {
-    for( int i=0; i<3; ++i )
-    {
-      real64 test = LvArray::math::abs(gridPosition[g+1][i] - gridPosition[g][i]);
-      m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
-    }
-  }
-  GEOS_LOG_RANK("m_hEl: " << m_hEl);
+  // // Messed with determining element size differently for debugging
+  // m_hEl.resize( 3 );
+  // LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
+  // for( int g=0; g<numNodes-1; ++g )
+  // {
+  //   for( int i=0; i<3; ++i )
+  //   {
+  //     real64 test = LvArray::math::abs(gridPosition[g+1][i] - gridPosition[g][i]);
+  //     m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
+  //   }
+  // }
+  // GEOS_LOG_RANK("m_hEl: " << m_hEl);
 
   // Currently in GEOS there is an issue with the ghost nodes of the positive periodic boundary positions being overriden during  
   // setup of the neighbors in spatial partition. We currently have a stop gap fix to check if the partition is on the boundary and it is periodic
@@ -2282,22 +2282,22 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     m_partitionExtent[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
-  // // Get element size
-  // m_hEl.resize( 3 );
-  // LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
-  // for( int g=0; g<numNodes; ++g )
-  // {
-  //   for( int i=0; i<3; ++i )
-  //   {
-  //     real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
-  //                                                        // should only be those on the local partition
-  //     if( test > 0.0 ) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite
-  //                      // precision bug.
-  //     {
-  //       m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
-  //     }
-  //   }
-  // }
+  // Get element size
+  m_hEl.resize( 3 );
+  LvArray::tensorOps::fill< 3 >( m_hEl, DBL_MAX );
+  for( int g=0; g<numNodes; ++g )
+  {
+    for( int i=0; i<3; ++i )
+    {
+      real64 test = gridPosition[g][i] - m_xLocalMin[i]; // By definition, this should always be positive. Furthermore, the gridPosition
+                                                         // should only be those on the local partition
+      if( test > 0.0 ) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite
+                       // precision bug.
+      {
+        m_hEl[i] = LvArray::math::min( test, m_hEl[i] );
+      }
+    }
+  }
 
   // Set SPH neighbor radius if necessary
   if( m_neighborRadius <= 0.0 )
@@ -3862,8 +3862,13 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
 
     // Sum grid momentum for debugging.   
     real64 partitionGridMomentumSum[6] = {};
+    real64 partitionGridInternalForceSum[6] = {};
+    real64 partitionGridExternalForceSum[6] = {};
+
     arrayView3d< real64 const > const & gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
     arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+    arrayView3d< real64 const > const & gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
+    arrayView3d< real64 const > const & gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
 
     arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
     
@@ -3877,10 +3882,15 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
           if( gridGhostRank[g] <= -1 )
           {
             partitionGridMomentumSum[i] += gridMomentum[g][fieldIndex][i];
+            partitionGridInternalForceSum[i] += gridInternalForce[g][fieldIndex][i];
+            partitionGridExternalForceSum[i] += gridExternalForce[g][fieldIndex][i];
+
             if( gridMass[g][fieldIndex] > m_smallMass )
             { // This stores the momentum mapped skipping small mass ndoes so we can compare
               // and compute the momentium lost due to the small mass threshold
               partitionGridMomentumSum[i+3] += gridMomentum[g][fieldIndex][i];
+              partitionGridInternalForceSum[i+3] += gridInternalForce[g][fieldIndex][i];
+              partitionGridExternalForceSum[i+3] += gridExternalForce[g][fieldIndex][i];
             }
           }
         }
@@ -3893,10 +3903,12 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
     // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
     // so file is directly plottable in excel as CSV or something.
     real64 globalGridMomentumSum[6] = {};
+    real64 globalGridInternalForceSum[6] = {};
+    real64 globalGridExternalForceSum[6] = {};
     for( localIndex i = 0; i < 6; ++i )
     {
       real64 localSum = partitionGridMomentumSum[i];
-      real64 globalSum;
+      real64 globalSum = 0.0;
       MPI_Allreduce( &localSum,
                     &globalSum,
                     1,
@@ -3904,11 +3916,37 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
                     MPI_SUM,
                     MPI_COMM_GEOS );
       globalGridMomentumSum[i] = globalSum;
+
+      localSum = partitionGridInternalForceSum[i];
+      globalSum = 0.0;
+      MPI_Allreduce( &localSum,
+                    &globalSum,
+                    1,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    MPI_COMM_GEOS );
+      globalGridInternalForceSum[i] = globalSum;
+
+      localSum = partitionGridExternalForceSum[i];
+      globalSum = 0.0;
+      MPI_Allreduce( &localSum,
+                    &globalSum,
+                    1,
+                    MPI_DOUBLE,
+                    MPI_SUM,
+                    MPI_COMM_GEOS );
+      globalGridExternalForceSum[i] = globalSum;
     }
     if(rank == 0)
     {
       GEOS_LOG_RANK(label<<" GLOBAL grid momentum sum = [ "<<globalGridMomentumSum[0]<<", "<<globalGridMomentumSum[1]<<", "<<globalGridMomentumSum[2]<<"]");
       GEOS_LOG_RANK(label<<" GLOBAL mass-thresholded grid momentum sum = [ "<<globalGridMomentumSum[3]<<", "<<globalGridMomentumSum[4]<<", "<<globalGridMomentumSum[5]<<"]");
+
+      GEOS_LOG_RANK(label<<" GLOBAL grid internal force sum = [ "<<globalGridInternalForceSum[0]<<", "<<globalGridInternalForceSum[1]<<", "<<globalGridInternalForceSum[2]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL mass-thresholded internal force sum = [ "<< globalGridInternalForceSum[3]<<", "<<globalGridInternalForceSum[4]<<", "<<globalGridInternalForceSum[5]<<"]");
+
+      GEOS_LOG_RANK(label<<" GLOBAL grid external force sum = [ "<<globalGridExternalForceSum[0]<<", "<<globalGridExternalForceSum[1]<<", "<<globalGridExternalForceSum[2]<<"]");
+      GEOS_LOG_RANK(label<<" GLOBAL mass-thresholded grid external force sum = [ "<<globalGridExternalForceSum[3]<<", "<<globalGridExternalForceSum[4]<<", "<<globalGridExternalForceSum[5]<<"]");
     }
   }
 }
@@ -5955,7 +5993,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).setDimLabels( 1, axesLabels );
   nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() ).setDimLabels( 1, axesLabels );
 
-  nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).setDimLabels( 1, axesLabels );
+  // nodeManager.getWrapper< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).setDimLabels( 1, axesLabels );
 
 
   // Apply labels to vector multi-fields
@@ -12276,7 +12314,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     GEOS_UNUSED_VAR( ijkMap );
     #endif
 
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
 
@@ -17608,7 +17646,7 @@ void SolidMechanicsMPM::updateStress( real64 dt,
     {
       using SolidType = TYPEOFREF( castedConstitutiveModel );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
-      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
+      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< serialPolicy >( subRegion.activeParticleIndices(),
                                                                                              constitutiveModelWrapper,
                                                                                              dt,
                                                                                              hyperelasticUpdate,
