@@ -3,7 +3,8 @@ set( gtest_geosx_tests
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
      testElementRegions.cpp
-     testSurfaceGenerator.cpp )
+     testSurfaceGenerator.cpp
+     testSplitMesh.cpp )
 
 set( gtest_geosx_mpi_tests
      testNeighborCommunicator.cpp )
@@ -109,6 +110,14 @@ set( dfn_market_mesh_files
 )
 set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
 
+# ---------------------------------------------------------------------------
+# Mesh files needed by testSplitMesh (VTK multiblock .vtm with faceBlocks)
+# ---------------------------------------------------------------------------
+set( split_mesh_files
+     DFN_5_fractures_hex_binarized.vtm
+)
+set( SPLIT_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market_split_meshes )
+
 
 # Add gtest C++ based tests
 foreach( test ${gtest_geosx_tests} )
@@ -142,6 +151,14 @@ file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
 foreach( mesh_file ${dfn_market_mesh_files} )
   file( COPY ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
         DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+endforeach()
+
+# Copy split-mesh (.vtm) files if they exist in the source directory.
+foreach( mesh_file ${split_mesh_files} )
+  if( EXISTS ${SPLIT_MESH_SOURCE_DIR}/${mesh_file} )
+    file( COPY ${SPLIT_MESH_SOURCE_DIR}/${mesh_file}
+          DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+  endif()
 endforeach()
 
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
@@ -187,5 +204,28 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                         LABELS "${sg_mpi_test_name}" )
 
   # DFN-market mesh files are already copied at configure time (see above).
+
+  # ---------------------------------------------------------------------------
+  # testSplitMesh_mpi — SplitMeshMpiTest suite (4 MPI ranks)
+  # ---------------------------------------------------------------------------
+  set( sm_mpi_nranks 4 )
+  set( sm_mpi_test_name testSplitMesh_mpi )
+
+  blt_add_executable( NAME       ${sm_mpi_test_name}
+                      SOURCES    testSplitMesh_mpi.cpp
+                      OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                      DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+  target_compile_definitions( ${sm_mpi_test_name}
+                              PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${sm_mpi_test_name}>\" )
+
+  geos_add_test( NAME          ${sm_mpi_test_name}
+                 COMMAND       ${sm_mpi_test_name}
+                 NUM_MPI_TASKS ${sm_mpi_nranks} )
+
+  set_tests_properties( ${sm_mpi_test_name}
+                        PROPERTIES
+                        ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sm_mpi_test_name}>"
+                        LABELS "${sm_mpi_test_name}" )
 
 endif()
