@@ -419,7 +419,6 @@ public:
                                            arrayView1d< globalIndex const > const & dofMap,
                                            CRSMatrixView< real64, globalIndex const > const & matrix ) const;
 
-
   /**
    * @brief View keys
    */
