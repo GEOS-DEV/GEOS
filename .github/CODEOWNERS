@@ -33,7 +33,7 @@
 /inputFiles/singlePhaseFlowFractures                  @jhuang2601 @dkachuma
 /inputFiles/singlePhaseWell                           @tjb-ltk @dkachuma
 /inputFiles/solidMechanics                            @castelletto1 @jhuang2601
-/inputFiles/surfaceGeneration                         @rrsettgast
+/inputFiles/surfaceGeneration                         @rrsettgast @OmarDuran
 /inputFiles/thermalMultiphaseFlow                     @dkachuma @tjb-ltk
 /inputFiles/thermalSinglePhaseFlowFractures           @jhuang2601 @frankfeifan @dkachuma
 /inputFiles/thermoPoromechanics                       @jhuang2601 @castelletto1 @frankfeifan
@@ -71,7 +71,7 @@
 /src/coreComponents/linearAlgebra                     @rrsettgast @castelletto1 @victorapm   
 /src/coreComponents/mainInterface                     @rrsettgast @corbett5 @wrtobin @MelReyCG
 /src/coreComponents/math                              @rrsettgast @corbett5 @wrtobin @OmarDuran
-/src/coreComponents/mesh                              @rrsettgast @wrtobin @OmarDuran
+/src/coreComponents/mesh                              @rrsettgast @wrtobin @OmarDuran @jafranc @bd713
 /src/coreComponents/physicsSolvers                    @rrsettgast @OmarDuran
 /src/coreComponents/physicsSolvers/contact            @rrsettgast @jhuang2601 @jafranc 
 /src/coreComponents/physicsSolvers/fluidFlow          @rrsettgast @tjb-ltk @dkachuma @OmarDuran
@@ -81,7 +81,7 @@
 /src/coreComponents/physicsSolvers/simplePDE          @rrsettgast @castelletto1 @frankfeifan
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @jhuang2601
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @jhuang2601 @OmarDuran
-/src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
+/src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain @bd713
 /src/coreComponents/schema                            @rrsettgast @herve-gross @jhuang2601 @dkachuma @OmarDuran
 /src/coreComponents/integrationTests                  @rrsettgast @corbett5 @wrtobin @MelReyCG @dkachuma @OmarDuran
 /src/docs                                             @rrsettgast @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
@@ -100,6 +100,7 @@
 # arng40             Arnaud DUDES
 # Bertbk             Bertrand Thierry
 # binw1   
+# bd713              Bertrand Denel
 # bmhan12            Brian Han
 # Bubusch            Gaetan
 # castelletto1       Nicola Castelletto

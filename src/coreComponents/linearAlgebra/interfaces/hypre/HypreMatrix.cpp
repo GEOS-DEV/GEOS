@@ -1568,14 +1568,17 @@ void HypreMatrix::computeScalingVector( HypreVector & scaling ) const
   array1d< HYPRE_Int > pointMarkers( numLocalRows() );
   m_dofManager->getLocalDofComponentLabels( pointMarkers );
 
-  // Create scaling vector
-  scaling.create( numLocalRows(), comm() );
-  HYPRE_ParVector hypre_vec = scaling.unwrapped();
-  HYPRE_ParVector *hypre_vec_ptr = &hypre_vec;
-
-  // Compute scaling vector
+  // Let hypre own the temporary vector so tagged scaling is free to resize
+  // and attach metadata without mutating GEOS-managed vector storage.
+  HYPRE_ParVector tempScaling = nullptr;
   GEOS_LAI_CHECK_ERROR( HYPRE_ParCSRMatrixComputeScalingTagged( m_parcsr_mat, 1, HYPRE_MEMORY_HOST, num_tags,
-                                                                pointMarkers.data(), hypre_vec_ptr ) );
+                                                                pointMarkers.data(), &tempScaling ) );
+
+  // Copy the computed values back into the wrapped GEOS vector.
+  scaling.create( numLocalRows(), comm() );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorCopy( tempScaling, scaling.unwrapped() ) );
+  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorDestroy( tempScaling ) );
+  scaling.touch();
 }
 
 }// end namespace geos
