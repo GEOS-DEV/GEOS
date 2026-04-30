@@ -676,7 +676,7 @@ public:
    */
   bool usesNonScalarValues() const
   {
-    return !m_scales.empty();
+    return !m_scales.empty() || !m_functionNames.empty();
   }
 
   template< typename LAMBDA >
