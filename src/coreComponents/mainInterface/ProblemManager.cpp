@@ -313,6 +313,7 @@ void ProblemManager::parseCommandLineInput()
   string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
   outputDirectory = opts.outputDirectory;
   OutputBase::setOutputDirectory( outputDirectory );
+  TaskBase::setOutputDirectory( outputDirectory );
 
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
 
