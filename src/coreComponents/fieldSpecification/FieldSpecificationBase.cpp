@@ -144,14 +144,14 @@ void FieldSpecificationBase::postInputInitialization()
   if( usesNonScalarValues() )
   {
     GEOS_THROW_IF( m_component != -1,
-                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one entry",
+                   GEOS_FMT ( "'{}' must not be set when '{}' is set.",
                               viewKeyStruct::componentString(),
                               viewKeyStruct::scalesString() ),
                    InputError,
                    getDataContext() );
 
     GEOS_THROW_IF( !m_functionName.empty(),
-                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one entry. "
+                   GEOS_FMT ( "'{}' must not be set when '{}' is set."
                               "Use '{}' to provide one function per component instead",
                               viewKeyStruct::functionNameString(),
                               viewKeyStruct::scalesString(),
@@ -163,7 +163,7 @@ void FieldSpecificationBase::postInputInitialization()
   if( !m_regionNames.empty() )
   {
     GEOS_THROW_IF( !m_objectPath.empty(),
-                   GEOS_FMT ( "'{}' must not be set when '{}' is set. ",
+                   GEOS_FMT ( "'{}' must not be set when '{}' is set.",
                               viewKeyStruct::objectPathString(),
                               viewKeyStruct::regionNamesString() ),
                    InputError,
