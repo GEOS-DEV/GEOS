@@ -141,7 +141,7 @@ void FieldSpecificationBase::postInputInitialization()
                  InputError,
                  getDataContext() );
 
-  if( isVectorMode() )
+  if( usesNonScalarValues() )
   {
     GEOS_THROW_IF( m_component != -1,
                    GEOS_FMT ( "'{}' must not be set when '{}' has more than one entry",

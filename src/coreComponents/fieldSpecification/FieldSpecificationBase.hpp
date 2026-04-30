@@ -674,7 +674,7 @@ public:
   /**
    * @brief Query whether this field specification uses non-scalar scales
    */
-  bool isVectorMode() const
+  bool usesNonScalarValues() const
   {
     return !m_scales.empty();
   }
@@ -682,7 +682,7 @@ public:
   template< typename LAMBDA >
   void forEachComponent( LAMBDA && lambda ) const
   {
-    if( isVectorMode() )
+    if( usesNonScalarValues() )
     {
       localIndex const numComponents = m_scales.size();
       for( localIndex comp = 0; comp < numComponents; ++comp )
