@@ -1231,8 +1231,37 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       //real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std::pow( vonMisesStress_old * pressureUnitCancellation , equilibriumShearStrainExponent) * (1 + m_creepH * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.0));
       //real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std::pow(vonMisesStress_old , equilibriumShearStrainExponent);
       
-      real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std::pow( vonMisesStress_old * pressureUnitCancellation , equilibriumShearStrainExponent)
-      *(1 + (m_creepH * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) );
+      real64 shearPowBase = vonMisesStress_old * pressureUnitCancellation;
+      real64 shearPowExp = equilibriumShearStrainExponent;
+      real64 tempDelta = std::max( temperature - m_referenceTemperature, 0.0 );
+
+      if( !std::isfinite( shearPowBase ) || !std::isfinite( shearPowExp ) || !std::isfinite( tempDelta ) )
+      {
+        GEOS_LOG_RANK( "Invalid input in shear creep term: "
+                       << "shearPowBase=" << shearPowBase
+                       << ", shearPowExp=" << shearPowExp
+                       << ", tempDelta=" << tempDelta
+                       << ", vonMisesStress_old=" << vonMisesStress_old
+                       << ", pressureUnitCancellation=" << pressureUnitCancellation
+                       << ", temperature=" << temperature
+                       << ", m_referenceTemperature=" << m_referenceTemperature );
+        return 1;
+      }
+
+      shearPowBase = std::max( shearPowBase, 0.0 );
+
+      real64 shearTerm = 0.0;
+      if( shearPowBase > 0.0 )
+      {
+        shearTerm = std::pow( shearPowBase, shearPowExp );
+      }
+      else
+      {
+        shearTerm = ( shearPowExp > 0.0 ) ? 0.0 : 1.0;
+      }
+
+      real64 equilibriumVMShearStrain =
+        equilibriumShearStrainConstant * shearTerm * ( 1 + ( m_creepH * tempDelta * tempDelta ) );
       
       
       //######################################################################
@@ -1396,15 +1425,37 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     //                         + ( -m_phiEqBeta * tempDeltaPhi ) );
     //######################################################################
 
-    real64 pEff = std::max( p, 1.e-12 );
-    real64 phiPowBase = pEff / m_creepB;
     real64 phiPowExp = equilibriumPorosityPressureExponent;
+
+    if( !std::isfinite( p ) || !std::isfinite( temperature ) || !std::isfinite( phiPowExp ) || !std::isfinite( m_creepB ) || m_creepB <= 0.0 )
+    {
+      GEOS_LOG_RANK( "Invalid input in equilibrium porosity term: "
+                     << "p=" << p
+                     << ", temperature=" << temperature
+                     << ", phiPowExp=" << phiPowExp
+                     << ", m_creepB=" << m_creepB
+                     << ", m_referenceTemperature=" << m_referenceTemperature );
+      return 1;
+    }
+
+    real64 pEff = std::max( p, 1.e-12 );
+    real64 phiPowBase = std::max( pEff / m_creepB, 0.0 );
     real64 tempDeltaPhi = std::max( temperature - m_referenceTemperature, 0.0 );
 
+    real64 phiTerm = 0.0;
+    if( phiPowBase > 0.0 )
+    {
+      phiTerm = std::pow( phiPowBase, phiPowExp );
+    }
+    else
+    {
+      phiTerm = ( phiPowExp > 0.0 ) ? 0.0 : 1.0;
+    }
+
     real64 phi_e = std::max( 1.e-10,
-                             m_creepA * exp( -std::pow( phiPowBase, phiPowExp ) )
+                             m_creepA * exp( -phiTerm )
                              + equilibriumPorosityOffset
-                             + ( -m_phiEqAlpha * std::pow( tempDeltaPhi, 2.0 ) )
+                             + ( -m_phiEqAlpha * tempDeltaPhi * tempDeltaPhi )
                              + ( -m_phiEqBeta * tempDeltaPhi ) );
 
 
@@ -1434,10 +1485,36 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     {  // creep compaction
       //std :: cout << "Creep Rate Temp MultiplierVolumetric: " << creepRateTemperatureMultiplierVolumetric << std::endl;
-      real64 dphidt = -1.0*creepRateTemperatureMultiplierVolumetric
-                          *std::pow( p / pressureUnitCancellation ,compactionRatePressureExponent)
-                          *m_creepC
-                          *( phi_p - phi_e );  
+      real64 compPowExp = compactionRatePressureExponent;
+
+      if( !std::isfinite( p ) || !std::isfinite( compPowExp ) || !std::isfinite( pressureUnitCancellation ) || pressureUnitCancellation <= 0.0 )
+      {
+        GEOS_LOG_RANK( "Invalid input in compaction rate term: "
+                       << "p=" << p
+                       << ", compPowExp=" << compPowExp
+                       << ", pressureUnitCancellation=" << pressureUnitCancellation
+                       << ", creepRateTemperatureMultiplierVolumetric=" << creepRateTemperatureMultiplierVolumetric
+                       << ", m_creepC=" << m_creepC
+                       << ", phi_p=" << phi_p
+                       << ", phi_e=" << phi_e );
+        return 1;
+      }
+
+      real64 compPowBase = std::max( p / pressureUnitCancellation, 0.0 );
+      real64 compactionTerm = 0.0;
+      if( compPowBase > 0.0 )
+      {
+        compactionTerm = std::pow( compPowBase, compPowExp );
+      }
+      else
+      {
+        compactionTerm = ( compPowExp > 0.0 ) ? 0.0 : 1.0;
+      }
+
+      real64 dphidt = -1.0 * creepRateTemperatureMultiplierVolumetric
+                          * compactionTerm
+                          * m_creepC
+                          * ( phi_p - phi_e );  
                           
       //######################################################################
       //                  
