@@ -221,10 +221,7 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
       //                    test name              mesh file (vtm)                          faceBlock   surf-elems  χ
-      std::make_tuple( "DFN_5_fracs_hex", "DFN_5_fractures_hex_binarized.vtm", "Fault",
-                       localIndex( -1 ), integer( 1 ) )
-      // NOTE: Set the expected surface element count to -1 as a placeholder until
-      //       the actual value is known from a reference run.
+      std::make_tuple( "DFN_5_fracs_hex", "DFN_5_fractures_hex_binarized.vtm", "Fault", localIndex( 196 ), integer( 2 ) )
     ),
     ::testing::Values(
       std::make_tuple( 1, 1, 4 ),

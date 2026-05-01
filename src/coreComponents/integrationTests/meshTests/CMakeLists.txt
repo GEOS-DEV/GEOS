@@ -115,6 +115,8 @@ set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
 # ---------------------------------------------------------------------------
 set( split_mesh_files
      DFN_5_fractures_hex_binarized.vtm
+     DFN_5_fractures_hex_binarized_domain.vtu
+     DFN_5_fractures_hex_binarized_fault.vtu
 )
 set( SPLIT_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market_split_meshes )
 
