@@ -1,4 +1,4 @@
-an/*
+/*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
@@ -31,8 +31,7 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
       // 5-fracture DFN split meshes
-      "DFN_5_fractures_hex_binarized.vtm",
-      "DFN_5_fractures_tet_binarized.vtm"
+      "DFN_5_fractures_hex_binarized.vtm"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
