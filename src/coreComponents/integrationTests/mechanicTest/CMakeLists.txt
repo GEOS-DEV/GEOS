@@ -80,3 +80,55 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
     target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 endif()
+
+# ---------------------------------------------------------------------------
+# testFEMConsistencySplitMesh: tests using pre-split (VTM) meshes with
+# fractures defined via faceBlocks instead of SurfaceGenerator.
+# ---------------------------------------------------------------------------
+set( DFN_MARKET_SPLIT_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market_split_meshes )
+
+set( split_mesh_files
+     DFN_5_fractures_hex_binarized.vtm
+     DFN_5_fractures_hex_binarized_domain.vtu
+     DFN_5_fractures_hex_binarized_fault.vtu
+)
+
+foreach( mesh_file ${split_mesh_files} )
+  file( COPY ${DFN_MARKET_SPLIT_MESH_SOURCE_DIR}/${mesh_file}
+        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+endforeach()
+
+# --- Serial variant (always built) ---
+set( test "testFEMConsistencySplitMesh.cpp" )
+get_filename_component( test_name ${test} NAME_WE )
+
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test}
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
+
+set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+# --- MPI variant (CPU-only MPI builds) ---
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( test "testFEMConsistencySplitMesh_mpi.cpp" )
+    set( nranks 4 )
+
+    get_filename_component( test_name ${test} NAME_WE )
+
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
+
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+endif()
