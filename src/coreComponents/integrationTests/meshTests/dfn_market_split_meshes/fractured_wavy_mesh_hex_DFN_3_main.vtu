@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="126" NumberOfCells="68">
+      <PointData GlobalIds="GLOBAL_IDS_POINTS">
+        <DataArray type="UInt8" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAAB+AAAAEwAAAA==eJxjYCAPMDIyIhNkGgIAAr8ACw==
+        </DataArray>
+        <DataArray type="Int64" IdType="1" Name="GLOBAL_IDS_POINTS" format="binary" RangeMin="0" RangeMax="125">
+          AQAAAACAAADwAwAAzAAAAA==eJwtxbNhAAAAALDatm3btm3bNn/v0GRJQMC/QAc52CEOdZjDHeFIRznaMY51nOOd4EQnOdkpTnWa053hTGc52znOdZ7zXeBCF7nYJS51mctd4UpXudo1rnWd693gRje52S1udZvb3eFOd7nbPe51n/s94EEPedgjHvWYxz3hSU952jOe9ZznveBFL3nZK171mte94U1veds73vWe933gQx/52Cc+9ZnPfeFLX/naN771ne/94Ec/+dkvfvWb3/3hT3/52z/+9R+4QB7E
+        </DataArray>
+      </PointData>
+      <CellData GlobalIds="GLOBAL_IDS_CELLS">
+        <DataArray type="Int32" Name="fault_id" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAAAQAQAADwAAAA==eJxjYBjZgBENAwABOAAF
+        </DataArray>
+        <DataArray type="Int64" IdType="1" Name="GLOBAL_IDS_CELLS" format="binary" RangeMin="0" RangeMax="67">
+          AQAAAACAAAAgAgAAeAAAAA==eJwtxUVCAgAAADA6JZVSugxQGqTr/3/iwHZZIPAUdMhhRxx1zHEnnHTKab8446xzzrvgol/95pLLrrjqmt/94bobbrrltjvuuue+Bx7601/+9o9HHvvXf5546pnnXnjpldfe+N9b77z3wUeffPbFV9989wNnygjn
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="1.7320508075688772">
+          AQAAAACAAADQCwAAsQEAAA==eJyNljFLA0EQhVMJYpHCH2Blp6D4AzZEK21ttLGS/AMRBFv/QIo0go0oWIiIlVporZKIIAjKYpPF6morRbI57u19zk6z3Mvezs28eW/TaPwXfVePe8AD4AXglCc+K+4BD4AXgOt5mldxD3gAvABc39O8invAA+AF4Pq75lXcAx4ALwDXIF6p79QX+m5rjtL15W1p/qbn3clVZ3N3cTDGJ9aPbpvXwU2dtvZmdgbu63x/8m76UfLmzinlGe1rfcr+MN5/0V1Yax5qXlsH8Xu1jo3V3vHB08fofNWNzpX2OVdn+p7yq7jOlb6fq2PigfRMeiM9xCjr0bmJvP09Jrz6pO+Rj/o6LR+Sfb/5tu/br5fvPlmr9eo5Olfsc9V5DNV6k756Nzf78LzcGY7x+npzfVTnwqpD50r35fo06Yz6RH5Nfhqj1IP6TtRxvS+QbklX1j3TB58gnkteq3wTH1o/+1D9ucF9n221i5Vhslbz5t6T5HM6L3qe4jpX1j1MPko6oDroPo5Bfkx6snyffNn6H0H3AOmYeCA9x7Dm3vIJ4pn4jmH1xfIhypeu5PM/MsbXiA==
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              1.7320508076
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="binary" RangeMin="0" RangeMax="125">
+          AQAAAACAAACAEAAAZAIAAA==eJyFlUVXkFEURbHFwkZMbLEDAxO7BRXFLuwubP+7A8+e7LXeut/kjPZe5w7O+zo6/n8TklOTU5I9yaXJVcmV4iYmp8kDtyzZKw/cpOR0eeCWJ1fLAzc52SkP3IrkGnm4k74zkzOS3Enfdcm14ug7Sx44+q6XB46+s+WBo+8GeeC4e448cNy9UR7upO/cZFeSO+nbl9wkjr7z5IGj72Z54Og7Xx44+m6RB467F8gDx91b5eFO+i5KLkxyJ323J7eJo+9ieeDou0MeOPp2ywNH353ywHH3EnnguHuXPNW+dyf3JA8k94tr7RuuPzkgT7VvuL3Jg/JU+4bblzwkT7Vv7qTvkeRhcfT1vuHo+1ceuNa+4eh7TJ5q33DcPShPtW/upO+J5HFxrX3D0fekPNW+4eh7Sp5q33CDydPyVPvmTvqeTZ4R19o3HH3PyVPtG46+5+Wp9g3H3RfkqfZ9MXkpeTU5LK61b7jLyWvyVPuGu5K8Lk+1b7ih5Ig81b65k743kzfE0feoPHD0HZWntW88cPS9JU+1bzjuvi1PtW/upO/d5B1x9PW+4eh7Tx641r7h6HtfnmrfcNz9QJ5q39xJ30fJh+Ja+4aj72N5qn3D0feJPNW+4bh7TJ5q30+Tz5Kvk6/EtfYN9zz5Rp5q33Avkm/lqfYN9zL5Tp5q39xJ3w/J9+Ja+4aj70d5qn3D0feTPNW+4bj7szzVvrmTvl+TX8S19g1H33F5qn3D0febPNW+4bj7uzzVvrmTvj+TP8S19g1H31/yVPuGo+9veap9w3H3H3mq/1f1f6re/+p9/weiboDd
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="binary" RangeMin="8" RangeMax="528">
+          AQAAAACAAAAgAgAAgQAAAA==eJwtxREQgwAAAMC2GwSDMAzDcBiGwzAMw+EwDMNwGIZhOAzDMBwO+pcPg1Pk2IlTZ344d+GnS1eu3fjlt1t37j3449GTZy/+evXm3Yd/Di5noSPHTpw688O5Cz9dunLtxi+/3bpz78Efj548e/HXqzfvPvxzcD27OfTdkf8ctx9T
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="binary" RangeMin="9" RangeMax="12">
+          AQAAAACAAABEAAAADgAAAA==eJzj4aEMcAIBAG4eAyU=
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

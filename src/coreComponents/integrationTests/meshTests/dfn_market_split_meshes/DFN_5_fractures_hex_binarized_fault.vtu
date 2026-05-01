@@ -14,28 +14,28 @@
             </Value>
           </InformationKey>
         </DataArray>
-        <DataArray type="Int64" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAACwBgAAOgAAAA==eJxjYKAOYMRBU2oeLvOpZR65gNrmkQuo7Q9666eWOdQO/9F0Rl17B1o/tcwZaemM3uU6IRoAebAAKQ==
+        <DataArray type="UInt8" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADWAAAAJQAAAA==eJxjYIACRkZGGIsBxgSyGNBZcAHsNKYAA80NQ3U6CAAADzYAKQ==
         </DataArray>
-        <DataArray type="Int64" Name="f2_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAACwBgAAIwAAAA==eJxjYBiagJFCeriC0XChLhgNT+xgNFyoC0bDkzgAAJKQACk=
+        <DataArray type="UInt8" Name="f2_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADWAAAAFwAAAA==eJxjYMAKGKEAuyyxSgbIMAYGABJSACk=
         </DataArray>
-        <DataArray type="Int64" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAACwBgAALwAAAA==eJxjZIAARgppXIBScwmZTykY7O4bamA0PLGD0XChLhgNT+yAXuEyUOEPAAinAEk=
+        <DataArray type="UInt8" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADWAAAAHgAAAA==eJxjZIQCBgYGRiQ2DGATww6IUEk7w9DUAwAhEwBJ
         </DataArray>
-        <DataArray type="Int64" Name="f4_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAACwBgAAHgAAAA==eJxjYBgF1ASMI5xmIFLdYKdHwSgYBYMPAAAC3wA5
+        <DataArray type="UInt8" Name="f4_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADWAAAAFQAAAA==eJxjYCAWMBIAOBUQbQP1AAAgWgA5
         </DataArray>
-        <DataArray type="Int64" Name="f5_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAACwBgAAHQAAAA==eJxjYBgFo2AUDDXAOMJpBiLVDXZ6FJAGAHwQADk=
+        <DataArray type="UInt8" Name="f5_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADWAAAAEwAAAA==eJxjYBgQwEgA4FRAnPEAD4IAOQ==
         </DataArray>
         <DataArray type="Int64" IdType="1" Name="GLOBAL_IDS_POINTS" format="binary" RangeMin="0" RangeMax="213">
           AQAAAACAAACwBgAAcwEAAA==eJwtxddCCAAAAMCEsho2ZZS9d8jKyp6hbNnZm6Jkhuy9srfskC0ykozE/3jo7uUCAspVcKArupIrO8jBruKqrubqruEQhzrM4a7pWq7tOq7req7vBm7oCEe6kRu7iZs6ytFu5uZu4ZZu5dZu47Zu5/bu4I7u5M7u4q7u5u7u4Rj3dC/3dqz7uK/7ub8HOM4DPciDPcRDHe9hHu4RHulRHu0xHutxHu8JnugET/JkT3GikzzV0zzdMzzTszzbc5zsuZ7n+V7ghV7kxU7xEi/1Mi/3Cq/0Kq/2Gq/1Oq/3Bm/0Jqc6zZu9xenO8FZnepu3e4d3epd3O8t7vNf7nO39PuCDPuTDPuKjPubjPuGTPuXTPuOzPufzzvEFX/QlX/YVX/U1X/cN3/Qt3/Yd33Wu7/m+H/ihH/mxnzjPT/3Mz53vF37pV37tN37rd37vAn/wRxf6kz/7i7+6yN9c7O8u8Q//9C//dqn/uMx//c//AXSxWQg=
         </DataArray>
       </PointData>
       <CellData GlobalIds="GLOBAL_IDS_CELLS">
-        <DataArray type="Int64" Name="attribute" format="binary" RangeMin="0" RangeMax="0">
-          AQAAAACAAAAgBgAAFQAAAA==eJxjYBgFo2AUjIJRMAowAQAGIAAB
+        <DataArray type="UInt8" Name="attribute" format="binary" RangeMin="0" RangeMax="0">
+          AQAAAACAAADEAAAADAAAAA==eJxjYBj6AAAAxAAB
         </DataArray>
         <DataArray type="Int32" Name="fault_id" format="binary" RangeMin="1" RangeMax="5">
           AQAAAACAAAAQAwAAGwAAAA==eJxjZGBgYKQjZqIzZh7mmGWIYNYhggHuwgJ3

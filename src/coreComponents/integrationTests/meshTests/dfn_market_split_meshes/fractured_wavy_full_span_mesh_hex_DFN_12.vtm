@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64">
+  <vtkMultiBlockDataSet>
+    <DataSet index="0" name="main" file="fractured_wavy_full_span_mesh_hex_DFN_12_main.vtu"/>
+    <DataSet index="1" name="Fault" file="fractured_wavy_full_span_mesh_hex_DFN_12_fault.vtu"/>
+  </vtkMultiBlockDataSet>
+</VTKFile>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <VTKFile type="vtkMultiBlockDataSet" version="1.0" byte_order="LittleEndian" header_type="UInt64">
   <vtkMultiBlockDataSet>
-    <DataSet index="0" name="main" file="DFN_5_fractures_hex_binarized_main.vtu"/>
-    <DataSet index="1" name="Fault" file="DFN_5_fractures_hex_binarized_fault.vtu"/>
+    <DataSet index="0" name="main" file="fractured_wavy_mesh_tet_DFN_13_main.vtu"/>
+    <DataSet index="1" name="Fault" file="fractured_wavy_mesh_tet_DFN_13_fault.vtu"/>
   </vtkMultiBlockDataSet>
 </VTKFile>
