@@ -71,12 +71,14 @@ protected:
   <Mesh>
     <VTKMesh name="mesh1" checkEulerCharacteristic="1" useGlobalIds="1"
              file=")xml" << meshFile << R"xml("
-             faceBlocks="{ )xml" << faceBlockName << R"xml( }"/>
+             faceBlocks="{ )xml" << faceBlockName <<
+    R"xml( }"/>
   </Mesh>
   <ElementRegions>
     <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ emptyConstitutive }"/>
     <SurfaceElementRegion name=")xml" << faceBlockName << R"xml(" defaultAperture="1.0e-4"
-                          faceBlock=")xml" << faceBlockName << R"xml("
+                          faceBlock=")xml" << faceBlockName <<
+    R"xml("
                           materialList="{ emptyConstitutive }"/>
   </ElementRegions>
   <Constitutive>
@@ -188,10 +190,71 @@ INSTANTIATE_TEST_SUITE_P(
   SplitMeshCases,
   SplitMeshTest,
   ::testing::Values(
-    //                   test name              mesh file (vtm)                          faceBlock   surf-elems  χ
-    std::make_tuple( "DFN_5_fracs_hex", "DFN_5_fractures_hex_binarized.vtm", "Fault",   localIndex( 196 ), integer( 2 ) )
-  )
-);
+    //                   test name              mesh file (vtm)                              faceBlock surf-elems         χ
+    std::make_tuple( "DFN_5_fracs_hex", "DFN_5_fractures_hex_binarized.vtm", "Fault", localIndex( 196 ), integer( 2 ) ),
+    std::make_tuple( "DFN_5_fracs_tet", "DFN_5_fractures_tet_binarized.vtm", "Fault", localIndex( 382 ), integer( 2 ) ),
+    std::make_tuple( "full_span_hex_1", "fractured_full_span_mesh_hex_DFN_1.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "full_span_hex_2", "fractured_full_span_mesh_hex_DFN_2.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "full_span_hex_3", "fractured_full_span_mesh_hex_DFN_3.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "full_span_hex_12", "fractured_full_span_mesh_hex_DFN_12.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "full_span_hex_13", "fractured_full_span_mesh_hex_DFN_13.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "full_span_hex_23", "fractured_full_span_mesh_hex_DFN_23.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "full_span_hex_123", "fractured_full_span_mesh_hex_DFN_123.vtm", "Fault", localIndex( 12 ), integer( 8 ) ),
+    std::make_tuple( "full_span_tet_1", "fractured_full_span_mesh_tet_DFN_1.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "full_span_tet_2", "fractured_full_span_mesh_tet_DFN_2.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "full_span_tet_3", "fractured_full_span_mesh_tet_DFN_3.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "full_span_tet_12", "fractured_full_span_mesh_tet_DFN_12.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "full_span_tet_13", "fractured_full_span_mesh_tet_DFN_13.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "full_span_tet_23", "fractured_full_span_mesh_tet_DFN_23.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "full_span_tet_123", "fractured_full_span_mesh_tet_DFN_123.vtm", "Fault", localIndex( 168 ), integer( 8 ) ),
+    std::make_tuple( "mesh_hex_1", "fractured_mesh_hex_DFN_1.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_2", "fractured_mesh_hex_DFN_2.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_3", "fractured_mesh_hex_DFN_3.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_12", "fractured_mesh_hex_DFN_12.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_13", "fractured_mesh_hex_DFN_13.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_23", "fractured_mesh_hex_DFN_23.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "mesh_hex_123", "fractured_mesh_hex_DFN_123.vtm", "Fault", localIndex( 12 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_1", "fractured_mesh_tet_DFN_1.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_2", "fractured_mesh_tet_DFN_2.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_3", "fractured_mesh_tet_DFN_3.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_12", "fractured_mesh_tet_DFN_12.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_13", "fractured_mesh_tet_DFN_13.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_23", "fractured_mesh_tet_DFN_23.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "mesh_tet_123", "fractured_mesh_tet_DFN_123.vtm", "Fault", localIndex( 48 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_hex_1", "fractured_wavy_full_span_mesh_hex_DFN_1.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_hex_2", "fractured_wavy_full_span_mesh_hex_DFN_2.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_hex_3", "fractured_wavy_full_span_mesh_hex_DFN_3.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_hex_12", "fractured_wavy_full_span_mesh_hex_DFN_12.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_hex_13", "fractured_wavy_full_span_mesh_hex_DFN_13.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_hex_23", "fractured_wavy_full_span_mesh_hex_DFN_23.vtm", "Fault", localIndex( 8 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_hex_123", "fractured_wavy_full_span_mesh_hex_DFN_123.vtm", "Fault", localIndex( 12 ), integer( 8 ) ),
+    std::make_tuple( "wavy_full_span_tet_1", "fractured_wavy_full_span_mesh_tet_DFN_1.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_tet_2", "fractured_wavy_full_span_mesh_tet_DFN_2.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_tet_3", "fractured_wavy_full_span_mesh_tet_DFN_3.vtm", "Fault", localIndex( 44 ), integer( 2 ) ),
+    std::make_tuple( "wavy_full_span_tet_12", "fractured_wavy_full_span_mesh_tet_DFN_12.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_tet_13", "fractured_wavy_full_span_mesh_tet_DFN_13.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_tet_23", "fractured_wavy_full_span_mesh_tet_DFN_23.vtm", "Fault", localIndex( 88 ), integer( 4 ) ),
+    std::make_tuple( "wavy_full_span_tet_123", "fractured_wavy_full_span_mesh_tet_DFN_123.vtm", "Fault", localIndex( 168 ), integer( 8 ) ),
+    std::make_tuple( "wavy_hex_1", "fractured_wavy_mesh_hex_DFN_1.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_2", "fractured_wavy_mesh_hex_DFN_2.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_3", "fractured_wavy_mesh_hex_DFN_3.vtm", "Fault", localIndex( 4 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_12", "fractured_wavy_mesh_hex_DFN_12.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_13", "fractured_wavy_mesh_hex_DFN_13.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_23", "fractured_wavy_mesh_hex_DFN_23.vtm", "Fault", localIndex( 8 ), integer( 2 ) ),
+    std::make_tuple( "wavy_hex_123", "fractured_wavy_mesh_hex_DFN_123.vtm", "Fault", localIndex( 12 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_1", "fractured_wavy_mesh_tet_DFN_1.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_2", "fractured_wavy_mesh_tet_DFN_2.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_3", "fractured_wavy_mesh_tet_DFN_3.vtm", "Fault", localIndex( 14 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_12", "fractured_wavy_mesh_tet_DFN_12.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_13", "fractured_wavy_mesh_tet_DFN_13.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_23", "fractured_wavy_mesh_tet_DFN_23.vtm", "Fault", localIndex( 32 ), integer( 2 ) ),
+    std::make_tuple( "wavy_tet_123", "fractured_wavy_mesh_tet_DFN_123.vtm", "Fault", localIndex( 48 ), integer( 2 ) ),
+    std::make_tuple( "t_shaped_wavy_hex", "t_shaped_wavy_mesh_hex_DFN_t1t2.vtm", "Fault", localIndex( 6 ), integer( 3 ) ),
+    std::make_tuple( "t_shaped_wavy_tet", "t_shaped_wavy_mesh_tet_DFN_t1t2.vtm", "Fault", localIndex( 66 ), integer( 3 ) ),
+    std::make_tuple( "y_shaped_wavy_hex", "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtm", "Fault", localIndex( 6 ), integer( 3 ) ),
+    std::make_tuple( "y_shaped_wavy_tet", "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtm", "Fault", localIndex( 66 ), integer( 3 ) )
+    )
+  );
 // clang-format on
 
 int main( int argc, char * argv[] )
