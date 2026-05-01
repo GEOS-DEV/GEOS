@@ -308,7 +308,7 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu 24.04 - gcc 13 (docs) debug
+          - name: Ubuntu 24.04 - gcc 13 debug
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             CMAKE_BUILD_TYPE: Debug
             DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
@@ -323,7 +323,7 @@ jobs:
 
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu 24.04 - gcc 13 (docs)
+          - name: Ubuntu 24.04 - gcc 13
             CMAKE_BUILD_TYPE: Release
             DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
             GCP_BUCKET: geosx/ubuntu24.04-gcc13
