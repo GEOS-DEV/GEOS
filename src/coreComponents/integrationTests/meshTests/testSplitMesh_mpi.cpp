@@ -82,14 +82,6 @@ protected:
   <Constitutive>
     <NullModel name="emptyConstitutive"/>
   </Constitutive>
-  <Outputs>
-    <VTK name="vtkOutputM" outputRegionType="cell"/>
-    <VTK name="vtkOutputF" outputRegionType="surface"/>
-  </Outputs>
-  <Events minTime="0.0" maxTime="0.1">
-    <SoloEvent name="outputsM" target="/Outputs/vtkOutputM"/>
-    <SoloEvent name="outputsF" target="/Outputs/vtkOutputF"/>
-  </Events>
 </Problem>
 )xml";
     return oss.str();
