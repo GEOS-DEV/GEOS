@@ -11,20 +11,11 @@
       useTotalMassEquation="0"
       targetRegions="{ region }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        maxTimeStepCuts="100"
-        maxSubSteps="1000"
-        lineSearchAction="Attempt"
-        lineSearchStartingIteration="5"
-        timeStepIncreaseIterLimit="0.3"
-        timeStepDecreaseIterLimit="0.6"
-        newtonMaxIter="15" />
+        newtonTol="1.0e-5"
+        newtonMaxIter="10"
+        lineSearchAction="None"/>
       <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="mgr"
-        krylovTol="1e-5"
-        krylovMaxIter="100"
-        logLevel="1" />
+        directParallel="0"/>
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -35,9 +26,9 @@
       xCoords="{ 0, 30 }"
       yCoords="{ 0, 30 }"
       zCoords="{ 0, 30 }"
-      nx="{ 100 }"
-      ny="{ 100 }"
-      nz="{ 100}"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
       cellBlockNames="{ cellBlock }"/>
   </Mesh>
 
@@ -89,14 +80,24 @@
     maxTime="1e6">
     <PeriodicEvent
       name="solverApplications"
-      forceDt="1e4"
+      forceDt="5e4"
       target="/Solvers/compflow"/>
 
     <PeriodicEvent
-      name="outputs"
-      timeFrequency="1e5"
-      target="/Outputs/siloOutput"/>
+      name="statistics"
+      forceDt="1e5"
+      target="/Tasks/compflowStatistics"/>
 
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="5e5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="5e5"
+      targetExactTimestep="0"
+      target="/Outputs/sidreRestart"/>
   </Events>
 
   <NumericalMethods>
@@ -310,9 +311,6 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="co2_flux_3d"/>
-
-    <Silo
-      name="siloOutput"/>
 
     <Restart
       name="sidreRestart"/>

@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./class09_pb3_hystRelperm_iterative_base.xml"/>
+    <File name="./class09_pb3_hystRelperm_direct_base.xml"/>
   </Included>
 
   <!-- SPHINX_MESH -->
@@ -13,9 +13,9 @@
       xCoords="{ 5240, 5640 }"
       yCoords="{ 3100, 3500 }"
       zCoords="{ -3000, -2950 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 5 }"
       cellBlockNames="{ 1_hexahedra }">
       <InternalWell
         name="wellInjector1"
@@ -59,7 +59,7 @@
   </Tasks>
 
   <Outputs>
-    <Silo
+    <VTK
       name="simpleReservoirViz"/>
     <Restart
       name="restartOutput"/>
