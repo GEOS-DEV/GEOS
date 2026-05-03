@@ -99,6 +99,107 @@ function print_phase_summary () {
     done
 }
 
+function run_diagnostic_command () {
+    echo
+    echo ">>> $*"
+    "$@" || true
+}
+
+function print_diagnostic_file () {
+    local file="$1"
+
+    if [[ -r "${file}" ]]; then
+        echo
+        echo ">>> ${file}"
+        cat "${file}" || true
+    fi
+}
+
+function print_ldd_diagnostics () {
+    local binary="$1"
+
+    if [[ -e "${binary}" ]]; then
+        echo
+        echo ">>> ldd ${binary}"
+        ldd "${binary}" || true
+    else
+        echo
+        echo ">>> ldd ${binary}"
+        echo "File not found."
+    fi
+}
+
+function print_selected_environment () {
+    echo
+    echo ">>> Selected environment variables"
+    env | sort | grep -E "^(ATS_|BLAS_|CMAKE_|CUDA|ENABLE_|GEOS|GEOSX|GOMP_|HIP|HOSTNAME=|KMP_|LAPACK_|LD_LIBRARY_PATH=|MKL_|MPI|MPICH|OMPI|OMP_|OPENBLAS_|PATH=|PMI|PMIX|ROCR|ROCM|UCX_)" || true
+}
+
+function print_runtime_diagnostics () {
+    echo
+    echo "===== Runtime diagnostics ====="
+    run_diagnostic_command date -u
+    run_diagnostic_command hostname
+    run_diagnostic_command id
+    run_diagnostic_command pwd
+    run_diagnostic_command uname -a
+    run_diagnostic_command nproc
+    run_diagnostic_command nproc --all
+    run_diagnostic_command lscpu
+    run_diagnostic_command free -h
+    run_diagnostic_command ulimit -a
+    run_diagnostic_command mpirun --version
+    run_diagnostic_command cmake --version
+    run_diagnostic_command ctest --version
+    run_diagnostic_command "${CMAKE_C_COMPILER:-cc}" --version
+    run_diagnostic_command "${CMAKE_CXX_COMPILER:-c++}" --version
+    print_selected_environment
+    run_diagnostic_command env OMP_DISPLAY_ENV=TRUE "${GEOS_BUILD_DIR}/tests/testExternalSolvers" --gtest_filter=NoSuchTest
+
+    print_diagnostic_file /proc/self/status
+    print_diagnostic_file /proc/self/cgroup
+    print_diagnostic_file /sys/fs/cgroup/cpu.max
+    print_diagnostic_file /sys/fs/cgroup/cpu.stat
+    print_diagnostic_file /sys/fs/cgroup/cpuset.cpus
+    print_diagnostic_file /sys/fs/cgroup/cpuset.cpus.effective
+    print_diagnostic_file /sys/fs/cgroup/memory.max
+    print_diagnostic_file /sys/fs/cgroup/memory.current
+
+    if [[ -r CMakeCache.txt ]]; then
+        echo
+        echo ">>> Selected CMakeCache entries"
+        grep -E "^(CMAKE_(C|CXX|Fortran)_COMPILER|CMAKE_(C|CXX)_FLAGS|ENABLE_(OPENMP|HYPRE|TRILINOS|SUPERLU_DIST)|GEOS_(LA_INTERFACE|ENABLE_BOUNDS_CHECK)|BLAS_LIBRARIES|LAPACK_LIBRARIES|SUPERLU_DIST_DIR|HYPRE_DIR|VTK_DIR|MPI|OpenMP)" CMakeCache.txt || true
+    fi
+
+    print_ldd_diagnostics "${GEOS_BUILD_DIR}/tests/testExternalSolvers"
+    print_ldd_diagnostics "${GEOS_BUILD_DIR}/bin/geosx"
+
+    local lib
+    for lib in "${GEOSX_TPL_DIR:-}"/llvm-*/superlu-dist-*/lib/libsuperlu_dist.so* \
+               "${GEOSX_TPL_DIR:-}"/gcc-*/superlu-dist-*/lib/libsuperlu_dist.so* \
+               "${GEOSX_TPL_DIR:-}"/llvm-*/hypre-*/lib/libHYPRE.so* \
+               "${GEOSX_TPL_DIR:-}"/gcc-*/hypre-*/lib/libHYPRE.so* \
+               "${GEOSX_TPL_DIR:-}"/llvm-*/vtk-*/lib/libvtkFiltersParallelDIY2*.so* \
+               "${GEOSX_TPL_DIR:-}"/gcc-*/vtk-*/lib/libvtkFiltersParallelDIY2*.so* \
+               /lib/x86_64-linux-gnu/libomp.so* \
+               /lib/x86_64-linux-gnu/libgomp.so* \
+               /usr/lib/x86_64-linux-gnu/libomp.so* \
+               /usr/lib/x86_64-linux-gnu/libgomp.so* \
+               /usr/lib64/libopenblas.so* \
+               /usr/lib/x86_64-linux-gnu/libopenblas.so*
+    do
+        if [[ -e "${lib}" ]]; then
+            print_ldd_diagnostics "${lib}"
+        fi
+    done
+
+    echo
+    echo ">>> ctest inventory"
+    ctest -N || true
+    echo "===== End runtime diagnostics ====="
+    echo
+}
+
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -415,11 +516,12 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  print_runtime_diagnostics
   phase_start "Unit tests"
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure -VV -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure -VV -E "testUncrustifyCheck|testDoxygenCheck"
   fi
   phase_finish 0
 fi
