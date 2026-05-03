@@ -840,6 +840,17 @@ jobs:
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
 
+    - name: Show sccache stats
+      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
+      run: |
+        sccache_runtime_dir="${{ steps.sccache_config.outputs.sccache_runtime_dir }}"
+        sccache_stats_file="${GITHUB_WORKSPACE}/${sccache_runtime_dir}/stats.txt"
+        if [[ -n "${sccache_runtime_dir}" && -f "${sccache_stats_file}" ]]; then
+          cat "${sccache_stats_file}"
+        else
+          echo "No in-container sccache stats file was captured."
+        fi
+
     - name: 'Cleanup build folder'
       if: always()
       run: |
@@ -849,15 +860,3 @@ jobs:
           alpine:3.20 \
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
 
-    - name: Show sccache stats
-      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
-      run: |
-        sccache_env_file="${{ steps.sccache_config.outputs.sccache_env_file }}"
-        if [[ -n "${sccache_env_file}" && -f "${GITHUB_WORKSPACE}/${sccache_env_file}" ]]; then
-          while IFS='=' read -r key value || [[ -n "${key}" ]]; do
-            [[ -z "${key}" ]] && continue
-            export "${key}=${value}"
-          done < "${GITHUB_WORKSPACE}/${sccache_env_file}"
-        fi
-
-        command -v sccache >/dev/null && sccache --show-stats || true
