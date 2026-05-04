@@ -39,7 +39,7 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid thermal expansion coefficient. Unit: 1/K" );
 
-  registerWrapper( viewKeyStruct::viscosityExpansivityString(), &m_viscosityExpansivity ).
+  registerWrapper( viewKeyStruct::temperatureViscosityCoefficient(), &m_temperatureViscosityCoefficient ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K" );
@@ -86,7 +86,7 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   };
 
   checkNonnegative( m_thermalExpansionCoeff, viewKeyStruct::thermalExpansionCoeffString() );
-  checkNonnegative( m_viscosityExpansivity, viewKeyStruct::viscosityExpansivityString() );
+  checkNonnegative( m_temperatureViscosityCoefficient, viewKeyStruct::temperatureViscosityCoefficient() );
   checkNonnegative( m_specificHeatCapacity, viewKeyStruct::specificHeatCapacityString() );
   checkNonnegative( m_referenceInternalEnergy, viewKeyStruct::referenceInternalEnergyString() );
 
@@ -105,7 +105,7 @@ ThermalCompressibleSinglePhaseFluid::KernelWrapper
 ThermalCompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceTemperature, m_referenceDensity, m_compressibility, -m_thermalExpansionCoeff ),
-                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceTemperature, m_referenceViscosity, m_viscosibility, -m_viscosityExpansivity ),
+                        KernelWrapper::ViscRelationType( m_referencePressure, m_referenceTemperature, m_referenceViscosity, m_viscosibility, -m_temperatureViscosityCoefficient ),
                         KernelWrapper::IntEnergyRelationType( m_referenceTemperature, m_referenceInternalEnergy, m_specificHeatCapacity/m_referenceInternalEnergy ),
                         m_density.value,
                         m_density.derivs,

@@ -238,7 +238,7 @@ public:
   struct viewKeyStruct : public CompressibleSinglePhaseFluid::viewKeyStruct
   {
     static constexpr char const * thermalExpansionCoeffString() { return "thermalExpansionCoeff"; }
-    static constexpr char const * viscosityExpansivityString() { return "viscosityExpansivity"; }
+    static constexpr char const * temperatureViscosityCoefficient() { return "temperatureViscosityCoefficient"; }
     static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
