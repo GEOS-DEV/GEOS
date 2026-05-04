@@ -42,7 +42,7 @@ jobs:
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -94,7 +94,7 @@ jobs:
       CI_REPOSITORY_OWNER: ${{ github.repository_owner }}
     steps:
     - name: Checkout CI config
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         sparse-checkout: |
           .github/ci/orgs
@@ -238,11 +238,15 @@ jobs:
     steps:
     - name: If this is a PR, Check that it is assigned
       env:
-        PR_JSON: ${{ toJson(github.event.pull_request) }}
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
 
         if [[ "${{ github.event_name }}" != 'pull_request' ]]; then exit 0 ; fi
+        PR_JSON=$(curl --fail --silent --show-error \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
         NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${PR_JSON}")
         echo "There are ${NUM_ASSIGNEES} assignees on this PR."
         if [[ "${NUM_ASSIGNEES}" == 0 ]]; then exit 1 ; fi
@@ -256,7 +260,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -460,7 +464,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         submodules: false
         lfs: false
