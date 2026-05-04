@@ -22,7 +22,7 @@
  * Euler characteristic (χ = V-E+F-C).
  */
 
-#include "testSplitMeshCommon.hpp"
+#include "testSplitMeshFixture.hpp"
 
 CommandLineOptions g_commandLineOptions;
 
@@ -72,13 +72,13 @@ protected:
     <VTKMesh name="mesh1" checkEulerCharacteristic="1" useGlobalIds="1"
              file=")xml" << meshFile << R"xml("
              faceBlocks="{ )xml" << faceBlockName <<
-      R"xml( }"/>
+    R"xml( }"/>
   </Mesh>
   <ElementRegions>
     <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ emptyConstitutive }"/>
     <SurfaceElementRegion name=")xml" << faceBlockName << R"xml(" defaultAperture="1.0e-4"
                           faceBlock=")xml" << faceBlockName <<
-      R"xml("
+    R"xml("
                           materialList="{ emptyConstitutive }"/>
   </ElementRegions>
   <Constitutive>

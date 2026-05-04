@@ -22,7 +22,7 @@
  * with various partitioning configurations.
  */
 
-#include "testSurfaceGeneratorCommon.hpp"
+#include "testSurfaceGeneratorFixture.hpp"
 
 // Global flag to control debug printing (set to false to disable verbose output)
 CommandLineOptions g_commandLineOptions;
