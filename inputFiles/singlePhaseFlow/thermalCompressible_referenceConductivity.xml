@@ -1,53 +1,21 @@
 <?xml version="1.0"?>
 <Problem>
   <Solvers>
-    <SinglePhaseReservoir
-      name="RESERVOIR.SOLVER"
-      flowSolverName="FLOW.SOLVER"
-      wellSolverName="WELL.SOLVER"
-      logLevel="1"
-      initialDt="86400"
-      targetRegions="{ RESERVOIR, WELL }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        maxAllowedResidualNorm="1e12"
-        newtonMaxIter="25" />
-      <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="mgr"
-        krylovTol="1e-4"
-        krylovAdaptiveTol="1"
-        krylovWeakestTol="1e-4"
-        logLevel="1" />
-    </SinglePhaseReservoir>
-
     <SinglePhaseFVM
       name="FLOW.SOLVER"
       discretization="FLUID.TPFA"
       targetRegions="{ RESERVOIR }"
       temperature="380.15"
       isThermal="1"
-      logLevel="2" />
-    <SinglePhaseWell
-      name="WELL.SOLVER"
-      logLevel="1"
-      isThermal="1"
-      targetRegions="{ WELL }">
-      <WellControls
-        name="WELL.CONTROL"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="-200"
-        useSurfaceConditions="1"
-        surfacePressure="101325.0"
-        surfaceTemperature="283.15"
-        injectionTemperature="293.15"
-        initialPressureCoefficient="0"
-        injectionStream="{1.0}"
-        targetBHP="1e10"
-        enableCrossflow="0"
-        targetTotalRateTableName="RATE" />
-    </SinglePhaseWell>
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        maxAllowedResidualNorm="1e12"
+        newtonMaxIter="25" />
+      <LinearSolverParameters
+        directParallel="0"
+        logLevel="1" />
+    </SinglePhaseFVM>
   </Solvers>
 
   <NumericalMethods>
@@ -64,21 +32,6 @@
       fieldNamesInGEOS="{ THERMAL.COND_referenceThermalConductivity }"
       fieldsToImport="{ CONDUCTIVITY }"
       logLevel="5">
-      <InternalWell
-        name="well.INJECTOR"
-        wellRegionName="WELL"
-        wellControlsName="WELL.CONTROL"
-        polylineNodeCoords="{
-          { 6440.37, 0.0, -200 },
-          { 6440.37, 0.0, -300 }
-        }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.19"
-        numElementsPerSegment="1">
-        <Perforation
-          name="WELL.PERF.1"
-          distanceFromHead="75.0" />
-      </InternalWell>
     </VTKMesh>
   </Mesh>
 
@@ -87,9 +40,14 @@
       name="RESERVOIR"
       cellBlocks="{ hexahedra }"
       materialList="{ FLUID, ROCK, THERMAL.COND  }" />
-    <WellElementRegion
-      name="WELL" materialList="{ FLUID }" />
   </ElementRegions>
+
+  <Geometry>
+    <Box
+      name="SOURCE"
+      xMin="{ 8699, -401, -301 }"
+      xMax="{ 9281,  401, -199 }" />
+  </Geometry>
 
   <Constitutive>
     <ThermalCompressibleSinglePhaseFluid
@@ -155,6 +113,19 @@
       fieldName="temperature"
       scale="380.15"
       initialCondition="1" />
+    <SourceFlux
+      name="INJECTOR"
+      functionName="RATE"
+      objectPath="ElementRegions/RESERVOIR"
+      setNames="{ SOURCE }" />
+    <FieldSpecification
+      name="SOURCE.TEMPERATURE"
+      setNames="{ SOURCE }"
+      objectPath="ElementRegions/RESERVOIR"
+      fieldName="temperature"
+      functionName="TEMPERATURE"
+      scale="1.0"
+      initialCondition="0" />
   </FieldSpecifications>
 
   <Functions>
@@ -162,9 +133,14 @@
       name="RATE"
       interpolation="lower"
       inputVarNames="{ time }"
-      coordinates="{ 0.0, 2592000, 86400000}"
+      coordinates="{ 0.0, 2592000, 86400000 }"
       values="{ 0.0, 2.911949431, 2.911949431 }" />
-
+    <TableFunction
+      name="TEMPERATURE"
+      interpolation="linear"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 2592000, 86400000 }"
+      values="{ 380.15, 320.15, 300.15 }" />
   </Functions>
 
   <Tasks>
@@ -185,7 +161,7 @@
   <Events maxTime="9504000">
     <PeriodicEvent
       name="SOLVER.APPLICATION"
-      target="/Solvers/RESERVOIR.SOLVER"
+      target="/Solvers/FLOW.SOLVER"
       maxEventDt="864000" />
     <PeriodicEvent
       name="STATISTICS"
