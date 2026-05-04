@@ -103,8 +103,7 @@ bool SinglePhaseStatistics::execute( real64 const time_n,
                                                                           MeshLevel & mesh,
                                                                           string_array const & regionNames )
   {
-    // current time is time_n + dt
-    computeRegionStatistics( time_n + dt, mesh, regionNames );
+    computeRegionStatistics( time_n, mesh, regionNames );
   } );
   return false;
 }

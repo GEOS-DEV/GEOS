@@ -201,15 +201,13 @@ bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
   {
     if( m_computeRegionStatistics )
     {
-      // current time is time_n + dt
-      computeRegionStatistics( time_n + dt, mesh, regionNames );
+      computeRegionStatistics( time_n, mesh, regionNames );
     }
   } );
 
   if( m_computeCFLNumbers )
   {
-    // current time is time_n + dt
-    computeCFLNumbers( time_n + dt, dt, domain );
+    computeCFLNumbers( time_n, dt, domain );
   }
 
   return false;

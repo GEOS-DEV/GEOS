@@ -88,8 +88,7 @@ bool SolidMechanicsStatistics::execute( real64 const time_n,
                                                                           MeshLevel & mesh,
                                                                           string_array const & )
   {
-    // current time is time_n + dt
-    computeNodeStatistics( mesh, time_n + dt );
+    computeNodeStatistics( mesh, time_n );
   } );
   return false;
 }
