@@ -1293,8 +1293,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
 
       // bring everything back to host, capture the scalars by reference
-      forAll< serialPolicy >( 1, [&useSurfaceConditions,
-                                  &currentBHP,
+      forAll< serialPolicy >( 1, [&currentBHP,
                                   connRate,
                                   &currentTotalVolRate,
                                   &iwelemRef,
