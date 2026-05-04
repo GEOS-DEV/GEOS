@@ -1881,11 +1881,35 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
   int const numParts = LvArray::integerConversion< int >( boundingBoxes.size() );
   int const thisRank = MpiWrapper::commRank();
 
-  // Inflate boxes to detect intersections more reliably
-  double constexpr inflateFactor = 1.01;
+  // Inflate boxes to detect intersections more reliably.
+  //
+  // Pure relative scaling (ScaleAboutCenter) fails for small or thin partitions in Release builds:
+  // two face-adjacent partitions share an exact planar boundary, so their bounding boxes only
+  // *touch* rather than overlap. After scaling by 1% about the center, the expanded extents of
+  // one box may still not penetrate the other in that dimension if the box is very thin relative
+  // to floating-point rounding under -O2/-O3.
+  //
+  // Fix: compute a per-box absolute inflation in each dimension as
+  //   max( relative_expand, absoluteMinExpand )
+  // where absoluteMinExpand is a small fixed distance that guarantees overlap even for
+  // degenerate (zero-length) extents along a split plane.
+  double constexpr relativeExpandFactor = 0.01; // 1% of the box length in each dimension
+  double constexpr absoluteMinExpand    = 1.0e-6; // absolute fallback (mesh units)
+
   for( vtkBoundingBox & box : boundingBoxes )
   {
-    box.ScaleAboutCenter( inflateFactor );
+    double const * minPt = box.GetMinPoint();
+    double const * maxPt = box.GetMaxPoint();
+    double newMin[3], newMax[3];
+    for( int d = 0; d < 3; ++d )
+    {
+      double const half = 0.5 * ( maxPt[d] - minPt[d] );
+      double const expand = std::max( relativeExpandFactor * half, absoluteMinExpand );
+      newMin[d] = minPt[d] - expand;
+      newMax[d] = maxPt[d] + expand;
+    }
+    box.SetMinPoint( newMin );
+    box.SetMaxPoint( newMax );
   }
 
   stdVector< int > neighbors;
@@ -3385,14 +3409,86 @@ string buildCellBlockName( ElementType const type, int const regionId )
 
 } // namespace vtk
 
+namespace
+{
 
 /**
- * @brief Build node sets
+ * @brief Extract node indices from a binary mask array using parallel scan
  *
- * @param[in] logLevel the log level
- * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @tparam ValueType The underlying data type (vtkTypeUInt8, vtkTypeUInt16, vtkTypeUInt32, vtkTypeUInt64)
+ * @param[in] rawData Pointer to the raw mask array data (values should be 0 or 1)
+ * @param[in] numPoints Total number of points in the mesh
+ * @param[out] targetNodeset The sorted array to populate with node indices
+ *
+ * @note Input array should contain only 0 (not in set) or 1 (in set). Values other than
+ *       1 will be treated as 0.
+ */
+template< typename ValueType >
+void extractNodesetFromMask( ValueType const * rawData,
+                             localIndex const numPoints,
+                             SortedArray< localIndex > & targetNodeset )
+{
+  // Early exit for empty mesh
+  if( numPoints == 0 )
+  {
+    return;
+  }
+
+  // Allocate temporary array for positions (initially stores flags)
+  array1d< localIndex > positions( numPoints );
+
+  // Step 1: Extract binary flags (0 or 1) from mask (parallel)
+  forAll< parallelHostPolicy >( numPoints, [rawData, &positions]( localIndex const j )
+  {
+    positions[j] = ( rawData[j] == 1 );  // Expect exactly 1 for membership
+  } );
+
+  // Save last flag value before scan overwrites it
+  localIndex const lastFlag = positions[numPoints - 1];
+
+  // Step 2: In-place exclusive scan to compute write positions (parallel)
+  RAJA::exclusive_scan_inplace< parallelHostPolicy >(
+    RAJA::make_span( positions.data(), numPoints ),
+    RAJA::operators::plus< localIndex >{}
+    );
+
+  // Step 3: Compute total count from scan result
+  localIndex const lastPosition = positions[numPoints - 1];
+  localIndex const count = lastPosition + lastFlag;
+
+  if( count == 0 )
+  {
+    return;  // No nodes in this nodeset
+  }
+
+  // Step 4: Allocate exact-size output array
+  array1d< localIndex > nodeIndices( count );
+
+  // Step 5: Scatter flagged node indices to compacted array (parallel)
+  forAll< parallelHostPolicy >( numPoints, [rawData, &nodeIndices, &positions]( localIndex const j )
+  {
+    if( rawData[j] == 1 )
+    {
+      nodeIndices[ positions[j] ] = j;
+    }
+  } );
+
+  // Step 6: Insert into sorted nodeset container exploiting sortedness and uniqueness of nodeIndices
+  targetNodeset.insert( nodeIndices.begin(), nodeIndices.end() );
+}
+
+}
+
+/**
+ * @brief Build node sets from binary mask arrays
+ *
+ * @param[in] logLevel The log level
+ * @param[in] mesh The vtk grid that is loaded
  * @param[in] nodesetNames An array of the node sets names
  * @param[in] cellBlockManager The instance that stores the node sets.
+ *
+ * @note Nodeset arrays should be binary masks (0 or 1 values) stored as unsigned integers.
+ *       UInt8 is recommended for optimal memory usage.
  */
 void importNodesets( integer const logLevel,
                      vtkDataSet & mesh,
@@ -3402,23 +3498,45 @@ void importNodesets( integer const logLevel,
   auto & nodeSets = cellBlockManager.getNodeSets();
   localIndex const numPoints = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
 
-  for( size_t i=0; i < nodesetNames.size(); ++i )
+  for( size_t i = 0; i < nodesetNames.size(); ++i )
   {
-    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    " + nodesetNames[i] );
+    string const & nodesetName = nodesetNames[i];
 
-    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetNames[i].c_str() );
+    GEOS_LOG_RANK_0_IF( logLevel >= 2, "    Processing nodeset: " + nodesetName );
+
+    vtkAbstractArray * const curArray = mesh.GetPointData()->GetAbstractArray( nodesetName.c_str() );
+
     GEOS_THROW_IF( curArray == nullptr,
-                   GEOS_FMT( "Target nodeset '{}' not found in mesh", nodesetNames[i] ),
+                   GEOS_FMT( "Nodeset '{}' not found in mesh point data", nodesetName ),
                    InputError );
-    vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
-    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetNames[i] );
-    for( localIndex j=0; j < numPoints; ++j )
+    // Get the target nodeset container
+    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetName );
+
+    // Get array metadata
+    int const dataType = curArray->GetDataType();
+    string const dataTypeName = curArray->GetDataTypeAsString();
+
+    vtkDataArray * dataArray = vtkDataArray::FastDownCast( curArray );
+    void const * rawData = dataArray->GetVoidPointer( 0 );
+
+    // Dispatch based on data type
+    switch( dataType )
     {
-      if( nodesetMask.GetValue( j ) == 1 )
-      {
-        targetNodeset.insert( j );
-      }
+      case VTK_TYPE_UINT8:
+        extractNodesetFromMask( static_cast< vtkTypeUInt8 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT16:
+        extractNodesetFromMask( static_cast< vtkTypeUInt16 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT32:
+        extractNodesetFromMask( static_cast< vtkTypeUInt32 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      case VTK_TYPE_UINT64:
+        extractNodesetFromMask( static_cast< vtkTypeUInt64 const * >( rawData ), numPoints, targetNodeset );
+        break;
+      default:
+        GEOS_THROW( GEOS_FMT( "Nodeset '{}': unsupported type '{}' (use UInt8/16/32/64)", nodesetName, dataTypeName ), InputError );
     }
   }
 }
