@@ -50,7 +50,7 @@
 
 using namespace geos;
 
-constexpr real64 relative_tolerance_split = 1.0e-1; // Because MPa range is used
+constexpr real64 relative_tolerance = 1.0e-6; // Because MPa range is used
 
 extern CommandLineOptions g_commandLineOptions;
 
@@ -266,9 +266,10 @@ TEST_P( ConsistencySplitMeshTest, Run )
     auto const & faceNodes = faceManager.nodeList();
     auto const & nodePos = nodeManager.referencePosition();
 
-    // Split meshes are expected to have conforming fracture geometry, so use standard tolerance
-    real64 const shear_tolerance = relative_tolerance_split;
-    real64 const normal_tolerance = relative_tolerance_split;
+    // Wavy hex meshes have non-planar fracture geometry that introduces larger discretisation errors
+    bool const isWavyHexMesh = ( meshFileName.find( "wavy_mesh_hex" ) != std::string::npos );
+    real64 const shear_tolerance  = isWavyHexMesh ? 1.0e-1 : relative_tolerance;
+    real64 const normal_tolerance = isWavyHexMesh ? 1.0e-1 : relative_tolerance;
 
     fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
