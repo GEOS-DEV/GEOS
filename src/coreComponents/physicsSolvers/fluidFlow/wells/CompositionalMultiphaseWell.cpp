@@ -2214,7 +2214,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       columnNames.emplace_back( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ) ) );
       columnNames.emplace_back( GEOS_FMT( "dt [{}]", units::getSymbol( units::Unit::Time ) ) );
       columnNames.emplace_back( GEOS_FMT( "BHP [{}]", units::getSymbol( units::Unit::Pressure ) ) );
-      columnNames.emplace_back( GEOS_FMT( "Total rate [{}]", massUnit ) );
+      columnNames.emplace_back( GEOS_FMT( "Total rate [{}/s]", massUnit ) );
       columnNames.emplace_back( GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey ) );
       for( integer ip = 0; ip < numPhase; ++ip )
       {
