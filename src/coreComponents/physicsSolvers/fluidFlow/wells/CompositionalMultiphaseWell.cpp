@@ -2203,7 +2203,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       }
 
       string const wellControlsName = wellControls.getName();
-      // string const massUnit = m_useMass ? units::getSymbol( units::Unit::Mass ) : units::getSymbol( units::Unit::Mole );
       string const massUnit = m_useMass ? "kg" : "mol";
       integer const useSurfaceConditions = wellControls.useSurfaceConditions();
       string const conditionKey = useSurfaceConditions ? "surface" : "reservoir";
