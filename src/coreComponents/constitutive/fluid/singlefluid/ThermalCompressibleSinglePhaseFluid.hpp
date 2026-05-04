@@ -254,8 +254,8 @@ private:
   /// scalar fluid thermal expansion coefficient
   real64 m_thermalExpansionCoeff;
 
-  /// scalar fluid viscosity thermal expansion coefficient
-  real64 m_viscosityExpansivity;
+  /// scalar fluid temperature-viscosity coefficient
+  real64 m_temperatureViscosityCoefficient;
 
   /// scalar fluid volumetric heat capacity coefficient
   real64 m_specificHeatCapacity;
