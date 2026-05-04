@@ -379,6 +379,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
                             real64 const relTol, bool diag_check, std::string const & testName,
                             LAMBDA && assembleFunction )
 {
+  GEOS_UNUSED_VAR( testName );
   WellManager & wellSolver = *solver.wellSolver();
   CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.reservoirSolver() );
 
