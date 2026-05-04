@@ -238,11 +238,15 @@ jobs:
     steps:
     - name: If this is a PR, Check that it is assigned
       env:
-        PR_JSON: ${{ toJson(github.event.pull_request) }}
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
 
         if [[ "${{ github.event_name }}" != 'pull_request' ]]; then exit 0 ; fi
+        PR_JSON=$(curl --fail --silent --show-error \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
         NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${PR_JSON}")
         echo "There are ${NUM_ASSIGNEES} assignees on this PR."
         if [[ "${NUM_ASSIGNEES}" == 0 ]]; then exit 1 ; fi
