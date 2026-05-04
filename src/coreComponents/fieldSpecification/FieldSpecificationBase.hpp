@@ -686,8 +686,8 @@ public:
       localIndex const numComponents = m_scales.size();
       for( localIndex comp = 0; comp < numComponents; ++comp )
       {
-        string const & functionName = m_functionName.empty() ? string{}
-                                                             : m_functionNames[ comp ];
+        string const & functionName = m_functionNames.empty() ? string{}
+                                                              : m_functionNames[ comp ];
         lambda( comp, m_scales[ comp ], functionName );
       }
     }
