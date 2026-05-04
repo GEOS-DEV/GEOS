@@ -9,36 +9,14 @@ geos_decorate_link_dependencies( LIST decoratedDependencies
 # Mesh files needed by all tests (sourced from the canonical dfn_market directory)
 set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market )
 
-set( mesh_files
-     fractured_mesh_hex_DFN_1.vtu
-     fractured_mesh_hex_DFN_12.vtu
-     fractured_mesh_hex_DFN_123.vtu
-     fractured_mesh_tet_DFN_1.vtu
-     fractured_mesh_tet_DFN_123.vtu
-     fractured_wavy_mesh_hex_DFN_1.vtu
-     fractured_wavy_mesh_hex_DFN_123.vtu
-     fractured_wavy_mesh_tet_DFN_1.vtu
-     fractured_wavy_mesh_tet_DFN_123.vtu
-     fractured_full_span_mesh_hex_DFN_1.vtu
-     fractured_full_span_mesh_hex_DFN_123.vtu
-     fractured_full_span_mesh_tet_DFN_1.vtu
-     fractured_full_span_mesh_tet_DFN_123.vtu
-     t_shaped_wavy_mesh_hex_DFN_t1t2.vtu
-     t_shaped_wavy_mesh_tet_DFN_t1t2.vtu
-     y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu
-     y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu
-     DFN_5_fractures_hex_binarized.vtu
-     DFN_5_fractures_tet_binarized.vtu
-)
+file( GLOB mesh_files "${DFN_MARKET_MESH_SOURCE_DIR}/*.vtu" )
 
 # ---------------------------------------------------------------------------
 # Copy DFN-market mesh files into the test output directory at configure time.
-# These are static assets; a one-time copy avoids the Ninja race condition
-# that arises when multiple POST_BUILD commands write the same files in parallel.
 # ---------------------------------------------------------------------------
 file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
 foreach( mesh_file ${mesh_files} )
-  file( COPY ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+  file( COPY ${mesh_file}
         DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
@@ -87,14 +65,14 @@ endif()
 # ---------------------------------------------------------------------------
 set( DFN_MARKET_SPLIT_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market_split_meshes )
 
-set( split_mesh_files
-     DFN_5_fractures_hex_binarized.vtm
-     DFN_5_fractures_hex_binarized_domain.vtu
-     DFN_5_fractures_hex_binarized_fault.vtu
-)
+# Glob all VTM and companion VTU files from the split-mesh directory so that
+# every mesh available is automatically copied to the test output directory.
+file( GLOB split_mesh_files
+      "${DFN_MARKET_SPLIT_MESH_SOURCE_DIR}/*.vtm"
+      "${DFN_MARKET_SPLIT_MESH_SOURCE_DIR}/*.vtu" )
 
 foreach( mesh_file ${split_mesh_files} )
-  file( COPY ${DFN_MARKET_SPLIT_MESH_SOURCE_DIR}/${mesh_file}
+  file( COPY ${mesh_file}
         DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 

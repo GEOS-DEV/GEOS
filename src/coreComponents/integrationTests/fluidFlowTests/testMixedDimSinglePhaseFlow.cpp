@@ -22,7 +22,7 @@
 
 CommandLineOptions g_commandLineOptions;
 
-/**
+/*
  * @brief Serial execution test cases (single rank, partition 1x1x1).
  */
 INSTANTIATE_TEST_SUITE_P(

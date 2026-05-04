@@ -29,290 +29,18 @@ geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
 # ---------------------------------------------------------------------------
-# Mesh files needed by testSurfaceGenerator
+# Mesh files needed by testSurfaceGenerator (dfn_market — single .vtu per mesh)
 # ---------------------------------------------------------------------------
-# DFN-market meshes: one file per fracture combination, covering flat / wavy
-# and no-boundary-cut / full-span variants for both hex and tet grids.
-set( dfn_market_mesh_files
-     # ---- flat, no-boundary-cut, hex ----
-     fractured_mesh_hex_DFN_1.vtu
-     fractured_mesh_hex_DFN_2.vtu
-     fractured_mesh_hex_DFN_3.vtu
-     fractured_mesh_hex_DFN_12.vtu
-     fractured_mesh_hex_DFN_13.vtu
-     fractured_mesh_hex_DFN_23.vtu
-     fractured_mesh_hex_DFN_123.vtu
-     # ---- flat, no-boundary-cut, tet ----
-     fractured_mesh_tet_DFN_1.vtu
-     fractured_mesh_tet_DFN_2.vtu
-     fractured_mesh_tet_DFN_3.vtu
-     fractured_mesh_tet_DFN_12.vtu
-     fractured_mesh_tet_DFN_13.vtu
-     fractured_mesh_tet_DFN_23.vtu
-     fractured_mesh_tet_DFN_123.vtu
-     # ---- flat, full-span, hex ----
-     fractured_full_span_mesh_hex_DFN_1.vtu
-     fractured_full_span_mesh_hex_DFN_2.vtu
-     fractured_full_span_mesh_hex_DFN_3.vtu
-     fractured_full_span_mesh_hex_DFN_12.vtu
-     fractured_full_span_mesh_hex_DFN_13.vtu
-     fractured_full_span_mesh_hex_DFN_23.vtu
-     fractured_full_span_mesh_hex_DFN_123.vtu
-     # ---- flat, full-span, tet ----
-     fractured_full_span_mesh_tet_DFN_1.vtu
-     fractured_full_span_mesh_tet_DFN_2.vtu
-     fractured_full_span_mesh_tet_DFN_3.vtu
-     fractured_full_span_mesh_tet_DFN_12.vtu
-     fractured_full_span_mesh_tet_DFN_13.vtu
-     fractured_full_span_mesh_tet_DFN_23.vtu
-     fractured_full_span_mesh_tet_DFN_123.vtu
-     # ---- wavy, no-boundary-cut, hex ----
-     fractured_wavy_mesh_hex_DFN_1.vtu
-     fractured_wavy_mesh_hex_DFN_2.vtu
-     fractured_wavy_mesh_hex_DFN_3.vtu
-     fractured_wavy_mesh_hex_DFN_12.vtu
-     fractured_wavy_mesh_hex_DFN_13.vtu
-     fractured_wavy_mesh_hex_DFN_23.vtu
-     fractured_wavy_mesh_hex_DFN_123.vtu
-     # ---- wavy, no-boundary-cut, tet ----
-     fractured_wavy_mesh_tet_DFN_1.vtu
-     fractured_wavy_mesh_tet_DFN_2.vtu
-     fractured_wavy_mesh_tet_DFN_3.vtu
-     fractured_wavy_mesh_tet_DFN_12.vtu
-     fractured_wavy_mesh_tet_DFN_13.vtu
-     fractured_wavy_mesh_tet_DFN_23.vtu
-     fractured_wavy_mesh_tet_DFN_123.vtu
-     # ---- wavy, full-span, hex ----
-     fractured_wavy_full_span_mesh_hex_DFN_1.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_2.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_3.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_12.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_13.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_23.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_123.vtu
-     # ---- wavy, full-span, tet ----
-     fractured_wavy_full_span_mesh_tet_DFN_1.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_2.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_3.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_12.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_13.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_23.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_123.vtu
-     # ---- T-shaped junction, boundary-cutting, hex & tet ----
-     t_shaped_wavy_mesh_hex_DFN_t1t2.vtu
-     t_shaped_wavy_mesh_tet_DFN_t1t2.vtu
-     # ---- Y-shaped junction, boundary-cutting, hex & tet ----
-     y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu
-     y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu
-     # ---- miscellaneous, no-boundary-cut, 5 fractures, hex & tet ----
-     DFN_5_fractures_hex_binarized.vtu
-     DFN_5_fractures_tet_binarized.vtu
-)
 set( DFN_MARKET_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market )
+file( GLOB dfn_market_mesh_files "${DFN_MARKET_MESH_SOURCE_DIR}/*.vtu" )
 
 # ---------------------------------------------------------------------------
-# Mesh files needed by testSplitMesh (VTK multiblock .vtm with faceBlocks)
+# Mesh files needed by testSplitMesh (dfn_market_split_meshes — .vtm + companion .vtu)
 # ---------------------------------------------------------------------------
-set( split_mesh_files
-     # ---- flat, no-boundary-cut, hex ----
-     fractured_mesh_hex_DFN_1.vtm
-     fractured_mesh_hex_DFN_1_main.vtu
-     fractured_mesh_hex_DFN_1_fault.vtu
-     fractured_mesh_hex_DFN_2.vtm
-     fractured_mesh_hex_DFN_2_main.vtu
-     fractured_mesh_hex_DFN_2_fault.vtu
-     fractured_mesh_hex_DFN_3.vtm
-     fractured_mesh_hex_DFN_3_main.vtu
-     fractured_mesh_hex_DFN_3_fault.vtu
-     fractured_mesh_hex_DFN_12.vtm
-     fractured_mesh_hex_DFN_12_main.vtu
-     fractured_mesh_hex_DFN_12_fault.vtu
-     fractured_mesh_hex_DFN_13.vtm
-     fractured_mesh_hex_DFN_13_main.vtu
-     fractured_mesh_hex_DFN_13_fault.vtu
-     fractured_mesh_hex_DFN_23.vtm
-     fractured_mesh_hex_DFN_23_main.vtu
-     fractured_mesh_hex_DFN_23_fault.vtu
-     fractured_mesh_hex_DFN_123.vtm
-     fractured_mesh_hex_DFN_123_main.vtu
-     fractured_mesh_hex_DFN_123_fault.vtu
-     # ---- flat, no-boundary-cut, tet ----
-     fractured_mesh_tet_DFN_1.vtm
-     fractured_mesh_tet_DFN_1_main.vtu
-     fractured_mesh_tet_DFN_1_fault.vtu
-     fractured_mesh_tet_DFN_2.vtm
-     fractured_mesh_tet_DFN_2_main.vtu
-     fractured_mesh_tet_DFN_2_fault.vtu
-     fractured_mesh_tet_DFN_3.vtm
-     fractured_mesh_tet_DFN_3_main.vtu
-     fractured_mesh_tet_DFN_3_fault.vtu
-     fractured_mesh_tet_DFN_12.vtm
-     fractured_mesh_tet_DFN_12_main.vtu
-     fractured_mesh_tet_DFN_12_fault.vtu
-     fractured_mesh_tet_DFN_13.vtm
-     fractured_mesh_tet_DFN_13_main.vtu
-     fractured_mesh_tet_DFN_13_fault.vtu
-     fractured_mesh_tet_DFN_23.vtm
-     fractured_mesh_tet_DFN_23_main.vtu
-     fractured_mesh_tet_DFN_23_fault.vtu
-     fractured_mesh_tet_DFN_123.vtm
-     fractured_mesh_tet_DFN_123_main.vtu
-     fractured_mesh_tet_DFN_123_fault.vtu
-     # ---- flat, full-span, hex ----
-     fractured_full_span_mesh_hex_DFN_1.vtm
-     fractured_full_span_mesh_hex_DFN_1_main.vtu
-     fractured_full_span_mesh_hex_DFN_1_fault.vtu
-     fractured_full_span_mesh_hex_DFN_2.vtm
-     fractured_full_span_mesh_hex_DFN_2_main.vtu
-     fractured_full_span_mesh_hex_DFN_2_fault.vtu
-     fractured_full_span_mesh_hex_DFN_3.vtm
-     fractured_full_span_mesh_hex_DFN_3_main.vtu
-     fractured_full_span_mesh_hex_DFN_3_fault.vtu
-     fractured_full_span_mesh_hex_DFN_12.vtm
-     fractured_full_span_mesh_hex_DFN_12_main.vtu
-     fractured_full_span_mesh_hex_DFN_12_fault.vtu
-     fractured_full_span_mesh_hex_DFN_13.vtm
-     fractured_full_span_mesh_hex_DFN_13_main.vtu
-     fractured_full_span_mesh_hex_DFN_13_fault.vtu
-     fractured_full_span_mesh_hex_DFN_23.vtm
-     fractured_full_span_mesh_hex_DFN_23_main.vtu
-     fractured_full_span_mesh_hex_DFN_23_fault.vtu
-     fractured_full_span_mesh_hex_DFN_123.vtm
-     fractured_full_span_mesh_hex_DFN_123_main.vtu
-     fractured_full_span_mesh_hex_DFN_123_fault.vtu
-     # ---- flat, full-span, tet ----
-     fractured_full_span_mesh_tet_DFN_1.vtm
-     fractured_full_span_mesh_tet_DFN_1_main.vtu
-     fractured_full_span_mesh_tet_DFN_1_fault.vtu
-     fractured_full_span_mesh_tet_DFN_2.vtm
-     fractured_full_span_mesh_tet_DFN_2_main.vtu
-     fractured_full_span_mesh_tet_DFN_2_fault.vtu
-     fractured_full_span_mesh_tet_DFN_3.vtm
-     fractured_full_span_mesh_tet_DFN_3_main.vtu
-     fractured_full_span_mesh_tet_DFN_3_fault.vtu
-     fractured_full_span_mesh_tet_DFN_12.vtm
-     fractured_full_span_mesh_tet_DFN_12_main.vtu
-     fractured_full_span_mesh_tet_DFN_12_fault.vtu
-     fractured_full_span_mesh_tet_DFN_13.vtm
-     fractured_full_span_mesh_tet_DFN_13_main.vtu
-     fractured_full_span_mesh_tet_DFN_13_fault.vtu
-     fractured_full_span_mesh_tet_DFN_23.vtm
-     fractured_full_span_mesh_tet_DFN_23_main.vtu
-     fractured_full_span_mesh_tet_DFN_23_fault.vtu
-     fractured_full_span_mesh_tet_DFN_123.vtm
-     fractured_full_span_mesh_tet_DFN_123_main.vtu
-     fractured_full_span_mesh_tet_DFN_123_fault.vtu
-     # ---- wavy, no-boundary-cut, hex ----
-     fractured_wavy_mesh_hex_DFN_1.vtm
-     fractured_wavy_mesh_hex_DFN_1_main.vtu
-     fractured_wavy_mesh_hex_DFN_1_fault.vtu
-     fractured_wavy_mesh_hex_DFN_2.vtm
-     fractured_wavy_mesh_hex_DFN_2_main.vtu
-     fractured_wavy_mesh_hex_DFN_2_fault.vtu
-     fractured_wavy_mesh_hex_DFN_3.vtm
-     fractured_wavy_mesh_hex_DFN_3_main.vtu
-     fractured_wavy_mesh_hex_DFN_3_fault.vtu
-     fractured_wavy_mesh_hex_DFN_12.vtm
-     fractured_wavy_mesh_hex_DFN_12_main.vtu
-     fractured_wavy_mesh_hex_DFN_12_fault.vtu
-     fractured_wavy_mesh_hex_DFN_13.vtm
-     fractured_wavy_mesh_hex_DFN_13_main.vtu
-     fractured_wavy_mesh_hex_DFN_13_fault.vtu
-     fractured_wavy_mesh_hex_DFN_23.vtm
-     fractured_wavy_mesh_hex_DFN_23_main.vtu
-     fractured_wavy_mesh_hex_DFN_23_fault.vtu
-     fractured_wavy_mesh_hex_DFN_123.vtm
-     fractured_wavy_mesh_hex_DFN_123_main.vtu
-     fractured_wavy_mesh_hex_DFN_123_fault.vtu
-     # ---- wavy, no-boundary-cut, tet ----
-     fractured_wavy_mesh_tet_DFN_1.vtm
-     fractured_wavy_mesh_tet_DFN_1_main.vtu
-     fractured_wavy_mesh_tet_DFN_1_fault.vtu
-     fractured_wavy_mesh_tet_DFN_2.vtm
-     fractured_wavy_mesh_tet_DFN_2_main.vtu
-     fractured_wavy_mesh_tet_DFN_2_fault.vtu
-     fractured_wavy_mesh_tet_DFN_3.vtm
-     fractured_wavy_mesh_tet_DFN_3_main.vtu
-     fractured_wavy_mesh_tet_DFN_3_fault.vtu
-     fractured_wavy_mesh_tet_DFN_12.vtm
-     fractured_wavy_mesh_tet_DFN_12_main.vtu
-     fractured_wavy_mesh_tet_DFN_12_fault.vtu
-     fractured_wavy_mesh_tet_DFN_13.vtm
-     fractured_wavy_mesh_tet_DFN_13_main.vtu
-     fractured_wavy_mesh_tet_DFN_13_fault.vtu
-     fractured_wavy_mesh_tet_DFN_23.vtm
-     fractured_wavy_mesh_tet_DFN_23_main.vtu
-     fractured_wavy_mesh_tet_DFN_23_fault.vtu
-     fractured_wavy_mesh_tet_DFN_123.vtm
-     fractured_wavy_mesh_tet_DFN_123_main.vtu
-     fractured_wavy_mesh_tet_DFN_123_fault.vtu
-     # ---- wavy, full-span, hex ----
-     fractured_wavy_full_span_mesh_hex_DFN_1.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_1_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_1_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_2.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_2_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_2_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_3.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_3_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_3_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_12.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_12_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_12_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_13.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_13_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_13_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_23.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_23_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_23_fault.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_123.vtm
-     fractured_wavy_full_span_mesh_hex_DFN_123_main.vtu
-     fractured_wavy_full_span_mesh_hex_DFN_123_fault.vtu
-     # ---- wavy, full-span, tet ----
-     fractured_wavy_full_span_mesh_tet_DFN_1.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_1_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_1_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_2.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_2_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_2_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_3.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_3_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_3_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_12.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_12_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_12_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_13.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_13_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_13_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_23.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_23_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_23_fault.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_123.vtm
-     fractured_wavy_full_span_mesh_tet_DFN_123_main.vtu
-     fractured_wavy_full_span_mesh_tet_DFN_123_fault.vtu
-     # ---- T-shaped junction, boundary-cutting, hex & tet ----
-     t_shaped_wavy_mesh_hex_DFN_t1t2.vtm
-     t_shaped_wavy_mesh_hex_DFN_t1t2_main.vtu
-     t_shaped_wavy_mesh_hex_DFN_t1t2_fault.vtu
-     t_shaped_wavy_mesh_tet_DFN_t1t2.vtm
-     t_shaped_wavy_mesh_tet_DFN_t1t2_main.vtu
-     t_shaped_wavy_mesh_tet_DFN_t1t2_fault.vtu
-     # ---- Y-shaped junction, boundary-cutting, hex & tet ----
-     y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtm
-     y_shaped_wavy_mesh_hex_DFN_y1y2y3_main.vtu
-     y_shaped_wavy_mesh_hex_DFN_y1y2y3_fault.vtu
-     y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtm
-     y_shaped_wavy_mesh_tet_DFN_y1y2y3_main.vtu
-     y_shaped_wavy_mesh_tet_DFN_y1y2y3_fault.vtu
-     # ---- miscellaneous, no-boundary-cut, 5 fractures, hex & tet ----
-     DFN_5_fractures_hex_binarized.vtm
-     DFN_5_fractures_hex_binarized_main.vtu
-     DFN_5_fractures_hex_binarized_fault.vtu
-     DFN_5_fractures_tet_binarized.vtm
-     DFN_5_fractures_tet_binarized_main.vtu
-     DFN_5_fractures_tet_binarized_fault.vtu
-)
 set( SPLIT_MESH_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dfn_market_split_meshes )
+file( GLOB split_mesh_files
+      "${SPLIT_MESH_SOURCE_DIR}/*.vtm"
+      "${SPLIT_MESH_SOURCE_DIR}/*.vtu" )
 
 
 # Add gtest C++ based tests
@@ -337,24 +65,19 @@ foreach( test ${gtest_geosx_tests} )
 endforeach()
 
 # ---------------------------------------------------------------------------
-# Copy DFN-market mesh files into the test output directory at configure time.
-# These are static assets committed to the repository, so a one-time copy is
-# sufficient and avoids the race condition that arises with Ninja when
-# multiple POST_BUILD commands from different targets write the same files
-# to the same directory in parallel.
+# Copy all mesh files into the test output directory at configure time.
+# file(GLOB ...) returns absolute paths so no source-dir prefix is needed.
 # ---------------------------------------------------------------------------
 file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
+
 foreach( mesh_file ${dfn_market_mesh_files} )
-  file( COPY ${DFN_MARKET_MESH_SOURCE_DIR}/${mesh_file}
+  file( COPY ${mesh_file}
         DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
-# Copy split-mesh (.vtm) files if they exist in the source directory.
 foreach( mesh_file ${split_mesh_files} )
-  if( EXISTS ${SPLIT_MESH_SOURCE_DIR}/${mesh_file} )
-    file( COPY ${SPLIT_MESH_SOURCE_DIR}/${mesh_file}
-          DESTINATION ${TEST_OUTPUT_DIRECTORY} )
-  endif()
+  file( COPY ${mesh_file}
+        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
@@ -376,8 +99,6 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   # ---------------------------------------------------------------------------
   # testSurfaceGenerator_mpi — SurfaceGeneratorMpiTest suite (4 MPI ranks)
-  #
-  # Now built from its own source file (testSurfaceGenerator_mpi.cpp).
   # ---------------------------------------------------------------------------
   set( sg_mpi_nranks 4 )
   set( sg_mpi_test_name testSurfaceGenerator_mpi )
@@ -398,8 +119,6 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
                         PROPERTIES
                         ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${sg_mpi_test_name}>"
                         LABELS "${sg_mpi_test_name}" )
-
-  # DFN-market mesh files are already copied at configure time (see above).
 
   # ---------------------------------------------------------------------------
   # testSplitMesh_mpi — SplitMeshMpiTest suite (4 MPI ranks)

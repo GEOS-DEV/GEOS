@@ -157,6 +157,57 @@ if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 endif()
 
 
+# testMixedDimSinglePhaseFlowSplitMesh: tests using pre-split (VTM) meshes where
+# fractures are defined via faceBlocks instead of the SurfaceGenerator workflow.
+# ---------------------------------------------------------------------------
+set( _flow_dfn_split_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market_split_meshes )
+
+file( GLOB _flow_split_mesh_files
+      "${_flow_dfn_split_src_dir}/*.vtm"
+      "${_flow_dfn_split_src_dir}/*.vtu" )
+
+foreach( mesh_file ${_flow_split_mesh_files} )
+  file( COPY ${mesh_file}
+        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+endforeach()
+
+# --- Serial variant (always built) ---
+set( test "testMixedDimSinglePhaseFlowSplitMesh.cpp" )
+get_filename_component( test_name ${test} NAME_WE )
+
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test}
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
+
+set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+# --- MPI variant (CPU-only MPI builds) ---
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( test "testMixedDimSinglePhaseFlowSplitMesh_mpi.cpp" )
+    # The MixedDimSplitMeshPartitionedFlowCases suite requires 4 ranks
+    set( nranks 4 )
+
+    get_filename_component( test_name ${test} NAME_WE )
+
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
+
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+endif()
+
+
 # testMixedDimHydrostaticEquilibrium: serial (single-rank) variant is always built.
 # Additionally, the multi-rank MPI variant (4 ranks) is built on CPU-only MPI builds.
 
