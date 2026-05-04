@@ -78,7 +78,7 @@ TractionBoundaryCondition::TractionBoundaryCondition( string const & name, Group
 void TractionBoundaryCondition::postInputInitialization()
 {
   FieldSpecificationBase::postInputInitialization();
-  
+
   if( m_tractionType == TractionType::vector )
   {
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
