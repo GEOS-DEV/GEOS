@@ -55,7 +55,7 @@ struct SplitMeshStats
   localIndex numFaces            = 0;
   localIndex numCells            = 0;
   localIndex numSurfaceElements  = 0;  ///< Elements in SurfaceElementRegion(s)
-  integer    eulerCharacteristic = 0;
+  integer eulerCharacteristic = 0;
 };
 
 /**
@@ -68,12 +68,12 @@ struct SplitMeshStats
  *   B4 – No element has duplicate node references (degenerate Jacobian).
  */
 void validateSplitMeshResults( std::string const & testCaseName,
-                                std::string const & meshFileName,
-                                SplitMeshStats const & stats,
-                                localIndex const expectedSurfaceElements,
-                                integer const expectedEuler,
-                                NodeManager const & nodeManager,
-                                ElementRegionManager const & elemManager )
+                               std::string const & meshFileName,
+                               SplitMeshStats const & stats,
+                               localIndex const expectedSurfaceElements,
+                               integer const expectedEuler,
+                               NodeManager const & nodeManager,
+                               ElementRegionManager const & elemManager )
 {
   // B1: Surface element count
   bool const b1Pass = ( stats.numSurfaceElements == expectedSurfaceElements );

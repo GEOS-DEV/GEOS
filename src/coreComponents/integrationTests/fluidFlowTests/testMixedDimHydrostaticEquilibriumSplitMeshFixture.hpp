@@ -83,7 +83,8 @@ protected:
     oss << R"xml(<?xml version="1.0" ?>
 <Problem>
   <Mesh>
-    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" faceBlocks="{ Fault }" useGlobalIds="1" checkEulerCharacteristic="0"/>
+    <VTKMesh name="mesh1" file=")xml" << meshFile <<
+      R"xml(" faceBlocks="{ Fault }" useGlobalIds="1" checkEulerCharacteristic="0"/>
   </Mesh>
 
   <Geometry>

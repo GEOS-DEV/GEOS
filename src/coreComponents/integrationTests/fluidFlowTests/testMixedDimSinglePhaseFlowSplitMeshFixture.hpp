@@ -76,7 +76,8 @@ protected:
     oss << R"xml(<?xml version="1.0" ?>
 <Problem>
   <Mesh>
-    <VTKMesh name="mesh1" useGlobalIds="1" file=")xml" << meshFile << R"xml(" faceBlocks="{ Fault }"/>
+    <VTKMesh name="mesh1" useGlobalIds="1" file=")xml" << meshFile <<
+      R"xml(" faceBlocks="{ Fault }"/>
   </Mesh>
 
   <Geometry>
