@@ -195,26 +195,15 @@ public:
                                          arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
-   * @brief Compute compressibility factor for the cubic EOS model
-   * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the phase
-   * @param[in] componentProperties The compositional component properties
-   * @param[out] compressibilityFactor the current compressibility factor
-   * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
+   * @brief Calculate the dimensional volume shift
+   * @details Computes the dimensional form of the volume shifts given the user defined non-dimensional form.
+   * @param[in] numComps The number of components
+   * @param[in] componentProperties The compositional model properties
+   * @param[out] dimensionalVolumeShift The calculated dimensional volume shifts
    */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  static void
-  computeCompressibilityFactorAndDerivs( integer const numComps,
-                                         real64 const & pressure,
-                                         real64 const & temperature,
-                                         arraySlice1d< real64 const, USD > const & composition,
-                                         ComponentProperties::KernelWrapper const & componentProperties,
-                                         real64 & compressibilityFactor,
-                                         arraySlice1d< real64 > const & compressibilityFactorDerivs );
+  GEOS_FORCE_INLINE
+  static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
+                                               arraySlice1d< real64 > const & dimensionalVolumeShift );
 
   /**
    * @brief Calculate the pure coefficients derivatives
