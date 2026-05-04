@@ -213,6 +213,8 @@ Usage: $0
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
       Either ON or OFF (default is ON). Build geos with bounds check.
+  --geos-enable-fpe
+      Either ON or OFF (default is ON). Build geos with floating point exceptions.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -254,7 +256,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,geos-enable-fpe:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -273,6 +275,7 @@ ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
+GEOS_ENABLE_FPE=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
 
@@ -299,6 +302,7 @@ do
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
     --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
+    --geos-enable-fpe) GEOS_ENABLE_FPE=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
@@ -456,6 +460,7 @@ or_die python3 scripts/config-build.py \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
+               -DGEOS_ENABLE_FPE=${GEOS_ENABLE_FPE} \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 phase_finish 0
@@ -516,6 +521,19 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
+  CXX_COMPILER=$(grep '^CMAKE_CXX_COMPILER:' CMakeCache.txt | cut -d= -f2- || true)
+  if [[ -z "${OMP_NUM_THREADS:-}" && "${CXX_COMPILER}" == *clang* ]]; then
+    export OMP_NUM_THREADS=1
+    echo "OMP_NUM_THREADS was unset; defaulting clang unit tests to OMP_NUM_THREADS=${OMP_NUM_THREADS}."
+  fi
+  if [[ -z "${OPENBLAS_NUM_THREADS:-}" && "${CXX_COMPILER}" == *clang* ]]; then
+    export OPENBLAS_NUM_THREADS=1
+    echo "OPENBLAS_NUM_THREADS was unset; defaulting clang unit tests to OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS}."
+  fi
+  if [[ -z "${OMP_PROC_BIND:-}" && "${CXX_COMPILER}" == *clang* ]]; then
+    export OMP_PROC_BIND=false
+    echo "OMP_PROC_BIND was unset; defaulting clang unit tests to OMP_PROC_BIND=${OMP_PROC_BIND}."
+  fi
   print_runtime_diagnostics
   phase_start "Unit tests"
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then

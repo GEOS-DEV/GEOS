@@ -23,6 +23,8 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/MeshFields.hpp"
 
+#include "LvArray/src/system.hpp"
+
 #ifdef GEOS_USE_PARMETIS
 #include "mesh/generators/ParMETISInterface.hpp"
 #endif
@@ -1418,7 +1420,11 @@ redistributeByKdTree( vtkDataSet & mesh )
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
-  rdsf->Update();
+  {
+    // VTK/DIY can raise floating point exceptions while redistributing or serializing partitions.
+    LvArray::system::FloatingPointExceptionGuard guard;
+    rdsf->Update();
+  }
 
   vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 

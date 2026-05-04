@@ -69,6 +69,9 @@ on:
       GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
+      GEOS_ENABLE_FPE:
+        required: false
+        type: string
       STORAGE_PROVIDER:
         required: false
         type: string
@@ -603,6 +606,9 @@ jobs:
 
         if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
           script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
+        fi
+        if [ ! -z "${{ inputs.GEOS_ENABLE_FPE }}" ]; then
+          script_args+=(--geos-enable-fpe "${{ inputs.GEOS_ENABLE_FPE }}")
         fi
 
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)

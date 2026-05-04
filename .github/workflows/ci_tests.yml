@@ -340,6 +340,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_FPE: OFF
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu 24.04 - clang 20 - NO BOUNDS CHECK
@@ -349,6 +350,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
+            GEOS_ENABLE_FPE: OFF
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Rocky Linux 8 - gcc 12
@@ -376,6 +378,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_FPE: OFF
             HOST_CONFIG: /spack-generated.cmake
 
           - name: Rocky Linux 9 - clang 22
@@ -385,6 +388,7 @@ jobs:
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_FPE: OFF
             HOST_CONFIG: /spack-generated.cmake
 
     uses: ./.github/workflows/build_and_test.yml
@@ -398,6 +402,7 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
+      GEOS_ENABLE_FPE: ${{ matrix.GEOS_ENABLE_FPE || '' }}
       STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
