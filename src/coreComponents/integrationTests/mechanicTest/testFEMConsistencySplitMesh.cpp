@@ -30,8 +30,33 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencySplitMeshTest,
   ::testing::Combine(
     ::testing::Values(
+      // Flat hex split meshes - single and triple fracture only
+      "fractured_mesh_hex_DFN_1.vtm",
+      "fractured_mesh_hex_DFN_123.vtm",
+
+      // Wavy hex split meshes - single and triple fracture only
+      "fractured_wavy_mesh_hex_DFN_1.vtm",
+      "fractured_wavy_mesh_hex_DFN_123.vtm",
+
+      // Full span hex split meshes - single and triple fracture only
+      "fractured_full_span_mesh_hex_DFN_1.vtm",
+      "fractured_full_span_mesh_hex_DFN_123.vtm",
+
+      // Full span tet split meshes - single and triple fracture only
+      "fractured_full_span_mesh_tet_DFN_1.vtm",
+      "fractured_full_span_mesh_tet_DFN_123.vtm",
+
+      // T-shaped wavy split meshes
+      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtm",
+      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtm",
+
+      // Y-shaped wavy split meshes
+      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtm",
+      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtm",
+
       // 5-fracture DFN split meshes
-      "DFN_5_fractures_hex_binarized.vtm"
+      "DFN_5_fractures_hex_binarized.vtm",
+      "DFN_5_fractures_tet_binarized.vtm"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
