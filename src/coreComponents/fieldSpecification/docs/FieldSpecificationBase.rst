@@ -11,7 +11,7 @@ Overview
 This page documents options added for per-component values and region-based targeting.
 
 Region-based targetting
-======================
+===============================
 
 Use `regionNames` to target one or more element regions without specifying an explicit `objectPath`.
 When `regionNames` is provided, GEOS builds the `objectPath` internally and applies the specification to all regions.
