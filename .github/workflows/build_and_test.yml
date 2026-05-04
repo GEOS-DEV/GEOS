@@ -16,6 +16,10 @@ on:
       CMAKE_BUILD_TYPE:
         required: true
         type: string
+      CMAKE_CXX_FLAGS_RELEASE:
+        required: false
+        type: string
+        default: ''
       CODE_COVERAGE:
         required: false
         type: boolean
@@ -609,6 +613,9 @@ jobs:
         fi
         if [ ! -z "${{ inputs.GEOS_ENABLE_FPE }}" ]; then
           script_args+=(--geos-enable-fpe "${{ inputs.GEOS_ENABLE_FPE }}")
+        fi
+        if [ ! -z "${{ inputs.CMAKE_CXX_FLAGS_RELEASE }}" ]; then
+          script_args+=(--cmake-cxx-flags-release "${{ inputs.CMAKE_CXX_FLAGS_RELEASE }}")
         fi
 
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
