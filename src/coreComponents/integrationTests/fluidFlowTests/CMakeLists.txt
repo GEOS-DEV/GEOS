@@ -97,27 +97,9 @@ target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_
 set( _flow_dfn_src_dir ${CMAKE_CURRENT_SOURCE_DIR}/../meshTests/dfn_market )
 
 file( MAKE_DIRECTORY ${TEST_OUTPUT_DIRECTORY} )
-foreach( mesh IN ITEMS "fractured_mesh_hex_DFN_1.vtu"
-                       "fractured_mesh_hex_DFN_12.vtu"
-                       "fractured_mesh_hex_DFN_123.vtu"
-                       "fractured_mesh_tet_DFN_1.vtu"
-                       "fractured_mesh_tet_DFN_123.vtu"
-                       "fractured_wavy_mesh_hex_DFN_1.vtu"
-                       "fractured_wavy_mesh_hex_DFN_123.vtu"
-                       "fractured_wavy_mesh_tet_DFN_1.vtu"
-                       "fractured_wavy_mesh_tet_DFN_123.vtu"
-                       "fractured_full_span_mesh_hex_DFN_1.vtu"
-                       "fractured_full_span_mesh_hex_DFN_123.vtu"
-                       "fractured_full_span_mesh_tet_DFN_1.vtu"
-                       "fractured_full_span_mesh_tet_DFN_123.vtu"
-                       "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu"
-                       "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu"
-                       "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu"
-                       "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu"
-                       "DFN_5_fractures_hex_binarized.vtu"
-                       "DFN_5_fractures_tet_binarized.vtu" )
-  file( COPY ${_flow_dfn_src_dir}/${mesh}
-        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+file( GLOB _flow_dfn_mesh_files "${_flow_dfn_src_dir}/*.vtu" )
+foreach( mesh_file ${_flow_dfn_mesh_files} )
+  file( COPY ${mesh_file} DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
 # --- Serial variant (always built) ---
@@ -167,8 +149,7 @@ file( GLOB _flow_split_mesh_files
       "${_flow_dfn_split_src_dir}/*.vtu" )
 
 foreach( mesh_file ${_flow_split_mesh_files} )
-  file( COPY ${mesh_file}
-        DESTINATION ${TEST_OUTPUT_DIRECTORY} )
+  file( COPY ${mesh_file} DESTINATION ${TEST_OUTPUT_DIRECTORY} )
 endforeach()
 
 # --- Serial variant (always built) ---
@@ -230,6 +211,47 @@ target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_
 if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
     set( test "testMixedDimHydrostaticEquilibrium_mpi.cpp" )
     # The MixedDimHydrostaticEquilibriumCases suite requires 4 ranks (e.g., 1x1x4 partitioning)
+    set( nranks 4 )
+
+    get_filename_component( test_name ${test} NAME_WE )
+
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
+
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+endif()
+
+# ---------------------------------------------------------------------------
+# testMixedDimHydrostaticEquilibriumSplitMesh: WF2 variant using pre-split
+# (VTM) meshes — fractures defined via faceBlocks instead of SurfaceGenerator.
+# The split mesh files are already copied by the _flow_split_mesh_files glob above.
+# ---------------------------------------------------------------------------
+
+# --- Serial variant (always built) ---
+set( test "testMixedDimHydrostaticEquilibriumSplitMesh.cpp" )
+get_filename_component( test_name ${test} NAME_WE )
+
+blt_add_executable( NAME ${test_name}
+                    SOURCES ${test}
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+
+geos_add_test( NAME ${test_name}
+               COMMAND ${test_name} )
+
+set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+# --- MPI variant (CPU-only MPI builds) ---
+if( ENABLE_MPI AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
+    set( test "testMixedDimHydrostaticEquilibriumSplitMesh_mpi.cpp" )
     set( nranks 4 )
 
     get_filename_component( test_name ${test} NAME_WE )

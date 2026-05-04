@@ -1,0 +1,78 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file testMixedDimHydrostaticEquilibriumSplitMesh.cpp
+ *
+ * Serial (single-rank) variant of the mixed-dimensional hydrostatic equilibrium test
+ * for pre-split (VTM) meshes with fractures defined via faceBlocks (WF2).
+ * Test fixture and TEST_P body live in testMixedDimHydrostaticEquilibriumSplitMeshFixture.hpp.
+ */
+
+#include "testMixedDimHydrostaticEquilibriumSplitMeshFixture.hpp"
+
+CommandLineOptions g_commandLineOptions;
+
+/**
+ * @brief Serial execution test cases (single rank, partition 1x1x1).
+ *
+ * Mirrors the mesh set used in testMixedDimHydrostaticEquilibrium.cpp (WF1)
+ * but uses the corresponding .vtm composite files instead of .vtu files.
+ */
+INSTANTIATE_TEST_SUITE_P(
+  MixedDimHydrostaticEquilibriumSplitMeshSerialCases,
+  MixedDimHydrostaticEquilibriumSplitMeshTest,
+  ::testing::Combine(
+    ::testing::Values(
+      // Flat tet meshes
+      "fractured_mesh_tet_DFN_1.vtm",
+      "fractured_mesh_tet_DFN_123.vtm",
+
+      // Wavy tet meshes
+      "fractured_wavy_mesh_tet_DFN_1.vtm",
+      "fractured_wavy_mesh_tet_DFN_123.vtm",
+
+      // Full span hex meshes
+      "fractured_full_span_mesh_hex_DFN_1.vtm",
+      "fractured_full_span_mesh_hex_DFN_123.vtm",
+
+      // Full span tet meshes
+      "fractured_full_span_mesh_tet_DFN_1.vtm",
+      "fractured_full_span_mesh_tet_DFN_123.vtm",
+
+      // T-shaped wavy meshes
+      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtm",
+      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtm",
+
+      // Y-shaped wavy meshes
+      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtm",
+      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtm",
+
+      // 5-fracture DFN market meshes
+      "DFN_5_fractures_hex_binarized.vtm",
+      "DFN_5_fractures_tet_binarized.vtm"
+      ),
+    ::testing::Values(
+      std::make_tuple( 1, 1, 1 )
+      )
+    )
+  );
+
+int main( int argc, char * argv[] )
+{
+  ::testing::InitGoogleTest( &argc, argv );
+  g_commandLineOptions = *geos::basicSetup( argc, argv, false );
+  int result = RUN_ALL_TESTS();
+  geos::basicCleanup();
+  return result;
+}
