@@ -84,6 +84,7 @@ jobs:
       SCCACHE_PROFILE: ${{ steps.resolve.outputs.SCCACHE_PROFILE }}
       INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ steps.resolve.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
       DOCKER_CA_BUNDLE_HOST_PATHS_JSON: ${{ steps.resolve.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON }}
+      CMAKE_CUDA_ARCHITECTURES_JSON: ${{ steps.resolve.outputs.CMAKE_CUDA_ARCHITECTURES_JSON }}
       RUNNER_LABELS_JSON: ${{ steps.resolve.outputs.RUNNER_LABELS_JSON }}
       ARTIFACT_UPLOAD_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_COMMAND }}
       ARTIFACT_UPLOAD_PRE_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
@@ -141,6 +142,8 @@ jobs:
           and (.artifact_public_url_bucket_scoped | type == "boolean")
           and (.runner_ca_bundle_host_paths | type == "object")
           and (.runner_ca_bundle_host_paths | all(.[]; type == "string"))
+          and (.runner_cuda_architectures | type == "object")
+          and (.runner_cuda_architectures | all(.[]; type == "string" and length > 0))
           and (.runners | type == "object")
           and (.runners.default | type == "string" and length > 0)
           and (.runners.cpu_heavy | type == "string" and length > 0)
@@ -148,7 +151,7 @@ jobs:
           and (.runners.code_coverage | type == "string" and length > 0)
           and (.runners.cuda | type == "string" and length > 0)
         ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
-          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
+          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
           exit 1
         fi
 
@@ -160,6 +163,7 @@ jobs:
         ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="$(jq -r '.artifact_public_url_bucket_scoped' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_LABELS_JSON="$(jq -c '.runners' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -c '.runner_ca_bundle_host_paths' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_CUDA_ARCHITECTURES_JSON="$(jq -c '.runner_cuda_architectures' <<< "${ORG_CONFIG_JSON}")"
 
         # --- Resolve per-runner-role CA bundle paths. ---
         # Each runner role picks up the bundle path for its label; if no exact match,
@@ -179,6 +183,30 @@ jobs:
             cuda: resolve_path($runners.cuda)
           }'
         )"
+
+        # --- Resolve CUDA architectures by runner role. ---
+        # Like CA bundle paths, CUDA architectures are keyed by runner label and use prefix fallback.
+        CMAKE_CUDA_ARCHITECTURES_JSON="$(jq -cn \
+          --argjson runners "${RUNNER_LABELS_JSON}" \
+          --argjson cuda_architectures "${RUNNER_CUDA_ARCHITECTURES_JSON}" '
+          def resolve_arch($runner_label):
+            ($cuda_architectures[$runner_label]
+             // (($runner_label | split("-")[0]) as $runner_prefix | $cuda_architectures[$runner_prefix])
+             // "");
+          {
+            default: resolve_arch($runners.default),
+            cpu_heavy: resolve_arch($runners.cpu_heavy),
+            integrated_tests: resolve_arch($runners.integrated_tests),
+            code_coverage: resolve_arch($runners.code_coverage),
+            cuda: resolve_arch($runners.cuda)
+          }'
+        )"
+
+        CUDA_RUNNER_LABEL="$(jq -r '.cuda' <<< "${RUNNER_LABELS_JSON}")"
+        if ! jq -e '.cuda | type == "string" and length > 0' <<< "${CMAKE_CUDA_ARCHITECTURES_JSON}" >/dev/null; then
+          echo "::error::${ORG_CONFIG_PATH} must define runner_cuda_architectures for CUDA runner '${CUDA_RUNNER_LABEL}'."
+          exit 1
+        fi
 
         # --- Load and validate the provider file. ---
         # storage_provider names a file under .github/ci/providers/.
@@ -218,6 +246,7 @@ jobs:
           echo "SCCACHE_PROFILE=${SCCACHE_PROFILE}"
           echo "INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH=${INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
           echo "DOCKER_CA_BUNDLE_HOST_PATHS_JSON=${DOCKER_CA_BUNDLE_HOST_PATHS_JSON}"
+          echo "CMAKE_CUDA_ARCHITECTURES_JSON=${CMAKE_CUDA_ARCHITECTURES_JSON}"
           echo "RUNNER_LABELS_JSON=${RUNNER_LABELS_JSON}"
           echo "ARTIFACT_UPLOAD_COMMAND<<__EOF__"
           printf '%s\n' "${ARTIFACT_UPLOAD_COMMAND}"
@@ -596,6 +625,7 @@ jobs:
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      CMAKE_CUDA_ARCHITECTURES: ${{ fromJSON(needs.resolve_ci_provider.outputs.CMAKE_CUDA_ARCHITECTURES_JSON)[matrix.RUNNER_KEY || 'default'] }}
       BUILD_GENERATOR: ${{ matrix.BUILD_GENERATOR }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}

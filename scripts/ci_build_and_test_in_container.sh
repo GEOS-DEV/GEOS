@@ -106,6 +106,8 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --cmake-cuda-architectures ...
+      Optional override for CMAKE_CUDA_ARCHITECTURES.
   --code-coverage
       run a code build and test.
   --data-basename output.tar.gz
@@ -153,7 +155,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -174,6 +176,7 @@ NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
+CMAKE_CUDA_ARCHITECTURES_ARGS=()
 
 eval set -- ${args}
 while :
@@ -184,6 +187,9 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --cmake-cuda-architectures)
+      CMAKE_CUDA_ARCHITECTURES_ARGS+=("-DCMAKE_CUDA_ARCHITECTURES=$2")
+      shift 2;;
     --ninja)
         BUILD_GENERATOR=$1;
         shift;;
@@ -355,6 +361,7 @@ or_die python3 scripts/config-build.py \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
+               "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 phase_finish 0
