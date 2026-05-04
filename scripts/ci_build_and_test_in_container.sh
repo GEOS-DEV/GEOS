@@ -99,124 +99,6 @@ function print_phase_summary () {
     done
 }
 
-function run_diagnostic_command () {
-    echo
-    echo ">>> $*"
-    "$@" || true
-}
-
-function print_diagnostic_file () {
-    local file="$1"
-
-    if [[ -r "${file}" ]]; then
-        echo
-        echo ">>> ${file}"
-        cat "${file}" || true
-    fi
-}
-
-function print_ldd_diagnostics () {
-    local binary="$1"
-
-    if [[ -e "${binary}" ]]; then
-        echo
-        echo ">>> ldd ${binary}"
-        ldd "${binary}" || true
-    else
-        echo
-        echo ">>> ldd ${binary}"
-        echo "File not found."
-    fi
-}
-
-function print_selected_environment () {
-    echo
-    echo ">>> Selected environment variables"
-    env | sort | grep -E "^(ATS_|BLAS_|CMAKE_|CUDA|ENABLE_|GEOS|GEOSX|GOMP_|HIP|HOSTNAME=|KMP_|LAPACK_|LD_LIBRARY_PATH=|MKL_|MPI|MPICH|OMPI|OMP_|OPENBLAS_|PATH=|PMI|PMIX|ROCR|ROCM|SCCACHE_|UCX_)" || true
-}
-
-function set_openmpi_runtime_defaults () {
-    if ! command -v mpirun >/dev/null 2>&1; then
-        return 0
-    fi
-
-    if mpirun --version 2>/dev/null | grep -q "Open MPI"; then
-        if [[ -z "${OMPI_MCA_mtl:-}" ]]; then
-            export OMPI_MCA_mtl="^ofi"
-            echo "OMPI_MCA_mtl was unset; defaulting OpenMPI runs to OMPI_MCA_mtl=${OMPI_MCA_mtl}."
-        fi
-        if [[ -z "${OMPI_MCA_pml:-}" ]]; then
-            export OMPI_MCA_pml="ob1"
-            echo "OMPI_MCA_pml was unset; defaulting OpenMPI runs to OMPI_MCA_pml=${OMPI_MCA_pml}."
-        fi
-    fi
-}
-
-function print_runtime_diagnostics () {
-    echo
-    echo "===== Runtime diagnostics ====="
-    run_diagnostic_command date -u
-    run_diagnostic_command hostname
-    run_diagnostic_command id
-    run_diagnostic_command pwd
-    run_diagnostic_command uname -a
-    run_diagnostic_command nproc
-    run_diagnostic_command nproc --all
-    run_diagnostic_command lscpu
-    run_diagnostic_command free -h
-    run_diagnostic_command ulimit -a
-    run_diagnostic_command mpirun --version
-    run_diagnostic_command cmake --version
-    run_diagnostic_command ctest --version
-    run_diagnostic_command "${CMAKE_C_COMPILER:-cc}" --version
-    run_diagnostic_command "${CMAKE_CXX_COMPILER:-c++}" --version
-    print_selected_environment
-    run_diagnostic_command env OMP_DISPLAY_ENV=TRUE "${GEOS_BUILD_DIR}/tests/testExternalSolvers" --gtest_filter=NoSuchTest
-
-    print_diagnostic_file /proc/self/status
-    print_diagnostic_file /proc/self/cgroup
-    print_diagnostic_file /sys/fs/cgroup/cpu.max
-    print_diagnostic_file /sys/fs/cgroup/cpu.stat
-    print_diagnostic_file /sys/fs/cgroup/cpuset.cpus
-    print_diagnostic_file /sys/fs/cgroup/cpuset.cpus.effective
-    print_diagnostic_file /sys/fs/cgroup/memory.max
-    print_diagnostic_file /sys/fs/cgroup/memory.current
-
-    if [[ -r CMakeCache.txt ]]; then
-        echo
-        echo ">>> Selected CMakeCache entries"
-        grep -E "^(CMAKE_(C|CXX|Fortran)_COMPILER|CMAKE_(C|CXX)_FLAGS|ENABLE_(OPENMP|HYPRE|TRILINOS|SUPERLU_DIST)|GEOS_(LA_INTERFACE|ENABLE_BOUNDS_CHECK|ENABLE_FPE)|BLAS_LIBRARIES|LAPACK_LIBRARIES|SUPERLU_DIST_DIR|HYPRE_DIR|VTK_DIR|MPI|OpenMP)" CMakeCache.txt || true
-    fi
-
-    print_ldd_diagnostics "${GEOS_BUILD_DIR}/tests/testExternalSolvers"
-    print_ldd_diagnostics "${GEOS_BUILD_DIR}/bin/geosx"
-
-    local lib
-    for lib in "${GEOSX_TPL_DIR:-}"/llvm-*/superlu-dist-*/lib/libsuperlu_dist.so* \
-               "${GEOSX_TPL_DIR:-}"/gcc-*/superlu-dist-*/lib/libsuperlu_dist.so* \
-               "${GEOSX_TPL_DIR:-}"/llvm-*/hypre-*/lib/libHYPRE.so* \
-               "${GEOSX_TPL_DIR:-}"/gcc-*/hypre-*/lib/libHYPRE.so* \
-               "${GEOSX_TPL_DIR:-}"/llvm-*/vtk-*/lib/libvtkFiltersParallelDIY2*.so* \
-               "${GEOSX_TPL_DIR:-}"/gcc-*/vtk-*/lib/libvtkFiltersParallelDIY2*.so* \
-               /lib/x86_64-linux-gnu/libomp.so* \
-               /lib/x86_64-linux-gnu/libgomp.so* \
-               /usr/lib/x86_64-linux-gnu/libomp.so* \
-               /usr/lib/x86_64-linux-gnu/libgomp.so* \
-               /usr/lib64/libopenblas.so* \
-               /usr/lib/x86_64-linux-gnu/libopenblas.so*
-    do
-        if [[ -e "${lib}" ]]; then
-            print_ldd_diagnostics "${lib}"
-        fi
-    done
-
-    echo
-    echo ">>> ctest inventory"
-    ctest -N || true
-    echo "===== End runtime diagnostics ====="
-    echo
-}
-
 function usage () {
 >&2 cat << EOF
 Usage: $0
@@ -224,16 +106,12 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
-  --cmake-cxx-flags-release ...
-      Optional override for CMAKE_CXX_FLAGS_RELEASE.
   --code-coverage
       run a code build and test.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
       Either ON or OFF (default is ON). Build geos with bounds check.
-  --geos-enable-fpe
-      Either ON or OFF (default is ON). Build geos with floating point exceptions.
   --enable-hypre
       One of ON or OFF (default is ON). Build geos with hypre.
   --enable-hypre-device
@@ -275,7 +153,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cxx-flags-release:,code-coverage,data-basename:,geos-enable-bounds-check:,geos-enable-fpe:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -294,11 +172,8 @@ ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
-GEOS_ENABLE_FPE=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
-LCOV_CMAKE_ARGS=""
-CMAKE_RELEASE_ARGS=()
 
 eval set -- ${args}
 while :
@@ -309,9 +184,6 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
-    --cmake-cxx-flags-release)
-      CMAKE_RELEASE_ARGS+=("-DCMAKE_CXX_FLAGS_RELEASE=$2")
-      shift 2;;
     --ninja)
         BUILD_GENERATOR=$1;
         shift;;
@@ -326,7 +198,6 @@ do
       unset DATA_BASENAME DATA_BASENAME_EXT
       shift 2;;
     --geos-enable-bounds-check) GEOS_ENABLE_BOUNDS_CHECK=$2; shift 2;;
-    --geos-enable-fpe) GEOS_ENABLE_FPE=$2; shift 2;;
     --enable-hypre)          ENABLE_HYPRE=$2;            shift 2;;
     --enable-hypre-device)   ENABLE_HYPRE_DEVICE=$2;     shift 2;;
     --enable-trilinos)       ENABLE_TRILINOS=$2;         shift 2;;
@@ -453,30 +324,6 @@ fi
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y lcov
-
-  LCOV_REAL=$(command -v lcov || true)
-  if [[ -n "${LCOV_REAL}" ]]; then
-    export GEOS_REAL_LCOV="${LCOV_REAL}"
-    LCOV_WRAPPER=/tmp/geos-lcov-wrapper
-    cat > "${LCOV_WRAPPER}" <<'EOF'
-#!/bin/bash
-set -e
-
-extra_args=()
-if "${GEOS_REAL_LCOV}" --version 2>&1 | grep -Eq 'LCOV version ([2-9]|[1-9][0-9])\.'; then
-  for arg in "$@"; do
-    if [[ "${arg}" == "--capture" || "${arg}" == "-c" ]]; then
-      extra_args=(--ignore-errors mismatch)
-      break
-    fi
-  done
-fi
-
-exec "${GEOS_REAL_LCOV}" "${extra_args[@]}" "$@"
-EOF
-    or_die chmod +x "${LCOV_WRAPPER}"
-    LCOV_CMAKE_ARGS="-DLCOV_EXECUTABLE=${LCOV_WRAPPER}"
-  fi
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -508,10 +355,7 @@ or_die python3 scripts/config-build.py \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
-               -DGEOS_ENABLE_FPE=${GEOS_ENABLE_FPE} \
-               "${CMAKE_RELEASE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
-               ${LCOV_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 phase_finish 0
 
@@ -571,26 +415,11 @@ fi
 
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
-  set_openmpi_runtime_defaults
-  CXX_COMPILER=$(grep '^CMAKE_CXX_COMPILER:' CMakeCache.txt | cut -d= -f2- || true)
-  if [[ -z "${OMP_NUM_THREADS:-}" && "${CXX_COMPILER}" == *clang* ]]; then
-    export OMP_NUM_THREADS=1
-    echo "OMP_NUM_THREADS was unset; defaulting clang unit tests to OMP_NUM_THREADS=${OMP_NUM_THREADS}."
-  fi
-  if [[ -z "${OPENBLAS_NUM_THREADS:-}" && "${CXX_COMPILER}" == *clang* ]]; then
-    export OPENBLAS_NUM_THREADS=1
-    echo "OPENBLAS_NUM_THREADS was unset; defaulting clang unit tests to OPENBLAS_NUM_THREADS=${OPENBLAS_NUM_THREADS}."
-  fi
-  if [[ -z "${OMP_PROC_BIND:-}" && "${CXX_COMPILER}" == *clang* ]]; then
-    export OMP_PROC_BIND=false
-    echo "OMP_PROC_BIND was unset; defaulting clang unit tests to OMP_PROC_BIND=${OMP_PROC_BIND}."
-  fi
-  print_runtime_diagnostics
   phase_start "Unit tests"
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -VV -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -VV -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
   fi
   phase_finish 0
 fi

@@ -298,48 +298,48 @@ jobs:
       fail-fast : false
       matrix:
         include:
-          # - name: Ubuntu 24.04 - gcc 12
-          #   CMAKE_BUILD_TYPE: Release
-          #   DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
-          #   GCP_BUCKET: geosx/ubuntu24.04-gcc12
-          #   BUILD_SHARED_LIBS: ON
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   GEOS_ENABLE_BOUNDS_CHECK: ON
-          #   HOST_CONFIG: /spack-generated.cmake
+          - name: Ubuntu 24.04 - gcc 12
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
+            GCP_BUCKET: geosx/ubuntu24.04-gcc12
+            BUILD_SHARED_LIBS: ON
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
-          # - name: Ubuntu 24.04 - gcc 13 debug
-          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
-          #   CMAKE_BUILD_TYPE: Debug
-          #   DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
-          #   BUILD_SHARED_LIBS: ON
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   GEOS_ENABLE_BOUNDS_CHECK: ON
-          #   # Resolved from .github/ci/orgs/<github.repository_owner>.json.
-          #   RUNNER_KEY: cpu_heavy
-          #   NPROC: 8
-          #   DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
-          #   HOST_CONFIG: /spack-generated.cmake
+          - name: Ubuntu 24.04 - gcc 13 debug
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+            CMAKE_BUILD_TYPE: Debug
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+            BUILD_SHARED_LIBS: ON
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            # Resolved from .github/ci/orgs/<github.repository_owner>.json.
+            RUNNER_KEY: cpu_heavy
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
+            HOST_CONFIG: /spack-generated.cmake
 
-          # - name: Ubuntu 24.04 - gcc 13
-          #   CMAKE_BUILD_TYPE: Release
-          #   DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
-          #   GCP_BUCKET: geosx/ubuntu24.04-gcc13
-          #   BUILD_SHARED_LIBS: ON
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   GEOS_ENABLE_BOUNDS_CHECK: ON
-          #   HOST_CONFIG: /spack-generated.cmake
+          - name: Ubuntu 24.04 - gcc 13
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+            GCP_BUCKET: geosx/ubuntu24.04-gcc13
+            BUILD_SHARED_LIBS: ON
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
           - name: Ubuntu 24.04 - clang 19
             CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             DOCKER_REPOSITORY: geosx/ubuntu24.04-clang19
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            GEOS_ENABLE_FPE: OFF
             RUNNER_KEY: cpu_heavy
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
@@ -347,43 +347,43 @@ jobs:
 
           - name: Ubuntu 24.04 - clang 20 - NO BOUNDS CHECK
             CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             DOCKER_REPOSITORY: geosx/ubuntu24.04-clang20
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            GEOS_ENABLE_FPE: OFF
             RUNNER_KEY: cpu_heavy
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
             HOST_CONFIG: /spack-generated.cmake
 
-          # - name: Rocky Linux 8 - gcc 12
-          #   CMAKE_BUILD_TYPE: Release
-          #   DOCKER_REPOSITORY: geosx/rockylinux8-gcc12
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   BUILD_SHARED_LIBS: ON
-          #   GEOS_ENABLE_BOUNDS_CHECK: ON
-          #   HOST_CONFIG: /spack-generated.cmake
+          - name: Rocky Linux 8 - gcc 12
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/rockylinux8-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
-          # - name: Rocky Linux 8 - gcc 13
-          #   CMAKE_BUILD_TYPE: Release
-          #   DOCKER_REPOSITORY: geosx/rockylinux8-gcc13
-          #   ENABLE_HYPRE: ON
-          #   ENABLE_TRILINOS: OFF
-          #   BUILD_SHARED_LIBS: ON
-          #   GEOS_ENABLE_BOUNDS_CHECK: ON
-          #   HOST_CONFIG: /spack-generated.cmake
+          - name: Rocky Linux 8 - gcc 13
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/rockylinux8-gcc13
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
           - name: Rocky Linux 8 - clang 19
             CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             DOCKER_REPOSITORY: geosx/rockylinux8-clang19
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            GEOS_ENABLE_FPE: OFF
             RUNNER_KEY: cpu_heavy
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
@@ -391,12 +391,12 @@ jobs:
 
           - name: Rocky Linux 9 - clang 22
             CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             DOCKER_REPOSITORY: geosx/rockylinux9-clang22
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
-            GEOS_ENABLE_FPE: OFF
             RUNNER_KEY: cpu_heavy
             NPROC: 8
             DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
@@ -407,14 +407,12 @@ jobs:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS || '' }}
       BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      CMAKE_CXX_FLAGS_RELEASE: ${{ matrix.CMAKE_CXX_FLAGS_RELEASE || (matrix.CMAKE_BUILD_TYPE == 'Release' && '-O3 -DNDEBUG -march=x86-64-v2 -mtune=generic') || '' }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS || '' }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GEOS_ENABLE_FPE: ${{ matrix.GEOS_ENABLE_FPE || '' }}
       STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
       SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
@@ -436,7 +434,6 @@ jobs:
       BUILD_AND_TEST_CLI_ARGS: --build-exe-only
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
-      CMAKE_CXX_FLAGS_RELEASE: -O3 -DNDEBUG -march=x86-64-v2 -mtune=generic
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
       ENABLE_HYPRE: ON
@@ -595,7 +592,6 @@ jobs:
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      CMAKE_CXX_FLAGS_RELEASE: ${{ matrix.CMAKE_CXX_FLAGS_RELEASE || (matrix.CMAKE_BUILD_TYPE == 'Release' && '-O3 -DNDEBUG -march=x86-64-v2 -mtune=generic') || '' }}
       BUILD_GENERATOR: ${{ matrix.BUILD_GENERATOR }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}

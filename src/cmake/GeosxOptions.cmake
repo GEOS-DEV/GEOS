@@ -168,8 +168,6 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOS_NINJA_FLAGS
                                  CLANG   "-fcolor-diagnostics"
                                )
 
-
-
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
