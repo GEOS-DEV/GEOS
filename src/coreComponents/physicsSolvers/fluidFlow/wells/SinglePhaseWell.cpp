@@ -1258,7 +1258,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
 
       auto const writeCSVRow = [&]( TableData const & data )
       {
-        if( !std::filesystem::exists( fileName ) )
+        if( !std::filesystem::exists( fileName ) || std::filesystem::is_empty( fileName ) )
         {
           makeDirsForPath( m_ratesOutputDir );
           TableLayout const tableLayout( columnNames );
