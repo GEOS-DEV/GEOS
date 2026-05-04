@@ -100,9 +100,9 @@ void QDRateAndStateBase::enforceRateAndVelocityConsistency( SurfaceElementSubReg
   real64 const shearImpedance = m_shearImpedance;
 
   string const & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
-  constitutive::FrictionBase & frictionLaw = subRegion.getConstitutiveModel< constitutive::FrictionBase >( frictionLawName );
+  FrictionBase & frictionLaw = subRegion.getConstitutiveModel< FrictionBase >( frictionLawName );
 
-  constitutive::ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
+  ConstitutivePassThru< RateAndStateFrictionBase >::execute( frictionLaw, [&] ( auto & castedFrictionLaw )
   {
     typename TYPEOFREF( castedFrictionLaw ) ::KernelWrapper frictionLawKernelWrapper = castedFrictionLaw.createKernelUpdates();
     rateAndStateKernels::enforceRateAndVelocityConsistency( frictionLawKernelWrapper, subRegion, shearImpedance );

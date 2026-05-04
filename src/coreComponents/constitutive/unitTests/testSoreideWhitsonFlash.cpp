@@ -117,6 +117,9 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
   kValues( 0, 0 ) = 100.0;
   kValues( 0, 1 ) = 0.01;
 
+  auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+  auto const * flashParameters = parameters->get< FlashParameters >();
+
   bool status = NegativeTwoPhaseFlash::compute(
     numComps,
     pressure,
@@ -124,6 +127,8 @@ TEST_P( SoreideWhitsonSolubilityTestFixture, testSolubility )
     totalComposition.toSliceConst(),
     componentProperties,
     flashData,
+    flashParameters->m_continuousParameters,
+    flashParameters->m_discreteParameters,
     kValues.toSlice(),
     vapourFraction,
     liquidComposition,

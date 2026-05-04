@@ -252,13 +252,10 @@ class SlurryFluidBase : public SingleFluidBase
 public:
   using SingleFluidProp = SingleFluidVar< real64, 2, constitutive::singlefluid::LAYOUT_FLUID, constitutive::singlefluid::LAYOUT_FLUID_DER >;
 
-  SlurryFluidBase( string const & name, Group * const parent );
+  SlurryFluidBase( string const & name, dataRepository::Group * const parent );
 
-  virtual ~SlurryFluidBase() override;
-
-  // *** ConstitutiveBase interface
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 3;
 
@@ -308,6 +305,19 @@ public:
 
   bool isNewtonianFluid() const { return m_isNewtonianFluid; }
 
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+
+    static constexpr char const * defaultComponentDensityString() { return "defaultComponentDensity"; }
+    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
+    static constexpr char const * defaultComponentViscosityString() { return "defaultComponentViscosity"; }
+
+    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
+    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
+  };
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -342,20 +352,6 @@ protected:
 
   bool m_isNewtonianFluid;
 
-private:
-
-  // *** Data repository keys
-  struct viewKeyStruct
-  {
-    static constexpr char const * componentNamesString() { return "componentNames"; }
-
-    static constexpr char const * defaultComponentDensityString() { return "defaultComponentDensity"; }
-    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
-    static constexpr char const * defaultComponentViscosityString() { return "defaultComponentViscosity"; }
-
-    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
-    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
-  };
 };
 
 } //namespace constitutive

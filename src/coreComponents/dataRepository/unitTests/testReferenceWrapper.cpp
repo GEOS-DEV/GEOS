@@ -71,7 +71,7 @@ TEST( testReferenceWrapper, testArrayOfWrappedInts )
   int val0 = 0;
   int val1 = 1;
 
-  std::vector< ReferenceWrapper< int > > arr2;
+  stdVector< ReferenceWrapper< int > > arr2;
   arr2.resize( 2 );
   arr2[0].set( val0 );
   arr2[1].set( val1 );

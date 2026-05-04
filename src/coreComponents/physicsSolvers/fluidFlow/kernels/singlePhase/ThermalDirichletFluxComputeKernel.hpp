@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
 
+#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
@@ -199,8 +200,11 @@ public:
                                            real64 const & f,
                                            real64 const & dF_dP,
                                            real64 const & mobility_up,
-                                           real64 const & dMobility_dP_up )
+                                           real64 const & dMobility_dP_up,
+                                           real64 const & dens_up,
+                                           real64 const & dDens_dP_up )
     {
+      GEOS_UNUSED_VAR( dens_up, dDens_dP_up );
 
       // Compute the derivatives of the density wrt temperature
 

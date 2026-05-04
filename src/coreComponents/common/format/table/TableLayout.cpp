@@ -24,31 +24,41 @@
 namespace geos
 {
 
-void TableLayout::addColumns( stdVector< string > const & columnNames )
+TableLayout & TableLayout::addColumns( stdVector< string > const & columnNames )
 {
   for( auto const & columnName : columnNames )
   {
     addColumn( columnName );
   }
+  return *this;
 }
 
-void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
+TableLayout & TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
 {
   for( auto const & column : columns )
   {
     addColumn( column );
   }
+  return *this;
 }
 
-void TableLayout::addColumn( string_view columnName )
+TableLayout & TableLayout::addColumns( TableLayoutArgs columns )
+{
+  processArguments( columns );
+  return *this;
+}
+
+TableLayout & TableLayout::addColumn( string_view columnName )
 {
   TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
-void TableLayout::addColumn( TableLayout::Column const & column )
+TableLayout & TableLayout::addColumn( TableLayout::Column const & column )
 {
   m_tableColumns.emplace_back( column );
+  return *this;
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
@@ -75,6 +85,23 @@ TableLayout & TableLayout::setMargin( MarginValue marginValue )
 TableLayout & TableLayout::setMaxColumnWidth( size_t width )
 {
   m_maxColumnWidth = width;
+  return *this;
+}
+
+TableLayout & TableLayout::setIndentation( size_t spacesCount )
+{
+  m_indentation = spacesCount;
+  return *this;
+}
+
+TableLayout & TableLayout::setDefaultHeaderAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultHeaderAlignment = alignment;
+  return *this;
+}
+TableLayout & TableLayout::setDefaultValueAlignment( TableLayout::Alignment alignment )
+{
+  m_defaultValueAlignment = alignment;
   return *this;
 }
 
@@ -159,7 +186,7 @@ void TableLayout::Cell::setText( string_view text )
 }
 
 TableLayout::Column::Column():
-  m_header( CellType::Header, defaultHeaderAlignment )
+  m_header( CellType::Header, Alignment::center )
 {}
 
 TableLayout::Column::Column( string_view name, TableLayout::ColumnAlignement alignment ):
@@ -171,6 +198,11 @@ TableLayout::Column & TableLayout::Column::setName( string_view name )
 {
   m_header.setText( name );
   return *this;
+}
+
+string_view TableLayout::Column::getName() const
+{
+  return m_header.getText();
 }
 
 TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
@@ -256,7 +288,7 @@ TableLayout::DeepFirstIterator & TableLayout::DeepFirstIterator::operator++()
     while( m_currentColumn->hasChild() )
     {
       m_currentLayer++;
-      m_currentColumn = &m_currentColumn->m_subColumns[0];
+      m_currentColumn = &m_currentColumn->m_subColumns.front();
     }
   }
   else
@@ -284,7 +316,7 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
     while( startColumn->hasChild() )
     {
       idxLayer++;
-      startColumn = &startColumn->m_subColumns[0];
+      startColumn = &startColumn->m_subColumns.front();
     }
   }
   return DeepFirstIterator( startColumn, idxLayer );
@@ -293,13 +325,16 @@ TableLayout::DeepFirstIterator TableLayout::beginDeepFirst() const
 PreparedTableLayout::PreparedTableLayout(  ):
   TableLayout(),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_visibleLowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {}
 
 PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
   TableLayout( other ),
   m_columnLayersCount( 0 ),
-  m_lowermostColumnCount( 0 )
+  m_totalLowermostColumnCount( 0 ),
+  m_visibleLowermostColumnCount( 0 ),
+  m_indentationStr( m_indentation, ' ' )
 {
   prepareLayoutRecusive( m_tableColumns, 0 );
 
@@ -309,26 +344,21 @@ PreparedTableLayout::PreparedTableLayout( TableLayout const & other ):
 void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column > & columns,
                                                  size_t level )
 {
-  for( size_t idxColumn = 0; idxColumn < columns.size(); ++idxColumn )
+  for( auto & column : columns )
   {
-    Column & column = columns[idxColumn];
-
-    if( column.isVisible() )
-    {
+    if( column.isVisible())
       m_columnLayersCount = std::max( m_columnLayersCount, level + 1 );
 
-      if( !column.hasChild() )
+    if( !column.hasChild() )
+    {
+      ++m_totalLowermostColumnCount;
+      if( column.isVisible() )
       {
-        ++m_lowermostColumnCount;
+        ++m_visibleLowermostColumnCount;
       }
     }
 
     column.m_header.prepareLayout( getMaxColumnWidth() );
-
-    if( idxColumn < columns.size() - 1 )
-    {
-      column.setNext( &columns[idxColumn + 1] );
-    }
 
     if( !column.m_subColumns.empty())
     {
@@ -340,6 +370,13 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
 
       prepareLayoutRecusive( column.m_subColumns, level + 1 );
     }
+  }
+
+  if( !columns.empty())
+  {
+    // Link adjacent columns
+    for( size_t i = 0; i < columns.size() - 1; ++i )
+      columns[i].setNext( &columns[i + 1] );
   }
 }
 

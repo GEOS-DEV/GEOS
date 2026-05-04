@@ -53,7 +53,7 @@ struct EOSStackVariables_Impl
    *
    * @tparam DIM Dimensionality of the derivative (default is 1).
    */
-  template< integer DIM = 1 >
+  template< integer DIM = 1, integer USD = 0 >
   using DerivativeType = T *;
 
   /**
@@ -61,7 +61,7 @@ struct EOSStackVariables_Impl
    *
    * @tparam DIM Dimensionality of the derivative (default is 1).
    */
-  template< integer DIM = 1 >
+  template< integer DIM = 1, integer USD = 0 >
   using ConstDerivativeType = const T *;
 
   /**
@@ -121,16 +121,16 @@ struct EOSStackVariables_Impl< T, true > : public EOSStackVariables_Impl< T, fal
    *
    * @tparam DIM Dimensionality of the derivative (default is 1).
    */
-  template< integer DIM = 1 >
-  using DerivativeType = ArraySlice< real64, DIM >;
+  template< integer DIM = 1, integer USD = 0 >
+  using DerivativeType = ArraySlice< real64, DIM, USD >;
 
   /**
    * @brief Type alias for read-only derivative arrays.
    *
    * @tparam DIM Dimensionality of the derivative (default is 1).
    */
-  template< integer DIM = 1 >
-  using ConstDerivativeType = ArraySlice< real64 const, DIM >;
+  template< integer DIM = 1, integer USD = 0 >
+  using ConstDerivativeType = ArraySlice< real64 const, DIM, USD >;
 
   /**
    * @brief Constructor for initializing EOS stack variables with derivatives.

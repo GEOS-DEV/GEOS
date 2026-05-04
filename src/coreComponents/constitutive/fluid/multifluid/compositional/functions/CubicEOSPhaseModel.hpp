@@ -84,11 +84,11 @@ struct CubicEOSPhaseModel
   template< bool DERIVATIVES >
   using StackVariables = EOSStackVariables_Impl< void, DERIVATIVES >;
 
-  template< integer DIM, bool DERIVATIVES >
-  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM >;
+  template< integer DIM, bool DERIVATIVES, integer USD = 0 >
+  using StackDerivativeType = typename StackVariables< DERIVATIVES >::template DerivativeType< DIM, USD >;
 
-  template< integer DIM, bool DERIVATIVES >
-  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM >;
+  template< integer DIM, bool DERIVATIVES, integer USD = 0 >
+  using StackConstDerivativeType = typename StackVariables< DERIVATIVES >::template ConstDerivativeType< DIM, USD >;
 
 public:
   /**
@@ -141,16 +141,16 @@ public:
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 >
   GEOS_HOST_DEVICE
   static void
   computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                            real64 const & pressure,
                                            real64 const & temperature,
-                                           arraySlice1d< real64 const, USD > const & composition,
+                                           arraySlice1d< real64 const, USD1 > const & composition,
                                            ComponentProperties::KernelWrapper const & componentProperties,
                                            arraySlice1d< real64 > const & logFugacityCoefficients,
-                                           arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+                                           arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor for the cubic EOS model
@@ -195,57 +195,26 @@ public:
                                          arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
-   * @brief CCompute enthalpy of a phase
-   * @details Computes the enthalpy for the cubic EOS model
+   * @brief Compute compressibility factor for the cubic EOS model
+   * @details Computes the compressibility factor (z-factor) for the cubic EOS model including derivatives
    * @param[in] numComps number of components
    * @param[in] pressure pressure
    * @param[in] temperature temperature
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
-   * @param[out] enthalpy the enthalpy
+   * @param[out] compressibilityFactor the current compressibility factor
+   * @param[out] compressibilityFactorDerivs derivatives of the compressibility factor
    */
   template< integer USD >
   GEOS_HOST_DEVICE
   static void
-  computeEnthalpy( integer const numComps,
-                   real64 const & pressure,
-                   real64 const & temperature,
-                   arraySlice1d< real64 const, USD > const & composition,
-                   ComponentProperties::KernelWrapper const & componentProperties,
-                   real64 & enthalpy );
-
-  /**
-   * @brief Compute enthalpy of a phase and derivatives
-   * @details Computes the enthalpy for the cubic EOS model including derivatives
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] temperature temperature
-   * @param[in] composition composition of the phase
-   * @param[in] componentProperties The compositional component properties
-   * @param[out] compressibilityFactor the phase enthalpy
-   * @param[out] enthalpyDerivs derivatives of the enthalpy
-   */
-  template< integer USD1, integer USD2 >
-  GEOS_HOST_DEVICE
-  static void
-  computeEnthalpyAndDerivs( integer const numComps,
-                            real64 const & pressure,
-                            real64 const & temperature,
-                            arraySlice1d< real64 const, USD1 > const & composition,
-                            ComponentProperties::KernelWrapper const & componentProperties,
-                            real64 & enthalpy,
-                            arraySlice1d< real64, USD2 > const & enthalpyDerivs );
-
-  /**
-   * @brief Calculate the dimensional volume shift
-   * @details Computes the dimensional form of the volume shifts given the user defined non-dimensional form.
-   * @param[in] numComps The number of components
-   * @param[in] componentProperties The compositional model properties
-   * @param[out] dimensionalVolumeShift The calculated dimensional volume shifts
-   */
-  GEOS_FORCE_INLINE
-  static void calculateDimensionalVolumeShift( ComponentProperties const & componentProperties,
-                                               arraySlice1d< real64 > const & dimensionalVolumeShift );
+  computeCompressibilityFactorAndDerivs( integer const numComps,
+                                         real64 const & pressure,
+                                         real64 const & temperature,
+                                         arraySlice1d< real64 const, USD > const & composition,
+                                         ComponentProperties::KernelWrapper const & componentProperties,
+                                         real64 & compressibilityFactor,
+                                         arraySlice1d< real64 > const & compressibilityFactorDerivs );
 
   /**
    * @brief Calculate the pure coefficients derivatives
@@ -280,26 +249,6 @@ public:
                               StackVariables< DERIVATIVES > & data );
 
   /**
-   * @brief Compute the temperature derivative of the mixture attractive parameter
-   * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
-   * @param[in] numComps number of components
-   * @param[in] pressure pressure
-   * @param[in] composition composition of the phase
-   * @param[in] data The component mixture properties
-   * @param[out] dA_dT The temperature derivative of the mixture attractive parameter
-   * @param[out] dA_dTDerivs Derivatives of dA_dT wrt all primary variables
-   */
-  template< integer USD >
-  GEOS_HOST_DEVICE
-  static void
-  computeAttractionParemeterDerivative( integer const numComps,
-                                        real64 const & pressure,
-                                        arraySlice1d< real64 const, USD > const & composition,
-                                        StackVariables< true > const & data,
-                                        real64 & dA_dT,
-                                        StackDerivativeType< 1, true > const & dA_dTDerivs );
-
-  /**
    * @brief Compute the compressibility factor using compositions, BICs, and mixture coefficients
    * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
    * @param[in] numComps number of components
@@ -330,42 +279,16 @@ public:
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD, bool DERIVATIVES = false >
+  template< integer USD1, bool DERIVATIVES = false, integer USD2 = 0 >
   GEOS_HOST_DEVICE
   static void
   computeLogFugacityCoefficients( integer const numComps,
-                                  arraySlice1d< real64 const, USD > const & composition,
+                                  arraySlice1d< real64 const, USD1 > const & composition,
                                   StackVariables< DERIVATIVES > const & data,
                                   real64 const & compressibilityFactor,
                                   StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                   arraySlice1d< real64 > const & logFugacityCoefficients,
-                                  StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs );
-
-  /**
-   * @brief Compute the residual enthalpy
-   * @tparam DERIVATIVES a flag to indicate if derivatives should be calculated
-   * @param[in] numComps number of components
-   * @param[in] temperature temperature
-   * @param[in] data The component mixture properties
-   * @param[in] compressibilityFactor compressibility factor
-   * @param[in] compressibilityFactorDerivs derivatives of the compressibility factor
-   * @param[in] dA_dT derivative of the mixture attraction parameter wrt temperature
-   * @param[in] dA_dTDerivs derivatives dA_dT wrt all the primary variables
-   * @param[out] enthalpy the residual enthalpy of the phase
-   * @param[out] enthalpyDerivs derivatives of the log of the residual enthalpy
-   */
-  template< bool DERIVATIVES = false >
-  GEOS_HOST_DEVICE
-  static void
-  computeEnthalpy( integer const numComps,
-                   real64 const & temperature,
-                   StackVariables< DERIVATIVES > const & data,
-                   real64 const & compressibilityFactor,
-                   StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
-                   real64 const & dA_dT,
-                   StackConstDerivativeType< 1, DERIVATIVES > const & dA_dTDerivs,
-                   real64 & enthalpy,
-                   StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs );
+                                  StackDerivativeType< 2, DERIVATIVES, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Helper functions solving a cubic equation using trigonometry

@@ -20,9 +20,7 @@
 #include "SinglePhaseStatistics.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
@@ -35,6 +33,7 @@ namespace geos
 {
 
 using namespace constitutive;
+using namespace fields;
 using namespace dataRepository;
 
 SinglePhaseStatistics::SinglePhaseStatistics( const string & name,
@@ -68,14 +67,25 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
       region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
 
-      // write output header
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
+        TableLayout tableLayout( {
+            TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
+            TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
+            TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))),
+            TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
+            TableLayout::Column().setName( GEOS_FMT( "Total fluid mass [{}]", units::getSymbol( units::Unit::Mass )))
+          } );
+
+        TableCSVFormatter csvFormatter( tableLayout );
         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
-        outputFile <<
-          "Time [s],Min pressure [Pa],Average pressure [Pa],Max pressure [Pa],Min delta pressure [Pa],Max delta pressure [Pa]," <<
-          "Min temperature [Pa],Average temperature [Pa],Max temperature [Pa],Total dynamic pore volume [rm^3],Total fluid mass [kg]";
-        outputFile << std::endl;
+        outputFile << csvFormatter.headerToString();
         outputFile.close();
       }
     }
@@ -134,9 +144,9 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
-    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+    arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< flow::deltaPressure >();
+    arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
 
     string const & solidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::solidNamesString() );
     Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
@@ -250,7 +260,8 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     {
       stats.averagePressure = 0.0;
       stats.averageTemperature = 0.0;
-      GEOS_WARNING( GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
+      GEOS_WARNING( GEOS_FMT( "{}: Cannot compute average pressure & temperature because region pore volume is zero.", regionNames[i] ),
+                    getDataContext() );
     }
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );

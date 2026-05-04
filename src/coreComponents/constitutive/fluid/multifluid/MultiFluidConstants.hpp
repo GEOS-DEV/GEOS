@@ -83,6 +83,12 @@ struct MultiFluidConstants
    */
   static constexpr real64 minForSpeciesPresence = 1.0e-10;
 
+  /**
+   * @brief Mole fraction at which a mixture is considered an almost pure component mixture
+   * @details If the sum of the mole fractions of all but one component is below this, then the
+   *          mixture will be said to be almost pure.
+   */
+  static constexpr real64 almostPureThreshold = 0.05;
 };
 
 } //namespace constitutive

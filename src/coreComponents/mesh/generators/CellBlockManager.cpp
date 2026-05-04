@@ -65,9 +65,9 @@ void convertFromCellBlockPairMap( ArrayOfArraysView< CellBlockIndexPair const > 
   toBlock.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
   toCell.resizeFromOffsets( numObjects, srcMap.toViewConst().getOffsets() );
 
-  forAll< parallelHostPolicy >( numObjects, [toBlock = toBlock.toView(),
-                                             toCell = toCell.toView(),
-                                             srcMap]( localIndex const objIndex )
+  forAll< POLICY >( numObjects, [toBlock = toBlock.toView(),
+                                 toCell = toCell.toView(),
+                                 srcMap]( localIndex const objIndex )
   {
     arraySlice1d< CellBlockIndexPair const > const cells = srcMap[ objIndex ];
     for( CellBlockIndexPair const & e : cells )
@@ -211,11 +211,11 @@ struct NodesAndElementOfFace
 {
   NodesAndElementOfFace( localIndex const duplicateFaceNodesIdx,
                          localIndex const cellIdx,
-                         localIndex const blockIdx,
+                         localIndex const blockId,
                          localIndex const faceNum ):
     duplicateFaceNodesIndex( duplicateFaceNodesIdx ),
     cellIndex( cellIdx ),
-    blockIndex( blockIdx ),
+    blockIndex( blockId ),
     faceNumber( faceNum )
   {}
 
@@ -774,7 +774,7 @@ CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,
                                                  integer regionAttribute )
 {
   CellBlock & cb = this->getCellBlocks().registerGroup< CellBlock >( cellBlockName );
-  m_regionAttributesCellBlocks[ regionAttribute ].emplace( cellBlockName );
+  m_regionAttributesCellBlocks.get_inserted( regionAttribute ).emplace( cellBlockName );
   return cb;
 }
 
@@ -816,12 +816,12 @@ arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
   return m_nodeLocalToGlobal.toView();
 }
 
-std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
+stdMap< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
 {
   return m_nodeSets;
 }
 
-std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
+stdMap< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
 {
   return m_nodeSets;
 }

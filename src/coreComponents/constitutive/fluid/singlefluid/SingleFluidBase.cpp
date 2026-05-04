@@ -33,26 +33,26 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
   m_numDOF( 1 )
 {
-  registerField( fields::singlefluid::density{}, &m_density.value );
-  registerField( fields::singlefluid::dDensity{}, &m_density.derivs );
-  registerField( fields::singlefluid::density_n{}, &m_density_n );
+  registerField< fields::singlefluid::density >( &m_density.value );
+  registerField< fields::singlefluid::dDensity >( &m_density.derivs );
+  registerField< fields::singlefluid::density_n >( &m_density_n );
 
-  registerField( fields::singlefluid::viscosity{}, &m_viscosity.value );
-  registerField( fields::singlefluid::dViscosity{}, &m_viscosity.derivs );
+  registerField< fields::singlefluid::viscosity >( &m_viscosity.value );
+  registerField< fields::singlefluid::dViscosity >( &m_viscosity.derivs );
 
-  registerField( fields::singlefluid::internalEnergy{}, &m_internalEnergy.value );
-  registerField( fields::singlefluid::dInternalEnergy{}, &m_internalEnergy.derivs );
-  registerField( fields::singlefluid::internalEnergy_n{}, &m_internalEnergy_n );
+  registerField< fields::singlefluid::internalEnergy >( &m_internalEnergy.value );
+  registerField< fields::singlefluid::dInternalEnergy >( &m_internalEnergy.derivs );
+  registerField< fields::singlefluid::internalEnergy_n >( &m_internalEnergy_n );
 
-  registerField( fields::singlefluid::enthalpy{}, &m_enthalpy.value );
-  registerField( fields::singlefluid::dEnthalpy{}, &m_enthalpy.derivs );
+  registerField< fields::singlefluid::enthalpy >( &m_enthalpy.value );
+  registerField< fields::singlefluid::dEnthalpy >( &m_enthalpy.derivs );
 }
 
 void SingleFluidBase::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
 
-  // for fracture elements, set the default value
+  // for fracture elements, set the default value - TODO check why this is needed
   getField< fields::singlefluid::density_n >().
     setDefaultValue( defaultDensity() );
 }
@@ -84,30 +84,27 @@ void SingleFluidBase::saveConvergedState() const
 }
 
 //START_SPHINX_INCLUDE_00
-void SingleFluidBase::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+void SingleFluidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  resize( parent.size() );
-
   // density
-  m_density.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_density.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
-  m_density_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_density.value.resize( 0, numPts );
+  m_density.derivs.resize( 0, numPts, m_numDOF );
+  m_density_n.resize( 0, numPts );
 
   // viscosity
-  m_viscosity.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_viscosity.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
+  m_viscosity.value.resize( 0, numPts );
+  m_viscosity.derivs.resize( 0, numPts, m_numDOF );
 
   // internal energy
-  m_internalEnergy.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_internalEnergy.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
-  m_internalEnergy_n.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_internalEnergy.value.resize( 0, numPts );
+  m_internalEnergy.derivs.resize( 0, numPts, m_numDOF );
+  m_internalEnergy_n.resize( 0, numPts );
 
   // enthalpy
-  m_enthalpy.value.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_enthalpy.derivs.resize( parent.size(), numConstitutivePointsPerParentIndex, m_numDOF );
+  m_enthalpy.value.resize( 0, numPts );
+  m_enthalpy.derivs.resize( 0, numPts, m_numDOF );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 //END_SPHINX_INCLUDE_00
 

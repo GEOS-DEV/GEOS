@@ -18,7 +18,7 @@
  */
 
 #include "TriaxialDriver.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 
 
 namespace geos
@@ -69,8 +69,7 @@ TriaxialDriver::TriaxialDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  addLogLevel< logInfo::Initialisation >();
-  addLogLevel< logInfo::Results >();
+  addLogLevel< logInfo::LogOutput >();
 }
 
 
@@ -152,12 +151,12 @@ void TriaxialDriver::postInputInitialization()
   // may overwrite it.
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
-                 getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
-                 InputError );
+                 "Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
-                 getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
-                 InputError );
+                 "Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
+                 InputError, getDataContext() );
 }
 
 
@@ -395,7 +394,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", geos::RuntimeError );
 
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
@@ -406,16 +405,16 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching Triaxial Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Material .......... " << m_solidMaterialName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type .............. " << baseSolid.getCatalogName() );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Mode .............. " << m_mode );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Axial Control ..... " << m_axialFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Radial Control .... " << m_radialFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Initial Stress .... " << m_initialStress );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps ............. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ............ " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline .......... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Triaxial Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Material .......... " << m_solidMaterialName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type .............. " << baseSolid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Mode .............. " << m_mode );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Axial Control ..... " << m_axialFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Radial Control .... " << m_radialFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Initial Stress .... " << m_initialStress );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps ............. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ............ " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline .......... " << m_baselineFile );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -539,7 +538,9 @@ void TriaxialDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 
@@ -561,15 +562,18 @@ void TriaxialDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       if( col < ITER ) // only compare "real" data columns
       {
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
-        GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
-                                                                                           << " (row " << row+10 << " with header)"
-                                                                                           << " and column " << col+1, std::runtime_error );
+        GEOS_THROW_IF( error > m_baselineTol,
+                       GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                                 row + 1,
+                                 row + 10,
+                                 col + 1 ),
+                       geos::RuntimeError );
       }
     }
   }
@@ -577,11 +581,11 @@ void TriaxialDriver::compareWithBaseline()
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ........ Internal results consistent with baseline." );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ........ Internal results consistent with baseline." );
 
   file.close();
 }

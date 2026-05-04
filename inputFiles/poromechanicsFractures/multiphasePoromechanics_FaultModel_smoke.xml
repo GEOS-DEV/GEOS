@@ -27,7 +27,6 @@
       stabilizationName="TPFA_stab"
       logLevel="1"
       targetRegions="{ Region, Fault }" 
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"/>  
 
     <CompositionalMultiphaseFVM 

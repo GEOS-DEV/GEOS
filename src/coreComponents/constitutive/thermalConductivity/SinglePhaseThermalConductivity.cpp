@@ -46,13 +46,6 @@ SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & n
     setDescription( "The reference temperature at which the conductivity components are equal to the default values" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-SinglePhaseThermalConductivity::deliverClone( string const & name,
-                                              Group * const parent ) const
-{
-  return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
-}
-
 void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
 {
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
@@ -110,20 +103,13 @@ void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 
   } );
 }
 
-void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                               localIndex const numConstitutivePointsPerParentIndex )
-{
-  SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
 void SinglePhaseThermalConductivity::postInputInitialization()
 {
   GEOS_THROW_IF( m_defaultThermalConductivityComponents[0] <= 0 ||
                  m_defaultThermalConductivityComponents[1] <= 0 ||
                  m_defaultThermalConductivityComponents[2] <= 0,
-                 GEOS_FMT( "{}: the components of the default thermal conductivity tensor must be strictly positive",
-                           getFullName() ),
-                 InputError );
+                 "the components of the default thermal conductivity tensor must be strictly positive",
+                 InputError, getDataContext() );
 
 }
 

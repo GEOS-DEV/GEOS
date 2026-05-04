@@ -28,20 +28,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct SiloOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Silo output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & SiloOutput::getTimerCategory() const
-{
-  static logInfo::SiloOutputTimer timer;
-  return timer;
-}
-
 SiloOutput::SiloOutput( string const & name,
                         Group * const parent ):
   OutputBase( name, parent ),
@@ -52,7 +38,8 @@ SiloOutput::SiloOutput( string const & name,
   m_writeFaceElementMesh( 1 ),
   m_plotLevel(),
   m_onlyPlotSpecifiedFieldNames(),
-  m_fieldNames()
+  m_fieldNames(),
+  m_parallelThreads( 1 )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -95,6 +82,10 @@ SiloOutput::SiloOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
 
+  registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads ).
+    setApplyDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of plot files." );
 }
 
 SiloOutput::~SiloOutput()
@@ -106,23 +97,22 @@ void SiloOutput::postInputInitialization()
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                 GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getDataContext(),
+                 GEOS_FMT( "The flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless"
+                        "`{}`: found {} fields to plot in `{}`. These fields will be output regardless"
                         " of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getDataContext(),
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with "
+                        "`{}`: found {} fields to plot in `{}`, in addition to all fields with "
                         "`plotLevel` smaller or equal to {}.",
-                        catalogName(), getDataContext(), std::to_string( m_fieldNames.size() ),
+                        getDataContext(), std::to_string( m_fieldNames.size() ),
                         fieldNamesString, m_plotLevel ) );
 }
 

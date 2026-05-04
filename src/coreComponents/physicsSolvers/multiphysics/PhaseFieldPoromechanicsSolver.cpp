@@ -20,10 +20,7 @@
 
 #include "PhaseFieldPoromechanicsSolver.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
-#include "finiteElement/Kinematics.h"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"

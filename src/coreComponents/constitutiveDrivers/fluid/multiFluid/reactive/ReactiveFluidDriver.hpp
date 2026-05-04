@@ -92,7 +92,7 @@ private:
   };
 
   integer m_numSteps;      ///< Number of load steps
-  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
+  GEOS_MAYBE_UNUSED integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
   integer m_numPhases;     ///< Number of fluid phases
 
   integer m_numPrimarySpecies; ///< Number of primary species (components)

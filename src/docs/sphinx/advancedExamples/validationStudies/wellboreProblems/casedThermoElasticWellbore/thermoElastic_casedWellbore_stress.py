@@ -41,9 +41,9 @@ def main():
 
 		# Compute total stress: 
 		# With the actual version of GEOS, the output stress need to be combined with the temperature contribution to obtain the total tress as follows: 
-		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
-		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * temperature
+		stress_xx_total = stress[:,:,0] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_yy_total = stress[:,:,1] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
+		stress_zz_total = stress[:,:,2] - 3 * bulkModuli[idx] * thermalExpansionCoefficients[idx] * (temperature-100)
 		stress_yz_total = stress[:,:,3]
 		stress_xz_total = stress[:,:,4]
 		stress_xy_total = stress[:,:,5]

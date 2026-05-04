@@ -22,7 +22,6 @@
 
 #include "CubicEOSPhaseModel.hpp"
 #include "common/logger/Logger.hpp"
-#include "common/PhysicsConstants.hpp"
 
 namespace geos
 {
@@ -99,17 +98,17 @@ computeLogFugacityCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
+template< integer USD1, integer USD2 >
 GEOS_HOST_DEVICE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                          real64 const & pressure,
                                          real64 const & temperature,
-                                         arraySlice1d< real64 const, USD > const & composition,
+                                         arraySlice1d< real64 const, USD1 > const & composition,
                                          ComponentProperties::KernelWrapper const & componentProperties,
                                          arraySlice1d< real64 > const & logFugacityCoefficients,
-                                         arraySlice2d< real64 > const & logFugacityCoefficientDerivs )
+                                         arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs )
 {
   integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
   integer const numDofs = 2 + numComps;
@@ -130,23 +129,23 @@ computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                            stack );
 
   // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients< USD, true >( numComps, composition, stack );
+  computeMixtureCoefficients< USD1, true >( numComps, composition, stack );
 
   // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor< USD, true >( numComps,
-                                             composition,
-                                             stack,
-                                             compressibilityFactor,
-                                             compressibilityFactorDerivs.toSlice() );
+  computeCompressibilityFactor< USD1, true >( numComps,
+                                              composition,
+                                              stack,
+                                              compressibilityFactor,
+                                              compressibilityFactorDerivs.toSlice() );
 
   // Step 4: Use mixture coefficients and compressibility factor to update fugacity coefficients
-  computeLogFugacityCoefficients< USD, true >( numComps,
-                                               composition,
-                                               stack,
-                                               compressibilityFactor,
-                                               compressibilityFactorDerivs.toSliceConst(),
-                                               logFugacityCoefficients,
-                                               logFugacityCoefficientDerivs );
+  computeLogFugacityCoefficients< USD1, true >( numComps,
+                                                composition,
+                                                stack,
+                                                compressibilityFactor,
+                                                compressibilityFactorDerivs.toSliceConst(),
+                                                logFugacityCoefficients,
+                                                logFugacityCoefficientDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -216,99 +215,6 @@ computeCompressibilityFactorAndDerivs( integer const numComps,
                                              stack,
                                              compressibilityFactor,
                                              compressibilityFactorDerivs );
-}
-
-template< typename EOS_TYPE >
-template< integer USD >
-GEOS_HOST_DEVICE
-void
-CubicEOSPhaseModel< EOS_TYPE >::
-computeEnthalpy( integer const numComps,
-                 real64 const & pressure,
-                 real64 const & temperature,
-                 arraySlice1d< real64 const, USD > const & composition,
-                 ComponentProperties::KernelWrapper const & componentProperties,
-                 real64 & enthalpy )
-{
-  integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
-  integer const numDofs = 2 + numComps;
-
-  StackArray< real64, 1, numMaxDofs > tempDerivs( numDofs );
-
-  computeEnthalpyAndDerivs( numComps,
-                            pressure,
-                            temperature,
-                            composition,
-                            componentProperties,
-                            enthalpy,
-                            tempDerivs.toSlice());
-}
-
-template< typename EOS_TYPE >
-template< integer USD1, integer USD2 >
-GEOS_HOST_DEVICE
-void
-CubicEOSPhaseModel< EOS_TYPE >::
-computeEnthalpyAndDerivs( integer const numComps,
-                          real64 const & pressure,
-                          real64 const & temperature,
-                          arraySlice1d< real64 const, USD1 > const & composition,
-                          ComponentProperties::KernelWrapper const & componentProperties,
-                          real64 & enthalpy,
-                          arraySlice1d< real64, USD2 > const & enthalpyDerivs )
-{
-  integer constexpr numMaxDofs = StackVariables< true >::maxNumDof;
-  integer const numDofs = 2 + numComps;
-
-  // Allocate space for the intermediate values and derivatives
-  StackArray< real64, 2, 2*numMaxDofs > tempDerivs( 2, numDofs );
-  real64 compressibilityFactor = 0.0;
-  real64 dA_dT = 0.0;
-  auto const compressibilityFactorDerivs = tempDerivs[0];
-  auto const dA_dTDerivs = tempDerivs[1];
-
-  arraySlice2d< real64 const > const & binaryInteractionCoefficients = componentProperties.m_componentBinaryCoeff.toSlice();
-
-  // Step 1: Allocate the stack memory needed for the update
-  integer sizes[2] = {0, 0};
-  arraySlice2d< real64 const > derivs( nullptr, sizes, sizes );
-  StackVariables< true > stack( numComps, binaryInteractionCoefficients, derivs );
-  initialiseStack( numComps,
-                   pressure,
-                   temperature,
-                   componentProperties,
-                   stack );
-
-  // Step 2: Compute the mixture coefficients
-  computeMixtureCoefficients( numComps,
-                              composition,
-                              stack );
-
-  // Step 3: Compute the compressibility factor (Z)
-  computeCompressibilityFactor( numComps,
-                                composition,
-                                stack,
-                                compressibilityFactor,
-                                compressibilityFactorDerivs );
-
-  // Step 4: Compute the derivative of the attraction parameter
-  computeAttractionParemeterDerivative( numComps,
-                                        pressure,
-                                        composition,
-                                        stack,
-                                        dA_dT,
-                                        dA_dTDerivs );
-
-  // Step 5: Compute the residual enthalpy
-  computeEnthalpy( numComps,
-                   temperature,
-                   stack,
-                   compressibilityFactor,
-                   compressibilityFactorDerivs.toSliceConst(),
-                   dA_dT,
-                   dA_dTDerivs.toSliceConst(),
-                   enthalpy,
-                   enthalpyDerivs );
 }
 
 template< typename EOS_TYPE >
@@ -448,67 +354,6 @@ computeMixtureCoefficients( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD >
-GEOS_HOST_DEVICE
-void
-CubicEOSPhaseModel< EOS_TYPE >::
-computeAttractionParemeterDerivative( integer const numComps,
-                                      real64 const & pressure,
-                                      arraySlice1d< real64 const, USD > const & composition,
-                                      StackVariables< true > const & stack,
-                                      real64 & dA_dT,
-                                      StackDerivativeType< 1, true > const & dA_dTDerivs )
-{
-  arraySlice2d< real64 const > const & kij = stack.kij;
-
-  dA_dT = 0.0;
-  LvArray::forValuesInSlice( dA_dTDerivs, setZero );
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    for( integer jc = 0; jc < numComps; ++jc )
-    {
-      real64 const ai = stack.aic[ic];
-      real64 const aj = stack.aic[jc];
-      real64 const dai_dp = stack.daic_dp[ic];
-      real64 const daj_dp = stack.daic_dp[jc];
-      real64 const dai_dT = stack.daic_dt[ic];
-      real64 const daj_dT = stack.daic_dt[jc];
-
-      real64 const d2ai_dTdp = dai_dT / pressure;
-      real64 const d2aj_dTdp = daj_dT / pressure;
-      real64 const d2ai_dT2 = stack.d2aic_dt2[ic];
-      real64 const d2aj_dT2 = stack.d2aic_dt2[jc];
-
-      real64 const sqrt_aiaj = LvArray::math::sqrt( ai * aj );
-      real64 const kij_term = 1.0 - kij( ic, jc );
-      real64 const coeff = composition[ic] * composition[jc] * kij_term;
-
-      // Intermediate expressions
-      real64 const daij_dp = dai_dp * aj + ai * daj_dp;
-      real64 const daij_dT = dai_dT * aj + ai * daj_dT;
-      real64 const C = 1.0 / (ai * aj * sqrt_aiaj);
-
-      // Pressure derivative
-      real64 const dsqrt_aiaj_dp = 0.5 / sqrt_aiaj * daij_dp;
-      real64 const d2sqrt_aiaj_dTdp = 0.5 / sqrt_aiaj * (d2ai_dTdp * aj + dai_dp * daj_dT + dai_dT * daj_dp + ai * d2aj_dTdp) - 0.25 * daij_dT * daij_dp * C;
-      dA_dTDerivs[Deriv::dP] += coeff * d2sqrt_aiaj_dTdp;
-
-      // Temperature derivative
-      real64 const dsqrt_aiaj_dT = 0.5 / sqrt_aiaj * daij_dT;
-      real64 const d2sqrt_aiaj_dT2 = 0.5 / sqrt_aiaj * (d2ai_dT2 * aj + 2.0 * dai_dT * daj_dT + ai * d2aj_dT2) - 0.25 * daij_dT * daij_dT * C;
-      dA_dTDerivs[Deriv::dT] += coeff * d2sqrt_aiaj_dT2;
-
-      // Composition derivatives
-      dA_dTDerivs[Deriv::dC+ic] += composition[jc] * kij_term * dsqrt_aiaj_dT;
-      dA_dTDerivs[Deriv::dC+jc] += composition[ic] * kij_term * dsqrt_aiaj_dT;
-
-      // Value
-      dA_dT += coeff * dsqrt_aiaj_dT;
-    }
-  }
-}
-
-template< typename EOS_TYPE >
 template< integer USD, bool DERIVATIVES >
 GEOS_HOST_DEVICE
 void
@@ -567,13 +412,13 @@ computeCompressibilityFactor( integer const numComps,
       StackArray< real64, 1, maxNumComp > logFugacityCoefficients( numComps );
       for( real64 const z : {zMin, zMax} )
       {
-        computeLogFugacityCoefficients< USD, false >( numComps,
-                                                      composition,
-                                                      stack,
-                                                      z,
-                                                      nullptr,
-                                                      logFugacityCoefficients.toSlice(),
-                                                      nullptr );
+        computeLogFugacityCoefficients< USD, false, 0 >( numComps,
+                                                         composition,
+                                                         stack,
+                                                         z,
+                                                         nullptr,
+                                                         logFugacityCoefficients.toSlice(),
+                                                         nullptr );
         real64 dG = 0.0;
         for( integer ic = 0; ic < numComps; ++ic )
         {
@@ -617,18 +462,18 @@ computeCompressibilityFactor( integer const numComps,
 }
 
 template< typename EOS_TYPE >
-template< integer USD, bool DERIVATIVES >
+template< integer USD1, bool DERIVATIVES, integer USD2 >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
 CubicEOSPhaseModel< EOS_TYPE >::
 computeLogFugacityCoefficients( integer const numComps,
-                                arraySlice1d< real64 const, USD > const & composition,
+                                arraySlice1d< real64 const, USD1 > const & composition,
                                 StackVariables< DERIVATIVES > const & stack,
                                 real64 const & compressibilityFactor,
                                 StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
                                 arraySlice1d< real64 > const & logFugacityCoefficients,
-                                StackDerivativeType< 2, DERIVATIVES > const & logFugacityCoefficientDerivs )
+                                StackDerivativeType< 2, DERIVATIVES, USD2 > const & logFugacityCoefficientDerivs )
 {
   constexpr integer maxNumComp = StackVariables< DERIVATIVES >::maxNumComp;
   StackArray< real64, 1, maxNumComp > ki( numComps );
@@ -649,8 +494,13 @@ computeLogFugacityCoefficients( integer const numComps,
   // E
   real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
   real64 const expF = Z - B;
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
-                 GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ));
+                 "Cubic EOS failed: exp(E) or exp(F) is below epsilon." );
+#else
+  GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
+                 GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ) );
+#endif
   real64 const E = log( expE );
   real64 const F = log( expF );
   real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
@@ -709,8 +559,7 @@ computeLogFugacityCoefficients( integer const numComps,
     auto const & dA = stack.daMixture;
     auto const & dB = stack.dbMixture;
 
-    for( integer idof = 0; idof < numDofs; ++idof )
-    {
+    auto const calculateDerivatives = [&]( integer const idof ){
       real64 const dE_dX =  (dZ[idof] + EOS_TYPE::delta1*dB[idof])/( Z + EOS_TYPE::delta1 * B )
                            -(dZ[idof] + EOS_TYPE::delta2*dB[idof])/( Z + EOS_TYPE::delta2 * B );
 
@@ -743,75 +592,19 @@ computeLogFugacityCoefficients( integer const numComps,
           - G * ( 2 * dki( ic, idof ) - dA_dX * Bi - A * dBi_dX ) * E
           - G * ( 2 * ki[ic] - A * Bi ) * dE_dX;
       }
+    };
+
+    calculateDerivatives( Deriv::dP );
+    calculateDerivatives( Deriv::dT );
+    for( integer jc = 0; jc < numComps; ++jc )
+    {
+      calculateDerivatives( Deriv::dC+jc );
     }
   }
   else
   {
     GEOS_UNUSED_VAR( compressibilityFactorDerivs );
     GEOS_UNUSED_VAR( logFugacityCoefficientDerivs );
-  }
-}
-
-template< typename EOS_TYPE >
-template< bool DERIVATIVES >
-GEOS_HOST_DEVICE
-void
-CubicEOSPhaseModel< EOS_TYPE >::
-computeEnthalpy( integer const numComps,
-                 real64 const & temperature,
-                 StackVariables< DERIVATIVES > const & stack,
-                 real64 const & compressibilityFactor,
-                 StackConstDerivativeType< 1, DERIVATIVES > const & compressibilityFactorDerivs,
-                 real64 const & dA_dT,
-                 StackConstDerivativeType< 1, DERIVATIVES > const & dA_dTDerivs,
-                 real64 & enthalpy,
-                 StackDerivativeType< 1, DERIVATIVES > const & enthalpyDerivs )
-{
-  real64 const Z = compressibilityFactor;
-  real64 const T = temperature;
-  real64 constexpr R = constants::gasConstant;
-  real64 const A = stack.aMixture;
-  real64 const B = stack.bMixture;
-
-  real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
-  real64 const E = log( expE );
-  real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
-  enthalpy = R*T*(Z - 1.0) + G*(T*dA_dT - A)*E;
-
-  if constexpr (DERIVATIVES)
-  {
-    integer const numDofs = 2 + numComps;
-
-    auto const & dZ = compressibilityFactorDerivs;
-    auto const & dA = stack.daMixture;
-    auto const & dB = stack.dbMixture;
-
-    for( integer idof = 0; idof < numDofs; ++idof )
-    {
-      real64 const dZ_dX = dZ[idof];
-      real64 const dB_dX = dB[idof];
-      real64 const dE_dX =  (dZ_dX + EOS_TYPE::delta1*dB_dX)/( Z + EOS_TYPE::delta1 * B )
-                           -(dZ_dX + EOS_TYPE::delta2*dB_dX)/( Z + EOS_TYPE::delta2 * B );
-
-      // real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );
-      real64 const dG_dX = -G * dB_dX / B;
-
-      real64 const dA_dX = dA[idof];
-      real64 const d2A_dTdX = dA_dTDerivs[idof];
-
-      // H = R*T*(Z - 1.0) + G*(T*dA_dT - A)*E;
-      real64 const dH_dX = R*T*dZ_dX +
-                           dG_dX*(T*dA_dT - A)*E + G*(T*d2A_dTdX - dA_dX)*E + G*(T*dA_dT - A)*dE_dX;
-      enthalpyDerivs[idof] = dH_dX;
-    }
-
-    enthalpyDerivs[Deriv::dT] += R*(Z - 1.0) + G*dA_dT*E;
-  }
-  else
-  {
-    GEOS_UNUSED_VAR( compressibilityFactorDerivs );
-    GEOS_UNUSED_VAR( enthalpyDerivs );
-    GEOS_UNUSED_VAR( dA_dTDerivs );
   }
 }
 

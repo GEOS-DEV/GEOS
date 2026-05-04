@@ -94,17 +94,17 @@ struct SoreideWhitsonEOSPhaseModel
    * @param[out] logFugacityCoefficients log of the fugacity coefficients
    * @param[out] logFugacityCoefficientDerivs derivatives of the log of the fugacity coefficients
    */
-  template< integer USD >
+  template< integer USD1, integer USD2 = 0 >
   GEOS_HOST_DEVICE
   static void
   computeLogFugacityCoefficientsAndDerivs( integer const numComps,
                                            real64 const & pressure,
                                            real64 const & temperature,
-                                           arraySlice1d< real64 const, USD > const & composition,
+                                           arraySlice1d< real64 const, USD1 > const & composition,
                                            ComponentProperties::KernelWrapper const & componentProperties,
                                            real64 const & salinity,
                                            arraySlice1d< real64 > const & logFugacityCoefficients,
-                                           arraySlice2d< real64 > const & logFugacityCoefficientDerivs );
+                                           arraySlice2d< real64, USD2 > const & logFugacityCoefficientDerivs );
 
   /**
    * @brief Compute compressibility factor

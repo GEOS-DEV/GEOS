@@ -11,11 +11,10 @@ PIP_CMD="pip --disable-pip-version-check"
 PACKAGE_BRANCH=main
 
 
-declare -a TARGET_PACKAGES=("geos-mesh"
+declare -a TARGET_PACKAGES=("geos-utils"
+                            "geos-mesh"
                             "geos-xml-tools"
                             "hdf5-wrapper"
-                            "geos-utils"
-                            "geos-mesh"
                             "pygeos-tools"
                             "geos-ats")
 declare -a LINK_SCRIPTS=("preprocess_xml"
@@ -72,7 +71,7 @@ case $key in
     echo "-p/--python-target \"Target parent python bin\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
     echo "-d/--pkg-dir \"Directory containing target python packages\""
-    echo "-t/--tool-branch \"Target branch for geosPythonPackages (default=main) \""
+    echo "-r/--python-pkg-branch \"Target branch for geosPythonPackages (default=main) \""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit
@@ -121,7 +120,7 @@ fi
 
 # Updating pip
 echo "Updating pip"
-$PYTHON_TARGET -m pip install --upgrade pip
+$PYTHON_TARGET -m pip install --upgrade pip setuptools wheel
 
 # Install packages
 echo "Installing python packages..."

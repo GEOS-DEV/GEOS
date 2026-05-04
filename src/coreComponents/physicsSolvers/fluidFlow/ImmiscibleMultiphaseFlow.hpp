@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"  // For GravityDensityScheme
+
 namespace geos
 {
 
@@ -90,8 +90,8 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( real64 const & time_n,
-                         real64 const & dt,
+  calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                         real64 const & GEOS_UNUSED_PARAM( dt ),
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;

@@ -83,7 +83,7 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
 
   auto const getPVTPackagePhaseType = [&]( string const & phaseName )
   {
-    static map< string, pvt::PHASE_TYPE > const phaseTypes
+    static geos::map< string, pvt::PHASE_TYPE > const phaseTypes
     {
       { "gas", pvt::PHASE_TYPE::GAS },
       { "oil", pvt::PHASE_TYPE::OIL },
@@ -101,8 +101,8 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
   auto const checkInputSize = [&]( auto const & array, auto const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext() );
 
   };
   checkInputSize( m_equationsOfState, LvArray::integerConversion< size_t >( NP ), viewKeyStruct::equationsOfStateString() );

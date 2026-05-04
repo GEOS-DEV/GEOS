@@ -42,10 +42,6 @@ CompressibleSolid< PORO_TYPE, PERM_TYPE >::CompressibleSolid( string const & nam
   CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >( name, parent )
 {}
 
-template< typename PORO_TYPE,
-          typename PERM_TYPE >
-CompressibleSolid< PORO_TYPE, PERM_TYPE >::~CompressibleSolid() = default;
-
 // Register all CompressibleSolid model types.
 typedef CompressibleSolid< PressurePorosity, ConstantPermeability > CompressibleRockConstant;
 typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > CompressibleRockCK;

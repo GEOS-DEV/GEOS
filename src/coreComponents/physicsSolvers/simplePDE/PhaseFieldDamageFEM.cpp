@@ -28,17 +28,13 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/Damage.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 #include "mesh/DomainPartition.hpp"
 
@@ -88,6 +84,8 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -117,17 +115,8 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setDescription( "field variable representing the diffusion coefficient" );
 
-
-      subRegion.registerWrapper< string >( viewKeyStruct::solidModelNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
-      solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
-                                                          getDataContext(), subRegion.getName() ) );
-
+      // TODO this should be in setConstitutiveNames
+      setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
     } );
   } );
 }
@@ -577,10 +566,11 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   const real64 residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual ))
+
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residual );
 
   return residual;
 }

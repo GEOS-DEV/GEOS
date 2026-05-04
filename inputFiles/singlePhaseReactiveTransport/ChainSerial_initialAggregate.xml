@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- AGGREGATE CONCENTRATIONS AT MEDIUM-->
+    <FieldSpecification
+      name="initialAggregate_C1_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_C2_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_C3_medium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="1e-8"/>
+
+    <!-- AGGREGATE CONCENTRATIONS AT SOURCE-->
+    <FieldSpecification
+      name="initialAggregate_C1_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_C2_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_C3_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="1e-8"/>
+  </FieldSpecifications>
+</Problem>

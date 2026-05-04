@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsEFEM.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 namespace geos
 {
 

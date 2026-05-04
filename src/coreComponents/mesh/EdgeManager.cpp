@@ -48,9 +48,21 @@ EdgeManager::EdgeManager( string const & name,
                                 viewKeyStruct::elementListString() } );
 }
 
+
+void EdgeManager::reserve( localIndex const newSize )
+{
+  GEOS_MARK_FUNCTION;
+  ObjectManagerBase::reserve( newSize );
+  m_toFacesRelation.reserveValues( newSize * 2 * faceMapOverallocation() );
+}
+
+
 void EdgeManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
+  GEOS_MARK_BEGIN( "m_toFacesRelation.resize" );
   m_toFacesRelation.resize( newSize, 2 * faceMapOverallocation() );
+  GEOS_MARK_END( "m_toFacesRelation.resize" );
   ObjectManagerBase::resize( newSize );
 }
 
@@ -241,9 +253,10 @@ localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 localIndex EdgeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
-                                          bool const GEOS_UNUSED_PARAM( overwriteDownMaps ) )
+                                          bool const overwriteDownMaps )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( overwriteDownMaps );
 
   localIndex unPackedSize = 0;
 

@@ -74,19 +74,19 @@ private:
 void TestMesh::createTestMesh()
 {
 
-  m_pathPermutations["body0"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region2"]={"subreg0", "subreg2"};
-  m_pathPermutations["body3"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region2" ) = {"subreg0", "subreg2"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
 
 
   for( auto const & meshBodyPair : m_pathPermutations )
@@ -129,7 +129,7 @@ TEST( testMeshObjectPath, fillPathTokens )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
 
-  map< string, std::vector< string > >
+  map< string, stdVector< string > >
   entries =
   {
     { "ElementRegions", { "*", "*", "ElementRegions", "*", "*" } },
@@ -141,7 +141,7 @@ TEST( testMeshObjectPath, fillPathTokens )
   for( auto const & entry : entries )
   {
     string const & path = entry.first;
-    std::vector< string > const & expectedPath = entry.second;
+    stdVector< string > const & expectedPath = entry.second;
     size_t const pathSize = expectedPath.size();
 
     MeshObjectPath meshObjectPath( path, meshBodies );
@@ -161,7 +161,7 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
   Group const & meshBodies = testMesh.meshBodies();
 
 
-  std::map< string, MeshObjectPath::permutationMapType > pathsAndResults =
+  map< string, MeshObjectPath::permutationMapType > pathsAndResults =
   {
     { "ElementRegions",
       { { "body0",
@@ -307,7 +307,7 @@ TEST( testMeshObjectPath, invalidMeshRegion )
 }
 
 
-void checkSubRegionNames( std::vector< string > const & names )
+void checkSubRegionNames( stdVector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "subreg0" );
   EXPECT_TRUE( names[1] == "subreg1" );
@@ -337,7 +337,7 @@ void checkSubRegionNames( std::vector< string > const & names )
   EXPECT_TRUE( names[25] == "subreg1" );
 }
 
-void checkRegionNames( std::vector< string > const & names )
+void checkRegionNames( stdVector< string > const & names )
 {
   EXPECT_TRUE( names[0] == "region0" );
   EXPECT_TRUE( names[1] == "region1" );
@@ -363,7 +363,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   MeshObjectPath meshObjectPath( path, meshBodiesConst );
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodiesConst,
                                                              [&]( ElementSubRegionBase const & elemSubRegionBase )
     {
@@ -373,7 +373,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   }
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementSubRegion >( meshBodies,
                                                              [&]( ElementSubRegionBase & elemSubRegionBase )
     {
@@ -383,7 +383,7 @@ TEST( testMeshObjectPath, forObjectsInPathFromMeshBodies )
   }
 
   {
-    std::vector< string > names;
+    stdVector< string > names;
     meshObjectPath.forObjectsInPath< CellElementRegion >( meshBodiesConst,
                                                           [&]( CellElementRegion const & elemRegionBase )
     {
@@ -403,7 +403,7 @@ void testForObjectInPathsMeshLevel( Group & meshBodies,
   MeshObjectPath meshObjectPath( path, meshBodies );
   MeshBody & meshBody = meshBodies.getGroup< MeshBody >( bodyName );
   MeshLevel & meshLevel = meshBody.getMeshLevel( levelName );
-  std::vector< string > names;
+  stdVector< string > names;
 
   meshObjectPath.forObjectsInPath< OBJECT_TYPE >( meshLevel,
                                                   [&]( OBJECT_TYPE const & object )
@@ -423,7 +423,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                          "*/*/ElementRegions",
                                                          "body0",
                                                          "level0",
-                                                         [&]( std::vector< string > const & names )
+                                                         [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "subreg0" );
     EXPECT_TRUE( names[1] == "subreg1" );
@@ -436,7 +436,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/nodeManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "nodeManager" );
   } );
@@ -445,7 +445,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/edgeManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "edgeManager" );
   } );
@@ -454,7 +454,7 @@ TEST( testMeshObjectPath, forObjectsInPath )
                                                 "*/*/faceManager",
                                                 "body0",
                                                 "level0",
-                                                [&]( std::vector< string > const & names )
+                                                [&]( stdVector< string > const & names )
   {
     EXPECT_TRUE( names[0] == "faceManager" );
   } );

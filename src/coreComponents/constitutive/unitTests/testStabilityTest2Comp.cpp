@@ -33,7 +33,8 @@ using StabilityData = std::tuple<
   real64 const,   // pressure
   real64 const,   // temperature
   real64 const,   // CH4 mole fraction
-  real64 const    // expected tangent plane distance
+  bool const,     // expected instability status of mixture
+  real64 const    // expected CH4 mole fraction in incipient phase
   >;
 
 template< EquationOfStateType EOS_TYPE >
@@ -56,7 +57,8 @@ public:
     real64 const pressure = std::get< 0 >( data );
     real64 const temperature = std::get< 1 >( data );
     real64 const zCH4 = std::get< 2 >( data );
-    real64 const expectedTangentPlaneDistance = std::get< 3 >( data );
+    bool const expectedUnstableMixture = std::get< 3 >( data );
+    real64 const expectedZCH4 = std::get< 4 >( data );
 
     constitutive::compositional::FlashData flashData;
     flashData.liquidEos = EOS_TYPE;
@@ -66,24 +68,42 @@ public:
     composition[0] = zCH4;
     composition[1] = 1.0 - zCH4;
 
-    real64 tangentPlaneDistance = LvArray::NumericLimits< real64 >::max;
+    bool unstableMixture = false;
+    EquationOfStateType incipientEos = EOS_TYPE;
     stackArray1d< real64, numComps > kValues( numComps );
+    stackArray1d< real64, numComps > incipientComposition( numComps );
+
+    KValueInitialization::computeWilsonGasLiquidKvalue( numComps,
+                                                        pressure,
+                                                        temperature,
+                                                        componentProperties,
+                                                        kValues.toSlice() );
+
+    auto const parameters = FlashParameters::create( std::make_unique< ModelParameters >() );
+    auto const * flashParameters = parameters->get< FlashParameters >();
 
     bool const stabilityStatus = StabilityTest::compute( numComps,
                                                          pressure,
                                                          temperature,
                                                          composition.toSliceConst(),
                                                          componentProperties,
-                                                         EOS_TYPE,
                                                          flashData,
-                                                         tangentPlaneDistance,
-                                                         kValues.toSlice() );
+                                                         kValues.toSliceConst(),
+                                                         flashParameters->m_continuousParameters,
+                                                         flashParameters->m_discreteParameters,
+                                                         unstableMixture,
+                                                         incipientEos,
+                                                         incipientComposition.toSlice() );
 
     // Expect this to succeed
     ASSERT_EQ( stabilityStatus, true );
 
-    // Check the tanget plane distance
-    checkRelativeError( expectedTangentPlaneDistance, tangentPlaneDistance, relTol, absTol );
+    // Check the stability labe;
+    ASSERT_EQ( unstableMixture, expectedUnstableMixture );
+
+    // Check the incipient methane fraction
+    real64 const incipientZCH4 = incipientComposition[0];
+    checkRelativeError( expectedZCH4, incipientZCH4, relTol, absTol );
   }
 
 protected:
@@ -117,24 +137,28 @@ TEST_P( SoaveRedlichKwong, testStabilityTest )
 
 INSTANTIATE_TEST_SUITE_P(StabilityTest, PengRobinson,
   ::testing::ValuesIn<StabilityData>({
-    {1.0e+06, 297.15, 0.400, -2.7755576e-16},
-    {1.0e+06, 353.15, 0.400, -1.1102230e-16},
-    {5.0e+06, 297.15, 0.400, -1.8699196e-01},
-    {5.0e+06, 353.15, 0.400,  1.6653345e-16},
-    {2.0e+07, 297.15, 0.400, -1.2767565e-15},
-    {2.0e+07, 353.15, 0.400, -1.6653345e-16}
+    {1.0e+06, 297.15, 0.4000, false,  0.40000000 },
+    {1.0e+06, 353.15, 0.4000, false,  0.40000000 },
+    {5.0e+06, 297.15, 0.4000, true,   0.78638826 },
+    {5.0e+06, 353.15, 0.4000, false,  0.40000000 },
+    {2.0e+07, 297.15, 0.4000, false,  0.40000000 },
+    {2.0e+07, 353.15, 0.4000, false,  0.40000001 },
+    {5.0e+06, 297.15, 0.7860, true,   0.31984391 },
+    {5.0e+06, 297.15, 0.7870, true,   0.32331543 },
+    {5.0e+06, 297.15, 0.3200, true,   0.78604645 },
+    {5.0e+06, 297.15, 0.3220, true,   0.78662927 }
   })
 );
 
 INSTANTIATE_TEST_SUITE_P(
   StabilityTest, SoaveRedlichKwong,
   ::testing::ValuesIn<StabilityData>({
-    {1.0e+06, 297.15, 0.350, -2.7755576e-16},
-    {1.0e+06, 353.15, 0.350, -3.8857806e-16},
-    {5.0e+06, 297.15, 0.350, -2.0115518e-01},
-    {5.0e+06, 353.15, 0.350, -2.7755576e-16},
-    {2.0e+07, 297.15, 0.350, -6.6613381e-16},
-    {2.0e+07, 353.15, 0.350, -7.7715612e-16}
+    {1.0e+06, 297.15, 0.3500, false,  0.35000000 },
+    {1.0e+06, 353.15, 0.3500, false,  0.35000000 },
+    {5.0e+06, 297.15, 0.3500, true,   0.79542990 },
+    {5.0e+06, 353.15, 0.3500, false,  0.35000000 },
+    {2.0e+07, 297.15, 0.3500, false,  0.35000000 },
+    {2.0e+07, 353.15, 0.3500, false,  0.35000000 }
   })
 );
 

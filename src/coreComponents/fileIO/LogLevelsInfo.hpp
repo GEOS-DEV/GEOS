@@ -22,6 +22,7 @@
 #define GEOS_FILEIO_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
+#include "dataRepository/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -54,11 +55,26 @@ struct OutputEvents
   static constexpr std::string_view getDescription() { return "Information on output events (VTK/ChomboIO/HDF5)"; }
 };
 
+struct UmpireStatistics
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription()
+  {
+    return "The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool "
+           "across all ranks.";
+  }
+};
 
 struct HDF5Writing
 {
   static constexpr int getMinLogLevel() { return 3; }
   static constexpr std::string_view getDescription() { return "Information on buffered data in an HDF5 file "; }
+};
+
+struct OutputTimers
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static std::string_view getDescription() { return "Output timing information"; }
 };
 
 /// @endcond

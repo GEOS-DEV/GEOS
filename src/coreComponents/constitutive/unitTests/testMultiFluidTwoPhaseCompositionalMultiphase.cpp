@@ -86,7 +86,7 @@ public:
 
     real64 constexpr eps = 1.0e-7;
 
-    constexpr real64 pressures[] = { 1.0e5, 50.0e5, 100.0e5, 600.0e5 };
+    constexpr real64 pressures[] = { 10.0e5, 50.0e5, 100.0e5, 600.0e5 };
     constexpr real64 temperatures[] = { 15.5, 24.0, 40.0, 80.0 };
 
     for( integer sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex )
@@ -254,9 +254,14 @@ public:
 
 TYPED_TEST_SUITE( MultiFluidCompositionalMultiphaseTestFixture, TestTypes, NameGenerator );
 
-TYPED_TEST( MultiFluidCompositionalMultiphaseTestFixture, numericalDerivatives )
+TYPED_TEST( MultiFluidCompositionalMultiphaseTestFixture, numericalDerivativesMolar )
 {
   this->testNumericalDerivatives( false );
+}
+
+TYPED_TEST( MultiFluidCompositionalMultiphaseTestFixture, numericalDerivativesMass )
+{
+  this->testNumericalDerivatives( true );
 }
 
 } // testing

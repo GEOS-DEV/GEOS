@@ -72,6 +72,7 @@ ThermalSinglePhasePoromechanics( NodeManager const & nodeManager,
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
+  m_referenceTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {}
@@ -89,6 +90,7 @@ setup( localIndex const k,
   stack.localTemperatureDofIndex = m_flowDofNumber[k]+1;
   stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
+  stack.deltaTemperature = m_temperature[k] - m_referenceTemperature[k];
 }
 
 template< typename SUBREGION_TYPE,
@@ -113,7 +115,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,
@@ -362,12 +364,12 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem]{};
   real64 dNdX[numNodesPerElem][3]{};
   FE_TYPE::calcN( q, stack.feStack, N );
-  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+  real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
+                                            stack.feStack, dNdX );
 
   // Step 2: compute strain increment
   LvArray::tensorOps::fill< 6 >( stack.strainIncrement, 0.0 );
-  FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
+  finiteElement::feOps::symmetricGradient( dNdX, stack.uhat_local, stack.strainIncrement );
 
   // Step 3: compute 1) the total stress, 2) the body force terms, and 3) the fluidMassIncrement
   // using quantities returned by the PorousSolid constitutive model.
@@ -395,7 +397,7 @@ complete( localIndex const k,
   real64 const maxForce = Base::complete( k, stack );
 
   localIndex const numSupportPoints =
-    m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.getNumSupportPoints( stack.feStack );
   integer numDisplacementDofs = numSupportPoints * numDofPerTestSupportPoint;
 
   // Step 1: assemble the derivatives of linear momentum balance wrt temperature into the global matrix

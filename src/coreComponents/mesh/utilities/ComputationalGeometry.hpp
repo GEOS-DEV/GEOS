@@ -274,7 +274,11 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
     {
       GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
     }
-    GEOS_ERROR( "Negative area found : " << area );
+#if defined(GEOS_DEVICE_COMPILE)
+    GEOS_ERROR( "Negative area found" );
+#else
+    GEOS_ERROR( GEOS_FMT( "Negative area found : {}", area ) );
+#endif
   }
   else
   {
@@ -433,6 +437,145 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
   return true;
 }
 
+/**
+ * @brief Check if a point is inside a polygon (2D version)
+ * @tparam POLYGON_TYPE type of @p polygon
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] polygon array of polygon nodes coordinates
+ * @param[in] n number of polygon nodes
+ * @param[in] point coordinates of the query point
+ * @param[in] tol tolerance for coordinate comparisons
+ * @return whether the point is inside
+ */
+template< typename POLYGON_TYPE, typename POINT_TYPE >
+bool isPointInPolygon2d( POLYGON_TYPE const & polygon,
+                         integer n,
+                         POINT_TYPE const & point,
+                         real64 const tol = 1e-10 )
+{
+  integer count = 0;
+
+  for( integer i = 0; i < n; ++i )
+  {
+    auto const & p1 = polygon[i];
+    auto const & p2 = polygon[(i + 1) % n];
+
+    real64 y1 = p1[1], y2 = p2[1];
+    real64 x1 = p1[0], x2 = p2[0];
+    real64 py = point[1], px = point[0];
+
+    // quick reject in y with tolerance
+    if( py + tol < std::min( y1, y2 ) || py - tol > std::max( y1, y2 ) )
+      continue;
+
+    // check if point is (approximately) on the segment
+    // parametric t for projection on segment in y (if segment vertical-ish use x)
+    if( std::abs( (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1) ) < tol *
+        ( std::hypot( x2 - x1, y2 - y1 ) + 1.0 ) )
+    {
+      // ensure px is between x1,x2 and py between y1,y2 (with tol)
+      if( px + tol >= std::min( x1, x2 ) && px - tol <= std::max( x1, x2 ) &&
+          py + tol >= std::min( y1, y2 ) && py - tol <= std::max( y1, y2 ) )
+        return true; // on boundary -> consider inside
+    }
+
+    // ignore nearly-horizontal edges for intersection counting
+    if( std::abs( y2 - y1 ) < tol )
+      continue;
+
+    // compute x coordinate of intersection of horizontal line py with segment p1-p2
+    real64 xIntersect = x1 + (py - y1) * (x2 - x1) / (y2 - y1);
+
+    // count crossing where intersection is strictly to the right of point (robust with tol)
+    if( px < xIntersect - tol )
+      ++count;
+  }
+
+  return (count % 2) == 1;
+}
+
+/**
+ * @brief Check if a point is inside a polygon (3D version)
+ * @tparam POLYGON_TYPE type of @p polygon
+ * @tparam POINT_TYPE type of @p point
+ * @param[in] polygon array of polygon nodes coordinates
+ * @param[in] n number of polygon nodes
+ * @param[in] point coordinates of the query point
+ * @param[in] tol tolerance for coordinate comparisons
+ * @return whether the point is inside
+ */
+template< typename POLYGON_TYPE, typename POINT_TYPE >
+bool isPointInPolygon3d( POLYGON_TYPE const & polygon,
+                         integer const n,
+                         POINT_TYPE const & point,
+                         real64 const tol = 1e-10 )
+{
+  // Check if the point lies in the plane of the polygon
+  auto const & p0 = polygon[0];
+  POINT_TYPE normal = {0, 0, 0};
+  for( integer i = 1; i < n - 1; i++ )
+  {
+    auto const & p1 = polygon[i];
+    auto const & p2 = polygon[i + 1];
+    normal[0] += (p1[1] - p0[1]) * (p2[2] - p0[2]) - (p1[2] - p0[2]) * (p2[1] - p0[1]);
+    normal[1] += (p1[2] - p0[2]) * (p2[0] - p0[0]) - (p1[0] - p0[0]) * (p2[2] - p0[2]);
+    normal[2] += (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p1[1] - p0[1]) * (p2[0] - p0[0]);
+  }
+
+  real64 const dist = normal[0] * point[0] + normal[1] * point[1] + normal[2] * point[2] -(normal[0] * p0[0] + normal[1] * p0[1] + normal[2] * p0[2]);
+
+  if( std::abs( dist ) > tol )
+  {
+    return false;
+  }
+
+  // Determine the dominant component of the normal vector
+  int dominantIndex = 0;
+  if( std::abs( normal[1] ) > std::abs( normal[0] ))
+  {
+    dominantIndex = 1;
+  }
+  if( std::abs( normal[2] ) > std::abs( normal[dominantIndex] ))
+  {
+    dominantIndex = 2;
+  }
+
+  // Project the polygon and the point onto a 2D plane
+  POLYGON_TYPE projectedPolygon( n );
+  POINT_TYPE projectedPoint;
+  if( dominantIndex == 0 )  // X is dominant, project onto YZ plane
+  {
+    for( int i = 0; i < n; i++ )
+    {
+      projectedPolygon[i][0] = polygon[i][1];
+      projectedPolygon[i][1] = polygon[i][2];
+    }
+    projectedPoint[0] = point[1];
+    projectedPoint[1] = point[2];
+  }
+  else if( dominantIndex == 1 )  // Y is dominant, project onto XZ plane
+  {
+    for( int i = 0; i < n; i++ )
+    {
+      projectedPolygon[i][0] = polygon[i][0];
+      projectedPolygon[i][1] = polygon[i][2];
+    }
+    projectedPoint[0] = point[0];
+    projectedPoint[1] = point[2];
+  }
+  else  // Z is dominant, project onto XY plane
+  {
+    for( int i = 0; i < n; i++ )
+    {
+      projectedPolygon[i][0] = polygon[i][0];
+      projectedPolygon[i][1] = polygon[i][1];
+    }
+    projectedPoint[0] = point[0];
+    projectedPoint[1] = point[1];
+  }
+
+  return isPointInPolygon2d( projectedPolygon, n, projectedPoint );
+}
 
 /**
  * @brief Method to perform lexicographic comparison of two nodes based on coordinates.
@@ -641,7 +784,7 @@ int findTriangleRefElement( arraySlice1d< localIndex const > const & nodeElement
 }
 
 /**
- * @brief Computes the winding number of a point with respecto to a mesh element.
+ * @brief Computes the winding number of a point with respect to a mesh element.
  * @tparam POINT_TYPE type of @p point
  * @param[in] element the element to be checked
  * @param[in] nodeCoordinates a global array of nodal coordinates
@@ -839,10 +982,10 @@ bool isPointInsideConvexPolyhedronRobust( localIndex element,
  * @param[in] pointCoordinates the vertices coordinates.
  * @param[out] boxDims The dimensions of the bounding box.
  */
-template< typename VEC_TYPE >
+template< typename NODE_MAP_TYPE, typename VEC_TYPE >
 GEOS_HOST_DEVICE
 void getBoundingBox( localIndex const elemIndex,
-                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & pointIndices,
+                     NODE_MAP_TYPE const & pointIndices,
                      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & pointCoordinates,
                      VEC_TYPE && boxDims )
 {
@@ -855,7 +998,7 @@ void getBoundingBox( localIndex const elemIndex,
   LvArray::tensorOps::fill< 3 >( boxDims, LvArray::NumericLimits< real64 >::lowest );
 
   // loop over all the vertices of the element to get the min and max coords
-  for( localIndex a = 0; a < pointIndices.size( 1 ); ++a )
+  for( localIndex a = 0; a < pointIndices[elemIndex].size(); ++a )
   {
     localIndex const id = pointIndices( elemIndex, a );
     for( localIndex d = 0; d < 3; ++d )

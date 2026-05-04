@@ -39,24 +39,8 @@ DamagePermeability::DamagePermeability( string const & name, Group * const paren
   registerWrapper( viewKeyStruct::damageDependenceConstantString(), &m_damageDependenceConstant ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Damage dependeny coefficient" );
+    setDescription( "Damage dependency coefficient" );
 }
-
-std::unique_ptr< ConstitutiveBase >
-DamagePermeability::deliverClone( string const & name,
-                                  Group * const parent ) const
-{
-  return PermeabilityBase::deliverClone( name, parent );
-}
-
-void DamagePermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                   localIndex const numConstitutivePointsPerParentIndex )
-{
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
-void DamagePermeability::postInputInitialization()
-{}
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamagePermeability, string const &, Group * const )
 

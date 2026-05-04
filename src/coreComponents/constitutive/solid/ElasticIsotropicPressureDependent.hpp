@@ -217,7 +217,10 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrain( localIndex cons
                                      Q,
                                      deviator );
 
-  elasticStrainVol = std::log( P/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
+
+  elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   elasticStrainDev = Q/3./mu;
 
   twoInvariant::strainRecomposition( elasticStrainVol,
@@ -250,6 +253,9 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrainInc( localIndex c
                                      Q,
                                      deviator );
 
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
+
   real64 elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   real64 elasticStrainDev = Q/3./mu;
 
@@ -266,6 +272,9 @@ void ElasticIsotropicPressureDependentUpdates::getElasticStrainInc( localIndex c
                                      P,
                                      Q,
                                      deviator );
+
+  if( isZero( P )) // to avoid log(0)
+    P = p0;
 
   elasticStrainVol = LvArray::math::log( P/p0 ) * Cr * (-1.0) + eps_v0;
   elasticStrainDev = Q/3./mu;
@@ -327,7 +336,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( oldP )) // to avoid log(0)
+    oldP = p0;
+
+  oldElasticStrainVol = LvArray::math::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -411,7 +423,10 @@ void ElasticIsotropicPressureDependentUpdates::smallStrainUpdate( localIndex con
   // Recover elastic strains from the previous step, based on stress from the previous step
   // [Note: in order to minimize data transfer, we are not storing and passing elastic strains]
 
-  oldElasticStrainVol = std::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
+  if( isZero( oldP )) // to avoid log(0)
+    oldP = p0;
+
+  oldElasticStrainVol = LvArray::math::log( oldP/p0 ) * Cr * (-1.0) + eps_v0;
   oldElasticStrainDev = oldQ/3./mu;
 
   // Now recover the old strain tensor from the strain invariants.
@@ -484,23 +499,15 @@ public:
   ElasticIsotropicPressureDependent( string const & name, Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropicPressureDependent() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropicPressureDependent";
 
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropicPressureDependent"; }
 
   /**
    * @brief Get catalog name
@@ -531,12 +538,6 @@ public:
 
     /// string/key for reference volumetric strain
     static constexpr char const * refStrainVolString() { return "refStrainVol"; }
-
-    /// string/key for recompression index
-    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
 
   /**

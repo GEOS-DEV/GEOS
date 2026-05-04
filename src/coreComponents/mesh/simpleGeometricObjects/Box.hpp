@@ -35,24 +35,12 @@ class Box : public SimpleGeometricObjectBase
 public:
 
   /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
    * @brief Constructor.
    * @param name name of the object in the data hierarchy.
    * @param parent pointer to the parent group in the data hierarchy.
    */
   Box( const string & name,
        Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~Box() override;
-
-  ///@}
 
   /**
    * @name Static Factory Catalog Functions

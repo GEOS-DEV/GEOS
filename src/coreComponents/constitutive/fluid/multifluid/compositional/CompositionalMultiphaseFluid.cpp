@@ -21,24 +21,12 @@
 
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
-namespace fields
-{
-namespace multifluid
-{
-DECLARE_FIELD( kValues,
-               "kValues",
-               array4dLayoutPhaseComp,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Phase equilibrium ratios" );
-}
-}
 
 namespace constitutive
 {
@@ -77,15 +65,12 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
-  registerField( fields::multifluid::kValues{}, &m_kValues );
+  registerField< fields::multifluid::kValues >( &m_kValues );
 
   // Link parameters specific to each model
   m_parameters->registerParameters( this );
 
   // Register extra wrappers to enable auto-cloning
-  registerWrapper( "phaseOrder", &m_phaseOrder )
-    .setSizedFromParent( 0 )
-    .setRestartFlags( RestartFlags::NO_WRITE );
   registerWrapper( "componentType", &m_componentProperties->m_componentType )
     .setSizedFromParent( 0 )
     .setRestartFlags( RestartFlags::NO_WRITE );
@@ -94,8 +79,16 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterPhaseIndex() const
 {
-  integer const aqueous = static_cast< integer >(PhaseType::AQUEOUS);
-  return m_phaseOrder.size() > aqueous ? m_phaseOrder[aqueous] : -1;
+  auto const phaseTypes = getPhaseTypes();
+  integer const aqueous = static_cast< integer >(compositional::PhaseType::AQUEOUS);
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    if( phaseTypes[ip] == aqueous )
+    {
+      return ip;
+    }
+  }
+  return -1;
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -107,12 +100,22 @@ string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogNam
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializeState() const
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  // Zero k-Values to force re-initialisation
+  m_kValues.zero();
 
-  // Zero k-Values to force initialisation with Wilson k-Values
+  MultiFluidBase::initializeState();
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( Group & parent, localIndex const numPts )
+{
+  m_kValues.resize( 0, numPts, numFluidPhases()-1, numFluidComponents() );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
+
+  // Zero k-Values to force re-initialisation
   m_kValues.zero();
 }
 
@@ -125,15 +128,28 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
   integer const NP = numFluidPhases();
 
   GEOS_THROW_IF_NE_MSG( NP, NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases in '{}'. There should be {} phases",
-                                  getFullName(), viewKeyStruct::phaseNamesString(), NUM_PHASES ),
-                        InputError );
+                        GEOS_FMT( "invalid number of phases in '{}'. There should be {} phases",
+                                  viewKeyStruct::phaseNamesString(), NUM_PHASES ),
+                        InputError, getDataContext() );
+
+  // Phase types should not be repeated
+  auto const phaseTypes = getPhaseTypes();
+  std::set< integer > uniquePhases;
+  for( integer ip = 0; ip < NP; ++ip )
+  {
+    string const type_name = EnumStrings< compositional::PhaseType >::toString( static_cast< compositional::PhaseType >(phaseTypes[ip]));
+    GEOS_THROW_IF ( uniquePhases.find( phaseTypes[ip] ) != uniquePhases.end(),
+                    GEOS_FMT( "phase with name {} is of type {} which is repeated. "
+                              "Phase types should be unique.", m_phaseNames[ip], type_name ),
+                    InputError, getDataContext() );
+    uniquePhases.insert( phaseTypes[ip] );
+  }
 
   auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext()  );
 
   };
   checkInputSize( m_componentProperties->m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
@@ -159,33 +175,27 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::postInputIni
 
   // Binary interaction coefficients should be symmetric and have zero diagonal
   GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 0 ), NC,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
-                        InputError );
+                        GEOS_FMT( "invalid number of values in attribute '{}'", viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( componentBinaryCoeff.size( 1 ), NC,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentBinaryCoeffString() ),
-                        InputError );
+                        GEOS_FMT( "invalid number of values in attribute '{}'", viewKeyStruct::componentBinaryCoeffString() ),
+                        InputError, getDataContext() );
   for( integer ic = 0; ic < NC; ++ic )
   {
     GEOS_THROW_IF_GT_MSG( LvArray::math::abs( componentBinaryCoeff( ic, ic )), MultiFluidConstants::epsilon,
-                          GEOS_FMT( "{}: {} entry at ({},{}) is {}: should be zero", getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                          GEOS_FMT( "{} entry at ({},{}) is {}: should be zero", viewKeyStruct::componentBinaryCoeffString(),
                                     ic, ic, componentBinaryCoeff( ic, ic ) ),
-                          InputError );
+                          InputError, getDataContext() );
     for( integer jc = ic + 1; jc < NC; ++jc )
     {
       real64 const difference = LvArray::math::abs( componentBinaryCoeff( ic, jc )-componentBinaryCoeff( jc, ic ));
       GEOS_THROW_IF_GT_MSG( difference, MultiFluidConstants::epsilon,
-                            GEOS_FMT( "{}: {} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
-                                      getFullName(), viewKeyStruct::componentBinaryCoeffString(),
+                            GEOS_FMT( "{} entry at ({},{}) is {} and is different from entry at ({},{}) which is {}",
+                                      viewKeyStruct::componentBinaryCoeffString(),
                                       ic, jc, componentBinaryCoeff( ic, jc ), jc, ic, componentBinaryCoeff( jc, ic ) ),
-                            InputError );
+                            InputError, getDataContext() );
     }
   }
-
-  // Determine the phase ordering
-  m_phaseOrder.resize( 3 );
-  m_phaseOrder[PhaseType::LIQUID] = findPhaseIndex( "oil,liq,liquid" );
-  m_phaseOrder[PhaseType::VAPOUR] = findPhaseIndex( "gas,vap,vapor,vapour" );
-  m_phaseOrder[PhaseType::AQUEOUS] = findPhaseIndex( "wat,water,aqueous" );
 
   m_parameters->postInputInitialization( this, *m_componentProperties );
 }
@@ -197,14 +207,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 
   // Create the fluid models
   createModels();
-}
-
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
-{
-  MultiFluidBase::resizeFields( size, numPts );
-
-  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
@@ -245,9 +247,16 @@ CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createKernelWrapp
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels()
 {
+  m_phaseType = getPhaseTypes();
+
+  // Determine the phase ordering
+  m_phaseOrder.resize( m_phaseType.size() );
+  FlashModel::calculatePhaseOrdering( m_phaseType.toViewConst(), m_phaseOrder );
+
   m_flash = std::make_unique< FLASH >( getName() + '_' + FLASH::catalogName(),
                                        *m_componentProperties,
-                                       *m_parameters );
+                                       *m_parameters,
+                                       m_phaseType.toViewConst() );
 
   m_phase1 = std::make_unique< PHASE1 >( GEOS_FMT( "{}_PhaseModel1", getName() ),
                                          *m_componentProperties,
@@ -266,19 +275,15 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::createModels
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::findPhaseIndex( string names ) const
+array1d< integer > CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getPhaseTypes() const
 {
-  auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
-
-  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  integer const numPhases = numFluidPhases();
+  array1d< integer > phaseTypes( numPhases );
+  for( integer ip = 0; ip < numPhases; ++ip )
   {
-    std::string const phaseName = stringutilities::toLower( m_phaseNames[ip] );
-    if( std::find( nameContainer.begin(), nameContainer.end(), phaseName ) != nameContainer.end())
-    {
-      return ip;
-    }
+    phaseTypes[ip] = static_cast< integer >(compositional::getPhaseTypeFromName( m_phaseNames[ip] ));
   }
-  return -1;
+  return phaseTypes;
 }
 
 // Create the fluid models
@@ -312,6 +317,14 @@ template class CompositionalMultiphaseFluid<
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
     compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+template class CompositionalMultiphaseFluid<
+    compositional::KValueFlashModel< 2 >,
+    compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+    compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalTwoPhaseConstantViscosity,
@@ -330,6 +343,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase,
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase,
                         CompositionalThreePhaseLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalKValueLohrenzBrayClarkViscosity,
+                        string const &,
+                        dataRepository::Group * const )
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase,
+                        CompositionalKValuePhillipsBrine,
                         string const &,
                         dataRepository::Group * const )
 

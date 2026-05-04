@@ -43,6 +43,7 @@ typedef int MPI_Datatype;
 #define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
 #define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
 #define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
+#define MPI_C_BOOL         ((MPI_Datatype)0x4c00013f)
 #define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
 #define MPI_SHORT          ((MPI_Datatype)0x4c000203)
 #define MPI_UNSIGNED_SHORT ((MPI_Datatype)0x4c000204)
@@ -195,7 +196,7 @@ public:
   static int init( int * argc, char * * * argv );
 
   /**
-   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * @brief Finalize the MPI environment and free MPI-managed resources.
    * Please note that once called, MPI functions, communicators and resources can no longer be used.
    */
   static void finalize();
@@ -317,9 +318,9 @@ public:
   ///@}
 
 #if !defined(GEOS_USE_MPI)
-  static std::map< int, std::pair< int, void * > > & getTagToPointersMap()
+  static stdMap< int, std::pair< int, void * > > & getTagToPointersMap()
   {
-    static std::map< int, std::pair< int, void * > > tagToPointers;
+    static stdMap< int, std::pair< int, void * > > tagToPointers;
     return tagToPointers;
   }
 #endif
@@ -381,6 +382,11 @@ public:
   static int allGather( arrayView1d< T const > const & sendbuf,
                         array1d< T > & recvbuf,
                         MPI_Comm comm = MPI_COMM_GEOS );
+
+  template< typename T >
+  static int allGatherv( arrayView1d< T const > const & sendbuf,
+                         array1d< T > & recvbuf,
+                         MPI_Comm comm = MPI_COMM_GEOS );
 
   /**
    * @brief Convenience wrapper for the MPI_Allreduce function.
@@ -580,6 +586,52 @@ public:
                       int root,
                       MPI_Comm comm = MPI_COMM_GEOS );
 
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatter.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcount The number of values to send.
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatter().
+ */
+  template< typename TS, typename TR >
+  static int scatter( TS const * const sendbuf,
+                      int sendcount,
+                      TR * const recvbuf,
+                      int recvcount,
+                      int root,
+                      MPI_Comm comm = MPI_COMM_GEOS );
+
+/**
+ * @brief Strongly typed wrapper around MPI_Scatterv.
+ * @tparam TS The pointer type for \p sendbuf
+ * @tparam TR The pointer type for \p recvbuf
+ * @param[in] sendbuf The pointer to the sending buffer.
+ * @param[in] sendcounts The number of values to send.
+ * @param[in] displs integer array (of length group size). Entry i specifies the displacement relative to sendbuf at
+ *                   which to take the outgoing data from process i (significant only at root).
+ * @param[out] recvbuf The pointer to the receive buffer.
+ * @param[in] recvcount The number of values to receive.
+ * @param[in] root The rank sending the data.
+ * @param[in] comm The MPI_Comm over which the scatter operates.
+ * @return The return value of the underlying call to MPI_Scatterv().
+ */
+  template< typename TS, typename TR >
+  static int scatterv( TS const * const sendbuf,
+                       const int * sendcounts,
+                       const int * displs,
+                       TR * const recvbuf,
+                       int recvcount,
+                       int root,
+                       MPI_Comm comm = MPI_COMM_GEOS );
+
+
+
   /**
    * @brief Returns an MPI_Op associated with our strongly typed Reduction enum.
    * @param[in] op The value of the Reduction enum to get an MPI_Op for.
@@ -618,6 +670,22 @@ public:
                     int tag,
                     MPI_Comm comm,
                     MPI_Request * request );
+
+  /**
+   * @brief Strongly typed wrapper around MPI_Send()
+   * @param[in] buf The pointer to the buffer that contains the data to be sent.
+   * @param[in] count The number of elements in \p buf.
+   * @param[in] dest The rank of the destination process within \p comm.
+   * @param[in] tag The message tag that is be used to distinguish different types of messages.
+   * @param[in] comm The handle to the MPI_Comm.
+   * @return
+   */
+  template< typename T >
+  static int send( T const * const buf,
+                   int count,
+                   int dest,
+                   int tag,
+                   MPI_Comm comm );
 
   /**
    * @brief Strongly typed wrapper around MPI_Isend()
@@ -803,6 +871,17 @@ struct MpiTypeImpl< T, std::enable_if_t< std::is_enum< T >::value > >
   static MPI_Datatype get() { return MpiTypeImpl< std::underlying_type_t< T > >::get(); }
 };
 
+template<>
+struct MpiTypeImpl< bool * >
+{
+  static MPI_Datatype get()
+  {
+    // Return the appropriate MPI_Datatype for bool*
+    return MPI_C_BOOL;
+  }
+};
+
+
 template< typename T >
 MPI_Datatype getMpiType()
 {
@@ -986,6 +1065,38 @@ int MpiWrapper::allGather( arrayView1d< T const > const & sendValues,
 }
 
 template< typename T >
+int MpiWrapper::allGatherv( arrayView1d< T const > const & sendValues,
+                            array1d< T > & allValues,
+                            MPI_Comm MPI_PARAM( comm ) )
+{
+  int const sendSize = LvArray::integerConversion< int >( sendValues.size() );
+#ifdef GEOS_USE_MPI
+  int const mpiSize = commSize( comm );
+  array1d< int > counts;
+  allGather( sendSize, counts, comm );
+  array1d< int > displs( mpiSize + 1 );
+  std::partial_sum( counts.begin(), counts.end(), displs.begin() + 1 );
+  allValues.resize( displs.back() );
+  return MPI_Allgatherv( sendValues.data(),
+                         sendSize,
+                         internal::getMpiType< T >(),
+                         allValues.data(),
+                         counts.data(),
+                         displs.data(),
+                         internal::getMpiType< T >(),
+                         comm );
+
+#else
+  allValues.resize( sendSize );
+  for( localIndex a=0; a<sendSize; ++a )
+  {
+    allValues[a] = sendValues[a];
+  }
+  return 0;
+#endif
+}
+
+template< typename T >
 int MpiWrapper::allReduce( T const * const sendbuf,
                            T * const recvbuf,
                            int const count,
@@ -1156,6 +1267,56 @@ int MpiWrapper::gatherv( TS const * const sendbuf,
 #endif
 }
 
+
+template< typename TS, typename TR >
+int MpiWrapper::scatter( TS const * const sendbuf,
+                         int sendcount,
+                         TR * const recvbuf,
+                         int recvcount,
+                         int MPI_PARAM( root ),
+                         MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatter( sendbuf, sendcount, internal::getMpiType< TS >(),
+                      recvbuf, recvcount, internal::getMpiType< TR >(),
+                      root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatter() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcount * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+template< typename TS, typename TR >
+int MpiWrapper::scatterv( TS const * const sendbuf,
+                          const int * sendcounts,
+                          const int * MPI_PARAM( displs ),
+                          TR * const recvbuf,
+                          int recvcount,
+                          int MPI_PARAM( root ),
+                          MPI_Comm MPI_PARAM( comm ))
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Scatterv( sendbuf, sendcounts, displs, internal::getMpiType< TS >(),
+                       recvbuf, recvcount, internal::getMpiType< TR >(),
+                       root, comm );
+#else
+  static_assert( std::is_same< TS, TR >::value,
+                 "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
+  std::size_t const sendBufferSize = sendcounts * sizeof(TS);
+  std::size_t const recvBufferSize = recvcount * sizeof(TR);
+  GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
+  memcpy( recvbuf, sendbuf, sendBufferSize );
+  return 0;
+#endif
+}
+
+
+
 template< typename T >
 int MpiWrapper::iRecv( T * const buf,
                        int count,
@@ -1169,8 +1330,8 @@ int MpiWrapper::iRecv( T * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Irecv( buf, count, internal::getMpiType< T >(), source, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {
@@ -1240,6 +1401,20 @@ int MpiWrapper::iSend( arrayView1d< T > const & buf,
 }
 
 template< typename T >
+int MpiWrapper::send( T const * const buf,
+                      int count,
+                      int dest,
+                      int tag,
+                      MPI_Comm comm )
+{
+#ifdef GEOS_USE_MPI
+  return MPI_Send( buf, count, internal::getMpiType< T >(), dest, tag, comm );
+#else
+  GEOS_ERROR( "Not implemented without MPI" );
+#endif
+}
+
+template< typename T >
 int MpiWrapper::iSend( T const * const buf,
                        int count,
                        int MPI_PARAM( dest ),
@@ -1252,8 +1427,8 @@ int MpiWrapper::iSend( T const * const buf,
                  "Attempting to use an MPI_Request that is still in use." );
   return MPI_Isend( buf, count, internal::getMpiType< T >(), dest, tag, comm, request );
 #else
-  std::map< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
-  std::map< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
+  stdMap< int, std::pair< int, void * > > & pointerMap = getTagToPointersMap();
+  stdMap< int, std::pair< int, void * > >::iterator iPointer = pointerMap.find( tag );
 
   if( iPointer==pointerMap.end() )
   {

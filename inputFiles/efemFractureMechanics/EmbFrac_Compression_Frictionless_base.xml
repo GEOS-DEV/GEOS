@@ -7,7 +7,6 @@
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
       initialDt="10"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="1"
       contactPenaltyStiffness="1.0e8">
