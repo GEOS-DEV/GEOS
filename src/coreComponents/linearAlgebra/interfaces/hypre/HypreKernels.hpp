@@ -36,6 +36,29 @@ namespace hypre
 
 /// @cond DO_NOT_DOCUMENT
 
+namespace internal
+{
+
+struct ZeroRowSumMessage
+{
+  long long row;
+};
+
+inline std::ostream & operator<<( std::ostream & os, ZeroRowSumMessage const & msg )
+{
+  return os << "Zero row sum in row " << msg.row;
+}
+
+GEOS_HOST_DEVICE inline ZeroRowSumMessage zeroRowSumMessage( globalIndex const row )
+{
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  printf( "***** Zero row sum in row %lld\n", static_cast< long long >( row ) );
+#endif
+  return { static_cast< long long >( row ) };
+}
+
+} // namespace internal
+
 template< bool CONST >
 struct CSRData
 {
@@ -103,7 +126,7 @@ void rescaleMatrixRows( hypre_ParCSRMatrix * const mat,
       }
     }
 
-    GEOS_ASSERT_MSG( !isZero( scale ), GEOS_FMT( "Zero row sum in row {}", rowIndices[i] ) );
+    GEOS_ASSERT_MSG( !isZero( scale ), internal::zeroRowSumMessage( rowIndices[i] ) );
     scale = 1.0 / scale;
     for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
     {
