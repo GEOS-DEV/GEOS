@@ -75,7 +75,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
   :
   WellControls( name, parent ),
-  m_useMass( false ),
   m_useTotalMassEquation( 1 ),
   m_maxCompFracChange( 1.0 ),
   m_maxRelativePresChange( 0.2 ),
@@ -83,11 +82,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
-  this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use mass formulation instead of molar" );
-
   this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -416,6 +410,7 @@ void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroup
   // setup fluid model
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
+  std::cout << "Validating fluid model for well " << getName() << "..." << m_useMass << std::endl;
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
 }
