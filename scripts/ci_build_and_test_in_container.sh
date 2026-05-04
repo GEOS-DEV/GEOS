@@ -177,6 +177,7 @@ GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
+LCOV_CMAKE_ARGS=""
 
 eval set -- ${args}
 while :
@@ -308,12 +309,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
-  #or_die apt-get update
-  or_die apt-get install -y virtualenv python3-dev python-is-python3
+  or_die apt-get update
+  or_die apt-get install -y python3-dev python3-venv
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die virtualenv ${ATS_PYTHON_HOME}
+  or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  python3 -m pip cache purge
+  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
@@ -330,6 +331,30 @@ fi
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y lcov
+
+  LCOV_REAL=$(command -v lcov || true)
+  if [[ -n "${LCOV_REAL}" ]]; then
+    export GEOS_REAL_LCOV="${LCOV_REAL}"
+    LCOV_WRAPPER=/tmp/geos-lcov-wrapper
+    cat > "${LCOV_WRAPPER}" <<'EOF'
+#!/bin/bash
+set -e
+
+extra_args=()
+if "${GEOS_REAL_LCOV}" --version 2>&1 | grep -Eq 'LCOV version ([2-9]|[1-9][0-9])\.'; then
+  for arg in "$@"; do
+    if [[ "${arg}" == "--capture" || "${arg}" == "-c" ]]; then
+      extra_args=(--ignore-errors mismatch)
+      break
+    fi
+  done
+fi
+
+exec "${GEOS_REAL_LCOV}" "${extra_args[@]}" "$@"
+EOF
+    or_die chmod +x "${LCOV_WRAPPER}"
+    LCOV_CMAKE_ARGS="-DLCOV_EXECUTABLE=${LCOV_WRAPPER}"
+  fi
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -363,6 +388,7 @@ or_die python3 scripts/config-build.py \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
+               ${LCOV_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
 phase_finish 0
 
