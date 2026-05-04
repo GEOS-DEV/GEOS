@@ -672,12 +672,19 @@ public:
 
   /**
    * @brief Query whether this field specification uses non-scalar scales
+   * @return True if the field specification uses the non-scalar 'scales' attribute
+   *         or the non-scalar 'functionNames' attribute
    */
   bool usesNonScalarValues() const
   {
     return !m_scales.empty() || !m_functionNames.empty();
   }
 
+  /**
+   * @brief Apply the lambda to each component of the field specification
+   * @tparam LAMBDA The type of lambda function passed into the parameter list.
+   * @param lambda The lambda being executed
+   */
   template< typename LAMBDA >
   void forEachComponent( LAMBDA && lambda ) const
   {
