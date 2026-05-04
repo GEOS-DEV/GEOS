@@ -38,8 +38,7 @@
         type="producer"
         control="BHP"
         maxRelativePressureChange="0.2"
-        maxCompFractionChange="0.2"
-        useMass="1">
+        maxCompFractionChange="0.2">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"
@@ -54,8 +53,7 @@
         type="injector"
         control="totalVolRate"
         maxRelativePressureChange="0.2"
-        maxCompFractionChange="0.2"
-        useMass="1">
+        maxCompFractionChange="0.2">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e7"

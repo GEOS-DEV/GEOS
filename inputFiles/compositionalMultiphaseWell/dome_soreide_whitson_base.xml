@@ -58,7 +58,6 @@
         logLevel="2"
         maxRelativePressureChange="0.5"
         maxCompFractionChange="0.5"
-        useMass="0"
         writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
@@ -81,7 +80,6 @@
         logLevel="2"
         maxRelativePressureChange="0.5"
         maxCompFractionChange="0.5"
-        useMass="0"
         writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
@@ -104,7 +102,6 @@
         logLevel="2"
         maxRelativePressureChange="0.5"
         maxCompFractionChange="0.5"
-        useMass="0"
         writeCSV="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxgasprod"

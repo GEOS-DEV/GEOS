@@ -35,8 +35,7 @@
         logLevel="1"
         type="producer"
         control="phaseVolRate"
-        maxCompFractionChange="0.2"
-        useMass="1">
+        maxCompFractionChange="0.2">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"
@@ -51,8 +50,7 @@
         logLevel="1"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.2"
-        useMass="1">
+        maxCompFractionChange="0.2">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e7"
