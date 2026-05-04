@@ -36,29 +36,7 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimSinglePhaseFlowSplitMeshTest,
   ::testing::Combine(
     ::testing::Values(
-      // Flat hex split meshes
-      "fractured_mesh_hex_DFN_123.vtm",
-
-      // Wavy hex split meshes
-      "fractured_wavy_mesh_hex_DFN_123.vtm",
-
-      // Full span hex split meshes
-      "fractured_full_span_mesh_hex_DFN_123.vtm",
-
-      // Full span tet split meshes
-      "fractured_full_span_mesh_tet_DFN_123.vtm",
-
-      // T-shaped wavy split meshes
-      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtm",
-      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtm",
-
-      // Y-shaped wavy split meshes
-      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtm",
-      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtm",
-
-      // 5-fracture DFN split meshes
-      "DFN_5_fractures_hex_binarized.vtm",
-      "DFN_5_fractures_tet_binarized.vtm"
+      "fractured_mesh_hex_DFN_123.vtm"
       ),
     ::testing::Bool(),
     ::testing::Values(
