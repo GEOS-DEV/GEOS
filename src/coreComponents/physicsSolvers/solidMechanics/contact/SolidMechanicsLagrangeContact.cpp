@@ -115,12 +115,6 @@ void SolidMechanicsLagrangeContact::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( getName()).
-        setDescription( "An array that holds the rotation matrices on the fracture." ).
-        reference().resizeDimension< 1, 2 >( 3, 3 );
-
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( getName()).
@@ -327,7 +321,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-        arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+        arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getField< contact::rotationMatrix >();
 
         FixedToManyElementRelation const & faceElementToElems = subRegion.getToCellRelation();
         array2d< localIndex > const & faceElemToElemRegion = faceElementToElems.m_toElementRegion;
@@ -525,7 +519,7 @@ void SolidMechanicsLagrangeContact::computeFaceDisplacementJump( DomainPartition
       if( subRegion.hasField< contact::traction >() )
       {
         arrayView3d< real64 > const &
-        rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+        rotationMatrix = subRegion.getField< contact::rotationMatrix >();
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
 
@@ -947,58 +941,6 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
   return {};
 }
 
-void SolidMechanicsLagrangeContact::computeRotationMatrices( DomainPartition & domain ) const
-{
-  GEOS_MARK_FUNCTION;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-  {
-    FaceManager const & faceManager = mesh.getFaceManager();
-
-    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
-
-    mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
-                                                                        [&]( localIndex const,
-                                                                             FaceElementSubRegion & subRegion )
-    {
-      arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
-
-      arrayView3d< real64 > const &
-      rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-      arrayView2d< real64 > const unitNormal   = subRegion.getNormalVector();
-      arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
-      arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
-
-      forAll< parallelHostPolicy >( subRegion.size(), [=]( localIndex const kfe )
-      {
-
-
-        localIndex const f0 = elemsToFaces[kfe][0];
-        localIndex const f1 = elemsToFaces[kfe][1];
-
-        stackArray1d< real64, 3 > Nbar( 3 );
-        Nbar[ 0 ] = faceNormal[f0][0] - faceNormal[f1][0];
-        Nbar[ 1 ] = faceNormal[f0][1] - faceNormal[f1][1];
-        Nbar[ 2 ] = faceNormal[f0][2] - faceNormal[f1][2];
-        LvArray::tensorOps::normalize< 3 >( Nbar );
-
-        computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
-        real64 const columnVector1[3] = { rotationMatrix[kfe][ 0 ][ 1 ],
-                                          rotationMatrix[kfe][ 1 ][ 1 ],
-                                          rotationMatrix[kfe][ 2 ][ 1 ] };
-
-        real64 const columnVector2[3] = { rotationMatrix[kfe][ 0 ][ 2 ],
-                                          rotationMatrix[kfe][ 1 ][ 2 ],
-                                          rotationMatrix[kfe][ 2 ][ 2 ] };
-
-        LvArray::tensorOps::copy< 3 >( unitNormal[kfe], Nbar );
-        LvArray::tensorOps::copy< 3 >( unitTangent1[kfe], columnVector1 );
-        LvArray::tensorOps::copy< 3 >( unitTangent2[kfe], columnVector2 );
-      } );
-    } );
-  } );
-}
 
 void SolidMechanicsLagrangeContact::computeFaceIntegrals( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                                           localIndex const (&faceToNodes)[11],
@@ -1360,7 +1302,7 @@ void SolidMechanicsLagrangeContact::
   {
     arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
     arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( contact::traction::key() );
-    arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+    arrayView3d< real64 const > const & rotationMatrix = subRegion.getField< contact::rotationMatrix >();
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -1478,7 +1420,7 @@ void SolidMechanicsLagrangeContact::
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & area = subRegion.getElementArea();
     arrayView3d< real64 const > const &
-    rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+    rotationMatrix = subRegion.getField< contact::rotationMatrix >();
     arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
@@ -1761,7 +1703,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
   arrayView3d< real64 const > const &
-  faceRotationMatrix = fractureSubRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+  faceRotationMatrix = fractureSubRegion.getField< contact::rotationMatrix >();
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =

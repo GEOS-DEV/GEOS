@@ -23,6 +23,8 @@
 #include "finiteElement/kernelInterface/InterfaceKernelBase.hpp"
 #include "SolidMechanicsConformingContactKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
 {
@@ -270,27 +272,34 @@ struct ComputeRotationMatricesKernel
 {
 
   /**
-   * @brief Launch the kernel function to comute rotation matrices
-   * @tparam POLICY the type of policy used in the kernel launch
-   * @param[in] size the size of the subregion
-   * @param[in] faceNormal the array of array containing the face to nodes map
-   * @param[in] elemsToFaces the array of array containing the element to faces map
-   * @param[out] rotationMatrix the array containing the rotation matrices
+   * @brief Launch the kernel function to compute rotation matrices.
+   * @tparam POLICY         the type of policy used in the kernel launch
+   * @param[in] size        the number of fracture elements
+   * @param[in] faceNormal  face normals array
+   * @param[in] elemsToFaces element-to-face connectivity
+   * @param[in] tangentRefDirection  reference direction used to anchor the canonical tangent frame
+   *            (t1 = normalize(refDir × normal), t2 = normal × t1).  Must be non-zero.
+   * @param[out] rotationMatrix  3×3 rotation matrix per element (columns: normal, t1, t2)
+   * @param[out] unitNormal    unit normal per element
+   * @param[out] unitTangent1  first tangent per element
+   * @param[out] unitTangent2  second tangent per element
    */
   template< typename POLICY >
   static void
   launch( localIndex const size,
           arrayView2d< real64 const > const & faceNormal,
           arrayView2d< localIndex const > const & elemsToFaces,
+          R1Tensor const & tangentRefDirection,
           arrayView3d< real64 > const & rotationMatrix,
           arrayView2d< real64 > const & unitNormal,
           arrayView2d< real64 > const & unitTangent1,
           arrayView2d< real64 > const & unitTangent2 )
   {
+    // Copy into a plain array so it is capturable by value in the device lambda.
+    real64 const refDir[3] = { tangentRefDirection[0], tangentRefDirection[1], tangentRefDirection[2] };
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
-
       localIndex const f0 = elemsToFaces[k][0];
       localIndex const f1 = elemsToFaces[k][1];
 
@@ -298,21 +307,18 @@ struct ComputeRotationMatricesKernel
       Nbar[0] = faceNormal[f0][0] - faceNormal[f1][0];
       Nbar[1] = faceNormal[f0][1] - faceNormal[f1][1];
       Nbar[2] = faceNormal[f0][2] - faceNormal[f1][2];
-
       LvArray::tensorOps::normalize< 3 >( Nbar );
-      computationalGeometry::RotationMatrix_3D( Nbar, rotationMatrix[k] );
 
-      real64 const columnVector1[3] = { rotationMatrix[k][ 0 ][ 1 ],
-                                        rotationMatrix[k][ 1 ][ 1 ],
-                                        rotationMatrix[k][ 2 ][ 1 ] };
+      computationalGeometry::canonicalRotationMatrix( Nbar, refDir, rotationMatrix[k] );
 
-      real64 const columnVector2[3] = { rotationMatrix[k][ 0 ][ 2 ],
-                                        rotationMatrix[k][ 1 ][ 2 ],
-                                        rotationMatrix[k][ 2 ][ 2 ] };
-
-      LvArray::tensorOps::copy< 3 >( unitNormal[k], Nbar );
-      LvArray::tensorOps::copy< 3 >( unitTangent1[k], columnVector1 );
-      LvArray::tensorOps::copy< 3 >( unitTangent2[k], columnVector2 );
+      // The rotation matrix stores vectors as columns: col 0 = normal, col 1 = t1, col 2 = t2.
+      // Extract each column into the corresponding unit-vector arrays.
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        unitNormal[k][i]   = rotationMatrix[k][i][0];
+        unitTangent1[k][i] = rotationMatrix[k][i][1];
+        unitTangent2[k][i] = rotationMatrix[k][i][2];
+      }
     } );
   }
 

@@ -101,9 +101,7 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
   {
     fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
     {
-      // Register the rotation matrix
-      subRegion.registerField< contact::rotationMatrix >( this->getName() ).
-        reference().resizeDimension< 1, 2 >( 3, 3 );
+      // Register the rotation matrix is now handled by ContactSolverBase::registerDataOnMesh.
 
       subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
@@ -250,26 +248,6 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
                                                            ParallelVector & solution,
                                                            bool const setSparsity )
 {
-  // setup monolithic coupled system
-
-  // Ensure kf1 node ordering is consistent with kf0 for conforming contact kernels.
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & )
-  {
-    NodeManager const & nodeManager = mesh.getNodeManager();
-    FaceManager & faceManager = mesh.getFaceManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-    {
-      if( subRegion.size() > 0 )
-      {
-        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
-      }
-    } );
-  } );
-
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
 
@@ -279,7 +257,9 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
 
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  // Enforce: f0 < f1 (global index) → n̂₀ = -n̂₁ → nodes(kf1) ~ nodes(kf0).
+  // Then build the DOF structure via PhysicsSolverBase::setupSystem.
+  ContactSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   computeRotationMatrices( domain );
 }
@@ -317,58 +297,36 @@ void SolidMechanicsLagrangeContactBubbleStab::setSparsityPattern( DomainPartitio
   this->addCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
-void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPartition & domain ) const
-{
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & )
-  {
-
-    FaceManager & faceManager = mesh.getFaceManager();
-    ElementRegionManager & elemManager = mesh.getElemManager();
-
-    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
-    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-
-    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
-    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
-
-    arrayView2d< real64 > const incrBubbleDisp =
-      faceManager.getField< contact::incrementalBubbleDisplacement >();
-
-    arrayView3d< real64 > const rotationMatrix =
-      subRegion.getField< contact::rotationMatrix >().toView();
-
-    arrayView2d< real64 > const unitNormal   = subRegion.getNormalVector();
-    arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
-    arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
-
-    // Compute rotation matrices
-    solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::launch< parallelDevicePolicy<> >( subRegion.size(),
-                                                                                                             faceNormal,
-                                                                                                             elemsToFaces,
-                                                                                                             rotationMatrix,
-                                                                                                             unitNormal,
-                                                                                                             unitTangent1,
-                                                                                                             unitTangent2 );
-
-    forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                      [ = ]
-                                      GEOS_HOST_DEVICE ( localIndex const k )
-    {
-      localIndex const kf0 = elemsToFaces[k][0];
-      localIndex const kf1 = elemsToFaces[k][1];
-      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf0], 0.0 );
-      LvArray::tensorOps::fill< 3 >( incrBubbleDisp[kf1], 0.0 );
-    } );
-  } );
-}
-
 void SolidMechanicsLagrangeContactBubbleStab::implicitStepSetup( real64 const & time_n,
                                                                  real64 const & dt,
                                                                  DomainPartition & domain )
 {
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
+  computeRotationMatrices( domain );
+
+  // Zero the incremental bubble displacement at the start of each implicit step.
+  // This must be done here (not inside computeRotationMatrices) because the base-class
+  // version of computeRotationMatrices knows nothing about bubble DOFs.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    arrayView2d< real64 > const incrBubbleDisp =
+      faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        LvArray::tensorOps::fill< 3 >( incrBubbleDisp[elemsToFaces[k][0]], 0.0 );
+        LvArray::tensorOps::fill< 3 >( incrBubbleDisp[elemsToFaces[k][1]], 0.0 );
+      } );
+    } );
+  } );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::assembleSystem( real64 const time,

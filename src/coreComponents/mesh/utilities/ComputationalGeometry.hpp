@@ -372,6 +372,65 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
 }
 
 /**
+ * @brief Build a canonical right-handed rotation matrix from a unit normal and a reference direction.
+ *
+ * The tangent vectors are defined as:
+ *   t1 = normalize( refDir × normal )
+ *   t2 = normal × t1
+ *
+ * When @p refDir is nearly parallel to @p normal (|dot| > 0.9) the function
+ * automatically selects an orthogonal fallback so that t1 is never degenerate.
+ * This produces a frame that is consistent across neighbouring fracture elements
+ * that share the same normal, giving smooth local-frame output fields in post-processing.
+ *
+ * @tparam NORMAL_TYPE  array-like type for the unit normal  (must support operator[])
+ * @tparam REF_TYPE     array-like type for the reference direction
+ * @tparam MATRIX_TYPE  2-D array-like type for the 3×3 output matrix (row-major indexing [i][j])
+ * @param[in]  normal         unit face normal
+ * @param[in]  refDir         reference direction (need not be unit; must not be zero)
+ * @param[out] rotationMatrix 3×3 rotation matrix whose columns are (normal, t1, t2)
+ */
+template< typename NORMAL_TYPE, typename REF_TYPE, typename MATRIX_TYPE >
+GEOS_HOST_DEVICE
+void canonicalRotationMatrix( NORMAL_TYPE const & normal,
+                              REF_TYPE const & refDir,
+                              MATRIX_TYPE && rotationMatrix )
+{
+  // Choose the reference vector; fall back to an orthogonal axis when refDir is
+  // nearly parallel to the normal to avoid a near-zero cross product.
+  real64 ref[3] = { refDir[0], refDir[1], refDir[2] };
+
+  real64 const dotNR = LvArray::tensorOps::AiBi< 3 >( normal, ref );
+  if( LvArray::math::abs( dotNR ) > 0.9 * LvArray::tensorOps::l2Norm< 3 >( ref ) )
+  {
+    // refDir is nearly parallel to normal — pick an orthogonal fallback.
+    // Use global Z unless normal is already close to Z, then use global X.
+    if( LvArray::math::abs( normal[2] ) < 0.9 )
+    {
+      ref[0] = 0.0; ref[1] = 0.0; ref[2] = 1.0;
+    }
+    else
+    {
+      ref[0] = 1.0; ref[1] = 0.0; ref[2] = 0.0;
+    }
+  }
+
+  // t1 = normalize( ref × normal )
+  real64 t1[3];
+  LvArray::tensorOps::crossProduct( t1, ref, normal );
+  LvArray::tensorOps::normalize< 3 >( t1 );
+
+  // t2 = normal × t1  (completes the right-handed frame)
+  real64 t2[3];
+  LvArray::tensorOps::crossProduct( t2, normal, t1 );
+
+  // Store column-major: col 0 = normal, col 1 = t1, col 2 = t2
+  rotationMatrix[0][0] = normal[0];  rotationMatrix[0][1] = t1[0];  rotationMatrix[0][2] = t2[0];
+  rotationMatrix[1][0] = normal[1];  rotationMatrix[1][1] = t1[1];  rotationMatrix[1][2] = t2[1];
+  rotationMatrix[2][0] = normal[2];  rotationMatrix[2][1] = t1[2];  rotationMatrix[2][2] = t2[2];
+}
+
+/**
  * @brief Return the sign of a given value as an integer.
  * @tparam T type of value
  * @param val the value in question

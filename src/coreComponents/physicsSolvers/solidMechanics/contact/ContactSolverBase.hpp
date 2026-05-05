@@ -43,6 +43,30 @@ public:
                 integer const cycleNumber,
                 DomainPartition & domain ) override final;
 
+  /**
+   * @brief Override setupSystem to ensure consistent f0/f1 face ordering for all
+   *        FaceElementSubRegions before the DOF structure is built.
+   *
+   * Calls flipFaceMap + fixNeighboringFacesNormals on every FaceElementSubRegion,
+   * then chains to PhysicsSolverBase::setupSystem.  This covers both pre-split meshes (called once
+   * at startup) and SurfaceGenerator runs (called again whenever new fractures are created).
+   */
+  virtual void setupSystem( DomainPartition & domain,
+                            DofManager & dofManager,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
+                            bool const setSparsity = true ) override;
+
+  /**
+   * @brief Compute the local rotation matrices (normal, t1, t2) for all fracture elements.
+   *
+   * Uses the shared GPU/CPU ComputeRotationMatricesKernel with m_tangentRefDirection to
+   * build a deterministic, canonical tangent frame.  Assumes flipFaceMap has already
+   * been called (e.g. via setupSystem) so that Nbar is consistently oriented.
+   */
+  void computeRotationMatrices( DomainPartition & domain ) const;
+
   string const & getUniqueFractureRegionName() const { return m_fractureRegionNames[0]; }
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
@@ -57,10 +81,14 @@ public:
 
     constexpr static char const * frictionLawNameString() { return "frictionLawName"; }
 
+    constexpr static char const * tangentRefDirectionString() { return "tangentReferenceDirection"; }
   };
 
 protected:
   virtual void postInputInitialization() override;
+
+  /// Reference direction for the canonical tangent frame (t1 = normalize(refDir x normal), t2 = normal x t1).
+  R1Tensor m_tangentRefDirection;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final;
 

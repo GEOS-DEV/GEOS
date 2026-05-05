@@ -27,6 +27,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
 
 namespace geos
 {
@@ -37,7 +38,8 @@ using namespace fields;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
-  SolidMechanicsLagrangianFEM( name, parent )
+  SolidMechanicsLagrangianFEM( name, parent ),
+  m_tangentRefDirection{ 1.0 / std::sqrt( 3.0 ), 1.0 / std::sqrt( 3.0 ), 1.0 / std::sqrt( 3.0 ) }
 {
   this->getWrapper< string >( viewKeyStruct::contactRelationNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
@@ -47,6 +49,14 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   addLogLevel< logInfo::ConfigurationStatistics >();
   addLogLevel< logInfo::ContactTolerance >();
+
+  registerWrapper( viewKeyStruct::tangentRefDirectionString(), &m_tangentRefDirection ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_tangentRefDirection ).
+    setDescription( "Reference direction used to build the canonical tangent frame on fracture elements "
+                    "(t1 = normalize(refDir x normal), t2 = normal x t1). "
+                    "Defaults to the isometric direction {1/sqrt(3), 1/sqrt(3), 1/sqrt(3)}. "
+                    "Automatically normalised at run-time." );
 }
 
 void ContactSolverBase::postInputInitialization()
@@ -58,6 +68,20 @@ void ContactSolverBase::postInputInitialization()
                            viewKeyStruct::timeIntegrationOptionString(),
                            EnumStrings< TimeIntegrationOption >::toString( TimeIntegrationOption::QuasiStatic ) ),
                  InputError, getDataContext() );
+
+  // Normalise the user-supplied (or default) tangent reference direction.
+  real64 const norm = LvArray::tensorOps::l2Norm< 3 >( m_tangentRefDirection.data );
+  GEOS_THROW_IF( norm < 1.0e-10,
+                 GEOS_FMT( "{}: `{}` must be a non-zero vector.",
+                           getName(), viewKeyStruct::tangentRefDirectionString() ),
+                 InputError, getDataContext() );
+  LvArray::tensorOps::scale< 3 >( m_tangentRefDirection.data, 1.0 / norm );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: tangent reference direction = {{ {:.6f}, {:.6f}, {:.6f} }}",
+                             getName(),
+                             m_tangentRefDirection[0],
+                             m_tangentRefDirection[1],
+                             m_tangentRefDirection[2] ) );
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -106,6 +130,10 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
       subRegion.registerField< contact::deltaSlip_n >( this->getName() ).
         setDimLabels( 1, labelsTangent ).reference().resizeDimension< 1 >( 2 );
+
+      // Register the rotation matrix and unit frame vectors (shared by all contact solvers).
+      subRegion.registerField< contact::rotationMatrix >( getName() ).
+        reference().resizeDimension< 1, 2 >( 3, 3 );
     } );
 
   } );
@@ -254,6 +282,80 @@ void ContactSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & su
   {
     setConstitutiveName< FrictionBase >( subRegion, viewKeyStruct::frictionLawNameString(), "friction" );
   }
+}
+
+void ContactSolverBase::setupSystem( DomainPartition & domain,
+                                     DofManager & dofManager,
+                                     CRSMatrix< real64, globalIndex > & localMatrix,
+                                     ParallelVector & rhs,
+                                     ParallelVector & solution,
+                                     bool const setSparsity )
+{
+  // Enforce: f0 < f1 (global index) → n̂₀ = -n̂₁ → nodes(kf1) ~ nodes(kf0).
+  // This sequence must be preserved in this exact order and runs before
+  // PhysicsSolverBase::setupSystem so the DOF structure is built on a consistent topology.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    NodeManager const & nodeManager = mesh.getNodeManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      if( subRegion.size() > 0 )
+      {
+        // Step 1: ensure f0 is the face adjacent to the element with the smallest global index.
+        subRegion.flipFaceMap( faceManager, elemManager );
+        // Step 2: orient each face normal outward (may reverse node lists).
+        subRegion.fixNeighboringFacesNormals( faceManager, elemManager );
+        // Step 3: reorder kf1 nodes to match kf0 so conforming-contact kernels
+        //         see a consistent node numbering on both sides of the fracture.
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+      }
+    } );
+  } );
+
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+}
+
+void ContactSolverBase::computeRotationMatrices( DomainPartition & domain ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & )
+  {
+    FaceManager const & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
+
+    // Iterate over ALL FaceElementSubRegions (not filtered by regionNames) so that
+    // pre-split meshes — whose fracture region is not listed in the solver's
+    // discretization target regions — are also processed.
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      arrayView2d< localIndex const > const elemsToFaces  = subRegion.faceList().toViewConst();
+      arrayView3d< real64 >           const rotationMatrix = subRegion.getField< contact::rotationMatrix >().toView();
+      arrayView2d< real64 >           const unitNormal    = subRegion.getNormalVector();
+      arrayView2d< real64 >           const unitTangent1  = subRegion.getTangentVector1();
+      arrayView2d< real64 >           const unitTangent2  = subRegion.getTangentVector2();
+
+      solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::
+        launch< parallelDevicePolicy<> >( subRegion.size(),
+                                          faceNormal,
+                                          elemsToFaces,
+                                          m_tangentRefDirection,
+                                          rotationMatrix,
+                                          unitNormal,
+                                          unitTangent1,
+                                          unitTangent2 );
+    } );
+  } );
 }
 
 }   /* namespace geos */

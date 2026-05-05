@@ -146,10 +146,6 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
       subRegion.registerField< contact::deltaTraction >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
-      // Register the rotation matrix
-      subRegion.registerField< contact::rotationMatrix >( getName() ).
-        reference().resizeDimension< 1, 2 >( 3, 3 );
-
       // Register the penalty coefficients for the iterative procedure
       subRegion.registerField< contact::iterativePenalty >( getName() ).
         reference().resizeDimension< 1 >( 5 );
@@ -277,7 +273,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   GEOS_MARK_FUNCTION;
 
   // Recompute geometric quantities (face normals, areas) after mesh topology changes.
-  // This is critical for distorted/non-axis-aligned meshes and after fracture events.
+  // This is critical when SurfaceGenerator creates new fractures mid-simulation.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -295,19 +291,12 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     } );
 
-    // Recompute element geometry for face elements (uses updated face areas)
+    // Recompute element geometry for face elements (areas, centres).
+    // Node ordering and normal orientation are handled by ContactSolverBase::setupSystem
+    // in the correct sequence: flipFaceMap → fixNeighboringFacesNormals → orderKf1NodesConsistentlyWithKf0.
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-
-      // Reorder kf1 nodes to match kf0 for conforming contact kernels.
-      // flipFaceMap and fixNeighboringFacesNormals are already called by
-      // ProblemManager::applyNumericalMethods after ghosting is complete.
-      if( subRegion.size() > 0 )
-      {
-        subRegion.fixNeighboringFacesNormals( faceManager, elemManager );
-        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
-      }
     } );
   } );
 
@@ -320,7 +309,10 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
 
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  // Enforce: f0 < f1 (global index) → n̂₀ = -n̂₁ → nodes(kf1) ~ nodes(kf0).
+  // Then build the DOF structure via PhysicsSolverBase::setupSystem.
+  ContactSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+
 }
 
 void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
@@ -386,53 +378,35 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
 
   SolidMechanicsLagrangianFEM::implicitStepSetup( time_n, dt, domain );
 
+  // Recompute rotation matrices using the canonical tangent frame.
+  // flipFaceMap was already called in setupSystem so Nbar is consistently oriented.
+  computeRotationMatrices( domain );
+
+  // Set the tolerances
+  computeTolerances( domain );
+
+  // Initialize the traction from the stress in adjacent volume elements.
+  // This is only done during stress initialization step to ensure the ALM solver
+  // starts with a physically consistent traction rather than zero.
+  // On subsequent time steps, the traction from the previous step is preserved.
+  if( m_performStressInitialization )
+  {
+    initializeTractionFromAdjacentCellStress( domain );
+  }
+
+  // Reset incremental bubble displacements and update penalty coefficients.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
-
     FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView2d< real64 const > const faceNormal = faceManager.faceNormal();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
-
-    arrayView2d< real64 > const incrBubbleDisp =
-      faceManager.getField< contact::incrementalBubbleDisplacement >();
-
-    arrayView3d< real64 > const
-    rotationMatrix = subRegion.getField< contact::rotationMatrix >().toView();
-
-    arrayView2d< real64 > const unitNormal   = subRegion.getNormalVector();
-    arrayView2d< real64 > const unitTangent1 = subRegion.getTangentVector1();
-    arrayView2d< real64 > const unitTangent2 = subRegion.getTangentVector2();
-
-    if( subRegion.size() > 0 )
-    {
-      solidMechanicsConformingContactKernels::ComputeRotationMatricesKernel::
-        launch< parallelDevicePolicy<> >( subRegion.size(),
-                                          faceNormal,
-                                          elemsToFaces,
-                                          rotationMatrix,
-                                          unitNormal,
-                                          unitTangent1,
-                                          unitTangent2 );
-    }
-
-    // Set the tollerances
-    computeTolerances( domain );
-
-    // Initialize the traction from the stress in adjacent volume elements.
-    // This is only done during stress initialization step to ensure the ALM solver
-    // starts with a physically consistent traction rather than zero.
-    // On subsequent time steps, the traction from the previous step is preserved.
-    if( m_performStressInitialization )
-    {
-      initializeTractionFromAdjacentCellStress( domain );
-    }
+    arrayView2d< real64 > const incrBubbleDisp = faceManager.getField< contact::incrementalBubbleDisplacement >();
 
     // Set array to update penalty coefficients
     arrayView2d< real64 > const dispJumpUpdPenalty =

@@ -138,8 +138,6 @@ public:
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
-  void computeRotationMatrices( DomainPartition & domain ) const;
-
   void computeTolerances( DomainPartition & domain ) const;
 
   void computeFaceNodalArea( localIndex const kf0,
