@@ -18,8 +18,11 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "Logger.hpp"
+#include "StackTrace.hpp"
 #include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/logger/StackTrace.hpp"
 #include "common/format/StringUtilities.hpp"
 
 #include <fstream>
@@ -66,7 +69,7 @@ DiagnosticMsgBuilder ErrorLogger::initCurrentExceptionMessage( MsgType msgType,
   m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
                                                          msgType, msgContent,
                                                          rank )
-                               .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                               .addCallStackInfo( StackTrace::stackTrace() )
                                .getDiagnosticMsg();
   return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
 }
@@ -209,7 +212,6 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view 
   std::string str = std::string( ossStackTrace );
   std::istringstream iss( str );
   std::string stackLine;
-  std::size_t index;
 
   std::regex lvArrayPattern( R"(Frame \d+: \S+)" );
   std::regex cpptracePattern( R"(^\s*#\d+\s+)" );

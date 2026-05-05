@@ -26,6 +26,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/strategy/AllocationStrategy.hpp>
+#include "logger/StackTrace.hpp"
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "umpire/util/Platform.hpp"
 
@@ -86,7 +87,7 @@ void setupLogger()
       }
       else
       {
-        std::string const stackHistory = LvArray::system::stackTrace( true );
+        std::string const stackHistory = StackTrace::stackTrace();
         DiagnosticMsg diagnosticMsg;
         ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                          MsgType::Error, errorMsg,
@@ -109,7 +110,7 @@ void setupLogger()
       ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
-      std::string const stackHistory = LvArray::system::stackTrace( true );
+      std::string const stackHistory = StackTrace::stackTrace();
       DiagnosticMsg diagnosticMsg;
       ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                        MsgType::ExternalError, "",

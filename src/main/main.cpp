@@ -16,6 +16,7 @@
 // Source includes
 #include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
+#include "common/logger/StackTrace.hpp"
 #include "common/GeosxConfig.hpp"
 #include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
@@ -82,6 +83,15 @@ int main( int argc, char *argv[] )
 
   auto onGeosException = [&]( geos::Exception & e )
   { // GEOS generated exceptions management
+#ifdef GEOS_USE_CPPTRACE
+    std::string const stacktrace = StackTrace::formatStackTrace( cpptrace::from_current_exception() );
+#else
+    std::string const stacktrace = LvArray::system::stackTrace( true );
+#endif
+    if( !stacktrace.empty() )
+    {
+      ErrorLogger::global().modifyCurrentExceptionMessage().addCallStackInfo( stacktrace );
+    }
     ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup( true );
     LvArray::system::callErrorHandler();
@@ -90,7 +100,7 @@ int main( int argc, char *argv[] )
   auto onStdException = [&]( std::exception const & e )
   { // native exceptions management
 #ifdef GEOS_USE_CPPTRACE
-    std::string const stacktrace = cpptrace::from_current_exception().to_string();
+    std::string const stacktrace = StackTrace::formatStackTrace( cpptrace::from_current_exception() );
 #else
     std::string const stacktrace = LvArray::system::stackTrace( true );
 #endif
