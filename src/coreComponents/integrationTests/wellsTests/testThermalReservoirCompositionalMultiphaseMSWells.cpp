@@ -103,7 +103,7 @@ char const * xmlInput =
       logLevel="1"
       initialDt="1e4"
       useMass="0">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
