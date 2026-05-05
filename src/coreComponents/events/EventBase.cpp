@@ -183,7 +183,15 @@ void EventBase::checkEvents( real64 const time,
     }
     else
     {
-      this->setForecast( int( ( m_beginTime - time ) / dt ) );
+      real64 constexpr min_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::min);
+      real64 constexpr max_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::max);
+
+      real64 const ratio = ( m_beginTime - time ) / dt;
+
+      integer const forecast = ratio < min_ratio ? LvArray::NumericLimits< integer >::min :
+                               (ratio > max_ratio ? LvArray::NumericLimits< integer >::max :
+                                static_cast< integer >(ratio));
+      this->setForecast( forecast );
     }
   }
   else if( time >= m_endTime )
