@@ -22,11 +22,11 @@
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
+#include "logger/StackTrace.hpp"
 // TPL includes
 #include <umpire/ResourceManager.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/strategy/AllocationStrategy.hpp>
-#include "logger/StackTrace.hpp"
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "umpire/util/Platform.hpp"
 
