@@ -1168,6 +1168,14 @@ void FaceElementSubRegion::flipFaceMap( FaceManager & faceManager,
       localIndex const esr1 = faceToElementSubRegionIndex[f1][0];
       localIndex const ek1  = faceToElementIndex[f1][0];
 
+      // Skip elements whose face-to-element maps are not yet populated (e.g. ghost
+      // faces created by SurfaceGenerator whose neighbouring solid element lives on
+      // another MPI rank).  The swap will be performed correctly on the owning rank.
+      if( er0 < 0 || esr0 < 0 || ek0 < 0 || er1 < 0 || esr1 < 0 || ek1 < 0 )
+      {
+        return;
+      }
+
       globalIndex const globalIndexElem0 = cellElemGlobalIndex[er0][esr0][ek0];
       globalIndex const globalIndexElem1 = cellElemGlobalIndex[er1][esr1][ek1];
 
@@ -1222,9 +1230,10 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
         LvArray::tensorOps::subtract< 3 >( f0e0vector, elemCenter[er0][esr0][ek0] );
 
         // Step 1: correct f0 so its normal points outward from its neighboring 3D element
-        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
-        // anti-parallel to the outward normal, so if the dot product is positive the
-        // normal is already pointing inward and must be flipped.
+        // (i.e. towards the fracture).  The vector (faceCenter - elemCenter) points
+        // outward from the element center to the face center.  The outward face normal
+        // should be roughly PARALLEL to this vector; if the dot product is NEGATIVE the
+        // normal is pointing inward and must be flipped.
         if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
         {
           LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
@@ -1235,9 +1244,8 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
         LvArray::tensorOps::subtract< 3 >( f1e1vector, elemCenter[er1][esr1][ek1] );
 
         // Step 2: correct f1 so its normal points outward from its neighboring 3D element
-        // (i.e. towards the fracture).  The vector faceCenter - elemCenter should be
-        // anti-parallel to the outward normal, so if the dot product is positive the
-        // normal is already pointing inward and must be flipped.
+        // (i.e. towards the fracture).  Same logic as Step 1: the outward face normal
+        // should be roughly PARALLEL to (faceCenter - elemCenter); if negative, flip it.
         if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
         {
           LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
