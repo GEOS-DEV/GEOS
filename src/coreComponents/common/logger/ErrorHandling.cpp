@@ -213,7 +213,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view 
   std::istringstream iss( str );
   std::string stackLine;
 
-  std::regex lvArrayPattern( R"(Frame \d+: \S+)" );
+  std::regex lvArrayPattern( R"(Frame \d+:\s*)" );
   std::regex cpptracePattern( R"(^\s*#\d+\s+)" );
 
   while( std::getline( iss, stackLine ) )
