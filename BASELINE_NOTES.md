@@ -6,15 +6,16 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 PR #4029 (2026-05-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4029-16484-a4227f0.tar.gz>
-=====================
 Add single phase viscosity dependency on temperature
+
+PR #3959 (2026-05-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3959-16478-faf1698.tar.gz>
+Add reference thermal conductivity
 
 PR #4021 (2026-04-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4021-16339-bb862da.tar.gz>
 =====================
 Add Young Modulus & Poisson import from VTK mesh
 
 PR #3883 (2026-04-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3883-16299-3037085.tar.gz>
-=====================
 Move PVT Driver tests from unit tests to integrated tests
 
 PR #4007 (2026-04-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4007-16213-67a3002.tar.gz>
