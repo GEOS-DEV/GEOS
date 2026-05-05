@@ -2247,7 +2247,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           row.push_back( { CellType::Value, GEOS_FMT( "{}", compRates[ ic ] ) } );
         }
         GEOS_ERROR_IF_NE_MSG( row.size(), numColumns,
-                              "CSV rates row size does not match header size for " << wellControlsName );
+                              "CSV rates row size does not match header size for "
+                              << wellControlsName );
         return row;
       };
 
