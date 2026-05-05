@@ -436,11 +436,24 @@ struct ComputeTractionSimultaneousKernel
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
-      tractionNew[kfe][0] = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
-      tractionNew[kfe][1] = traction[kfe][1] + ( penalty[kfe][2] * deltaDispJump[kfe][1]+
-                                                 penalty[kfe][4] * deltaDispJump[kfe][2] );
-      tractionNew[kfe][2] = traction[kfe][2] + ( penalty[kfe][3] * deltaDispJump[kfe][2] +
-                                                 penalty[kfe][4] * deltaDispJump[kfe][1] );
+      // Enforce non-positivity of normal traction: contact cannot sustain tension.
+      // If the updated normal traction is tensile the face is opening and all
+      // traction components must be zero.
+      real64 const tractionNormalTrial = traction[kfe][0] + penalty[kfe][0] * dispJump[kfe][0];
+      if( tractionNormalTrial > 0.0 )
+      {
+        tractionNew[kfe][0] = 0.0;
+        tractionNew[kfe][1] = 0.0;
+        tractionNew[kfe][2] = 0.0;
+      }
+      else
+      {
+        tractionNew[kfe][0] = tractionNormalTrial;
+        tractionNew[kfe][1] = traction[kfe][1] + ( penalty[kfe][2] * deltaDispJump[kfe][1]+
+                                                   penalty[kfe][4] * deltaDispJump[kfe][2] );
+        tractionNew[kfe][2] = traction[kfe][2] + ( penalty[kfe][3] * deltaDispJump[kfe][2] +
+                                                   penalty[kfe][4] * deltaDispJump[kfe][1] );
+      }
     } );
   }
 

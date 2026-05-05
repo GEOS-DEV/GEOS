@@ -378,10 +378,11 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
  *   t1 = normalize( refDir × normal )
  *   t2 = normal × t1
  *
- * When @p refDir is nearly parallel to @p normal (|dot| > 0.9) the function
+ * When @p refDir is nearly parallel to @p normal (|dot| > 0.999, i.e. angle < ~2.6°) the function
  * automatically selects an orthogonal fallback so that t1 is never degenerate.
- * This produces a frame that is consistent across neighbouring fracture elements
- * that share the same normal, giving smooth local-frame output fields in post-processing.
+ * A tight threshold is essential: a loose value (e.g. 0.9, ~26°) creates a band of fracture
+ * orientations where neighbouring elements straddle the boundary and receive completely different
+ * tangent frames, producing visible spatial discontinuities in traction and displacement-jump fields.
  *
  * @tparam NORMAL_TYPE  array-like type for the unit normal  (must support operator[])
  * @tparam REF_TYPE     array-like type for the reference direction
@@ -393,26 +394,24 @@ void RotationMatrix_3D( NORMAL_TYPE const & normal,
 template< typename NORMAL_TYPE, typename REF_TYPE, typename MATRIX_TYPE >
 GEOS_HOST_DEVICE
 void canonicalRotationMatrix( NORMAL_TYPE const & normal,
-                              REF_TYPE const & refDir,
-                              MATRIX_TYPE && rotationMatrix )
+                               REF_TYPE const & refDir,
+                               MATRIX_TYPE && rotationMatrix )
 {
-  // Choose the reference vector; fall back to an orthogonal axis when refDir is
-  // nearly parallel to the normal to avoid a near-zero cross product.
+  // Choose the reference vector; fall back to an orthogonal axis only when refDir is
+  // within ~2.6° of normal (|dot| > 0.999).  A loose threshold (e.g. 0.9) creates a
+  // ~26° band where adjacent elements straddle the boundary and receive entirely
+  // different tangent frames — causing spatial discontinuities in local-frame fields.
   real64 ref[3] = { refDir[0], refDir[1], refDir[2] };
 
   real64 const dotNR = LvArray::tensorOps::AiBi< 3 >( normal, ref );
-  if( LvArray::math::abs( dotNR ) > 0.9 * LvArray::tensorOps::l2Norm< 3 >( ref ) )
+  if( LvArray::math::abs( dotNR ) > 0.999 * LvArray::tensorOps::l2Norm< 3 >( ref ) )
   {
     // refDir is nearly parallel to normal — pick an orthogonal fallback.
     // Use global Z unless normal is already close to Z, then use global X.
     if( LvArray::math::abs( normal[2] ) < 0.9 )
-    {
-      ref[0] = 0.0; ref[1] = 0.0; ref[2] = 1.0;
-    }
+    { ref[0] = 0.0; ref[1] = 0.0; ref[2] = 1.0; }
     else
-    {
-      ref[0] = 1.0; ref[1] = 0.0; ref[2] = 0.0;
-    }
+    { ref[0] = 1.0; ref[1] = 0.0; ref[2] = 0.0; }
   }
 
   // t1 = normalize( ref × normal )

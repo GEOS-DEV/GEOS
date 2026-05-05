@@ -78,10 +78,10 @@ void ContactSolverBase::postInputInitialization()
   LvArray::tensorOps::scale< 3 >( m_tangentRefDirection.data, 1.0 / norm );
 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: tangent reference direction = {{ {:.6f}, {:.6f}, {:.6f} }}",
-                             getName(),
-                             m_tangentRefDirection[0],
-                             m_tangentRefDirection[1],
-                             m_tangentRefDirection[2] ) );
+                              getName(),
+                              m_tangentRefDirection[0],
+                              m_tangentRefDirection[1],
+                              m_tangentRefDirection[2] ) );
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -294,6 +294,17 @@ void ContactSolverBase::setupSystem( DomainPartition & domain,
   // Enforce: f0 < f1 (global index) → n̂₀ = -n̂₁ → nodes(kf1) ~ nodes(kf0).
   // This sequence must be preserved in this exact order and runs before
   // PhysicsSolverBase::setupSystem so the DOF structure is built on a consistent topology.
+  //
+  // NOTE: ProblemManager::applyNumericalMethods already calls all three functions at
+  // startup (after ghosting is complete), so the calls below are a no-op on the first
+  // invocation.  They are kept here specifically for the SurfaceGenerator workflow:
+  // when new fracture elements are created mid-simulation, applyNumericalMethods is NOT
+  // re-run, so setupSystem is the only opportunity to initialize the new elements.
+  //
+  // MPI safety: all three functions are deterministic (based on global indices and
+  // reference positions that are identical on owner and ghost ranks) and idempotent,
+  // so calling them on ghost elements produces the same result as on the owning rank
+  // without requiring any additional ghost synchronisation.
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & )

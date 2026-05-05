@@ -504,7 +504,8 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
   // TODO: Pass this tol as an argument or define a new class member
   real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 
-  tractionNew[0] = traction[0] + penalty[0] * dispJump[0];
+  // Enforce non-positivity of normal traction: contact cannot sustain tension.
+  tractionNew[0] = std::min( traction[0] + penalty[0] * dispJump[0], zero );
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
   tractionNew[2] = traction[2] + penalty[1] * deltaDispJump[2];
 

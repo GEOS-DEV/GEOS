@@ -168,6 +168,11 @@ void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
   localIndex numInvalidNu   = 0;
   localIndex numNegativeNu  = 0;
 
+  real64 minE  =  LvArray::NumericLimits< real64 >::max;
+  real64 maxE  = -LvArray::NumericLimits< real64 >::max;
+  real64 minNu =  LvArray::NumericLimits< real64 >::max;
+  real64 maxNu = -LvArray::NumericLimits< real64 >::max;
+
   for( localIndex k = 0; k < m_youngModulus.size(); ++k )
   {
     // youngModulus default is 0: negative values are invalid, zero means not imported
@@ -192,16 +197,27 @@ void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
     if( nu[k] < 0.0 )
       ++numNegativeNu;
 
+    // Track range of valid imported E and nu
+    minE  = LvArray::math::min( minE,  youngMod[k] );
+    maxE  = LvArray::math::max( maxE,  youngMod[k] );
+    minNu = LvArray::math::min( minNu, nu[k] );
+    maxNu = LvArray::math::max( maxNu, nu[k] );
+
     bulkMod[k]  = conversions::youngModAndPoissonRatio::toBulkMod( youngMod[k], nu[k] );
     shearMod[k] = conversions::youngModAndPoissonRatio::toShearMod( youngMod[k], nu[k] );
     ++numConverted;
   }
 
-  // Aggregate counters across all MPI ranks to report global totals
+  // Aggregate counters and ranges across all MPI ranks
   localIndex const globalConverted  = MpiWrapper::sum( numConverted );
   localIndex const globalInvalidE   = MpiWrapper::sum( numInvalidE );
   localIndex const globalInvalidNu  = MpiWrapper::sum( numInvalidNu );
   localIndex const globalNegativeNu = MpiWrapper::sum( numNegativeNu );
+
+  real64 const globalMinE  = MpiWrapper::min( minE );
+  real64 const globalMaxE  = MpiWrapper::max( maxE );
+  real64 const globalMinNu = MpiWrapper::min( minNu );
+  real64 const globalMaxNu = MpiWrapper::max( maxNu );
 
   if( globalConverted + globalInvalidE + globalInvalidNu > 0 )
   {
@@ -224,6 +240,17 @@ void ElasticIsotropic::initializePostInitialConditionsPreSubGroups()
                                "{} converted, {} skipped (invalid E), {} skipped (invalid nu), "
                                "{} with negative nu.",
                                getName(), globalConverted, globalInvalidE, globalInvalidNu, globalNegativeNu ) );
+
+    if( globalConverted > 0 )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "ElasticIsotropic '{}': converted cell range — "
+                                 "E in [{:.6e}, {:.6e}], nu in [{:.6f}, {:.6f}] "
+                                 "(max nu is {:.4f} away from the incompressibility limit 0.5).",
+                                 getName(),
+                                 globalMinE, globalMaxE,
+                                 globalMinNu, globalMaxNu,
+                                 0.5 - globalMaxNu ) );
+    }
   }
 
   // Back-compute E and nu for all cells from the final K/G so that output fields are meaningful

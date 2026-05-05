@@ -770,8 +770,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 }
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 const & time_n,
-                                                                     real64 const & dt,
-                                                                     DomainPartition & domain )
+                                                                      real64 const & dt,
+                                                                      DomainPartition & domain )
 {
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
@@ -1274,6 +1274,46 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           dispJumpUpdPenalty[kfe][2] = deltaDispJump[kfe][2];
         } );
       } );
+
+      // Reset incremental bubble displacement to zero before the next configuration
+      // iteration's Newton solve.  Without this reset, incrBubbleDisp accumulates
+      // across ALL Newton iterations of ALL configuration iterations within a single
+      // time-step attempt, so deltaDispJump ≈ dispJump (large) instead of reflecting
+      // only the tiny Newton corrections within the current configuration.  The spurious
+      // large deltaDispJump causes condConv=3 ("stick & gt>lim") to fire permanently
+      // for elements that are genuinely in stick contact — most visibly during stress
+      // initialisation where the starting state is zero and equilibrium involves
+      // significant elastic tangential deformation.
+      //
+      // Resetting here makes deltaDispJump in the NEXT constraintCheck reflect only
+      // the increments accumulated during that configuration's Newton solve.  After
+      // Newton converges (R~1e-7) those increments are tiny, so condConv=3 no longer
+      // fires spuriously.  dispJump (computed from totalBubbleDisp) is unaffected.
+      FaceManager & faceManager = mesh.getFaceManager();
+      ElementRegionManager & elemManagerForReset = mesh.getElemManager();
+      arrayView2d< real64 > const incrBubbleDisp =
+        faceManager.getField< contact::incrementalBubbleDisplacement >();
+
+      elemManagerForReset.forElementSubRegions< FaceElementSubRegion >( regionNames,
+                                                                         [&incrBubbleDisp]( localIndex const,
+                                                                                            FaceElementSubRegion & sr )
+      {
+        arrayView2d< localIndex const > const elemsToFaces = sr.faceList().toViewConst();
+        forAll< parallelDevicePolicy<> >( sr.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          LvArray::tensorOps::fill< 3 >( incrBubbleDisp[elemsToFaces[k][0]], 0.0 );
+          LvArray::tensorOps::fill< 3 >( incrBubbleDisp[elemsToFaces[k][1]], 0.0 );
+        } );
+      } );
+
+      // Synchronise so ghost faces also start the next Newton solve with a clean slate.
+      FieldIdentifiers fieldsToBeSync;
+      fieldsToBeSync.addFields( FieldLocation::Face,
+                                { contact::incrementalBubbleDisplacement::key() } );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                           mesh,
+                                                           domain.getNeighbors(),
+                                                           true );
     } );
   }
 

@@ -24,7 +24,6 @@
 #include "SolidMechanicsConformingContactKernelsHelper.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
 {
@@ -301,23 +300,47 @@ struct ComputeRotationMatricesKernel
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
       localIndex const f0 = elemsToFaces[k][0];
-      localIndex const f1 = elemsToFaces[k][1];
 
-      real64 Nbar[3];
-      Nbar[0] = faceNormal[f0][0] - faceNormal[f1][0];
-      Nbar[1] = faceNormal[f0][1] - faceNormal[f1][1];
-      Nbar[2] = faceNormal[f0][2] - faceNormal[f1][2];
-      LvArray::tensorOps::normalize< 3 >( Nbar );
+      // Use faceNormal[f0] directly as the element normal.
+      // After fixNeighboringFacesNormals, faceNormal[f0] is already the outward unit
+      // normal of f0 (pointing toward the fracture from the f0 side) and is guaranteed
+      // to be a unit vector from computeGeometry.  Using n0 - n1 would average two
+      // normals that, on a geometrically imperfect mesh, are not exactly anti-parallel,
+      // introducing element-to-element noise that breaks the smoothness of the tangent
+      // frame along a curved but geometrically smooth fault surface.
+      real64 const Nbar[3] = { faceNormal[f0][0], faceNormal[f0][1], faceNormal[f0][2] };
 
+      // Build the contact-mechanics rotation matrix from Nbar as-is.
+      // faceNormal[f0] is oriented "outward from the smaller-global-index element," which
+      // is consistent for the contact kernel but has no global sign convention across the
+      // fault (adjacent elements can have f0 on opposite sides → opposite Nbar signs).
       computationalGeometry::canonicalRotationMatrix( Nbar, refDir, rotationMatrix[k] );
 
-      // The rotation matrix stores vectors as columns: col 0 = normal, col 1 = t1, col 2 = t2.
-      // Extract each column into the corresponding unit-vector arrays.
+      // Build a consistently-oriented frame for the postprocessing fields
+      // (unitNormal, unitTangent1, unitTangent2).  rotationMatrix is left untouched
+      // so contact-kernel sign conventions are not affected.
+      //
+      // Convention: orient the normal so its dominant (largest-magnitude) component is
+      // positive.  This is robust for any fault dip/strike and guarantees that adjacent
+      // elements always receive the same sign, eliminating the checkerboard artefact
+      // seen when f0 alternates between the two sides of the fault.
+      real64 const absX = LvArray::math::abs( Nbar[0] );
+      real64 const absY = LvArray::math::abs( Nbar[1] );
+      real64 const absZ = LvArray::math::abs( Nbar[2] );
+      real64 const signFlip =
+        ( absZ >= absX && absZ >= absY ) ? ( Nbar[2] >= 0 ? 1.0 : -1.0 ) :
+        ( absY >= absX )                 ? ( Nbar[1] >= 0 ? 1.0 : -1.0 ) :
+                                           ( Nbar[0] >= 0 ? 1.0 : -1.0 );
+
+      real64 const postNbar[3] = { signFlip * Nbar[0], signFlip * Nbar[1], signFlip * Nbar[2] };
+      real64 postR[3][3];
+      computationalGeometry::canonicalRotationMatrix( postNbar, refDir, postR );
+
       for( localIndex i = 0; i < 3; ++i )
       {
-        unitNormal[k][i]   = rotationMatrix[k][i][0];
-        unitTangent1[k][i] = rotationMatrix[k][i][1];
-        unitTangent2[k][i] = rotationMatrix[k][i][2];
+        unitNormal[k][i]   = postR[i][0];
+        unitTangent1[k][i] = postR[i][1];
+        unitTangent2[k][i] = postR[i][2];
       }
     } );
   }
