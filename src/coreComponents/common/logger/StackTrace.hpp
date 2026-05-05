@@ -56,14 +56,14 @@ public:
    * @brief Access the configured cpptrace formatter.
    * @return The formatter instance.
    */
-  static cpptrace::formatter & formatter();
+  static cpptrace::formatter const & formatter();
 
   /**
    * @brief Format a cpptrace stacktrace using the configured formatter.
    * @param stacktrace The cpptrace stack trace to format.
    * @return Formatted stack trace string.
    */
-  static std::string formatStackTrace( cpptrace::v1::stacktrace stacktrace );
+  static std::string formatStackTrace( cpptrace::stacktrace const & stacktrace );
 #endif
 
 };

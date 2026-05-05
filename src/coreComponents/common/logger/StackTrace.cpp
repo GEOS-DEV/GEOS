@@ -46,9 +46,9 @@ std::string StackTrace::signalSafeStackTrace()
 }
 
 #ifdef GEOS_USE_CPPTRACE
-cpptrace::formatter & StackTrace::formatter()
+cpptrace::formatter const & StackTrace::formatter()
 {
-  static cpptrace::formatter fmt = cpptrace::formatter{}
+  static cpptrace::formatter const fmt = cpptrace::formatter{}
     .header( "" )
     .addresses( cpptrace::formatter::address_mode::none )
     .paths( cpptrace::formatter::path_mode::basename )
@@ -81,7 +81,7 @@ cpptrace::formatter & StackTrace::formatter()
   return fmt;
 }
 
-std::string StackTrace::formatStackTrace( cpptrace::v1::stacktrace stacktrace )
+std::string StackTrace::formatStackTrace( cpptrace::stacktrace const & stacktrace )
 {
   return formatter().format( stacktrace );
 }
