@@ -314,6 +314,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die python3 -m venv ${ATS_PYTHON_HOME}
 
+  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
   ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
@@ -465,8 +466,13 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  # fix the setuptools/distutils conflict
-  export SETUPTOOLS_USE_DISTUTILS=stdlib
+  PYTHON_MINOR_VERSION="$(${ATS_PYTHON_HOME}/bin/python3 -c 'import sys; print(sys.version_info.minor if sys.version_info.major == 3 else 99)')"
+  if (( PYTHON_MINOR_VERSION < 12 )); then
+    # fix the setuptools/distutils conflict
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
+  else
+    unset SETUPTOOLS_USE_DISTUTILS
+  fi
 
   # We split the process in two steps. First installing the environment, then running the tests.
   phase_start "Build ATS environment"
