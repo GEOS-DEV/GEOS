@@ -110,7 +110,7 @@ void setupLogger()
       ExternalErrorHandler::instance().flush( "before signal error output" );
 
       // error message output
-      std::string const stackHistory = StackTrace::stackTrace();
+      std::string const stackHistory = StackTrace::signalSafeStackTrace();
       DiagnosticMsg diagnosticMsg;
       ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
                                                                        MsgType::ExternalError, "",

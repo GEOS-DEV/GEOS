@@ -40,6 +40,11 @@ std::string StackTrace::stackTrace()
 #endif
 }
 
+std::string StackTrace::signalSafeStackTrace()
+{
+  return LvArray::system::stackTrace( true );
+}
+
 #ifdef GEOS_USE_CPPTRACE
 cpptrace::formatter & StackTrace::formatter()
 {

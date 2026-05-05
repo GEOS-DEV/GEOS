@@ -41,8 +41,15 @@ public:
   /**
    * @brief Get a stack trace for the current thread.
    * @return The stack trace as a string.
+   * @note Not signal-safe. Use signalSafeStackTrace() from inside a signal handler.
    */
   static std::string stackTrace();
+
+  /**
+   * @brief Get a stack trace from a context where signal-safety is required.
+   * @return The stack trace as a string.
+   */
+  static std::string signalSafeStackTrace();
 
 #ifdef GEOS_USE_CPPTRACE
   /**
