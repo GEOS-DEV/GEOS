@@ -58,8 +58,7 @@ macro( geosx_add_code_checks )
     if (ENABLE_COVERAGE)
         blt_add_code_coverage_target( NAME   ${arg_PREFIX}_coverage
                                       RUNNER ctest --progress --output-on-failure -E 'blt_gtest_smoke|blt_mpi_smoke|testUncrustifyCheck|testDoxygenCheck'
-                                      # BLT forwards SOURCE_DIRECTORIES to lcov --directory, so use a gcda/gcno root.
-                                      SOURCE_DIRECTORIES ${CMAKE_BINARY_DIR}/coreComponents )
+                                      SOURCE_DIRECTORIES ${PROJECT_SOURCE_DIR}/coreComponents )
     endif()
 
 endmacro( geosx_add_code_checks )
