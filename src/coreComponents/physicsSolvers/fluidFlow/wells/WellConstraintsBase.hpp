@@ -144,7 +144,7 @@ public:
    * @brief Sets constraint active status
    * @param[in] constraintActive true if the constraint is active, false otherwise
    */
-  bool setConstraintActive( bool const & constraintActive ) { return m_isConstraintActive=constraintActive; }
+  void setConstraintActive( bool const & constraintActive ) { m_isConstraintActive=constraintActive; }
 
   /**
    * @brief Sets constraint value

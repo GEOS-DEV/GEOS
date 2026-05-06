@@ -16,6 +16,8 @@ if( ENABLE_PVTPackage )
           testReservoirThermalSinglePhaseMSWells_RateInj.cpp
           testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
           testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
+          testThermalInjWell.cpp
+          testThermalProdWell.cpp
           testThermalReservoirCompositionalMultiphaseSSWells.cpp 
           testThermalReservoirCompositionalMultiphaseMSWells.cpp )
 endif()

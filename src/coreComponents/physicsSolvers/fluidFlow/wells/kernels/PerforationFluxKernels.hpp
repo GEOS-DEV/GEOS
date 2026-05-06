@@ -137,56 +137,33 @@ public:
     m_isCrossflowEnabled( isCrossflowEnabled )
   {}
 
-  template< typename FUNC = NoOpFunc >
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables ) located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    real64 m_potDiff;
+    real64 m_dPotDiff[2][constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer];
+
+  };
+
+
   GEOS_HOST_DEVICE
   inline
-  void
-  computeFlux( localIndex const iperf, FUNC && fluxKernelOp= NoOpFunc {} ) const
+  void initialize( localIndex const iperf, StackVariables & stack ) const
   {
     using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
-
-    if( !m_perfStatus[iperf] )
+    stack.m_potDiff = 0.0;
+    for( integer i = 0; i < 2; ++i )
     {
-      for( integer ic = 0; ic < NC; ++ic )
+      for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
       {
-        m_compPerfRate[iperf][ic] = 0.0;
-        for( integer ke = 0; ke < 2; ++ke )
-        {
-          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-          {
-            m_dCompPerfRate[iperf][ke][ic][jc] = 0.0;
-          }
-        }
+        stack.m_dPotDiff[i][ic] = 0.0;
       }
-      return;
     }
-    // get the index of the reservoir elem
-    localIndex const er  = m_resElementRegion[iperf];
-    localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei  = m_resElementIndex[iperf];
-
-    // get the index of the well elem
-    localIndex const iwelem = m_perfWellElemIndex[iperf];
-
-    using Deriv = constitutive::multifluid::DerivativeOffset;
-
-
-    // local working variables and arrays
-    real64 pres[2]{};
-    real64 multiplier[2]{};
-
-    // local working variables - compact
-    // All derivative quantiites generated are stored in arrays using CP_Deriv offsets
-    // The input well/reservoir quantites use the Deriv offsets
-    // The arrays using the deriv offsets have extra column for dT in isothermal cases
-
-    real64 dPres[2][CP_Deriv::nDer]{};
-    real64 dFlux[2][CP_Deriv::nDer]{};
-    real64 dMob[CP_Deriv::nDer]{};
-    real64 dPotDiff[2][CP_Deriv::nDer]{};
-    real64 dCompFrac[CP_Deriv::nDer]{};
-
-    // Step 1: reset the perforation rates
     for( integer ic = 0; ic < NC; ++ic )
     {
       m_compPerfRate[iperf][ic] = 0.0;
@@ -198,11 +175,20 @@ public:
         }
       }
     }
+  }
+  GEOS_HOST_DEVICE
+  inline
+  void computePotentialandDeriv( localIndex const iperf, localIndex const er, localIndex const esr, localIndex const ei, localIndex const iwelem, StackVariables & stack ) const
+  {
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+    real64 dPres[2][CP_Deriv::nDer]{};
 
-    // Step 2: copy the variables from the reservoir and well element
+    // local working variables and arrays
+    real64 pres[2]{};
+    real64 multiplier[2]{};
 
     // a) get reservoir variables
-
     pres[TAG::RES] = m_resPres[er][esr][ei];
     dPres[TAG::RES][CP_Deriv::dP] = 1.0;
     multiplier[TAG::RES] = 1.0;
@@ -210,9 +196,7 @@ public:
     // Here in the absence of a buoyancy term we assume that the reservoir cell is perforated at its center
     // TODO: add a buoyancy term for the reservoir side here
 
-
     // b) get well variables
-
     pres[TAG::WELL] = m_wellElemPres[iwelem];
     dPres[TAG::WELL][CP_Deriv::dP] = 1.0;
     multiplier[TAG::WELL] = -1.0;
@@ -231,22 +215,162 @@ public:
       dPres[TAG::WELL][CP_Deriv::dC+ic] += m_dWellElemTotalMassDens[iwelem][Deriv::dC+ic] * gravD;
     }
 
-    // Step 3: compute potential difference
-
-    real64 potDiff = 0.0;
+    // compute potential difference
+    stack.m_potDiff = 0.0;
     for( integer i = 0; i < 2; ++i )
     {
-      potDiff += multiplier[i] * m_perfTrans[iperf] * pres[i];
+      stack.m_potDiff += multiplier[i] * m_perfTrans[iperf] * pres[i];
       // LHS & RHS both use CP_Deriv
       for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
       {
-        dPotDiff[i][ic] += multiplier[i] * m_perfTrans[iperf] * dPres[i][ic];
+        stack.m_dPotDiff[i][ic] += multiplier[i] * m_perfTrans[iperf] * dPres[i][ic];
       }
     }
-    // Step 4: upwinding based on the flow direction
+  }
 
+  GEOS_HOST_DEVICE
+  inline
+  void computeMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
+                                real64 & mob, real64 (& dMob)[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
+  {
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
+
+    // viscosity
+    real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
+    real64 dVisc[CP_Deriv::nDer]{};
+    dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
+    if constexpr ( IS_THERMAL )
+    {
+      dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
+    }
+
+    applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                    m_dResPhaseVisc[er][esr][ei][0][ip],
+                    &dVisc[CP_Deriv::dC],
+                    Deriv::dC );
+
+    // relative permeability
+    real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
+    real64 dRelPerm[CP_Deriv::nDer]{};
+    for( integer jp = 0; jp < NP; ++jp )
+    {
+      real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+      dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
+      }
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+      }
+    }
+    // compute mobility kr/mu
+    mob += resRelPerm / resVisc;
+    for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+    {
+      dMob[jc] += (dRelPerm[jc] *resVisc -  resRelPerm * dVisc[jc] )
+                  / ( resVisc * resVisc);
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  void computeDensityMobilityandDeriv( localIndex const ip, localIndex const er, localIndex const esr, localIndex const ei,
+
+                                       real64 & mob, real64 (& dMob)[constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >::nDer] ) const
+  {
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
+    // density
+    real64 const resDens = m_resPhaseDens[er][esr][ei][0][ip];
+    real64 dDens[CP_Deriv::nDer]{};
+
+    dDens[CP_Deriv::dP]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dP];
+    if constexpr ( IS_THERMAL )
+    {
+      dDens[CP_Deriv::dT]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dT];
+    }
+    applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                    m_dResPhaseDens[er][esr][ei][0][ip],
+                    &dDens[CP_Deriv::dC],
+                    Deriv::dC );
+
+    // viscosity
+    real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
+    real64 dVisc[CP_Deriv::nDer]{};
+    dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
+    if constexpr ( IS_THERMAL )
+    {
+      dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
+    }
+
+    applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                    m_dResPhaseVisc[er][esr][ei][0][ip],
+                    &dVisc[CP_Deriv::dC],
+                    Deriv::dC );
+
+    // relative permeability
+    real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
+    real64 dRelPerm[CP_Deriv::nDer]{};
+    for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+    {
+      dRelPerm[jc]=0;
+    }
+    for( integer jp = 0; jp < NP; ++jp )
+    {
+      real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+      dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+      if constexpr ( IS_THERMAL )
+      {
+        dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
+      }
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+      }
+    }
+    // compute mobility kr/mu
+    mob =   resDens * resRelPerm / resVisc;
+    for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+    {
+      dMob[jc] = dRelPerm[jc] * resDens / resVisc
+                 + mob * (dDens[jc] / resDens - dVisc[jc] / resVisc);
+    }
+  }
+
+  template< typename FUNC = NoOpFunc >
+  GEOS_HOST_DEVICE
+  inline
+  void
+  computeFlux( localIndex const iperf, localIndex const er, localIndex const esr, localIndex const ei, localIndex const iwelem, StackVariables & stack, FUNC && fluxKernelOp= NoOpFunc {} ) const
+  {
+
+    // perf closed or inactive, return
+    if( !m_perfStatus[iperf] )
+    {
+      return;
+    }
+
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+
+    // Step 2: compute potential difference and its derivatives
+    //computePotentialandDeriv( iperf, er, esr, ei, iwelem );
+
+    // Step 3: compute mobility kr/mu and its derivatives
+    real64 mob;
+    real64 dMob[CP_Deriv::nDer]{};
+
+    //computeDensityMobilityandDeriv( ip, er, esr, ei, mob, dMob, fluxKernelOp );
     real64 flux = 0.0;
-    if( potDiff >= 0 )  // ** reservoir cell is upstream **
+    real64 dFlux[2][CP_Deriv::nDer]{};
+    real64 dCompFrac[CP_Deriv::nDer]{};
+
+    if( stack.m_potDiff >= 0 )  // ** well is downstream **
     {
 
       // loop over phases, compute and upwind phase flux
@@ -255,80 +379,22 @@ public:
       {
         // skip the rest of the calculation if the phase is absent
         // or if crossflow is disabled for injectors
-        bool const phaseExists = (m_resPhaseVolFrac[er][esr][ei][ip] > 0);
+        real64 const resPhaseVolFrac = m_resPhaseVolFrac[er][esr][ei][ip];
+        bool const phaseExists = (resPhaseVolFrac > 0);
         if( !phaseExists || (m_isInjector && !m_isCrossflowEnabled) )
         {
           continue;
         }
 
-        // here, we have to recompute the reservoir phase mobility (not including density)
-
-        // density
-        real64 const resDens = m_resPhaseDens[er][esr][ei][0][ip];
-        real64 dDens[CP_Deriv::nDer]{};
-
-        dDens[CP_Deriv::dP]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dP];
-        if constexpr ( IS_THERMAL )
-        {
-          dDens[CP_Deriv::dT]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dT];
-        }
-        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseDens[er][esr][ei][0][ip],
-                        &dDens[CP_Deriv::dC],
-                        Deriv::dC );
-        // viscosity
-        real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
-        real64 dVisc[CP_Deriv::nDer]{};
-        dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
-        if constexpr ( IS_THERMAL )
-        {
-          dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
-        }
-
-        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseVisc[er][esr][ei][0][ip],
-                        &dVisc[CP_Deriv::dC],
-                        Deriv::dC );
-
-        // relative permeability
-        real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
-        real64 dRelPerm[CP_Deriv::nDer]{};
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dRelPerm[jc]=0;
-        }
-        for( integer jp = 0; jp < NP; ++jp )
-        {
-          real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-          if constexpr ( IS_THERMAL )
-          {
-            dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
-          }
-          for( integer jc = 0; jc < NC; ++jc )
-          {
-            dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-          }
-        }
-
-        // compute the reservoir phase mobility, including phase density
-        real64 const resPhaseMob = resDens * resRelPerm / resVisc;
-
-        // Handles all dependencies
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dMob[jc] = dRelPerm[jc] * resDens / resVisc
-                     + resPhaseMob * (dDens[jc] / resDens - dVisc[jc] / resVisc);
-        }
+        computeDensityMobilityandDeriv( ip, er, esr, ei, mob, dMob );
+        fluxKernelOp( ip, resPhaseVolFrac, mob, dMob );
         // compute the phase flux and derivatives using upstream cell mobility
-        flux = resPhaseMob * potDiff;
-        std::cout << "tjb resPhaseMob: " << resPhaseMob << " potDiff " << potDiff << " resDens " << resDens << " resRelPerm " << resRelPerm << " resVisc " << resVisc << std::endl;
-        std::cout << "tjb flux: " << flux << " potdiff " << potDiff << std::endl;
+        flux = mob * stack.m_potDiff;
         // Handles all dependencies
         for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
-          dFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMob * dPotDiff[TAG::RES][jc];
-          dFlux[TAG::WELL][jc] = resPhaseMob * dPotDiff[TAG::WELL][jc];
+          dFlux[TAG::RES][jc]  = dMob[jc] * stack.m_potDiff + mob * stack.m_dPotDiff[TAG::RES][jc];
+          dFlux[TAG::WELL][jc] = mob * stack.m_dPotDiff[TAG::WELL][jc];
         }
 
         // increment component fluxes
@@ -354,15 +420,12 @@ public:
             m_dCompPerfRate[iperf][TAG::WELL][ic][jc] += dFlux[TAG::WELL][jc] *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
           }
         }
-
       }  // end resevoir is upstream phase loop
-
     }
     else // ** well is upstream **
     {
-
       real64 resTotalMob     = 0.0;
-
+      real64 dResTotalMob[CP_Deriv::nDer]{};
       // we re-compute here the total mass (when useMass == 1) or molar (when useMass == 0) density
       real64 wellElemTotalDens = 0;
       for( integer ic = 0; ic < NC; ++ic )
@@ -373,7 +436,6 @@ public:
       // first, compute the reservoir total mobility (excluding phase density)
       for( integer ip = 0; ip < NP; ++ip )
       {
-
         // skip the rest of the calculation if the phase is absent
         // or if crossflow is disabled for non-injectors aka producers
         bool const phaseExists = (m_resPhaseVolFrac[er][esr][ei][ip] > 0);
@@ -381,50 +443,7 @@ public:
         {
           continue;
         }
-
-        // viscosity
-        real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
-        real64 dVisc[CP_Deriv::nDer]{};
-        dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
-        if constexpr ( IS_THERMAL )
-        {
-          dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
-        }
-
-        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseVisc[er][esr][ei][0][ip],
-                        &dVisc[CP_Deriv::dC],
-                        Deriv::dC );
-
-
-        // relative permeability
-        real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
-        real64 dRelPerm[CP_Deriv::nDer]{};
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dRelPerm[jc]=0;
-        }
-        for( integer jp = 0; jp < NP; ++jp )
-        {
-          real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-          dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-          if constexpr ( IS_THERMAL )
-          {
-            dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
-          }
-          for( integer jc = 0; jc < NC; ++jc )
-          {
-            dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-          }
-        }
-        // increment total mobility
-        resTotalMob     += resRelPerm / resVisc;
-        // Handles all dependencies
-        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-        {
-          dMob[jc] += (dRelPerm[jc] *resVisc -  resRelPerm * dVisc[jc] )
-                      / ( resVisc * resVisc);
-        }
+        computeMobilityandDeriv( ip, er, esr, ei, resTotalMob, dResTotalMob );
       } // end well is upstream phase loop
 
       // compute a potdiff multiplier = wellElemTotalDens * resTotalMob
@@ -443,19 +462,16 @@ public:
       }
       for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
       {
-        dMult[TAG::RES][jc] = wellElemTotalDens * dMob[jc];
+        dMult[TAG::RES][jc] = wellElemTotalDens * dResTotalMob[jc];
       }
 
-
       // compute the volumetric flux and derivatives using upstream cell mobility
-      flux = mult * potDiff;
-
+      flux = mult * stack.m_potDiff;
       for( integer ic = 0; ic < CP_Deriv::nDer; ++ic )
       {
-        dFlux[TAG::RES][ic]  = dMult[TAG::RES][ic] * potDiff + mult * dPotDiff[TAG::RES][ic];
-        std::cout << "tjb dFlux RES: " << ic << " " << dFlux[TAG::RES][ic] << " dMult " << dMult[TAG::RES][ic] << " potDiff " << potDiff << " mult " << mult << " dPotDiff " <<
-          dPotDiff[TAG::RES][ic] << std::endl;
-        dFlux[TAG::WELL][ic] = dMult[TAG::WELL][ic] * potDiff + mult * dPotDiff[TAG::WELL][ic];
+        dFlux[TAG::RES][ic]  = dMult[TAG::RES][ic] * stack.m_potDiff + mult * stack.m_dPotDiff[TAG::RES][ic];
+        dFlux[TAG::WELL][ic] = dMult[TAG::WELL][ic] * stack.m_potDiff + mult * stack.m_dPotDiff[TAG::WELL][ic];
+
       }
       // compute component fluxes
       for( integer ic = 0; ic < NC; ++ic )
@@ -479,12 +495,13 @@ public:
           m_dCompPerfRate[iperf][TAG::WELL][ic][CP_Deriv::dC+jc] += m_dWellElemCompFrac_dCompDens[iwelem][ic][jc] * flux;
         }
       }
-
-    } // end upstream
-    if constexpr ( IS_THERMAL )
-    {
-      fluxKernelOp( iwelem, er, esr, ei, potDiff, dPotDiff, flux, dFlux );
-    }
+      if constexpr ( IS_THERMAL )
+      {
+        // Cant have different dispatch functions
+        // so need to have arg list with union of upstream and downstream args, even if some are unused in one of the cases
+        fluxKernelOp( -1, -1, resTotalMob, dResTotalMob );
+      }
+    }       // end upstream
   }
   /**
    * @brief Performs the kernel launch
@@ -501,7 +518,17 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-      kernelComponent.computeFlux( iperf );
+      typename KERNEL_TYPE::StackVariables stack;
+      // get the index of the reservoir elem
+      localIndex const er  = kernelComponent.m_resElementRegion[iperf];
+      localIndex const esr = kernelComponent.m_resElementSubRegion[iperf];
+      localIndex const ei  = kernelComponent.m_resElementIndex[iperf];
+      // get the index of the well elem
+      localIndex const iwelem = kernelComponent.m_perfWellElemIndex[iperf];
+
+      kernelComponent.initialize( iperf, stack );
+      kernelComponent.computePotentialandDeriv( iperf, er, esr, ei, iwelem, stack );
+      kernelComponent.computeFlux( iperf, er, esr, ei, iwelem, stack );
     } );
   }
 
@@ -622,7 +649,21 @@ public:
   using Base::m_dResPhaseRelPerm_dPhaseVolFrac;
   using Base::m_isInjector;
   using Base::m_isCrossflowEnabled;
+  using Base::m_resElementRegion;
+  using Base::m_resElementSubRegion;
+  using Base::m_resElementIndex;
+  using Base::m_perfWellElemIndex;
 
+  struct StackVariables : public Base::StackVariables
+  {
+public:
+    GEOS_HOST_DEVICE
+    StackVariables()
+      : Base::StackVariables()
+    {}
+    using Base::StackVariables::m_potDiff;
+    using Base::StackVariables::m_dPotDiff;
+  };
   /// Compile time value for the number of components
   static constexpr integer numComp = NC;
 
@@ -675,8 +716,10 @@ public:
             relPermAccessors,
             isInjector,
             isCrossflowEnabled ),
-    m_wellElemPhaseFrac( wellFluid.phaseFraction() ),
-    m_dWellElemPhaseFrac( wellFluid.dPhaseFraction() ),
+    m_wellElemPhaseVolFrac( subRegion.getField< fields::well::phaseVolumeFraction >() ),
+    m_dWellElemPhaseVolFrac( subRegion.getField< fields::well::dPhaseVolumeFraction >() ),
+    m_wellElemPhaseDensity( wellFluid.phaseDensity() ),
+    m_dWellElemPhaseDensity( wellFluid.dPhaseDensity()),
     m_wellElemPhaseEnthalpy( wellFluid.phaseEnthalpy()),
     m_dWellElemPhaseEnthalpy( wellFluid.dPhaseEnthalpy()),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >() ),
@@ -692,7 +735,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   void
-  computeFlux( localIndex const iperf ) const
+  computeFlux( localIndex const iperf, localIndex const er, localIndex const esr, localIndex const ei, localIndex const iwelem, StackVariables & stack ) const
   {
     using Deriv = constitutive::multifluid::DerivativeOffset;
     using CP_Deriv =constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
@@ -705,192 +748,122 @@ public:
         m_dEnergyPerfFlux[iperf][ke][i]=0;
       }
     }
-
-    Base::computeFlux ( iperf, [&]( localIndex const iwelem, localIndex const er, localIndex const esr, localIndex const ei
-                                    , real64 const potDiff, real64 const dPotDiff[2][CP_Deriv::nDer],
-                                    real64 const flux, real64 const (&dFlux)[2][CP_Deriv::nDer] )
+    if( stack.m_potDiff >= 0 )    // ** well is downstream **
     {
-      real64 dMob[CP_Deriv::nDer]{};
-      GEOS_UNUSED_VAR( iwelem );
-      if( potDiff >= 0 )    // ** reservoir cell is upstream **
+      real64 dEmob[CP_Deriv::nDer]{};
+      Base::computeFlux ( iperf, er, esr, ei, iwelem, stack, [&]( localIndex const ip, real64 const resPhaseVolFrac, real64 const mob, real64 const (&dMob)[CP_Deriv::nDer] )
       {
-        real64 eflux = 0.0;
-        // loop over phases, compute and upwind phase flux
-        // and sum contributions to each component's perforation rate
-        for( integer ip = 0; ip < NP; ++ip )
+        // enthalpy
+        real64 const resEnthalpy =  m_resPhaseEnthalpy[er][esr][ei][0][ip];
+        real64 dResEnthalpy[CP_Deriv::nDer]{};
+        dResEnthalpy[CP_Deriv::dP]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
+        dResEnthalpy[CP_Deriv::dT]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
+
+        applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                        m_dResPhaseEnthalpy[er][esr][ei][0][ip],
+                        &dResEnthalpy[CP_Deriv::dC],
+                        Deriv::dC );
+        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
         {
-          // skip the rest of the calculation if the phase is absent
-          // or if crossflow is disabled for injectors
-          real64 const resPhaseVolFrac = m_resPhaseVolFrac[er][esr][ei][ip];
-          bool const phaseExists = (resPhaseVolFrac > 0 );
-          if( !phaseExists || (m_isInjector && !m_isCrossflowEnabled) )
-          {
-            continue;
-          }
-
-          // here, we have to recompute the reservoir phase mobility (not including density)
-
-          // density
-          real64 const resDens = m_resPhaseDens[er][esr][ei][0][ip];
-          real64 dDens[CP_Deriv::nDer]{};
-          dDens[CP_Deriv::dP]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dP];
-          dDens[CP_Deriv::dT]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dT];
-          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                          m_dResPhaseDens[er][esr][ei][0][ip],
-                          &dDens[CP_Deriv::dC],
-                          Deriv::dC );
-          // viscosity
-          real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
-          real64 dVisc[CP_Deriv::nDer]{};
-          dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
-          dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
-          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                          m_dResPhaseVisc[er][esr][ei][0][ip],
-                          &dVisc[CP_Deriv::dC],
-                          Deriv::dC );
-          // enthalpy
-          real64 const resEnthalpy =  m_resPhaseEnthalpy[er][esr][ei][0][ip];
-          real64 dResEnthalpy[CP_Deriv::nDer]{};
-          dResEnthalpy[CP_Deriv::dP]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
-          dResEnthalpy[CP_Deriv::dT]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
-
-          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
-                          m_dResPhaseEnthalpy[er][esr][ei][0][ip],
-                          &dResEnthalpy[CP_Deriv::dC],
-                          Deriv::dC );
-
-          // relative permeability
-          real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
-          real64 dRelPerm[CP_Deriv::nDer]{};
-          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-          {
-            dRelPerm[jc]=0;
-          }
-          for( integer jp = 0; jp < NP; ++jp )
-          {
-            real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
-            dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
-            for( integer jc = 0; jc < NC; ++jc )
-            {
-              dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
-            }
-          }
-
-          // compute the reservoir phase mobility, including phase density and enthalpy
-          real64 const resPhaseMob = resDens * resRelPerm / resVisc;
-          real64 const resPhaseMobE = resEnthalpy * resPhaseMob;
-           // Handles all dependencies
-          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-          {
-            dMob[jc] = resPhaseMob*dResEnthalpy[jc]  +
-                       resPhaseMobE*(dRelPerm[jc]/(resRelPerm+0.000000001) + dDens[jc] / (resDens +0.000000001)  - dVisc[jc]/(resVisc+0.000000001));
-          }
-          // compute the phase flux and derivatives using upstream cell mobility
-          eflux = resPhaseMobE * potDiff;
-
-          real64 dEFlux[2][CP_Deriv::nDer]{};
-          dEFlux[TAG::WELL][CP_Deriv::dP] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dP];
-          dEFlux[TAG::WELL][CP_Deriv::dT] = resPhaseMobE * dPotDiff[TAG::WELL][CP_Deriv::dT];
-          // Handles all dependencies
-          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
-          {
-            dEFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMobE * dPotDiff[TAG::RES][jc];
-            m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = resPhaseMobE * dPotDiff[TAG::WELL][jc];
-            std::cout << "tjb TAG::WELL " << jc <<  " m_dEnergyPerfFlux[iperf][TAG::WELL][jc] " << m_dEnergyPerfFlux[iperf][TAG::WELL][jc] <<   std::endl;
-          }
-          // m_energyPerfFlux[iperf] += resPhaseVolFrac * eflux;
-          m_energyPerfFlux[iperf] +=   eflux;
-          // energy equation derivatives WRT res P & T
-          std::cout << "tjb m_dEnergyPerfFlux phase : " << ip << m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] << std::endl;
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dEFlux[TAG::RES][CP_Deriv::dP] * resPhaseVolFrac +
-                                                              eflux *   m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP];
-          std::cout << "tjb m_dEnergyPerfFlux 1 phase : " << ip << " resPhaseVolFrac " << resPhaseVolFrac << " dEFlux[TAG::RES][CP_Deriv::dP] " << dEFlux[TAG::RES][CP_Deriv::dP] << std::endl;
-          std::cout << "tjb m_dEnergyPerfFlux 2 phase : " << ip << " eflux " << eflux << "  m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP] " << m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP] << std::endl;
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dEFlux[TAG::RES][CP_Deriv::dT] * resPhaseVolFrac +
-                                                              eflux *m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dT];
-          // energy equation derivatives WRT well P - //tjb
-          //m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dEFlux[TAG::WELL][CP_Deriv::dP];
-          // m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dEFlux[TAG::WELL][CP_Deriv::dT];
-          std::cout << "tjb TAG::WELL m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP]  " << m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] <<  " m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT]  " <<
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] << std::endl;
-          real64 dProp_dC[numComp]{};
-          applyChainRule( NC,
-                          m_dResCompFrac_dCompDens[er][esr][ei],
-                          m_dResPhaseFraction[er][esr][ei][0][ip],
-                          dProp_dC,
-                          Deriv::dC );
-          for( integer jc = 0; jc < NC; ++jc )
-          {
-            //real64 const resPhaseCompFrac = m_resPhaseCompFrac[er][esr][ei][0][ip][jc];
-            // m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  eflux * dProp_dC[jc] +
-            //                                                       resPhaseCompFrac * dEFlux[TAG::RES][CP_Deriv::dC+jc];
-            m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  dEFlux[TAG::RES][CP_Deriv::dC+jc];
-          }
-
-        } // end resevoir is upstream phase loop
-
-      }
-      else   // ** reservoir cell is downstream
+          dEmob[jc] = dMob[jc] * m_resPhaseEnthalpy[er][esr][ei][0][ip] + mob * dResEnthalpy[jc];
+        }
+        real64 resPhaseMobE = mob * resEnthalpy;
+        real64 eflux = resPhaseMobE * stack.m_potDiff;
+        real64 dEFlux[2][CP_Deriv::nDer]{};
+        dEFlux[TAG::WELL][CP_Deriv::dP] = resPhaseMobE * stack.m_dPotDiff[TAG::WELL][CP_Deriv::dP];
+        dEFlux[TAG::WELL][CP_Deriv::dT] = resPhaseMobE * stack.m_dPotDiff[TAG::WELL][CP_Deriv::dT];
+        // Handles all dependencies
+        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+        {
+          dEFlux[TAG::RES][jc]  = dEmob[jc] * stack.m_potDiff + resPhaseMobE * stack.m_dPotDiff[TAG::RES][jc];
+          m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = resPhaseMobE * stack.m_dPotDiff[TAG::WELL][jc];
+        }
+        m_energyPerfFlux[iperf] +=   eflux;
+        // energy equation derivatives WRT res P & T
+        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dEFlux[TAG::RES][CP_Deriv::dP] * resPhaseVolFrac +
+                                                            eflux *   m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP];
+        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dEFlux[TAG::RES][CP_Deriv::dT] * resPhaseVolFrac +
+                                                            eflux *m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dT];
+        real64 dProp_dC[numComp]{};
+        applyChainRule( NC,
+                        m_dResCompFrac_dCompDens[er][esr][ei],
+                        m_dResPhaseFraction[er][esr][ei][0][ip],
+                        dProp_dC,
+                        Deriv::dC );
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  dEFlux[TAG::RES][CP_Deriv::dC+jc];
+        }
+      } );
+    }
+    else   // ** well element is upstream **
+    {
+      Base::computeFlux ( iperf, er, esr, ei, iwelem, stack, [&]( localIndex const null1, real64 const null2, real64 const mob, real64 const (&dMob)[CP_Deriv::nDer] )
       {
+        GEOS_UNUSED_VAR( null1 );
+        GEOS_UNUSED_VAR( null2 );
+        real64 dMult[CP_Deriv::nDer]{};
+        real64 dProp_dC[NC]{};
+        real64 totalEnthalpy=0;
+
+        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_wellElemPhaseVolFrac[iwelem];
+        arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac = m_dWellElemPhaseVolFrac[iwelem];
+        arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > phaseDens = m_wellElemPhaseDensity[iwelem][0];
+        arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dWellElemPhaseDensity[iwelem][0];
+        arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > phaseEnthalpy = m_wellElemPhaseEnthalpy[iwelem][0];
+        arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > dPhaseEnthalpy = m_dWellElemPhaseEnthalpy[iwelem][0];
+        // Compute total enthalpy in the well element and its derivatives, then use it to compute energy flux and derivatives
         for( integer iphase = 0; iphase < NP; ++iphase )
         {
-          bool const phaseExists = (m_wellElemPhaseFrac[iwelem][0][iphase] > 0);
+          bool const phaseExists = (phaseVolFrac[iphase] > 0);
           if( !phaseExists || (!m_isInjector && !m_isCrossflowEnabled) )
           {
             continue;
           }
-          real64 const phaseFlux =  flux;
-          real64 const wellelem_enthalpy = m_wellElemPhaseEnthalpy[iwelem][0][iphase];
-          m_energyPerfFlux[iperf] += phaseFlux * wellelem_enthalpy;
-          std::cout << "tjbi phaseFlux " << phaseFlux << " wellelem_enthalpy " << wellelem_enthalpy << " m_energyPerfFlux[iperf] " << m_energyPerfFlux[iperf] << " m_wellElemPhaseFrac[iwelem][0][iphase] " <<
-            m_wellElemPhaseFrac[iwelem][0][iphase] << std::endl;
-          // energy equation derivatives WRT res P & T
-          std::cout << "tjbi m_dEnergyPerfFlux downstream phase : " << iphase << " " << m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] << " dFlux[TAG::RES][CP_Deriv::dP] " <<
-            dFlux[TAG::RES][CP_Deriv::dP] << std::endl;
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] +=   dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy;
-          std::cout << "tjbi m_dEnergyPerfFlux downstream phase : " << iphase << " " << m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] << std::endl;
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] +=  dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy;
-          std::cout << "tjbi m_dEnergyPerfFlux dt downstream phase : " << iphase << " " << m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] << std::endl;
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] +=   dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy
-                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP];
-          // + phaseFlux * wellelem_enthalpy * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dP];
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] +=   dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy
-                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dT];
-          //+ phaseFlux * wellelem_enthalpy * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dT];
-
-          //energy e
-          real64 dPVF_dC[numComp]{};
-          applyChainRule( NC,
-                          m_dWellElemCompFrac_dCompDens[iwelem],
-                          m_dWellElemPhaseFrac[iwelem][0][iphase],
-                          dPVF_dC,
-                          Deriv::dC );
-          for( integer ic=0; ic<NC; ic++ )
-          {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * dFlux[TAG::WELL][CP_Deriv::dC+ic];// * m_wellElemPhaseFrac[iwelem][0][iphase];
-            //m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * phaseFlux * dPVF_dC[ic];
-          }
-          // energy equation enthalpy derivatives WRT well dens
-          real64 dProp_dC[numComp]{};
-          applyChainRule( NC,
-                          m_dWellElemCompFrac_dCompDens[iwelem],
-                          m_dWellElemPhaseEnthalpy[iwelem][0][iphase],
-                          dProp_dC,
-                          Deriv::dC );
+          totalEnthalpy += phaseEnthalpy[iphase] * phaseVolFrac[iphase] * phaseDens[iphase];
+          dMult[CP_Deriv::dP] += phaseEnthalpy[iphase] * dPhaseVolFrac[iphase][Deriv::dP] * phaseDens[iphase] +
+                                 dPhaseEnthalpy[iphase][Deriv::dP] * phaseVolFrac[iphase] * phaseDens[iphase] +
+                                 phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dPhaseDens[iphase][Deriv::dP];
+          dMult[CP_Deriv::dT ] += phaseEnthalpy[iphase] * dPhaseVolFrac[iphase][Deriv::dT] * phaseDens[iphase] +
+                                  dPhaseEnthalpy[iphase][Deriv::dT] *phaseVolFrac[iphase] * phaseDens[iphase]+
+                                  phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dPhaseDens[iphase][Deriv::dT];
 
           for( integer jc = 0; jc < NC; ++jc )
           {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+jc] += phaseFlux * dProp_dC[jc];
+            dProp_dC[jc] += phaseVolFrac[iphase]    * phaseDens[iphase] * dPhaseEnthalpy[iphase][Deriv::dC+jc]
+                            + phaseVolFrac[iphase]    * dPhaseDens[iphase][Deriv::dC+jc] * phaseEnthalpy[iphase];
+            dMult[CP_Deriv::dC+jc] +=   phaseEnthalpy[iphase] * phaseDens[iphase] * dPhaseVolFrac[iphase][Deriv::dC+jc];
           }
         }
 
-      }
-    } );
+        real64 dProp_dD[numComp]{};
+        applyChainRule( NC,
+                        m_dWellElemCompFrac_dCompDens[iwelem],
+                        dProp_dC,
+                        dProp_dD,
+                        0 );
+        for( integer iphase=0; iphase < NP; ++iphase )
+        {
+          for( integer jc = 0; jc < NC; ++jc )
+          {
+            dMult[CP_Deriv::dC+jc] += phaseVolFrac[iphase]    * phaseDens[iphase] * dProp_dD[jc]
+                                      +  phaseEnthalpy[iphase] * phaseVolFrac[iphase] * dProp_dD[jc];
+          }
+        }
+
+        real64 eflux =  mob * totalEnthalpy*stack.m_potDiff;
+        m_energyPerfFlux[iperf] = eflux;
+        for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+        {
+          m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = mob* dMult[jc]*stack.m_potDiff
+                                                    + mob* totalEnthalpy * stack.m_dPotDiff[TAG::WELL][jc];
+          m_dEnergyPerfFlux[iperf][TAG::RES][jc] = dMob[jc]*totalEnthalpy*stack.m_potDiff
+                                                   + mob* totalEnthalpy * stack.m_dPotDiff[TAG::RES][jc];
+        }
+
+      } );
+    }
   }
-
-
-
   /**
    * @brief Performs the kernel launch
    * @tparam POLICY the policy used in the RAJA kernels
@@ -907,17 +880,28 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-      kernelComponent.computeFlux( iperf );
+      typename KERNEL_TYPE::StackVariables stack;
+      // get the index of the reservoir elem
+      localIndex const er  = kernelComponent.m_resElementRegion[iperf];
+      localIndex const esr = kernelComponent.m_resElementSubRegion[iperf];
+      localIndex const ei  = kernelComponent.m_resElementIndex[iperf];
+      // get the index of the well elem
+      localIndex const iwelem = kernelComponent.m_perfWellElemIndex[iperf];
+      kernelComponent.initialize( iperf, stack );
+      kernelComponent.computePotentialandDeriv( iperf, er, esr, ei, iwelem, stack );
+      kernelComponent.computeFlux( iperf, er, esr, ei, iwelem, stack );
     } );
   }
 
 protected:
 
   /// Views on well element properties
-  /// Element phase fraction
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseFrac;
+
   arrayView2d< real64 const, compflow::USD_PHASE > const m_wellElemPhaseVolFrac;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseFrac;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dWellElemPhaseVolFrac;
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseDensity;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseDensity;
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseEnthalpy;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseEnthalpy;
 

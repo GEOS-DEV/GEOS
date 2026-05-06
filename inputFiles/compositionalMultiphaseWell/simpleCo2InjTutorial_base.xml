@@ -42,8 +42,7 @@
         surfacePressure="101325"
         surfaceTemperature="288.71"
         control="totalVolRate"
-        maxCompFractionChange="0.2"
-        useMass="1">
+        maxCompFractionChange="0.2">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="5e7"

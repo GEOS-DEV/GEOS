@@ -47,8 +47,7 @@
         logLevel="0"
         control="totalVolRate"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5"
-        useMass="0">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -69,8 +68,7 @@
         logLevel="0"
         control="totalVolRate"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5"
-        useMass="0">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -90,8 +88,7 @@
         logLevel="0"
         control="BHP"
         maxRelativePressureChange="0.5"
-        maxCompFractionChange="0.5"
-        useMass="0">
+        maxCompFractionChange="0.5">
         <ProductionPhaseVolumeRateConstraint
           name="maxgasprod"
           phaseName="gas"
