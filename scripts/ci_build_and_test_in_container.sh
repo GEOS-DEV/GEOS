@@ -180,6 +180,7 @@ SCCACHE_BIN=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
 CMAKE_NATIVE_ARCHITECTURE_ARGS=()
+ATS_CMAKE_ARGS=()
 LCOV_CMAKE_ARGS=""
 
 eval set -- ${args}
@@ -219,8 +220,8 @@ do
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
     --use-native-architecture)
-      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_C_FLAGS="-march=native -mtune=native"')
-      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_CXX_FLAGS="-march=native -mtune=native"')
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_C_FLAGS:STRING="-march=native -mtune=native"')
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_CXX_FLAGS:STRING="-march=native -mtune=native"')
       shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
@@ -331,7 +332,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3 -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
+                  "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+                  "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
+                  "-DATS_BASELINE_DIR=${ATS_BASELINE_DIR}"
+                  "-DATS_WORKING_DIR=${ATS_WORKING_DIR}")
   phase_finish 0
 fi
 
@@ -404,7 +410,7 @@ or_die python3 scripts/config-build.py \
                "${CMAKE_NATIVE_ARCHITECTURE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${LCOV_CMAKE_ARGS} \
-               ${ATS_CMAKE_ARGS}
+               "${ATS_CMAKE_ARGS[@]}"
 phase_finish 0
 
 # The configuration step is now over, we can now move to the build directory for the build!

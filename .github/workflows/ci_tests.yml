@@ -515,8 +515,8 @@ jobs:
       DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').code_coverage || '' }}
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
-      NPROC: 8
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=192g"
+      NPROC: 4
+      DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
 
 
   # mac_builds:
