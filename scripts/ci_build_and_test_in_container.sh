@@ -110,6 +110,8 @@ Usage: $0
       Optional override for CMAKE_CUDA_ARCHITECTURES.
   --code-coverage
       run a code build and test.
+  --ctest-parallel-level N
+      Number of tests ctest may run in parallel.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
@@ -157,7 +159,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -174,6 +176,7 @@ TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
+CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
@@ -227,6 +230,9 @@ do
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
+    --ctest-parallel-level)
+      CTEST_PARALLEL_LEVEL_ARG=$2
+      shift 2;;
     --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -312,6 +318,11 @@ if [ -z "${NPROC}" ]; then
   echo "NPROC unset, setting to ${NPROC}..."
 fi
 echo "Using ${NPROC} cores."
+
+if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
+  export CTEST_PARALLEL_LEVEL="${CTEST_PARALLEL_LEVEL_ARG}"
+  echo "Running ctest with CTEST_PARALLEL_LEVEL=${CTEST_PARALLEL_LEVEL}."
+fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"

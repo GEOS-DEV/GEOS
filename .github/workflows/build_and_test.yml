@@ -24,6 +24,10 @@ on:
         required: false
         type: boolean
         default: false
+      CTEST_PARALLEL_LEVEL:
+        required: false
+        type: string
+        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -676,6 +680,10 @@ jobs:
         fi
         docker_args+=(--name ${CONTAINER_NAME})
 
+
+        if [[ -n "${{ inputs.CTEST_PARALLEL_LEVEL }}" ]]; then
+          script_args+=(--ctest-parallel-level "${{ inputs.CTEST_PARALLEL_LEVEL }}")
+        fi
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)

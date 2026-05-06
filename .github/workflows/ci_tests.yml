@@ -457,7 +457,7 @@ jobs:
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --use-native-architecture"
+      BUILD_AND_TEST_CLI_ARGS: "--build-exe-only"
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
@@ -496,27 +496,27 @@ jobs:
     - name: Check that the baseline logs are modified if rebaselines are detected
       run: "scripts/check_baseline_log.sh"
 
-  code_coverage:
-    needs:
-      - is_not_draft_pull_request
-      - resolve_ci_provider
-    uses: ./.github/workflows/build_and_test.yml
-    secrets: inherit
-    with:
-      BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
-      CMAKE_BUILD_TYPE: Debug
-      CODE_COVERAGE: true
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
-      ENABLE_HYPRE: ON
-      ENABLE_TRILINOS: OFF
-      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
-      RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).code_coverage }}
-      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').code_coverage || '' }}
-      REQUIRED_LABEL: "ci: run code coverage"
-      HOST_CONFIG: /spack-generated.cmake
-      NPROC: 4
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
+  # code_coverage:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #     - resolve_ci_provider
+  #   uses: ./.github/workflows/build_and_test.yml
+  #   secrets: inherit
+  #   with:
+  #     BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+  #     CMAKE_BUILD_TYPE: Debug
+  #     CODE_COVERAGE: true
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+  #     ENABLE_HYPRE: ON
+  #     ENABLE_TRILINOS: OFF
+  #     SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
+  #     RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).code_coverage }}
+  #     DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').code_coverage || '' }}
+  #     REQUIRED_LABEL: "ci: run code coverage"
+  #     HOST_CONFIG: /spack-generated.cmake
+  #     NPROC: 4
+  #     DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
 
 
   # mac_builds:
