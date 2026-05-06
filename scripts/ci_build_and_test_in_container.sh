@@ -351,10 +351,16 @@ set -e
 extra_args=()
 if "${GEOS_REAL_LCOV}" --version 2>&1 | grep -Eq 'LCOV version ([2-9]|[1-9][0-9])\.'; then
   for arg in "$@"; do
-    if [[ "${arg}" == "--capture" || "${arg}" == "-c" ]]; then
-      extra_args=(--ignore-errors mismatch,empty)
-      break
-    fi
+    case "${arg}" in
+      --capture|-c)
+        extra_args=(--ignore-errors mismatch,empty)
+        break
+        ;;
+      --remove|-r)
+        extra_args=(--ignore-errors unused)
+        break
+        ;;
+    esac
   done
 fi
 

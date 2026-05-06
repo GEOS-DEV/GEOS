@@ -355,7 +355,7 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: ON
             # Resolved from .github/ci/orgs/<github.repository_owner>.json.
             RUNNER_KEY: cpu_heavy
-            NPROC: 8
+            NPROC: 4
             DOCKER_RUN_ARGS: "--cpus=8 --memory=192g"
             HOST_CONFIG: /spack-generated.cmake
 
