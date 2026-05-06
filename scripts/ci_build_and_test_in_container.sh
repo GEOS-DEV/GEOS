@@ -136,6 +136,8 @@ Usage: $0
       Do not run the unit tests (but they will be built).
   --nproc N
       Number of cores to use for the build.
+  --use-native-architecture
+      Build with compiler flags targeting the native runner CPU.
   --repository /path/to/repository
       Internal mountpoint where the geos repository will be available.
   --run-integrated-tests
@@ -155,7 +157,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -177,6 +179,7 @@ GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
 CMAKE_CUDA_ARCHITECTURES_ARGS=()
+CMAKE_NATIVE_ARCHITECTURE_ARGS=()
 LCOV_CMAKE_ARGS=""
 
 eval set -- ${args}
@@ -215,6 +218,10 @@ do
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
+    --use-native-architecture)
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_C_FLAGS="-march=native -mtune=native"')
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_CXX_FLAGS="-march=native -mtune=native"')
+      shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
@@ -388,6 +395,7 @@ or_die python3 scripts/config-build.py \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
                "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
+               "${CMAKE_NATIVE_ARCHITECTURE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
                ${LCOV_CMAKE_ARGS} \
                ${ATS_CMAKE_ARGS}
