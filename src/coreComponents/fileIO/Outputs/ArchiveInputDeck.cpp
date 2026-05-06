@@ -19,6 +19,7 @@
 
 #include "ArchiveInputDeck.hpp"
 
+#include "common/GeosxConfig.hpp"
 #include "common/Path.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
@@ -26,6 +27,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
+#include <system_error>
 
 namespace geos
 {
@@ -170,15 +173,52 @@ xmlWrapper::xmlDocument flattenXMLs( string_array const & fileNames )
   return flatDoc;
 }
 
+void copySchemaToArchive( string const & archiveDir )
+{
+  std::filesystem::path const candidates[] = {
+    GEOS_SCHEMA_INSTALL_PATH,
+    GEOS_SCHEMA_SOURCE_PATH
+  };
+
+  std::error_code ec;
+  for( std::filesystem::path const & source : candidates )
+  {
+    if( source.empty() || !std::filesystem::is_regular_file( source, ec ) )
+    {
+      continue;
+    }
+
+    std::filesystem::path const destination = std::filesystem::path( archiveDir ) / "schema.xsd";
+    std::filesystem::copy_file( source,
+                                destination,
+                                ec );
+
+    if( ec )
+    {
+      GEOS_WARNING( GEOS_FMT( "Failed to copy XSD schema to archive '{}': {}",
+                              destination.string(), ec.message() ) );
+      return;
+    }
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "Archived XSD schema: {}",
+                               getAbsolutePath( destination.string() ) ) );
+
+    return;
+  }
+
+  GEOS_WARNING( "Could not locate the XSD schema for archiving" );
+}
+
 
 }
 
 
 void archiveInputDeck( string_array const & inputFileNames,
                        string const & outputDirectory,
-                       string_array const & xmlTagOrder )
+                       string_array const & xmlTagOrder,
+                       integer const level )
 {
-  if( inputFileNames.empty() || outputDirectory.empty() )
+  if( level == 0 || inputFileNames.empty() || outputDirectory.empty() )
   {
     return;
   }
@@ -199,6 +239,11 @@ void archiveInputDeck( string_array const & inputFileNames,
 
   GEOS_LOG_RANK_0( GEOS_FMT( "Archived XML inputs: {}",
                              getAbsolutePath( inputArchiveFile ) ) );
+
+  if( level >= 2 )
+  {
+    copySchemaToArchive( archiveDir );
+  }
 }
 
 

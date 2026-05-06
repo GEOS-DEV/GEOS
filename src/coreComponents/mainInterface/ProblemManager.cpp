@@ -328,7 +328,10 @@ void ProblemManager::parseCommandLineInput()
   {
     string_array xmlTagOrder;
     initializationOrder( xmlTagOrder );
-    archiveInputDeck::archiveInputDeck( opts.inputFileNames, outputDirectory, xmlTagOrder );
+    archiveInputDeck::archiveInputDeck( opts.inputFileNames,
+                                        outputDirectory,
+                                        xmlTagOrder,
+                                        opts.archiveInputDeck );
   }
 
   inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );

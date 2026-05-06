@@ -131,7 +131,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { MEMORY_USAGE, 0, "m", "memory-usage", Arg::nonEmpty, "\t-m, --memory-usage, \t Minimum threshold for printing out memory allocations in a member of the data repository." },
     { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { ERRORSOUTPUT, 0, "e", "errorsOutput", Arg::nonEmpty, "\t-e, --errors-output, \t Output path for the errors file (\".yaml\" supported)" },
-    { ARCHIVE, 0, "a", "archive", Arg::numeric, "\t-a, --archive, \t Set the archiving strategy level (0 = no archiving, 1 = only XML inputs (default))" },
+    { ARCHIVE, 0, "a", "archive", Arg::numeric, "\t-a, --archive, \t Set the archiving strategy level (0 = no archiving, 1 = only XML inputs (default), 2 = XML inputs and the XSD schema)" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 

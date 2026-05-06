@@ -131,6 +131,12 @@
 /// CMake option CMAKE_BUILD_TYPE
 #cmakedefine GEOS_CMAKE_BUILD_TYPE @GEOS_CMAKE_BUILD_TYPE@
 
+/// Absolute path to the XSD schema in the install tree
+#cmakedefine GEOS_SCHEMA_INSTALL_PATH "@GEOS_SCHEMA_INSTALL_PATH@"
+
+/// Absolute path to the XSD schema in the source tree (development builds)
+#cmakedefine GEOS_SCHEMA_SOURCE_PATH "@GEOS_SCHEMA_SOURCE_PATH@"
+
 /// The type that localIndex will be aliased to.
 #define GEOS_LOCALINDEX_TYPE @GEOS_LOCALINDEX_TYPE@
 
