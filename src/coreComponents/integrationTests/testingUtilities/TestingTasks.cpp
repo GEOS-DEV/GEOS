@@ -43,6 +43,13 @@ bool TimeStepChecker::execute( real64 const time_n,
   return false;
 }
 
+void TimeStepChecker::cleanup( real64 time_n, integer cycleNumber,
+                               integer eventCounter, real64 eventProgress,
+                               DomainPartition & domain )
+{
+  execute( time_n, 0.0, cycleNumber, eventCounter, eventProgress, domain );
+}
+
 REGISTER_CATALOG_ENTRY( TaskBase, TimeStepChecker, string const &, geos::dataRepository::Group * const )
 
 

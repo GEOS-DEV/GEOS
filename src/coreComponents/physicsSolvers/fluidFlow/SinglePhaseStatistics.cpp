@@ -96,14 +96,15 @@ bool SinglePhaseStatistics::execute( real64 const time_n,
                                      real64 const dt,
                                      integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                      integer const GEOS_UNUSED_PARAM( eventCounter ),
-                                     real64 const GEOS_UNUSED_PARAM( eventProgress ),
+                                     real64 const eventProgress,
                                      DomainPartition & domain )
 {
+  real64 const time = time_n + dt * eventProgress;
   m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                           MeshLevel & mesh,
                                                                           string_array const & regionNames )
   {
-    computeRegionStatistics( time_n, mesh, regionNames );
+    computeRegionStatistics( time, mesh, regionNames );
   } );
   return false;
 }
