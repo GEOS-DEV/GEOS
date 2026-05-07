@@ -48,6 +48,7 @@ public:
   /**
    * @brief Get a stack trace from a context where signal-safety is required.
    * @return The stack trace as a string.
+   * @note Implementation reverts back to LvArray::system stack trace for signal-safety
    */
   static std::string signalSafeStackTrace();
 
