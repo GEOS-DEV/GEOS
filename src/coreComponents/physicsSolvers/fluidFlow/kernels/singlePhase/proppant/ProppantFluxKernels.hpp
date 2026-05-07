@@ -93,7 +93,9 @@ struct FaceElementFluxKernel
    *
    *
    */
-  template< localIndex MAX_NUM_CONNECTIONS >
+  template< localIndex MAX_NUM_CONNECTIONS,
+            localIndex MAX_NUM_FLUX_ELEMS,
+            localIndex MAX_STENCIL_SIZE >
   GEOS_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
@@ -110,9 +112,9 @@ struct FaceElementFluxKernel
            ElementViewConst< arrayView1d< real64 const > > const & mob,
            ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dMob,
            real64 const dt,
-           arraySlice1d< real64 > const & flux,
-           arraySlice2d< real64 > const & fluxJacobian,
-           arraySlice2d< real64 > const & dFlux_dAperture );
+           real64 (&flux)[MAX_NUM_FLUX_ELEMS],
+           real64 (&fluxJacobian)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE],
+           real64 (&dFlux_dAperture)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE] );
 };
 
 

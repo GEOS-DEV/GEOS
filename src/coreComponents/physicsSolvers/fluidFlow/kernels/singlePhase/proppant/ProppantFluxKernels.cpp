@@ -73,14 +73,12 @@ void FaceElementFluxKernel::
     {
 
       // working arrays
-      stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( numDofs );
-      stackArray1d< localIndex, maxNumFluxElems > localColIndices( numFluxElems );
-
-      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
-      stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
+      globalIndex dofColIndices[maxStencilSize]{};
+      real64 localFlux[maxNumFluxElems]{};
+      real64 localFluxJacobian[maxNumFluxElems][maxStencilSize]{};
 
       // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-      stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
+      real64 dFlux_dAper[maxNumFluxElems][maxStencilSize]{};
 
       // compute transmissibility
       real64 transmissibility[maxNumConnections][2]{};
@@ -116,7 +114,6 @@ void FaceElementFluxKernel::
       for( localIndex i = 0; i < numDofs; ++i )
       {
         dofColIndices[i] = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        localColIndices[i] = sei( iconn, i );
       }
 
       for( localIndex i = 0; i < numFluxElems; ++i )
@@ -130,8 +127,8 @@ void FaceElementFluxKernel::
 
           RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
           localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                                     dofColIndices.data(),
-                                                                                     localFluxJacobian[i].dataIfContiguous(),
+                                                                                     dofColIndices,
+                                                                                     localFluxJacobian[i],
                                                                                      stencilSize );
 
         }
@@ -163,7 +160,9 @@ FaceElementFluxKernel::
                                      arrayView1d< real64 > const & localRhs );
 
 
-template< localIndex MAX_NUM_CONNECTIONS >
+template< localIndex MAX_NUM_CONNECTIONS,
+          localIndex MAX_NUM_FLUX_ELEMS,
+          localIndex MAX_STENCIL_SIZE >
 GEOS_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
@@ -180,9 +179,9 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 ElementViewConst< arrayView1d< real64 const > > const & mob,
                                 ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dMob,
                                 real64 const dt,
-                                arraySlice1d< real64 > const & flux,
-                                arraySlice2d< real64 > const & fluxJacobian,
-                                arraySlice2d< real64 > const & dFlux_dAperture )
+                                real64 (&flux)[MAX_NUM_FLUX_ELEMS],
+                                real64 (&fluxJacobian)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE],
+                                real64 (&dFlux_dAperture)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE] )
 {
 
   localIndex k[2];
