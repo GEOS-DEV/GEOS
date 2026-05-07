@@ -223,7 +223,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view 
         std::regex_search( stackLine, m, cpptracePattern ) )
     {
       m_errorMsg.m_isValidStackTrace = true;
-      m_errorMsg.m_sourceCallStack.push_back( stackLine.substr( m.position() + m.length() ) );
+      m_errorMsg.m_sourceCallStack.push_back( m.suffix().str() );
     }
   }
 
