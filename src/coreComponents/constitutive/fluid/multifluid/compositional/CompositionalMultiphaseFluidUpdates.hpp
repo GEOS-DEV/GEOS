@@ -335,14 +335,14 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
     m_phase1.enthalpy.compute( m_componentProperties,
                                pressure,
                                temperature,
-                               phaseCompFrac.value[m_phaseOrder[0]].toSliceConst(),
+                               phaseComponentFraction.value[m_phaseOrder[0]].toSliceConst(),
                                phaseEnthalpy.value[m_phaseOrder[0]],
                                phaseEnthalpy.derivs[m_phaseOrder[0]],
                                m_useMass );
     m_phase2.enthalpy.compute( m_componentProperties,
                                pressure,
                                temperature,
-                               phaseCompFrac.value[m_phaseOrder[1]].toSliceConst(),
+                               phaseComponentFraction.value[m_phaseOrder[1]].toSliceConst(),
                                phaseEnthalpy.value[m_phaseOrder[1]],
                                phaseEnthalpy.derivs[m_phaseOrder[1]],
                                m_useMass );
@@ -351,7 +351,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
       m_phase3.enthalpy.compute( m_componentProperties,
                                  pressure,
                                  temperature,
-                                 phaseCompFrac.value[m_phaseOrder[2]].toSliceConst(),
+                                 phaseComponentFraction.value[m_phaseOrder[2]].toSliceConst(),
                                  phaseEnthalpy.value[m_phaseOrder[2]],
                                  phaseEnthalpy.derivs[m_phaseOrder[2]],
                                  m_useMass );
@@ -377,7 +377,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
     if constexpr (Traits::isThermalType())
     {
       convertDerivativesToTotalMoleFraction( numComp,
-                                             phaseCompFrac.derivs[ip].toSliceConst(),
+                                             phaseComponentFraction.derivs[ip].toSliceConst(),
                                              phaseEnthalpy.derivs[ip],
                                              workSpace );
     }
@@ -386,8 +386,8 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   // 7. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
   {
-    real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight[maxNumPhase][maxNumDof]{};
+    real64 phaseMolecularWeight[NUM_PHASES]{};
+    real64 dPhaseMolecularWeight[NUM_PHASES][maxNumDof]{};
 
     arrayView1d< real64 const > const & componentMolarWeight = m_componentProperties.m_componentMolarWeight;
 

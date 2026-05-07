@@ -123,6 +123,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/FlashParameters.hpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
@@ -283,6 +284,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/FlashParameters.cpp
+     fluid/multifluid/compositional/parameters/HeatCapacityCoefficients.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
      fluid/multifluid/compositional/parameters/KValueFlashParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp

@@ -133,13 +133,13 @@ void CompositionalEnthalpyUpdate::compute(
 {
   GEOS_UNUSED_VAR( useMass );
   GEOS_UNUSED_VAR( pressure );
-  GEOS_UNUSED_VAR( enthalpy );
 
   integer const numComps = componentProperties.m_componentMolarWeight.size();
 
   // 1. Calculate the ideal gas enthalpy
-  real64 hIdealGas = 0.0;
+  real64& hIdealGas = enthalpy;
   auto const & dhIdealGas = dEnthalpy;
+  hIdealGas = 0.0;
   dhIdealGas[Deriv::dT] = 0.0;
   dhIdealGas[Deriv::dP] = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
@@ -152,7 +152,6 @@ void CompositionalEnthalpyUpdate::compute(
     dhIdealGas[Deriv::dT] += phaseComposition[ic] * heatCapacityI;
     dhIdealGas[Deriv::dC+ic] = enthalpyI;
   }
-  ((void)m_equationOfState);
 }
 
 } // end namespace compositional
