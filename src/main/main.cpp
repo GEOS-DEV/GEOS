@@ -81,7 +81,7 @@ int main( int argc, char *argv[] )
     basicCleanup( false );
   };
 
-  auto onGeosException = [&]( geos::Exception & e )
+  auto onGeosException = [&]( geos::Exception & )
   { // GEOS generated exceptions management
 #ifdef GEOS_USE_CPPTRACE
     std::string const stacktrace = StackTrace::formatStackTrace( cpptrace::from_current_exception() );
@@ -120,13 +120,13 @@ int main( int argc, char *argv[] )
   {
     runMain();
   }
-  catch( NotAnError const & e )
+  catch( NotAnError const & )
   {
-    onNotAnError( e );
+    onNotAnError();
   }
-  catch( geos::Exception & e )
+  catch( geos::Exception & )
   {
-    onGeosException( e );
+    onGeosException();
   }
   catch( std::exception const & e )
   {
