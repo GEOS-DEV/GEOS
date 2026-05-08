@@ -70,6 +70,14 @@ on:
       LOCAL_BASELINE_DIR:
         required: false
         type: string
+      INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX:
+        description: >
+          Optional public URL prefix used by integrated tests when the
+          baseline archive is missing from the current org's public artifact
+          location and local runner cache.
+        required: false
+        type: string
+        default: ''
       BUILD_GENERATOR:
         required: false
         type: string
@@ -503,6 +511,7 @@ jobs:
         ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="${{ inputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}"
         ARTIFACT_UPLOAD_URI_PREFIX="${{ inputs.ARTIFACT_UPLOAD_URI_PREFIX }}"
         ARTIFACT_PUBLIC_URL_PREFIX="${{ inputs.ARTIFACT_PUBLIC_URL_PREFIX }}"
+        INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX="${{ inputs.INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX }}"
         ARTIFACT_UPLOAD_CREDENTIALS_FILE="${{ steps.artifact_upload_credentials.outputs.credentials_file }}"
         ARTIFACT_UPLOAD_COMMAND="$(cat <<'__ARTIFACT_UPLOAD_COMMAND__'
         ${{ inputs.ARTIFACT_UPLOAD_COMMAND }}
@@ -717,9 +726,38 @@ jobs:
           CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
           echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
 
-          if [ -d ${CURRENT_BASELINE_DIR} ];then
+          if [ ! -d "${CURRENT_BASELINE_DIR}" ]; then
+            BASELINE_ARCHIVE_NAME="${BASELINE_TAG%.tar.gz}.tar.gz"
+            BASELINE_DOWNLOAD_URLS=()
+
+            if [[ -n "${ARTIFACT_PUBLIC_URL_PREFIX}" ]]; then
+              BASELINE_DOWNLOAD_URLS+=("${ARTIFACT_PUBLIC_URL_PREFIX%/}/${BASELINE_ARCHIVE_NAME}")
+            fi
+
+            if [[ -n "${INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX}" ]]; then
+              BASELINE_DOWNLOAD_URLS+=("${INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX%/}/${BASELINE_ARCHIVE_NAME}")
+            fi
+
+            if (( ${#BASELINE_DOWNLOAD_URLS[@]} > 0 )); then
+              BASELINE_DOWNLOAD_TMP="${RUNNER_TEMP}/${BASELINE_ARCHIVE_NAME}"
+              rm -f "${BASELINE_DOWNLOAD_TMP}"
+
+              for BASELINE_DOWNLOAD_URL in "${BASELINE_DOWNLOAD_URLS[@]}"; do
+                echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found; trying ${BASELINE_DOWNLOAD_URL}"
+                if curl --fail --location --silent --show-error --retry 3 --retry-delay 5 --output "${BASELINE_DOWNLOAD_TMP}" "${BASELINE_DOWNLOAD_URL}"; then
+                  mkdir -p "${CURRENT_BASELINE_DIR}"
+                  mv "${BASELINE_DOWNLOAD_TMP}" "${CURRENT_BASELINE_DIR}/${BASELINE_ARCHIVE_NAME}"
+                  echo "Downloaded integrated test baseline archive to ${CURRENT_BASELINE_DIR}/${BASELINE_ARCHIVE_NAME}"
+                  break
+                fi
+                rm -f "${BASELINE_DOWNLOAD_TMP}"
+              done
+            fi
+          fi
+
+          if [ -d "${CURRENT_BASELINE_DIR}" ];then
             echo "Current baseline dir found."
-            ls -l ${CURRENT_BASELINE_DIR}
+            ls -l "${CURRENT_BASELINE_DIR}"
 
             # We defined a mount point and mount it read-only inside the container.
             CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines

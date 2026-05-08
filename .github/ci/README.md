@@ -29,6 +29,12 @@ Required fields (all of them, always):
   Path under the bucket where integrated-test artifacts are uploaded. For providers whose URI
   scheme is `<scheme>://<bucket>/<path>`, the first path segment is the bucket name.
 
+- `integrated_tests_baseline_fallback_public_url_prefix`
+  Public URL prefix used by integrated tests when the requested baseline archive is missing from
+  both the runner-local baseline cache and this org's public artifact URL prefix. Use an empty
+  string to disable fallback. The workflow appends the baseline archive filename from
+  `.integrated_tests.yaml`, e.g. `baseline_integratedTests-pr3959-16478-faf1698.tar.gz`.
+
 - `artifact_public_url_base`
   Public URL root for uploaded artifacts. The consumer builds each final URL as
   `${artifact_public_url_base}/${integrated_tests_artifact_bucket_path}/${filename}`, so the base

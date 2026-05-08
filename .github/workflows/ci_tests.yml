@@ -83,6 +83,7 @@ jobs:
       STORAGE_PROVIDER: ${{ steps.resolve.outputs.STORAGE_PROVIDER }}
       SCCACHE_PROFILE: ${{ steps.resolve.outputs.SCCACHE_PROFILE }}
       INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ steps.resolve.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX: ${{ steps.resolve.outputs.INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX }}
       DOCKER_CA_BUNDLE_HOST_PATHS_JSON: ${{ steps.resolve.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON }}
       CMAKE_CUDA_ARCHITECTURES_JSON: ${{ steps.resolve.outputs.CMAKE_CUDA_ARCHITECTURES_JSON }}
       RUNNER_LABELS_JSON: ${{ steps.resolve.outputs.RUNNER_LABELS_JSON }}
@@ -138,6 +139,7 @@ jobs:
           (.storage_provider | type == "string" and length > 0)
           and (.sccache_profile | type == "string" and length > 0)
           and (.integrated_tests_artifact_bucket_path | type == "string" and length > 0)
+          and (.integrated_tests_baseline_fallback_public_url_prefix | type == "string")
           and (.artifact_public_url_base | type == "string")
           and (.artifact_public_url_bucket_scoped | type == "boolean")
           and (.runner_ca_bundle_host_paths | type == "object")
@@ -151,7 +153,7 @@ jobs:
           and (.runners.code_coverage | type == "string" and length > 0)
           and (.runners.cuda | type == "string" and length > 0)
         ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
-          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
+          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, integrated_tests_baseline_fallback_public_url_prefix, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
           exit 1
         fi
 
@@ -159,6 +161,7 @@ jobs:
         STORAGE_PROVIDER="$(jq -r '.storage_provider' <<< "${ORG_CONFIG_JSON}")"
         SCCACHE_PROFILE="$(jq -r '.sccache_profile' <<< "${ORG_CONFIG_JSON}")"
         INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="$(jq -r '.integrated_tests_artifact_bucket_path' <<< "${ORG_CONFIG_JSON}")"
+        INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX="$(jq -r '.integrated_tests_baseline_fallback_public_url_prefix' <<< "${ORG_CONFIG_JSON}")"
         ARTIFACT_PUBLIC_URL_ROOT="$(jq -r '.artifact_public_url_base' <<< "${ORG_CONFIG_JSON}")"
         ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="$(jq -r '.artifact_public_url_bucket_scoped' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_LABELS_JSON="$(jq -c '.runners' <<< "${ORG_CONFIG_JSON}")"
@@ -245,6 +248,7 @@ jobs:
           echo "STORAGE_PROVIDER=${STORAGE_PROVIDER}"
           echo "SCCACHE_PROFILE=${SCCACHE_PROFILE}"
           echo "INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH=${INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
+          echo "INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX=${INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX}"
           echo "DOCKER_CA_BUNDLE_HOST_PATHS_JSON=${DOCKER_CA_BUNDLE_HOST_PATHS_JSON}"
           echo "CMAKE_CUDA_ARCHITECTURES_JSON=${CMAKE_CUDA_ARCHITECTURES_JSON}"
           echo "RUNNER_LABELS_JSON=${RUNNER_LABELS_JSON}"
@@ -473,6 +477,7 @@ jobs:
       ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
       ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
       ARTIFACT_PUBLIC_URL_BUCKET_SCOPED: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}
+      INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX: ${{ needs.resolve_ci_provider.outputs.INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX }}
       DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').integrated_tests || '' }}
       RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).integrated_tests }}
       NPROC: 32
