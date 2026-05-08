@@ -297,7 +297,9 @@ struct FluxKernel
    * This is a specialized version that flux in a single region, and uses
    * element pairing instead of a proper junction.
    */
-  template< localIndex MAX_NUM_FLUX_ELEMS >
+  template< localIndex MAX_NUM_FLUX_ELEMS,
+            localIndex MAX_LOCAL_FLUX_SIZE,
+            localIndex MAX_LOCAL_DOF_SIZE >
   GEOS_HOST_DEVICE
   static void
   computeJunction( localIndex const numElems,
@@ -331,8 +333,8 @@ struct FluxKernel
                    real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const dt,
-                   arraySlice1d< real64 > const & localFlux,
-                   arraySlice2d< real64 > const & localFluxJacobian );
+                   real64 (&localFlux)[MAX_LOCAL_FLUX_SIZE],
+                   real64 (&localFluxJacobian)[MAX_LOCAL_FLUX_SIZE][MAX_LOCAL_DOF_SIZE] );
 
 
   template< localIndex MAX_NUM_FLUX_ELEMS >

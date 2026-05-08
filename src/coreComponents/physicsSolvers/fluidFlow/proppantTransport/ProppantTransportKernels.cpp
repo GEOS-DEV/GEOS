@@ -179,7 +179,9 @@ AccumulationKernel::
                                      arrayView1d< real64 > const & localRhs );
 
 
-template< localIndex MAX_NUM_FLUX_ELEMS >
+template< localIndex MAX_NUM_FLUX_ELEMS,
+          localIndex MAX_LOCAL_FLUX_SIZE,
+          localIndex MAX_LOCAL_DOF_SIZE >
 GEOS_HOST_DEVICE
 void
 FluxKernel::
@@ -214,8 +216,8 @@ FluxKernel::
                    real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const dt,
-                   arraySlice1d< real64 > const & localFlux,
-                   arraySlice2d< real64 > const & localFluxJacobian )
+                   real64 (&localFlux)[MAX_LOCAL_FLUX_SIZE],
+                   real64 (&localFluxJacobian)[MAX_LOCAL_FLUX_SIZE][MAX_LOCAL_DOF_SIZE] )
 {
 
   // We assume numElems == stencilSize;
@@ -815,10 +817,9 @@ void FluxKernel::
       localIndex const nDofs = numFluxElems * numDofPerCell;
 
       // working arrays
-      stackArray1d< globalIndex, DOF2 > dofColIndices( nDofs );
-
-      stackArray1d< real64, DOF1 > localFlux( nDofs );
-      stackArray2d< real64, DOF1 * DOF2 > localFluxJacobian( nDofs, nDofs );
+      globalIndex dofColIndices[DOF2]{};
+      real64 localFlux[DOF1]{};
+      real64 localFluxJacobian[DOF1][DOF2]{};
 
       localIndex const er = seri[iconn][0];
       localIndex const esr = sesri[iconn][0];
@@ -891,8 +892,8 @@ void FluxKernel::
           {
             RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + idof], localFlux[i * numDofPerCell + idof] );
             localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + idof,
-                                                                                       dofColIndices.data(),
-                                                                                       localFluxJacobian[i * numDofPerCell + idof].dataIfContiguous(),
+                                                                                       dofColIndices,
+                                                                                       localFluxJacobian[i * numDofPerCell + idof],
                                                                                        stencilSize * numDofPerCell );
           }
         }
