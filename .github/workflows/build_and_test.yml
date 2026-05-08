@@ -588,7 +588,18 @@ jobs:
           docker_args+=(-e CURL_CA_BUNDLE=/certs/ca-bundle.crt)
         fi
 
-        COMMIT=${{ github.event.pull_request.head.sha }}
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          COMMIT="${{ github.event.pull_request.head.sha }}"
+          INTEGRATED_TESTS_ARTIFACT_ID="pr${{ github.event.number }}"
+        else
+          COMMIT="${GITHUB_SHA}"
+          INTEGRATED_TESTS_ARTIFACT_ID="branch"
+        fi
+
+        if [[ -z "${COMMIT}" ]]; then
+          COMMIT="${GITHUB_SHA}"
+        fi
+
         SHORT_COMMIT=${COMMIT:0:7}
         script_args+=(--install-dir-basename GEOS-${SHORT_COMMIT})
 
@@ -596,7 +607,7 @@ jobs:
           HAS_DATA_EXCHANGE=true
 
           if [[ "${{ inputs.BUILD_TYPE }}" == "integrated_tests" ]]; then
-            DATA_BASENAME=integratedTests-pr${{ github.event.number }}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
+            DATA_BASENAME=integratedTests-${INTEGRATED_TESTS_ARTIFACT_ID}-${{ github.run_number }}-${SHORT_COMMIT}.tar.gz
             script_args+=(--run-integrated-tests)
           else
             DATA_BASENAME=GEOS-and-TPL-${SHORT_COMMIT}.tar.gz
@@ -844,8 +855,7 @@ jobs:
                 # 1. We copy the baselines to a local directory to store them
 
                 # 1.a Create the new target directory to store the new baselines
-                THIS_PR_NUMBER=pr${{ github.event.number }}
-                NEW_PR_BASELINE_FOLDER_NAME=baselines_${THIS_PR_NUMBER}
+                NEW_PR_BASELINE_FOLDER_NAME=baselines_${INTEGRATED_TESTS_ARTIFACT_ID}
                 TARGET_DIR="${{ inputs.LOCAL_BASELINE_DIR }}/${NEW_PR_BASELINE_FOLDER_NAME}"
                 echo "Create folder ${TARGET_DIR}"
                 mkdir -p "${TARGET_DIR}"

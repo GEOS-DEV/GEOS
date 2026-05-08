@@ -3,7 +3,7 @@
   "sccache_profile": "cloudflare",
   "integrated_tests_artifact_bucket_path": "geosx/integratedTests",
   "integrated_tests_baseline_fallback_public_url_prefix": "https://storage.googleapis.com/geosx/integratedTests",
-  "artifact_public_url_base": "https://pub-17b272fb651e459ca81dd0fd457099ed.r2.dev",
+  "artifact_public_url_base": "https://pub-a0f706ed868c4d19b0bc6c13e7f0bc29.r2.dev",
   "artifact_public_url_bucket_scoped": true,
   "runner_ca_bundle_host_paths": {},
   "runner_cuda_architectures": { "thinkpad": "120" },
