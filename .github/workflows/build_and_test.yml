@@ -723,7 +723,8 @@ jobs:
           PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
           echo "Baseline folder name: ${PR_BASELINE_FOLDER_NAME}"
 
-          CURRENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
+          PERSISTENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
+          CURRENT_BASELINE_DIR="${PERSISTENT_BASELINE_DIR}"
           echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
 
           if [ ! -d "${CURRENT_BASELINE_DIR}" ]; then
@@ -739,15 +740,17 @@ jobs:
             fi
 
             if (( ${#BASELINE_DOWNLOAD_URLS[@]} > 0 )); then
-              BASELINE_DOWNLOAD_TMP="${RUNNER_TEMP}/${BASELINE_ARCHIVE_NAME}"
+              BASELINE_DOWNLOAD_DIR="${RUNNER_TEMP}/geos-baselines/${PR_BASELINE_FOLDER_NAME}"
+              BASELINE_DOWNLOAD_TMP="${RUNNER_TEMP}/geos-baselines-${BASELINE_ARCHIVE_NAME}"
               rm -f "${BASELINE_DOWNLOAD_TMP}"
 
               for BASELINE_DOWNLOAD_URL in "${BASELINE_DOWNLOAD_URLS[@]}"; do
-                echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found; trying ${BASELINE_DOWNLOAD_URL}"
+                echo "Current baselines directory (${PERSISTENT_BASELINE_DIR}) not found; trying ${BASELINE_DOWNLOAD_URL}"
                 if curl --fail --location --silent --show-error --retry 3 --retry-delay 5 --output "${BASELINE_DOWNLOAD_TMP}" "${BASELINE_DOWNLOAD_URL}"; then
-                  mkdir -p "${CURRENT_BASELINE_DIR}"
-                  mv "${BASELINE_DOWNLOAD_TMP}" "${CURRENT_BASELINE_DIR}/${BASELINE_ARCHIVE_NAME}"
-                  echo "Downloaded integrated test baseline archive to ${CURRENT_BASELINE_DIR}/${BASELINE_ARCHIVE_NAME}"
+                  mkdir -p "${BASELINE_DOWNLOAD_DIR}"
+                  mv "${BASELINE_DOWNLOAD_TMP}" "${BASELINE_DOWNLOAD_DIR}/${BASELINE_ARCHIVE_NAME}"
+                  CURRENT_BASELINE_DIR="${BASELINE_DOWNLOAD_DIR}"
+                  echo "Downloaded integrated test baseline archive to transient cache ${CURRENT_BASELINE_DIR}/${BASELINE_ARCHIVE_NAME}"
                   break
                 fi
                 rm -f "${BASELINE_DOWNLOAD_TMP}"
@@ -763,7 +766,7 @@ jobs:
             CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
             docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
           else
-            echo "Current baselines directory (${CURRENT_BASELINE_DIR}) not found"
+            echo "Current baselines directory (${PERSISTENT_BASELINE_DIR}) not found"
           fi
         fi
 
