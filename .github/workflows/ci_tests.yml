@@ -457,7 +457,7 @@ jobs:
     needs:
       - is_not_draft_pull_request
       - resolve_ci_provider
-      - cpu_builds
+#      - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
