@@ -63,7 +63,6 @@
         control="totalVolRate"
         enableCrossflow="0"
         logLevel="2"
-        useMass="1"
         writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"

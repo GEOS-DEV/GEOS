@@ -39,9 +39,11 @@ set( fluidFlowSolvers_headers
      SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
      StencilAccessors.hpp
+     SolutionCheckHelpers.hpp
      StencilDataCollection.hpp
      LogLevelsInfo.hpp
      kernels/MinPoreVolumeMaxPorosityKernel.hpp
+     kernels/SolutionCheckKernelsHelpers.hpp
      kernels/StencilWeightsUpdateKernel.hpp
      kernels/HybridFVMHelperKernels.hpp
      kernels/singlePhase/AccumulationKernels.hpp
@@ -167,12 +169,12 @@ set( fluidFlowSolvers_sources
      SinglePhaseProppantBase.cpp
      SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
+     SolutionCheckHelpers.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernelsInstantiations.cpp     
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -200,7 +202,11 @@ set( kernelTemplateFileList "" )
 
 # Keep only the templates that are unrelated to hybrid flux/dirichlet
 list( APPEND kernelTemplateFileList
-      ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+      ReactiveCompositionalMultiphaseOBLKernels.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_flux_grouped.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped.cpp.template
+      CompositionalMultiphaseHybridFVMKernels_bcprops.cpp.template
+      SinglePhaseHybridFVMKernels_grouped.cpp.template )
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
@@ -243,9 +249,6 @@ blt_add_library( NAME       fluidFlowSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
-
-# Always enable the manual instantiation compile flag
-target_compile_definitions( fluidFlowSolvers PUBLIC GEOS_ENABLE_MANUAL_HYBRID_FVM_INST )
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

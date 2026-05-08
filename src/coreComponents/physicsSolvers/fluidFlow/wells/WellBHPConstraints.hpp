@@ -17,7 +17,6 @@
  * @file WellBHPConstraints.hpp
  */
 
-
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLBHPCONSTRAINTS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLBHPCONSTRAINTS_HPP
 
@@ -28,14 +27,21 @@
 namespace geos
 {
 
+enum class BHPConstraintTypeId : integer
+{
+  MIN,    /**< The well operates at a specified minimum bottom hole pressure (BHP) */
+  MAX,    /**< The well operates at a specified maximum bottom hole pressure (BHP) */
+  UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
+};
+
 /**
  * @class BHPConstraint
  * @brief This class describes a minimum pressure constraint used to control a injection well.
  */
+template< BHPConstraintTypeId T >
 class BHPConstraint : public WellConstraintBase
 {
 public:
-
   /**
    * @name Constructor / Destructor
    */
@@ -105,7 +111,7 @@ public:
   }
   viewKeysWellBHPConstraint;
 
-  //virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
   /**
    * @brief Getter for the reference elevation where the BHP control is enforced
@@ -130,6 +136,25 @@ public:
    */
   void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
 
+
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    if constexpr (T == BHPConstraintTypeId::MAX)
+    {
+      return "MaximumBHPConstraint";
+    }
+    else
+    {
+      return "MinimumBHPConstraint";
+    }
+
+  }
+
+  virtual string getCatalogName() const override { return catalogName(); }
 protected:
 
   virtual void postInputInitialization() override;
@@ -142,192 +167,8 @@ protected:
 
 };
 
-/**
- * @class MinimumBHPConstraint
- * @brief This class describes a minimum pressure constraint used to control a injection well.
- */
-class MinimumBHPConstraint : public BHPConstraint
-{
-public:
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit MinimumBHPConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~MinimumBHPConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  MinimumBHPConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  MinimumBHPConstraint( MinimumBHPConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  MinimumBHPConstraint( MinimumBHPConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  MinimumBHPConstraint & operator=( MinimumBHPConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  MinimumBHPConstraint & operator=( MinimumBHPConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
-   */
-  static string catalogName()
-  {
-    return "MinimumBHPConstraint";
-  }
-  virtual string getCatalogName() const override { return catalogName(); }
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-
-
-  /**
-   * @brief Struct to serve as a container for variable strings and keys.
-   * @struct viewKeyStruct
-   */
-  struct viewKeyStruct
-  {
-    /// String key for the well target BHP
-    static constexpr char const * targetBHPString() { return "targetBHP"; }
-  }
-  viewKeysWellBHPConstraint;
-
-  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-
-};
-
-/**
- * @class WellMinimumBHPConstraint
- * @brief This class describes a maximum pressure constraint used to control a injection well.
- */
-class MaximumBHPConstraint : public BHPConstraint
-{
-public:
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit MaximumBHPConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~MaximumBHPConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  MaximumBHPConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  MaximumBHPConstraint( MaximumBHPConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  MaximumBHPConstraint( MaximumBHPConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  MaximumBHPConstraint & operator=( MaximumBHPConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  MaximumBHPConstraint & operator=( MaximumBHPConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
-   */
-  static string catalogName()
-  {
-    return "MaximumBHPConstraint";
-  }
-  virtual string getCatalogName() const override { return catalogName(); }
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
-
-
-  ///@}
-  /**
-   * @brief Struct to serve as a container for variable strings and keys.
-   * @struct viewKeyStruct
-   */
-  struct viewKeyStruct
-  {
-    /// String key for the well target BHP
-    static constexpr char const * targetBHPString() { return "targetBHP"; }
-  }
-  viewKeysWellBHPConstraint;
-
-  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
-protected:
-
-  virtual void postInputInitialization() override;
-
-
-
-private:
-
-
-};
-
+using MinimumBHPConstraint = BHPConstraint< BHPConstraintTypeId::MIN >;
+using MaximumBHPConstraint = BHPConstraint< BHPConstraintTypeId::MAX >;
 
 } //namespace geos
 

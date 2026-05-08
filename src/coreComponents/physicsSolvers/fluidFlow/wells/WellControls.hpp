@@ -343,7 +343,13 @@ public:
   checkWellSystemSolution( WellElementSubRegion & subRegion,
                            DofManager const & dofManager,
                            arrayView1d< real64 const > const & localSolution,
-                           real64 const scalingFactor ) = 0;
+                           real64 const scalingFactor,
+                           real64 & minPressure,
+                           real64 & minDensity,
+                           real64 & minTotalDensity,
+                           ElementsReporterBuffer & negPressureIds,
+                           ElementsReporterBuffer & negDensityIds,
+                           ElementsReporterBuffer & negTotalDensityIds ) = 0;
 
   virtual void
   applyWellSystemSolution( DofManager const & dofManager,
@@ -924,10 +930,11 @@ public:
   /**
    * @brief Getters for constraints
    */
-  MinimumBHPConstraint * getMinBHPConstraint() { return m_minBHPConstraint; };
-  MinimumBHPConstraint * getMinBHPConstraint() const { return m_minBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() { return m_maxBHPConstraint; };
-  MaximumBHPConstraint * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return m_minBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+
 
   //  WHP constraint getters
   MinimumWHPConstraint * getMinWHPConstraint() { return m_minWHPConstraint; };
@@ -936,10 +943,10 @@ public:
   MaximumWHPConstraint * getMaxWHPConstraint() const { return m_maxWHPConstraint; };
 
   ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
-  MinimumBHPConstraint * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
 
   InjectionConstraint< PhaseVolumeRateConstraint > * getMaxPhaseVolumeConstraintForWHP() { return m_maxPhaseVolumeConstraintForWHP; };
-  MaximumBHPConstraint * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaximumBHPConstraintForWHP() { return m_maxBHPConstraintForWHP; };
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * >  getProdRateConstraints() { return m_productionRateConstraintList; };
@@ -1087,15 +1094,15 @@ protected:
   WellConstraintBase * m_currentConstraint;
 
   // Minimum and maximum BHP and WHP constraints
-  MinimumBHPConstraint *  m_minBHPConstraint;
-  MaximumBHPConstraint * m_maxBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MIN > *  m_minBHPConstraint;
+  BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraint;
   MinimumWHPConstraint *  m_minWHPConstraint;
   MaximumWHPConstraint * m_maxWHPConstraint;
 
   // BHP constraint used when WHP constraint is active
-  MinimumBHPConstraint *     m_minBHPConstraintForWHP;
+  BHPConstraint< BHPConstraintTypeId::MIN > *     m_minBHPConstraintForWHP;
   ProductionConstraint< LiquidRateConstraint > *  m_maxLiquidConstraintForWHP;
-  MaximumBHPConstraint * m_maxBHPConstraintForWHP;
+  BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraintForWHP;
   InjectionConstraint< PhaseVolumeRateConstraint > * m_maxPhaseVolumeConstraintForWHP;
 
   // Lists of rate constraints

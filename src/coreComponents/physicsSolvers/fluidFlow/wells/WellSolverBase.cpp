@@ -171,8 +171,9 @@ void WellSolverBase::initializePostSubGroups()
       {
         TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
         GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                       "The interpolation method for the perforation status table "
-                       << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
+                       GEOS_FMT( "The interpolation method for the perforation status table {} "
+                                 "should be TableFunction::InterpolationType::Lower",
+                                 tableFunction->getName() ),
                        InputError, getDataContext() );
       }
     } );
@@ -388,7 +389,7 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
         wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
       } );
 
-      wellControls.forSubGroups< BHPConstraint >( [&]( auto & constraint )
+      wellControls.forSubGroups< MinimumBHPConstraint, MaximumBHPConstraint >( [&]( auto & constraint )
       {
         // set the reference well element where the BHP control is applied
         real64 const refElev1 = constraint.getReferenceElevation();

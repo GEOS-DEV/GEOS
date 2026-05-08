@@ -44,8 +44,7 @@
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15"
-        control="totalVolRate"
-        useMass="1">
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           constraintScheduleTableName="totalBHPTable"

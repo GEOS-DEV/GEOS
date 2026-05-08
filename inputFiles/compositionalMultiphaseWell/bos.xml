@@ -34,12 +34,11 @@
       useMass="1">
       <CompositionalMultiphaseWell
         logLevel="5"
-         maxRelativePressureChange="0.1"
-         maxCompFractionChange="0.1"
+        maxRelativePressureChange="0.1"
+        maxCompFractionChange="0.1"
         name="wellControls1"
         type="producer"
-        control="BHP" 
-         useMass="1">
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -52,11 +51,10 @@
       <CompositionalMultiphaseWell
         name="wellControls2"
         logLevel="5"
-         maxRelativePressureChange="0.1"
-         maxCompFractionChange="0.1"
+        maxRelativePressureChange="0.1"
+        maxCompFractionChange="0.1"
         type="injector"
-        control="BHP" 
-         useMass="1">
+        control="BHP">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e+7"

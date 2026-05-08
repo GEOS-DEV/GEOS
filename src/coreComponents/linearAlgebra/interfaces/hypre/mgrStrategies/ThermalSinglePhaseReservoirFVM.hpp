@@ -54,7 +54,7 @@ public:
    * @brief Constructor.
    */
   explicit ThermalSinglePhaseReservoirFVM( arrayView1d< int const > const & )
-    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 1 ) )
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( 5 ) )
   {
     // Level 0: eliminate the well variables, and just keep the cell-centered pressures
     m_labels[0].push_back( 0 );

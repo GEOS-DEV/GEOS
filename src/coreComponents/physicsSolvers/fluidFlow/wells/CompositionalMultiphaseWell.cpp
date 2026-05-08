@@ -32,6 +32,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
@@ -84,7 +85,6 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
 {
-
   this->registerWrapper( viewKeyStruct::useTotalMassEquationString(), &m_useTotalMassEquation ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -367,8 +367,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   {
     bool const useSeg = getReferenceReservoirRegion().empty();
     GEOS_WARNING_IF( useSeg,
-                     "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                     " not set and well constraint fluid property calculations will use top segement pressure and temp " );
+                     GEOS_FMT( "WellControls {} not set and well constraint fluid property calculations will use "
+                               "top segement pressure and temp ",
+                               WellControls::viewKeyStruct::referenceReservoirRegionString() ) );
     if( useSeg )
     {
       setRegionAveragePressure( -1 );
@@ -420,6 +421,7 @@ void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroup
   // setup fluid model
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
+  std::cout << "Validating fluid model for well " << getName() << "..." << m_useMass << std::endl;
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
 
@@ -1698,104 +1700,89 @@ bool
 CompositionalMultiphaseWell::checkWellSystemSolution( WellElementSubRegion & subRegion,
                                                       DofManager const & dofManager,
                                                       arrayView1d< real64 const > const & localSolution,
-                                                      real64 const scalingFactor )
+                                                      real64 const scalingFactor,
+                                                      real64 & minPressure,
+                                                      real64 & minDensity,
+                                                      real64 & minTotalDensity,
+                                                      ElementsReporterBuffer & negPressureIds,
+                                                      ElementsReporterBuffer & negDensityIds,
+                                                      ElementsReporterBuffer & negTotalDensityIds )
 {
   GEOS_MARK_FUNCTION;
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
 
+  integer constexpr allowNegativePressure = 0;
+  compositionalMultiphaseUtilities::ScalingType constexpr scalingType = compositionalMultiphaseUtilities::ScalingType::Global;
 
-  real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
-  integer numNegPres = 0, numNegDens = 0, numNegTotalDens = 0;
+  arrayView1d< real64 const > const pressure = subRegion.getField< well::pressure >();
+  arrayView1d< real64 const > const temperature = subRegion.getField< well::temperature >();
+  arrayView2d< real64 const, compflow::USD_COMP > const compDens = subRegion.getField< well::globalCompDensity >();
+  arrayView1d< real64 > pressureScalingFactor = subRegion.getField< well::pressureScalingFactor >();
+  arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< well::temperatureScalingFactor >();
+  arrayView1d< real64 > compDensScalingFactor = subRegion.getField< well::globalCompDensityScalingFactor >();
 
-  const std::string wellName = subRegion.getName();
-
-  //integer const m_allowCompDensChopping(true);
-  integer const m_allowNegativePressure( false );
-  compositionalMultiphaseUtilities::ScalingType const m_scalingType( compositionalMultiphaseUtilities::ScalingType::Global );
-  arrayView1d< real64 const > const pressure =
-    subRegion.getField< fields::well::pressure >();
-  arrayView1d< real64 const > const temperature =
-    subRegion.getField< fields::well::temperature >();
-  arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-    subRegion.getField< fields::well::globalCompDensity >();
-  arrayView1d< real64 > pressureScalingFactor = subRegion.getField< fields::well::pressureScalingFactor >();
-  arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< fields::well::temperatureScalingFactor >();
-  arrayView1d< real64 > compDensScalingFactor = subRegion.getField< fields::well::globalCompDensityScalingFactor >();
+  auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
+  auto const negPresCollector = negPressureIds.createCollector( cellLocalToGlobalIds );
+  auto const negDensCollector = negDensityIds.createCollector( cellLocalToGlobalIds );
+  auto const negTotalDensCollector = negTotalDensityIds.createCollector( cellLocalToGlobalIds );
 
   // check that pressure and component densities are non-negative
   // for thermal, check that temperature is above 273.15 K
   const integer temperatureOffset = m_numComponents+2;
-  auto const subRegionData =
-    m_isThermal
-  ? thermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                 m_allowNegativePressure,
-                                                 m_scalingType,
-                                                 scalingFactor,
-                                                 pressure,
-                                                 temperature,
-                                                 compDens,
-                                                 pressureScalingFactor,
-                                                 temperatureScalingFactor,
-                                                 compDensScalingFactor,
-                                                 dofManager.rankOffset(),
-                                                 m_numComponents,
-                                                 wellDofKey,
-                                                 subRegion,
-                                                 localSolution,
-                                                 temperatureOffset )
-  : isothermalCompositionalMultiphaseBaseKernels::
-      SolutionCheckKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
-                                                 m_allowNegativePressure,
-                                                 m_scalingType,
-                                                 scalingFactor,
-                                                 pressure,
-                                                 compDens,
-                                                 pressureScalingFactor,
-                                                 compDensScalingFactor,
-                                                 dofManager.rankOffset(),
-                                                 m_numComponents,
-                                                 wellDofKey,
-                                                 subRegion,
-                                                 localSolution );
+
+  auto const subRegionData = [&](){
+    if( m_isThermal )
+    {
+      using Kernel = thermalCompositionalMultiphaseBaseKernels::SolutionCheckKernelFactory;
+      return Kernel::createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                                allowNegativePressure,
+                                                                scalingType,
+                                                                scalingFactor,
+                                                                pressure,
+                                                                temperature,
+                                                                compDens,
+                                                                pressureScalingFactor,
+                                                                temperatureScalingFactor,
+                                                                compDensScalingFactor,
+                                                                dofManager.rankOffset(),
+                                                                m_numComponents,
+                                                                wellDofKey,
+                                                                subRegion,
+                                                                localSolution,
+                                                                negPresCollector,
+                                                                negDensCollector,
+                                                                negTotalDensCollector,
+                                                                temperatureOffset );
+    }
+    else
+    {
+      using Kernel = isothermalCompositionalMultiphaseBaseKernels::SolutionCheckKernelFactory;
+      return Kernel::createAndLaunch< parallelDevicePolicy<> >( m_allowCompDensChopping,
+                                                                allowNegativePressure,
+                                                                scalingType,
+                                                                scalingFactor,
+                                                                pressure,
+                                                                compDens,
+                                                                pressureScalingFactor,
+                                                                compDensScalingFactor,
+                                                                dofManager.rankOffset(),
+                                                                m_numComponents,
+                                                                wellDofKey,
+                                                                subRegion,
+                                                                localSolution,
+                                                                negPresCollector,
+                                                                negDensCollector,
+                                                                negTotalDensCollector );
+    }
+  }();
+
+  minPressure  = std::min( minPressure, subRegionData.localMinNegPres );
+  minDensity = std::min( minDensity, subRegionData.localMinNegDens );
+  minTotalDensity = std::min( minTotalDensity, subRegionData.localMinNegTotalDens );
 
   localCheck = std::min( localCheck, subRegionData.localMinVal );
-
-  minPres  = std::min( minPres, subRegionData.localMinPres );
-  minDens = std::min( minDens, subRegionData.localMinDens );
-  minTotalDens = std::min( minTotalDens, subRegionData.localMinTotalDens );
-  numNegPres += subRegionData.localNumNegPressures;
-  numNegDens += subRegionData.localNumNegDens;
-  numNegTotalDens += subRegionData.localNumNegTotalDens;
-
-
-  minPres  = MpiWrapper::min( minPres );
-  minDens = MpiWrapper::min( minDens );
-  minTotalDens = MpiWrapper::min( minTotalDens );
-  numNegPres = MpiWrapper::sum( numNegPres );
-  numNegDens = MpiWrapper::sum( numNegDens );
-  numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
-
-  if( numNegPres > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative well pressure values: {}, minimum value: {} Pa",
-                                     subRegion.getName(), numNegPres, fmt::format( "{:.{}f}", minPres, 3 ) ) );
-  string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
-  if( numNegDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative well component density values: {}, minimum value: {} {} ",
-                                     subRegion.getName(), numNegDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
-  if( minTotalDens > 0 )
-    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                           GEOS_FMT( "        {}: Number of negative total well density values: {}, minimum value: {} {} ",
-                                     subRegion.getName(), minTotalDens, fmt::format( "{:.{}f}", minDens, 3 ), massUnit ) );
-
-
-
   return MpiWrapper::min( localCheck );
 }
 
@@ -1807,7 +1794,8 @@ void CompositionalMultiphaseWell::computeWellPerforationRates( real64 const & ti
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
 
-  //CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  //CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName()
+  // );
 
   PerforationData * const perforationData = subRegion.getPerforationData();
 

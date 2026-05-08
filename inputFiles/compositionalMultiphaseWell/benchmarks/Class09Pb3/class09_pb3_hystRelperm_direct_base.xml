@@ -37,8 +37,7 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="totalVolRate"
-        useMass="1">
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"

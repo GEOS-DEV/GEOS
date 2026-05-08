@@ -42,8 +42,7 @@
         name="wellControls1"
         type="producer"
         control="BHP"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -57,8 +56,7 @@
         name="wellControls2"
         type="producer"
         control="BHP"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -72,8 +70,7 @@
         name="wellControls3"
         type="producer"
         control="BHP"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -87,8 +84,7 @@
         name="wellControls4"
         type="producer"
         control="BHP"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -102,8 +98,7 @@
         name="wellControls5"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -118,8 +113,7 @@
         name="wellControls6"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -134,8 +128,7 @@
         name="wellControls7"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -150,8 +143,7 @@
         name="wellControls8"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -166,8 +158,7 @@
         name="wellControls9"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -182,8 +173,7 @@
         name="wellControls10"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -198,8 +188,7 @@
         name="wellControls11"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -214,8 +203,7 @@
         name="wellControls12"
         type="injector"
         control="totalVolRate"
-        maxCompFractionChange="0.5"
-        useMass="1">
+        maxCompFractionChange="0.5">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"

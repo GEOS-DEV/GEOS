@@ -31,9 +31,9 @@ using namespace dataRepository;
 MassRateConstraint::MassRateConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
-  this->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  this->registerWrapper( viewKeyStruct::massRateString(), &this->m_constraintValue ).
+  registerWrapper( viewKeyStruct::massRateString(), &m_constraintValue ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).

@@ -29,88 +29,69 @@ namespace geos
 
 using namespace dataRepository;
 
-BHPConstraint::BHPConstraint( string const & name, Group * const parent )
+template< BHPConstraintTypeId T >
+BHPConstraint< T >::BHPConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent ),
   m_refElevation( 0.0 ),
   m_refGravCoef( 0.0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-  registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Minimun bottom-hole production pressure [Pa]" );
-
   registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
     setDefaultValue( -1 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference elevation where BHP control is enforced [m]" );
-
+  if constexpr (T == BHPConstraintTypeId::MAX)
+  {
+    // override the description for minimum BHP constraint
+    registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
+      setDefaultValue( 0.0 ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Maximum bottom-hole production pressure [Pa]" );
+  }
+  else
+  {
+    registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
+      setDefaultValue( 0.0 ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Minimum bottom-hole production pressure [Pa]" );
+  }
 }
 
-
-BHPConstraint::~BHPConstraint()
+template< BHPConstraintTypeId T >
+BHPConstraint< T >::~BHPConstraint()
 {}
 
-void BHPConstraint::postInputInitialization()
+template< BHPConstraintTypeId T >
+void BHPConstraint< T >::postInputInitialization()
 {
-
   WellConstraintBase::postInputInitialization();
-
 }
 
-MinimumBHPConstraint::MinimumBHPConstraint( string const & name, Group * const parent )
-  : BHPConstraint( name, parent )
+
+template< BHPConstraintTypeId T >
+bool BHPConstraint< T >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( viewKeyStruct::targetBHPString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Minimun bottom-hole production pressure [Pa]" );
+  if constexpr (T == BHPConstraintTypeId::MAX)
+  {
+    return currentConstraint.bottomHolePressure() > getConstraintValue( currentTime );
+  }
+  else
+  {
+    return currentConstraint.bottomHolePressure() < getConstraintValue( currentTime );
+  }
 }
 
 
-MinimumBHPConstraint::~MinimumBHPConstraint()
-{}
-
-void MinimumBHPConstraint::postInputInitialization()
+template class BHPConstraint< BHPConstraintTypeId::MIN >;
+template class BHPConstraint< BHPConstraintTypeId::MAX >;
+namespace
 {
-
-  BHPConstraint::postInputInitialization();
-
-}
-
-bool MinimumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
-{
-  return currentConstraint.bottomHolePressure() < getConstraintValue( currentTime );
-}
-
-MaximumBHPConstraint::MaximumBHPConstraint( string const & name, Group * const parent )
-  : BHPConstraint( name, parent )
-{
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-}
-
-
-MaximumBHPConstraint::~MaximumBHPConstraint()
-{}
-
-void MaximumBHPConstraint::postInputInitialization()
-{
-  // Validate value and table options
-  BHPConstraint::postInputInitialization();
-
-}
-bool MaximumBHPConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
-{
-  return currentConstraint.bottomHolePressure() > getConstraintValue( currentTime );
-}
-
+typedef BHPConstraint< BHPConstraintTypeId::MIN > MinimumBHPConstraint;
+typedef BHPConstraint< BHPConstraintTypeId::MAX > MaximumBHPConstraint;
 REGISTER_CATALOG_ENTRY( WellConstraintBase, MinimumBHPConstraint, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( WellConstraintBase, MaximumBHPConstraint, string const &, Group * const )
-
+}
 } //namespace geos
