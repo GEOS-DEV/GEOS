@@ -364,7 +364,7 @@ void testWellEstimatorNumericalJacobian( CompositionalMultiphaseReservoirAndWell
                                          real64 const relTol, bool diag_check, std::string const & testName,
                                          LAMBDA && assembleFunction )
 {
-  GEOS_UNUSED_VAR(testName);
+  GEOS_UNUSED_VAR( testName );
   WellManager & wellSolver = *solver.wellSolver();
 
   wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,

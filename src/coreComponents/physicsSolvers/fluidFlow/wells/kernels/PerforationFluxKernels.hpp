@@ -488,7 +488,7 @@ public:
         if constexpr ( IS_THERMAL )
         {
           m_dCompPerfRate[iperf][TAG::WELL][ic][CP_Deriv::dT] = m_wellElemCompFrac[iwelem][ic] * dFlux[TAG::WELL][CP_Deriv::dT];
-         }
+        }
         for( integer jc = 0; jc < NC; ++jc )
         {
           m_dCompPerfRate[iperf][TAG::WELL][ic][CP_Deriv::dC+jc] += m_wellElemCompFrac[iwelem][ic] * dFlux[TAG::WELL][CP_Deriv::dC+jc];
