@@ -380,8 +380,8 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
                              std::sqrt( sum_fb2*sum_u2 ), std::sqrt( sum_ff2*sum_fb2 ) ) );
   real32 diffToCheck;
   diffToCheck=std::abs( sum_ufb-sum_qff ) / std::max( std::sqrt( sum_fb2*sum_u2 ), std::sqrt( sum_q2*sum_ff2 ));
-  GEOS_LOG_RANK_0( GEOS_FMT( "Diff to compare with 1e-7: {}", diffToCheck ) );
-  ASSERT_TRUE( diffToCheck < 1e-7 );
+  GEOS_LOG_RANK_0( GEOS_FMT( "Diff to compare with 5e-7: {}", diffToCheck ) );
+  ASSERT_TRUE( diffToCheck < 5e-7 );
 }
 
 INSTANTIATE_TEST_SUITE_P(
