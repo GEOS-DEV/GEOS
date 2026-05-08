@@ -98,23 +98,23 @@ struct FaceElementFluxKernel
             localIndex MAX_STENCIL_SIZE >
   GEOS_HOST_DEVICE
   static void
-  compute( localIndex const numFluxElems,
-           arraySlice1d< localIndex const > const & seri,
-           arraySlice1d< localIndex const > const & sesri,
-           arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
-           real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
-           real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
-           ElementViewConst< arrayView1d< real64 const > > const & pres,
-           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-           ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
-           ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
-           ElementViewConst< arrayView1d< real64 const > > const & mob,
-           ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dMob,
-           real64 const dt,
-           real64 (&flux)[MAX_NUM_FLUX_ELEMS],
-           real64 (&fluxJacobian)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE],
-           real64 (&dFlux_dAperture)[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE] );
+    compute( localIndex const numFluxElems,
+             arraySlice1d< localIndex const > const & seri,
+             arraySlice1d< localIndex const > const & sesri,
+             arraySlice1d< localIndex const > const & sei,
+             real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
+             real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
+             real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
+             ElementViewConst< arrayView1d< real64 const > > const & pres,
+             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+             ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dens,
+             ElementViewConst< arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > > const & dDens,
+             ElementViewConst< arrayView1d< real64 const > > const & mob,
+             ElementViewConst< arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > > const & dMob,
+             real64 const dt,
+             real64 ( &flux )[MAX_NUM_FLUX_ELEMS],
+             real64 ( &fluxJacobian )[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE],
+             real64 ( &dFlux_dAperture )[MAX_NUM_FLUX_ELEMS][MAX_STENCIL_SIZE] );
 };
 
 

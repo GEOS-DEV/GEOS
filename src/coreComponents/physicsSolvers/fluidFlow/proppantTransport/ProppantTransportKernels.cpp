@@ -216,8 +216,8 @@ FluxKernel::
                    real64 const (&apertureWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const (&geometricWeight)[MAX_NUM_FLUX_ELEMS],
                    real64 const dt,
-                   real64 (&localFlux)[MAX_LOCAL_FLUX_SIZE],
-                   real64 (&localFluxJacobian)[MAX_LOCAL_FLUX_SIZE][MAX_LOCAL_DOF_SIZE] )
+                   real64 (& localFlux)[MAX_LOCAL_FLUX_SIZE],
+                   real64 (& localFluxJacobian)[MAX_LOCAL_FLUX_SIZE][MAX_LOCAL_DOF_SIZE] )
 {
 
   // We assume numElems == stencilSize;
@@ -814,7 +814,6 @@ void FluxKernel::
     if( ( numFluxElems > 1 || updateProppantPacking != 0 ) )
     {
       localIndex const stencilSize  = numFluxElems;
-      localIndex const nDofs = numFluxElems * numDofPerCell;
 
       // working arrays
       globalIndex dofColIndices[DOF2]{};
