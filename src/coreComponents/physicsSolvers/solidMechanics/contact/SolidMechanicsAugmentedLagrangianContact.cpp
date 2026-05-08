@@ -41,6 +41,7 @@
 #include "mesh/DomainPartition.hpp"
 
 #include <stdio.h>
+#include <atomic>
 
 #if defined( GEOS_USE_CUDA )
 #include <cuda_runtime.h>
@@ -115,6 +116,8 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   // Strategy: static condensation of bubble dofs using MGR
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
+
+  addLogLevel< logInfo::StressInitialization >();
 }
 
 SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()
@@ -2060,6 +2063,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 {
   GEOS_MARK_FUNCTION;
 
+  localIndex numTensileAdjacentCellsTotalLocal = 0;
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
@@ -2083,6 +2088,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     ElementRegionManager::ElementViewConst< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const
     avgElementStressView = avgElementStress.toNestedViewConst();
 
+    // Rank-local statistics accumulators (summed across all subRegions on this mesh)
+    localIndex numCoulombViolationsLocal = 0;
+    localIndex numTensileAdjacentCellsLocal = 0;
+
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       if( subRegion.hasField< contact::traction >() )
@@ -2105,6 +2114,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
         real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
 
+        // Local counters for statistics (accumulated across this subRegion's parallel loop)
+        std::atomic< localIndex > localNumCoulombViolations{ 0 };
+        std::atomic< localIndex > localNumTensileAdjacentCells{ 0 };
+
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,
                                                           elemsToFaces,
@@ -2118,7 +2131,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           hasCoulombParams,
                                                           cohesion,
                                                           frictionCoefficient,
-                                                          avgElementStressView] ( localIndex const kfe )
+                                                          avgElementStressView,
+                                                          &localNumCoulombViolations,
+                                                          &localNumTensileAdjacentCells, this] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2127,6 +2142,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             real64 tGlobalAvg[3]{};
             real64 avgSigma[6]{};
             integer numValidCells{};
+            bool hasTensileAdjacentCell = false;
 
             // Use the fracture element's normal from the rotation matrix (first column)
             real64 const n[3]{ faceRotationMatrix( kfe, 0, 0 ), faceRotationMatrix( kfe, 1, 0 ), faceRotationMatrix( kfe, 2, 0 ) };
@@ -2147,17 +2163,22 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 continue;
               }
 
-              // Check principal stress components in 3D elements adjecent to the fracture element.
-              // If the maximun principal stress is tensile, issue a warning. Principal stresses are
-              // sorted in ascending order
+              // Check principal stress components in 3D elements adjacent to the fracture element.
+              // If the maximum principal stress is tensile, issue a log-level-2 warning.
+              // Principal stresses are sorted in ascending order.
               real64 principalStresses[3];
               LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStressView[er][esr][ei] );
-              GEOS_WARNING_IF( principalStresses[2] > 0.0,
-                             GEOS_FMT(
-                               "WARNING: Maximum principal stress is tensile in element adjacent to fracture element {} "
-                               "connected to face {}. Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e}). "
-                               "Stress initialization will proceed with the available stress state.",
-                               kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
+              if( principalStresses[2] > 0.0 )
+              {
+                hasTensileAdjacentCell = true;
+                GEOS_LOG_LEVEL_BY_RANK( logInfo::StressInitialization,
+                                     GEOS_FMT( "StressInit WARNING: Maximum principal stress is tensile in bulk element "
+                                               "adjacent to fracture element {} (face side {}). "
+                                               "Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e}). "
+                                               "Stress initialization will proceed with the available stress state.",
+                                               kfe, faceIdx,
+                                               principalStresses[0], principalStresses[1], principalStresses[2] ) );
+              }
 
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStressView[er][esr][ei] );
@@ -2166,6 +2187,11 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStressView[er][esr][ei], n );
 
               ++numValidCells;
+            }
+
+            if( hasTensileAdjacentCell )
+            {
+              ++localNumTensileAdjacentCells;
             }
 
             // Average the tractions if we have valid data from both sides
@@ -2178,6 +2204,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // Rotate averaged traction to local coordinate system: t_local = R^T * t_global
               real64 tLocal[3];
               LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( tLocal, faceRotationMatrix[kfe], tGlobalAvg );
+
+              // Clamp to open fracture state if normal traction is tensile.
+              // A positive normal traction (tension) means the fracture is open:
+              // zero out all traction components so the fracture carries no load.
+              if( tLocal[0] > 0.0 )
+              {
+                tLocal[0] = 0.0;
+                tLocal[1] = 0.0;
+                tLocal[2] = 0.0;
+              }
 
               // Store the traction
               LvArray::tensorOps::copy< 3 >( traction[kfe], tLocal );
@@ -2221,15 +2257,15 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 real64 const tangentialTraction = LvArray::math::sqrt( tLocal[1] * tLocal[1] + tLocal[2] * tLocal[2] );
 
                 // Coulomb criterion: |tau| <= cohesion - mu * sigma_n (sigma_n < 0 for compression)
-                // For open fracture (sigma_n > 0): no traction should be applied
+                // For open fracture (sigma_n > 0): no traction should be applied (already clamped above)
                 real64 const tauLimit = cohesion - frictionCoefficient * normalTraction;
 
                 bool isInvalid = false;
-                string reason;
+                string_view reason;
 
                 if( normalTraction > 0.0 )
                 {
-                  // Tensile normal traction - fracture should be open, no traction
+                  // Tensile normal traction - fracture should be open, no traction (already clamped)
                   isInvalid = true;
                   reason = "tensile normal traction (fracture should be open)";
                 }
@@ -2242,37 +2278,48 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 
                 if( isInvalid )
                 {
+                  localNumCoulombViolations++;
+
                   // Get tangent vectors from rotation matrix
                   real64 const t1[3]{ faceRotationMatrix( kfe, 0, 1 ), faceRotationMatrix( kfe, 1, 1 ), faceRotationMatrix( kfe, 2, 1 ) };
                   real64 const t2[3]{ faceRotationMatrix( kfe, 0, 2 ), faceRotationMatrix( kfe, 1, 2 ), faceRotationMatrix( kfe, 2, 2 ) };
 
-                  GEOS_LOG_RANK( GEOS_FMT( "WARNING: Stress state inconsistent with Coulomb friction law at fracture element {}.\n"
-                                           "  Reason: {}\n"
-                                           "  Friction parameters: cohesion = {:.6e}, friction coefficient = {:.6f}\n"
-                                           "  Normal vector (global):    n  = ({:.6f}, {:.6f}, {:.6f})\n"
-                                           "  Tangent vector 1 (global): t1 = ({:.6f}, {:.6f}, {:.6f})\n"
-                                           "  Tangent vector 2 (global): t2 = ({:.6f}, {:.6f}, {:.6f})\n"
-                                           "  Average stress from {} adjacent cell(s) (Voigt: XX, YY, ZZ, YZ, XZ, XY):\n"
-                                           "    sigma = ({:.6e}, {:.6e}, {:.6e}, {:.6e}, {:.6e}, {:.6e})\n"
-                                           "  Traction (local: normal, tangent1, tangent2):\n"
-                                           "    t = ({:.6e}, {:.6e}, {:.6e})\n"
-                                           "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
-                                           kfe, reason,
-                                           cohesion, frictionCoefficient,
-                                           n[0], n[1], n[2],
-                                           t1[0], t1[1], t1[2],
-                                           t2[0], t2[1], t2[2],
-                                           numValidCells,
-                                           avgSigma[0], avgSigma[1], avgSigma[2], avgSigma[3], avgSigma[4], avgSigma[5],
-                                           tLocal[0], tLocal[1], tLocal[2],
-                                           tangentialTraction, tauLimit ) );
+                  GEOS_LOG_LEVEL_BY_RANK( logInfo::StressInitialization,
+                                       GEOS_FMT( "StressInit WARNING: Stress state inconsistent with Coulomb friction law at fracture element {}.\n"
+                                                 "  Reason: {}\n"
+                                                 "  Friction parameters: cohesion = {:.6e}, friction coefficient = {:.6f}\n"
+                                                 "  Normal vector (global):    n  = ({:.6f}, {:.6f}, {:.6f})\n"
+                                                 "  Tangent vector 1 (global): t1 = ({:.6f}, {:.6f}, {:.6f})\n"
+                                                 "  Tangent vector 2 (global): t2 = ({:.6f}, {:.6f}, {:.6f})\n"
+                                                 "  Average stress from {} adjacent cell(s) (Voigt: XX, YY, ZZ, YZ, XZ, XY):\n"
+                                                 "    sigma = ({:.6e}, {:.6e}, {:.6e}, {:.6e}, {:.6e}, {:.6e})\n"
+                                                 "  Traction (local: normal, tangent1, tangent2):\n"
+                                                 "    t = ({:.6e}, {:.6e}, {:.6e})\n"
+                                                 "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
+                                                 kfe, reason,
+                                                 cohesion, frictionCoefficient,
+                                                 n[0], n[1], n[2],
+                                                 t1[0], t1[1], t1[2],
+                                                 t2[0], t2[1], t2[2],
+                                                 numValidCells,
+                                                 avgSigma[0], avgSigma[1], avgSigma[2], avgSigma[3], avgSigma[4], avgSigma[5],
+                                                 tLocal[0], tLocal[1], tLocal[2],
+                                                 tangentialTraction, tauLimit ) );
                 }
               }
             }
           }
         } );
+
+        // Accumulate subRegion counts into rank-level totals
+        numCoulombViolationsLocal += static_cast< localIndex >( localNumCoulombViolations );
+        numTensileAdjacentCellsLocal += static_cast< localIndex >( localNumTensileAdjacentCells );
       }
     } );
+
+    // Accumulate mesh-level counts into function-level totals
+    numCoulombViolationsTotalLocal += numCoulombViolationsLocal;
+    numTensileAdjacentCellsTotalLocal += numTensileAdjacentCellsLocal;
   } );
 
   // Synchronize the traction, displacement jump, and bubble displacement fields
@@ -2293,6 +2340,26 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                          domain.getNeighbors(),
                                                          true );
   } );
+
+  // MPI reduction to rank 0
+  localIndex globalCoulombViolations = 0;
+  localIndex globalTensileAdjacentCells = 0;
+  MpiWrapper::reduce( &numCoulombViolationsTotalLocal, &globalCoulombViolations, 1, MPI_SUM, 0, MPI_COMM_GEOS );
+  MpiWrapper::reduce( &numTensileAdjacentCellsTotalLocal, &globalTensileAdjacentCells, 1, MPI_SUM, 0, MPI_COMM_GEOS );
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    const_cast< SolidMechanicsAugmentedLagrangianContact * >( this )->m_totalCoulombViolationsInitialization = globalCoulombViolations;
+    const_cast< SolidMechanicsAugmentedLagrangianContact * >( this )->m_totalTensileAdjacentCellsInitialization = globalTensileAdjacentCells;
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "\n"
+                               "=== Stress Initialization Summary ===\n"
+                               "  Total fracture elements with adjacent tensile cells: {}\n"
+                               "  Total fracture elements violating Mohr-Coulomb law:       {}\n"
+                               "=====================================",
+                               globalTensileAdjacentCells,
+                               globalCoulombViolations ) );
+  }
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SolidMechanicsAugmentedLagrangianContact, string const &, Group * const )

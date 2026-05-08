@@ -263,6 +263,9 @@ private:
    */
   void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
 
+  localIndex m_totalCoulombViolationsInitialization = 0;
+  localIndex m_totalTensileAdjacentCellsInitialization = 0;
+
   /// Finite element type to face element index map
   stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 

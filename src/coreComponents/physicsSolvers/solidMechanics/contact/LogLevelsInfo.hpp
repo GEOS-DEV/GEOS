@@ -47,6 +47,12 @@ struct ContactTolerance
   static constexpr std::string_view getDescription() { return "Output tolerance computed the given fracture element"; }
 };
 
+struct StressInitialization
+{
+  static constexpr int getMinLogLevel() { return 2; }
+  static constexpr std::string_view getDescription() { return "Output warnings and statistics during stress initialization from adjacent cell stress"; }
+};
+
 /// @endcond
 ///@}
 
