@@ -44,9 +44,9 @@ char const * xmlInput =
         cflFactor="0.25"
         discretization="FE1"
         targetRegions="{ Region }"
-        sourceCoordinates="{ { 100, 250, 300 } }"
+        sourceCoordinates="{ { 20, 50, 60 } }"
         timeSourceFrequency="1"
-        receiverCoordinates="{ { 300.1, 350.1, 350.1 }, { 100.1, 250.1, 300.1 }, { 200.1, 325.1, 350.1 }, { 301.1, 351.1, 351.1 } }"
+        receiverCoordinates="{ { 60.02, 70.02, 70.02 }, { 20.02, 50.02, 60.02 }, { 40.02, 65.02, 70.02 }, { 60.22, 70.22, 70.22 } }"
         outputSeismoTrace="0"
         dtSeismoTrace="0.005"/>
     </Solvers>
@@ -54,12 +54,12 @@ char const * xmlInput =
       <InternalMesh
         name="mesh"
         elementTypes="{ C3D8 }"
-        xCoords="{ 0, 500 }"
-        yCoords="{ 0, 600 }"
-        zCoords="{ 0, 750 }"
-        nx="{ 20 }"
-        ny="{ 25 }"
-        nz="{ 30 }"
+        xCoords="{ 0, 100 }"
+        yCoords="{ 0, 120 }"
+        zCoords="{ 0, 100 }"
+        nx="{ 7 }"
+        ny="{ 6 }"
+        nz="{ 5 }"
         cellBlockNames="{ cb }"/>
     </Mesh>
     <Events
@@ -213,8 +213,8 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   localIndex * ptrRickerOrder = &propagator->getReference< localIndex >( AcousticWaveEquationSEM::viewKeyStruct::rickerOrderString() );
 
   real64 time_n = time;
-  std::cout << "Begin forward:" << time_n << std::endl;
-  // run for 0.25s (100 steps)
+  GEOS_LOG_RANK_0( GEOS_FMT( "Begin forward: {}", time_n ) );
+  // run for 0.25s
   for( int i=0; i<50; i++ )
   {
     rhsForward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
@@ -241,12 +241,6 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   // save receiver value forward on uForward.
   for( int i = 0; i < 51; i++ )
   {
-    /*std::cout << "time: " << i*dt  << std::endl;
-       std::cout << "pReceivers1 " << i << ":" << pReceivers[i][0] << std::endl;
-       std::cout << "pReceivers2 " << i << ":" << pReceivers[i][1] << std::endl;
-       std::cout << "pReceivers3 " << i << ":" << pReceivers[i][2] << std::endl;
-       std::cout << "pReceivers4 " << i << ":" << pReceivers[i][3] << std::endl;
-       std::cout << "rhsForward  " << i << ":" << rhsForward[i][0] << std::endl;*/
     uForward[i][0] = pReceivers[i][0];
     pReceivers[i][0] = 0.;
     pReceivers[i][1] = 0.;
@@ -260,11 +254,11 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   arrayView2d< localIndex > const rNodeIds = propagator->getReference< array2d< localIndex > >( AcousticWaveEquationSEM::viewKeyStruct::receiverNodeIdsString() ).toView();
   rNodeIds.move( hostMemorySpace, false );
   localIndex sNodesIdsAfterModif=rNodeIds[0][0];
-  std::cout << "ref back sNodeIds[0][0]:" << sNodesIdsAfterModif << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "ref back sNodeIds[0][0]: {}", sNodesIdsAfterModif ) );
 
   /*---------------------------------------------------*/
 
-  std::cout << "Begin backward:" << time_n << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "Begin backward: {}", time_n ) );
 
   //----------Switch source and receiver1 position for backward----------------------//
   arrayView2d< real64 > const sCoord = propagator->getReference< array2d< real64 > >( AcousticWaveEquationSEM::viewKeyStruct::sourceCoordinatesString() ).toView();
@@ -281,17 +275,17 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   sCoord.registerTouch( hostMemorySpace );
   rCoord.registerTouch( hostMemorySpace );
 
-  std::cout << "sCoord  :" << sCoord[0][0] <<" "<< sCoord[0][1] <<" "<< sCoord[0][2] << std::endl;
-  std::cout << "rCoord1 :" << rCoord[0][0] <<" "<< rCoord[0][1] <<" "<< rCoord[0][2] << std::endl;
-  std::cout << "rCoord2 :" << rCoord[1][0] <<" "<< rCoord[1][1] <<" "<< rCoord[1][2] << std::endl;
-  std::cout << "rCoord3 :" << rCoord[2][0] <<" "<< rCoord[2][1] <<" "<< rCoord[2][2] << std::endl;
-  std::cout << "rCoord4 :" << rCoord[3][0] <<" "<< rCoord[3][1] <<" "<< rCoord[3][2] << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "sCoord  : {} {} {}", sCoord[0][0], sCoord[0][1], sCoord[0][2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "rCoord1 : {} {} {}", rCoord[0][0], rCoord[0][1], rCoord[0][2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "rCoord2 : {} {} {}", rCoord[1][0], rCoord[1][1], rCoord[1][2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "rCoord3 : {} {} {}", rCoord[2][0], rCoord[2][1], rCoord[2][2] ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "rCoord4 : {} {} {}", rCoord[3][0], rCoord[3][1], rCoord[3][2] ) );
 
   //change timeSourceFrequency
-  std::cout << "timeSourceFrequency forward:" << *ptrTimeSourceFrequency << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "timeSourceFrequency forward: {}", *ptrTimeSourceFrequency ) );
   real32 newTimeFreq=2;
   *ptrTimeSourceFrequency = newTimeFreq;
-  std::cout << "timeSourceFrequency backward:" << *ptrTimeSourceFrequency << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "timeSourceFrequency backward: {}", *ptrTimeSourceFrequency ) );
 
   //reinit m_indexSeismoTrace
   localIndex * ptrISeismo = &propagator->getReference< localIndex >( AcousticWaveEquationSEM::viewKeyStruct::indexSeismoTraceString() );
@@ -309,12 +303,17 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
 
   arrayView2d< localIndex > const sNodeIds_new2 = propagator->getReference< array2d< localIndex > >( AcousticWaveEquationSEM::viewKeyStruct::sourceNodeIdsString() ).toView();
   sNodeIds_new2.move( hostMemorySpace, false );
-  std::cout << "sNodeIds[0][0] second get2:" << sNodeIds_new2[0][0] << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "sNodeIds[0][0] second get2: {}", sNodeIds_new2[0][0] ) );
   ASSERT_TRUE( sNodeIds_new2[0][0] == sNodesIdsAfterModif );
 
   /*---------------------------------------------------*/
-  // run backward solver
-  for( int i = 50; i > 0; i-- )
+  // Run backward solver.
+  // Mirrors the forward loop (50 steps + cleanup gives 51 receiver slots):
+  // we run 51 backward iterations so that the final iteration at i=0,
+  // time_n=0 writes pReceivers[0] = q(0). Without this final slot, sum_qff loses
+  // the q(0)*f(0) boundary term and the discrete adjoint identity fails to
+  // single-precision tolerance.
+  for( int i = 50; i >= 0; i-- )
   {
     rhsBackward[i][0]=WaveSolverUtils::evaluateRicker( time_n, *ptrTimeSourceFrequency, *ptrTimeSourceDelay, *ptrRickerOrder );
     propagator->explicitStepBackward( time_n, dt, i, domain, gradient );
@@ -329,19 +328,16 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   pReceivers.move( hostMemorySpace, false );
 
   localIndex mForward2 = propagator->getReference< localIndex >( AcousticWaveEquationSEM::viewKeyStruct::forwardString() );
-  std::cout << "m_forward second get:" << mForward2 << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "m_forward second get: {}", mForward2 ) );
   ASSERT_TRUE( mForward2 == 0 );
 
   arrayView2d< localIndex > const sNodeIds_new3 = propagator->getReference< array2d< localIndex > >( AcousticWaveEquationSEM::viewKeyStruct::sourceNodeIdsString() ).toView();
   sNodeIds_new3.move( hostMemorySpace, false );
-  std::cout << "sNodeIds[0][0] get3:" << sNodeIds_new3[0][0] << std::endl;
+  GEOS_LOG_RANK_0( GEOS_FMT( "sNodeIds[0][0] get3: {}", sNodeIds_new3[0][0] ) );
   ASSERT_TRUE( sNodeIds_new3[0][0] == sNodesIdsAfterModif );
 
   real32 const timeSourceFrequency_new = propagator->getReference< real32 >( AcousticWaveEquationSEM::viewKeyStruct::timeSourceFrequencyString() );
   ASSERT_TRUE( std::abs( timeSourceFrequency_new - newTimeFreq ) < 1.e-8 );
-
-  /*std::cout << "pReceiver size(0):" << pReceivers.size(0) << std::endl;
-     std::cout << "pReceiver size(1):" << pReceivers.size(1) << std::endl;*/
 
 
   /*----------Save receiver backward----------------------*/
@@ -355,15 +351,9 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
   real32 sum_ff2=0.;
   real32 sum_fb2=0.;
 
-  // fill backward field at receiver.
-  for( int i=50; i > 0; i-- )
+  // fill backward field at receiver, pReceivers[i] = q(i*dt) for i=0..50.
+  for( int i = 0; i <= 50; i++ )
   {
-    /*std::cout << "back time: " << i*dt  << std::endl;
-       std::cout << "back pReceivers1 " << i << ":" << pReceivers[i][0] << std::endl;
-       std::cout << "back pReceivers2 " << i << ":" << pReceivers[i][1] << std::endl;
-       std::cout << "back pReceivers3 " << i << ":" << pReceivers[i][2] << std::endl;
-       std::cout << "back pReceivers4 " << i << ":" << pReceivers[i][3] << std::endl;
-       std::cout << "back rhsBackward " << i << ":" << rhsBackward[i][0] << std::endl;*/
     qBackward[i][0] = pReceivers[i][0];
   }
 
@@ -377,23 +367,21 @@ TEST_P( AcousticWaveEquationSEMTest, SeismoTrace )
     sum_q2 += qBackward[i][0]*qBackward[i][0];
     sum_ff2 += rhsForward[i][0]*rhsForward[i][0];
     sum_fb2 += rhsBackward[i][0]*rhsBackward[i][0];
-    /*std::cout << "sum evol sum_ufb:" << sum_ufb << " / sum_qff:" << sum_qff << std::endl;
-       std::cout << "uForward:" << uForward[i][0] << " / qBackward:" << qBackward[i][0] << std::endl;
-       std::cout << "ufb:" << uForward[i][0]*rhsBackward[i][0] << " / qff:" << qBackward[i][0]*rhsForward[i][0] << std::endl;*/
   }
 
   // check scalar products <u,f'> and <f,q> are non null
-  ASSERT_TRUE( sum_ufb > 1.e-8 );
-  ASSERT_TRUE( sum_qff > 1.e-8 );
+  ASSERT_TRUE( std::abs( sum_ufb ) > 1.e-8 );
+  ASSERT_TRUE( std::abs( sum_qff ) > 1.e-8 );
 
-  // check ||<f,q> - <u,f'>||/max(||f||.||q||,||f'||.||u||) < 10^1or2 x epsilon_machine with f rhs direct and f' rhs backward
-  std::cout << "<u,f'>: " << sum_ufb << " / <f,q>: " << sum_qff << std::endl;
-  std::cout << "||<f,q> - <u,f'>||=" << std::abs( sum_ufb-sum_qff ) << " / ||f||.||q||=" << std::sqrt( sum_q2*sum_ff2 );
-  std::cout << " / ||f'||.||u||=" << std::sqrt( sum_fb2*sum_u2 ) << " / ||f||.||f'||=" << std::sqrt( sum_ff2*sum_fb2 ) << std::endl;
+  // check ||<f,q> - <u,f'>||/max(||f||.||q||,||f'||.||u||) at single-precision machine accuracy.
+  GEOS_LOG_RANK_0( GEOS_FMT( "<u,f'>: {} / <f,q>: {}", sum_ufb, sum_qff ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( "||<f,q> - <u,f'>||={} / ||f||.||q||={} / ||f'||.||u||={} / ||f||.||f'||={}",
+                             std::abs( sum_ufb-sum_qff ), std::sqrt( sum_q2*sum_ff2 ),
+                             std::sqrt( sum_fb2*sum_u2 ), std::sqrt( sum_ff2*sum_fb2 ) ) );
   real32 diffToCheck;
   diffToCheck=std::abs( sum_ufb-sum_qff ) / std::max( std::sqrt( sum_fb2*sum_u2 ), std::sqrt( sum_q2*sum_ff2 ));
-  std::cout << " Diff to compare with 9e-3: " << diffToCheck << std::endl;
-  ASSERT_TRUE( diffToCheck < 9e-3 );
+  GEOS_LOG_RANK_0( GEOS_FMT( "Diff to compare with 1e-7: {}", diffToCheck ) );
+  ASSERT_TRUE( diffToCheck < 1e-7 );
 }
 
 INSTANTIATE_TEST_SUITE_P(
