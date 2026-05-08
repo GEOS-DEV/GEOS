@@ -2063,6 +2063,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
 {
   GEOS_MARK_FUNCTION;
 
+  localIndex numCoulombViolationsTotalLocal = 0;
   localIndex numTensileAdjacentCellsTotalLocal = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
