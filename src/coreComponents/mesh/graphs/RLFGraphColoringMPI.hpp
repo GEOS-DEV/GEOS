@@ -60,7 +60,7 @@ public:
    * @param colors Vector of color assignments.
    * @return Number of unique colors.
    */
-  size_t getNumberOfColors( const std::vector< int > & colors ) const;
+  size_t getNumberOfColors( const stdVector< int > & colors ) const;
 
   /**
    * @brief Returns the number of distinct colors used, assuming one node per rank.
@@ -75,7 +75,7 @@ public:
    * @param localColor Color assigned to the local node.
    * @return True if the coloring is valid, false otherwise.
    */
-  bool isColoringValid( const std::vector< size_t > & localAdjncy, const int localColor ) const;
+  bool isColoringValid( const stdVector< size_t > & localAdjncy, const int localColor ) const;
 
   /**
    * @brief Colors a distributed graph.
@@ -83,14 +83,14 @@ public:
    * @param localAdjncy Local adjacency list.
    * @return A vector of assigned colors.
    */
-  std::vector< int > colorGraph( const std::vector< size_t > & localXadj, const std::vector< size_t > & localAdjncy ) override;
+  stdVector< int > colorGraph( const stdVector< size_t > & localXadj, const stdVector< size_t > & localAdjncy ) override;
 
   /**
    * @brief Simplified coloring assuming one node per rank.
    * @param localAdjncy Local adjacency list.
    * @return Color of the node.
    */
-  int colorGraph( const std::vector< size_t > & localAdjncy ) override;
+  int colorGraph( const stdVector< size_t > & localAdjncy ) override;
 };
 
 } // namespace graph

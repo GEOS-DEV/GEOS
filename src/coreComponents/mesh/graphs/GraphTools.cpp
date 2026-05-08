@@ -29,13 +29,13 @@ namespace geos
 namespace graph
 {
 
-size_t getGraphNodeDegree( size_t node, const std::vector< size_t > & xadj )
+size_t getGraphNodeDegree( size_t node, const stdVector< size_t > & xadj )
 {
   return xadj[node + 1] - xadj[node];
 }
 
 
-std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy )
+std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy )
 {
   std::unordered_set< size_t > neighbors;
   for( size_t i = xadj[node]; i < xadj[node + 1]; ++i )
@@ -46,8 +46,8 @@ std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const std::vect
 }
 
 
-bool isGraphValid( const std::vector< size_t > & xadj,
-                   const std::vector< size_t > & adjncy )
+bool isGraphValid( const stdVector< size_t > & xadj,
+                   const stdVector< size_t > & adjncy )
 {
   size_t num_nodes = xadj.size() - 1;
 
@@ -95,9 +95,9 @@ bool isGraphValid( const std::vector< size_t > & xadj,
 }
 
 
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( size_t numVertices, size_t numEdges )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphRandom( size_t numVertices, size_t numEdges )
 {
-  std::vector< std::pair< size_t, size_t > > edges;
+  stdVector< std::pair< size_t, size_t > > edges;
   srand( static_cast< unsigned int >(time( 0 )));
 
   // Generate random edges
@@ -116,8 +116,8 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( 
   std::sort( edges.begin(), edges.end());
 
   // Initialize xadj and adjncy
-  std::vector< size_t > xadj( numVertices + 1, 0 );
-  std::vector< size_t > adjncy;
+  stdVector< size_t > xadj( numVertices + 1, 0 );
+  stdVector< size_t > adjncy;
   adjncy.reserve( edges.size());
 
   // Fill xadj and adjncy
@@ -142,11 +142,11 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( 
 }
 
 
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D( size_t nx, size_t ny, size_t nz, const std::vector< std::array< int, 3 > > & neighbor_offsets )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D( size_t nx, size_t ny, size_t nz, const stdVector< stdArray< int, 3 > > & neighbor_offsets )
 {
   size_t num_nodes = nx * ny * nz;
-  std::vector< size_t > xadj( num_nodes + 1, 0 );
-  std::vector< size_t > adjncy;
+  stdVector< size_t > xadj( num_nodes + 1, 0 );
+  stdVector< size_t > adjncy;
 
   auto getNodeIndex = [nx, ny] ( const size_t x, const size_t y, const size_t z )
   {
@@ -160,7 +160,7 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPart
     {
       for( size_t x = 0; x < nx; ++x )
       {
-        std::vector< size_t > neighbors;
+        stdVector< size_t > neighbors;
         for( const auto & offset : neighbor_offsets )
         {
 
@@ -186,17 +186,17 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPart
   return {xadj, adjncy};
 }
 
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz )
 {
-  std::vector< std::array< int, 3 > > neighbor_offsets = {
+  stdVector< stdArray< int, 3 > > neighbor_offsets = {
     {-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}
   };
   return generateGraphCartPartitioning3D( nx, ny, nz, neighbor_offsets );
 }
 
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz )
 {
-  std::vector< std::array< int, 3 > > neighbor_offsets;
+  stdVector< stdArray< int, 3 > > neighbor_offsets;
   for( int dz = -1; dz <= 1; ++dz )
   {
     for( int dy = -1; dy <= 1; ++dy )

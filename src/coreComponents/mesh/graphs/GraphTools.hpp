@@ -43,7 +43,7 @@ namespace graph
  * @param adjncy The adjacency list containing the neighbors of each node.
  * @return True if the graph meets all criteria, false otherwise.
  */
-bool isGraphValid( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy );
+bool isGraphValid( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy );
 
 /**
  * @brief Calculates the degree of a node in the graph.
@@ -54,7 +54,7 @@ bool isGraphValid( const std::vector< size_t > & xadj, const std::vector< size_t
  * @param xadj The adjacency list offsets for each node.
  * @return The degree of the node.
  */
-size_t getGraphNodeDegree( size_t node, const std::vector< size_t > & xadj );
+size_t getGraphNodeDegree( size_t node, const stdVector< size_t > & xadj );
 
 /**
  * @brief Retrieves the neighbors of a node in the graph.
@@ -66,7 +66,7 @@ size_t getGraphNodeDegree( size_t node, const std::vector< size_t > & xadj );
  * @param adjncy The adjacency list containing the neighbors of each node.
  * @return A set of indices representing the neighbors of the node.
  */
-std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy );
+std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy );
 
 
 
@@ -79,7 +79,7 @@ std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const std::vect
  * @param num_edges Number of edges in the graph.
  * @return A tuple containing xadj and adjncy.
  */
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( size_t num_nodes, size_t num_edges );
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphRandom( size_t num_nodes, size_t num_edges );
 
 /**
  * @brief Generates the adjacency list representation (xadj and adjncy) for a Cartesian domain decomposition in 3D.
@@ -92,7 +92,7 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( 
  * @param nz Number of divisions along the z-axis.
  * @return A tuple containing xadj and adjncy.
  */
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz );
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz );
 
 /**
  * @brief Generates the adjacency list representation (xadj and adjncy) for a Cartesian domain decomposition in 3D.
@@ -105,7 +105,7 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPart
  * @param nz Number of divisions along the z-axis.
  * @return A tuple containing xadj and adjncy.
  */
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz );
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz );
 
 
 } // namespace geos

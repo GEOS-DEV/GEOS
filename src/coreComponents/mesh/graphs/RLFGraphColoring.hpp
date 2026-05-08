@@ -63,21 +63,21 @@ public:
    * @param adjncy Adjacency list.
    * @return A vector of assigned colors.
    */
-  std::vector< int > colorGraph( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy ) override;
+  stdVector< int > colorGraph( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy ) override;
 
   /**
    * @brief Colors a graph assuming one node per rank.
    * @param localAdjncy Local adjacency list.
    * @return Color of the node.
    */
-  int colorGraph( const std::vector< size_t > & localAdjncy ) override;
+  int colorGraph( const stdVector< size_t > & localAdjncy ) override;
 
   /**
    * @brief Returns the number of distinct colors used.
    * @param colors Vector of color assignments.
    * @return Number of unique colors.
    */
-  size_t getNumberOfColors( const std::vector< int > & colors ) const;
+  size_t getNumberOfColors( const stdVector< int > & colors ) const;
 
   /**
    * @brief Validates the coloring of a graph.
@@ -86,7 +86,7 @@ public:
    * @param colors Vector of assigned colors.
    * @return True if coloring is valid, false otherwise.
    */
-  bool isColoringValid( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy, const std::vector< int > & colors ) const;
+  bool isColoringValid( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy, const stdVector< int > & colors ) const;
 
 
 private:
@@ -96,7 +96,7 @@ private:
  * @param adjncy The adjacency list containing the neighbors of each node.
  * @return A vector where the index represents the node and the value represents the assigned color.
  */
-  std::vector< int > RecursiveLargestFirstColoring( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy );
+  stdVector< int > RecursiveLargestFirstColoring( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy );
 };
 
 } // namespace graph

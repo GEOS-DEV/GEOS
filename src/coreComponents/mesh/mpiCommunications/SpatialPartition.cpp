@@ -99,7 +99,6 @@ int SpatialPartition::getColor()
 int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
 {
   // Determine neighbor source
-  std::vector< size_t > adjncy;
   bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
 
   if( useGraphColoring )
@@ -162,7 +161,7 @@ int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
       }
     }
 
-    std::vector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+    stdVector< size_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
 
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;

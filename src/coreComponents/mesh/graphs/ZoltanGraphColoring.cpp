@@ -59,16 +59,16 @@ ZoltanGraphColoring::~ZoltanGraphColoring()
 }
 
 
-int ZoltanGraphColoring::colorGraph( const std::vector< size_t > & localAdjncy )
+int ZoltanGraphColoring::colorGraph( const stdVector< size_t > & localAdjncy )
 {
-  std::vector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
-  std::vector< int > colors = colorGraph( localXadj, localAdjncy );
+  stdVector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  stdVector< int > colors = colorGraph( localXadj, localAdjncy );
   return colors[0];
 }
 
 
-std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< size_t > & xadj,
-                                                    const std::vector< size_t > & adjncy )
+stdVector< int > ZoltanGraphColoring::colorGraph( const stdVector< size_t > & xadj,
+                                                  const stdVector< size_t > & adjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
 
@@ -89,7 +89,7 @@ std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< size_t > 
   graph.m_numVertices = safeConvert( xadj.size() - 1 );
   graph.m_rank = rank;
 
-  std::vector< int > vertexGID = createVertexGlobalID( xadj, m_comm );
+  stdVector< int > vertexGID = createVertexGlobalID( xadj, m_comm );
   graph.m_vertexGID.resize( graph.m_numVertices );
   for( int i = 0; i < graph.m_numVertices; i++ )
   {
@@ -115,7 +115,7 @@ std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< size_t > 
   std::fill( color, color + graph.m_numVertices, -1 );
 
   GEOS_ZOLTAN_CHECK( m_zz->Color( numGidEntries, numReqObjs, reqObjs, color ));
-  std::vector< int > coloringVector;
+  stdVector< int > coloringVector;
   coloringVector.assign( color, color + graph.m_numVertices );
 
   // Make numbering starts at 0, and not 1.
@@ -210,13 +210,13 @@ size_t ZoltanGraphColoring::getNumberOfColors( const int color ) const
   return GraphColoringBase::getNumberOfColors( color, m_comm );
 }
 
-size_t ZoltanGraphColoring::getNumberOfColors( const std::vector< int > & colors ) const
+size_t ZoltanGraphColoring::getNumberOfColors( const stdVector< int > & colors ) const
 {
   return GraphColoringBase::getNumberOfColors( colors, m_comm );
 }
 
 
-bool ZoltanGraphColoring::isColoringValid( const std::vector< size_t > & adjncy, const int color ) const
+bool ZoltanGraphColoring::isColoringValid( const stdVector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }
