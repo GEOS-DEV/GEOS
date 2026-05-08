@@ -21,6 +21,7 @@
 #include "RLFGraphColoring.hpp"
 #include "GraphToolsMPI.hpp"
 #include <algorithm>
+#include <set>
 
 
 namespace geos
@@ -54,6 +55,39 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< size_t > 
   std::vector< int > colors;
   if( rank == 0 )
   {
+    // Symmetrize the gathered graph before coloring.
+    // findNeighborRanks() can produce asymmetric neighbor lists in Release builds
+    // (A lists B but B doesn't list A).  gatherGraphData() concatenates these
+    // directed edges verbatim; the resulting graph may be asymmetric.
+    // RLFGraphColoring treats the graph as undirected, so an asymmetric input
+    // can yield a coloring that is valid from one direction but not the other.
+    // Symmetrizing here ensures the coloring is globally valid.
+    int const numNodes = static_cast< int >( xadj.size() ) - 1;
+    // Build adjacency sets for each node, then add reverse edges.
+    std::vector< std::set< camp::idx_t > > adjSets( numNodes );
+    for( int i = 0; i < numNodes; ++i )
+    {
+      for( camp::idx_t j = xadj[i]; j < xadj[i + 1]; ++j )
+      {
+        camp::idx_t const neighbor = adjncy[j];
+        adjSets[i].insert( neighbor );
+        adjSets[neighbor].insert( static_cast< camp::idx_t >( i ) ); // reverse edge
+      }
+    }
+    // Rebuild xadj and adjncy from the symmetrized sets.
+    std::vector< camp::idx_t > symXadj( numNodes + 1, 0 );
+    std::vector< camp::idx_t > symAdjncy;
+    for( int i = 0; i < numNodes; ++i )
+    {
+      symXadj[i + 1] = symXadj[i] + static_cast< camp::idx_t >( adjSets[i].size() );
+      for( camp::idx_t nb : adjSets[i] )
+      {
+        symAdjncy.push_back( nb );
+      }
+    }
+    xadj   = std::move( symXadj );
+    adjncy = std::move( symAdjncy );
+
     geos::graph::RLFGraphColoring graphColoring;
     colors = graphColoring.colorGraph( xadj, adjncy );
   }

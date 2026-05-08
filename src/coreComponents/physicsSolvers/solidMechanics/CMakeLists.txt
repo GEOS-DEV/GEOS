@@ -36,6 +36,7 @@ set( solidMechanicsSolvers_headers
      kernels/ImplicitSmallStrainNewmark_impl.hpp
      kernels/ImplicitSmallStrainQuasiStatic.hpp
      kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+     SolidMechanicsInitialization.hpp
      SolidMechanicsStateReset.hpp
      SolidMechanicsStatistics.hpp
      contact/ContactSolverBase.hpp
@@ -62,6 +63,7 @@ set( solidMechanicsSolvers_headers
 set( solidMechanicsSolvers_sources
      SolidMechanicsLagrangianFEM.cpp
      SolidMechanicsMPM.cpp
+     SolidMechanicsInitialization.cpp
      SolidMechanicsStateReset.cpp
      SolidMechanicsStatistics.cpp
      contact/ContactSolverBase.cpp

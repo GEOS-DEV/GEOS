@@ -494,8 +494,13 @@ computeLogFugacityCoefficients( integer const numComps,
   // E
   real64 const expE = ( Z + EOS_TYPE::delta1 * B ) / ( Z + EOS_TYPE::delta2 * B );
   real64 const expF = Z - B;
+#if defined(GEOS_DEVICE_COMPILE)
   GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
-                 GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ));
+                 "Cubic EOS failed: exp(E) or exp(F) is below epsilon." );
+#else
+  GEOS_ERROR_IF( expE < MultiFluidConstants::epsilon || expF < MultiFluidConstants::epsilon,
+                 GEOS_FMT( "Cubic EOS failed with exp(E)={} and exp(F)={}", expE, expF ) );
+#endif
   real64 const E = log( expE );
   real64 const F = log( expF );
   real64 const G = 1.0 / ( ( EOS_TYPE::delta1 - EOS_TYPE::delta2 ) * B );

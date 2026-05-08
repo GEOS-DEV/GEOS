@@ -17,7 +17,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
@@ -279,7 +279,9 @@ void RelpermDriver::compareWithBaseline()
   // open baseline file
 
   std::ifstream file( m_baselineFile.c_str() );
-  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+  GEOS_THROW_IF( !file.is_open(),
+                 GEOS_FMT( "Can't seem to open the baseline file {}", m_baselineFile ),
+                 InputError );
 
   // discard file header
 
@@ -305,11 +307,11 @@ void RelpermDriver::compareWithBaseline()
       file >> value;
 
       real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
-      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row + 1
-                                                                                         << " (row "
-                                                                                         << row + m_numColumns
-                                                                                         << " with header)"
-                                                                                         << " and column " << col + 1,
+      GEOS_THROW_IF( error > m_baselineTol,
+                     GEOS_FMT( "Results do not match baseline at data row {} (row {} with header) and column {}",
+                               row + 1,
+                               row + m_numColumns,
+                               col + 1 ),
                      geos::RuntimeError );
     }
   }

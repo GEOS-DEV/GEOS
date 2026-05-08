@@ -196,7 +196,7 @@ public:
   static int init( int * argc, char * * * argv );
 
   /**
-   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * @brief Finalize the MPI environment and free MPI-managed resources.
    * Please note that once called, MPI functions, communicators and resources can no longer be used.
    */
   static void finalize();
