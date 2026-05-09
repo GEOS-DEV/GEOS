@@ -97,6 +97,8 @@ partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
            MPI_Comm comm,
            int const numRefinements )
 {
+  GEOS_ERROR_IF( numParts <= 0, "Number of partitions must be strictly positive" );
+
   array1d< idx_t > part( graph.size() ); // all 0 by default
   if( numParts == 1 )
   {
@@ -155,6 +157,8 @@ partitionWeighted( ArrayOfArraysView< idx_t const, idx_t > const & graph,
                    MPI_Comm comm,
                    int const numRefinements )
 {
+  GEOS_ERROR_IF( numParts <= 0, "Number of partitions must be strictly positive" );
+
   array1d< idx_t > part( graph.size() );
   if( numParts == 1 )
   {
