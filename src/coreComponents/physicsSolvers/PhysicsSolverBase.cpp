@@ -1651,16 +1651,17 @@ Timestamp PhysicsSolverBase::getMeshModificationTimestamp( DomainPartition & dom
 
 R1Tensor const PhysicsSolverBase::gravityVector() const
 {
-  R1Tensor rval;
-  if( dynamicCast< PhysicsSolverManager const * >( &getParent() ) != nullptr )
+  // Avoid dynamic_cast< PhysicsSolverManager const * > here: it would force the
+  // base library (physicsSolversBase) to link against PhysicsSolverManager's
+  // typeinfo, which lives in the dependent physicsSolvers library — circular
+  // on macOS dylibs. Probe by wrapper presence; the gravityVector wrapper is
+  // only ever registered by PhysicsSolverManager.
+  auto const key = PhysicsSolverManager::viewKeyStruct::gravityVectorString();
+  if( getParent().hasWrapper( key ) )
   {
-    rval = getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() );
+    return getParent().getReference< R1Tensor >( key );
   }
-  else
-  {
-    rval = {0.0, 0.0, -9.81};
-  }
-  return rval;
+  return { 0.0, 0.0, -9.81 };
 }
 
 bool PhysicsSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const

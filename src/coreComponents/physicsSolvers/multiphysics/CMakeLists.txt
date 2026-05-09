@@ -87,7 +87,7 @@ set( multiPhysicsSolvers_sources
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)
 
-set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers )
+set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers surfaceGeneration )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
