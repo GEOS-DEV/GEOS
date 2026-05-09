@@ -343,7 +343,11 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_args=--use-hwthread-cpus --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  # Current geos-ats treats openmpi_args as a single value, so keep all MPI args together.
+  ATS_OPENMPI_ARGS="--allow-run-as-root --use-hwthread-cpus"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=\\\"${ATS_OPENMPI_ARGS}\\\" --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
