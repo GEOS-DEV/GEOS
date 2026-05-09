@@ -8,17 +8,17 @@
   "runner_ca_bundle_host_paths": {},
   "runner_cuda_architectures": { "thinkpad": "120" },
   "runner_resource_overrides": {
-    "thinkpad1": {
+    "thinkpad0": {
       "docker_run_args": "--cpuset-cpus=0-7",
       "nproc": "8",
       "ctest_parallel_level": "1"
     },
-    "thinkpad2": {
+    "thinkpad1": {
       "docker_run_args": "--cpuset-cpus=8-15",
       "nproc": "8",
       "ctest_parallel_level": "1"
     },
-    "thinkpad3": {
+    "thinkpad2": {
       "docker_run_args": "--cpuset-cpus=16-23",
       "nproc": "8",
       "ctest_parallel_level": "1"
