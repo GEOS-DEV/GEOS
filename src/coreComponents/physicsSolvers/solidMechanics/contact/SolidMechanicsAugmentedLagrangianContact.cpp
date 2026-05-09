@@ -1232,8 +1232,9 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [m_symmetric=m_symmetric,
-                                                                              &nLocalStateChanges]( localIndex const,
-                                                                                                    FaceElementSubRegion & subRegion )
+                                                                              &nLocalStateChanges,
+                                                                              &condConv]( localIndex const,
+                                                                                          FaceElementSubRegion & subRegion )
       {
 
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
@@ -1286,7 +1287,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               m_symmetric,
                                               normalTractionTolerance,
                                               traction,
-                                              fractureState );
+                                              fractureState,
+                                              condConv.toViewConst() );
         } );
 
         // ---- Count state changes after UpdateStateKernel (owned elements only) ----
@@ -1350,12 +1352,14 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                                            true );
     } );
 
-    // ---- Secondary acceptance criterion: "no state change" (Fix C) ----
-    // After UpdateStateKernel, if no owned element actually changed fractureState across
-    // all ranks, the active set is stable: re-solving with the same set would only
-    // add round-off perturbations and risks driving the linear system into the
-    // poorly-conditioned regime that makes GMRES stall after a few configuration
-    // iterations.  Treat the configuration as converged in that case.
+    // ---- Secondary acceptance criterion: "no state change" ----
+    // After UpdateStateKernel, if no owned element actually changed fractureState
+    // across all ranks, the active set is stable and the configuration is converged
+    // — even if a few condConv flags remain non-zero (those flags can fire on
+    // borderline elements that updateTraction's friction-cone projection
+    // legitimately leaves in their current state).  Hysteresis in the state
+    // transition (see CoulombFriction.hpp::updateTraction) ensures this counter
+    // actually reaches zero instead of asymptoting to a small chattering set.
     localIndex const globalStateChanges =
       MpiWrapper::sum< localIndex >( nLocalStateChanges, MPI_COMM_GEOS );
 
@@ -1363,8 +1367,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     {
       hasConfigurationConvergedGlobally = true;
       GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
-                             "  ALM configuration accepted by 'no state change' criterion "
-                             "(some condConv flags non-zero but active set is stable)." );
+                             "  ALM configuration accepted: active set is stable (no state changes)." );
     }
     else
     {
@@ -2218,7 +2221,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 continue;
               }
 
-              arraySlice1d< real64 const > const sigma = avgElementStressView[er][esr][ei];
+              // Bind a const view of the symmetric stress tensor (Voigt-6) for this cell.
+              arraySlice1d< real64 const, cells::RANK2_TENSOR_USD - 1 > const sigma =
+                avgElementStressView[er][esr][ei];
 
               // Check principal stress components in 3D elements adjacent to the fracture element.
               // If the maximum principal stress is tensile, issue a log-level-2 warning.
@@ -2237,34 +2242,12 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                principalStresses[0], principalStresses[1], principalStresses[2] ) );
               }
 
-              // Accumulate stress for averaging (for warning message)
+              // Accumulate stress for averaging (used only in the diagnostic warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, sigma );
 
-              // Compute and accumulate traction in global coordinates: t = sigma * n
-              // We want the normal stress component to be specifically n^T * sigma * n
-              // because it is less polluted than individual stress components.
-              // Compute sigma_n = sigma * n, then sigma_nn = sigma_n . n
-              real64 sigma_n[3]{};
-              LvArray::tensorOps::Ri_eq_symAijBj< 3 >( sigma_n, sigma, n );
-              real64 const sigma_nn = LvArray::tensorOps::AiBi< 3 >( sigma_n, n );
-
-              // t_normal = sigma_nn * n
-              real64 t_normal[3];
-              LvArray::tensorOps::copy< 3 >( t_normal, n );
-              LvArray::tensorOps::scale< 3 >( t_normal, sigma_nn );
-
-              // t_tangential = (sigma * n) - (sigma_nn * n)
-              real64 t_global[3];
-              LvArray::tensorOps::Ri_add_symAijBj< 3 >( t_global, sigma, n );
-              LvArray::tensorOps::scaledAdd< 3 >( t_global, t_normal, -1.0 );
-
-              // tGlobalAvg += t_normal + t_tangential = sigma * n
-              // Actually, we can just use sigma * n for the tangential part and add the "clean" normal part.
-              // Since we want t_total = t_normal + t_tangential
-              // and t_tangential = (sigma*n) - ((sigma*n).n)n
-              // We use sigma_nn for the normal component.
-              LvArray::tensorOps::add< 3 >( tGlobalAvg, t_normal );
-              LvArray::tensorOps::add< 3 >( tGlobalAvg, t_global );
+              // Accumulate traction in global coordinates: t = sigma * n.
+              // (Same convention as the original implementation — no sign change.)
+              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, sigma, n );
 
               ++numValidCells;
             }

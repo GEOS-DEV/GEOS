@@ -109,6 +109,13 @@ struct UpdateStateKernel
    * @param[in] normalTractionTolerance Check tolerance (normal traction)
    * @param[in] traction the array containing the current traction
    * @param[in] fractureState the array containing the fracture state
+   * @param[in] condConv the per-element constraint-check verdict (0 = converged).
+   *                     Elements with condConv == 0 are skipped: their state, traction
+   *                     and penalty are left untouched so that the active set remains
+   *                     consistent with what ConstraintCheckKernel just validated.
+   *                     Without this gate, updateTraction's friction-cone projection
+   *                     can flip already-converged elements between Stick/Slip every
+   *                     configuration iteration (active-set chattering).
    */
   template< typename POLICY, typename CONTACT_WRAPPER >
   static void
@@ -120,11 +127,19 @@ struct UpdateStateKernel
           bool const symmetric,
           arrayView1d< real64 const > const & normalTractionTolerance,
           arrayView2d< real64 > const & traction,
-          arrayView1d< integer > const & fractureState )
+          arrayView1d< integer > const & fractureState,
+          arrayView1d< int const > const & condConv )
 
   {
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
+      // Skip elements that ConstraintCheckKernel has already accepted: re-running
+      // the friction-cone projection here would cause spurious Stick<->Slip flips
+      // (active-set chattering) and prevent the configuration loop from converging.
+      if( condConv[k] == 0 )
+      {
+        return;
+      }
 
       real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 

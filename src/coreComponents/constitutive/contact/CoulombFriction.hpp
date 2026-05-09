@@ -584,15 +584,25 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
   }
   else
   {
-    // Case 2: compenetration
-    if(( LvArray::math::abs( dispJump[0] ) > normalDisplacementTolerance ) &&
-       (fractureState != FractureState::Open))
+    // Case 2: positive normal gap on a closed element → should transition to Open.
+    // Negative gap (interpenetration) on a closed element is *under-penalisation*,
+    // not a state violation: the penalty term will resolve it on the next Newton
+    // iteration.  Forcing a state change here would push the element into Open and
+    // immediately back to Stick (chatter), so only flag *true* opening.
+    if( dispJump[0] > normalDisplacementTolerance &&
+        fractureState != FractureState::Open )
     {
       condConv = 2;
     }
-    // Case 3: it is stick and dg is greater than 0
+    // Case 3: stick element with significant tangential motion AND near the friction
+    // cone boundary.  The extra `currentTau ≈ limitTau` test avoids flagging Stick
+    // elements that have purely elastic tangential motion (currentTau << limitTau):
+    // updateTraction's friction-cone projection legitimately keeps them as Stick,
+    // so re-flagging produces chatter that prevents the configuration loop from
+    // terminating.
     if( fractureState == FractureState::Stick &&
-        deltaDispNorm > slidingTolerance )
+        deltaDispNorm > slidingTolerance &&
+        currentTau > LvArray::math::abs( limitTau ) * (1.0 - slidingCheckTolerance) )
     {
       condConv = 3;
     }
