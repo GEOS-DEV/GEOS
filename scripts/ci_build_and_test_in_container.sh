@@ -28,6 +28,17 @@ function or_die () {
     fi
 }
 
+function run_diagnostic_command () {
+    local description="$1"
+    shift
+
+    echo "Diagnostic: ${description}"
+    "$@"
+    local status=$?
+    echo "Diagnostic '${description}' exit status: ${status}"
+    return 0
+}
+
 PHASE_TIMINGS=()
 CURRENT_PHASE_LABEL=""
 CURRENT_PHASE_START=""
@@ -347,7 +358,9 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=${NPROC}"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_args=--use-hwthread-cpus --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=\"--allow-run-as-root --use-hwthread-cpus\" --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
   echo "Running integrated tests with ATS_FILTER=${ATS_FILTER}, openmpi_procspernode=${NPROC}, openmpi_maxprocs=${NPROC}."
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
