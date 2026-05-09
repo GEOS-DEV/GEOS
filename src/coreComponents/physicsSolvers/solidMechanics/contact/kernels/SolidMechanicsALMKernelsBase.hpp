@@ -164,9 +164,21 @@ struct UpdateStateKernel
       }
 
       LvArray::tensorOps::copy< 3 >( traction[k], localTractionNew );
-      penalty[k][2] = -localPenalty[1][1];
-      penalty[k][3] = -localPenalty[2][2];
-      penalty[k][4] = -localPenalty[1][2];
+
+      // Apply a per-state penalty floor on the off-diagonal/tangential blocks to keep the
+      // bubble subsystem well-conditioned when many adjacent elements are in Slip/Open.
+      // Without a floor, Open elements (localPenalty == 0) and weakly-loaded Slip elements
+      // produce singular blocks in the global matrix, which manifests as GMRES stagnation
+      // after a few configuration iterations.
+      // Use a small fraction of the user-prescribed normal/tangential penalties as the floor.
+      real64 const tangentFloor = 1.0e-2 * penalty[k][1];
+      real64 const p22 = -localPenalty[1][1];
+      real64 const p33 = -localPenalty[2][2];
+      real64 const p23 = -localPenalty[1][2];
+
+      penalty[k][2] = ( LvArray::math::abs( p22 ) > tangentFloor ) ? p22 : tangentFloor;
+      penalty[k][3] = ( LvArray::math::abs( p33 ) > tangentFloor ) ? p33 : tangentFloor;
+      penalty[k][4] = p23; // off-diagonal coupling, may legitimately be 0
 
     } );
   }

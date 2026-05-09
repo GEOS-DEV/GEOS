@@ -597,8 +597,13 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
       condConv = 3;
     }
 
-    // Case 4: the elastic tangential traction is greater than the limit
-    if( currentTau > (LvArray::math::abs( limitTau ) * (1.0 + slidingCheckTolerance)) )
+    // Case 4: the elastic tangential traction is greater than the limit.
+    // Only flag for Stick elements: for Slip elements, updateTraction has already
+    // projected the tangential traction onto the cone (currentTau ≈ limitTau by construction),
+    // so re-flagging would force a spurious extra configuration iteration and destabilize
+    // the active set.
+    if( fractureState == FractureState::Stick &&
+        currentTau > (LvArray::math::abs( limitTau ) * (1.0 + slidingCheckTolerance)) )
     {
       condConv = 4;
     }
