@@ -360,7 +360,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   export ATS_FILTER="np<=${NPROC}"
   export OMPI_ALLOW_RUN_AS_ROOT=1
   export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=\"--allow-run-as-root --use-hwthread-cpus\" --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--use-hwthread-cpus --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
   echo "Running integrated tests with ATS_FILTER=${ATS_FILTER}, openmpi_procspernode=${NPROC}, openmpi_maxprocs=${NPROC}."
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
