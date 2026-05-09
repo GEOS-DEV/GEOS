@@ -32,43 +32,27 @@ CollocatedNodes::CollocatedNodes( string const & faceBlockName,
 
   vtkIdTypeArray const * collocatedNodes = vtkIdTypeArray::FastDownCast( faceMesh->GetPointData()->GetArray( COLLOCATED_NODES.c_str() ) );
 
-  if( performGlobalCheck )
+  // With performGlobalCheck, a NULL on the local rank is OK if any other rank found the field
+  // (vtk does not provide fields for empty meshes). Otherwise we require it on every rank.
+  // After MPI max a non-zero result means the field exists on at
+  // least one rank, so the field is not globally missing.
+  bool const isMissing = performGlobalCheck
+                         ? ( MpiWrapper::max( reinterpret_cast< std::uintptr_t >( collocatedNodes ) ) == 0 )
+                         : ( collocatedNodes == nullptr );
+
+  if( isMissing )
   {
-    // Depending on the parallel split, the vtk face mesh may be empty on a rank.
-    // In that case, vtk will not provide any field for the empty mesh.
-    // Therefore, not finding the duplicated nodes field on a rank cannot be interpreted as a globally missing field.
-    // Converting the address into an integer and exchanging it through the MPI ranks let us find out
-    // if the field is globally missing or not.
-    std::uintptr_t const address = MpiWrapper::max( reinterpret_cast< std::uintptr_t >(collocatedNodes) );
-    if( address == 0 )
+    GEOS_LOG_RANK_0( GEOS_FMT( "Available point data fields in '{}':", faceBlockName ) );
+    for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
     {
-      GEOS_LOG_RANK_0( GEOS_FMT( "Available point data fields in '{}':", faceBlockName ) );
-      for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( " - {} of type '{}'",
-                                   faceMesh->GetPointData()->GetArrayName( i ),
-                                   faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() ) );
-      }
-      GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\".",
-                            COLLOCATED_NODES,
-                            faceBlockName ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( " - {} of type '{}'",
+                                 faceMesh->GetPointData()->GetArrayName( i ),
+                                 faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() ) );
     }
-  }
-  else
-  {
-    if( !collocatedNodes )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "Available point data fields in '{}':", faceBlockName ) );
-      for( int i = 0; i < faceMesh->GetPointData()->GetNumberOfArrays(); ++i )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( " - {} of type '{}'",
-                                   faceMesh->GetPointData()->GetArrayName( i ),
-                                   faceMesh->GetPointData()->GetArray( i )->GetDataTypeAsString() ) );
-      }
-      GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\" on this rank.",
-                            COLLOCATED_NODES,
-                            faceBlockName ) );
-    }
+    GEOS_ERROR( GEOS_FMT( "Could not find valid field \"{}\" for fracture \"{}\"{}.",
+                          COLLOCATED_NODES,
+                          faceBlockName,
+                          performGlobalCheck ? "" : " on this rank" ) );
   }
 
   if( collocatedNodes )

@@ -74,7 +74,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
   // -----------------------------------------------------------------------
   // Step 1: Build 3D cell connectivity graph via fractures
   // -----------------------------------------------------------------------
-  std::map< vtkIdType, std::set< vtkIdType > > fractureGraph;
+  stdMap< vtkIdType, std::set< vtkIdType > > fractureGraph;
   vtkIdType totalFractureElements = 0;
 
   for( auto const & [fractureName, neighbors] : fractureNeighbors )
@@ -103,25 +103,21 @@ SuperCellInfo tagCellsWithSuperCellIds(
   // -----------------------------------------------------------------------
   // Step 2: Find the maximum global ID from ALL cells (not just fracture cells)
   // -----------------------------------------------------------------------
-  vtkIdType maxGlobalId = 0;
-
-  for( vtkIdType i = 0; i < numLocalCells; ++i )
-  {
-    vtkIdType gid = globalIds->GetValue( i );
-    maxGlobalId = std::max( maxGlobalId, gid );
-  }
+  vtkIdType const maxGlobalId = numLocalCells > 0
+                                ? globalIds->GetValueRange( 0 )[1]
+                                : 0;
 
   // -----------------------------------------------------------------------
   // Step 3: Find connected components using DFS
   // -----------------------------------------------------------------------
-  std::map< vtkIdType, vtkIdType > cellToSuperCell;
+  stdMap< vtkIdType, vtkIdType > cellToSuperCell;
   std::set< vtkIdType > visited;
 
   // Start super-cell IDs AFTER the maximum global ID to avoid collisions
   vtkIdType nextSuperCellId = maxGlobalId + 1;
 
-  std::function< void(vtkIdType, vtkIdType, std::vector< vtkIdType > &) > dfs =
-    [&]( vtkIdType cell, vtkIdType superCellId, std::vector< vtkIdType > & component )
+  std::function< void(vtkIdType, vtkIdType, stdVector< vtkIdType > &) > dfs =
+    [&]( vtkIdType cell, vtkIdType superCellId, stdVector< vtkIdType > & component )
   {
     if( visited.count( cell ) )
       return;
@@ -139,13 +135,13 @@ SuperCellInfo tagCellsWithSuperCellIds(
     }
   };
 
-  std::map< vtkIdType, std::vector< vtkIdType > > superCellComponents;
+  stdMap< vtkIdType, stdVector< vtkIdType > > superCellComponents;
 
   for( auto const & [cell, neighbors] : fractureGraph )
   {
     if( !visited.count( cell ) )
     {
-      std::vector< vtkIdType > component;
+      stdVector< vtkIdType > component;
       dfs( cell, nextSuperCellId, component );
 
       superCellComponents[nextSuperCellId] = component;
@@ -234,7 +230,7 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
   GEOS_ERROR_IF( !globalIds, "Mesh missing global IDs" );
 
   // Build map: super-cell ID -> vector of cell global IDs
-  std::map< vtkIdType, std::vector< vtkIdType > > localSuperCells;
+  stdMap< vtkIdType, stdVector< vtkIdType > > localSuperCells;
 
   for( vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i )
   {
@@ -284,7 +280,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     vtkIdType const numCells = cells3D->GetNumberOfCells();
 
     // Build super-cell metadata
-    std::map< vtkIdType, std::vector< vtkIdType > > superCellToLocalCells;
+    stdMap< vtkIdType, stdVector< vtkIdType > > superCellToLocalCells;
 
     for( vtkIdType i = 0; i < numCells; ++i )
     {
@@ -303,11 +299,11 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     struct SuperCellDistributionInfo
     {
       vtkIdType scId;
-      std::vector< vtkIdType > cellIndices;
-      std::array< double, 3 > centroid;  // Only computed for Morton strategy
+      stdVector< vtkIdType > cellIndices;
+      stdArray< double, 3 > centroid;  // Only computed for Morton strategy
     };
 
-    std::vector< SuperCellDistributionInfo > superCells;
+    stdVector< SuperCellDistributionInfo > superCells;
     superCells.reserve( numSuperCells );
 
     if( strategy == InitialDistributionStrategy::MORTON )
@@ -317,7 +313,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
       // Compute super-cell centroids directly
       for( auto const & [scId, cellIndices] : superCellToLocalCells )
       {
-        std::array< double, 3 > centroid = {0.0, 0.0, 0.0};
+        stdArray< double, 3 > centroid = {0.0, 0.0, 0.0};
         vtkIdType totalPoints = 0;
 
         // Accumulate all points from all cells in this super-cell
@@ -364,7 +360,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
       }
 
       // Morton encoding
-      auto computeMorton = []( std::array< double, 3 > const & centroid,
+      auto computeMorton = []( stdArray< double, 3 > const & centroid,
                                double bounds_min[3],
                                double bounds_max[3] ) -> uint64_t
       {
@@ -421,7 +417,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     // Step 2: Assign super-cells to ranks in contiguous blocks
     // -----------------------------------------------------------------------
     array1d< int64_t > cellPartitions( numCells );
-    std::vector< vtkIdType > cellsPerRank( numRanks, 0 );
+    stdVector< vtkIdType > cellsPerRank( numRanks, 0 );
 
     vtkIdType superCellsPerRank = (numSuperCells + numRanks - 1) / numRanks;
 
@@ -534,7 +530,7 @@ buildSuperCellGraph(
 
   vtkIdType numLocalCells = cells3D->GetNumberOfCells();
 
-  std::map< vtkIdType, std::vector< vtkIdType > > superCellToLocalCells;
+  stdMap< vtkIdType, stdVector< vtkIdType > > superCellToLocalCells;
   for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
     vtkIdType superCellId = superCellIdArray->GetValue( i );
@@ -557,10 +553,10 @@ buildSuperCellGraph(
     temp = next;
   }
 
-  pmet_idx_t myGlobalStart = superElemDist[rank];
-  pmet_idx_t myGlobalEnd = superElemDist[rank + 1];
+  pmet_idx_t localGlobalStart = superElemDist[rank];
+  pmet_idx_t localGlobalEnd = superElemDist[rank + 1];
 
-  std::vector< vtkIdType > orderedSuperCellIds;
+  stdVector< vtkIdType > orderedSuperCellIds;
   orderedSuperCellIds.reserve( numLocalSuperCells );
   for( auto const & [superCellId, localCells] : superCellToLocalCells )
   {
@@ -568,32 +564,32 @@ buildSuperCellGraph(
   }
   std::sort( orderedSuperCellIds.begin(), orderedSuperCellIds.end() );
 
-  std::map< vtkIdType, pmet_idx_t > superCellIdToGlobalIdx;
+  stdMap< vtkIdType, pmet_idx_t > superCellIdToGlobalIdx;
   for( pmet_idx_t i = 0; i < numLocalSuperCells; ++i )
   {
-    superCellIdToGlobalIdx[orderedSuperCellIds[i]] = myGlobalStart + i;
+    superCellIdToGlobalIdx[orderedSuperCellIds[i]] = localGlobalStart + i;
   }
 
   // -----------------------------------------------------------------------
   // Step 1: Build mappings for exchange
   // -----------------------------------------------------------------------
   // Local maps
-  std::unordered_map< pmet_idx_t, vtkIdType > myGlobalCellToSuperCell;
-  myGlobalCellToSuperCell.reserve( numLocalCells );
+  stdUnorderedMap< pmet_idx_t, vtkIdType > localGlobalCellToSuperCell;
+  localGlobalCellToSuperCell.reserve( numLocalCells );
 
-  std::unordered_map< pmet_idx_t, vtkIdType > myParmetisToVtk;
-  myParmetisToVtk.reserve( numLocalCells );
+  stdUnorderedMap< pmet_idx_t, vtkIdType > localParmetisToVtk;
+  localParmetisToVtk.reserve( numLocalCells );
 
-  pmet_idx_t myParmetisStart = baseElemDist[rank];
-  pmet_idx_t myParmetisEnd = baseElemDist[rank + 1];
+  pmet_idx_t localParmetisStart = baseElemDist[rank];
+  pmet_idx_t localParmetisEnd = baseElemDist[rank + 1];
 
   for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
     vtkIdType vtkGlobalId = cellGlobalIds->GetValue( i );
     vtkIdType superCellId = superCellIdArray->GetValue( i );
 
-    myGlobalCellToSuperCell[vtkGlobalId] = superCellId;
-    myParmetisToVtk[myParmetisStart + i] = vtkGlobalId;
+    localGlobalCellToSuperCell[vtkGlobalId] = superCellId;
+    localParmetisToVtk[localParmetisStart + i] = vtkGlobalId;
   }
 
   // -----------------------------------------------------------------------
@@ -607,7 +603,7 @@ buildSuperCellGraph(
     for( localIndex j = 0; j < neighbors.size(); ++j )
     {
       pmet_idx_t nbrIdx = neighbors[j];
-      if( nbrIdx < myParmetisStart || nbrIdx >= myParmetisEnd )
+      if( nbrIdx < localParmetisStart || nbrIdx >= localParmetisEnd )
       {
         ghostParmetisSet.insert( nbrIdx );
       }
@@ -628,7 +624,7 @@ buildSuperCellGraph(
 
   for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
-    localParmetisIndices.emplace_back( myParmetisStart + i );
+    localParmetisIndices.emplace_back( localParmetisStart + i );
     localVtkIds.emplace_back( cellGlobalIds->GetValue( i ) );
     localSuperCellIds.emplace_back( superCellIdArray->GetValue( i ) );
   }
@@ -643,8 +639,8 @@ buildSuperCellGraph(
   MpiWrapper::allGatherv( localSuperCellIds.toViewConst(), allSuperCellIds, comm );
 
   // Build lookup tables from gathered data (only for ghosts + local)
-  std::unordered_map< pmet_idx_t, vtkIdType > parmetisToVtk;
-  std::unordered_map< vtkIdType, vtkIdType > vtkToSuperCell;
+  stdUnorderedMap< pmet_idx_t, vtkIdType > parmetisToVtk;
+  stdUnorderedMap< vtkIdType, vtkIdType > vtkToSuperCell;
 
   parmetisToVtk.reserve( ghostParmetisSet.size() + numLocalCells );
   vtkToSuperCell.reserve( ghostParmetisSet.size() + numLocalCells );
@@ -654,7 +650,7 @@ buildSuperCellGraph(
     pmet_idx_t const parmetisIdx = allParmetisIndices[i];
 
     // Only store if it's local or a ghost we need
-    if( (parmetisIdx >= myParmetisStart && parmetisIdx < myParmetisEnd) ||
+    if( (parmetisIdx >= localParmetisStart && parmetisIdx < localParmetisEnd) ||
         ghostParmetisSet.count( parmetisIdx ) > 0 )
     {
       vtkIdType const vtkId = allVtkIds[i];
@@ -696,7 +692,7 @@ buildSuperCellGraph(
   // Step 5: Build super-cell graph edges
   // -----------------------------------------------------------------------
   array1d< pmet_idx_t > superVertexWeights( numLocalSuperCells );
-  std::vector< std::set< pmet_idx_t > > neighborSets( numLocalSuperCells );
+  stdVector< std::set< pmet_idx_t > > neighborSets( numLocalSuperCells );
 
   for( localIndex localSuperIdx = 0; localSuperIdx < numLocalSuperCells; ++localSuperIdx )
   {
@@ -741,35 +737,33 @@ buildSuperCellGraph(
   // Step 6: Symmetrize
   // -----------------------------------------------------------------------
   // Collect ALL edges to send (to any rank)
-  std::vector< pmet_idx_t > myEdgesSrc;
-  std::vector< pmet_idx_t > myEdgesDst;
+  stdVector< pmet_idx_t > localEdgesSrc;
+  stdVector< pmet_idx_t > localEdgesDst;
 
   for( localIndex i = 0; i < numLocalSuperCells; ++i )
   {
-    pmet_idx_t globalI = myGlobalStart + i;
+    pmet_idx_t globalI = localGlobalStart + i;
     for( pmet_idx_t nbrIdx : neighborSets[i] )
     {
-      if( nbrIdx < myGlobalStart || nbrIdx >= myGlobalEnd )
+      if( nbrIdx < localGlobalStart || nbrIdx >= localGlobalEnd )
       {
-        myEdgesSrc.push_back( nbrIdx );  // destination of reverse edge
-        myEdgesDst.push_back( globalI ); // source of reverse edge
+        localEdgesSrc.push_back( nbrIdx );  // destination of reverse edge
+        localEdgesDst.push_back( globalI ); // source of reverse edge
       }
     }
   }
 
-  int myEdgeCount = static_cast< int >( myEdgesSrc.size() );
+  int localEdgeCount = static_cast< int >( localEdgesSrc.size() );
 
   // Gather counts from all ranks
   array1d< int > allEdgeCounts( numRanks );
-  MpiWrapper::allgather( &myEdgeCount, 1, allEdgeCounts.data(), 1, comm );
+  MpiWrapper::allgather( &localEdgeCount, 1, allEdgeCounts.data(), 1, comm );
 
   // Compute displacements for symmetrization
   array1d< int > edgeDispls( numRanks + 1 );
   edgeDispls[0] = 0;
-  for( int r = 0; r < numRanks; ++r )
-  {
-    edgeDispls[r + 1] = edgeDispls[r] + allEdgeCounts[r];
-  }
+  std::partial_sum( allEdgeCounts.begin(), allEdgeCounts.end(),
+                    edgeDispls.begin() + 1 );
 
   int totalEdges = edgeDispls[numRanks];
 
@@ -777,11 +771,11 @@ buildSuperCellGraph(
   array1d< pmet_idx_t > allEdgeSrc( totalEdges > 0 ? totalEdges : 1 );
   array1d< pmet_idx_t > allEdgeDst( totalEdges > 0 ? totalEdges : 1 );
 
-  if( myEdgeCount > 0 )
+  if( localEdgeCount > 0 )
   {
-    MpiWrapper::allgatherv( myEdgesSrc.data(), myEdgeCount,
+    MpiWrapper::allgatherv( localEdgesSrc.data(), localEdgeCount,
                             allEdgeSrc.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
-    MpiWrapper::allgatherv( myEdgesDst.data(), myEdgeCount,
+    MpiWrapper::allgatherv( localEdgesDst.data(), localEdgeCount,
                             allEdgeDst.data(), allEdgeCounts.data(), edgeDispls.data(), comm );
   }
   else
@@ -825,8 +819,8 @@ void validateSuperCellGraph(
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
-  pmet_idx_t myStart = superElemDist[rank];
-  pmet_idx_t myEnd = superElemDist[rank + 1];
+  pmet_idx_t localStart = superElemDist[rank];
+  pmet_idx_t localEnd = superElemDist[rank + 1];
 
   // -----------------------------------------------------------------------
   // Check 1: No self-loops
@@ -834,13 +828,13 @@ void validateSuperCellGraph(
   {
     for( localIndex i = 0; i < superGraph.size(); ++i )
     {
-      pmet_idx_t myGlobalId = myStart + i;
+      pmet_idx_t localGlobalId = localStart + i;
 
       for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
       {
-        GEOS_ERROR_IF( superGraph[i][j] == myGlobalId,
+        GEOS_ERROR_IF( superGraph[i][j] == localGlobalId,
                        GEOS_FMT( "Rank {}: Super-cell {} (global {}) has self-loop",
-                                 rank, i, myGlobalId ) );
+                                 rank, i, localGlobalId ) );
       }
     }
   }
@@ -897,7 +891,7 @@ void validateSuperCellGraph(
         isolated++;
         if( isolated <= 5 )
         {
-          pmet_idx_t globalId = myStart + i;
+          pmet_idx_t globalId = localStart + i;
           GEOS_LOG_RANK( GEOS_FMT( "WARNING: Super-cell {} (global {}) has no neighbors (isolated)",
                                    i, globalId ) );
         }
@@ -929,58 +923,53 @@ void validateSuperCellGraph(
   // Check 6: Graph symmetry for local edges
   // -----------------------------------------------------------------------
   {
+    // Pack a pair of (<32-bit) ids into a single uint64_t hash key.
+    auto const edgeKey = []( pmet_idx_t a, pmet_idx_t b ) -> uint64_t
+    {
+      return (static_cast< uint64_t >( a ) << 32) | static_cast< uint64_t >( b );
+    };
+
+    // Iterate every edge whose endpoints are both local to this rank.
+    auto const forEachLocalEdge = [&]( auto && fn )
+    {
+      for( localIndex i = 0; i < superGraph.size(); ++i )
+      {
+        pmet_idx_t const globalI = localStart + i;
+        auto neighbors = superGraph[i];
+        for( localIndex j = 0; j < neighbors.size(); ++j )
+        {
+          pmet_idx_t const globalJ = neighbors[j];
+          if( globalJ >= localStart && globalJ < localEnd )
+          {
+            fn( globalI, globalJ );
+          }
+        }
+      }
+    };
+
     std::unordered_set< uint64_t > localOutgoingNeighbors;
 
-    // Build edge set
-    for( localIndex i = 0; i < superGraph.size(); ++i )
+    forEachLocalEdge( [&]( pmet_idx_t globalI, pmet_idx_t globalJ )
     {
-      pmet_idx_t globalI = myStart + i;
-      auto neighbors = superGraph[i];
+      localOutgoingNeighbors.insert( edgeKey( globalI, globalJ ) );
+    } );
 
-      for( localIndex j = 0; j < neighbors.size(); ++j )
-      {
-        pmet_idx_t globalJ = neighbors[j];
-
-        if( globalJ >= myStart && globalJ < myEnd )
-        {
-          uint64_t edgeKey = (static_cast< uint64_t >( globalI ) << 32) |
-                             static_cast< uint64_t >( globalJ );
-          localOutgoingNeighbors.insert( edgeKey );
-        }
-      }
-    }
-
-    // Verify symmetry
-    for( localIndex i = 0; i < superGraph.size(); ++i )
+    forEachLocalEdge( [&]( pmet_idx_t globalI, pmet_idx_t globalJ )
     {
-      pmet_idx_t globalI = myStart + i;
-      auto neighbors = superGraph[i];
-
-      for( localIndex j = 0; j < neighbors.size(); ++j )
-      {
-        pmet_idx_t globalJ = neighbors[j];
-
-        if( globalJ >= myStart && globalJ < myEnd )
-        {
-          uint64_t reverseKey = (static_cast< uint64_t >( globalJ ) << 32) |
-                                static_cast< uint64_t >( globalI );
-
-          GEOS_ERROR_IF( localOutgoingNeighbors.find( reverseKey ) == localOutgoingNeighbors.end(),
-                         GEOS_FMT( "Rank {}: Asymmetric edge ({} -> {}) - reverse edge missing",
-                                   rank, globalI, globalJ ) );
-        }
-      }
-    }
+      GEOS_ERROR_IF( localOutgoingNeighbors.find( edgeKey( globalJ, globalI ) ) == localOutgoingNeighbors.end(),
+                     GEOS_FMT( "Rank {}: Asymmetric edge ({} -> {}) - reverse edge missing",
+                               rank, globalI, globalJ ) );
+    } );
   }
 
 }
 
 
 // =============================================================================================
-// SECTION 5: PARTITION UNPACKING (after ParMETIS)
+// SECTION 5: PARTITION EXPANSION (after ParMETIS)
 // =============================================================================================
 array1d< int64_t >
-unpackSuperCellPartitioning(
+expandSuperCellPartitioningToCells(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   array1d< int64_t > const & superPartitioning,
   stdMap< vtkIdType, localIndex > const & superCellIdToLocalIdx,
@@ -1023,20 +1012,14 @@ unpackSuperCellPartitioning(
   // Step 3: Validate that super-cells weren't split
   // -----------------------------------------------------------------------
   stdMap< vtkIdType, std::set< int64_t > > superCellToRanks;
+  vtkIdType numSplitSuperCells = 0;
 
   for( vtkIdType i = 0; i < numCells; ++i )
   {
     vtkIdType const scId = superCellIdArray->GetValue( i );
-    superCellToRanks.get_inserted( scId ).insert( cellPartitioning[i] );
-  }
-
-  vtkIdType numSplitSuperCells = 0;
-  for( auto const & [superCellId, ranks] : superCellToRanks )
-  {
-    if( ranks.size() > 1 )
-    {
-      ++numSplitSuperCells;
-    }
+    auto & ranks = superCellToRanks.get_inserted( scId );
+    // A super-cell becomes "split" the first time we add a second distinct rank.
+    numSplitSuperCells += ( ranks.insert( cellPartitioning[i] ).second && ranks.size() == 2 );
   }
 
   vtkIdType totalSplitSuperCells = MpiWrapper::sum( numSplitSuperCells, comm );

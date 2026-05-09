@@ -207,84 +207,6 @@ generateGlobalIDs( vtkSmartPointer< vtkDataSet > mesh )
 
 
 /**
- * @brief Get the Cell Array object
- * @details Replaces GetCells() that exist only in vtkUnstructuredGrid
- * @param[in] mesh a vtk grid
- * @return an array of cells
- */
-vtkSmartPointer< vtkCellArray > getCellArray( vtkSmartPointer< vtkDataSet > mesh )
-{
-  vtkSmartPointer< vtkCellArray > cells = vtkSmartPointer< vtkCellArray >::New();
-  if( mesh->IsA( "vtkUnstructuredGrid" ) )
-  {
-    cells = vtkUnstructuredGrid::SafeDownCast( mesh )->GetCells();
-  }
-  else if( isMeshStructured( mesh ) )
-  {
-    // All cells are either hexahedra or voxels
-    vtkIdType const numCells = mesh->GetNumberOfCells();
-    cells->AllocateExact( numCells, 8 * numCells );
-    for( vtkIdType c = 0; c < numCells; ++c )
-    {
-      cells->InsertNextCell( mesh->GetCell( c ) );
-    }
-  }
-  else
-  {
-    GEOS_ERROR( "Unsupported mesh format" );
-  }
-  return cells;
-}
-
-
-/**
- * @brief Build the element to nodes mappings implementation
- * @tparam INDEX_TYPE The indexing type
- * @tparam POLICY The computational policy (parallel/serial)
- * @param mesh The 3D mesh
- * @param cells The vtk cell array
- * @return The mapping for 3D cells only
- */
-template< typename INDEX_TYPE, typename POLICY >
-ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodesImpl( vtkSmartPointer< vtkDataSet > mesh,
-                      vtkSmartPointer< vtkCellArray > const & cells )
-{
-  GEOS_MARK_FUNCTION;
-
-  localIndex const numCells = LvArray::integerConversion< localIndex >( mesh->GetNumberOfCells() );
-
-  array1d< INDEX_TYPE > nodeCounts( numCells );
-
-  // GetCellSize() is always thread-safe, can run in parallel
-  forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
-  {
-    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells->GetCellSize( cellIdx ) );
-  } );
-
-  // Create strictly allocated ArrayOfArrays using resizeFromCapacities
-  ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
-  elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
-
-  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
-
-  // GetCellAtId() is conditionally thread-safe, use POLICY argument
-  forAll< POLICY >( numCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
-  {
-    vtkIdType numPts;
-    vtkIdType const * points;
-    cells->GetCellAtId( cellIdx, numPts, points );
-    for( int a = 0; a < numPts; ++a )
-    {
-      vtkIdType const pointIdx = globalPointId.GetValue( points[a] );
-      elemToNodes.emplaceBack( cellIdx, LvArray::integerConversion< INDEX_TYPE >( pointIdx ) );
-    }
-  } );
-
-  return elemToNodes;
-}
-
-/**
  * @brief Build the element to nodes mappings for the 3D mesh only
  * @tparam INDEX_TYPE The indexing type
  * @param mesh The 3D mesh
@@ -295,13 +217,35 @@ template< typename INDEX_TYPE >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
 buildElemToNodes( vtkSmartPointer< vtkDataSet > mesh )
 {
-  vtkSmartPointer< vtkCellArray > const & cells = vtk::getCellArray( mesh );
-  // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
-  // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
-  // and thus results can be used in a thread-safe way.
-  return cells->IsStorageShareable()
-         ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh, cells )
-         : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh, cells );
+  GEOS_MARK_FUNCTION;
+
+  localIndex const numCells = LvArray::integerConversion< localIndex >( mesh->GetNumberOfCells() );
+
+  array1d< INDEX_TYPE > nodeCounts( numCells );
+
+  forAll< parallelHostPolicy >( numCells, [&mesh, nodeCounts = nodeCounts.toView()] ( localIndex const cellIdx )
+  {
+    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( mesh->GetCellSize( cellIdx ) );
+  } );
+
+  ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
+  elemToNodes.template resizeFromCapacities< parallelHostPolicy >( numCells, nodeCounts.data() );
+
+  vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh->GetPointData()->GetGlobalIds() );
+
+  forAll< parallelHostPolicy >( numCells, [&mesh, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
+  {
+    vtkSmartPointer< vtkIdList > const ptIds = vtkSmartPointer< vtkIdList >::New();
+    mesh->GetCellPoints( cellIdx, ptIds );
+    vtkIdType const numPts = ptIds->GetNumberOfIds();
+    for( vtkIdType a = 0; a < numPts; ++a )
+    {
+      vtkIdType const pointIdx = globalPointId.GetValue( ptIds->GetId( a ) );
+      elemToNodes.emplaceBack( cellIdx, LvArray::integerConversion< INDEX_TYPE >( pointIdx ) );
+    }
+  } );
+
+  return elemToNodes;
 }
 
 
@@ -834,7 +778,7 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
   // Step 8: Unpack super-cell partitioning to individual cells
   // -----------------------------------------------------------------------
-  array1d< int64_t > cellPartitioning = unpackSuperCellPartitioning(
+  array1d< int64_t > cellPartitioning = expandSuperCellPartitioningToCells(
     ugrid,
     superCellPartitioning,
     superCellIdToLocalIdx,
@@ -1624,15 +1568,15 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
   // -----------------------------------------------------------------------
   stdMap< vtkIdType, std::set< vtkIdType > > nodeGlobalIdToCells3D;
 
+  vtkSmartPointer< vtkIdList > const ptIds = vtkSmartPointer< vtkIdList >::New();
   for( localIndex i = 0; i < cells3DIndices.size(); ++i )
   {
     vtkIdType const origCellIdx = cells3DIndices[i];
-    vtkCell * cell = originalMesh.GetCell( origCellIdx );
-    vtkIdList * pointIds = cell->GetPointIds();
+    originalMesh.GetCellPoints( origCellIdx, ptIds );
 
-    for( vtkIdType p = 0; p < pointIds->GetNumberOfIds(); ++p )
+    for( vtkIdType p = 0; p < ptIds->GetNumberOfIds(); ++p )
     {
-      vtkIdType const nodeLocalId = pointIds->GetId( p );
+      vtkIdType const nodeLocalId = ptIds->GetId( p );
       vtkIdType const nodeGlobalId = static_cast< vtkIdType >( meshGlobalNodeIds->GetTuple1( nodeLocalId ) );
 
       nodeGlobalIdToCells3D.get_inserted( nodeGlobalId ).insert( origCellIdx );
@@ -1650,14 +1594,14 @@ buildFractureTo3DNeighbors( vtkDataSet & originalMesh,
   ArrayOfArrays< localIndex, int64_t > result;
   result.reserve( numFractureElems );
 
+  vtkSmartPointer< vtkIdList > const fracPtIds = vtkSmartPointer< vtkIdList >::New();
   for( vtkIdType fracElemIdx = 0; fracElemIdx < numFractureElems; ++fracElemIdx )
   {
-    vtkCell * fracCell = fractureMesh->GetCell( fracElemIdx );
-    vtkIdList * fracPointIds = fracCell->GetPointIds();
+    fractureMesh->GetCellPoints( fracElemIdx, fracPtIds );
 
     // Find matching 3D cells using exact node matching
     stdVector< vtkIdType > matchingOriginalCells = findMatchingCellsForFractureElement(
-      fracPointIds,
+      fracPtIds,
       collocatedNodes,
       nodeGlobalIdToCells3D );
 

@@ -155,7 +155,7 @@ void validateSuperCellGraph(
  * @return Cell-level partition assignments
  */
 array1d< int64_t >
-unpackSuperCellPartitioning(
+expandSuperCellPartitioningToCells(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   array1d< int64_t > const & superPartitioning,
   stdMap< vtkIdType, localIndex > const & superCellIdToLocalIdx,

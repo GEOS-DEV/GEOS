@@ -170,9 +170,7 @@ partitionWeighted( ArrayOfArraysView< idx_t const, idx_t > const & graph,
   idx_t npart = numParts;
 
   // Options: [use_defaults, log_level, seed, coupling]
-  // PARMETIS_PSR_UNCOUPLED = 0 (default - uses PartitionSmallGraph)
-  // PARMETIS_PSR_COUPLED = 1 (forces distributed algorithm)
-  idx_t options[4] = { 1, 0, 2022, 0 };
+  idx_t options[4] = { 1, 0, 2022, PARMETIS_PSR_UNCOUPLED };
 
   idx_t edgecut = 0;
   real_t ubvec = 1.05;

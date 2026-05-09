@@ -196,7 +196,8 @@ private:
       main->SetPoints( points );
 
       int constexpr numHexs = 3;
-      vtkIdType const cubes[numHexs][8] = {
+      int constexpr pointsPerHex = 8;
+      vtkIdType const cubes[numHexs][pointsPerHex] = {
         { 0, 1, 2, 3, 4, 5, 6, 7 },     // Hex 0
         { 8, 9, 10, 11, 12, 13, 14, 15 }, // Hex 1
         { 16, 17, 18, 19, 20, 21, 22, 23 } // Hex 2
@@ -204,7 +205,7 @@ private:
       main->Allocate( numHexs );
       for( vtkIdType const * cube: cubes )
       {
-        main->InsertNextCell( VTK_HEXAHEDRON, 8, cube );
+        main->InsertNextCell( VTK_HEXAHEDRON, pointsPerHex, cube );
       }
 
       vtkNew< vtkIdTypeArray > cellGlobalIds;
@@ -246,11 +247,12 @@ private:
       fracture->SetPoints( points );
 
       int constexpr numQuads = 1;
-      vtkIdType const quad[numQuads][4] = { { 0, 1, 2, 3 } };
+      int constexpr pointsPerQuad = 4;
+      vtkIdType const quad[numQuads][pointsPerQuad] = { { 0, 1, 2, 3 } };
       fracture->Allocate( numQuads );
       for( vtkIdType const * q: quad )
       {
-        fracture->InsertNextCell( VTK_QUAD, 4, q );
+        fracture->InsertNextCell( VTK_QUAD, pointsPerQuad, q );
       }
 
       vtkNew< vtkIdTypeArray > cellGlobalIds;
