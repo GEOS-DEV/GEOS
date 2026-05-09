@@ -28,17 +28,6 @@ function or_die () {
     fi
 }
 
-function run_diagnostic_command () {
-    local label="$1"
-    shift
-
-    echo "Diagnostic: ${label}"
-    echo "+ $*"
-    "$@"
-    local status=$?
-    echo "Diagnostic '${label}' exit status: ${status}"
-}
-
 PHASE_TIMINGS=()
 CURRENT_PHASE_LABEL=""
 CURRENT_PHASE_START=""
@@ -354,7 +343,7 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_args=--use-hwthread-cpus --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
@@ -525,29 +514,30 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   # because with ninja it swallows the output while all the
   # simulations are running.
   # We directly use the script instead...
-  echo "Integrated test runtime diagnostics:"
-  echo "hostname: $(hostname)"
-  run_diagnostic_command "nproc" nproc
-  run_diagnostic_command "nproc --all" nproc --all
-  run_diagnostic_command "getconf _NPROCESSORS_ONLN" getconf _NPROCESSORS_ONLN
-  if [[ -r /proc/self/status ]]; then
-    echo "Cgroup CPU affinity from /proc/self/status:"
-    grep -E 'Cpus_allowed|Mems_allowed' /proc/self/status || true
-  fi
-  if [[ -r /sys/fs/cgroup/cpu.max ]]; then
-    echo -n "cgroup cpu.max: "
-    cat /sys/fs/cgroup/cpu.max
-  fi
-  if command -v lscpu >/dev/null; then
-    run_diagnostic_command "lscpu" lscpu
-  fi
-  if command -v /usr/bin/mpirun >/dev/null; then
-    run_diagnostic_command "mpirun display allocation" /usr/bin/mpirun --allow-run-as-root --display-allocation -np 1 hostname
-    run_diagnostic_command "mpirun 18 ranks" /usr/bin/mpirun --allow-run-as-root -np 18 hostname
-    run_diagnostic_command "mpirun 27 ranks" /usr/bin/mpirun --allow-run-as-root -np 27 hostname
-    run_diagnostic_command "mpirun 27 ranks with hardware threads" /usr/bin/mpirun --allow-run-as-root --use-hwthread-cpus -np 27 hostname
-    run_diagnostic_command "mpirun 27 ranks with oversubscribe" /usr/bin/mpirun --allow-run-as-root --oversubscribe -np 27 hostname
-  fi
+
+  # echo "Integrated test runtime diagnostics:"
+  # echo "hostname: $(hostname)"
+  # run_diagnostic_command "nproc" nproc
+  # run_diagnostic_command "nproc --all" nproc --all
+  # run_diagnostic_command "getconf _NPROCESSORS_ONLN" getconf _NPROCESSORS_ONLN
+  # if [[ -r /proc/self/status ]]; then
+  #   echo "Cgroup CPU affinity from /proc/self/status:"
+  #   grep -E 'Cpus_allowed|Mems_allowed' /proc/self/status || true
+  # fi
+  # if [[ -r /sys/fs/cgroup/cpu.max ]]; then
+  #   echo -n "cgroup cpu.max: "
+  #   cat /sys/fs/cgroup/cpu.max
+  # fi
+  # if command -v lscpu >/dev/null; then
+  #   run_diagnostic_command "lscpu" lscpu
+  # fi
+  # if command -v /usr/bin/mpirun >/dev/null; then
+  #   run_diagnostic_command "mpirun display allocation" /usr/bin/mpirun --allow-run-as-root --display-allocation -np 1 hostname
+  #   run_diagnostic_command "mpirun 18 ranks" /usr/bin/mpirun --allow-run-as-root -np 18 hostname
+  #   run_diagnostic_command "mpirun 27 ranks" /usr/bin/mpirun --allow-run-as-root -np 27 hostname
+  #   run_diagnostic_command "mpirun 27 ranks with hardware threads" /usr/bin/mpirun --allow-run-as-root --use-hwthread-cpus -np 27 hostname
+  #   run_diagnostic_command "mpirun 27 ranks with oversubscribe" /usr/bin/mpirun --allow-run-as-root --oversubscribe -np 27 hostname
+  # fi
 
   echo "Available baselines:"
   ls -lR /tmp/geos/baselines
