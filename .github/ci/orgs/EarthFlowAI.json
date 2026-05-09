@@ -8,9 +8,9 @@
   "runner_ca_bundle_host_paths": {},
   "runner_cuda_architectures": { "thinkpad": "120" },
   "runners": {
-    "default": "ubuntu-22.04",
-    "cpu_heavy": "32core",
-    "integrated_tests": "32core",
+    "default": "thinkpad",
+    "cpu_heavy": "thinkpad",
+    "integrated_tests": "32-physical-core",
     "code_coverage": "32core",
     "cuda": "thinkpad"
   }
