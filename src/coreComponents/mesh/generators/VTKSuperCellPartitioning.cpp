@@ -92,8 +92,8 @@ SuperCellInfo tagCellsWithSuperCellIds(
       vtkIdType gidA = neighborList[0];
       vtkIdType gidB = neighborList[1];
 
-      fractureGraph[gidA].insert( gidB );
-      fractureGraph[gidB].insert( gidA );
+      fractureGraph.get_inserted( gidA ).insert( gidB );
+      fractureGraph.get_inserted( gidB ).insert( gidA );
     }
   }
 
@@ -122,7 +122,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
     if( visited.count( cell ) )
       return;
     visited.insert( cell );
-    cellToSuperCell[cell] = superCellId;
+    cellToSuperCell.insert_or_assign( cell, superCellId );
     component.push_back( cell );
 
     // Recursively visit all neighbors
@@ -144,7 +144,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
       stdVector< vtkIdType > component;
       dfs( cell, nextSuperCellId, component );
 
-      superCellComponents[nextSuperCellId] = component;
+      superCellComponents.insert_or_assign( nextSuperCellId, component );
       nextSuperCellId++;
     }
   }
@@ -236,7 +236,7 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
   {
     vtkIdType scId = superCellIdArray->GetValue( i );
     vtkIdType globalId = globalIds->GetValue( i );
-    localSuperCells[scId].push_back( globalId );
+    localSuperCells.get_inserted( scId ).push_back( globalId );
   }
 
   for( auto const & [scId, cells] : localSuperCells )
@@ -285,7 +285,7 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     for( vtkIdType i = 0; i < numCells; ++i )
     {
       vtkIdType scId = superCellIdArray->GetValue( i );
-      superCellToLocalCells[scId].push_back( i );
+      superCellToLocalCells.get_inserted( scId ).push_back( i );
     }
     vtkIdType numSuperCells = superCellToLocalCells.size();
 
@@ -534,7 +534,7 @@ buildSuperCellGraph(
   for( vtkIdType i = 0; i < numLocalCells; ++i )
   {
     vtkIdType superCellId = superCellIdArray->GetValue( i );
-    superCellToLocalCells[superCellId].push_back( i );
+    superCellToLocalCells.get_inserted( superCellId ).push_back( i );
   }
 
   localIndex numLocalSuperCells = superCellToLocalCells.size();
@@ -567,7 +567,7 @@ buildSuperCellGraph(
   stdMap< vtkIdType, pmet_idx_t > superCellIdToGlobalIdx;
   for( pmet_idx_t i = 0; i < numLocalSuperCells; ++i )
   {
-    superCellIdToGlobalIdx[orderedSuperCellIds[i]] = localGlobalStart + i;
+    superCellIdToGlobalIdx.insert_or_assign( orderedSuperCellIds[i], localGlobalStart + i );
   }
 
   // -----------------------------------------------------------------------
@@ -588,8 +588,8 @@ buildSuperCellGraph(
     vtkIdType vtkGlobalId = cellGlobalIds->GetValue( i );
     vtkIdType superCellId = superCellIdArray->GetValue( i );
 
-    localGlobalCellToSuperCell[vtkGlobalId] = superCellId;
-    localParmetisToVtk[localParmetisStart + i] = vtkGlobalId;
+    localGlobalCellToSuperCell.insert_or_assign( vtkGlobalId, superCellId );
+    localParmetisToVtk.insert_or_assign( localParmetisStart + i, vtkGlobalId );
   }
 
   // -----------------------------------------------------------------------
@@ -656,8 +656,8 @@ buildSuperCellGraph(
       vtkIdType const vtkId = allVtkIds[i];
       vtkIdType const superCellId = allSuperCellIds[i];
 
-      parmetisToVtk[parmetisIdx] = vtkId;
-      vtkToSuperCell[vtkId] = superCellId;
+      parmetisToVtk.insert_or_assign( parmetisIdx, vtkId );
+      vtkToSuperCell.insert_or_assign( vtkId, superCellId );
     }
   }
 
@@ -685,7 +685,7 @@ buildSuperCellGraph(
   // Update local map with all super-cell mappings
   for( localIndex i = 0; i < allSCIds.size(); ++i )
   {
-    superCellIdToGlobalIdx[allSCIds[i]] = allSCGlobalIndices[i];
+    superCellIdToGlobalIdx.insert_or_assign( allSCIds[i], allSCGlobalIndices[i] );
   }
 
   // -----------------------------------------------------------------------
