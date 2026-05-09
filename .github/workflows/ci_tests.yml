@@ -146,6 +146,11 @@ jobs:
           and (.runner_ca_bundle_host_paths | all(.[]; type == "string"))
           and (.runner_cuda_architectures | type == "object")
           and (.runner_cuda_architectures | all(.[]; type == "string" and length > 0))
+          and (.runner_resource_overrides | type == "object")
+          and (.runner_resource_overrides | all(.[]; type == "object"
+            and ((.docker_run_args? // "") | type == "string")
+            and ((.nproc? // "") | type == "string" and test("^$|^[1-9][0-9]*$"))
+            and ((.ctest_parallel_level? // "") | type == "string" and test("^$|^[1-9][0-9]*$"))))
           and (.runners | type == "object")
           and (.runners.default | type == "string" and length > 0)
           and (.runners.cpu_heavy | type == "string" and length > 0)
@@ -153,7 +158,7 @@ jobs:
           and (.runners.code_coverage | type == "string" and length > 0)
           and (.runners.cuda | type == "string" and length > 0)
         ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
-          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, integrated_tests_baseline_fallback_public_url_prefix, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
+          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, integrated_tests_baseline_fallback_public_url_prefix, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, runner_resource_overrides, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
           exit 1
         fi
 
@@ -167,6 +172,7 @@ jobs:
         RUNNER_LABELS_JSON="$(jq -c '.runners' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -c '.runner_ca_bundle_host_paths' <<< "${ORG_CONFIG_JSON}")"
         RUNNER_CUDA_ARCHITECTURES_JSON="$(jq -c '.runner_cuda_architectures' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_RESOURCE_OVERRIDES_JSON="$(jq -c '.runner_resource_overrides' <<< "${ORG_CONFIG_JSON}")"
 
         # --- Resolve per-runner-role CA bundle paths. ---
         # Each runner role picks up the bundle path for its label; if no exact match,
@@ -251,6 +257,7 @@ jobs:
           echo "INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX=${INTEGRATED_TESTS_BASELINE_FALLBACK_PUBLIC_URL_PREFIX}"
           echo "DOCKER_CA_BUNDLE_HOST_PATHS_JSON=${DOCKER_CA_BUNDLE_HOST_PATHS_JSON}"
           echo "CMAKE_CUDA_ARCHITECTURES_JSON=${CMAKE_CUDA_ARCHITECTURES_JSON}"
+          echo "RUNNER_RESOURCE_OVERRIDES_JSON=${RUNNER_RESOURCE_OVERRIDES_JSON}"
           echo "RUNNER_LABELS_JSON=${RUNNER_LABELS_JSON}"
           echo "ARTIFACT_UPLOAD_COMMAND<<__EOF__"
           printf '%s\n' "${ARTIFACT_UPLOAD_COMMAND}"
@@ -440,6 +447,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS || '' }}
+      RUNNER_RESOURCE_OVERRIDES_JSON: ${{ needs.resolve_ci_provider.outputs.RUNNER_RESOURCE_OVERRIDES_JSON }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
@@ -466,6 +474,7 @@ jobs:
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
+      RUNNER_RESOURCE_OVERRIDES_JSON: ${{ needs.resolve_ci_provider.outputs.RUNNER_RESOURCE_OVERRIDES_JSON }}
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
@@ -628,6 +637,7 @@ jobs:
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
       DOCKER_RUN_ARGS: ${{ matrix.DOCKER_RUN_ARGS }}
+      RUNNER_RESOURCE_OVERRIDES_JSON: ${{ needs.resolve_ci_provider.outputs.RUNNER_RESOURCE_OVERRIDES_JSON }}
       ENABLE_HYPRE_DEVICE: ${{ matrix.ENABLE_HYPRE_DEVICE }}
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}

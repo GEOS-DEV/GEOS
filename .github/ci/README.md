@@ -66,6 +66,22 @@ Required fields (all of them, always):
   `CMAKE_CUDA_ARCHITECTURES` for CUDA jobs on that runner. The same exact-match then prefix
   fallback used by `runner_ca_bundle_host_paths` applies. Example: `{"streak2": "86"}`.
 
+- `runner_resource_overrides`
+  Map keyed first by the actual GitHub runner name (`RUNNER_NAME`), then by runner label, then by
+  the prefix before the first `-`. Each value is an object with optional string fields:
+  `docker_run_args`, `nproc`, and `ctest_parallel_level`.
+  When `nproc` or `ctest_parallel_level` is set here, it takes precedence over the workflow
+  matrix value for jobs that land on that runner. `nproc` and `ctest_parallel_level` must be
+  positive integer strings when present.
+  Use a runner-label key for a common cap that applies to any runner selected for that label, for
+  example `{"thinkpad": {"docker_run_args": "--cpus=8", "nproc": "8"}}`.
+  Use actual `RUNNER_NAME` keys only when runner services have known stable names and need
+  exclusive CPU pinning, for example
+  `{"thinkpad1": {"docker_run_args": "--cpuset-cpus=0-7", "nproc": "8"}}`.
+  `docker_run_args` is appended to the job's Docker arguments and can affect host isolation, so
+  review changes to this field with the same care as workflow changes.
+  Use `{}` for orgs that do not need runner-specific resource overrides.
+
 - `runners`
   Map from runner role to runner label. Required roles:
   - `default`

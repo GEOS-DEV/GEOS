@@ -37,6 +37,10 @@ on:
       DOCKER_RUN_ARGS:
         required: false
         type: string
+      RUNNER_RESOURCE_OVERRIDES_JSON:
+        required: false
+        type: string
+        default: '{}'
       DOCKER_CA_BUNDLE_HOST_PATH:
         required: false
         type: string
@@ -521,6 +525,27 @@ jobs:
         ${{ inputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
         __ARTIFACT_UPLOAD_PRE_COMMAND__
         )"
+        RUNNER_RESOURCE_OVERRIDES_JSON='${{ inputs.RUNNER_RESOURCE_OVERRIDES_JSON }}'
+        if [[ -z "${RUNNER_RESOURCE_OVERRIDES_JSON}" ]]; then
+          RUNNER_RESOURCE_OVERRIDES_JSON='{}'
+        fi
+        if ! jq -e 'type == "object"' <<< "${RUNNER_RESOURCE_OVERRIDES_JSON}" >/dev/null 2>&1; then
+          echo "::error::RUNNER_RESOURCE_OVERRIDES_JSON must be a JSON object."
+          exit 1
+        fi
+        RUNNER_RESOURCE_OVERRIDE_JSON="$(jq -c \
+          --arg runner_name "${RUNNER_NAME:-}" \
+          --arg runner_label "${{ inputs.RUNS_ON }}" '
+          def prefix($value): ($value | split("-")[0]);
+          .[$runner_name] // .[$runner_label] // .[(prefix($runner_label))] // {}
+        ' <<< "${RUNNER_RESOURCE_OVERRIDES_JSON}")"
+        RUNNER_RESOURCE_DOCKER_RUN_ARGS="$(jq -r '.docker_run_args // ""' <<< "${RUNNER_RESOURCE_OVERRIDE_JSON}")"
+        RUNNER_RESOURCE_NPROC="$(jq -r '.nproc // ""' <<< "${RUNNER_RESOURCE_OVERRIDE_JSON}")"
+        RUNNER_RESOURCE_CTEST_PARALLEL_LEVEL="$(jq -r '.ctest_parallel_level // ""' <<< "${RUNNER_RESOURCE_OVERRIDE_JSON}")"
+
+        if [[ "${RUNNER_RESOURCE_OVERRIDE_JSON}" != "{}" ]]; then
+          echo "Resolved runner resource override for RUNNER_NAME=${RUNNER_NAME:-}, RUNS_ON=${{ inputs.RUNS_ON }}: ${RUNNER_RESOURCE_OVERRIDE_JSON}"
+        fi
 
         if [[ -z "${ARTIFACT_UPLOAD_URI_PREFIX}" && -n "${ARTIFACT_UPLOAD_BUCKET_PATH}" ]]; then
           ARTIFACT_UPLOAD_URI_PREFIX="${ARTIFACT_UPLOAD_URI_ROOT%/}/${ARTIFACT_UPLOAD_BUCKET_PATH}"
@@ -566,9 +591,12 @@ jobs:
           HAS_UPLOAD_TARGET=true
         fi
 
-        if [[ -n "${{ inputs.NPROC }}" ]]; then
-          NPROC=${{ inputs.NPROC }}
-          script_args+=(--nproc ${NPROC})
+        EFFECTIVE_NPROC="${RUNNER_RESOURCE_NPROC}"
+        if [[ -z "${EFFECTIVE_NPROC}" ]]; then
+          EFFECTIVE_NPROC="${{ inputs.NPROC }}"
+        fi
+        if [[ -n "${EFFECTIVE_NPROC}" ]]; then
+          script_args+=(--nproc "${EFFECTIVE_NPROC}")
         fi
 
         if [[ -n "${{ inputs.BUILD_GENERATOR }}" ]]; then
@@ -576,6 +604,9 @@ jobs:
         fi
 
         docker_args+=(${{ inputs.DOCKER_RUN_ARGS }})
+        if [[ -n "${RUNNER_RESOURCE_DOCKER_RUN_ARGS}" ]]; then
+          docker_args+=(${RUNNER_RESOURCE_DOCKER_RUN_ARGS})
+        fi
 
         if [[ -n "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
           if [[ ! -f "${INPUT_DOCKER_CA_BUNDLE_HOST_PATH}" ]]; then
@@ -701,8 +732,12 @@ jobs:
         docker_args+=(--name ${CONTAINER_NAME})
 
 
-        if [[ -n "${{ inputs.CTEST_PARALLEL_LEVEL }}" ]]; then
-          script_args+=(--ctest-parallel-level "${{ inputs.CTEST_PARALLEL_LEVEL }}")
+        EFFECTIVE_CTEST_PARALLEL_LEVEL="${RUNNER_RESOURCE_CTEST_PARALLEL_LEVEL}"
+        if [[ -z "${EFFECTIVE_CTEST_PARALLEL_LEVEL}" ]]; then
+          EFFECTIVE_CTEST_PARALLEL_LEVEL="${{ inputs.CTEST_PARALLEL_LEVEL }}"
+        fi
+        if [[ -n "${EFFECTIVE_CTEST_PARALLEL_LEVEL}" ]]; then
+          script_args+=(--ctest-parallel-level "${EFFECTIVE_CTEST_PARALLEL_LEVEL}")
         fi
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
