@@ -357,11 +357,8 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_BASELINE_DIR=$tempdir/GEOS_integratedTests_baselines
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
-  export ATS_FILTER="np<=${NPROC}"
-  export OMPI_ALLOW_RUN_AS_ROOT=1
-  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
-  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--use-hwthread-cpus --ats openmpi_procspernode=${NPROC} --ats openmpi_maxprocs=${NPROC} --ats cutoff=45m"
-  echo "Running integrated tests with ATS_FILTER=${ATS_FILTER}, openmpi_procspernode=${NPROC}, openmpi_maxprocs=${NPROC}."
+  export ATS_FILTER="np<=32"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
   ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
                   "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
                   "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
