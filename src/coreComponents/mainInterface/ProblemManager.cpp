@@ -27,7 +27,6 @@
 #include "constitutiveDrivers/solid/TriaxialDriver.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
-#include "dataRepository/RestartTiming.hpp"
 #include "dataRepository/KeyNames.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
@@ -1305,17 +1304,8 @@ void ProblemManager::applyInitialConditions()
 
 void ProblemManager::readRestartOverwrite()
 {
-  dataRepository::restartTiming::ScopedTimer const restartTimer( "ProblemManager::readRestartOverwrite" );
-
-  {
-    dataRepository::restartTiming::ScopedTimer const timer( "ProblemManager::loadFromConduit" );
-    this->loadFromConduit();
-  }
-
-  {
-    dataRepository::restartTiming::ScopedTimer const timer( "ProblemManager::postRestartInitializationRecursive" );
-    this->postRestartInitializationRecursive();
-  }
+  this->loadFromConduit();
+  this->postRestartInitializationRecursive();
 }
 
 } /* namespace geos */

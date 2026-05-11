@@ -30,7 +30,6 @@
 #include "BufferOps.hpp"
 #include "BufferOpsDevice.hpp"
 #include "RestartFlags.hpp"
-#include "RestartTiming.hpp"
 #include "codingUtilities/traits.hpp"
 #include "common/GeosxConfig.hpp"
 #include "DefaultValue.hpp"
@@ -834,8 +833,6 @@ public:
       m_conduitNode.reset();
       return false;
     }
-
-    restartTiming::ScopedTimer const timer( GEOS_FMT( "Wrapper::loadFromConduit {}", getPath() ) );
 
     setSizedFromParent( m_conduitNode[ "__sizedFromParent__" ].value() );
 

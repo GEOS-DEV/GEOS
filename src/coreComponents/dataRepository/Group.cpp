@@ -15,7 +15,6 @@
 
 // Source includes
 #include "Group.hpp"
-#include "RestartTiming.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
@@ -644,8 +643,6 @@ void Group::loadFromConduit()
   {
     return;
   }
-
-  restartTiming::ScopedTimer const timer( GEOS_FMT( "Group::loadFromConduit {}", getPath() ) );
 
   m_size = m_conduitNode.fetch_existing( "__size__" ).value();
   localIndex const groupSize = m_size;
