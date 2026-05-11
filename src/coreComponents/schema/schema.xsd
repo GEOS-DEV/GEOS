@@ -30,7 +30,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}|\s*[+-]?[\d]+\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
@@ -55,7 +55,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="groupNameRef_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{([a-zA-Z0-9.\-_/*\[\], ]+)*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{([a-zA-Z0-9.\-_/*\[\], ]+)*\}|[a-zA-Z0-9.\-_/*\[\]]+)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer">
@@ -65,7 +65,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}|\s*[+-]?[\d]+\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
@@ -85,7 +85,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}|\s*[+-]?[\d]+\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
@@ -110,7 +110,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="path_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*\s*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[^*?&lt;>\|:&quot;;,\s]+\s*,\s*)*\s*[^*?&lt;>\|:&quot;;,\s]+\s*)?\}|\s*[^*?&lt;>\|:&quot;;,\s]+\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32">
@@ -120,7 +120,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real32_array2d">
@@ -140,7 +140,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*,\s*)*\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)?\}|\s*[+-]?[\d]*([\d]\.?|\.[\d])[\d]*([eE][-+]?[\d]+|\s*)\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="real64_array2d">
@@ -165,7 +165,7 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="string_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[^,\{\}\s]+\s*,\s*)*\s*[^,\{\}\s]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*(\{\s*((\s*[^,\{\}\s]+\s*,\s*)*\s*[^,\{\}\s]+\s*)?\}|\s*[^,\{\}\s]+\s*)\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:element name="Problem" type="ProblemType" />
@@ -1361,11 +1361,8 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
@@ -1373,10 +1370,8 @@ Either left empty or sized exactly like 'scales'.-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1410,21 +1405,16 @@ When set to "error", output a throw.
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1453,21 +1443,16 @@ When set to "error", output a throw.
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1502,11 +1487,8 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
 		<xsd:attribute name="initialPhaseName" type="groupNameRef" default="" />
 		<!--maxNumberOfEquilibrationIterations => Maximum number of equilibration iterations-->
@@ -1517,10 +1499,8 @@ Either left empty or sized exactly like 'scales'.-->
 		<xsd:attribute name="phaseContacts" type="real64_array" default="{0}" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="groupNameRef" default="" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1544,21 +1524,16 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1596,21 +1571,16 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of a function(s) that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
+		<!--scale => Multiplier(s) of the functionName value. If no functionName is provided, this value is used directly.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
@@ -1633,11 +1603,8 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--functionName => Name of function that specifies variation of the boundary condition.-->
-		<xsd:attribute name="functionName" type="groupNameRef" default="" />
-		<!--functionNames => Names of per-component functions that specifies variation of the boundary condition.
-Either left empty or sized exactly like 'scales'.-->
-		<xsd:attribute name="functionNames" type="groupNameRef_array" default="{}" />
+		<!--functionName => Name(s) of function(s) that specifies variation of the boundary condition.-->
+		<xsd:attribute name="functionName" type="groupNameRef_array" default="{}" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--inputStress => Input stress for tractionType = stress-->
@@ -1648,12 +1615,10 @@ Either left empty or sized exactly like 'scales'.-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--regionNames => Names of the regions where the field specification is applied.-->
 		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
-		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
-		<xsd:attribute name="scale" type="real64" default="0" />
+		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
+		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--scaleSet => (no description available)-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
-		<!--scales => Apply scaling factors for the values of every component of the boundary condition.-->
-		<xsd:attribute name="scales" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
 A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
