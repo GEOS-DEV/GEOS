@@ -34,7 +34,8 @@ Group::Group( string const & name,
               Group * const parent ):
   Group( name, parent->getConduitNode() )
 {
-  GEOS_ERROR_IF( parent == nullptr, "Should not be null (for Group named " << name << ")." );
+  GEOS_ERROR_IF( parent == nullptr,
+                 GEOS_FMT( "Should not be null (for Group named {}).", name ) );
   m_parent = parent;
 }
 
@@ -77,7 +78,7 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group.",
+                 GEOS_FMT( "Wrapper '{}' doesn't exist in Group.", name ),
                  getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
@@ -85,6 +86,8 @@ void Group::deregisterWrapper( string const & name )
 
 void Group::resize( indexType const newSize )
 {
+  GEOS_MARK_FUNCTION;
+
   forWrappers( [newSize] ( WrapperBase & wrapper )
   {
     if( wrapper.sizedFromParent() == 1 )
@@ -122,7 +125,7 @@ void Group::reserve( indexType const newSize )
   {
     if( subGroup.sizedFromParent() == 1 )
     {
-      subGroup.resize( newSize );
+      subGroup.reserve( newSize );
     }
   } );
 
@@ -359,7 +362,8 @@ string Group::dumpWrappersNames() const
 
 void Group::deregisterGroup( string const & name )
 {
-  GEOS_ERROR_IF( !hasGroup( name ), "Group " << name << " doesn't exist." );
+  GEOS_ERROR_IF( !hasGroup( name ),
+                 GEOS_FMT( "Group '{}' doesn't exist.", name ) );
   m_subGroups.erase( name );
   m_conduitNode.remove( name );
 }
@@ -444,7 +448,7 @@ localIndex Group::packImpl( buffer_unit_type * & buffer,
     }
     else
     {
-      GEOS_ERROR( "Wrapper " << wrapperName << " not found in Group " << getDataContext() << "." );
+      GEOS_ERROR( GEOS_FMT( "Wrapper {} not found in Group {}.", wrapperName, getDataContext() ) );
     }
   }
 
@@ -692,8 +696,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
       }
     }
     GEOS_THROW_IF( !foundTarget,
-                   "Could not find the specified path start.\n"<<
-                   "Specified path is " << path,
+                   GEOS_FMT( "Could not find the specified path start.\nSpecified path is {}", path ),
                    geos::DomainError );
   }
 
