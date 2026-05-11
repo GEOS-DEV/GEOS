@@ -433,7 +433,8 @@ struct ComputeTractionSimultaneousKernel
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
-          arrayView2d< real64 > const & tractionNew )
+          arrayView2d< real64 > const & tractionNew,
+          arrayView1d< integer > const & fractureState)
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const kfe )
@@ -447,6 +448,7 @@ struct ComputeTractionSimultaneousKernel
         tractionNew[kfe][0] = 0.0;
         tractionNew[kfe][1] = 0.0;
         tractionNew[kfe][2] = 0.0;
+        fractureState[kfe] = fields::contact::FractureState::Open;
       }
       else
       {
@@ -455,6 +457,7 @@ struct ComputeTractionSimultaneousKernel
                                                    penalty[kfe][4] * deltaDispJump[kfe][2] );
         tractionNew[kfe][2] = traction[kfe][2] + ( penalty[kfe][3] * deltaDispJump[kfe][2] +
                                                    penalty[kfe][4] * deltaDispJump[kfe][1] );
+        fractureState[kfe] = fields::contact::FractureState::Stick;
       }
     } );
   }
