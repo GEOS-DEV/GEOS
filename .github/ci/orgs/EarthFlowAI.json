@@ -28,7 +28,7 @@
     "default": "thinkpad",
     "cpu_heavy": "thinkpad",
     "integrated_tests": "32-physical-core",
-    "code_coverage": "32core",
+    "code_coverage": "thinkpad",
     "cuda": "thinkpad"
   }
 }
