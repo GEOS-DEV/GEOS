@@ -191,7 +191,7 @@ void EventBase::checkEvents( real64 const time,
       integer const forecast = ratio < min_ratio ? LvArray::NumericLimits< integer >::min :
                                (ratio > max_ratio ? LvArray::NumericLimits< integer >::max :
                                 static_cast< integer >(ratio));
-      this->setForecast( forecast );
+      this->setForecast(  std::clamp( static_cast<integer>( (m_beginTime - time) / dt  ),  LvArray::NumericLimits< integer >::min,  LvArray::NumericLimits< integer >::max    );
     }
   }
   else if( time >= m_endTime )
