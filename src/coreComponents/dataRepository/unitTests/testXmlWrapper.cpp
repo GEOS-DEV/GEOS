@@ -475,7 +475,6 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
       GroupNameTest( groupNameRefArrayRegex, "{test\tname}" ),
       GroupNameTest( groupNameRefArrayRegex, "{test\nname}" ),
       GroupNameTest( groupNameRefArrayRegex, "{test\rname}" ),
-      GroupNameTest( groupNameRefArrayRegex, "groupName" ),
       GroupNameTest( groupNameRefArrayRegex, "{groupName" ),
       GroupNameTest( groupNameRefArrayRegex, "groupName}" ),
       GroupNameTest( groupNameRefArrayRegex, "{groupName}} " ),

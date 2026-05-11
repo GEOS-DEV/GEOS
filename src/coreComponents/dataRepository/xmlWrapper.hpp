@@ -391,7 +391,12 @@ stringToInputVariable( Array< T, NDIM, PERMUTATION > & array, string const & val
 {
   validateString( value, regex );
 
-  LvArray::input::stringToArray( array, string( stringutilities::trimSpaces( value ) ) );
+  string valueTrimmed{ stringutilities::trimSpaces( value ) };
+  if( NDIM == 1 && !valueTrimmed.empty() && valueTrimmed.front() != '{' )
+  {
+    valueTrimmed = "{ " + valueTrimmed + " }";
+  }
+  LvArray::input::stringToArray( array, valueTrimmed );
 }
 
 /**
