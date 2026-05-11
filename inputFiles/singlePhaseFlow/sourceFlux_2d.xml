@@ -150,7 +150,7 @@
       setNames="{ wall1, wall2 }"
       objectPath="ElementRegions/Region1/block1"
       fieldName="rockPerm_permeability"
-      scales="{ 2.0e-22, 2.0e-22, 2.0e-22 }"/>
+      scale="{ 2.0e-22, 2.0e-22, 2.0e-22 }"/>
 
     <SourceFlux
       name="sourceTerm"

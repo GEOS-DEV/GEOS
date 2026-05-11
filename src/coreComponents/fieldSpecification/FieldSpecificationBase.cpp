@@ -64,16 +64,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setDescription( "Direction to apply boundary condition to." );
 
   registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of function that specifies variation of the boundary condition." );
-
-  registerWrapper( viewKeyStruct::functionNamesString(), &m_functionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setSizedFromParent( 0 ).
-    setDescription( "Names of per-component functions that specifies variation of the boundary condition.\n"
-                    "Either left empty or sized exactly like 'scales'." );
+    setDescription( "Name(s) of function(s) that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::bcApplicationTableNameString(), &m_bcApplicationFunctionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -83,12 +76,8 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Apply a scaling factor for the value of the boundary condition." );
-
-  registerWrapper( viewKeyStruct::scalesString(), &m_scales ).
-    setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
-    setDescription( "Apply scaling factors for the values of every component of the boundary condition." );
+    setDescription( "Apply scaling factor(s) for the value(s) of the boundary condition." );
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
@@ -131,31 +120,23 @@ FieldSpecificationBase::getCatalog()
 
 void FieldSpecificationBase::postInputInitialization()
 {
-  GEOS_THROW_IF( !m_functionNames.empty() &&
-                 m_functionNames.size() != static_cast< string_array::size_type >( m_scales.size() ),
+  GEOS_THROW_IF( !m_functionName.empty() &&
+                 m_functionName.size() != 1 &&
+                 m_functionName.size() != static_cast< string_array::size_type >( m_scale.size() ),
                  GEOS_FMT ( "Size mismatch: '{}' has {} entries but '{}' has {}. "
-                            "Either leave '{}' empty or size it exactly like '{}'",
-                            viewKeyStruct::functionNamesString(), m_functionNames.size(),
-                            viewKeyStruct::scalesString(), m_scales.size(),
-                            viewKeyStruct::functionNamesString(), viewKeyStruct::scalesString() ),
+                            "'{}' either must be empty, have a single entry, or be sized exactly like '{}'",
+                            viewKeyStruct::functionNameString(), m_functionName.size(),
+                            viewKeyStruct::scaleString(), m_scale.size(),
+                            viewKeyStruct::functionNameString(), viewKeyStruct::scaleString() ),
                  InputError,
                  getDataContext() );
 
   if( usesNonScalarValues() )
   {
     GEOS_THROW_IF( m_component != -1,
-                   GEOS_FMT ( "'{}' must not be set when '{}' is set.",
+                   GEOS_FMT ( "'{}' must not be set when '{}' has more than one value.",
                               viewKeyStruct::componentString(),
-                              viewKeyStruct::scalesString() ),
-                   InputError,
-                   getDataContext() );
-
-    GEOS_THROW_IF( !m_functionName.empty(),
-                   GEOS_FMT ( "'{}' must not be set when '{}' is set."
-                              "Use '{}' to provide one function per component instead",
-                              viewKeyStruct::functionNameString(),
-                              viewKeyStruct::scalesString(),
-                              viewKeyStruct::functionNamesString() ),
+                              viewKeyStruct::scaleString() ),
                    InputError,
                    getDataContext() );
   }

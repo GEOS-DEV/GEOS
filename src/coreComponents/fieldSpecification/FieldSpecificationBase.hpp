@@ -444,12 +444,8 @@ public:
     constexpr static char const * bcApplicationTableNameString() { return "bcApplicationTableName"; }
     /// @return The key for scale
     constexpr static char const * scaleString() { return "scale"; }
-    /// @return The key for scales
-    constexpr static char const * scalesString() { return "scales"; }
     /// @return The key for functionName
     constexpr static char const * functionNameString() { return "functionName"; }
-    /// @return The key for functionNames
-    constexpr static char const * functionNamesString() { return "functionNames"; }
     /// @return The key for initialCondition
     constexpr static char const * initialConditionString() { return "initialCondition"; }
     /// @return The key for beginTime
@@ -462,11 +458,17 @@ public:
 
   /**
    * Accessor
-   * @return const reference to m_function
+   * @return first entry of m_functionName, or an empty string if empty
+   *
+   * @note Legacy scalar accessor.
+   *       Use getFunctionNames() to access the full list of function names when using non-scalar
+   *       field specifications (eg. functionName="{ f1, f2, f3 }")
    */
   string const & getFunctionName() const
   {
-    return m_functionName;
+    // TODO warn when m_functionName.size() > 1 ?
+    static string const emptyName;
+    return m_functionName.empty() ? emptyName : m_functionName.front();
   }
 
   /**
@@ -475,7 +477,7 @@ public:
    */
   string_array const & getFunctionNames() const
   {
-    return m_functionNames;
+    return m_functionName;
   }
 
   /**
@@ -562,11 +564,15 @@ public:
 
   /**
    * Accessor
-   * @return const m_scale
+   * @return first entry of m_scale, or 0 if m_scale is empty
+   *
+   * @note Legacy scalar accessor.
+   *       Use getScales() to access the full list of scales when using non-scalar
+   *       field specifications (eg. scales="{ 1, 2, 3 }")
    */
   real64 getScale() const
   {
-    return m_scale;
+    return m_scale.empty() ? 0.0 : m_scale.front();
   }
 
   /**
@@ -575,7 +581,7 @@ public:
    */
   arrayView1d< real64 const > getScales() const
   {
-    return m_scales.toViewConst();
+    return m_scale.toViewConst();
   }
 
   /**
@@ -611,7 +617,8 @@ public:
    */
   void setScale( real64 const & scale )
   {
-    m_scale = scale;
+    m_scale.resize( 1 );
+    m_scale[ 0 ] = scale;
   }
 
   /**
@@ -621,18 +628,18 @@ public:
    */
   void setScales( array1d< real64 > const & scales )
   {
-    m_scales = scales;
+    m_scale = scales;
   }
 
   /**
    * Mutator
    * @brief Set the per-component function names
-   * @param[in] functionNames The per-component function names. Must have the same
-   *                          size as @p m_scales or be empty.
+   * @param[in] functionNames The per-component function names. Must either be empty,
+   *                          have a single entry, or be sized exactly as @p m_scale
    */
   void setFunctionNames( string_array const & functionNames )
   {
-    m_functionNames = functionNames;
+    m_functionName = functionNames;
   }
 
   /**
@@ -671,13 +678,13 @@ public:
   }
 
   /**
-   * @brief Query whether this field specification uses non-scalar scales
-   * @return True if the field specification uses the non-scalar 'scales' attribute
-   *         or the non-scalar 'functionNames' attribute
+   * @brief Query whether this field specification uses non-scalar values
+   * @return True if the field specification provides more than one value
+   *         in the 'scale' or 'functionName' attributes
    */
   bool usesNonScalarValues() const
   {
-    return !m_scales.empty() || !m_functionNames.empty();
+    return m_scale.size() > 1 || m_functionName.size() > 1;
   }
 
   /**
@@ -690,17 +697,17 @@ public:
   {
     if( usesNonScalarValues() )
     {
-      localIndex const numComponents = m_scales.size();
+      localIndex const numComponents = m_scale.size();
       for( localIndex comp = 0; comp < numComponents; ++comp )
       {
-        string const & functionName = m_functionNames.empty() ? string{}
-                                                              : m_functionNames[ comp ];
-        lambda( comp, m_scales[ comp ], functionName );
+        string const & functionName = m_functionName.empty() ? string{}
+                                                             : m_functionName[ comp ];
+        lambda( comp, m_scale[ comp ], functionName );
       }
     }
     else
     {
-      lambda( getComponent(), m_scale, m_functionName );
+      lambda( getComponent(), getScale(), getFunctionName() );
     }
   }
 
@@ -738,18 +745,11 @@ private:
   /// Whether or not the boundary condition is an initial condition.
   int m_initialCondition;
 
-  /// The name of the function used to generate values for application.
-  string m_functionName;
+  /// Name(s) of the function used to generate values for application.
+  string_array m_functionName;
 
-  /// Per-component function names used when @p m_scales.size() > 1
-  /// Either empty or sized exactly like @p m_scales
-  string_array m_functionNames;
-
-  /// The scale factor to use on the value of the boundary condition.
-  real64 m_scale;
-
-  /// Per-component scale factors
-  array1d< real64 > m_scales;
+  /// Scale factor(s) to use on the value of the boundary condition.
+  array1d< real64 > m_scale;
 
   /// Time after which the bc is allowed to be applied
   real64 m_beginTime;
@@ -1078,8 +1078,8 @@ FieldSpecificationBase::
                           LAMBDA && lambda ) const
 {
   computeRhsContribution< FIELD_OP, POLICY, LAMBDA >( ( getComponent() >= 0 ) ? getComponent() : 0,
-                                                      m_scale,
-                                                      m_functionName,
+                                                      getScale(),
+                                                      getFunctionName(),
                                                       targetSet,
                                                       time,
                                                       dt,
