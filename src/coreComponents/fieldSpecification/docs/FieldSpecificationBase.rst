@@ -23,18 +23,17 @@ You can also specify subregions in `regionNames` by using a syntax similar to th
 Non-scalar values
 ======================
 
-Use `scales` and (optionally) `functionNames` to apply per-component values.
+The `scale` and `functionName` attributes accept either a single value or a list of values surrounded by braces.
 
-- `scales` replaces `scale` when you want one value per component.
-- `functionNames` is optional and must be empty or have the same size as `scales`.
-- When `scales` is used, do not set `component` or `functionName`.
-
-For scalar fields, you can use `scale`, or `scales` with a single value.
+- `scale="1.0"` and `scale="{ 1.0 }"` are equivalent.
+- `scale={ a, b, c }` applies one scale factor per component.
+- `functionName` follows the same convention. For convenience, if a single function name is set it will be applied to every component.
+- When `scale` has more than one entry, `component` must not be set.
 
 Examples
 ======================
 
-The snippet below shows a specification using `scales` and `functionNames`.
+The snippet below shows a specification using scalar values in `scale` and `functionName`.
 
 .. code-block:: xml
 
@@ -45,8 +44,39 @@ The snippet below shows a specification using `scales` and `functionNames`.
             objectPath="ElementRegions/region1/block1"
             setNames="{ all }"
             fieldName="permeability"
-            scales="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
-            functionNames="{ func1, func2, func3 }"
+            scale="1.0e-22"
+            functionName="func"
+        />
+    </FieldSpecifications>
+The snippet below shows a specification using non-scalar values in `scale` and `functionName`.
+
+.. code-block:: xml
+
+    <FieldSpecifications>
+        <FieldSpecification
+            name="perm"
+            initialCondition="1"
+            objectPath="ElementRegions/region1/block1"
+            setNames="{ all }"
+            fieldName="permeability"
+            scale="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
+            functionName="{ func1, func2, func3 }"
+        />
+    </FieldSpecifications>
+
+The snippet below shows a specification using a single `functionName` applied to every components.
+
+.. code-block:: xml
+
+    <FieldSpecifications>
+        <FieldSpecification
+            name="perm"
+            initialCondition="1"
+            objectPath="ElementRegions/region1/block1"
+            setNames="{ all }"
+            fieldName="permeability"
+            scale="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
+            functionName="func"
         />
     </FieldSpecifications>
 
@@ -58,10 +88,10 @@ The snippet below shows a specification using `regionNames` on a single region.
         <FieldSpecification
             name="perm"
             initialCondition="1"
-            regionNames="{ region1 }"
+            regionNames="region1"
             setNames="{ all }"
             fieldName="permeability"
-            scales="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
+            scale="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
         />
     </FieldSpecifications>
 
@@ -76,6 +106,6 @@ The snippet below shows a specification using `regionNames` on a multiple subreg
             regionNames="{ region1/block1, region1/block2 }"
             setNames="{ all }"
             fieldName="permeability"
-            scales="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
+            scale="{ 1.0e-22, 2.0e-22, 3.0e-22 }"
         />
     </FieldSpecifications>
