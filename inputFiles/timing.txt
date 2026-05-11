@@ -1,0 +1,8 @@
+# Scheduling hints for GEOS integrated tests.
+#
+# These values are expected runtimes used only when geos-ats runs with
+# config.priority="timing". They are not timeout limits.
+PoroElastic_hybridHexPrism_co2_fim_3d_01 3600
+PoroElastic_hybridHexPrism_co2_sequential_3d_01 3600
+multiphasePoromechanics_FaultModel_smoke_01 3600
+multiphasePoromechanics_FaultModel_well_fim_smoke_01 3600
