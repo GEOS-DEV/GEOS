@@ -144,6 +144,7 @@ public:
    * @param[in] penalty  the penalty coefficients
    * @param[in] traction the traction vector
    * @param[out] tractionNew the new traction vector
+   * @param[inout] fractureState the fracture state; updated to Open when normal trial traction is tensile
    */
   GEOS_HOST_DEVICE
   inline
@@ -151,8 +152,9 @@ public:
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
-                                   arraySlice1d< real64 > const & tractionNew ) const
-  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, tractionNew ); }
+                                   arraySlice1d< real64 > const & tractionNew,
+                                   integer & fractureState ) const
+  { GEOS_UNUSED_VAR( dispJump, deltaDispJump, penalty, traction, tractionNew, fractureState ); }
 
   /**
    * @brief Check for the constraint satisfaction
@@ -168,7 +170,7 @@ public:
   virtual void constraintCheck( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                integer const fractureState,
+                                integer & fractureState,
                                 real64 const normalTractionTolerance,
                                 real64 const normalDisplacementTolerance,
                                 real64 const slidingTolerance,

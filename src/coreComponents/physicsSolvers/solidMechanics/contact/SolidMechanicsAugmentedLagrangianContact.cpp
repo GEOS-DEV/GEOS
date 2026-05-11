@@ -1070,7 +1070,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
       arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
       arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >();
-      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 const > const normalDisplacementTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
@@ -1100,7 +1100,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               traction,
                                               dispJump,
                                               deltaDispJump,
-                                              traction_new_v );
+                                              traction_new_v,
+                                              fractureState );
         }
         else
         {
@@ -1111,7 +1112,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                               traction,
                                               dispJump,
                                               deltaDispJump,
-                                              traction_new_v );
+                                              traction_new_v,
+                                              fractureState );
         }
       } );
 
@@ -2160,7 +2162,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
         arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >().toViewConst();
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
+        arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
+        
         // Get friction law parameters for Coulomb check
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
@@ -2185,6 +2188,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           traction,
                                                           dispJump,
                                                           iterativePenalty,
+                                                          fractureState,
                                                           totalBubbleDisplacement,
                                                           hasCoulombParams,
                                                           cohesion,
@@ -2276,6 +2280,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 tLocal[0] = 0.0;
                 tLocal[1] = 0.0;
                 tLocal[2] = 0.0;
+                fractureState[kfe] = contact::FractureState::Open;
+              }
+              else {
+                fractureState[kfe] = contact::FractureState::Stick;
               }
 
               // Store the traction

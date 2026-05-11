@@ -120,14 +120,15 @@ public:
                                    arraySlice1d< real64 const > const & deltaDispJump,
                                    arraySlice1d< real64 const > const & penalty,
                                    arraySlice1d< real64 const > const & traction,
-                                   arraySlice1d< real64 > const & tractionNew ) const override final;
+                                   arraySlice1d< real64 > const & tractionNew,
+                                   integer & fractureState ) const override final;
 
   GEOS_HOST_DEVICE
   inline
   virtual void constraintCheck( arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 const > const & deltaDispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                integer const fractureState,
+                                integer & fractureState,
                                 real64 const normalTractionTolerance,
                                 real64 const normalDisplacementTolerance,
                                 real64 const slidingTolerance,
@@ -498,14 +499,31 @@ inline void CoulombFrictionUpdates::updateTractionOnly( arraySlice1d< real64 con
                                                         arraySlice1d< real64 const > const & deltaDispJump,
                                                         arraySlice1d< real64 const > const & penalty,
                                                         arraySlice1d< real64 const > const & traction,
-                                                        arraySlice1d< real64 > const & tractionNew ) const
+                                                        arraySlice1d< real64 > const & tractionNew,
+                                                        integer & fractureState ) const
 {
+
+  using namespace fields::contact;
 
   // TODO: Pass this tol as an argument or define a new class member
   real64 const zero = LvArray::NumericLimits< real64 >::epsilon;
 
+  // Trial normal traction (no clamping yet)
+  real64 const tractionNormalTrial = traction[0] + penalty[0] * dispJump[0];
+
+  // If trial normal traction is tensile, the fracture is opening:
+  // zero out all components and synchronize fractureState with the clamp.
+  if( tractionNormalTrial > zero )
+  {
+    tractionNew[0] = 0.0;
+    tractionNew[1] = 0.0;
+    tractionNew[2] = 0.0;
+    fractureState = FractureState::Open;
+    return;
+  }
+
   // Enforce non-positivity of normal traction: contact cannot sustain tension.
-  tractionNew[0] = std::min( traction[0] + penalty[0] * dispJump[0], zero );
+  tractionNew[0] = tractionNormalTrial;
   tractionNew[1] = traction[1] + penalty[1] * deltaDispJump[1];
   tractionNew[2] = traction[2] + penalty[1] * deltaDispJump[2];
 
@@ -546,7 +564,7 @@ GEOS_HOST_DEVICE
 inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const > const & dispJump,
                                                      arraySlice1d< real64 const > const & deltaDispJump,
                                                      arraySlice1d< real64 > const & tractionVector,
-                                                     integer const fractureState,
+                                                     integer & fractureState,
                                                      real64 const normalTractionTolerance,
                                                      real64 const normalDisplacementTolerance,
                                                      real64 const slidingTolerance,
@@ -581,6 +599,8 @@ inline void CoulombFrictionUpdates::constraintCheck( arraySlice1d< real64 const 
     tractionVector[0] = 0.0;
     tractionVector[1] = 0.0;
     tractionVector[2] = 0.0;
+    // Sync the active set with the clamp: the clamped traction implies an Open state.
+    fractureState = FractureState::Open;
   }
   else
   {

@@ -22,6 +22,8 @@
 
 #include "SolidMechanicsConformingContactKernelsBase.hpp"
 #include "mesh/MeshFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {

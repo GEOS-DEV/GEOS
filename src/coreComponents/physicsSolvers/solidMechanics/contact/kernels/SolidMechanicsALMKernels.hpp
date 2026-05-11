@@ -415,14 +415,16 @@ struct ComputeTractionKernel
           arrayView2d< real64 const > const & traction,
           arrayView2d< real64 const > const & dispJump,
           arrayView2d< real64 const > const & deltaDispJump,
-          arrayView2d< real64 > const & tractionNew )
+          arrayView2d< real64 > const & tractionNew,
+          arrayView1d< integer > const & fractureState )
   {
 
     forAll< POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
       contactWrapper.updateTractionOnly( dispJump[k], deltaDispJump[k],
-                                         penalty[k], traction[k], tractionNew[k] );
+                                         penalty[k], traction[k], tractionNew[k],
+                                         fractureState[k] );
 
     } );
   }

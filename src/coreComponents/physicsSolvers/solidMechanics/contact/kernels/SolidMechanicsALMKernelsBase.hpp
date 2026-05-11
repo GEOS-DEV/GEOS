@@ -68,7 +68,7 @@ struct ConstraintCheckKernel
           arrayView1d< real64 const > const & normalDisplacementTolerance,
           arrayView1d< real64 const > const & slidingTolerance,
           real64 const slidingCheckTolerance,
-          arrayView1d< integer const > const fractureState,
+          arrayView1d< integer > const fractureState,
           arrayView1d< integer > const & condConv )
   {
 
