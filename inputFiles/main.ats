@@ -2,7 +2,9 @@
 Primary ATS script
 """
 import ats
+import os
 from pathlib import Path
+from geos.ats.configuration_record import config
 
 # Set default ats parameters
 glue(collection='')
@@ -10,6 +12,9 @@ glue(checks='')
 glue(solvers='')
 glue(outputs='')
 glue(constitutive_models='')
+
+if os.environ.get("GEOS_ATS_PRIORITY") == "timing":
+    config.priority = "timing"
 
 # Recursively search the child directories and add them to ATS
 root_path = Path(ats.tests.AtsTest.getOptions().get("atsRootDir"))

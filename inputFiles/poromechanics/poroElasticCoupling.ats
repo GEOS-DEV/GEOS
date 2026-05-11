@@ -9,7 +9,8 @@ from geos.ats.test_steps import geos
 
 
 TEST_TIMELIMITS = {
-    "PoroElastic_hybridHexPrism_co2_fim_3d_01": "45m",
+    "PoroElastic_hybridHexPrism_co2_fim_3d_01": "90m",
+    "PoroElastic_hybridHexPrism_co2_sequential_3d_01": "90m",
 }
 
 

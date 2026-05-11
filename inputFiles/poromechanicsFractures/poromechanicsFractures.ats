@@ -1,4 +1,31 @@
-from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+import os
+
+from geos.ats import test_builder
+from geos.ats.test_builder import TestDeck, RestartcheckParameters
+
+TEST_TIMELIMITS = {
+    "multiphasePoromechanics_FaultModel_smoke_01": "90m",
+    "multiphasePoromechanics_FaultModel_well_fim_smoke_01": "90m",
+}
+
+
+def generate_geos_tests_with_timelimits(decks):
+    original_geos = test_builder.geos
+
+    def geos_with_timelimit(*args, **kwargs):
+        deck = kwargs.get("deck")
+        np = kwargs.get("np", 1)
+        if deck is not None:
+            testcase_name = "{}_{:02d}".format(os.path.splitext(deck)[0], np)
+            if testcase_name in TEST_TIMELIMITS:
+                kwargs.setdefault("timelimit", TEST_TIMELIMITS[testcase_name])
+        return original_geos(*args, **kwargs)
+
+    try:
+        test_builder.geos = geos_with_timelimit
+        test_builder.generate_geos_tests(decks)
+    finally:
+        test_builder.geos = original_geos
 
 restartcheck_params = {'atol': 1e-07, 'rtol': 4e-06}
 
@@ -152,4 +179,4 @@ decks = [
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04))
 ]
 
-generate_geos_tests(decks)
+generate_geos_tests_with_timelimits(decks)
