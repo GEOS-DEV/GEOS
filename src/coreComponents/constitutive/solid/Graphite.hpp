@@ -50,6 +50,9 @@ public:
    * @param[in] velocityGradient The ArrayView holding the velocity gradient for each element/particle.
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] relaxation The ArrayView holding the relaxation for each quadrature point.
+   * @param[in] enableCrackTipStressConcentration Flag to activate crack-tip stress concentration
+   * @param[in] crackTipStressConcentration The ArrayView holding the crack-tip stress concentration (plotting array not needed)
+   * @param[in] distanceToCrackTip The ArrayView holding the crack tip distance computed in the solver and passed here.
    * @param[in] basalPlanePlasticWork The ArrayView holding the basal-plane plastic work for each quadrature point.
    * @param[in] plasticWork The ArrayView holding the total plastic work for each quadrature point.
    * @param[in] alphaL Thermal expansion logitudinal to crystal symmetry axis
@@ -62,6 +65,9 @@ public:
    * @param[in] lengthScale The ArrayView holding the length scale for each element.
    * @param[in] strengthScale The ArrayView holding the strength scale for each element.
    * @param[in] failureStrength The failure strength.
+   * @param[in] maxPrincipalStressDamage Flag to activate max tensile stress damage evolution
+   * @param[in] crackSpeed  Damage evolution rate
+   * @param[in] scaleFractureEnergyReleaseRate flag to apply strength scale to fracture energy release rate.
    * @param[in] basalPlaneFractureEnergyReleaseRate Fracture energy release rate for basal plane separation 
    * @param[in] totalFractureEnergyReleaseRate Used to determine amount of plastic work needed to generate a damage surface
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
@@ -82,6 +88,9 @@ public:
                    arrayView3d< real64 > const & velocityGradient,
                    arrayView3d< real64 > const & plasticStrain,
                    arrayView2d< real64 > const & relaxation,
+                   int const & enableCrackTipStressConcentration,
+                   arrayView1d< real64 > const & crackTipStressConcentration,
+                   arrayView1d< real64 > const & distanceToCrackTip,
                    arrayView2d< real64 > const & basalPlanePlasticWork,
                    arrayView2d< real64 > const & plasticWork,
                    real64 const & alphaL,
@@ -93,6 +102,9 @@ public:
                    arrayView1d< real64 > const & lengthScale,
                    arrayView1d< real64 > const & strengthScale,
                    real64 const & failureStrength,
+                   int const & maximumPrincipalStressDamage,
+                   real64 const & crackSpeed,
+                   int const & scaleFractureEnergyReleaseRate,
                    real64 const & basalPlaneFractureEnergyReleaseRate,
                    real64 const & totalFractureEnergyReleaseRate,
                    real64 const & damagedMaterialFrictionalSlope,
@@ -138,6 +150,9 @@ public:
     m_velocityGradient( velocityGradient ),
     m_plasticStrain( plasticStrain ),
     m_relaxation( relaxation ),
+    m_enableCrackTipStressConcentration( enableCrackTipStressConcentration ),
+    m_crackTipStressConcentration( crackTipStressConcentration ),
+    m_distanceToCrackTip( distanceToCrackTip ),
     m_basalPlanePlasticWork( basalPlanePlasticWork ),
     m_plasticWork( plasticWork ),
     m_alphaL( alphaL ),
@@ -149,6 +164,9 @@ public:
     m_lengthScale( lengthScale ),
     m_strengthScale( strengthScale ),
     m_failureStrength( failureStrength ),
+    m_maximumPrincipalStressDamage( maximumPrincipalStressDamage ),
+    m_crackSpeed( crackSpeed ),
+    m_scaleFractureEnergyReleaseRate( scaleFractureEnergyReleaseRate ),
     m_basalPlaneFractureEnergyReleaseRate( basalPlaneFractureEnergyReleaseRate ),
     m_totalFractureEnergyReleaseRate( totalFractureEnergyReleaseRate ),
     m_damagedMaterialFrictionalSlope( damagedMaterialFrictionalSlope ),
@@ -353,6 +371,14 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_relaxation;
 
+  /// Model parameter: Flag to enable stress concenration for crack-tip
+  int m_enableCrackTipStressConcentration;
+  ///State variable: Lets us plot the stress concentration, not actually needed by the algorithm.
+  arrayView1d< real64 > const m_crackTipStressConcentration;
+  /// A reference to the ArrayView holding the distance to crack tip.
+  arrayView1d< real64 > const m_distanceToCrackTip;
+
+
   // A reference to the ArrayView holding the accumulated plastic work for each quadrature point.
   arrayView2d< real64 > const m_basalPlanePlasticWork;
   arrayView2d< real64 > const m_plasticWork;
@@ -384,7 +410,11 @@ private:
   /// The maximum theoretical strength
   real64 const m_failureStrength;
 
-  // The time to failure
+  // Energy regularization of fracture evolution
+  int const m_maximumPrincipalStressDamage;
+  real64 const m_crackSpeed;
+
+  int const m_scaleFractureEnergyReleaseRate;   // Apply strength-scale to fracture energy parameters.
   real64 const m_basalPlaneFractureEnergyReleaseRate;
   real64 const m_totalFractureEnergyReleaseRate;
 
@@ -692,36 +722,66 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // Trial pressure to compute pressure-dependence of strength
   real64 pressure = (-1.0/3.0)*( stress[0] + stress[1] + stress[2] );
 
-  // CC: debug
-  // GEOS_LOG_RANK( "Particle " << k << ":\n" <<
-  //                 "\toldStress: {" << oldStress[0] << ", " << oldStress[1] << ", " << oldStress[2] << ", " << oldStress[3] << ", " <<
-  // oldStress[4] << ", " << oldStress[5] << "}" <<
-  //                 "\tnewStress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ",
-  // " << stress[5] << "}" <<
-  //                 "\tpressure: " << pressure);
+  // scale fracture energy release rate with strength scale also, so strain
+  // to fracture doesn't increase as strength scale decreases.
+  real64 basalPlaneFractureEnergyReleaseRate = ( m_scaleFractureEnergyReleaseRate == 1 ) ? m_basalPlaneFractureEnergyReleaseRate * m_strengthScale[k] : m_basalPlaneFractureEnergyReleaseRate;
+  real64 totalFractureEnergyReleaseRate = ( m_scaleFractureEnergyReleaseRate == 1 ) ? m_totalFractureEnergyReleaseRate * m_strengthScale[k] : m_totalFractureEnergyReleaseRate;
 
+  // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
+  // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
+  // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.  TODO:
+  // switch this back later to reduce memory footprint of the model.
+  // real64 crackTipStressConcentration = 1.0;
+  m_crackTipStressConcentration[k] = 1.0;
+  if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
+  {
+    real64 fractureEnergyReleaseRate = 0.5*( m_basalPlaneFractureEnergyReleaseRate + m_totalFractureEnergyReleaseRate );
+    real64 constrainedModulus =  m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k];
+    real64 fractureToughness = fractureEnergyReleaseRate * constrainedModulus;
+    real64 nominalIntactStrength = m_failureStrength;
+
+    real64 fractureProcessZoneRadius =
+      LvArray::math::max( 1.e-12, fractureToughness * fractureToughness /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
+    m_crackTipStressConcentration[k] = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+  }
 
   // Check for tensile failure in preferred direction
-  // real64 temp[3] = {};
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
-
-  
   int basalModeIFracture = 0;
-  // Increment damage based on max plane-normal stress subject to energy normalization.
-  if( planeNormalStress > failureStrength )
-  { // Mode I basal plane fracture
-    basalModeIFracture = 1;
+
+
+  // If user has specified a maximum principal stress, compute eigen values of
+  // trial stress and use that to evolve damage.
+  if ( m_maximumPrincipalStressDamage == 1 )
+  {
+    real64 principalStresses[3] = { 0 };
+    real64 eigenVectors[3][3] = { { 0 } };
+    LvArray::tensorOps::symEigenvectors< 3 >( principalStresses, eigenVectors, stress );
+
+    // Find the largest principalStress
+    real64 maximumPrincipalStress = 0.0;
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      maximumPrincipalStress = LvArray::math::max( principalStresses[i], maximumPrincipalStress );
+    }
+
+    if( maximumPrincipalStress*m_crackTipStressConcentration[k] > failureStrength )
+    {
+      real64 newDamage = m_damage[k][q] + m_crackSpeed * timeIncrement / m_lengthScale[k];
+      m_damage[k][q] = LvArray::math::max( 0.0, LvArray::math::min( 1.0, LvArray::math::max( m_damage[k][q], newDamage )));
+    }
   }
 
-  // Test if damage is 0 but there is significant accumulated plastic work.  
+
+  // Test if damage is exactly 0 but there is significant accumulated plastic work.  
   // This should only occur if the damage has been healed by an event in the solver, 
   // in which case we need to also reset the accumulated plastic work so it
   // doesn't immediately re-damage.
   //
-  if ( isZero( m_damage[k][q] ) && ( (m_plasticWork[k][q] > ( 1.e-3*m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) || 
-                                    (m_basalPlanePlasticWork[k][q] > ( 1.e-3*m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) ) )
+  if ( isZero( m_damage[k][q] ) && ( (m_plasticWork[k][q] > ( 1.e-3*totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) || 
+                                    (m_basalPlanePlasticWork[k][q] > ( 1.e-3*basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) ) )
                                     {
                                       m_plasticWork[k][q] = 0.0;
                                       m_basalPlanePlasticWork[k][q] = 0.0;
@@ -729,19 +789,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // strength scale factor, combining plastic softening and damage
   real64 damageMultiplier = (1.0 - m_damage[k][q]);
-
-
-  // CC: debug
-  // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
-
-  // Enforce damage, no tensile stress on plane
-  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
-  {
-    if( planeNormalStress > 0 )
-    {
-      LvArray::tensorOps::scale< 6 >( sigma1, 0.0 );
-    }
-  }
 
   // find in-plane isotropic and deviatoric stress
   real64 inPlaneIso[6];
@@ -768,6 +815,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
   LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
 
+  // We will scale stress components and reconstruct so:
+  //   newStress = distortion_iso + distortion_dev + inPlaneDev +sigma5
+  //
+  //   distortion_iso: This is also the isotropic part of the full stress tensor. With damage, should be 0 if tensile.
+  //.  distortion_de
+
+
   // We don't want spherical tension in-plane for damaged material, so here we force that to be zero if it would otherwise
   // be tensile.  along with the sigma1 scaling above and the deviatoric scaling below this should give a no-strength damaged
   // material while still having anisotropic strength in compression.
@@ -777,6 +831,16 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     {
       LvArray::tensorOps::scale< 6 >( distortion_iso, 0.0 );
     }
+
+      // Enforce damage, no tensile stress on plane
+  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+  {
+    if( planeNormalStress > 0 )
+    {
+      LvArray::tensorOps::scale< 6 >( sigma1, 0.0 );
+    }
+  }
+
   }
 
   // Define 3 pressure-dependent shear strengths for different shear modes.
@@ -1018,17 +1082,17 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
 
-
-    //
-
-    //real64 timeToFailure = m_lengthScale[k] / m_basalPlaneFractureEnergyReleaseRate;
-    //m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+    if ( m_crackSpeed < DBL_MAX ) 
+    { 
+      real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
+      m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+    }
 
     // If we have exceeded the tensile strength for normal stress, incement the plane-normal plastic
     // work that is used to compute damage.
     if ( m_basalPlaneFractureEnergyReleaseRate < DBL_MAX ) 
     { 
-      if ( basalModeIFracture == 1 )
+      if( ( basalModeIFracture == 1 ) and ( pressure < m_distortionShearResponseX2 ) )
       {
       // Mode I basal plane fracture:
       real64 dEpsilonIJnJ[3] = {};
@@ -1038,15 +1102,17 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       m_basalPlanePlasticWork[k][q] += LvArray::math::max( 0.0 , plasticNormalStrainIncrement*avePlaneNormalStress );  // Should be non-negative, max may not be needed.
       }
 
-      // Increment in basal plane shear work:
-      for ( int i = 0; i < 6; ++i )
-      {
-        m_basalPlanePlasticWork[k][q] += plasticStrainIncrement[i]*sigma5[i];
+      if ( pressure < m_distortionShearResponseX2 )
+      { // Increment in basal plane shear work:
+        for ( int i = 0; i < 6; ++i )
+        {
+          m_basalPlanePlasticWork[k][q] += plasticStrainIncrement[i]*sigma5[i];
+        }
       }
 
       // Compare accumulated work to specified effective fracture energy release rate normalized by length scale
       // The power will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( m_basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
       m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32 ) );      
     }
 
@@ -1066,8 +1132,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
       // Damage is ( Wp/(Gf/l) )^k, where k=32, and we allow only increase in damage.
       // This will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
-      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( m_totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32 ) );      
+      real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_plasticWork[k][q] / ( totalFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32. ) );      
     }
   }
 }
@@ -1425,6 +1491,14 @@ public:
     /// string/key for quadrature point relaxation value
     static constexpr char const * relaxationString() { return "relaxation"; }
 
+    /// string/key for Flag to enable stress concenration for crack-tip
+    static constexpr char const * enableCrackTipStressConcentrationString() { return "enableCrackTipStressConcentration"; }
+    /// string/key for crackTipStressConcentration plotting variable
+    static constexpr char const * crackTipStressConcentrationString() { return "crackTipStressConcentration"; }
+    /// string/key for strength scale value
+    static constexpr char const * distanceToCrackTipString() { return "distanceToCrackTip"; }
+
+
     /// string/key for quadrature point accumulated plastic work value
     static constexpr char const * basalPlanePlasticWorkString() { return "basalPlanePlasticWork"; }
     static constexpr char const * plasticWorkString() { return "plasticWork"; }
@@ -1456,7 +1530,16 @@ public:
     /// string/key for maximum strength
     static constexpr char const * failureStrengthString() { return "failureStrength"; }
 
-    /// string/key for crack speed
+    /// string/key for flag to apply max principal stress failure criterion
+    static constexpr char const * maximumPrincipalStressDamageString() { return "maximumPrincipalStressDamage"; }
+    
+    /// string/key for damage evolution rate parameters
+    static constexpr char const * crackSpeedString() { return "crackSpeed"; }
+
+    /// string/key for flag to apply strength scale to fracture energy release rate.
+    static constexpr char const * scaleFractureEnergyReleaseRateString() { return "scaleFractureEnergyReleaseRate"; }
+
+    /// string/key for fracture energy release rate basal plane shear and normal modes
     static constexpr char const * basalPlaneFractureEnergyReleaseRateString() { return "basalPlaneFractureEnergyReleaseRate"; }
 
     /// string/key for totalFractureEnergyReleaseRate
@@ -1539,6 +1622,9 @@ public:
                             m_velocityGradient,
                             m_plasticStrain,
                             m_relaxation,
+                            m_enableCrackTipStressConcentration,
+                            m_crackTipStressConcentration,
+                            m_distanceToCrackTip,
                             m_basalPlanePlasticWork,
                             m_plasticWork,
                             m_alphaL,
@@ -1550,6 +1636,9 @@ public:
                             m_lengthScale,
                             m_strengthScale,
                             m_failureStrength,
+                            m_maximumPrincipalStressDamage,
+                            m_crackSpeed,
+                            m_scaleFractureEnergyReleaseRate,
                             m_basalPlaneFractureEnergyReleaseRate,
                             m_totalFractureEnergyReleaseRate,
                             m_damagedMaterialFrictionalSlope,
@@ -1602,6 +1691,9 @@ public:
                           m_velocityGradient,
                           m_plasticStrain,
                           m_relaxation,
+                          m_enableCrackTipStressConcentration,
+                          m_crackTipStressConcentration,
+                          m_distanceToCrackTip,
                           m_basalPlanePlasticWork,
                           m_plasticWork,
                           m_alphaL,
@@ -1613,6 +1705,9 @@ public:
                           m_lengthScale,
                           m_strengthScale,
                           m_failureStrength,
+                          m_maximumPrincipalStressDamage,
+                          m_crackSpeed,
+                          m_scaleFractureEnergyReleaseRate,
                           m_basalPlaneFractureEnergyReleaseRate,
                           m_totalFractureEnergyReleaseRate,
                           m_damagedMaterialFrictionalSlope,
@@ -1821,6 +1916,11 @@ protected:
   /// State variable: The relaxation values for each quadrature point
   array2d< real64 > m_relaxation;
 
+  // Crack-tip stress concentration variables:
+  int m_enableCrackTipStressConcentration;
+  array1d< real64 > m_crackTipStressConcentration;
+  array1d< real64 > m_distanceToCrackTip;
+
   /// State variable: The accumulated plastic work values for each quadrature point
   array2d< real64 > m_basalPlanePlasticWork;
   array2d< real64 > m_plasticWork;
@@ -1853,7 +1953,11 @@ protected:
   /// Material parameter: The value of the failure strength
   real64 m_failureStrength;
 
-  /// Material parameter: The value of crack speed
+  int m_maximumPrincipalStressDamage;
+  real64 m_crackSpeed;
+
+  /// Material parameter: The value of fracture energy release rate
+  int m_scaleFractureEnergyReleaseRate;
   real64 m_basalPlaneFractureEnergyReleaseRate;
   real64 m_totalFractureEnergyReleaseRate;
 

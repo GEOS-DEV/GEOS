@@ -188,6 +188,18 @@ public:
   arrayView1d< real64 > getParticleStrengthScale()
   { return m_particleStrengthScale; }
 
+  /**
+   * @brief Get the crack tip distance of each particle in this subregion.
+   * @return an arrayView1d of const particle strength scale
+   */
+  arrayView1d< real64 const > getParticleCrackTipDistance() const
+  { return m_particleCrackTipDistance; }
+
+  /**
+   * @copydoc getParticleCrackTipDistance() const
+   */
+  arrayView1d< real64 > getParticleCrackTipDistance()
+  { return m_particleCrackTipDistance; }
 
   /**
    * @brief Get the ghost rank of each particle in this subregion.
@@ -449,6 +461,9 @@ public:
     /// @return String key for the member level field for the particle strength scale.
     static constexpr char const * particleStrengthScaleString() { return "particleStrengthScale"; }
 
+    /// @return String key for the member level field for the particle crack tip distance.
+    static constexpr char const * particleCrackTipDistanceString() { return "particleCrackTipDistance"; }
+
     /// @return String key for the member level field for the particle ghost rank.
     static constexpr char const * particleRankString() { return "particleRank"; }
 
@@ -585,6 +600,9 @@ protected:
 
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;
+
+  /// Member level field for the particle crack tip distance.
+  array1d< real64 > m_particleCrackTipDistance;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;

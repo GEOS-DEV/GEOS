@@ -42,6 +42,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleTemperature(),
   m_particleTemperatureRate(),
   m_particleStrengthScale(),
+  m_particleCrackTipDistance(),
   m_particleCenter(),
   m_particleVelocity(),
   m_particleMaterialDirection(),
@@ -80,6 +81,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::particleStrengthScaleString(), &m_particleStrengthScale ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleCrackTipDistanceString(), &m_particleCrackTipDistance ).
+    setPlotLevel( PlotLevel::LEVEL_1 );   
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
     setPlotLevel( PlotLevel::LEVEL_1 ).

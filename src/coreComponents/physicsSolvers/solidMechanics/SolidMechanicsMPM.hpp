@@ -716,30 +716,32 @@ public:
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
-  void particleToGrid_reduction( real64 const time_n,
-                                 integer const cycleNumber,
-                                 ParticleManager & particleManager,
-                                 NodeManager & nodeManager );
+  // These were used to test performance in p2g, and were usually worse than atomics
+  // but will be saved here as comment blocks for a while.                       
+  // void particleToGrid_reduction( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
 
-  void particleToGrid_noAtomics( real64 const time_n,
-                                 integer const cycleNumber,
-                                 ParticleManager & particleManager,
-                                 NodeManager & nodeManager );
+  // void particleToGrid_noAtomics( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
 
-  void particleToGrid_randomMix( real64 const time_n,
-                                 integer const cycleNumber,
-                                 ParticleManager & particleManager,
-                                 NodeManager & nodeManager );
+  // void particleToGrid_randomMix( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
 
-  void particleToGrid_minimalAtomics( real64 const time_n,
-                                      integer const cycleNumber,
-                                      ParticleManager & particleManager,
-                                      NodeManager & nodeManager );
+  // void particleToGrid_minimalAtomics( real64 const time_n,
+  //                                     integer const cycleNumber,
+  //                                     ParticleManager & particleManager,
+  //                                     NodeManager & nodeManager );
 
-  void particleToGrid_colors( real64 const time_n,
-                              integer const cycleNumber,
-                              ParticleManager & particleManager,
-                              NodeManager & nodeManager );
+  // void particleToGrid_colors( real64 const time_n,
+  //                             integer const cycleNumber,
+  //                             ParticleManager & particleManager,
+  //                             NodeManager & nodeManager );
 
   void computeSPHSurfaceCurvature( ParticleManager & particleManager );
 
@@ -890,7 +892,7 @@ public:
 
   void resizeMappingArrays( ParticleManager & particleManager );
 
-  void populateMappingArrays( ParticleManager & particleManager,
+  void populateMappingArraysForActiveParticles( ParticleManager & particleManager,
                               NodeManager & nodeManager ); //,
   //  SpatialPartition & partition  );
 
@@ -919,7 +921,7 @@ public:
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void mapNodesAndComputeShapeFunctions( arrayView3d< localIndex const > const ijkMap,
+  void mapNodesAndComputeShapeFunctionsForSingleParticle( arrayView3d< localIndex const > const ijkMap,
                                          real64 const (&xLocalMin)[3],
                                          real64 const (&hEl)[3],
                                          ParticleType particleType,
@@ -952,6 +954,33 @@ public:
                                           localIndex * const mappedNodes,
                                           real64 * const shapeFunctionValues,
                                           real64 shapeFunctionGradientValues[][3] );
+
+  #ifdef USEOLDSHAPEFUNCTIONFUNCTIONS
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeSinglePointParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                 arraySlice1d< real64 const > const particlePosition,
+                                                 arrayView3d< int const > const ijkMap,
+                                                 real64 const (&xLocalMin)[3],
+                                                 real64 const (&hEl)[3],
+                                                 localIndex * const mappedNodes,
+                                                 real64 * const shapeFunctionValues,
+                                                 real64 shapeFunctionGradientValues[][3] );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeCPDIParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                          arraySlice1d< real64 const > const particlePosition,
+                                          arraySlice2d< real64 const > const particleRVectors,
+                                          arrayView3d< int const > const ijkMap,
+                                          real64 const (&xLocalMin)[3],
+                                          real64 const (&hEl)[3],
+                                          localIndex * const mappedNodes,
+                                          real64 * const shapeFunctionValues,
+                                          real64 shapeFunctionGradientValues[][3] );
+  #endif
+
+
 
   void computeBodyForce( ParticleManager & particleManager );
 
