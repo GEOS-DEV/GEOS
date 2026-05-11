@@ -20,6 +20,7 @@
 #include "common/TimingMacros.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/traits.hpp"
+#include "dataRepository/RestartTiming.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -432,13 +433,88 @@ Unpack( buffer_unit_type const * & buffer,
 }
 
 template< typename T >
-localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfArrays< T > & var )
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< T > & var )
 {
+  dataRepository::restartTiming::ScopedTimer const timer( "bufferOps::Unpack ArrayOfArrays" );
+  buffer_unit_type const * const bufferStart = buffer;
+
+  buffer_unit_type const * scanBuffer = buffer;
+  localIndex numOfArrays;
+  Unpack( scanBuffer, numOfArrays );
+  if( dataRepository::restartTiming::enabled() )
+  {
+    GEOS_LOG_RANK( "RestartTiming DETAIL bufferOps::Unpack ArrayOfArrays numArrays=" << numOfArrays );
+  }
+
+  if( numOfArrays == 0 )
+  {
+    Unpack( buffer, numOfArrays );
+    var.resize( 0 );
+    return LvArray::integerConversion< localIndex >( buffer - bufferStart );
+  }
+
+  stdVector< localIndex > sizes( numOfArrays );
+  for( localIndex a=0; a<numOfArrays; ++a )
+  {
+    localIndex sizeOfArray;
+    Unpack( scanBuffer, sizeOfArray );
+    sizes[a] = sizeOfArray;
+
+    localIndex packedLength;
+    Unpack( scanBuffer, packedLength );
+    GEOS_ASSERT_MSG( packedLength == sizeOfArray,
+                     GEOS_FMT( "packedLength != sizeOfArray: {} != {}", packedLength, sizeOfArray ) );
+    scanBuffer += packedLength * sizeof(T);
+  }
+
+  var.template resizeFromCapacities< parallelHostPolicy >( numOfArrays, sizes.data() );
+
+  localIndex numOfArraysCheck;
+  Unpack( buffer, numOfArraysCheck );
+  GEOS_ASSERT_MSG( numOfArraysCheck == numOfArrays,
+                   GEOS_FMT( "numOfArraysCheck != numOfArrays: {} != {}", numOfArraysCheck, numOfArrays ) );
+
+  Stopwatch progressTimer;
+  for( localIndex a=0; a<numOfArrays; ++a )
+  {
+    localIndex sizeOfArray;
+    Unpack( buffer, sizeOfArray );
+    GEOS_ASSERT_MSG( sizeOfArray == sizes[a],
+                     GEOS_FMT( "sizeOfArray != sizes[a]: {} != {}", sizeOfArray, sizes[a] ) );
+    var.resizeArray( a, sizeOfArray );
+    T * data = var[a];
+    UnpackPointer( buffer, data, sizeOfArray );
+    if( dataRepository::restartTiming::enabled() && a % 1000 == 0 )
+    {
+      real64 const elapsed = progressTimer.elapsedTime();
+      if( elapsed >= 5.0 )
+      {
+        dataRepository::restartTiming::logProgress( GEOS_FMT( "bufferOps::Unpack ArrayOfArrays {}/{}", a + 1, numOfArrays ),
+                                                    elapsed );
+        progressTimer.zero();
+      }
+    }
+  }
+  return LvArray::integerConversion< localIndex >( buffer - bufferStart );
+}
+
+template< typename T >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< T > & var )
+{
+  dataRepository::restartTiming::ScopedTimer const timer( "bufferOps::Unpack ArrayOfArrays" );
   localIndex sizeOfUnpackedChars = 0;
   localIndex numOfArrays;
   sizeOfUnpackedChars += Unpack( buffer, numOfArrays );
   var.resize( numOfArrays );
+  if( dataRepository::restartTiming::enabled() )
+  {
+    GEOS_LOG_RANK( "RestartTiming DETAIL bufferOps::Unpack ArrayOfArrays numArrays=" << numOfArrays );
+  }
+  Stopwatch progressTimer;
   for( localIndex a=0; a<numOfArrays; ++a )
   {
     localIndex sizeOfArray;
@@ -446,6 +522,16 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     var.resizeArray( a, sizeOfArray );
     T * data = var[a];
     sizeOfUnpackedChars += UnpackPointer( buffer, data, sizeOfArray );
+    if( dataRepository::restartTiming::enabled() && a % 1000 == 0 )
+    {
+      real64 const elapsed = progressTimer.elapsedTime();
+      if( elapsed >= 5.0 )
+      {
+        dataRepository::restartTiming::logProgress( GEOS_FMT( "bufferOps::Unpack ArrayOfArrays {}/{}", a + 1, numOfArrays ),
+                                                    elapsed );
+        progressTimer.zero();
+      }
+    }
   }
   return sizeOfUnpackedChars;
 }
@@ -475,9 +561,13 @@ template< typename T >
 localIndex Unpack( buffer_unit_type const * & buffer,
                    ArrayOfSets< T > & var )
 {
+  dataRepository::restartTiming::ScopedTimer const timer( "bufferOps::Unpack ArrayOfSets" );
   ArrayOfArrays< T > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
-  var.template assimilate< parallelHostPolicy >( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  {
+    dataRepository::restartTiming::ScopedTimer const assimilateTimer( "bufferOps::Unpack ArrayOfSets assimilate" );
+    var.template assimilate< parallelHostPolicy >( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  }
   return sizeOfUnpackedChars;
 }
 

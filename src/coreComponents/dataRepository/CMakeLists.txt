@@ -39,6 +39,7 @@ set( dataRepository_headers
      ObjectCatalog.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
+     RestartTiming.hpp
      Utilities.hpp
      Wrapper.hpp
      WrapperBase.hpp

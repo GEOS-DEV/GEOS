@@ -26,7 +26,7 @@
       rickerOrder="3"
       outputSeismoTrace="1"
       dtSeismoTrace="1e-3"
-      receiverCoordinates="{ { 3752.2936, 2400, 2933.3333 } }"/>
+      receiverCoordinates="{{3752.2936,2400,2933.3333}}"/>
     <ElasticSEM
       name="elasticSolver"
       discretization="FE1"

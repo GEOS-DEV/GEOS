@@ -334,8 +334,14 @@ Unpack( buffer_unit_type const * & buffer,
 
 //------------------------------------------------------------------------------
 template< typename T >
-localIndex Unpack( buffer_unit_type const * & buffer,
-                   ArrayOfArrays< T > & var );
+typename std::enable_if< std::is_trivial< T >::value, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< T > & var );
+
+template< typename T >
+typename std::enable_if< !std::is_trivial< T >::value, localIndex >::type
+Unpack( buffer_unit_type const * & buffer,
+        ArrayOfArrays< T > & var );
 
 //------------------------------------------------------------------------------
 inline

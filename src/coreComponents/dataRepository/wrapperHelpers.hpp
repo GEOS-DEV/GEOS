@@ -29,6 +29,7 @@
 #include "BufferOpsDevice.hpp"
 #include "DefaultValue.hpp"
 #include "ConduitRestart.hpp"
+#include "RestartTiming.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
 #include "common/Span.hpp"
@@ -353,6 +354,9 @@ pullDataFromConduitNode( T & var, conduit::Node const & node )
   buffer_unit_type const * buffer = valuesNode.value();
 
   // Unpack the object from the array.
+  restartTiming::ScopedTimer const timer( GEOS_FMT( "wrapperHelpers::pullDataFromConduitNode packed type={} bytes={}",
+                                                   LvArray::system::demangleType< T >(),
+                                                   byteSize ) );
   localIndex const bytesRead = bufferOps::Unpack( buffer, var );
   GEOS_ERROR_IF_NE( bytesRead, byteSize );
 }
