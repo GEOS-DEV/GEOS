@@ -700,8 +700,11 @@ public:
       localIndex const numComponents = m_scale.size();
       for( localIndex comp = 0; comp < numComponents; ++comp )
       {
+        // allow for a single functionName to be applied to every component
+        localIndex const fnIdx = ( m_functionName.size() == 1 ) ? localIndex( 0 ) : comp;
         string const & functionName = m_functionName.empty() ? string{}
-                                                             : m_functionName[ comp ];
+                                                             : m_functionName[ fnIdx ];
+
         lambda( comp, m_scale[ comp ], functionName );
       }
     }
