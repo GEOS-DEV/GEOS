@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3977 (2026-05-12) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3977-16557-abd84a6.tar.gz>
+Change face normal, centers and area for local Newell's formula
+
 PR #4029 (2026-05-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4029-16507-7e3d8b5.tar.gz>
 Add single phase viscosity dependency on temperature
 
