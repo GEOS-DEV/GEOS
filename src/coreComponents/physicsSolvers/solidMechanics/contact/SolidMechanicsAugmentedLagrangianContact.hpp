@@ -149,9 +149,6 @@ public:
   template< typename LAMBDA >
   void forFiniteElementOnStickFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
-
-    bool const isStickState = true;
-
     stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
@@ -161,7 +158,7 @@ public:
 
       finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
 
-      lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
+      lambda( finiteElementName, subRegionFE, faceElemList);
     }
 
   }
@@ -176,9 +173,6 @@ public:
   template< typename LAMBDA >
   void forFiniteElementOnSlipFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
-
-    bool const isStickState = false;
-
     stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
 
@@ -188,7 +182,7 @@ public:
 
       finiteElement::FiniteElementBase const & subRegionFE = *(m_faceTypeToFiniteElements.at( finiteElementName ));
 
-      lambda( finiteElementName, subRegionFE, faceElemList, isStickState );
+      lambda( finiteElementName, subRegionFE, faceElemList);
     }
 
   }
