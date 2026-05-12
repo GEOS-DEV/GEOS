@@ -9,7 +9,8 @@ set(testSources
     testH1_Pyramid_Lagrange1_Gauss5.cpp
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
     testQ3_Hexahedron_Lagrange_GaussLobatto.cpp
-    testQ5_Hexahedron_Lagrange_GaussLobatto.cpp )
+    testQ5_Hexahedron_Lagrange_GaussLobatto.cpp
+    testMatrixViewAbstraction.cpp )
 
 set( dependencyList gtest denseLinearAlgebra finiteElement ${parallelDeps} )
 
