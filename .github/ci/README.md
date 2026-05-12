@@ -35,6 +35,11 @@ Required fields (all of them, always):
   string to disable fallback. The workflow appends the baseline archive filename from
   `.integrated_tests.yaml`, e.g. `baseline_integratedTests-pr3959-16478-faf1698.tar.gz`.
 
+- `local_baseline_dir`
+  Host-side directory used as a persistent integrated-test baseline cache on runners that mount
+  one. Use an empty string for GitHub-hosted, Azure-hosted, or other runners without this mount;
+  those runners will use the configured artifact URLs instead.
+
 - `artifact_public_url_base`
   Public URL root for uploaded artifacts. The consumer builds each final URL as
   `${artifact_public_url_base}/${integrated_tests_artifact_bucket_path}/${filename}`, so the base

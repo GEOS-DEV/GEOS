@@ -744,7 +744,7 @@ jobs:
           script_args+=(--code-coverage)
         fi
 
-        if [[ -n "${{ inputs.LOCAL_BASELINE_DIR }}" ]]; then
+        if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" ]]; then
           # Extract the 'baseline' value
 
           # Define the path to the YAML file
@@ -769,11 +769,19 @@ jobs:
           PR_BASELINE_FOLDER_NAME=baselines_${PR_NUMBER}
           echo "Baseline folder name: ${PR_BASELINE_FOLDER_NAME}"
 
-          PERSISTENT_BASELINE_DIR=${{ inputs.LOCAL_BASELINE_DIR }}/${PR_BASELINE_FOLDER_NAME}
-          CURRENT_BASELINE_DIR="${PERSISTENT_BASELINE_DIR}"
-          echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
+          LOCAL_BASELINE_DIR_INPUT="${{ inputs.LOCAL_BASELINE_DIR }}"
+          PERSISTENT_BASELINE_DIR=""
+          CURRENT_BASELINE_DIR=""
 
-          if [ ! -d "${CURRENT_BASELINE_DIR}" ]; then
+          if [[ -n "${LOCAL_BASELINE_DIR_INPUT}" ]]; then
+            PERSISTENT_BASELINE_DIR="${LOCAL_BASELINE_DIR_INPUT}/${PR_BASELINE_FOLDER_NAME}"
+            CURRENT_BASELINE_DIR="${PERSISTENT_BASELINE_DIR}"
+            echo "Current baseline dir: ${CURRENT_BASELINE_DIR}"
+          else
+            echo "No persistent local baseline directory configured."
+          fi
+
+          if [[ -z "${CURRENT_BASELINE_DIR}" || ! -d "${CURRENT_BASELINE_DIR}" ]]; then
             BASELINE_ARCHIVE_NAME="${BASELINE_TAG%.tar.gz}.tar.gz"
             BASELINE_DOWNLOAD_URLS=()
 
@@ -791,7 +799,11 @@ jobs:
               rm -f "${BASELINE_DOWNLOAD_TMP}"
 
               for BASELINE_DOWNLOAD_URL in "${BASELINE_DOWNLOAD_URLS[@]}"; do
-                echo "Current baselines directory (${PERSISTENT_BASELINE_DIR}) not found; trying ${BASELINE_DOWNLOAD_URL}"
+                if [[ -n "${PERSISTENT_BASELINE_DIR}" ]]; then
+                  echo "Current baselines directory (${PERSISTENT_BASELINE_DIR}) not found; trying ${BASELINE_DOWNLOAD_URL}"
+                else
+                  echo "Trying ${BASELINE_DOWNLOAD_URL}"
+                fi
                 if curl --fail --location --silent --show-error --retry 3 --retry-delay 5 --output "${BASELINE_DOWNLOAD_TMP}" "${BASELINE_DOWNLOAD_URL}"; then
                   mkdir -p "${BASELINE_DOWNLOAD_DIR}"
                   mv "${BASELINE_DOWNLOAD_TMP}" "${BASELINE_DOWNLOAD_DIR}/${BASELINE_ARCHIVE_NAME}"
@@ -811,8 +823,10 @@ jobs:
             # We defined a mount point and mount it read-only inside the container.
             CURRENT_BASELINE_DIR_MOUNT=/tmp/geos/baselines
             docker_args+=(--volume=${CURRENT_BASELINE_DIR}:${CURRENT_BASELINE_DIR_MOUNT}:ro)
-          else
+          elif [[ -n "${PERSISTENT_BASELINE_DIR}" ]]; then
             echo "Current baselines directory (${PERSISTENT_BASELINE_DIR}) not found"
+          else
+            echo "No integrated test baselines were found to mount."
           fi
         fi
 
