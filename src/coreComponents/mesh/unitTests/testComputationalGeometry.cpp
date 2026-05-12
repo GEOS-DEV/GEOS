@@ -115,7 +115,6 @@ TEST( testComputationalGeometry, checkHighAspectRatio )
   EXPECT_LT( abs( faceNormal[1]-EXPECTED_NORMAL[1] ), 1e-6 );
   EXPECT_LT( abs( faceNormal[2]-EXPECTED_NORMAL[2] ), 1e-6 );
   EXPECT_LT( abs( faceCenter[0]-EXPECTED_CENTER[0] ), 1e-6 );
-  EXPECT_LT( abs( faceCenter[0]-EXPECTED_CENTER[0] ), 1e-6 );
   EXPECT_LT( abs( faceCenter[1]-EXPECTED_CENTER[1] ), 1e-6 );
   EXPECT_LT( abs( faceCenter[2]-EXPECTED_CENTER[2] ), 1e-6 );
 
