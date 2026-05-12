@@ -42,6 +42,41 @@ namespace finiteElement
  * Provides a common base for kernels that require the assembly of a system of
  * equations. The types required to assemble the system, such as DOF
  * information, the Matrix and Vector object, etc., are declared and set here.
+ *
+ * ### MATRIX_VIEW contract
+ *
+ * The @p MATRIX_VIEW template parameter is the type of the global Jacobian
+ * view captured by kernels.  Any type passed in the @p MATRIX_VIEW slot must
+ * satisfy the following contract:
+ *
+ *   - default-constructible (used by SparsityKernelBase in sparsity-only
+ *     mode, where no matrix is needed)
+ *   - copy-constructible into device lambdas.  Copies must be lightweight and
+ *     device-safe; they must not perform dynamic allocation or rely on
+ *     host-only refcount side effects.
+ *   - `numRows() const` returning a value convertible to @c localIndex
+ *   - `numColumns() const` returning a value convertible to @c localIndex
+ *   - `numNonZeros() const` returning total non-zeros
+ *   - `numNonZeros( localIndex row ) const` returning non-zeros in @p row
+ *   - `getColumns( localIndex row ) const` returning a value convertible to
+ *     @c arraySlice1d<globalIndex const>
+ *   - `getEntries( localIndex row ) const` returning a value convertible to
+ *     @c arraySlice1d<real64>, mutable
+ *   - `template< typename AtomicPolicy > addToRow( localIndex row,
+ *     globalIndex const * cols, real64 const * vals, localIndex nCols ) const`
+ *   - `template< typename AtomicPolicy > addToRowBinarySearchUnsorted(...) const`
+ *     with the same signature
+ *
+ * The @c AtomicPolicy template parameter follows LvArray atomic-policy
+ * semantics — when instantiated with @c parallelDeviceAtomic the method
+ * must perform a true device atomic add.  Concurrent invocation from
+ * thousands of element kernels is the standard usage.
+ *
+ * The callable interface and copy-constructibility requirements are pinned at
+ * compile time by @c hasMatrixViewInterface in
+ * @c finiteElement/unitTests/testMatrixViewAbstraction.cpp .  When a new
+ * @p MATRIX_VIEW type is introduced, add a @c static_assert next to the
+ * existing ones in that file.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,

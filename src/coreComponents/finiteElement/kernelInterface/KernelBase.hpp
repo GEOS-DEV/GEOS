@@ -342,6 +342,17 @@ class KernelFactory;
  * @tparam KERNEL_TYPE Templated class that defines the physics kernel with 3 template parameters.
  *   Most likely derives from KernelBase.
  * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
+ *
+ * @note **Partial-specialization disambiguation.**  This specialization and the
+ *   4+-parameter one below have identical primary @c KernelFactory template
+ *   parameter lists; they are disambiguated solely by the arity of
+ *   @c KERNEL_TYPE 's template-template parameter (3 vs. 4+).  This is
+ *   well-formed C++ but relies on partial-ordering of class-template partial
+ *   specializations with differing template-template-parameter arities, which
+ *   different compilers have historically handled differently.  Any change to
+ *   these two specializations — adding a third, reordering, or changing the
+ *   parameter pack — must be re-audited across gcc11, gcc12, clang, and the
+ *   supported nvcc front-end.
  */
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,
@@ -415,9 +426,18 @@ private:
  *   Most likely derives from KernelBase.
  * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
  *
- * @details The MATRIX_VIEW slot is deduced via internal::FirstMatrixViewOrDefault, which selects the first matching
- *   matrix-view type from @c ARGS or falls back to a default. This allows kernels that operate on a sparse global
- *   matrix view to share the same factory machinery as the 3-parameter specialization.
+ * @details The MATRIX_VIEW slot is deduced via internal::FirstMatrixViewOrDefault, which selects the first
+ *   trailing argument whose decayed type makes @p KERNEL_TYPE constructible when placed in the @p MATRIX_VIEW
+ *   template slot, or falls back to @c DefaultGlobalMatrixView if no such argument exists. This allows kernels
+ *   that operate on a sparse global matrix view to share the same factory machinery as the 3-parameter
+ *   specialization.
+ *
+ * @note **Partial-specialization disambiguation.**  See the note on the
+ *   3-parameter @c KernelFactory specialization above.  This specialization
+ *   is selected when @c KERNEL_TYPE has 4+ template-template-parameter slots
+ *   (the 4th being @c MATRIX_VIEW ).  The 3-vs-4+ partial ordering between
+ *   the two specializations has been sensitive to compiler front-end behavior;
+ *   any structural change here needs the same cross-compiler audit.
  */
 template< template< typename SUBREGION_TYPE,
                     typename CONSTITUTIVE_TYPE,

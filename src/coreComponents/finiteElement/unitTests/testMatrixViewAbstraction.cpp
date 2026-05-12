@@ -23,8 +23,8 @@
  *
  * The MATRIX_VIEW contract (see @c ImplicitKernelBase doxygen) requires:
  *   - default-constructible (used by SparsityKernelBase in sparsity-only mode)
- *   - trivially-copyable (so kernels can capture-by-value into device lambdas)
- *   - @c numRows() , @c numColumns() , @c numNonZeros(row)
+ *   - copy-constructible and safe to capture by value into device lambdas
+ *   - @c numRows() , @c numColumns() , @c numNonZeros() , @c numNonZeros(row)
  *   - @c getColumns(row)  -> indexable, yields globalIndex
  *   - @c getEntries(row)  -> indexable, yields a mutable real64-like
  *   - @c addToRow< AtomicPolicy >( row, cols, vals, nCols ) const
@@ -34,17 +34,20 @@
  * type whose only relationship to @c CRSMatrixView is conformance to the
  * above interface, (b) declaring a @c hasMatrixViewInterface SFINAE trait
  * and asserting both @c MockMatrixView and the production
- * @c DefaultGlobalMatrixView satisfy it, and (c) exercising the mock
- * functionally to confirm the contract is internally consistent.
+ * @c DefaultGlobalMatrixView satisfy it, (c) forcing a production
+ * @c LaplaceFEMKernel @c complete() instantiation against the mock, and
+ * (d) exercising the mock functionally to confirm the contract is internally
+ * consistent.
  *
  * If a future change to a kernel reaches past the documented interface
  * (e.g. into a CRSMatrix-internal layout assumption), the mock-backed
  * compile path here will fail.
  *
- * NOTE: this test deliberately does NOT instantiate a full physics-kernel
- *       leaf against MockMatrixView — that path requires mesh and constitutive
- *       fixtures and belongs in an integration test.  The trait-based pin
- *       is the contract proof; the functional smoke test confirms the mock
+ * NOTE: this test deliberately does NOT run a full physics-kernel launch
+ *       against MockMatrixView — that path requires mesh and constitutive
+ *       fixtures and belongs in an integration test.  The compile-time
+ *       LaplaceFEMKernel instantiation proves the leaf kernel stays within
+ *       the documented interface; the functional smoke test confirms the mock
  *       behaves like a real sparse matrix view.
  */
 

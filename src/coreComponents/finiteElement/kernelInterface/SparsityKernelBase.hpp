@@ -40,6 +40,15 @@ namespace finiteElement
  *
  * ### SparsityKernelBase Description
  * Provide common kernels for generation of CRS Sparsity patterns.
+ *
+ * @note The @p MATRIX_VIEW template parameter is threaded through to the
+ *   @c ImplicitKernelBase base for type-system consistency, but no method is
+ *   ever invoked on it in sparsity-only mode (see the @c complete() override
+ *   below, which only inserts into @c m_sparsity ).  The base is constructed
+ *   with a default-constructed @c MATRIX_VIEW() — see the call site below
+ *   and the MATRIX_VIEW contract on @c ImplicitKernelBase .
+ *
+ * @see geos::finiteElement::ImplicitKernelBase for the MATRIX_VIEW contract.
  */
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
@@ -102,6 +111,15 @@ public:
           inputConstitutiveType,
           inputDofNumber,
           rankOffset,
+          // Pass a default-constructed MATRIX_VIEW to ImplicitKernelBase.
+          // In sparsity-only mode the SparsityKernelBase::complete()
+          // override below only touches m_sparsity; m_matrix is never
+          // dereferenced.  MATRIX_VIEW types are therefore required to be
+          // default-constructible — see the contract block on
+          // ImplicitKernelBase.  If a future kernel deriving from
+          // SparsityKernelBase reaches a code path that calls a method on
+          // m_matrix, the default-constructed view will misbehave
+          // (for CRSMatrixView, numRows() == 0 and any row access is UB).
           MATRIX_VIEW(),
           arrayView1d< real64 >(),
           inputDt ),

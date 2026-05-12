@@ -98,7 +98,11 @@ public:
  * @tparam FE_TYPE The type of finite element.
  * @tparam NUM_DOF_PER_TEST_SP The number of DOF per test support point.
  * @tparam NUM_DOF_PER_TRIAL_SP The number of DOF per trial support point.
+ * @tparam MATRIX_VIEW The type of the global Jacobian view.  Must satisfy
+ *                     the MATRIX_VIEW contract documented on
+ *                     @c geos::finiteElement::ImplicitKernelBase.
  *
+ * @see geos::finiteElement::ImplicitKernelBase for the MATRIX_VIEW contract.
  */
 
 template< typename CONSTITUTIVE_TYPE,
@@ -255,8 +259,10 @@ private:
  * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
  *
  * @details The MATRIX_VIEW slot is deduced via internal::FirstInterfaceMatrixViewOrDefault, which selects the first
- *   matching matrix-view type from @c ARGS or falls back to a default. This allows interface kernels that operate on
- *   a sparse global matrix view to share the same factory machinery as the 2-parameter specialization.
+ *   trailing argument whose decayed type makes @p KERNEL_TYPE constructible when placed in the @p MATRIX_VIEW
+ *   template slot, or falls back to @c DefaultGlobalMatrixView if no such argument exists. This allows interface
+ *   kernels that operate on a sparse global matrix view to share the same factory machinery as the 2-parameter
+ *   specialization.
  */
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE,
