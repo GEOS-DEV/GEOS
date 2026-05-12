@@ -294,7 +294,7 @@ public:
 
     static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
     static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
-    static constexpr char const * gridSurfaceTensionForceString() { return "gridSurfaceForceTension"; }
+    static constexpr char const * gridSurfaceTensionForceString() { return "gridSurfaceTensionForce"; }
     static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
     static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
     static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
@@ -330,7 +330,7 @@ public:
     static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
     static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
     static constexpr char const * gridExplicitSurfaceNormalString() { return "gridExplicitSurfaceNormal"; }
-    static constexpr char const * gridMaxMappedParticleIDString() { return "gridMaxMappedParticleIDS"; }
+    static constexpr char const * gridMaxMappedParticleIDString() { return "gridMaxMappedParticleID"; }
     static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
     static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
     static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
@@ -456,10 +456,6 @@ public:
 
   void initializeFrictionCoefficients();
 
-  void lookupFrictionCoefficient( int const a,
-                                  int const b,
-                                  real64 & frictionCoefficient );
-
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
@@ -508,8 +504,6 @@ public:
                                   NodeManager & nodeManager );
 
   void optimizeBinSort( ParticleManager & particleManager );
-
-  void particleColorSort( ParticleManager & particleManager );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -569,12 +563,6 @@ public:
                                    arrayView1d< real64 const > const & fp,           // scalar field values (e.g. damage) at neighbor
                                                                                      // particles
                                    arraySlice1d< real64 > const result );
-
-  void computeKernelFieldGradient( arraySlice1d< real64 const > const x,       // query point
-                                   std::vector< std::vector< real64 > > & xp,  // List of neighbor particle locations.
-                                   std::vector< real64 > & Vp,                 // List of neighbor particle volumes.
-                                   std::vector< real64 > & fp,                 // scalar field values (e.g. damage) at neighbor particles
-                                   real64 ( &result )[3] );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -852,12 +840,6 @@ public:
 
   void computeSurfaceFlags( ParticleManager & particleManager );
 
-  void computeSurfaceNormals( ParticleManager & particleManager,
-                              NodeManager & nodeManager );
-
-  void computeSurfacePositions( ParticleManager & particleManager,
-                                NodeManager & nodeManager );
-
   void computeSphF( ParticleManager & particleManager );
 
   // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
@@ -988,9 +970,6 @@ public:
 
   void computeSPHJacobian( ParticleManager & particleManager );
 
-  void overlapCorrection( real64 const dt,
-                          ParticleManager & particleManager );
-
   void sphOverlapCorrection( real64 const dt,
                              ParticleManager & particleManager );
 
@@ -1017,11 +996,6 @@ public:
                         real64 const dt,
                         NodeManager & nodeManager,
                         SpatialPartition & partition );
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  void cofactor( real64 const (&F)[3][3],
-                 real64 ( &Fc )[3][3] );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -1207,7 +1181,7 @@ protected:
 
   // Cohesive zone options
   AreaIntegrationOption m_areaIntegrationMethod;
-  real64 m_numSurfaceIntegrationPoints;
+  int m_numSurfaceIntegrationPoints;
   int m_preventCZInterpenetration;
   real64 m_totalBinderVolume;
   real64 m_polymerCZThickness;
@@ -1347,7 +1321,7 @@ ENUM_STRINGS( SolidMechanicsMPM::GPUSchemeOption,
               "Reduction",
               "Colors" );
 
-ENUM_STRINGS( SolidMechanicsMPM:: NormalsAndPositionsMethodOption,
+ENUM_STRINGS( SolidMechanicsMPM::NormalsAndPositionsMethodOption,
               "LogisticRegression",
               "DFGAndVolumeIntegration" );
 

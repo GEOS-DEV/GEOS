@@ -650,26 +650,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to that determines if existing particle normals and positions are overriden" );
 
-  registerWrapper( "boundaryConditionTypes", &m_boundaryConditionTypes ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Boundary conditions on x-, x+, y-, y+, z- and z+ faces. Options are:\n* " + EnumStrings< BoundaryConditionOption >::concat( "\n* " ) );
-
-  registerWrapper( "boundaryFaceCoefficientsOfRestitution", &m_boundaryFaceCoefficientsOfRestitution ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Boundary face coefficients of restitution for BC type = 3 on x-, x+, y-, y+, z- and z+ faces." );
-
-  registerWrapper( "boundaryFaceFrictionCoefficients", &m_boundaryFaceFrictionCoefficients ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Boundary face fricition coefficients for BC type = 3 on x-, x+, y-, y+, z- and z+ faces." );
-
-  registerWrapper( "bodyForce", &m_bodyForce ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores uniform body force" );
-
   registerWrapper( "enableSurfaceTension", &m_enableSurfaceTension ).
     setApplyDefaultValue( m_enableSurfaceTension ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -716,16 +696,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "xyz coordinate of confining pressure box max corner" );
-
-  registerWrapper( "bcTable", &m_bcTable ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores time-dependent bc types on x-, x+, y-, y+, z- and z+ faces." );
-
-  registerWrapper( "prescribedFTable", &m_prescribedFTable ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag for whether to have time-dependent superimposed velocity gradient for triply periodic simulations" );
 
   registerWrapper( "prescribedBoundaryFTable", &m_prescribedBoundaryFTable ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1449,18 +1419,10 @@ void SolidMechanicsMPM::postInputInitialization()
                      !isEqual( LvArray::math::round( m_bcTable[i][5] ), m_bcTable[i][5] ) ||
                      !isEqual( LvArray::math::round( m_bcTable[i][6] ), m_bcTable[i][6] ), "Only integer boundary condition types are permitted." );
 
-      GEOS_ERROR_IF( ( m_bcTable[i][1] < 0 ||
-                       m_bcTable[i][2] < 0 ||
-                       m_bcTable[i][3] < 0 ||
-                       m_bcTable[i][4] < 0 ||
-                       m_bcTable[i][5] < 0 ||
-                       m_bcTable[i][6] < 0 ) &&
-                     ( m_bcTable[i][1] > 3 ||
-                       m_bcTable[i][2] > 3 ||
-                       m_bcTable[i][3] > 3 ||
-                       m_bcTable[i][4] > 3 ||
-                       m_bcTable[i][5] > 3 ||
-                       m_bcTable[i][6] > 3 ), "Boundary types must be 0, 1, 2 or 3" );
+      for( int face = 1; face <= 6; ++face )
+      {
+        GEOS_ERROR_IF( m_bcTable[i][face] < 0 || m_bcTable[i][face] > 3, "Boundary types must be 0, 1, 2 or 3" );
+      }
     }
   }
 
@@ -5349,7 +5311,7 @@ void SolidMechanicsMPM::mapSurfaceNormalsAndPositionsToParticles( ParticleManage
           }
 
           LvArray::tensorOps::normalize< 3 >( particleSurfaceNormal[p] ); // Should check for zero magnitude
-          LvArray::tensorOps::scale< 3 >( particleSurfacePosition[p], mappedMass );
+          LvArray::tensorOps::scale< 3 >( particleSurfacePosition[p], 1.0 / mappedMass );
 
           // Update reference surface normals and positions so kinematic update will be correct based on particle deformation gradient
           real64 invF[3][3] = {};
@@ -6963,7 +6925,7 @@ void SolidMechanicsMPM::subdivideParticles( ParticleManager & particleManager )
   MpiWrapper::allGather( numNewParticles.get(), numNewParticlesPerRank, MPI_COMM_GEOS );
 
   int rank = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
+  MPI_Comm_rank( MPI_COMM_GEOS, &rank );
 
   globalIndex currGlobalIndex = maxParticleID+1;
   int totalNewParticles = 0;
@@ -7272,6 +7234,14 @@ void SolidMechanicsMPM::correctGhostParticleCentersAcrossPeriodicBoundaries( Par
 real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager )
 {
   GEOS_MARK_FUNCTION;
+
+  // TODO: Can we move towards 2-pass GPU construction:
+  // 1. Compute bin id for each particle.
+  // 2. Sort particles by bin id.
+  // 3. Prefix-sum bin offsets.
+  // 4. Count neighbors per particle/node.
+  // 5. Prefix-sum neighbor capacities.
+  // 6. Fill neighbor arrays with atomics or deterministic offsets.
 
   // Time this function
   real64 tStart = MPI_Wtime();
@@ -9617,6 +9587,10 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
           for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
           {
             uniqueNodesView[p][g] = mappedNodes[p][g];
+
+            // BUGFIX:  There seems to be some inconsistency in whether mapped nodes is of length
+            // active particle indices (e.g. mappedNodes[pp] throughout the code) or of the complete
+            // list of particles in subregion
           }
         }
         else
@@ -9671,7 +9645,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
           localIndex nodeIndex = uniqueNodesView[p][g];
           
           // If the node is not on this partition (e.g. occurs with ghosted nodes, just ignore it)
-          if ( nodeIndex < 0 || nodeIndex > numNodes )
+          if ( nodeIndex < 0 || nodeIndex >= numNodes ) // BUGFIX: change this from nodeIndex > numNodes
           {
             // GEOS_LOG_RANK( "nodeIndex " << nodeIndex << " is a ghost node for particle with rank " << particleRank[p] << "(" << rank << ")" );
             continue;
@@ -10308,6 +10282,10 @@ void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & doma
   } ); // subregion loop
 
   // Sync damage gradient field
+  // BUGFIX: A componentwise MPI_MAX is not equivalent to “take the vector with largest norm.” 
+  // It can create a vector whose x, y, and z components came from different ranks. That can corrupt 
+  // field partitioning and contact normals.  Do we care as long as it defines a consistent plane? 
+  // Maybe.  we'd have to do  a multi-step sync of a priority vector based on magnitude.
   syncGridFields( { viewKeyStruct::gridDamageGradientString() }, domain, nodeManager, mesh, MPI_MAX );
 }
 
@@ -10670,6 +10648,7 @@ void SolidMechanicsMPM::projectParticleSurfaceNormalsToGrid( DomainPartition & d
     } );
     } );
 
+  // BUGFIX:  This looks inconsistent. Either copy into gridPrincipalExplicitSurfaceNormal, or sync gridExplicitSurfaceNormalString()
   syncGridFields( { viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() }, domain, nodeManager, mesh, MPI_SUM );
 
   arrayView1d< real64 > const gridSurfaceMass = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() );
@@ -11439,20 +11418,23 @@ bool computeLinePlaneIntersection( real64 (& plane_origin)[3],
   distToPlane = DBL_MAX; // Parametric parameter
 
   // Check if line and plane are parallel (e.g. no intersection)
-  real64 c = LvArray::tensorOps::AiBi< 3 >( plane_normal, ray ) > 0.0;
-  if ( c > 0.0 )
-  {
-    real64 diff[3] = {};
-    LvArray::tensorOps::copy< 3 >( diff, plane_origin );
-    LvArray::tensorOps::subtract< 3 >( diff, origin );
-    distToPlane = LvArray::tensorOps::AiBi< 3 >( diff, plane_normal ) / c;
+  real64 const denom = LvArray::tensorOps::AiBi< 3 >( plane_normal, ray );
 
-    LvArray::tensorOps::copy< 3 >( intersection, origin );
-    LvArray::tensorOps::scaledAdd< 3 >( intersection, ray, distToPlane );
-    return true;
+  if( LvArray::math::abs( denom ) < 1e-14 )
+  {
+    return false;
   }
 
-  return false;
+  real64 diff[3] = {};
+  LvArray::tensorOps::copy< 3 >( diff, plane_origin );
+  LvArray::tensorOps::subtract< 3 >( diff, origin );
+
+  distToPlane = LvArray::tensorOps::AiBi< 3 >( diff, plane_normal ) / denom;
+
+  LvArray::tensorOps::copy< 3 >( intersection, origin );
+  LvArray::tensorOps::scaledAdd< 3 >( intersection, ray, distToPlane );
+  return true;
+
 }
 
 // Gaussian quadrature for mesh nodal area integration
@@ -11632,6 +11614,14 @@ int compareAngles(const void *a, const void *b) {
     const real64 *A = (const real64 *)a;
     const real64 *B = (const real64 *)b;
     return A[0] - B[0];
+
+    // // BUFGIX: Is this unsafe, would it be better as:
+    // int compareAngles( const void * a, const void * b )
+    // {
+    //   real64 const A = static_cast< real64 const * >( a )[0];
+    //   real64 const B = static_cast< real64 const * >( b )[0];
+    //   return ( A > B ) - ( A < B );
+    // }
 }
 
 
@@ -11649,8 +11639,14 @@ bool intersectRayParallelepiped( real64 (& origin)[3],
     LvArray::tensorOps::scaledCopy< 3 >( M[2], particleRVectors[2], 2.0 );
     LvArray::tensorOps::transpose< 3 >( M );
 
+    // BUGFIX:  We were inverting M but not storing it as Minv
     real64 Minv[3][3] = {};
-    LvArray::tensorOps::invert< 3 >( M );
+    LvArray::tensorOps::copy< 3, 3 >( Minv, M );
+    real64 const det = LvArray::tensorOps::invert< 3 >( Minv );
+    if( isZero( det ) )
+    {
+      return false;
+    }
 
     real64 corner[3] = {};
     LvArray::tensorOps::copy< 3 >( corner, particleCenter );
@@ -11789,7 +11785,7 @@ real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
     if( result )
     {
       // Check if intersection is within start and end point of domain edge
-      real64 edgeLen = LvArray::tensorOps::l2Norm< 3 >( edgeDir );
+      real64 edgeLen = LvArray::tensorOps::l2Norm< 3 >( edgeDir );    // should this be if( 0.0 <= distToPlane && distToPlane <= 1.0 ) ?
       if( 0.0 <= distToIntersection && distToIntersection <= edgeLen )
       {
         LvArray::tensorOps::copy< 3 >( intersections[numIntersections], intersection );
@@ -11804,7 +11800,7 @@ real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
   // Arbitrarily use first intersection in list as angle = 0
   real64 v00[3] = {};
   LvArray::tensorOps::copy< 3 >( v00, intersections[0] );
-  LvArray::tensorOps::copy< 3 >( v00, surfPos );
+  LvArray::tensorOps::subtract< 3 >( v00, surfPos );  // BUGFIX: This was a copy not a subtract, which was clearly a bug. but check this change.
   LvArray::tensorOps::normalize< 3 >( v00 );
 
   real64 angles[12][4] = {}; // Initialize all to 0
@@ -11814,7 +11810,7 @@ real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
     {
       real64 v11[3] = {};
       LvArray::tensorOps::copy< 3 >( v11, intersections[i] );
-      LvArray::tensorOps::copy< 3 >( v11, surfPos );
+      LvArray::tensorOps::subtract< 3 >( v11, surfPos ); // BUGFIX: This was a copy not a subtract, which was clearly a bug. but check this change.
       LvArray::tensorOps::normalize< 3 >( v11 );
 
       real64 cross[3] = {};
@@ -11923,6 +11919,20 @@ real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
       nodalArea += w * ( 1.0 - LvArray::math::abs( p[0] / hEl[0] ) ) * 
                        ( 1.0 - LvArray::math::abs( p[1] / hEl[1] ) ) *
                        ( 1.0 - LvArray::math::abs( p[2] / hEl[2] ) );
+
+      // BUGFIX:  is this dimensionally an area or should we do something like
+      // real64 e0[3] = {};
+      // real64 e1[3] = {};
+      // LvArray::tensorOps::copy< 3 >( e0, v0 );
+      // LvArray::tensorOps::subtract< 3 >( e0, v2 );
+      // LvArray::tensorOps::copy< 3 >( e1, v1 );
+      // LvArray::tensorOps::subtract< 3 >( e1, v2 );
+
+      // real64 cross[3] = {};
+      // LvArray::tensorOps::crossProduct( cross, e0, e1 );
+      // real64 const jacobian = LvArray::tensorOps::l2Norm< 3 >( cross ); // = 2 * physical triangle area
+
+      // nodalArea += jacobian * w * shapeValue;                       
 
       GEOS_UNUSED_VAR( numNeighbors );
       GEOS_UNUSED_VAR( neighborRegions );
@@ -14234,7 +14244,7 @@ void SolidMechanicsMPM::initializeFrictionCoefficients()
 
     for( int i = 0; i < m_numContactGroups; ++i )
     {
-      for( int j = i+1; i < m_numContactGroups; ++j )
+      for( int j = i+1; j < m_numContactGroups; ++j )
       {
         GEOS_ERROR_IF( !isZero( m_frictionCoefficientTable[i][j] - m_frictionCoefficientTable[j][i], DBL_EPSILON ), "Off-diagonal friction coefficients must match" );
       }
@@ -15642,11 +15652,21 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
                 // Enforce friction in transverse directions
                 real64 mu = boundaryFaceFrictionCoefficients[face];
-                real64 frictionalForce = mu * LvArray::math::max( -gridAcceleration[g][face][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0 );
+                real64 frictionalForce = mu * LvArray::math::max( -gridAcceleration[g][fieldIndex][dir0] * ( -1.0 + 2.0 * positiveNormal ), 0.0 );
 
                 real64 inPlaneSpeed = std::sqrt( gridVelocity[g][fieldIndex][dir1] * gridVelocity[g][fieldIndex][dir1] + gridVelocity[g][fieldIndex][dir2] * gridVelocity[g][fieldIndex][dir2] );
-                real64 r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
-                real64 r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
+                
+                real64 r1, r2;
+                if( inPlaneSpeed > 1e-16 )
+                {
+                  r1 = gridVelocity[g][fieldIndex][dir1] / inPlaneSpeed;
+                  r2 = gridVelocity[g][fieldIndex][dir2] / inPlaneSpeed;
+                }
+                else
+                {
+                  r1 = 0.;
+                  r2 = 0.;
+                }
 
                 real64 da1 = r1 * frictionalForce;
                 real64 da2 = r2 * frictionalForce;
@@ -15655,7 +15675,7 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
                 gridDVelocity[g][fieldIndex][dir2] = da2 * dt;
 
                 gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir1];
-                gridVelocity[g][fieldIndex][dir1] += gridDVelocity[g][fieldIndex][dir2];
+                gridVelocity[g][fieldIndex][dir2] += gridDVelocity[g][fieldIndex][dir2];
 
                 gridAcceleration[g][fieldIndex][dir1] -= da1;
                 gridAcceleration[g][fieldIndex][dir2] -= da2;
@@ -16681,6 +16701,8 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
 
       // Zero this out before additive sum
       LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
+      LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
+      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
 
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
@@ -16944,7 +16966,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
                                                              gridDamageGradient[mappedNodeJ] );
 
               for( localIndex i = 0; i < numDims; ++i )
-              {
+              { // BUGFIX TODO: Make this use atomics to be safe for GPU:
                 gridVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r + 1.0 ) / r ) *
                                                           ( particleMass[p] * shapeFunctionValueI * shapeFunctionValueJ / gridMass[mappedNodeI][fieldIndexI] ) *
                                                           vMinus[mappedNodeJ][fieldIndexJ][i];
@@ -17091,6 +17113,8 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
               for( localIndex i = 0; i < numDims; ++i )
               {
+                // BUGFIX TODO: Make this use atomics to be safe for GPU:
+
                 gridDVPlus[mappedNodeI][fieldIndexI][i] += ( ( updateOrder - r ) / r ) *
                                                            ( particleMass[p] * shapeFunctionValueI * shapeFunctionValueJ / gridMass[mappedNodeI][fieldIndexI] ) *
                                                            dVMinus[mappedNodeJ][fieldIndexJ][i];
@@ -17891,6 +17915,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
 
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    // BUGFIX: Flag is captured by reference in device parallel loop.  That is not GPU-safe and is also a race. Use a RAJA reduction or integer atomic flag.
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=, &zeroMagnitudeMaterialDirection] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
@@ -17908,14 +17934,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
       real64 particleSpeedSquared = 0;
       for( int d = 0; d < numDims; ++d )
       {
-        real64 addSqr = particleVelocity[p][d] * particleVelocity[p][d];
-        if( particleSpeedSquared > numeric_max - addSqr )
-        {
+        real64 const vmaxSqrt = LvArray::math::sqrt( numeric_max / real64( numDims ) );
+        if( LvArray::math::abs( particleVelocity[p][d] ) > vmaxSqrt )
+        { 
           numParticlesVelocityOverflowed += 1;
           flaggedForDeletion = true;
           break;
-        }
-        particleSpeedSquared += addSqr;
+
+          real64 addSqr = particleVelocity[p][d] * particleVelocity[p][d];
+          particleSpeedSquared += addSqr;
+        }       
       }
 
       if( !flaggedForDeletion && particleSpeedSquared > maxParticleVelocitySquared )
@@ -18002,7 +18030,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::scaledCopy< 3, 3 >( dcofF, out, dt );
 
           real64 dF[3][3] = {};
-          LvArray::tensorOps::scaledCopy< 3, 3 >( dF, particleDeformationGradient[p], dt );
+          LvArray::tensorOps::scaledCopy< 3, 3 >( dF, particleDeformationGradient[p], dt );  // BUGFIX: possibly this should be particleFDot[p]
 
           // Update quantities
           real64 temp[3]= {};
@@ -18495,10 +18523,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxMass += particleMass[p];
           boxMatVolume += particleVolume[p];
           boxParticleReferenceVolume += particleReferenceVolume[p];
-          boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];
+          boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];  // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
 
           if( computeInternalEnergyAndTemperature == 1 )
           {
+            // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
             boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
           }
 
@@ -18679,6 +18708,17 @@ real64 SolidMechanicsMPM::getStableTimeStep( ParticleManager & particleManager )
 
   // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
   real64 dtReturn = maxWavespeed.get() > 1.0e-16 ? cflFactor * length / maxWavespeed.get() : DBL_MAX;
+
+  // TODO: expand time-step calculation to account for:
+  // - global MPI max wavespeed
+  // - particle crossing / CPDI corner crossing limit
+  // - domain-resize velocity from F-table or stress control
+  // - contact overlap correction limit
+  // - cohesive law stability limit, if available from the CZ model
+  // - next MPM event time
+  // - output/restart landing time, if exact event alignment matters
+  //
+  // and cap timestep growth (e.g. no moore than 20% of previous value.)
 
   // CC: TODO add check to make sure that next time step won't skip a MPM event
   return dtReturn;
