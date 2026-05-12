@@ -291,22 +291,33 @@ static_assert( std::is_same<
                "A failure here means production kernel code reached outside the "
                "documented MATRIX_VIEW contract." );
 
+// Force instantiation of LaplaceFEMKernel< ..., MockMatrixView >::complete().
+//
+// The two static_asserts above only verify signatures (decltype is unevaluated
+// context, so they do not force function template body instantiation).  The
+// body of complete() is where the kernel actually calls into MATRIX_VIEW —
+// `m_matrix.numRows()` and `m_matrix.template addToRowBinarySearchUnsorted<
+// parallelDeviceAtomic >( ... )`.  To catch a future kernel edit that reaches
+// past the documented contract, we need the body to type-check against the
+// mock.
+//
+// Taking the address of `instantiateComplete< MockLaplaceKernel >` at
+// namespace scope is an odr-use in evaluated context and therefore forces the
+// function template to be instantiated, which in turn instantiates
+// MockLaplaceKernel::complete().  The variable itself is otherwise unused;
+// [[maybe_unused]] suppresses the warning.
 template< typename KERNEL >
-struct CanInstantiateComplete
+real64 instantiateComplete( KERNEL const & kernel,
+                            typename KERNEL::StackVariables & stack )
 {
-  static real64 call( KERNEL const & kernel,
-                      typename KERNEL::StackVariables & stack )
-  {
-    return kernel.complete( 0, stack );
-  }
-};
+  return kernel.complete( 0, stack );
+}
 
-static_assert( std::is_same<
-                 decltype( &CanInstantiateComplete< MockLaplaceKernel >::call ),
-                 real64 (*)( MockLaplaceKernel const &,
-                             MockLaplaceKernel::StackVariables & ) >::value,
-               "LaplaceFEMKernel::complete must instantiate as a callable "
-               "function with MockMatrixView." );
+using MockLaplaceCompleteFunction = real64 (*)( MockLaplaceKernel const &,
+                                                MockLaplaceKernel::StackVariables & );
+
+[[maybe_unused]] MockLaplaceCompleteFunction const mockLaplaceCompleteFunction
+  = &instantiateComplete< MockLaplaceKernel >;
 
 //==============================================================================
 //  Functional tests: confirm MockMatrixView behaves like a real sparse matrix
