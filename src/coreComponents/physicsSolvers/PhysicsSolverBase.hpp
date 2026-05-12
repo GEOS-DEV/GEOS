@@ -1200,7 +1200,7 @@ protected:
   Timestamp m_systemSetupTimestamp;
 
   /// Callback function for assembly step
-  std::function< void( MATRIX, array1d< real64 > ) > m_assemblyCallback;
+  std::function< void( MATRIX const &, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
   stdMap< std::string, std::chrono::system_clock::duration > m_timers;

@@ -256,9 +256,9 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
 
 bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & funcType )
 {
-  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > ) ) )
+  if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( DefaultGlobalMatrix const &, array1d< real64 > ) > ) ) )
   {
-    m_assemblyCallback = *reinterpret_cast< std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > * >( func );
+    m_assemblyCallback = *reinterpret_cast< std::function< void( DefaultGlobalMatrix const &, array1d< real64 > ) > * >( func );
     return true;
   }
 
@@ -571,7 +571,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
     if( m_assemblyCallback )
     {
-      // Make a copy of LA objects and ship off to the callback
+      // Make a copy of the RHS and ship it off to the callback.
       array1d< real64 > localRhsCopy( m_rhs.localSize() );
       localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
       m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
@@ -1012,7 +1012,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       if( m_assemblyCallback )
       {
-        // Make a copy of LA objects and ship off to the callback
+        // Make a copy of the RHS and ship it off to the callback.
         array1d< real64 > localRhsCopy( m_rhs.localSize() );
         localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
         m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );

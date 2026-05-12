@@ -161,7 +161,7 @@ private:
   {
     localIndex const nnz = m_sizes[ row ];
     globalIndex const * const rowCols = m_cols + m_offsets[ row ];
-    real64 * const           rowVals = m_vals + m_offsets[ row ];
+    real64 * const rowVals = m_vals + m_offsets[ row ];
     for( localIndex i = 0; i < nCols; ++i )
     {
       for( localIndex j = 0; j < nnz; ++j )
@@ -175,8 +175,8 @@ private:
     }
   }
 
-  localIndex          m_numRows = 0;
-  localIndex          m_numCols = 0;
+  localIndex m_numRows = 0;
+  localIndex m_numCols = 0;
   localIndex const *  m_offsets = nullptr;
   localIndex *        m_sizes   = nullptr;
   globalIndex *       m_cols    = nullptr;
@@ -195,42 +195,42 @@ struct hasMatrixViewInterface : std::false_type {};
 
 template< typename T >
 struct hasMatrixViewInterface< T,
-                               std::void_t<
-                                 // Default-constructible (required by SparsityKernelBase)
-                                 decltype( T() ),
-                                 // Query methods.
-                                 decltype( std::declval< T const >().numRows() ),
-                                 decltype( std::declval< T const >().numColumns() ),
-                                 decltype( std::declval< T const >().numNonZeros() ),
-                                 decltype( std::declval< T const >().numNonZeros( std::declval< localIndex >() ) ),
-                                 // Row views.
-                                 decltype( std::declval< T const >().getColumns( std::declval< localIndex >() ) ),
-                                 decltype( std::declval< T const >().getEntries( std::declval< localIndex >() ) ),
-                                 decltype( std::declval< T const >().getColumns( std::declval< localIndex >() )[ std::declval< localIndex >() ] ),
-                                 decltype( std::declval< T const >().getEntries( std::declval< localIndex >() )[ std::declval< localIndex >() ] = real64{} ),
-                                 // addToRow< AtomicPolicy >( row, cols, vals, nCols )
-                                 decltype( std::declval< T const >().template addToRow< parallelDeviceAtomic >(
-                                             std::declval< localIndex >(),
-                                             static_cast< globalIndex const * >( nullptr ),
-                                             static_cast< real64 const * >( nullptr ),
-                                             std::declval< localIndex >() ) ),
-                                 // addToRowBinarySearchUnsorted< AtomicPolicy >( row, cols, vals, nCols )
-                                 decltype( std::declval< T const >().template addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
-                                             std::declval< localIndex >(),
-                                             static_cast< globalIndex const * >( nullptr ),
-                                             static_cast< real64 const * >( nullptr ),
-                                             std::declval< localIndex >() ) )
-                                 >
-                               > : std::integral_constant< bool,
-                                                           std::is_default_constructible< T >::value &&
-                                                           std::is_copy_constructible< T >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().numRows() ), localIndex >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().numColumns() ), localIndex >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().numNonZeros() ), localIndex >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().numNonZeros( std::declval< localIndex >() ) ), localIndex >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().getColumns( std::declval< localIndex >() ) ), arraySlice1d< globalIndex const > >::value &&
-                                                           std::is_convertible< decltype( std::declval< T const >().getEntries( std::declval< localIndex >() ) ), arraySlice1d< real64 > >::value
-                                                           > {};
+std::void_t<
+// Default-constructible (required by SparsityKernelBase)
+decltype( T() ),
+// Query methods.
+decltype( std::declval< T const >().numRows() ),
+decltype( std::declval< T const >().numColumns() ),
+decltype( std::declval< T const >().numNonZeros() ),
+decltype( std::declval< T const >().numNonZeros( std::declval< localIndex >() ) ),
+// Row views.
+decltype( std::declval< T const >().getColumns( std::declval< localIndex >() ) ),
+decltype( std::declval< T const >().getEntries( std::declval< localIndex >() ) ),
+decltype( std::declval< T const >().getColumns( std::declval< localIndex >() )[ std::declval< localIndex >() ] ),
+decltype( std::declval< T const >().getEntries( std::declval< localIndex >() )[ std::declval< localIndex >() ] = real64 {} ),
+// addToRow< AtomicPolicy >( row, cols, vals, nCols )
+decltype( std::declval< T const >().template addToRow< parallelDeviceAtomic >(
+            std::declval< localIndex >(),
+            static_cast< globalIndex const * >( nullptr ),
+            static_cast< real64 const * >( nullptr ),
+            std::declval< localIndex >() ) ),
+// addToRowBinarySearchUnsorted< AtomicPolicy >( row, cols, vals, nCols )
+decltype( std::declval< T const >().template addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
+            std::declval< localIndex >(),
+            static_cast< globalIndex const * >( nullptr ),
+            static_cast< real64 const * >( nullptr ),
+            std::declval< localIndex >() ) )
+>
+> : std::integral_constant< bool,
+                            std::is_default_constructible< T >::value &&
+                            std::is_copy_constructible< T >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().numRows() ), localIndex >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().numColumns() ), localIndex >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().numNonZeros() ), localIndex >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().numNonZeros( std::declval< localIndex >() ) ), localIndex >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().getColumns( std::declval< localIndex >() ) ), arraySlice1d< globalIndex const > >::value &&
+                            std::is_convertible< decltype( std::declval< T const >().getEntries( std::declval< localIndex >() ) ), arraySlice1d< real64 > >::value
+                            > {};
 
 //==============================================================================
 //  Pin the contract at compile time.
@@ -264,9 +264,9 @@ static_assert( hasMatrixViewInterface< DefaultGlobalMatrixView >::value,
                "compile against it." );
 
 using MockLaplaceKernel = LaplaceFEMKernel< CellElementSubRegion,
-                                           constitutive::NullModel,
-                                           finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2_impl,
-                                           MockMatrixView >;
+                                            constitutive::NullModel,
+                                            finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2_impl,
+                                            MockMatrixView >;
 
 static_assert( std::is_constructible< MockLaplaceKernel,
                                       NodeManager const &,
@@ -342,15 +342,15 @@ namespace
  *
  * Returns a MockMatrixView and stashes the backing storage in the out-params.
  */
-MockMatrixView build3x3( std::vector< localIndex >  & offsets,
-                         std::vector< localIndex >  & sizes,
+MockMatrixView build3x3( std::vector< localIndex > & offsets,
+                         std::vector< localIndex > & sizes,
                          std::vector< globalIndex > & cols,
-                         std::vector< real64 >      & vals )
+                         std::vector< real64 > & vals )
 {
   offsets = { 0, 2, 4, 6 };
   sizes   = { 2, 2, 2 };
-  cols    = { 1, 2,   0, 1,   0, 2 };
-  vals    = { 1, 2,   3, 4,   5, 6 };
+  cols    = { 1, 2, 0, 1, 0, 2 };
+  vals    = { 1, 2, 3, 4, 5, 6 };
   return MockMatrixView( 3, 3,
                          offsets.data(),
                          sizes.data(),
@@ -368,7 +368,7 @@ TEST( MatrixViewAbstraction, mock_attribute_queries )
   std::vector< real64 >      vals;
   MockMatrixView const m = build3x3( offsets, sizes, cols, vals );
 
-  EXPECT_EQ( m.numRows(),    3 );
+  EXPECT_EQ( m.numRows(), 3 );
   EXPECT_EQ( m.numColumns(), 3 );
   EXPECT_EQ( m.numNonZeros(), 6 );
   EXPECT_EQ( m.numNonZeros( 0 ), 2 );
@@ -412,7 +412,7 @@ TEST( MatrixViewAbstraction, mock_addToRow )
   // Add { col 0: +10, col 1: +20 } into row 1.
   // Existing row 1: cols {0,1}, vals {3,4}.  After: vals {13,24}.
   globalIndex const addCols[] = { 0, 1 };
-  real64      const addVals[] = { 10.0, 20.0 };
+  real64 const addVals[] = { 10.0, 20.0 };
   m.template addToRow< serialAtomic >( 1, addCols, addVals, 2 );
 
   auto const e1 = m.getEntries( 1 );
@@ -431,7 +431,7 @@ TEST( MatrixViewAbstraction, mock_addToRowBinarySearchUnsorted )
   // Add unsorted { col 2: +100, col 0: +200 } into row 2.
   // Existing row 2: cols {0,2}, vals {5,6}.  After: vals {205, 106}.
   globalIndex const addCols[] = { 2, 0 };
-  real64      const addVals[] = { 100.0, 200.0 };
+  real64 const addVals[] = { 100.0, 200.0 };
   m.template addToRowBinarySearchUnsorted< serialAtomic >( 2, addCols, addVals, 2 );
 
   auto const e2 = m.getEntries( 2 );
@@ -451,7 +451,7 @@ TEST( MatrixViewAbstraction, mock_dirichlet_style_row_mutation )
   MockMatrixView const m = build3x3( offsets, sizes, cols, vals );
 
   globalIndex const targetDof = 1;
-  localIndex  const localRow  = 1;   // row 1 has columns {0,1}; diag-of-interest is col 1
+  localIndex const localRow  = 1;    // row 1 has columns {0,1}; diag-of-interest is col 1
   real64 rhs = 0.0;
   FieldSpecificationEqual::SpecifyFieldValue< MockMatrixView >( targetDof,
                                                                 0,
@@ -475,7 +475,7 @@ TEST( MatrixViewAbstraction, default_constructed_view_is_safe_to_hold )
   // and copyable.  Verify both hold for the mock.
   MockMatrixView const m;
   MockMatrixView const copy = m;
-  EXPECT_EQ( m.numRows(),    0 );
+  EXPECT_EQ( m.numRows(), 0 );
   EXPECT_EQ( copy.numRows(), 0 );
 }
 

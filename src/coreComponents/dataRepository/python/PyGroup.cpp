@@ -296,8 +296,16 @@ static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args 
     return nullptr;
   }
 
-  std::function< void( DefaultGlobalMatrix, array1d< real64 > ) > wrapedCallback =
-    LvArray::python::PythonFunction< DefaultGlobalMatrix, array1d< real64 > > { callback };
+  // PythonFunction's operator() and the underlying LvArray::python::create()
+  // overloads require non-const lvalue CRSMatrix arguments to build the numpy
+  // wrappers, so the lambda copies the matrix before forwarding.
+  std::function< void( DefaultGlobalMatrix const &, array1d< real64 > ) > wrapedCallback =
+    [ pyFunc = LvArray::python::PythonFunction< DefaultGlobalMatrix, array1d< real64 > >{ callback } ]
+      ( DefaultGlobalMatrix const & matrix, array1d< real64 > rhs ) mutable
+  {
+    DefaultGlobalMatrix matrixCopy( matrix );
+    pyFunc( std::move( matrixCopy ), std::move( rhs ) );
+  };
 
   if( self->group->registerCallback( &wrapedCallback, typeid( wrapedCallback ) ) )
   {
