@@ -536,8 +536,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
     forFiniteElementOnStickFractureSubRegions( meshName, [&] ( string const &,
                                                                finiteElement::FiniteElementBase const & subRegionFE,
-                                                               arrayView1d< localIndex const > const & faceElementList,
-                                                               bool const )
+                                                               arrayView1d< localIndex const > const & faceElementList)
     {
 
       if( m_simultaneous )
@@ -588,8 +587,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
     forFiniteElementOnSlipFractureSubRegions( meshName, [&] ( string const &,
                                                               finiteElement::FiniteElementBase const & subRegionFE,
-                                                              arrayView1d< localIndex const > const & faceElementList,
-                                                              bool const )
+                                                              arrayView1d< localIndex const > const & faceElementList)
     {
 
       if( m_simultaneous )
@@ -1388,6 +1386,8 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
     updateStickSlipList( domain );
   }
 
+  // Log configuration statistics after each configuration iteration
+  outputConfigurationStatistics(domain);
   return hasConfigurationConvergedGlobally;
 
 }
@@ -1414,7 +1414,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
 
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,
-                                                          arrayView1d< localIndex const > const & faceElementList )
+                                                          arrayView1d< localIndex const > const & faceElementList)
     {
 
       array1d< localIndex > keys( subRegion.size());
