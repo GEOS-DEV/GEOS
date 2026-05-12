@@ -342,6 +342,7 @@ protected:
 
 using ThermalMultiphasePoromechanicsKernelFactory =
   finiteElement::KernelFactory< ThermalMultiphasePoromechanics,
+                                DefaultGlobalMatrixView,
                                 arrayView1d< globalIndex const > const,
                                 globalIndex const,
                                 DefaultGlobalMatrixView const,

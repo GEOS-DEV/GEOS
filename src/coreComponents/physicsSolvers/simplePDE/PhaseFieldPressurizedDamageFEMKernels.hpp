@@ -217,6 +217,7 @@ protected:
 };
 
 using PhaseFieldPressurizedDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldPressurizedDamageKernel,
+                                                                               DefaultGlobalMatrixView,
                                                                                arrayView1d< globalIndex const > const,
                                                                                globalIndex,
                                                                                DefaultGlobalMatrixView const,

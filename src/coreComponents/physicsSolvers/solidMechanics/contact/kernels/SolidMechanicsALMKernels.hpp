@@ -384,6 +384,7 @@ protected:
 
 /// The factory used to construct the kernel.
 using ALMFactory = finiteElement::InterfaceKernelFactory< ALM,
+                                                          DefaultGlobalMatrixView,
                                                           arrayView1d< globalIndex const > const,
                                                           arrayView1d< globalIndex const > const,
                                                           globalIndex const,

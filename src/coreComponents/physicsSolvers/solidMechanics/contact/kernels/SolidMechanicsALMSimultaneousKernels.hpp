@@ -403,6 +403,7 @@ protected:
 
 /// The factory used to construct the kernel.
 using ALMSimultaneousFactory = finiteElement::InterfaceKernelFactory< ALMSimultaneous,
+                                                                      DefaultGlobalMatrixView,
                                                                       arrayView1d< globalIndex const > const,
                                                                       arrayView1d< globalIndex const > const,
                                                                       globalIndex const,

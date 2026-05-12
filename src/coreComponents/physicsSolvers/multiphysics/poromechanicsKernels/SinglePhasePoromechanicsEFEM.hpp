@@ -295,6 +295,7 @@ protected:
 
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhasePoromechanicsEFEM,
+                                                               DefaultGlobalMatrixView,
                                                                EmbeddedSurfaceSubRegion const &,
                                                                arrayView1d< globalIndex const > const,
                                                                arrayView1d< globalIndex const > const,

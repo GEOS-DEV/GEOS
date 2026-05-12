@@ -424,6 +424,7 @@ protected:
 
 /// The factory used to construct the kernel.
 using LagrangeContactFactory = finiteElement::InterfaceKernelFactory< LagrangeContact,
+                                                                      DefaultGlobalMatrixView,
                                                                       arrayView1d< globalIndex const > const,
                                                                       arrayView1d< globalIndex const > const,
                                                                       globalIndex const,

@@ -190,6 +190,7 @@ protected:
 
 using SinglePhasePoromechanicsDamageKernelFactory =
   finiteElement::KernelFactory< SinglePhasePoromechanicsDamage,
+                                DefaultGlobalMatrixView,
                                 arrayView1d< globalIndex const > const,
                                 globalIndex const,
                                 DefaultGlobalMatrixView const,

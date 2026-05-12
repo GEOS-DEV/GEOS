@@ -429,6 +429,7 @@ protected:
 
 /// The factory used to construct a QuasiStatic kernel.
 using FaceBubbleFactory = finiteElement::KernelFactory< FaceBubbleKernels,
+                                                        DefaultGlobalMatrixView,
                                                         arrayView1d< globalIndex const > const,
                                                         arrayView1d< globalIndex const > const,
                                                         globalIndex const,

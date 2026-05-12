@@ -48,61 +48,6 @@ namespace geos
 namespace finiteElement
 {
 
-namespace internal
-{
-
-template< template< typename, typename, typename, typename, typename ... > class KERNEL_TYPE,
-          typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          typename ... TYPES >
-struct FirstMatrixViewOrDefault
-{
-  using type = DefaultGlobalMatrixView;
-};
-
-template< template< typename, typename, typename, typename, typename ... > class KERNEL_TYPE,
-          typename SUBREGION_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          typename TYPE0,
-          typename ... TYPES >
-struct FirstMatrixViewOrDefault< KERNEL_TYPE,
-                                 SUBREGION_TYPE,
-                                 CONSTITUTIVE_TYPE,
-                                 FE_TYPE,
-                                 TYPE0,
-                                 TYPES ... >
-{
-private:
-  using Type0 = std::remove_cv_t< std::remove_reference_t< TYPE0 > >;
-  static constexpr bool isConstructible = std::is_constructible_v<
-    KERNEL_TYPE< SUBREGION_TYPE,
-                 CONSTITUTIVE_TYPE,
-                 FE_TYPE,
-                 Type0 >,
-    NodeManager &,
-    EdgeManager const &,
-    FaceManager const &,
-    localIndex const,
-    SUBREGION_TYPE const &,
-    FE_TYPE const &,
-    CONSTITUTIVE_TYPE &,
-    TYPE0,
-    TYPES ... >;
-
-public:
-  using type = std::conditional_t< isConstructible,
-                                   Type0,
-                                   typename FirstMatrixViewOrDefault< KERNEL_TYPE,
-                                                                      SUBREGION_TYPE,
-                                                                      CONSTITUTIVE_TYPE,
-                                                                      FE_TYPE,
-                                                                      TYPES ... >::type >;
-};
-
-}
-
 /**
  * @class KernelBase
  * @brief Define the base interface for finite element kernels.
@@ -424,13 +369,9 @@ private:
  * including a MATRIX_VIEW (SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW, ...).
  * @tparam KERNEL_TYPE Templated class that defines the physics kernel and is parameterized on a global matrix view.
  *   Most likely derives from KernelBase.
+ * @tparam MATRIX_VIEW The type bound to the kernel's @c MATRIX_VIEW template slot.  Must be supplied
+ *   explicitly at the call site — there is no default.
  * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
- *
- * @details The MATRIX_VIEW slot is deduced via internal::FirstMatrixViewOrDefault, which selects the first
- *   trailing argument whose decayed type makes @p KERNEL_TYPE constructible when placed in the @p MATRIX_VIEW
- *   template slot, or falls back to @c DefaultGlobalMatrixView if no such argument exists. This allows kernels
- *   that operate on a sparse global matrix view to share the same factory machinery as the 3-parameter
- *   specialization.
  *
  * @note **Partial-specialization disambiguation.**  See the note on the
  *   3-parameter @c KernelFactory specialization above.  This specialization
@@ -444,8 +385,9 @@ template< template< typename SUBREGION_TYPE,
                     typename FE_TYPE,
                     typename MATRIX_VIEW,
                     typename ... > class KERNEL_TYPE,
+          typename MATRIX_VIEW,
           typename ... ARGS >
-class KernelFactory< KERNEL_TYPE, ARGS ... >
+class KernelFactory< KERNEL_TYPE, MATRIX_VIEW, ARGS ... >
 {
 public:
 
@@ -469,8 +411,8 @@ public:
    * @param elementSubRegion The subregion to execute on.
    * @param finiteElementSpace The finite element space.
    * @param inputConstitutiveType The constitutive relation.
-   * @return A new kernel constructed with the given arguments and @c ARGS. The kernel's MATRIX_VIEW
-   *   template parameter is deduced from @c ARGS via internal::FirstMatrixViewOrDefault.
+   * @return A new kernel constructed with the given arguments and @c ARGS, with the kernel's
+   *   @c MATRIX_VIEW slot bound to the factory's @p MATRIX_VIEW template parameter.
    */
   template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
   auto createKernel(
@@ -485,11 +427,7 @@ public:
     using Kernel = KERNEL_TYPE< SUBREGION_TYPE,
                                 CONSTITUTIVE_TYPE,
                                 FE_TYPE,
-                                typename internal::FirstMatrixViewOrDefault< KERNEL_TYPE,
-                                                                             SUBREGION_TYPE,
-                                                                             CONSTITUTIVE_TYPE,
-                                                                             FE_TYPE,
-                                                                             ARGS ... >::type >;
+                                MATRIX_VIEW >;
 
     camp::tuple< NodeManager &,
                  EdgeManager const &,

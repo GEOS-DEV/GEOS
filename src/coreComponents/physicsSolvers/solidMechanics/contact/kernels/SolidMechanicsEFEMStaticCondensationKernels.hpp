@@ -242,6 +242,7 @@ public:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMStaticCondensationFactory = finiteElement::KernelFactory< EFEMStaticCondensation,
+                                                                    DefaultGlobalMatrixView,
                                                                     EmbeddedSurfaceSubRegion &,
                                                                     arrayView1d< globalIndex const > const,
                                                                     globalIndex const,

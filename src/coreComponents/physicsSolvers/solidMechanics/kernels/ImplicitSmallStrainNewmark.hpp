@@ -207,6 +207,7 @@ protected:
 
 /// The factory used to construct a ImplicitNewmark kernel.
 using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitSmallStrainNewmark,
+                                                             DefaultGlobalMatrixView,
                                                              arrayView1d< globalIndex const > const &,
                                                              globalIndex,
                                                              DefaultGlobalMatrixView const,

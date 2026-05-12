@@ -278,6 +278,7 @@ protected:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMFactory = finiteElement::KernelFactory< EFEM,
+                                                  DefaultGlobalMatrixView,
                                                   EmbeddedSurfaceSubRegion &,
                                                   arrayView1d< globalIndex const > const,
                                                   arrayView1d< globalIndex const > const,

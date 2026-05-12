@@ -55,7 +55,7 @@ template< typename SUBREGION_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class SparsityKernelBase : public ImplicitKernelBase< SUBREGION_TYPE,
                                                       CONSTITUTIVE_TYPE,
                                                       FE_TYPE,
@@ -261,17 +261,18 @@ public:
                                CONSTITUTIVE_TYPE,
                                FE_TYPE,
                                Kernel::numDofPerTestSupportPoint,
-                               Kernel::numDofPerTrialSupportPoint >( nodeManager,
-                                                                     edgeManager,
-                                                                     faceManager,
-                                                                     targetRegionIndex,
-                                                                     elementSubRegion,
-                                                                     finiteElementSpace,
-                                                                     inputConstitutiveType,
-                                                                     m_inputDofNumber,
-                                                                     m_rankOffset,
-                                                                     0.0, //dt but not needed
-                                                                     m_inputSparsityPattern );
+                               Kernel::numDofPerTrialSupportPoint,
+                               DefaultGlobalMatrixView >( nodeManager,
+                                                          edgeManager,
+                                                          faceManager,
+                                                          targetRegionIndex,
+                                                          elementSubRegion,
+                                                          finiteElementSpace,
+                                                          inputConstitutiveType,
+                                                          m_inputDofNumber,
+                                                          m_rankOffset,
+                                                          0.0, //dt but not needed
+                                                          m_inputSparsityPattern );
   }
 
 private:
@@ -344,17 +345,18 @@ public:
                                CONSTITUTIVE_TYPE,
                                FE_TYPE,
                                Kernel::numDofPerTestSupportPoint,
-                               Kernel::numDofPerTrialSupportPoint >( nodeManager,
-                                                                     edgeManager,
-                                                                     faceManager,
-                                                                     targetRegionIndex,
-                                                                     elementSubRegion,
-                                                                     finiteElementSpace,
-                                                                     inputConstitutiveType,
-                                                                     m_inputDofNumber,
-                                                                     m_rankOffset,
-                                                                     0.0, //dt but not needed
-                                                                     m_inputSparsityPattern );
+                               Kernel::numDofPerTrialSupportPoint,
+                               DefaultGlobalMatrixView >( nodeManager,
+                                                          edgeManager,
+                                                          faceManager,
+                                                          targetRegionIndex,
+                                                          elementSubRegion,
+                                                          finiteElementSpace,
+                                                          inputConstitutiveType,
+                                                          m_inputDofNumber,
+                                                          m_rankOffset,
+                                                          0.0, //dt but not needed
+                                                          m_inputSparsityPattern );
   }
 
 private:

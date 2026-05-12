@@ -254,6 +254,7 @@ protected:
 
 /// The factory used to construct a LaplaceFEMKernel.
 using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
+                                                              DefaultGlobalMatrixView,
                                                               arrayView1d< globalIndex const > const,
                                                               globalIndex const,
                                                               DefaultGlobalMatrixView const,

@@ -236,6 +236,7 @@ public:
 
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMJumpUpdateFactory = finiteElement::KernelFactory< EFEMJumpUpdate,
+                                                            DefaultGlobalMatrixView,
                                                             EmbeddedSurfaceSubRegion &,
                                                             arrayView1d< globalIndex const > const,
                                                             globalIndex const,

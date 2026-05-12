@@ -173,6 +173,7 @@ private:
 
 
 using ThermalSinglePhasePoromechanicsEFEMKernelFactory = finiteElement::KernelFactory< ThermalSinglePhasePoromechanicsEFEM,
+                                                                                       DefaultGlobalMatrixView,
                                                                                        EmbeddedSurfaceSubRegion const &,
                                                                                        arrayView1d< globalIndex const > const,
                                                                                        arrayView1d< globalIndex const > const,

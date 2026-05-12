@@ -39,56 +39,6 @@ namespace geos
 namespace finiteElement
 {
 
-namespace internal
-{
-
-template< template< typename, typename, typename, typename ... > class KERNEL_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          typename ... TYPES >
-struct FirstInterfaceMatrixViewOrDefault
-{
-  using type = DefaultGlobalMatrixView;
-};
-
-template< template< typename, typename, typename, typename ... > class KERNEL_TYPE,
-          typename CONSTITUTIVE_TYPE,
-          typename FE_TYPE,
-          typename TYPE0,
-          typename ... TYPES >
-struct FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
-                                          CONSTITUTIVE_TYPE,
-                                          FE_TYPE,
-                                          TYPE0,
-                                          TYPES ... >
-{
-private:
-  using Type0 = std::remove_cv_t< std::remove_reference_t< TYPE0 > >;
-  static constexpr bool isConstructible = std::is_constructible_v<
-    KERNEL_TYPE< CONSTITUTIVE_TYPE,
-                 FE_TYPE,
-                 Type0 >,
-    NodeManager &,
-    EdgeManager const &,
-    FaceManager const &,
-    localIndex const,
-    FaceElementSubRegion &,
-    FE_TYPE const &,
-    CONSTITUTIVE_TYPE &,
-    TYPE0,
-    TYPES ... >;
-
-public:
-  using type = std::conditional_t< isConstructible,
-                                   Type0,
-                                   typename FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
-                                                                               CONSTITUTIVE_TYPE,
-                                                                               FE_TYPE,
-                                                                               TYPES ... >::type >;
-};
-
-}
-
 /**
  * @class InterfaceKernelBase
  * @brief Define the base class for interface finite element kernels.
@@ -109,7 +59,7 @@ template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE,
           int NUM_DOF_PER_TEST_SP,
           int NUM_DOF_PER_TRIAL_SP,
-          typename MATRIX_VIEW = DefaultGlobalMatrixView >
+          typename MATRIX_VIEW >
 class InterfaceKernelBase : public ImplicitKernelBase< FaceElementSubRegion,
                                                        CONSTITUTIVE_TYPE,
                                                        FE_TYPE,
@@ -256,20 +206,17 @@ private:
  * parameters, including a MATRIX_VIEW (CONSTITUTIVE_TYPE, FE_TYPE, MATRIX_VIEW, ...).
  * @tparam KERNEL_TYPE Templated class that defines the physics kernel and is parameterized on a global matrix view.
  *   Most likely derives from InterfaceKernelBase.
+ * @tparam MATRIX_VIEW The type bound to the kernel's @c MATRIX_VIEW template slot.  Must be supplied
+ *   explicitly at the call site — there is no default.
  * @tparam ARGS The trailing arguments forwarded to the kernel constructor in addition to the standard arguments.
- *
- * @details The MATRIX_VIEW slot is deduced via internal::FirstInterfaceMatrixViewOrDefault, which selects the first
- *   trailing argument whose decayed type makes @p KERNEL_TYPE constructible when placed in the @p MATRIX_VIEW
- *   template slot, or falls back to @c DefaultGlobalMatrixView if no such argument exists. This allows interface
- *   kernels that operate on a sparse global matrix view to share the same factory machinery as the 2-parameter
- *   specialization.
  */
 template< template< typename CONSTITUTIVE_TYPE,
                     typename FE_TYPE,
                     typename MATRIX_VIEW,
                     typename ... > class KERNEL_TYPE,
+          typename MATRIX_VIEW,
           typename ... ARGS >
-class InterfaceKernelFactory< KERNEL_TYPE, ARGS ... >
+class InterfaceKernelFactory< KERNEL_TYPE, MATRIX_VIEW, ARGS ... >
 {
 public:
 
@@ -292,7 +239,8 @@ public:
    * @param elementSubRegion The subregion to execute on.
    * @param finiteElementSpace The finite element space.
    * @param inputConstitutiveType The constitutive relation.
-   * @return A new kernel constructed with the given arguments and @c ARGS.
+   * @return A new kernel constructed with the given arguments and @c ARGS, with the kernel's
+   *   @c MATRIX_VIEW slot bound to the factory's @p MATRIX_VIEW template parameter.
    */
   template< typename CONSTITUTIVE_TYPE, typename FE_TYPE >
   auto createKernel(
@@ -306,10 +254,7 @@ public:
   {
     using Kernel = KERNEL_TYPE< CONSTITUTIVE_TYPE,
                                 FE_TYPE,
-                                typename internal::FirstInterfaceMatrixViewOrDefault< KERNEL_TYPE,
-                                                                                      CONSTITUTIVE_TYPE,
-                                                                                      FE_TYPE,
-                                                                                      ARGS ... >::type >;
+                                MATRIX_VIEW >;
 
     camp::tuple< NodeManager &,
                  EdgeManager const &,

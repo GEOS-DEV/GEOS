@@ -370,6 +370,7 @@ protected:
 
 using MultiphasePoromechanicsKernelFactory =
   finiteElement::KernelFactory< MultiphasePoromechanics,
+                                DefaultGlobalMatrixView,
                                 arrayView1d< globalIndex const > const,
                                 globalIndex const,
                                 DefaultGlobalMatrixView const,

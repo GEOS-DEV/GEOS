@@ -218,6 +218,7 @@ protected:
 
 /// The factory used to construct a FixedStressThermoPoromechanics kernel.
 using FixedStressThermoPoromechanicsFactory = finiteElement::KernelFactory< FixedStressThermoPoromechanics,
+                                                                            DefaultGlobalMatrixView,
                                                                             arrayView1d< globalIndex const > const,
                                                                             globalIndex,
                                                                             DefaultGlobalMatrixView const,
