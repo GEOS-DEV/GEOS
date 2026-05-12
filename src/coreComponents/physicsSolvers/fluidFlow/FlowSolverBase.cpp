@@ -34,7 +34,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" //should not be here -- testing only design flaw
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" 
 #include "constitutive/permeability/ExponentialDecayPermeability.hpp"
 #include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
@@ -679,25 +679,27 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
 
-  arrayView2d< real64 const > const dispJump           = subRegion.getField< fields::contact::dispJump >();
-  arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
-
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );
 
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-   
-      if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ParallelPlatesPermeability >)  {
+    
+    arrayView2d< real64 const > const dispJump           = subRegion.getField< fields::contact::dispJump >();
+    arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
+    
+    if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ParallelPlatesPermeability >)  {
         updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
       }
       else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::SlipDependentPermeability > || 
         std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > || 
         std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ExponentialDecayPermeability > ) 
       {
+        /*dHydraulicAperture_dNormalJump dummy entry*/
+        arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
         updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction(porousWrapper, 
-          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, oldHydraulicAperture/*dHydraulicAperture_dNormalJump dummy entry*/, 
+          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv, 
           dispJump, fractureTraction);
       }
       else {

@@ -20,7 +20,7 @@
 #include "SolidMechanicsStateReset.hpp"
 
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" //should not be here -- testing only design flaw
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -113,7 +113,7 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
-        subRegion.getField< contact::dispJump >().zero(); //MAYBE NOT IF Fault Failing from zero !
+        subRegion.getField< contact::dispJump >().zero();
         subRegion.getField< contact::slip >().zero();
       } );
 
