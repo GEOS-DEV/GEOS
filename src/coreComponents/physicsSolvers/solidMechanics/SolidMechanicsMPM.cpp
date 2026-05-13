@@ -2071,6 +2071,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                                     SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
+  
+  // Probably un-needed unless initialize can somehow be called twice.
+  m_numberOfSubRegions = 0;
 
   //For debugging purposes
   MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
@@ -2180,18 +2183,31 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   // m_hEl0.resize( 0 );
   // LvArray::tensorOps::copy< 3 >( m_hEl0, m_hEl);
 
-  // Set SPH neighbor radius if necessary
-  if( m_neighborRadius <= 0.0 )
+  // Set SPH-kernel neighbor radius.
+  // If user specifies m_neighborRadius = 0, a default value is calculated
+  // to be the grid diagonal.
+  // If user specifies a positive value of m_neighborRadius we use that directly
+  // If the user specifies a negative value of m_neighborRadius, we take the negative
+  // of the input and scale the default value.
+  real64 const defaultNeighborRadius =
+    m_planeStrain == 1
+    ? sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] )
+    : sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] + m_hEl[2] * m_hEl[2] );
+
+  if( m_neighborRadius < 0.0 )
   {
-    if( m_planeStrain == 1 )
-    {
-      m_neighborRadius *= -1.0 * sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] );
-    }
-    else
-    {
-      m_neighborRadius *= -1.0 * sqrt( m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1] + m_hEl[2] * m_hEl[2] );
-    }
+    m_neighborRadius = -m_neighborRadius * defaultNeighborRadius;
   }
+  else if( isZero( m_neighborRadius ) )
+  {
+    m_neighborRadius = defaultNeighborRadius;
+  }
+
+  GEOS_ERROR_IF( m_neighborRadius <= 0.0,
+                "MPM neighborRadius must be positive after initialization." );
+
+  GEOS_ERROR_IF( m_binSizeMultiplier < 1,
+                "MPM binSizeMultiplier must be >= 1." );
 
   // Get global domain extent excluding buffer nodes
   m_xGlobalMin.resize( 3 );
@@ -2356,6 +2372,10 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
                  MPI_INT,
                  MPI_MAX,
                  MPI_COMM_GEOS );
+
+  // contact group validation - if user accidentally gave group = 1000 or something,
+  // memory would be use. This will show why so they can diagnose OOM
+  GEOS_ERROR_IF( maxGlobalGroupNumber + 1 > 100, "Too many MPM contact groups. Check particleGroup values." );                 
 
   // Number of contact groups
   m_numContactGroups = maxGlobalGroupNumber + 1;
@@ -3372,7 +3392,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
   GEOS_LOG_LEVEL_BY_RANK( logInfo::MPMSubroutines, "End of explicitStep" );
   solverProfiling( "End of explicitStep" );
-  if( m_solverProfiling >= 1 )
+  if( m_solverProfiling == 1 )
   {
     printProfilingResults();
   }
@@ -7262,6 +7282,13 @@ real64 SolidMechanicsMPM::computeNeighborList( ParticleManager & particleManager
       nybins = LvArray::math::ceil( ( ymax - ymin ) / binWidth ),
       nzbins = m_planeStrain ? 1 : LvArray::math::ceil( ( zmax - zmin ) / binWidth );
   int nbins = nxbins * nybins * nzbins;
+
+  GEOS_ERROR_IF( nbins <= 0,
+               "Invalid MPM neighbor-list bin count." );
+
+GEOS_ERROR_IF( nbins > 1000000000,
+               "MPM neighbor-list bin count is too large. Check neighborRadius and binSizeMultiplier." );
+
   real64 dx = ( xmax - xmin ) / nxbins,
          dy = ( ymax - ymin ) / nybins,
          dz = ( zmax - zmin ) / nzbins;
@@ -12858,18 +12885,23 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   localIndex const numContactGroups = m_numContactGroups;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   int const useArtificialViscosity = m_useArtificialViscosity;
-  int const computeXProfile = m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
+  int const computeXProfile =
+    m_computeXProfile == 1 &&
+    ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
+
   int const explicitSurfaceNormalInfluence = m_explicitSurfaceNormalInfluence;
   int const enableSurfaceTension = m_enableSurfaceTension;
   real64 const surfaceTensionCoefficient = m_surfaceTensionCoefficient;
 
-  real64 hEl[3] = { };
+  real64 hEl[3] = {};
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 
-  real64 xLocalMin[3] = { };
+  real64 xLocalMin[3] = {};
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
 
   real64 const damageGradientThreshold = 0.0001 / hEl[0];
+  real64 const damageGradientThresholdSquared =
+    damageGradientThreshold * damageGradientThreshold;
 
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
 
@@ -12936,16 +12968,35 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     // Particle fields
-    arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
-    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
-    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
-    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
-    arrayView1d< int const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
-    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
-    arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-    arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-    arrayView2d< real64 const > const particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
+    arrayView2d< real64 const > const particlePosition =
+      subRegion.getParticleCenter();
+
+    arrayView2d< real64 const > const particleVelocity =
+      subRegion.getParticleVelocity();
+
+    arrayView1d< real64 const > const particleVolume =
+      subRegion.getParticleVolume();
+
+    arrayView1d< int const > const particleGroup =
+      subRegion.getParticleGroup();
+
+    arrayView1d< int const > const particleSurfaceFlag =
+      subRegion.getParticleSurfaceFlag();
+
+    arrayView3d< real64 const > const particleRVectors =
+      subRegion.getParticleRVectors();
+
+    arrayView1d< real64 const > const particleDamage =
+      subRegion.getParticleDamage();
+
+    arrayView2d< real64 const > const particleSurfaceNormal =
+      subRegion.getParticleSurfaceNormal();
+
+    arrayView2d< real64 const > const particleSurfacePosition =
+      subRegion.getParticleSurfacePosition();
+
+    arrayView2d< real64 const > const particleSurfaceTraction =
+      subRegion.getParticleSurfaceTraction();
 
     arrayView1d< real64 const > const particleMass =
       subRegion.getField< fields::mpm::particleMass >();
@@ -12979,8 +13030,11 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         subRegion.getField< fields::mpm::particleSurfaceCurvature >();
     }
 
-    localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
-    localIndex const numberOfMappedNodesPerParticle = 8 * numberOfVerticesPerParticle;
+    localIndex const numberOfVerticesPerParticle =
+      subRegion.numberOfVerticesPerParticle();
+
+    localIndex const numberOfMappedNodesPerParticle =
+      8 * numberOfVerticesPerParticle;
 
     SortedArrayView< localIndex const > const activeParticleIndices =
       subRegion.activeParticleIndices();
@@ -13009,9 +13063,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
       localIndex const p = activeParticleIndices[pp];
 
       #ifdef GEOS_USE_DEVICE
-      localIndex mappedNodesForParticle[64] = { };
-      real64 shapeFunctionValuesForParticle[64] = { };
-      real64 shapeFunctionGradientValuesForParticle[64][3] = { };
+      localIndex mappedNodesForParticle[64] = {};
+      real64 shapeFunctionValuesForParticle[64] = {};
+      real64 shapeFunctionGradientValuesForParticle[64][3] = {};
 
       mapNodesAndComputeShapeFunctionsForSingleParticle( ijkMap,
                                                          xLocalMin,
@@ -13023,9 +13077,89 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                                                          mappedNodesForParticle,
                                                          shapeFunctionValuesForParticle,
                                                          shapeFunctionGradientValuesForParticle );
+
+      localIndex const numberOfEffectiveMappedNodesPerParticle =
+        numberOfMappedNodesPerParticle;
+      #else
+      // CPU optimization:
+      // Collapse duplicate mapped nodes for this particle by summing shape
+      // values and shape gradients before scattering to the grid.
+      //
+      // For a fixed particle and fixed mapped node, fieldIndex is unchanged.
+      // Therefore all additive contributions are linear in either N or gradN,
+      // and atomicMax / atomicOr only need to be performed once.
+      localIndex coalescedMappedNodes[64];
+      real64 coalescedShapeFunctionValues[64];
+      real64 coalescedShapeFunctionGradientValues[64][3];
+
+      localIndex numberOfEffectiveMappedNodesPerParticle = 0;
+
+      for( localIndex rawG = 0;
+           rawG < numberOfMappedNodesPerParticle;
+           ++rawG )
+      {
+        localIndex const mappedNodeRaw =
+          mappedNodes[pp][rawG];
+
+        real64 const shapeFunctionValueRaw =
+          shapeFunctionValues[pp][rawG];
+
+        real64 const grad0Raw =
+          shapeFunctionGradientValues[pp][rawG][0];
+
+        real64 const grad1Raw =
+          shapeFunctionGradientValues[pp][rawG][1];
+
+        real64 const grad2Raw =
+          shapeFunctionGradientValues[pp][rawG][2];
+
+        localIndex uniqueIndex = 0;
+
+        for( ; uniqueIndex < numberOfEffectiveMappedNodesPerParticle; ++uniqueIndex )
+        {
+          if( coalescedMappedNodes[uniqueIndex] == mappedNodeRaw )
+          {
+            break;
+          }
+        }
+
+        if( uniqueIndex == numberOfEffectiveMappedNodesPerParticle )
+        {
+          coalescedMappedNodes[uniqueIndex] =
+            mappedNodeRaw;
+
+          coalescedShapeFunctionValues[uniqueIndex] =
+            shapeFunctionValueRaw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][0] =
+            grad0Raw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][1] =
+            grad1Raw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][2] =
+            grad2Raw;
+
+          ++numberOfEffectiveMappedNodesPerParticle;
+        }
+        else
+        {
+          coalescedShapeFunctionValues[uniqueIndex] +=
+            shapeFunctionValueRaw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][0] +=
+            grad0Raw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][1] +=
+            grad1Raw;
+
+          coalescedShapeFunctionGradientValues[uniqueIndex][2] +=
+            grad2Raw;
+        }
+      }
       #endif
 
-      // Particle-only values. These used to be repeatedly loaded/recomputed for every mapped node.
+      // Particle-only values.
       real64 const pMass = particleMass[p];
       real64 const pVolume = particleVolume[p];
       real64 const pDamage = particleDamage[p];
@@ -13034,9 +13168,14 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
       int const pSurfaceFlag = particleSurfaceFlag[p];
       int const cohesiveZoneFlag = particleCohesiveZoneFlag[p];
 
-      bool const surfaceAsDamage = markSurfaceAsDamage( pSurfaceFlag );
-      real64 const mappedDamageValue = surfaceAsDamage ? 1.0 : pDamage;
-      real64 const pMassTimesMappedDamage = pMass * mappedDamageValue;
+      bool const surfaceAsDamage =
+        markSurfaceAsDamage( pSurfaceFlag );
+
+      real64 const mappedDamageValue =
+        surfaceAsDamage ? 1.0 : pDamage;
+
+      real64 const pMassTimesMappedDamage =
+        pMass * mappedDamageValue;
 
       bool const hasExplicitSurfaceNormal =
         pSurfaceFlag == 2 || pSurfaceFlag == 3 || pSurfaceFlag == 4;
@@ -13057,21 +13196,26 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
       real64 const sn1 = particleSurfaceNormal[p][1];
       real64 const sn2 = particleSurfaceNormal[p][2];
 
-      real64 const surfaceNormalNormSquared = sn0 * sn0 + sn1 * sn1 + sn2 * sn2;
-      bool const hasSurfaceNormal = surfaceNormalNormSquared > 1e-32;
+      real64 const surfaceNormalNormSquared =
+        sn0 * sn0 + sn1 * sn1 + sn2 * sn2;
+
+      bool const hasSurfaceNormal =
+        surfaceNormalNormSquared > 1e-32;
 
       real64 const pdg0 = particleDamageGradient[p][0];
       real64 const pdg1 = particleDamageGradient[p][1];
       real64 const pdg2 = particleDamageGradient[p][2];
 
-      real64 const particleDamageGradientNorm =
-        LvArray::tensorOps::l2Norm< 3 >( particleDamageGradient[p] );
+      real64 const particleDamageGradientNormSquared =
+        pdg0 * pdg0 + pdg1 * pdg1 + pdg2 * pdg2;
 
       bool const hasParticleDamageGradient =
-        particleDamageGradientNorm > damageGradientThreshold;
+        particleDamageGradientNormSquared > damageGradientThresholdSquared;
 
       real64 const invParticleDamageGradientNorm =
-        hasParticleDamageGradient ? 1.0 / particleDamageGradientNorm : 0.0;
+        hasParticleDamageGradient
+        ? 1.0 / LvArray::math::sqrt( particleDamageGradientNormSquared )
+        : 0.0;
 
       real64 const pStress0 = particleStress[p][0];
       real64 const pStress1 = particleStress[p][1];
@@ -13125,20 +13269,40 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         }
       }
 
-      for( localIndex g = 0; g < numberOfMappedNodesPerParticle; ++g )
+      for( localIndex g = 0;
+           g < numberOfEffectiveMappedNodesPerParticle;
+           ++g )
       {
         #ifdef GEOS_USE_DEVICE
-        localIndex const mappedNode = mappedNodesForParticle[g];
-        real64 const shapeFunctionValue = shapeFunctionValuesForParticle[g];
-        real64 const grad0 = shapeFunctionGradientValuesForParticle[g][0];
-        real64 const grad1 = shapeFunctionGradientValuesForParticle[g][1];
-        real64 const grad2 = shapeFunctionGradientValuesForParticle[g][2];
+        localIndex const mappedNode =
+          mappedNodesForParticle[g];
+
+        real64 const shapeFunctionValue =
+          shapeFunctionValuesForParticle[g];
+
+        real64 const grad0 =
+          shapeFunctionGradientValuesForParticle[g][0];
+
+        real64 const grad1 =
+          shapeFunctionGradientValuesForParticle[g][1];
+
+        real64 const grad2 =
+          shapeFunctionGradientValuesForParticle[g][2];
         #else
-        localIndex const mappedNode = mappedNodes[pp][g];
-        real64 const shapeFunctionValue = shapeFunctionValues[pp][g];
-        real64 const grad0 = shapeFunctionGradientValues[pp][g][0];
-        real64 const grad1 = shapeFunctionGradientValues[pp][g][1];
-        real64 const grad2 = shapeFunctionGradientValues[pp][g][2];
+        localIndex const mappedNode =
+          coalescedMappedNodes[g];
+
+        real64 const shapeFunctionValue =
+          coalescedShapeFunctionValues[g];
+
+        real64 const grad0 =
+          coalescedShapeFunctionGradientValues[g][0];
+
+        real64 const grad1 =
+          coalescedShapeFunctionGradientValues[g][1];
+
+        real64 const grad2 =
+          coalescedShapeFunctionGradientValues[g][2];
         #endif
 
         real64 const nodeX = gridPosition[mappedNode][0];
@@ -13162,7 +13326,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
         if( computeXProfile == 1 )
         {
-          real64 const profileScale = shapeFunctionValue * pVolume;
+          real64 const profileScale =
+            shapeFunctionValue * pVolume;
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridNormalStress[mappedNode][fieldIndex][0],
@@ -13181,17 +13346,17 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                            shapeFunctionValue * pDamage * pMass );
         }
 
-        // Grid mass
+        // Grid mass.
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridMass[mappedNode][fieldIndex],
                          pMass * shapeFunctionValue );
 
-        // Grid material volume
+        // Grid material volume.
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridMaterialVolume[mappedNode][fieldIndex],
                          pVolume * shapeFunctionValue );
 
-        // Grid damage
+        // Grid damage.
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridDamage[mappedNode][fieldIndex],
                          pMassTimesMappedDamage * shapeFunctionValue );
@@ -13203,20 +13368,25 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         // Alignment of particle and grid damage-gradient fields.
         if( hasParticleDamageGradient )
         {
-          real64 const gridDamageGradientNorm =
-            LvArray::tensorOps::l2Norm< 3 >( gridDamageGradient[mappedNode] );
+          real64 const gdg0 = gridDamageGradient[mappedNode][0];
+          real64 const gdg1 = gridDamageGradient[mappedNode][1];
+          real64 const gdg2 = gridDamageGradient[mappedNode][2];
 
-          if( gridDamageGradientNorm > damageGradientThreshold )
+          real64 const gridDamageGradientNormSquared =
+            gdg0 * gdg0 + gdg1 * gdg1 + gdg2 * gdg2;
+
+          if( gridDamageGradientNormSquared > damageGradientThresholdSquared )
           {
             real64 const dotDamageGradient =
-              pdg0 * gridDamageGradient[mappedNode][0] +
-              pdg1 * gridDamageGradient[mappedNode][1] +
-              pdg2 * gridDamageGradient[mappedNode][2];
+              pdg0 * gdg0 + pdg1 * gdg1 + pdg2 * gdg2;
+
+            real64 const invGridDamageGradientNorm =
+              1.0 / LvArray::math::sqrt( gridDamageGradientNormSquared );
 
             real64 const damageGradientAlignment =
               LvArray::math::abs( dotDamageGradient *
-                                  invParticleDamageGradientNorm /
-                                  gridDamageGradientNorm );
+                                  invParticleDamageGradientNorm *
+                                  invGridDamageGradientNorm );
 
             RAJA::atomicAdd( parallelDeviceAtomic{},
                              &gridFieldGradientAlignment[mappedNode][fieldIndex],
@@ -13249,18 +13419,30 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 
         if( hasContact == 1 )
         {
-          real64 surfaceNormalContribution0 = grad0 * pVolume;
-          real64 surfaceNormalContribution1 = grad1 * pVolume;
-          real64 surfaceNormalContribution2 = grad2 * pVolume;
+          real64 surfaceNormalContribution0 =
+            grad0 * pVolume;
+
+          real64 surfaceNormalContribution1 =
+            grad1 * pVolume;
+
+          real64 surfaceNormalContribution2 =
+            grad2 * pVolume;
 
           if( hasExplicitSurfaceNormal )
           {
             real64 const explicitSurfaceNormalScale =
-              explicitSurfaceNormalInfluence * shapeFunctionValue * pVolume;
+              explicitSurfaceNormalInfluence *
+              shapeFunctionValue *
+              pVolume;
 
-            surfaceNormalContribution0 += explicitSurfaceNormalScale * sn0;
-            surfaceNormalContribution1 += explicitSurfaceNormalScale * sn1;
-            surfaceNormalContribution2 += explicitSurfaceNormalScale * sn2;
+            surfaceNormalContribution0 +=
+              explicitSurfaceNormalScale * sn0;
+
+            surfaceNormalContribution1 +=
+              explicitSurfaceNormalScale * sn1;
+
+            surfaceNormalContribution2 +=
+              explicitSurfaceNormalScale * sn2;
           }
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
@@ -13284,7 +13466,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           if( hasSurfaceNormal )
           {
             real64 const surfacePositionScale =
-              shapeFunctionValue * pMass * surfacePositionAlongNormal;
+              shapeFunctionValue *
+              pMass *
+              surfacePositionAlongNormal;
 
             RAJA::atomicAdd( parallelDeviceAtomic{},
                              &gridSurfacePosition[mappedNode][fieldIndex][0],
@@ -13306,11 +13490,11 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           }
         }
 
-        real64 const dx = px - nodeX;
-        real64 const dy = py - nodeY;
-        real64 const dz = pz - nodeZ;
+        real64 const dxParticleNode = px - nodeX;
+        real64 const dyParticleNode = py - nodeY;
+        real64 const dzParticleNode = pz - nodeZ;
 
-        // Momentum
+        // Momentum.
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridMomentum[mappedNode][fieldIndex][0],
                          pMomentum0 * shapeFunctionValue );
@@ -13329,7 +13513,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                            pMomentum2 * shapeFunctionValue );
         }
 
-        // External force
+        // External force.
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridExternalForce[mappedNode][fieldIndex][0],
                          externalForce0 * shapeFunctionValue );
@@ -13348,45 +13532,48 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                            externalForce2 * shapeFunctionValue );
         }
 
-        // Centers of volume and mass
-        real64 const volumeWeightedShape = pVolume * shapeFunctionValue;
-        real64 const massWeightedShape = pMass * shapeFunctionValue;
+        // Centers of volume and mass.
+        real64 const volumeWeightedShape =
+          pVolume * shapeFunctionValue;
+
+        real64 const massWeightedShape =
+          pMass * shapeFunctionValue;
 
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridCenterOfVolume[mappedNode][fieldIndex][0],
-                         volumeWeightedShape * dx );
+                         volumeWeightedShape * dxParticleNode );
 
         RAJA::atomicAdd( parallelDeviceAtomic{},
                          &gridCenterOfMass[mappedNode][fieldIndex][0],
-                         massWeightedShape * dx );
+                         massWeightedShape * dxParticleNode );
 
         if( numDims > 1 )
         {
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridCenterOfVolume[mappedNode][fieldIndex][1],
-                           volumeWeightedShape * dy );
+                           volumeWeightedShape * dyParticleNode );
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridCenterOfMass[mappedNode][fieldIndex][1],
-                           massWeightedShape * dy );
+                           massWeightedShape * dyParticleNode );
         }
 
         if( numDims > 2 )
         {
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridCenterOfVolume[mappedNode][fieldIndex][2],
-                           volumeWeightedShape * dz );
+                           volumeWeightedShape * dzParticleNode );
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridCenterOfMass[mappedNode][fieldIndex][2],
-                           massWeightedShape * dz );
+                           massWeightedShape * dzParticleNode );
         }
 
         // Internal force.
         //
-        // Original code performed one atomicAdd per (i,k), i.e. 9 atomics in 3D
-        // and 4 atomics in 2D. This accumulates the local contribution first and
-        // performs one atomicAdd per component.
+        // Accumulate the k-loop locally and perform one atomicAdd per component.
+        // In 3D this keeps the 9 original component-pair contributions but
+        // reduces them to 3 atomics.
         if( numDims > 2 )
         {
           real64 const bg0 = gridBackgroundStress[mappedNode][0];
@@ -13396,21 +13583,35 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           real64 const bg4 = gridBackgroundStress[mappedNode][4];
           real64 const bg5 = gridBackgroundStress[mappedNode][5];
 
-          real64 const sigma0 = pStress0 - bg0 - artificialViscosity;
-          real64 const sigma1 = pStress1 - bg1 - artificialViscosity;
-          real64 const sigma2 = pStress2 - bg2 - artificialViscosity;
-          real64 const sigma3 = pStress3 - bg3;
-          real64 const sigma4 = pStress4 - bg4;
-          real64 const sigma5 = pStress5 - bg5;
+          real64 const sigma0 =
+            pStress0 - bg0 - artificialViscosity;
+
+          real64 const sigma1 =
+            pStress1 - bg1 - artificialViscosity;
+
+          real64 const sigma2 =
+            pStress2 - bg2 - artificialViscosity;
+
+          real64 const sigma3 =
+            pStress3 - bg3;
+
+          real64 const sigma4 =
+            pStress4 - bg4;
+
+          real64 const sigma5 =
+            pStress5 - bg5;
 
           real64 const internalForce0 =
-            -pVolume * ( grad0 * sigma0 + grad1 * sigma5 + grad2 * sigma4 );
+            -pVolume *
+            ( grad0 * sigma0 + grad1 * sigma5 + grad2 * sigma4 );
 
           real64 const internalForce1 =
-            -pVolume * ( grad0 * sigma5 + grad1 * sigma1 + grad2 * sigma3 );
+            -pVolume *
+            ( grad0 * sigma5 + grad1 * sigma1 + grad2 * sigma3 );
 
           real64 const internalForce2 =
-            -pVolume * ( grad0 * sigma4 + grad1 * sigma3 + grad2 * sigma2 );
+            -pVolume *
+            ( grad0 * sigma4 + grad1 * sigma3 + grad2 * sigma2 );
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridInternalForce[mappedNode][fieldIndex][0],
@@ -13430,9 +13631,14 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
           real64 const bg1 = gridBackgroundStress[mappedNode][1];
           real64 const bg5 = gridBackgroundStress[mappedNode][5];
 
-          real64 const sigma0 = pStress0 - bg0 - artificialViscosity;
-          real64 const sigma1 = pStress1 - bg1 - artificialViscosity;
-          real64 const sigma5 = pStress5 - bg5;
+          real64 const sigma0 =
+            pStress0 - bg0 - artificialViscosity;
+
+          real64 const sigma1 =
+            pStress1 - bg1 - artificialViscosity;
+
+          real64 const sigma5 =
+            pStress5 - bg5;
 
           real64 const internalForce0 =
             -pVolume * ( grad0 * sigma0 + grad1 * sigma5 );
@@ -13451,7 +13657,9 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
         else
         {
           real64 const bg0 = gridBackgroundStress[mappedNode][0];
-          real64 const sigma0 = pStress0 - bg0 - artificialViscosity;
+
+          real64 const sigma0 =
+            pStress0 - bg0 - artificialViscosity;
 
           RAJA::atomicAdd( parallelDeviceAtomic{},
                            &gridInternalForce[mappedNode][fieldIndex][0],
@@ -13481,7 +13689,7 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
 //   int const explicitSurfaceNormalInfluence = m_explicitSurfaceNormalInfluence;
 //   int const enableSurfaceTension = m_enableSurfaceTension;
 
-//   localIndex voigtMap[3][3] = { { 0, 5, 4 }, { 5, 1, 3 }, { 4, 3, 2 } };
+//   //localIndex voigtMap[3][3] = { { 0, 5, 4 }, { 5, 1, 3 }, { 4, 3, 2 } };
 //   real64 hEl[3] = { };
 //   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
 //   real64 xLocalMin[3] = { };
@@ -20074,9 +20282,18 @@ void SolidMechanicsMPM::unscaleCPDIVectors( ParticleManager & particleManager )
 
 void SolidMechanicsMPM::printProfilingResults()
 {
+  if( m_profilingTimes.size() < 2 )
+  {
+    GEOS_LOG_RANK_0_IF( m_solverProfiling != 0,
+                        "MPM solver profiling requested, but fewer than two profiling timestamps were recorded." );
+    m_profilingTimes.resize( 0 );
+    m_profilingLabels.resize( 0 );
+    return;
+  }
+
   // Use MPI reduction to get the average elapsed time for each step on all partitions
   int rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-  unsigned int numIntervals = m_profilingTimes.size() - 1;
+  std::size_t const numIntervals = m_profilingTimes.size() - 1;
   stdVector< real64 > timeIntervalsAllRanks( numIntervals );
 
   // Get total CPU time for the entire time step
