@@ -41,6 +41,7 @@
 
 // System includes
 #include <cstdlib>
+#include <optional>
 #include <type_traits>
 
 namespace geos
@@ -722,46 +723,40 @@ public:
   }
 
   /**
-   * @brief Set a minimum bound for this attribute's value.
-   * @param minValue the minimum allowed value (inclusive)
-   * @return pointer to Wrapper<T>
-   */
-  template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
-  setMinValue( T const & minValue )
-  {
-    m_limits.minValue = minValue;
-    return *this;
-  }
-
-  /**
-   * @brief Set a maximum bound for this attribute's value.
-   * @param maxValue the maximum allowed value (inclusive)
-   * @return pointer to Wrapper<T>
-   */
-  template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
-  setMaxValue( T const & maxValue )
-  {
-    m_limits.maxValue = maxValue;
-    return *this;
-  }
-
-  /**
    * @brief Set both bounds for this attribute's value.
    * @param minValue the minimum allowed value (inclusive)
    * @param maxValue the maximum allowed value (inclusive)
+   * @param mode the enforcement mode
    * @return pointer to Wrapper<T>
+   *
+   * @note @p minValue and @p maxValue are std::optional(s).
+   *       Set them to std::nullopt to disable a limit.
+   *
+   * @code 
+   * registerWrapper( viewKeysStruct::fooString(), &m_foo )
+   *   .setLimits( 0.0, std::nullopt )  // sets a minimum value of 0.0 and no maximum value
+   * @endcode 
    */
   template< typename U=T >
   std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
-  setLimits( T const & minValue,
-             T const & maxValue,
+  setLimits( std::optional< T > minValue,
+             std::optional< T > maxValue,
              LimitsMode mode = LimitsMode::Warning )
   {
     m_limits.minValue = minValue;
     m_limits.maxValue = maxValue;
     m_limitsMode = mode;
+    return *this;
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable< U >::value, Wrapper< T > & >
+  setLimits( std::optional< T >,
+             std::optional< T >,
+             LimitsMode mode = LimitsMode::Warning )
+  {
+    static_assert( is_limitable< U >::value,
+                   "setLimits is only supported on scalar arithmetic types." );
     return *this;
   }
 
