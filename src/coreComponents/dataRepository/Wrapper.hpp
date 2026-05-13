@@ -21,6 +21,8 @@
 #define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
+#include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 #include "dataRepository/AttributeLimits.hpp"
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
@@ -816,6 +818,11 @@ public:
                                                                        targetNode,
                                                                        getDefaultValueStruct() );
         }
+
+        if( m_successfulReadFromInput )
+        {
+          validateLimits();
+        }
       }
       catch( std::exception const & ex )
       {
@@ -1151,6 +1158,38 @@ private:
   {
     buffer_unit_type * dummy;
     return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable< U >::value, void >
+  validateLimits()
+  {
+    if( !m_limits.minValue.has_value() && !m_limits.maxValue.has_value() )
+    {
+      return;
+    }
+
+    T const & value = reference();
+    bool const belowMin = m_limits.minValue.has_value() && ( value < *m_limits.minValue );
+    bool const aboveMax = m_limits.maxValue.has_value() && ( value > *m_limits.maxValue );
+    if( !belowMin && !aboveMax )
+    {
+      return;
+    }
+
+    // TODO: show the allowed range in the message
+    string const msg = GEOS_FMT( "Attribute '{}' has value '{}' outside of the allowed range.",
+                                 getName(), value );
+
+    // TODO: set different output strategies (log, warn, error)
+    GEOS_LOG_RANK_0( msg );
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable< U >::value, void >
+  validateLimits()
+  {
+    /* no-op */
   }
 
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
