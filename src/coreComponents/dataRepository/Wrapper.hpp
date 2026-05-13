@@ -756,10 +756,12 @@ public:
   template< typename U=T >
   std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
   setLimits( T const & minValue,
-             T const & maxValue )
+             T const & maxValue,
+             LimitsMode mode = LimitsMode::Warning )
   {
     m_limits.minValue = minValue;
     m_limits.maxValue = maxValue;
+    m_limitsMode = mode;
     return *this;
   }
 
@@ -1164,7 +1166,8 @@ private:
   std::enable_if_t< is_limitable< U >::value, void >
   validateLimits()
   {
-    if( !m_limits.minValue.has_value() && !m_limits.maxValue.has_value() )
+    if( (!m_limits.minValue.has_value() && !m_limits.maxValue.has_value()) ||
+         m_limitsMode == LimitsMode::Indicative )
     {
       return;
     }
@@ -1181,8 +1184,20 @@ private:
     string const msg = GEOS_FMT( "Attribute '{}' has value '{}' outside of the allowed range.",
                                  getName(), value );
 
-    // TODO: set different output strategies (log, warn, error)
-    GEOS_LOG_RANK_0( msg );
+    switch( m_limitsMode )
+    {
+      case LimitsMode::Warning:
+        GEOS_WARNING( msg );
+        break;
+
+      case LimitsMode::Error:
+        GEOS_THROW( msg, InputError );
+        break;
+      
+      default:
+        GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
+        break;
+    }
   }
 
   template< typename U=T >
