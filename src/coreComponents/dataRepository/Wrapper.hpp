@@ -738,7 +738,7 @@ public:
    * @endcode 
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
+  std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
   setLimits( std::optional< T > minValue,
              std::optional< T > maxValue,
              LimitsMode mode = LimitsMode::Warning )
@@ -750,12 +750,12 @@ public:
   }
 
   template< typename U=T >
-  std::enable_if_t< !is_limitable< U >::value, Wrapper< T > & >
+  std::enable_if_t< !is_limitable_v< U >, Wrapper< T > & >
   setLimits( std::optional< T >,
              std::optional< T >,
              LimitsMode mode = LimitsMode::Warning )
   {
-    static_assert( is_limitable< U >::value,
+    static_assert( is_limitable_v< U >,
                    "setLimits is only supported on scalar arithmetic types." );
     return *this;
   }
@@ -766,7 +766,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, std::optional< T > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< T > const & >
   getMinValue() const
   {
     return m_limits.minValue;
@@ -778,7 +778,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, std::optional< T > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< T > const & >
   getMaxValue() const
   {
     return m_limits.maxValue;
@@ -1158,7 +1158,7 @@ private:
   }
 
   template< typename U=T >
-  std::enable_if_t< is_limitable< U >::value, void >
+  std::enable_if_t< is_limitable_v< U >, void >
   validateLimits()
   {
     if( (!m_limits.minValue.has_value() && !m_limits.maxValue.has_value()) ||
@@ -1196,7 +1196,7 @@ private:
   }
 
   template< typename U=T >
-  std::enable_if_t< !is_limitable< U >::value, void >
+  std::enable_if_t< !is_limitable_v< U >, void >
   validateLimits()
   {
     /* no-op */

@@ -62,6 +62,12 @@ struct is_limitable
 };
 
 /**
+ * @brief Convenience variable template alias for is_limitable< T >::value
+ */
+template< typename T >
+inline constexpr bool is_limitable_v = is_limitable< T >::value;
+
+/**
  * @struct Limits
  * @brief Storage for the optional min/max bounds of a wrapped value.
  *
@@ -69,7 +75,7 @@ struct is_limitable
  * for limitable types. Preventing instantiation non-limitable types, especially
  * abstract types that can't be instantiated with std::optional< absT >.
  */
-template< typename T, bool = is_limitable< T >::value >
+template< typename T, bool = is_limitable_v< T > >
 struct Limits
 {};
 
