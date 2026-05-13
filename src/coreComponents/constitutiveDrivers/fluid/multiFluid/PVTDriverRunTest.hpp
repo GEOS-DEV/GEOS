@@ -67,11 +67,11 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   bool const outputEnthalpy = fluid.isThermal();
 
   integer const numRows = m_table.size( 0 );
-  using ExecPolicy = typename FLUID_TYPE::exec_policy;
-  forAll< ExecPolicy >( numRows,
-                        [outputMassDensity, outputCompressibility, outputPhaseComposition, outputEnthalpy,
-                         numPhases, numComponents, kernelWrapper, table, composition]
-                        GEOS_HOST_DEVICE ( localIndex const step )
+
+  forAll< parallelDevicePolicy<> >( numRows,
+                                    [outputMassDensity, outputCompressibility, outputPhaseComposition, outputEnthalpy,
+                                     numPhases, numComponents, kernelWrapper, table, composition]
+                                    GEOS_HOST_DEVICE ( localIndex const step )
   {
     // Index for start of phase properties
     integer const PHASE_FRACTION = TEMP + 2 + (outputCompressibility ? 1 : 0);
