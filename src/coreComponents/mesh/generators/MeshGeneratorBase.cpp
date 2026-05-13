@@ -284,18 +284,34 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
       ++ownedV;
   }
 
+  // --- Strict Edge Ownership ---
   localIndex ownedE = 0;
   for( EdgeKey const & e : allEdges )
   {
-    if( nodeIsOwned( e.first ) )   // e.first is the min global ID (sorted)
+    if( nodeIsOwned( e.first ) && nodeIsOwned( e.second ) )
+    {
       ++ownedE;
+    }
   }
 
+  // --- Strict Face Ownership ---
   localIndex ownedF = 0;
   for( FaceKey const & f : allFaces )
   {
-    if( nodeIsOwned( f[0] ) )      // f[0] is the min global ID (sorted)
+    bool allNodesOwned = true;
+    for( globalIndex gid : f )
+    {
+      if( !nodeIsOwned( gid ) )
+      {
+        allNodesOwned = false;
+        break;
+      }
+    }
+
+    if( allNodesOwned )
+    {
       ++ownedF;
+    }
   }
 
   // --- MPI reduce --------------------------------------------------------
