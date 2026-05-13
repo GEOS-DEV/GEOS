@@ -703,7 +703,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
           dispJump, fractureTraction);
       }
       else {
-        GEOS_ERROR( GEOS_FMT("{} permeability model is not yet supported. {}, {} and {} are supported.", 
+        GEOS_ERROR( GEOS_FMT("{} permeability model is not yet supported. {}, {}, {} and {} are supported.", 
                     TYPEOFREF(castedPorousSolid)::PermType::catalogName(),
                     constitutive::ParallelPlatesPermeability::catalogName(), 
                     constitutive::SlipDependentPermeability::catalogName(), 
