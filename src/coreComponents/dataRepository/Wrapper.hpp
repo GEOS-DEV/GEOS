@@ -725,7 +725,7 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
   setMinValue( T const & minValue )
   {
     m_limits.minValue = minValue;
@@ -738,7 +738,7 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
   setMaxValue( T const & maxValue )
   {
     m_limits.maxValue = maxValue;
@@ -752,7 +752,7 @@ public:
    * @return pointer to Wrapper<T>
    */
   template< typename U=T >
-  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  std::enable_if_t< is_limitable< U >::value, Wrapper< T > & >
   setLimits( T const & minValue,
              T const & maxValue )
   {
@@ -767,7 +767,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< std::is_arithmetic< U >::value, std::optional< T > const & >
+  std::enable_if_t< is_limitable< U >::value, std::optional< T > const & >
   getMinValue() const
   {
     return m_limits.minValue;
@@ -779,7 +779,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< std::is_arithmetic< U >::value, std::optional< T > const & >
+  std::enable_if_t< is_limitable< U >::value, std::optional< T > const & >
   getMaxValue() const
   {
     return m_limits.maxValue;

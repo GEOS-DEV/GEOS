@@ -27,14 +27,27 @@ namespace dataRepository
 {
 
 /**
+ * @struct is_limitable
+ * @tparam T type to check
+ * @brief Trait determining whether attribute limits can be applied to type @p T
+ *
+ * Limits apply to scalar numeric types (integer, real32, real64, etc.)
+ */
+template< typename T >
+struct is_limitable
+{
+  static constexpr bool value = std::is_arithmetic< T >::value;
+};
+
+/**
  * @struct Limits
  * @brief Storage for the optional min/max bounds of a wrapped value.
  *
  * Specialized so that the members (std::optional< T >) are only instanciated
- * for arithmetic types. Preventing instantiation non-limitable types, especially
- * abstract types that can't be instantiated with std::optional< absT >. 
+ * for limitable types. Preventing instantiation non-limitable types, especially
+ * abstract types that can't be instantiated with std::optional< absT >.
  */
-template< typename T, bool = std::is_arithmetic< T >::value >
+template< typename T, bool = is_limitable< T >::value >
 struct Limits
 {};
 
