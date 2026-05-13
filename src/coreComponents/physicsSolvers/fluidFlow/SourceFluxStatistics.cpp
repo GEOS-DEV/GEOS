@@ -372,7 +372,6 @@ void SourceFluxStatsAggregator::WrappedStats::gatherTimeStepStats( real64 const 
     m_periodStats.m_timeStepMass = producedMass;
   }
 }
-
 void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 {
   // init phase data memory allocation if needed
