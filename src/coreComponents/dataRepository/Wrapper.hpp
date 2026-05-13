@@ -21,6 +21,7 @@
 #define GEOS_DATAREPOSITORY_WRAPPER_HPP_
 
 // Source inclues
+#include "dataRepository/AttributeLimits.hpp"
 #include "wrapperHelpers.hpp"
 #include "KeyNames.hpp"
 #include "LvArray/src/limits.hpp"
@@ -38,7 +39,6 @@
 
 // System includes
 #include <cstdlib>
-#include <optional>
 #include <type_traits>
 
 namespace geos
@@ -204,8 +204,7 @@ public:
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
     m_dimLabels = castedSource.m_dimLabels;
-    m_minValue = castedSource.m_minValue;
-    m_maxValue = castedSource.m_maxValue;
+    m_limits = castedSource.m_limits;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -729,7 +728,7 @@ public:
   std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
   setMinValue( T const & minValue )
   {
-    m_minValue = minValue;
+    m_limits.minValue = minValue;
     return *this;
   }
 
@@ -742,7 +741,7 @@ public:
   std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
   setMaxValue( T const & maxValue )
   {
-    m_maxValue = maxValue;
+    m_limits.maxValue = maxValue;
     return *this;
   }
 
@@ -757,27 +756,33 @@ public:
   setLimits( T const & minValue,
              T const & maxValue )
   {
-    m_minValue = minValue;
-    m_maxValue = maxValue;
+    m_limits.minValue = minValue;
+    m_limits.maxValue = maxValue;
     return *this;
   }
 
   /**
    * @brief Accessor for the minimum bound of this attribute's value.
    * @return optional containing the typed minimum value, empty if not set
+   * @note Only available when T is a limitable type
    */
-  std::optional< T > const & getMinValue() const
+  template< typename U=T >
+  std::enable_if_t< std::is_arithmetic< U >::value, std::optional< T > const & >
+  getMinValue() const
   {
-    return m_minValue;
+    return m_limits.minValue;
   }
 
   /**
    * @brief Accessor for the maximum bound of this attribute's value.
    * @return optional containing the typed maximum value, empty if not set
+   * @note Only available when T is a limitable type
    */
-  std::optional< T > const & getMaxValue() const
+  template< typename U=T >
+  std::enable_if_t< std::is_arithmetic< U >::value, std::optional< T > const & >
+  getMaxValue() const
   {
-    return m_maxValue;
+    return m_limits.maxValue;
   }
 
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
@@ -1163,11 +1168,8 @@ private:
   /// stores dimension labels (used mainly for plotting) for multidimensional arrays, empty member otherwise
   wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
 
-  ///
-  std::optional< T > m_minValue;
-
-  ///
-  std::optional< T > m_maxValue;
+  /// stores the (optional) min/max bounds for the wrapped value.
+  Limits< T > m_limits;
 };
 
 }
