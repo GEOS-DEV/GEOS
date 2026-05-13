@@ -685,7 +685,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-   using PERM_TYPE = typename TYPEOFREF( castedPorousSolid )::PermType;
+
     if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ParallelPlatesPermeability >)  {
       updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
     }
