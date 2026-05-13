@@ -30,9 +30,9 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-      // Flat hex meshes - single and triple fracture only
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_123.vtu",
+      // Wavy tet meshes - single and triple fracture only
+      "fractured_wavy_mesh_tet_DFN_1.vtu",
+      "fractured_wavy_mesh_tet_DFN_123.vtu",
 
       // Wavy hex meshes - single and triple fracture only
       "fractured_wavy_mesh_hex_DFN_1.vtu",
