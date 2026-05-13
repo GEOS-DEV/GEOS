@@ -28,7 +28,7 @@ CommandLineOptions g_commandLineOptions;
  * Combinations:
  * - Meshes: 1 fracture, 2 fractures, 3 fractures
  * - Solver: Run solver (true) vs Initialization only (false)
- * - Partitioning: 1x1x4, 1x2x2 (4 ranks)
+ * - Partitioning: 4 ranks
  */
 INSTANTIATE_TEST_SUITE_P(
   MixedDimPartitionedFlowCases,
@@ -38,10 +38,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 2, 2 )
-      )
+    ::testing::Values( 4)
     )
   );
 
