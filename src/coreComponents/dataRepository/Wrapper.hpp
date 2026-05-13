@@ -37,8 +37,8 @@
 #include "WrapperBase.hpp"
 
 // System includes
-#include <type_traits>
 #include <cstdlib>
+#include <optional>
 #include <type_traits>
 
 namespace geos
@@ -204,6 +204,8 @@ public:
     m_ownsData = castedSource.m_ownsData;
     m_default = castedSource.m_default;
     m_dimLabels = castedSource.m_dimLabels;
+    m_minValue = castedSource.m_minValue;
+    m_maxValue = castedSource.m_maxValue;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -718,6 +720,66 @@ public:
     return ss.str();
   }
 
+  /**
+   * @brief Set a minimum bound for this attribute's value.
+   * @param minValue the minimum allowed value (inclusive)
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  setMinValue( T const & minValue )
+  {
+    m_minValue = minValue;
+    return *this;
+  }
+
+  /**
+   * @brief Set a maximum bound for this attribute's value.
+   * @param maxValue the maximum allowed value (inclusive)
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  setMaxValue( T const & maxValue )
+  {
+    m_maxValue = maxValue;
+    return *this;
+  }
+
+  /**
+   * @brief Set both bounds for this attribute's value.
+   * @param minValue the minimum allowed value (inclusive)
+   * @param maxValue the maximum allowed value (inclusive)
+   * @return pointer to Wrapper<T>
+   */
+  template< typename U=T >
+  std::enable_if_t< std::is_arithmetic< U >::value, Wrapper< T > & >
+  setLimits( T const & minValue,
+             T const & maxValue )
+  {
+    m_minValue = minValue;
+    m_maxValue = maxValue;
+    return *this;
+  }
+
+  /**
+   * @brief Accessor for the minimum bound of this attribute's value.
+   * @return optional containing the typed minimum value, empty if not set
+   */
+  std::optional< T > const & getMinValue() const
+  {
+    return m_minValue;
+  }
+
+  /**
+   * @brief Accessor for the maximum bound of this attribute's value.
+   * @return optional containing the typed maximum value, empty if not set
+   */
+  std::optional< T > const & getMaxValue() const
+  {
+    return m_maxValue;
+  }
+
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
                                  xmlWrapper::xmlNodePos const & nodePos ) override
   {
@@ -1100,6 +1162,12 @@ private:
 
   /// stores dimension labels (used mainly for plotting) for multidimensional arrays, empty member otherwise
   wrapperHelpers::ArrayDimLabels< T > m_dimLabels;
+
+  ///
+  std::optional< T > m_minValue;
+
+  ///
+  std::optional< T > m_maxValue;
 };
 
 }
