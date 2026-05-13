@@ -802,7 +802,9 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
-  forFractureRegionOnMeshTargets( domain.getMeshBodies(), [&] ( SurfaceElementRegion & fractureRegion )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
   {
     //fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     //{
