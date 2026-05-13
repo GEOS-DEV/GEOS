@@ -686,9 +686,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
 
-    arrayView2d< real64 const > const dispJump           = subRegion.getField< fields::contact::dispJump >();
-    arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
-
     if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ParallelPlatesPermeability >)  {
       updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
     }
@@ -696,11 +693,20 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
                         std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::WillisRichardsPermeability > ||
                         std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ExponentialDecayPermeability > )
     {
-      /*dHydraulicAperture_dNormalJump dummy entry*/
-      arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
-      updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( porousWrapper,
-                                                                       subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
-                                                                       dispJump, fractureTraction );
+      if( subRegion.hasField< fields::contact::dispJump >() && subRegion.hasField< fields::contact::traction >() )
+      {
+        arrayView2d< real64 const > const dispJump = subRegion.getField< fields::contact::dispJump >();
+        arrayView2d< real64 const > const fractureTraction = subRegion.getField< fields::contact::traction >();
+        /*dHydraulicAperture_dNormalJump dummy entry*/
+        arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
+        updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( porousWrapper,
+                                                                         subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
+                                                                         dispJump, fractureTraction );
+      }
+      else
+      {
+        updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+      }
     }
     else
     {
