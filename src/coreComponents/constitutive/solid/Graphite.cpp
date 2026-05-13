@@ -76,42 +76,37 @@ Graphite::Graphite( string const & name, Group * const parent ):
 {
   // register default values
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Transverse Young's Modulus" );
 
   registerWrapper( viewKeyStruct::defaultYoungModulusAxialString(), &m_defaultYoungModulusAxial ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Axial Young's Modulus" );
 
   registerWrapper( viewKeyStruct::defaultPoissonRatioTransverseString(), &m_defaultPoissonRatioTransverse ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Transverse Poisson's Ratio" );
 
   registerWrapper( viewKeyStruct::defaultPoissonRatioAxialTransverseString(), &m_defaultPoissonRatioAxialTransverse ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Axial-Transverse Poisson's Ratio" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusAxialTransverseString(), &m_defaultShearModulusAxialTransverse ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default Axial-Transverse Shear Modulus" );
 
   registerWrapper( viewKeyStruct::defaultYoungModulusTransversePressureDerivativeString(), &m_defaultYoungModulusTransversePressureDerivative ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( 0. ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Transverse Young's modulus pressure derivative" );
 
   registerWrapper( viewKeyStruct::defaultYoungModulusAxialPressureDerivativeString(), &m_defaultYoungModulusAxialPressureDerivative ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( 0. ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Axial Young's modulus pressure derivative" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusAxialTransversePressureDerivativeString(), &m_defaultShearModulusAxialTransversePressureDerivative ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( 0. ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Axial transverse shear modulus pressure derivative" );
 
@@ -259,12 +254,14 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setDescription( "Plastic Work" );
   
   registerWrapper( viewKeyStruct::alphaLString(), &m_alphaL ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "constant for thermal expansion lateral to symmetry axis" );
+    setDescription( "constant for thermal expansion longitudinal to symmetry axis" );
 
   registerWrapper( viewKeyStruct::alphaTString(), &m_alphaT ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "constant for thermal expansion lateral to symmetry axis" );
+    setDescription( "constant for thermal expansion transverse to symmetry axis" );
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
@@ -287,7 +284,7 @@ Graphite::Graphite( string const & name, Group * const parent ):
     setDescription( "Array of quadrature point jacobian values" );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
-    setApplyDefaultValue( DBL_MIN ).
+    setInputFlag( InputFlags::REQUIRED ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point length scale values" );
 
@@ -331,6 +328,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
   m_basalPlanePlasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_plasticWork.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
+  m_temperature.resize( 0 );
+  m_temperatureRate.resize( 0 );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_lengthScale.resize( 0 );
   m_strengthScale.resize( 0 );
@@ -368,9 +367,9 @@ void Graphite::postInputInitialization()
   //                  "max ep: " << m_maximumPlasticStrain );
 
   // Add elastic constants check
-  GEOS_THROW_IF( m_defaultYoungModulusAxial < 0.0, "defaultYoungModulusAxial must be a positive number.", InputError );
-  GEOS_THROW_IF( m_defaultYoungModulusTransverse < 0.0, "defaultYoungModulusTransverse must be a positive number.", InputError );
-  GEOS_THROW_IF( m_defaultShearModulusAxialTransverse < 0.0, "defaultShearModulusAxialTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusAxial <= 0.0, "defaultYoungModulusAxial must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultYoungModulusTransverse <= 0.0, "defaultYoungModulusTransverse must be a positive number.", InputError );
+  GEOS_THROW_IF( m_defaultShearModulusAxialTransverse <= 0.0, "defaultShearModulusAxialTransverse must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYoungModulusAxialPressureDerivative < 0.0, "defaultYoungModulusAxialPressureDerivative must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYoungModulusTransversePressureDerivative < 0.0, "defaultYoungModulusTransversePressureDerivative must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultShearModulusAxialTransversePressureDerivative < 0.0, "defaultShearModulusAxialTransversePressureDerivative must be a positive number.", InputError );
@@ -379,32 +378,44 @@ void Graphite::postInputInitialization()
   GEOS_THROW_IF( m_defaultPoissonRatioTransverse < -0.499999,  "defaultPoissonRatioTransverse must be > -0.5 ", InputError );
   GEOS_THROW_IF( m_defaultPoissonRatioTransverse > 0.499999,  "defaultPoissonRatioTransverse must be < 0.5 ", InputError );
 
+  real64 stability =
+  1.0 - m_defaultPoissonRatioTransverse
+      - 2.0 * m_defaultYoungModulusTransverse
+              / m_defaultYoungModulusAxial
+              * m_defaultPoissonRatioAxialTransverse
+              * m_defaultPoissonRatioAxialTransverse;
+
+  GEOS_THROW_IF( stability <= 1.e-12, "Transversely isotropic elastic constants are not positive definite.", InputError );
+
   GEOS_THROW_IF( m_failureStrength <= 0.0, "Maximum theoretical strength must be greater than 0", InputError );
-  GEOS_THROW_IF( m_maximumPrincipalStressDamage < 0, "Max Princ. Stress Damage flag should be 0 or 1", InputError );
+  GEOS_THROW_IF( m_maximumPrincipalStressDamage != 0 &&
+               m_maximumPrincipalStressDamage != 1, "Max Princ. Stress Damage flag should be 0 or 1", InputError );
   GEOS_THROW_IF( m_crackSpeed <= 0, "Crack speed should be positive", InputError );
-  GEOS_THROW_IF( m_scaleFractureEnergyReleaseRate > 1, "Fracture energy scale flag should be 0 or 1", InputError );
+  GEOS_THROW_IF( m_scaleFractureEnergyReleaseRate != 0 && m_scaleFractureEnergyReleaseRate != 1,  "Fracture energy scale flag should be 0 or 1", InputError );
+
+  GEOS_THROW_IF( m_enableCrackTipStressConcentration != 0 &&  m_enableCrackTipStressConcentration != 1,  "Crack tip flag should be 0 or 1", InputError );
 
   GEOS_THROW_IF( m_basalPlaneFractureEnergyReleaseRate <= 0.0, "Basal plane fracture energy release rate must be a positive number.", InputError );
   GEOS_THROW_IF( m_totalFractureEnergyReleaseRate <= 0.0, "Total Fracture Energy Release Rate must be a positive number.", InputError );
 
   GEOS_THROW_IF( m_damagedMaterialFrictionalSlope < 0.0, "Damaged material frictional slope must be greater than 0", InputError );
 
-  GEOS_THROW_IF( m_distortionShearResponseX2 < 0.0, "Distortion shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseX2 <= 0.0, "Distortion shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseY1 < 0.0, "Distortion shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_distortionShearResponseY2 < 0.0, "Distortion shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_distortionShearResponseY2 <= m_distortionShearResponseY1, "Distortion shear response y2 must > y1.", InputError );
   GEOS_THROW_IF( m_distortionShearResponseM1 < 0.0, "Distortion shear response m1 must be a positive number.", InputError );
 
-  GEOS_THROW_IF( m_inPlaneShearResponseX2 < 0.0, "In plane shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseX2 <= 0.0, "In plane shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_inPlaneShearResponseY1 < 0.0, "In plane shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_inPlaneShearResponseY2 < 0.0, "In plane shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_inPlaneShearResponseY2 <= m_inPlaneShearResponseY1, "In plane shear response y2 must > y1.", InputError );
   GEOS_THROW_IF( m_inPlaneShearResponseM1 < 0.0, "In plane shear response m1 must be a positive number.", InputError );
 
-  GEOS_THROW_IF( m_coupledShearResponseX2 < 0.0, "Coupled shear response x2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseX2 <= 0.0, "Coupled shear response x2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_coupledShearResponseY1 < 0.0, "Coupled shear response y1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_coupledShearResponseY2 < 0.0, "Coupled shear response y2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_coupledShearResponseY2 <= m_coupledShearResponseY1, "Coupled shear response y2 must > y1.", InputError );
   GEOS_THROW_IF( m_coupledShearResponseM1 < 0.0, "Coupled shear response m1 must be a positive number.", InputError );
 
-  GEOS_THROW_IF( m_maximumPlasticStrain < 0.0, "Maximum plastic strain must be a positive number.", InputError );
+  GEOS_THROW_IF( m_maximumPlasticStrain <= 0.0, "Maximum plastic strain must be a positive number.", InputError );
 }
 
 

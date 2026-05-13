@@ -298,14 +298,14 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   real64 previousStress[6] = { 0 };
   LvArray::tensorOps::copy< 6 >( previousStress, m_oldStress[k][q] );
 
-  real64 trialP;
-  real64 trialQ;
+  real64 previousP;
+  real64 previousQ;
   real64 oldDeviatoricStress[6] = { 0 };
   twoInvariant::stressDecomposition( previousStress,
-                                     trialP,
-                                     trialQ,
-                                     oldDeviatoricStress );
-  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, LvArray::math::sqrt( 2.0 / 3.0 )*trialQ );
+                                     previousP,
+                                     previousQ,
+                                     oldDeviatoricStress ); // This was a unit tensor
+  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, LvArray::math::sqrt( 2.0 / 3.0 )*previousQ );
 
   // Exactly compute pressure
   real64 J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
@@ -350,6 +350,7 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   }
 
   real64 deviator[6] = { 0 };
+  real64 trialP, trialQ;
   twoInvariant::stressDecomposition( stress,
                                      trialP,
                                      trialQ,
@@ -369,7 +370,8 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 
     real64 stressIncrement[6] = {0};
     LvArray::tensorOps::copy< 6 >( stressIncrement, stress );
-    LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
+    LvArray::tensorOps::subtract< 6 >( stressIncrement, previousStress );
+
 
     // Compute plastic strain increment
     real64 plasticStrainIncrement[6] = {0};
@@ -491,7 +493,7 @@ void VonMisesJUpdates::computePlasticStrainIncrement ( localIndex const k,
     }
     if( m_shearModulus[k] > 1.0e-12 )
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2/3 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2./3. ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 

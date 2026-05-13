@@ -340,15 +340,15 @@ public:
   }
 
 private:
-  real64 const & m_defaultYoungModulusTransverse;
+  real64 const m_defaultYoungModulusTransverse;
 
-  real64 const & m_defaultYoungModulusAxial;
+  real64 const m_defaultYoungModulusAxial;
 
-  real64 const & m_defaultPoissonRatioTransverse;
+  real64 const m_defaultPoissonRatioTransverse;
 
-  real64 const & m_defaultPoissonRatioAxialTransverse;
+  real64 const m_defaultPoissonRatioAxialTransverse;
 
-  real64 const & m_defaultShearModulusAxialTransverse;
+  real64 const m_defaultShearModulusAxialTransverse;
 
   arrayView1d< real64 > const m_effectiveBulkModulus;
 
@@ -612,7 +612,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                  m_materialDirection[k][0][2]};
 
   // Should be normalized already:
-  // LvArray::tensorOps::normalize< 3 >( materialDirection );
+  LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Unrotate material direction
   real64 unrotatedMaterialDirection[3] = {};
@@ -637,6 +637,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 Gzp  = LvArray::math::max( 0.001*m_defaultShearModulusAxialTransverse, m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure ) );
   real64 nuzp = LvArray::math::min( 0.4999, m_defaultPoissonRatioAxialTransverse );
   real64 nup = LvArray::math::min( 0.4999, m_defaultPoissonRatioTransverse );
+
+  // BUGFIX: add checks to limit scaling of moduli so stiffness is positive definite
 
   // Update effective elastic properties
   m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));  // prevent negative k or division by 0
@@ -737,12 +739,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     real64 fractureEnergyReleaseRate = 0.5*( m_basalPlaneFractureEnergyReleaseRate + m_totalFractureEnergyReleaseRate );
     real64 constrainedModulus =  m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k];
-    real64 fractureToughness = fractureEnergyReleaseRate * constrainedModulus;
     real64 nominalIntactStrength = m_failureStrength;
 
     real64 fractureProcessZoneRadius =
-      LvArray::math::max( 1.e-12, fractureToughness * fractureToughness /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
-    m_crackTipStressConcentration[k] = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+      LvArray::math::max( 1.e-12, constrainedModulus * fractureEnergyReleaseRate /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
+    m_crackTipStressConcentration[k] = LvArray::math::max( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
 
   // Check for tensile failure in preferred direction
@@ -751,6 +752,11 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
   int basalModeIFracture = 0;
 
+  if( planeNormalStress > failureStrength )
+  { // If load step is plastic (likely) then this will trigger
+    // evolution of modeIplastic work towards plastic fracture
+    basalModeIFracture = 1;
+  }
 
   // If user has specified a maximum principal stress, compute eigen values of
   // trial stress and use that to evolve damage.
@@ -799,6 +805,15 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::copy< 6 >( inPlaneDev, sigma4 );
   LvArray::tensorOps::subtract< 6 >( inPlaneDev, inPlaneIso );
 
+  // Enforce damage, no tensile stress on plane
+  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+  {
+    if( planeNormalStress > 0 )
+    {
+      LvArray::tensorOps::scale< 6 >( sigma1, 0.0 );
+    }
+  }
+
   // find distortion stress from in-plane isotropic and plane-normal stress
   real64 distortion[6] = {};
   LvArray::tensorOps::copy< 6 >( distortion, inPlaneIso );
@@ -831,16 +846,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     {
       LvArray::tensorOps::scale< 6 >( distortion_iso, 0.0 );
     }
-
-      // Enforce damage, no tensile stress on plane
-  if( m_damage[k][q] >= 0.9999999 ) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
-  {
-    if( planeNormalStress > 0 )
-    {
-      LvArray::tensorOps::scale< 6 >( sigma1, 0.0 );
-    }
-  }
-
   }
 
   // Define 3 pressure-dependent shear strengths for different shear modes.
@@ -1075,11 +1080,14 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
 
     // increment relaxation
-    //For symmetric matrix need to double off diagonal elements for l2Norm?
-    plasticStrainIncrement[3] *= 1.41421356237;
-    plasticStrainIncrement[4] *= 1.41421356237;
-    plasticStrainIncrement[5] *= 1.41421356237;
-    m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
+    // For symmetric matrix need to double off diagonal elements for l2Norm?
+    real64 plasticStrainIncrementForNorm[6] = { plasticStrainIncrement[0], 
+                                                plasticStrainIncrement[1], 
+                                                plasticStrainIncrement[2], 
+                                                plasticStrainIncrement[3] / 1.41421356237, 
+                                                plasticStrainIncrement[3] / 1.41421356237, 
+                                                plasticStrainIncrement[3] / 1.41421356237 };
+    m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrementForNorm ) / m_maximumPlasticStrain;
     m_relaxation[k][q] = LvArray::math::min( 1.0, m_relaxation[k][q] );
 
     if ( m_crackSpeed < DBL_MAX ) 
@@ -1096,7 +1104,17 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       {
       // Mode I basal plane fracture:
       real64 dEpsilonIJnJ[3] = {};
-      LvArray::tensorOps::Ri_eq_symAijBj< 3 >(dEpsilonIJnJ, plasticStrainIncrement, unrotatedMaterialDirection);
+      real64 plasticStrainIncrementForTensorOp[6] = { plasticStrainIncrement[0], 
+                                                      plasticStrainIncrement[1], 
+                                                      plasticStrainIncrement[2], 
+                                                      plasticStrainIncrement[3] * 0.5, 
+                                                      plasticStrainIncrement[4] * 0.5, 
+                                                      plasticStrainIncrement[5] * 0.5 };
+      LvArray::tensorOps::Ri_eq_symAijBj< 3 >(dEpsilonIJnJ, plasticStrainIncrementForTensorOp, unrotatedMaterialDirection);
+      dEpsilonIJnJ[3] *= 2.0;
+      dEpsilonIJnJ[4] *= 2.0;
+      dEpsilonIJnJ[5] *= 2.0;
+
       real64 plasticNormalStrainIncrement = LvArray::tensorOps::AiBi< 3 >(unrotatedMaterialDirection, dEpsilonIJnJ );
       real64 avePlaneNormalStress = 0.5*( planeNormalStress + oldPlaneNormalStress );
       m_basalPlanePlasticWork[k][q] += LvArray::math::max( 0.0 , plasticNormalStrainIncrement*avePlaneNormalStress );  // Should be non-negative, max may not be needed.
@@ -1113,7 +1131,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       // Compare accumulated work to specified effective fracture energy release rate normalized by length scale
       // The power will let damage stay at 0 until the accumulated work nears the threshold, then it ramps smoothly to 1.
       real64 normalizedWork = LvArray::math::max( 0.0, LvArray::math::min( 1.0, m_basalPlanePlasticWork[k][q] / ( basalPlaneFractureEnergyReleaseRate / m_lengthScale[k] ) ) );
-      m_damage[k][q] = LvArray::math::max( m_damage[k][q], pow( normalizedWork, 32 ) );      
+      m_damage[k][q] = LvArray::math::max( m_damage[k][q], LvArray::math::pow( normalizedWork, 32.0 ) );      
     }
 
     // Compute total plastic work and compare to the effective value for the fracture energy release
@@ -1127,7 +1145,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
       {
         // Here the stress is what's left after subtracting off the basal stress plane normal
         // and shear stress
-        m_plasticWork[k][q] += plasticStrainIncrement[i]*(newStress[i] - sigma5[i] - sigma1[i]);
+        real64 dWp = plasticStrainIncrement[i]*(newStress[i] - sigma5[i] - sigma1[i]);
+        m_plasticWork[k][q] += LvArray::math::max( 0.0, dWp );
       }
 
       // Damage is ( Wp/(Gf/l) )^k, where k=32, and we allow only increase in damage.
@@ -1723,6 +1742,9 @@ public:
                           m_coupledShearResponseY1,
                           m_coupledShearResponseY2,
                           m_coupledShearResponseM1,
+                          m_distortionStrainHardeningC0,
+                          m_inPlaneStrainHardeningC0,
+                          m_coupledStrainHardeningC0,
                           m_maximumPlasticStrain,
                           m_thermalExpansionCoefficient,
                           m_newStress,

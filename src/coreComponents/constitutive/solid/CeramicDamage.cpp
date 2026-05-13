@@ -85,16 +85,15 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::damageString(), &m_damage ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point damage values" );
 
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point jacobian values" );
 
   registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
-    setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
 
@@ -117,7 +116,7 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Plastic strain" );
 
   registerWrapper( viewKeyStruct::enableCrackTipStressConcentrationString(), &m_enableCrackTipStressConcentration ).
@@ -179,17 +178,25 @@ void CeramicDamage::allocateConstitutiveData( Group & parent, localIndex const n
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 
+  // Either need to resize state variable arrays or restrict model to 1 pt per particle (q=1)
+  GEOS_THROW_IF( numPts > 1,
+               "State variables for this model are not 2D arrays that accomodate numPts > 1 per particle", InputError );
+
   m_strengthScale.resize( 0 );
   m_porosity.resize( 0 );
   m_referencePorosity.resize( 0 );
+  m_lengthScale.resize( 0 );
+
   m_damage.resize( 0, numPts );
   m_jacobian.resize( 0, numPts );
   m_velocityGradient.resize( 0, 3, 3 );
   m_plasticStrain.resize( 0, numPts, 6 );
+
   m_crackTipStressConcentration.resize( 0 );
   m_accumulatedModeIWork.resize( 0 );
   m_accumulatedModeIIWork.resize( 0 );
   m_distanceToCrackTip.resize( 0 );
+  m_surfaceFlag.resize( 0 ); 
 }
 
 
@@ -197,12 +204,48 @@ void CeramicDamage::postInputInitialization()
 {
   ElasticIsotropic::postInputInitialization();
 
-  // CC: TODO double check model inputs
-  GEOS_THROW_IF( m_tensileStrength < 0.0, "Tensile strength must be a positive number.", InputError );
-  GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
-  GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
-  GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
-  GEOS_THROW_IF( m_fractureEnergyReleaseRate < 0.0, "Fracture energy release rate must be positive.", InputError );
+  GEOS_THROW_IF( m_tensileStrength <= 0.0,
+               "Tensile strength must be strictly positive.", InputError );
+
+  GEOS_THROW_IF( m_compressiveStrength <= m_tensileStrength,
+                "Compressive strength must be strictly greater than tensile strength.", InputError );
+
+  GEOS_THROW_IF( m_maximumStrength <= m_compressiveStrength,
+                "Maximum theoretical strength must be strictly greater than compressive strength.", InputError );
+
+  GEOS_THROW_IF( m_crackSpeed <= 0.0 && m_enableEnergyFailureCriterion == 0,
+                "Crack speed must be strictly positive when using time-to-failure damage.", InputError );
+
+  GEOS_THROW_IF( m_damagedMaterialFrictionSlope <= 0.0,
+                "Damaged material friction slope must be strictly positive.", InputError );
+
+  GEOS_THROW_IF( m_thirdInvariantDependence != 0 && m_thirdInvariantDependence != 1,
+                "thirdInvariantDependence must be 0 or 1.", InputError );
+
+  GEOS_THROW_IF( m_enableCrackTipStressConcentration != 0 &&
+                m_enableCrackTipStressConcentration != 1,
+                "enableCrackTipStressConcentration must be 0 or 1.", InputError );
+
+  GEOS_THROW_IF( m_enableEnergyFailureCriterion != 0 &&
+                m_enableEnergyFailureCriterion != 1,
+                "enableEnergyFailureCriterion must be 0 or 1.", InputError );
+
+  GEOS_THROW_IF( m_enableCrackTipStressConcentration == 1 &&
+                m_fractureToughness <= 0.0,
+                "fractureToughness must be strictly positive when crack-tip stress concentration is enabled.",
+                InputError );
+
+  GEOS_THROW_IF( m_enableEnergyFailureCriterion == 1 &&
+                m_fractureEnergyReleaseRate <= 0.0,
+                "fractureEnergyReleaseRate must be strictly positive when the energy failure criterion is enabled.",
+                InputError );
+
+  real64 const p1 = m_compressiveStrength / 3.0;
+  real64 const p2 = m_maximumStrength / m_damagedMaterialFrictionSlope;
+  GEOS_THROW_IF( p2 <= p1,
+               "Invalid strength surface: maximumStrength / damagedMaterialFrictionSlope "
+               "must be greater than compressiveStrength / 3.",
+               InputError );
 
 }
 

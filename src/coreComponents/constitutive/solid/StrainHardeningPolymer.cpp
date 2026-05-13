@@ -163,17 +163,17 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setDescription( "Maximum stretch" );
 
   registerWrapper( viewKeyStruct::maximumStretchAString(), &m_maximumStretchA ).
-    setApplyDefaultValue( 300 ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "max Stretch A" );
 
   registerWrapper( viewKeyStruct::maximumStretchBString(), &m_maximumStretchB ).
-    setApplyDefaultValue( DBL_MAX ).
+    setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch B" );
 
   registerWrapper( viewKeyStruct::maximumStretchT0String(), &m_maximumStretchT0 ).
-    setApplyDefaultValue( DBL_MAX ).
+    setApplyDefaultValue( 300.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch T0" );
 
@@ -225,6 +225,7 @@ void StrainHardeningPolymer::allocateConstitutiveData( dataRepository::Group & p
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_yieldStrength.resize( 0 );
+  m_temperature.resize( 0 );
 }
 
 
@@ -237,8 +238,8 @@ void StrainHardeningPolymer::postInputInitialization()
                                                                                                                   // are the rules for
                                                                                                                   // inputs
   GEOS_THROW_IF( m_shearSofteningMagnitude < 0.0, "Shear softening magnitude must be a positive number.", InputError );
-  GEOS_THROW_IF( m_shearSofteningShapeParameter1 < 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
-  GEOS_THROW_IF( m_shearSofteningShapeParameter2 < 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_shearSofteningShapeParameter1 <= 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
+  GEOS_THROW_IF( m_shearSofteningShapeParameter2 <= 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
   GEOS_THROW_IF( m_maximumStretch <= 1.0, "Max stretch must be greater than 1", InputError );
 

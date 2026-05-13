@@ -14,11 +14,105 @@
 
 /**
  * @file StrainHardeningPolymer.hpp
- * @brief Simple flow stress model for strain hardening polymer
+ * @brief Corotational strain-hardening / shear-softening polymer model for explicit MPM.
  *
- * This damage model is intended for use with damage-field partitioning (DFG) within the
- * MPM solver, but can also be used without DFG by any solver. It is only appropriate for
- * schemes implementing explicit time integration. CC: TODO add description of material model
+ * @details
+ * This material model implements a pressure-independent, J2-type flow-stress
+ * law for a strain-hardening polymer with thermal property scaling, plastic
+ * shear softening, stretch hardening, and stretch-based failure detection.
+ *
+ * The model is intended for explicit time integration, especially explicit MPM.
+ * It does not provide a consistent implicit tangent. The stress update is
+ * formulated in a corotational small-strain frame: finite rotations are handled
+ * outside this class by the solver/wrapper, while the constitutive update itself
+ * operates on unrotated stress, unrotated strain increment, and unrotated
+ * tensorial history variables.
+ *
+ * Frame convention:
+ * - On entry, the wrapper has rotated the beginning-of-step Cauchy stress and
+ *   plastic strain into the material/corotational frame.
+ * - The strain increment supplied to this update is also expressed in that
+ *   corotational frame.
+ * - This class updates stress and internal variables in the corotational frame.
+ * - On exit, the wrapper rotates the updated stress and plastic strain back to
+ *   the spatial frame for storage and force calculation.
+ *
+ * The elastic predictor uses isotropic linear hypoelasticity in the unrotated
+ * frame,
+ *
+ *   sigma_trial = sigma_n
+ *               + K(T) tr(Delta epsilon) I
+ *               + 2 G(T) dev(Delta epsilon),
+ *
+ * where K(T) and G(T) are temperature-scaled bulk and shear moduli. The pressure
+ * part of the trial stress is retained during plastic correction. Plastic flow
+ * is governed by the von Mises invariant
+ *
+ *   q = sqrt(3/2 s:s),
+ *
+ * with radial return in deviatoric stress space when q_trial exceeds the current
+ * flow strength.
+ *
+ * The flow strength is modeled as
+ *
+ *   sigma_y = sigma_0(T)
+ *           + S(T) exp( - (gamma_p / r_1) ^ r_2 )
+ *           + H(T) h(lambda),
+ *
+ * where:
+ * - sigma_0(T) is the temperature-scaled base yield strength,
+ * - S(T) is the temperature-scaled shear-softening magnitude,
+ * - gamma_p is the accumulated magnitude of the plastic strain tensor,
+ * - r_1 and r_2 control the decay rate and shape of the shear-softening term,
+ * - H(T) is the temperature-scaled stretch-hardening slope,
+ * - lambda is the tensile principal-stretch driver, obtained from the right
+ *   stretch tensor associated with the deformation gradient, and
+ * - h(lambda) is the stretch-hardening function used by the implementation.
+ *
+ * The shear-softening contribution is initially positive and decays with
+ * increasing plastic strain magnitude. The stretch-hardening contribution
+ * increases the flow strength as the tensile stretch grows.
+ *
+ * Temperature dependence is applied through logistic scaling factors of the
+ * form
+ *
+ *   scale(T; T0, A, B) = 1 + A / (1 + exp( B (T - T0) )),
+ *
+ * unless A is zero, in which case the scale is one. Each temperature-dependent
+ * material parameter has its own A, B, and T0 values.
+ *
+ * Failure is detected from the maximum principal stretch. If
+ *
+ *   lambda_max > lambda_failure(T),
+ *
+ * the damage variable is set to one. In MPM/DFG applications, this damage flag
+ * may be consumed by the solver to partition material, release stress, or apply
+ * other failure logic. The objective rotation of damage-related tensorial state
+ * is not performed here.
+ *
+ * State variables updated by this model include:
+ * - plastic strain,
+ * - damage,
+ * - Jacobian / volume change measure,
+ * - current yield strength,
+ * - temperature-dependent elastic properties when stored by the parent model.
+ *
+ * Voigt convention:
+ * Strain-like quantities are stored using the GEOS symmetric Voigt convention,
+ * with engineering shear components. Tensor rotations of strain-like quantities
+ * must therefore convert shear components to tensor form before rotation and
+ * convert them back afterward. In normal MPM use, this conversion and rotation
+ * are handled by the wrapper.
+ *
+ * Main assumptions and limitations:
+ * - explicit time integration,
+ * - small elastic strain in the corotational frame,
+ * - finite rotation handled externally,
+ * - pressure-independent plastic flow,
+ * - no rate dependence or viscoplasticity,
+ * - no implicit consistent tangent,
+ * - material parameters must remain finite and positive after temperature
+ *   scaling.
  */
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_STRAINHARDENINGPOLYMER_HPP_
@@ -80,7 +174,6 @@ public:
    * @param[in] maximumStretchA
    * @param[in] maximumStretchB
    * @param[in] maximumStretchT0
-   * @param[in] thermalSoftening not currently implemented (CC: TODO)
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
@@ -252,7 +345,7 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  real64 thermalSoftening( const real64 & T,
+  real64 thermalScaling( const real64 & T,
                            const real64 & T0,
                            const real64 & A,
                            const real64 & B
@@ -424,7 +517,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   // elastic predictor "trialStress" (assume strainIncrement is all elastic)
   // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
 
-  real64 scale = StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This
+  real64 bulkModulusScale = StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This
                                                                                                                                             // will
                                                                                                                                             // actually
                                                                                                                                             // be
@@ -438,9 +531,9 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                                                                                             // +
                                                                                                                                             // A*f(m_temperature[k]),
                                                                                                                                             // etc.
-  m_bulkModulus[k] = m_defaultBulkModulus * scale;
+  m_bulkModulus[k] = m_defaultBulkModulus * bulkModulusScale;
 
-  scale = StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB );      // This
+  real64 shearModulusScale = StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB );      // This
                                                                                                                                         // will
                                                                                                                                         // actually
                                                                                                                                         // be
@@ -453,7 +546,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
                                                                                                                                         // +
                                                                                                                                         // A*f(m_temperature[k]),
                                                                                                                                         // etc.
-  m_shearModulus[k] = m_defaultShearModulus *  scale; // This will actually be some function of m_temperature[k]
+  m_shearModulus[k] = m_defaultShearModulus *  shearModulusScale; // This will actually be some function of m_temperature[k]
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k,
                                                          q,
@@ -536,13 +629,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
   // Find the largest eigenvalues and compare to max allowable failure stretch (which is temperature dependent)
 
   // Stretch to failure at current temperature:
-  real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );
+  real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );
 
   // Maximum principal stretch:
   real64 maximumStretch = 0.0;
   for( localIndex i = 0; i < 3; ++i )
   {
-    maximumStretch = std::max( stretch[i], maximumStretch );
+    maximumStretch = LvArray::math::max( stretch[i], maximumStretch );
   }
 
   if( maximumStretch > failureStretch )
@@ -552,20 +645,21 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Return to yield surface requires iterative solution
   // Implemented fixed points, however a newton solver may be more efficient and applicable
-  real64 tol = 1e-10;   // CC: need to experiment with these for the best options
+  real64 relTol = 1e-10;   // CC: need to experiment with these for the best options
   int maxEvals = 100;   // Same as above
 
   // In initialization, yieldStrength is set to defaultYieldStrength, but we will generally want it to be modified by temp
   // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
   // These will be input paramters:
   real64 oldYieldStrength = m_yieldStrength[k];
+  real64 yieldStrengthIter = oldYieldStrength;
 
   // Compute change in yield strength: yieldStrength = m_initialYield + plasticSoftening + stretchHardening;
   // Where each of the 3 terms on the right hace parameters modified by temperature with 3 parameters.
-  real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB );
+  real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB );
   real64 strainHardeningSlope = m_strainHardeningSlope *
-                                StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB );
-  real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA,
+                                StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB );
+  real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalScaling( m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA,
                                                                                                                 m_shearSofteningMagnitudeB );
 
   real64 unrotatedTempPlasticStrain[6] = { };
@@ -593,27 +687,35 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // Shear Softening:
     real64 plasticSoftening = shearSofteningMagnitude * LvArray::math::exp( LvArray::math::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
 
-    // Stretch hardening
-    real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
+    // Stretch hardening (only in tension)
+    real64 const lambdaBar = LvArray::math::max( maximumStretch, 1.0 );
+    real64 stretchHardening = strainHardeningSlope * ( lambdaBar * lambdaBar - 1.0 / lambdaBar );
 
     // Flow stress after temp, hardening, and softening modifications
-    m_yieldStrength[k] = yield0 + plasticSoftening + stretchHardening;   // CC: debugging disabling change in yield strength
+    yieldStrengthIter = yield0 + plasticSoftening + stretchHardening;
+    real64 newPlasticStrain[6] = { };
 
     // check yield function
-    if( trialQ > m_yieldStrength[k] || iter > 0 )
+    if( trialQ > yieldStrengthIter || iter > 0 )
     {
+      // In case there is hardening, don't allow dev stress to exceed trial value or be negative (for the iter > 0 cases)
+      real64 const returnedQ = LvArray::math::min( trialQ, LvArray::math::max( yieldStrengthIter, 0.0 ) );
 
       // re-construct stress = P*eye + sqrt(2/3)*Q*nhat
       real64 stressTemp[6] = {};
       twoInvariant::stressRecomposition( trialP,
-                                         m_yieldStrength[k],
+                                         returnedQ,
                                          deviator,
                                          stressTemp );
 
       // Increment plastic strain
       real64 stressIncrement[6] = { };
+      real64 oldStress[6] = { 0 };
+      LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] );
+
+      // We will compute:  plasticStrainIncrement = strainIncrement - elasticStrainIncrement = strainIncrement - C^inv*( newStress - oldStress )
       LvArray::tensorOps::copy< 6 >( stressIncrement, stressTemp );
-      LvArray::tensorOps::subtract< 6 >( stressIncrement, trialStress );
+      LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
 
       // increment plastic strain
       computePlasticStrainIncrement( k,
@@ -627,36 +729,40 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
       LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
 
-      if( abs( m_yieldStrength[k] - oldYieldStrength ) < tol )
+      real64 const yieldScale = LvArray::math::max( 1.0, LvArray::math::abs( yieldStrengthIter ) );
+      if( LvArray::math::abs( yieldStrengthIter - oldYieldStrength ) <= relTol * yieldScale )
       {
         unrotatedNewPlasticStrain[3] *= 0.5;
         unrotatedNewPlasticStrain[4] *= 0.5;
         unrotatedNewPlasticStrain[5] *= 0.5;
 
-        real64 newPlasticStrain[6] = { };
+        
         LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
         newPlasticStrain[3] *= 2.0;
         newPlasticStrain[4] *= 2.0;
         newPlasticStrain[5] *= 2.0;
 
-        LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
         LvArray::tensorOps::copy< 6 >( stress, stressTemp );
         return;
       }
       else
       {
-        oldYieldStrength = m_yieldStrength[k];
+        oldYieldStrength = yieldStrengthIter;
       }
     }
     else
     {
       return;
     }
+
+    // Store converged values:
+    m_yieldStrength[k] = yieldStrengthIter;
+    LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+
   }
 
   GEOS_ERROR( "Plastic strain of StrainHardeningPolymer model did not converge within max evals." );
 }
-
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -707,15 +813,23 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
   LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement );
 }
 
-// Compute (dZeta/devp) Zeta and vol. plastic strain
+// Compute thermal scaling function.  
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
+real64 StrainHardeningPolymerUpdates::thermalScaling( const real64 & T,
                                                         const real64 & T0,
                                                         const real64 & A,
                                                         const real64 & B ) const
 {
-  if( LvArray::math::abs( A ) > 1.e-16 )
+  // This is an empirical scaling function used to modify parameters based on available
+  // data.  It is applied differently for stretch hardeng, shear softening, and
+  // elasticity parameters.  Be advised that it is not a thermal softening model
+  // with the expected response that scaling=1 when T=T0.  The model is disabled
+  // by default and when A = 0.
+  //
+  // TODO: Reformulate this so we can have input values unchanged when T=T0
+  // but still fit data for temp dependence of various parameters.  
+  if( A > __DBL_EPSILON__ )
   {
     return 1.0 + A / (1.0 + LvArray::math::exp( B * (T-T0) ) );
   }

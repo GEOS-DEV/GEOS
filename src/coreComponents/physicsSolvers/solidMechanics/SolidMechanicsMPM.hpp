@@ -962,6 +962,17 @@ public:
                                           real64 shapeFunctionGradientValues[][3] );
   #endif
 
+  /**
+   * @brief Applies TransformParticles events that must run after deformation-gradient updates.
+   *
+   * @param time_n Beginning-of-step time.
+   * @param dt Time-step size.
+   * @param particleManager Particle manager containing active particle subregions.
+   */
+  void transformParticlesForTriggeredEvents( real64 const time_n,
+                                             real64 const dt,
+                                             ParticleManager & particleManager );
+
 
 
   void computeBodyForce( ParticleManager & particleManager );

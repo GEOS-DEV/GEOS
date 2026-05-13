@@ -508,8 +508,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // Tensile cutoff pressure (negative value in tension) is scaled by damage.
   // so we also scale the bulk modulus in tension so unloading from a damaged vertex
   // smoothly appraoches p=0 as J=1
-  real64 bulk = (m_jacobian[k][q] <= 1.0) ? m_bulkModulus[k] : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
-  real64 trialPressure = -bulk * log( m_jacobian[k][q] );
+  real64 bulk =  LvArray::math::max( 1.0e-9 * m_bulkModulus[k] , (m_jacobian[k][q] <= 1.0) ? m_bulkModulus[k] : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k] );
+  real64 trialPressure = -bulk * LvArray::math::log( m_jacobian[k][q] );
 
   // The tensile strength is Yt = (1/Gamma)*Yt0, where Gamma is the third-invariant dependence function
   // that gives a reduced strength in TXE vs TXC.  This correction ensures the model produces the correct
@@ -542,7 +542,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Compute the nominal 0-damage yield stress for crack-tip correction and regularization.
   real64 nominalIntactStrength;
-  if( trialPressure >= pmin )
+  if( trialPressure >= pmin0 )
   {
     nominalIntactStrength = CeramicDamageUpdates::getStrength( 0.0, 1.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
   }
@@ -562,7 +562,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 fractureProcessZoneRadius =
       LvArray::math::max( 1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
     //crackTipStressConcentration = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
-    m_crackTipStressConcentration[k] = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    m_crackTipStressConcentration[k] = LvArray::math::max( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
 
   // Evaluate the yield criterion:
@@ -746,9 +746,15 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // Compute plastic strain.  This is just a plotting variable, but it can be useful.
     // This will be pStrain += C^inv:(sigmaTrial - sigmaNew)
+    //
+    // Alternatively: plasticStrainIncrement = strainIncrement - elasticStrainIncrement
+    //                                       = strainIncrement - C^inv:(sigmaNew - sigmaOld)
+    //                                       = strainIncrement - C^inv:stressIncrement
     real64 stressIncrement[6] = { };
-    LvArray::tensorOps::copy< 6 >( stressIncrement, trialStress );
-    LvArray::tensorOps::subtract< 6 >( stressIncrement, stress );
+    real64 oldStress[6] = { 0 };
+    LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] );
+    LvArray::tensorOps::copy< 6 >( stressIncrement, stress );
+    LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
 
     // Unlike the stress and strain incremenent, the old value
     // of the plastic strain has not been unrotated,
@@ -849,10 +855,13 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
 
     // Strength at current value of damage and trial pressure
     strength = CeramicDamageUpdates::getStrength( damage, crackTipStressConcentration, pressure, J2, J3, mu, Yc, Yt0, Ycmax );
+    strength = LvArray::math::max( 0.0, strength ); // Just to avoid finite precision errors that would lead to a negative value
+
     // scale deviatoric stress and return reconstructed stress:
 
     // trialJ2 = trialVonMises * trialVonMises / 3.0;
     // trialVonMises = LvArray::math::sqrt(3.0*J2);
+
     newShearStress = LvArray::math::min( LvArray::math::sqrt( 3.0*J2 ), strength );
     twoInvariant::stressRecomposition( -pressure,
                                        newShearStress, // new magnitude of deviatoric stress
@@ -1055,7 +1064,7 @@ void CeramicDamageUpdates::computePlasticStrainIncrement ( localIndex const k,
     }
     if( m_shearModulus[k] > 1.0e-12 )
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2/3 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2.0 / 3.0 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 
