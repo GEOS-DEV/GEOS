@@ -34,7 +34,7 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 
-#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp" 
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "constitutive/permeability/ExponentialDecayPermeability.hpp"
 #include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
@@ -113,13 +113,13 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 
 template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
-                                                           SurfaceElementSubRegion & subRegion,
-                                                           arrayView1d< real64 const > const & pressure,
-                                                           arrayView1d< real64 const > const & oldHydraulicAperture,
-                                                           arrayView1d< real64 const > const & newHydraulicAperture,
-                                                           arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
-                                                           arrayView2d< real64 const > const & dispJump,
-                                                           arrayView2d< real64 const > const & fracTraction)
+                                                                      SurfaceElementSubRegion & subRegion,
+                                                                      arrayView1d< real64 const > const & pressure,
+                                                                      arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                                      arrayView1d< real64 const > const & newHydraulicAperture,
+                                                                      arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
+                                                                      arrayView2d< real64 const > const & dispJump,
+                                                                      arrayView2d< real64 const > const & fracTraction )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -128,13 +128,13 @@ void updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( POROUSWRAP
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
       real64 const traction[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( fracTraction[k] );
       porousWrapper.updateStateFromPressureApertureJumpAndTraction( k, q,
-                                                        pressure[k],
-                                                        oldHydraulicAperture[k],
-                                                        newHydraulicAperture[k],
-                                                        dHydraulicAperture_dNormalJump[k],
-                                                        jump,
-                                                        traction
-                                                       );
+                                                                    pressure[k],
+                                                                    oldHydraulicAperture[k],
+                                                                    newHydraulicAperture[k],
+                                                                    dHydraulicAperture_dNormalJump[k],
+                                                                    jump,
+                                                                    traction
+                                                                    );
     }
   } );
 
@@ -685,32 +685,33 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-    
+
     arrayView2d< real64 const > const dispJump           = subRegion.getField< fields::contact::dispJump >();
     arrayView2d< real64 const > const fractureTraction   = subRegion.getField< fields::contact::traction >();
-    
-    if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ParallelPlatesPermeability >)  {
-        updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
-      }
-      else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::SlipDependentPermeability > || 
-        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::WillisRichardsPermeability > || 
-        std::is_same_v< typename TYPEOFREF( castedPorousSolid )::PermType, constitutive::ExponentialDecayPermeability > ) 
-      {
-        /*dHydraulicAperture_dNormalJump dummy entry*/
-        arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
-        updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction(porousWrapper, 
-          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv, 
-          dispJump, fractureTraction);
-      }
-      else {
-        GEOS_ERROR( GEOS_FMT("{} permeability model is not yet supported. {}, {}, {} and {} are supported.", 
-                    TYPEOFREF(castedPorousSolid)::PermType::catalogName(),
-                    constitutive::ParallelPlatesPermeability::catalogName(), 
-                    constitutive::SlipDependentPermeability::catalogName(), 
-                    constitutive::WillisRichardsPermeability::catalogName(), 
-                    constitutive::ExponentialDecayPermeability::catalogName()
-                  ), getDataContext()  );
-      }
+
+    if constexpr (std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ParallelPlatesPermeability >)  {
+      updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
+    }
+    else if constexpr ( std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::SlipDependentPermeability > ||
+                        std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::WillisRichardsPermeability > ||
+                        std::is_same_v< typename TYPEOFREF( castedPorousSolid ) ::PermType, constitutive::ExponentialDecayPermeability > )
+    {
+      /*dHydraulicAperture_dNormalJump dummy entry*/
+      arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
+      updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( porousWrapper,
+                                                                       subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
+                                                                       dispJump, fractureTraction );
+    }
+    else
+    {
+      GEOS_ERROR( GEOS_FMT( "{} permeability model is not yet supported. {}, {}, {} and {} are supported.",
+                            TYPEOFREF( castedPorousSolid ) ::PermType::catalogName(),
+                            constitutive::ParallelPlatesPermeability::catalogName(),
+                            constitutive::SlipDependentPermeability::catalogName(),
+                            constitutive::WillisRichardsPermeability::catalogName(),
+                            constitutive::ExponentialDecayPermeability::catalogName()
+                            ), getDataContext()  );
+    }
 
   } );
 }

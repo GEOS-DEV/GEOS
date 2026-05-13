@@ -807,43 +807,43 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
     //fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     //{
 
-      ElementRegionManager & elemManager = mesh.getElemManager();
-      SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
-      FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-  
-      arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
-      arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
-      arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
+    FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-      arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
+    arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+    arrayView2d< real64 > const oldDispJump = subRegion.getField< contact::oldDispJump >();
+    arrayView2d< real64 > const deltaDispJump  = subRegion.getField< contact::deltaDispJump >();
 
-      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
-      arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
+    arrayView2d< real64 > const traction  = subRegion.getField< contact::traction >();
 
-      arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
-      arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
+    arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const oldFractureState = subRegion.getField< contact::oldFractureState >();
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [ = ]
-                                        GEOS_DEVICE ( localIndex const kfe )
-      {
-	// Compute the slip
-	real64 const shearDisp[2] = { dispJump[kfe][1],
-					    dispJump[kfe][2] };
-        slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( shearDisp );
+    arrayView1d< real64 > const slip = subRegion.getField< contact::slip >();
+    arrayView1d< real64 > const tangentialTraction  = subRegion.getField< contact::tangentialTraction >();
 
-        // Compute current Tau and limit Tau
-        real64 const tau[2] = { traction[kfe][1],
-                                traction[kfe][2] };
-        tangentialTraction[kfe] = LvArray::tensorOps::l2Norm< 2 >( tau );
+    forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                      [ = ]
+                                      GEOS_DEVICE ( localIndex const kfe )
+    {
+      // Compute the slip
+      real64 const shearDisp[2] = { dispJump[kfe][1],
+                                    dispJump[kfe][2] };
+      slip[kfe] = LvArray::tensorOps::l2Norm< 2 >( shearDisp );
 
-        LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
-        LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
-        oldFractureState[kfe] = fractureState[kfe];
+      // Compute current Tau and limit Tau
+      real64 const tau[2] = { traction[kfe][1],
+                              traction[kfe][2] };
+      tangentialTraction[kfe] = LvArray::tensorOps::l2Norm< 2 >( tau );
 
-      } );
+      LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+      LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+      oldFractureState[kfe] = fractureState[kfe];
+
     } );
- // } );
+  } );
+  // } );
 
 }
 
