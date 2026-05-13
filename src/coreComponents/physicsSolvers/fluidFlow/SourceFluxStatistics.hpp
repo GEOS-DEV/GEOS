@@ -113,6 +113,14 @@ public:
     void finalizePeriod();
 
     /**
+     * @brief Aggregate the statistics of the instance with those of another one.
+     * @details Combines the statistics from the other object into this one and also advances the period
+     * start if the other object has a later time recorded.
+     * @param other the other WrappedStats object.
+     */
+    void combine( WrappedStats const & other );
+
+    /**
      * @return the reference to the wrapped stats data collected over the last period (one timestep or more), computed by finalizePeriod()
      */
     StatData & stats()
@@ -151,7 +159,7 @@ private:
     /// stats data collected over the last period (one timestep or more), computed by finalizePeriod()
     StatData m_stats;
     /// the start time of the wrapped stats period (in s)
-    real64 m_statsPeriodStart;
+    real64 m_statsPeriodStart{-LvArray::NumericLimits< real64 >::max};
     /// the duration of the wrapped stats period (in s)
     real64 m_statsPeriodDT;
 
@@ -169,7 +177,7 @@ private:
       /// time that the current timestep is simulating.
       real64 m_timeStepDeltaTime = 0.0;
       /// start time of the current period.
-      real64 m_periodStart = 0.0;
+      real64 m_periodStart = -LvArray::NumericLimits< real64 >::max;
       /// delta time from all previous time-step of the current period.
       real64 m_periodPendingDeltaTime = 0.0;
       /// number of cell elements targeted by this instance

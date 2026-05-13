@@ -231,7 +231,7 @@ void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
   }
 }
 
-bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
+bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM ( time_n ),
                                          real64 const GEOS_UNUSED_PARAM( dt ),
                                          integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                          integer const GEOS_UNUSED_PARAM( eventCounter ),
@@ -264,16 +264,16 @@ bool SourceFluxStatsAggregator::execute( real64 const GEOS_UNUSED_PARAM( time_n 
         {
           subRegionStats.stats().reset();
           subRegionStats.finalizePeriod();
-          regionStats.stats().combine( subRegionStats.stats() );
+          regionStats.combine( subRegionStats );
         } );
-        fluxStats.stats().combine( regionStats.stats() );
+        fluxStats.combine( regionStats );
 
         gatherStatsForLog( regionsStatsOn,
                            fluxStats.getFluxName(), region.getName(), logData, regionStats );
         gatherStatsForCSV( fluxStats.getFluxName(), region.getName(), csvData, regionStats );
       } );
 
-      meshLevelStats.stats().combine( fluxStats.stats() );
+      meshLevelStats.combine( fluxStats );
 
       gatherStatsForLog( fluxesStatsOn,
                          fluxStats.getFluxName(), allRegionsStr, logData, fluxStats );
@@ -379,7 +379,7 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 
   // produce the period stats of this rank
   m_stats.m_elementCount = m_periodStats.m_elementCount;
-  m_statsPeriodStart = m_periodStats.m_periodStart;
+  m_statsPeriodStart = MpiWrapper::max( m_periodStats.m_periodStart );
   m_statsPeriodDT = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
 
   real64 const timeDivisor = m_statsPeriodDT > 0.0 ? 1.0 / m_statsPeriodDT : 0.0;
@@ -395,6 +395,11 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 
   // start a new timestep
   m_periodStats.reset();
+}
+void SourceFluxStatsAggregator::WrappedStats::combine( WrappedStats const & other )
+{
+  stats().combine( other.stats() );
+  m_statsPeriodStart = LvArray::math::max( m_statsPeriodStart, other.m_statsPeriodStart );
 }
 void SourceFluxStatsAggregator::WrappedStats::PeriodStats::allocate( integer phaseCount )
 {
