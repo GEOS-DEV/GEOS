@@ -732,10 +732,10 @@ public:
    * @note @p minValue and @p maxValue are std::optional(s).
    *       Set them to std::nullopt to disable a limit.
    *
-   * @code 
+   * @code
    * registerWrapper( viewKeysStruct::fooString(), &m_foo )
    *   .setLimits( 0.0, std::nullopt )  // sets a minimum value of 0.0 and no maximum value
-   * @endcode 
+   * @endcode
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
@@ -1162,7 +1162,7 @@ private:
   validateLimits()
   {
     if( (!m_limits.minValue.has_value() && !m_limits.maxValue.has_value()) ||
-         m_limitsMode == LimitsMode::Indicative )
+        m_limitsMode == LimitsMode::Indicative )
     {
       return;
     }
@@ -1175,9 +1175,8 @@ private:
       return;
     }
 
-    // TODO: show the allowed range in the message
-    string const msg = GEOS_FMT( "Attribute '{}' has value '{}' outside of the allowed range.",
-                                 getName(), value );
+    string const msg = GEOS_FMT( "Value {} for attribute '{}' is outside the allowed range.",
+                                 value, getName() );
 
     switch( m_limitsMode )
     {
@@ -1188,7 +1187,7 @@ private:
       case LimitsMode::Error:
         GEOS_THROW( msg, InputError );
         break;
-      
+
       default:
         GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
         break;
