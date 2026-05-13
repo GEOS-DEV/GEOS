@@ -368,27 +368,16 @@ void HyperelasticMMSUpdates::hyperUpdate( localIndex const k,
   real64 lambda = m_lambda[k];
   real64 G = m_shearModulus[k];
 
-  real64 F[3][3];
+  real64 F[3][3] = {};
   LvArray::tensorOps::copy< 3, 3 >( F, FminusI );
-  F[0][0] += 1;
-  F[1][1] += 1;
-  F[2][2] += 1;
+  LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
 
-  real64 C[3][3] = {{0}};
-  for( int i = 0; i < 3; i++ )
-  {
-    for( int j = 0; j < 3; j++ )
-    {
-      for( int kk = 0; kk < 3; kk++ )
-      {
-        C[i][j] += F[i][kk] * F[j][kk];
-      }
-    }
-  }
+  real64 Fcopy[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( Fcopy, F );
+  real64 C[3][3] = {};
+  LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( C, F, Fcopy );
 
-  real64 J = F[0][0] * ( F[1][1] * F[2][2] - F[1][2] * F[2][1] ) -
-             F[0][1] * ( F[1][0] * F[2][2] - F[1][2] * F[2][0] ) +
-             F[0][2] * ( F[1][0] * F[2][1] - F[1][1] * F[2][0] );
+  real64 J = LvArray::tensorOps::determinant< 3 >( F );
 
   real64 const x1 = lambda * LvArray::math::log( J ) / J;
   real64 const x2 = G / J;
@@ -401,7 +390,7 @@ void HyperelasticMMSUpdates::hyperUpdate( localIndex const k,
   stress[4] = x2 * C[0][2];
   stress[5] = x2 * C[0][1];
 
-  m_wavespeed[k][0] = LvArray::math::sqrt( (conversions::lameConstants::toBulkMod( m_lambda[k], m_shearModulus[k] ) + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
+  m_wavespeed[k][0] = LvArray::math::sqrt( (conversions::lameConstants::toBulkMod( lambda, G ) + (4.0/3.0) * G ) / m_density[k][0] );
 }
 
 // CC: hyperelastic update for model

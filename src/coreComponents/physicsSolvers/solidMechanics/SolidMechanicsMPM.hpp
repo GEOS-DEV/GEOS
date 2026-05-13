@@ -393,7 +393,8 @@ public:
 
   void logMomentumSum( std::string label, // For tagging code location of output
                          ParticleManager & particleManager,
-                         NodeManager & nodeManager );
+                         NodeManager & nodeManager,
+                        bool plotLocalSums );
                                        
 
   void applySuperimposedVelocityGradient( const real64 dt,

@@ -368,32 +368,20 @@ void HyperelasticUpdates::hyperUpdate( localIndex const k,
   real64 K = m_bulkModulus[k];
   real64 G = m_shearModulus[k];
 
-  real64 F[3][3];
+  real64 F[3][3] = {};
   LvArray::tensorOps::copy< 3, 3 >( F, FminusI );
-  F[0][0] += 1;
-  F[1][1] += 1;
-  F[2][2] += 1;
+  LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
 
-  real64 C[3][3] = { { 0.0 } };
-  for( int i = 0; i < 3; i++ )
-  {
-    for( int j = 0; j < 3; j++ )
-    {
-      for( int kk = 0; kk < 3; kk++ )
-      {
-        C[i][j] += F[i][kk] * F[j][kk];
-      }
-    }
-  }
+  real64 Fcopy[3][3] = {};
+  LvArray::tensorOps::copy< 3, 3 >( Fcopy, F );
+  real64 C[3][3] = {};
+  LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 3 >( C, F, Fcopy );
 
   real64 trFtF = LvArray::tensorOps::trace< 3 >( C );
+  real64 J = LvArray::tensorOps::determinant< 3 >( F );
 
-  real64 J = F[0][0] * ( F[1][1] * F[2][2] - F[1][2] * F[2][1] ) -
-             F[0][1] * ( F[1][0] * F[2][2] - F[1][2] * F[2][0] ) +
-             F[0][2] * ( F[1][0] * F[2][1] - F[1][1] * F[2][0] );
-
-  real64 const x1 = G / std::pow( J, 5/3 );
-  real64 const x2 = K * ( J-1 ) - G / std::pow( J, 5/3 ) * trFtF / 3.0;
+  real64 const x1 = G / LvArray::math::pow( J, 5/3 );
+  real64 const x2 = K * ( J-1 ) - G / LvArray::math::pow( J, 5/3 ) * trFtF / 3.0;
 
   stress[0] = x1 * C[0][0] + x2;
   stress[1] = x1 * C[1][1] + x2;

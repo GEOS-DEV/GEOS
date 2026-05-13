@@ -32,36 +32,36 @@ Hyperelastic::Hyperelastic( string const & name, Group * const parent ):
   m_shearModulus()
 {
   registerWrapper< real64 >( viewKeyStruct::defaultLambdaString() ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default First Lame Parameter" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultYoungModulusString() ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Young's Modulus" );
 
   registerWrapper< real64 >( viewKeyStruct::defaultPoissonRatioString() ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default bulk modulus" );
 
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default shear modulus" );
 
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Elastic Bulk Modulus Field" );
 
   registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setApplyDefaultValue( -1 ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Elastic Shear Modulus Field" );
 }
 
