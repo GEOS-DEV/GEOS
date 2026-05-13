@@ -710,13 +710,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
     }
     else
     {
-      GEOS_ERROR( GEOS_FMT( "{} permeability model is not yet supported. {}, {}, {} and {} are supported.",
-                            TYPEOFREF( castedPorousSolid ) ::PermType::catalogName(),
-                            constitutive::ParallelPlatesPermeability::catalogName(),
-                            constitutive::SlipDependentPermeability::catalogName(),
-                            constitutive::WillisRichardsPermeability::catalogName(),
-                            constitutive::ExponentialDecayPermeability::catalogName()
-                            ), getDataContext()  );
+      updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
     }
 
   } );
