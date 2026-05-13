@@ -30,7 +30,7 @@ CommandLineOptions g_commandLineOptions;
  * 2. s_xx (real64): Applied stress component XX.
  * 3. s_yy (real64): Applied stress component YY.
  * 4. s_zz (real64): Applied stress component ZZ.
- * 5. Partitioning (tuple<int, int, int>): Number of partitions in x, y, z directions.
+ * 5. Partitioning int: Number of partitions 4.
  *
  * The test cases cover a subset of meshes with various partitioning schemes for 4 ranks.
  */
@@ -70,10 +70,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
-    ::testing::Values(
-      std::make_tuple( 2, 2, 1 ),
-      std::make_tuple( 4, 1, 1 )
-      )
+    ::testing::Values(4)
     )
   );
 

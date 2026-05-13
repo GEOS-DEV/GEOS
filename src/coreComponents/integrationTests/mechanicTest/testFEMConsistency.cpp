@@ -23,7 +23,7 @@
 CommandLineOptions g_commandLineOptions;
 
 /**
- * @brief Serial execution test cases (single rank, partition 1x1x1).
+ * @brief Serial execution test cases (single rank, partition number 1).
  */
 INSTANTIATE_TEST_SUITE_P(
   FractureStressCasesSerial,
@@ -61,9 +61,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
-    ::testing::Values(
-      std::make_tuple( 1, 1, 1 )
-      )
+    ::testing::Values(1)
     )
   );
 
