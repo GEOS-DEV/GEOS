@@ -60,10 +60,10 @@ extern CommandLineOptions g_commandLineOptions;
  *
  * Parametrized with std::tuple<std::string, std::tuple<int,int,int>>:
  *  - std::string:                Mesh file name (e.g. "fractured_mesh_hex_DFN_1.vtu")
- *  - tuple<int, int, int>:       Number of MPI partitions in x, y, z directions
+ *  - int:       Number of MPI partitions
  */
 class MixedDimHydrostaticEquilibriumTest
-  : public ::testing::TestWithParam< std::tuple< std::string, std::tuple< int, int, int > > >
+  : public ::testing::TestWithParam< std::tuple< std::string, int > >
 {
 protected:
   void SetUp() override
@@ -240,10 +240,7 @@ protected:
 TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
-  std::tuple< int, int, int > const & partitions = std::get< 1 >( GetParam() );
-  int const xPartitions = std::get< 0 >( partitions );
-  int const yPartitions = std::get< 1 >( partitions );
-  int const zPartitions = std::get< 2 >( partitions );
+  int const n_partitions = std::get< 1 >( GetParam() );
 
   std::string nodeSetNames = "{ f1_node_set }";
   if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
@@ -292,10 +289,7 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
   std::string::size_type const extPos = baseName.rfind( ".vtu" );
   if( extPos != std::string::npos )
     baseName.erase( extPos );
-  std::string const xmlName = "test_hydrostatic_" + baseName
-                              + "_" + std::to_string( xPartitions )
-                              + "x" + std::to_string( yPartitions )
-                              + "x" + std::to_string( zPartitions );
+  std::string const xmlName = "test_hydrostatic_" + baseName + "_" + std::to_string( n_partitions );
   std::string const xmlPath = testBinaryDir + "/" + xmlName + ".xml";
   // Only rank 0 writes the XML file; all ranks then barrier before reading it.
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
@@ -309,9 +303,9 @@ TEST_P( MixedDimHydrostaticEquilibriumTest, Run )
     auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
     options->inputFileNames.push_back( xmlPath );
     options->problemName = xmlName;
-    options->xPartitionsOverride = xPartitions;
-    options->yPartitionsOverride = yPartitions;
-    options->zPartitionsOverride = zPartitions;
+    options->xPartitionsOverride = n_partitions;
+    options->yPartitionsOverride = 0;
+    options->zPartitionsOverride = 0;
     options->overridePartitionNumbers = true;
 
     GeosxState state( std::move( options ) );

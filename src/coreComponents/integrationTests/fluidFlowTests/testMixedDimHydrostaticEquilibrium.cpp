@@ -45,9 +45,7 @@ INSTANTIATE_TEST_SUITE_P(
       "DFN_5_fractures_hex_binarized.vtu",
       "DFN_5_fractures_tet_binarized.vtu"
       ),
-    ::testing::Values(
-      std::make_tuple( 1, 1, 1 )
-      )
+    ::testing::Values(1)
     )
   );
 
