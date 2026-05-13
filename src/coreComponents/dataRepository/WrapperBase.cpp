@@ -39,6 +39,7 @@ WrapperBase::WrapperBase( string const & name,
   m_inputFlag( InputFlags::INVALID ),
   m_successfulReadFromInput( false ),
   m_description(),
+  m_limitsMode( LimitsMode::Indicative ),
   m_rtTypeName( rtTypeName ),
   m_registeringObjects(),
   m_conduitNode( parent.getConduitNode()[ name ] ),
@@ -61,6 +62,7 @@ void WrapperBase::copyWrapperAttributes( WrapperBase const & source )
   m_plotLevel  = source.m_plotLevel;
   m_inputFlag = source.m_inputFlag;
   m_description = source.m_description;
+  m_limitsMode = source.m_limitsMode;
   m_rtTypeName = source.m_rtTypeName;
 }
 

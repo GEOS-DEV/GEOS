@@ -17,6 +17,8 @@
 #ifndef GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
 #define GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
 
+#include "common/DataTypes.hpp"
+#include "common/format/EnumStrings.hpp"
 #include <optional>
 #include <type_traits>
 
@@ -25,6 +27,26 @@ namespace geos
 
 namespace dataRepository
 {
+
+/**
+ * @enum LimitsMode
+ * @brief Enforcement mode associated with the limits of an attribute
+ *
+ * - Indicative: the limits are documentation only, no runtime check is performed.
+ * - Warning:    a value outside the limits emits a runtime warning.
+ * - Error:      a value outside the limits throws.
+ */
+enum class LimitsMode : integer
+{
+  Indicative,
+  Warning,
+  Error
+};
+
+ENUM_STRINGS( LimitsMode,
+              "Indicative",
+              "Warning",
+              "Error" );
 
 /**
  * @struct is_limitable

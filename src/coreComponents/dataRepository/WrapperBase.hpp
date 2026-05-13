@@ -21,6 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/Span.hpp"
+#include "dataRepository/AttributeLimits.hpp"
 #include "InputFlags.hpp"
 #include "xmlWrapper.hpp"
 #include "RestartFlags.hpp"
@@ -530,6 +531,15 @@ public:
   }
 
   /**
+   * @brief Get the enforcement mode of the (optional) attribute limits
+   * @return the LimitsMode of the wrapper
+   */
+  LimitsMode getLimitsMode() const
+  {
+    return m_limitsMode;
+  }
+
+  /**
    * @brief Get the list of names of groups that registered this wrapper.
    * @return vector of object names
    */
@@ -698,6 +708,9 @@ protected:
 
   /// A string description of the wrapped object
   string m_description;
+
+  /// Enforcement mode of the (optional) attribute limits
+  LimitsMode m_limitsMode;
 
   /// A string regex to validate the input values string to parse for the wrapped object
   string m_rtTypeName;
