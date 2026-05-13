@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4055 (2026-05-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4055-16586-34c9812.tar.gz>
+Trim some fluid model tests
+
 PR #4029 (2026-05-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4029-16507-7e3d8b5.tar.gz>
 Add single phase viscosity dependency on temperature
 
