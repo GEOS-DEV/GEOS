@@ -33,7 +33,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values(1)
+    ::testing::Values( 1 )
     )
   );
 
