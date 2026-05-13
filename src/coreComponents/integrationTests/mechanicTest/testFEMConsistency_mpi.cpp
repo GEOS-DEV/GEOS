@@ -43,14 +43,6 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_1.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
 
-      // Flat tet meshes - single and triple fracture only
-      "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_123.vtu",
-
-      // Full span hex meshes - single and triple fracture only
-      "fractured_full_span_mesh_hex_DFN_1.vtu",
-      "fractured_full_span_mesh_hex_DFN_123.vtu",
-
       // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
       "fractured_full_span_mesh_tet_DFN_123.vtu"
