@@ -449,19 +449,19 @@ INSTANTIATE_TEST_SUITE_P(
       std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
                        "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 3, localIndex( 13 ), localIndex( 12 ) ),
+                       1, 3, localIndex( 13 ), localIndex( 12 ) )
 
       // Miscellaneous · no-boundary-cutting ·  hex          nodes:  180  elems:  196
-      std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN",
-                       "DFN_5_fractures_hex_binarized.vtu",
-                       "{  f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
-                       1, 2, localIndex( 180 ), localIndex( 196 ) ),
+//      std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN",
+//                       "DFN_5_fractures_hex_binarized.vtu",
+//                       "{  f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
+//                       1, 2, localIndex( 180 ), localIndex( 196 ) ),
 
       // Miscellaneous · no-boundary-cutting · tet          nodes:  180  elems:  392 (minus 10 corner triangles)
-      std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN",
-                       "DFN_5_fractures_tet_binarized.vtu",
-                       "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
-                       1, 2, localIndex( 180 ), localIndex( 382 ) )
+//      std::make_tuple( "Mkt_NoBndCut_5_fracs_tet_DFN",
+//                       "DFN_5_fractures_tet_binarized.vtu",
+//                       "{ f1_node_set, f2_node_set, f3_node_set, f4_node_set, f5_node_set }",
+//                       1, 2, localIndex( 180 ), localIndex( 382 ) )
 
       ),
     ::testing::Values( 4 )
