@@ -288,30 +288,19 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
   localIndex ownedE = 0;
   for( EdgeKey const & e : allEdges )
   {
-    if( nodeIsOwned( e.first ) && nodeIsOwned( e.second ) )
+    // e.first is the minimum global node ID for the edge because makeEdge() sorted the pair
+    if( nodeIsOwned( e.first ) )
     {
       ++ownedE;
     }
   }
 
-  // --- Strict Face Ownership ---
   localIndex ownedF = 0;
   for( FaceKey const & f : allFaces )
   {
-    bool allNodesOwned = true;
-    for( globalIndex gid : f )
-    {
-      if( !nodeIsOwned( gid ) )
-      {
-        allNodesOwned = false;
-        break;
-      }
-    }
-
-    if( allNodesOwned )
-    {
+    // f ([0] is the minimum global node ID for the face because makeFace() sorts the node list
+    if( nodeIsOwned( f[0] ) )
       ++ownedF;
-    }
   }
 
   // --- MPI reduce --------------------------------------------------------

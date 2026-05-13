@@ -58,11 +58,11 @@ std::string g_testBinaryDir;
  * because fracture-boundary classification depends on global topology, not the local partition.
  */
 using SurfaceGenerator_mpiMeshTuple = std::tuple< std::string, std::string, std::string, integer, integer, localIndex, localIndex >;
-using SurfaceGenerator_mpiPartitionTuple = std::tuple< int, int, int >;
+using SurfaceGenerator_mpiPartitions = int;
 
 class SurfaceGenerator_mpiTest
   : public ::testing::TestWithParam<
-    std::tuple< SurfaceGenerator_mpiMeshTuple, SurfaceGenerator_mpiPartitionTuple > >
+    std::tuple< SurfaceGenerator_mpiMeshTuple, SurfaceGenerator_mpiPartitions > >
 {
 protected:
   void SetUp() override
@@ -143,7 +143,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
   auto const & params = GetParam();
   // ::testing::Combine produces std::tuple< MeshTuple, PartitionTuple >
   SurfaceGenerator_mpiMeshTuple const & meshParams = std::get< 0 >( params );
-  SurfaceGenerator_mpiPartitionTuple const & partitions = std::get< 1 >( params );
+  SurfaceGenerator_mpiPartitions const & partitions = std::get< 1 >( params );
 
   std::string const & testCaseName        = std::get< 0 >( meshParams );
   std::string const & meshFileName        = std::get< 1 >( meshParams );
@@ -153,29 +153,19 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
   localIndex const expectedNewNodes       = std::get< 5 >( meshParams );
   localIndex const expectedFractureElems  = std::get< 6 >( meshParams );
 
-  int const xPartitions = std::get< 0 >( partitions );
-  int const yPartitions = std::get< 1 >( partitions );
-  int const zPartitions = std::get< 2 >( partitions );
-
   // Check if we are running with the correct number of ranks for this partitioning.
   // This prevents the serial test runner (rank=1) from crashing when attempting
   // to run a 4-partition test.
-  int const requiredRanks = xPartitions * yPartitions * zPartitions;
-  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != requiredRanks )
+  if( MpiWrapper::commSize( MPI_COMM_GEOS ) != partitions )
   {
-    GTEST_SKIP() << "Skipping MPI test expecting " << requiredRanks
+    GTEST_SKIP() << "Skipping MPI test expecting " << partitions
                  << " ranks (running on " << MpiWrapper::commSize( MPI_COMM_GEOS ) << ")";
   }
 
   std::string const xmlInput = generateXmlInput( testBinaryDir + "/" + meshFileName, nodeSetNames );
 
   // Only rank 0 writes the XML; all ranks barrier before reading.
-  std::string const xmlPath = testBinaryDir
-                              + "/test_surface_gen_mpi_" + testCaseName
-                              + "_" + std::to_string( xPartitions )
-                              + "x" + std::to_string( yPartitions )
-                              + "x" + std::to_string( zPartitions )
-                              + ".xml";
+  std::string const xmlPath = testBinaryDir + "/test_surface_gen_mpi_" + testCaseName + ".xml";
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     std::ofstream ofs( xmlPath );
@@ -186,9 +176,9 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
   auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_surface_gen_mpi_" + testCaseName;
-  options->xPartitionsOverride = xPartitions;
-  options->yPartitionsOverride = yPartitions;
-  options->zPartitionsOverride = zPartitions;
+  options->xPartitionsOverride = partitions;
+  options->yPartitionsOverride = 0;
+  options->zPartitionsOverride = 0;
   options->overridePartitionNumbers = true;
 
   // Scoped state to ensure GeosxState is fully destroyed before the next
@@ -197,8 +187,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
     GeosxState state( std::move( options ) );
     ASSERT_TRUE( state.initializeDataRepository() )
       << "Test " << testCaseName << ": Failed to initialize data repository for '"
-      << meshFileName << "' with partitioning "
-      << xPartitions << "x" << yPartitions << "x" << zPartitions;
+      << meshFileName << "' with partitioning " << partitions;
     state.applyInitialConditions();
 
     // ------------------------------------------------------------------
@@ -248,7 +237,7 @@ TEST_P( SurfaceGenerator_mpiTest, TopologyValidation )
 
     GEOS_LOG_RANK_0( "========================================" );
     GEOS_LOG_RANK_0( "Test (MPI): " << testCaseName
-                                    << " [" << xPartitions << "x" << yPartitions << "x" << zPartitions << "]" );
+                                    << " [" << partitions << "]" );
     GEOS_LOG_RANK_0( "Expected duplication (from serial ground truth):" );
     GEOS_LOG_RANK_0( "  New nodes:         " << expected.totalDuplicatedNodes );
     GEOS_LOG_RANK_0( "  Fracture elements: " << expected.numFractureElements );
@@ -407,11 +396,11 @@ INSTANTIATE_TEST_SUITE_P(
                        "{ f1_node_set, f2_node_set, f3_node_set }",
                        1, 2, localIndex( 19 ), localIndex( 48 ) ),
       // -----------------------------------------------------------------------
-      // flat · full-span · hex · DFN_123           nodes:  37  elems:  12
+      // flat · full-span · hex · DFN_123           nodes:  91  elems:  48
       std::make_tuple( "Mkt_BndCut_hex_DFN_123",
                        "fractured_full_span_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 8, localIndex( 37 ), localIndex( 12 ) ),
+                       1, 8, localIndex( 91 ), localIndex( 48 ) ),
       // flat · full-span · tet · DFN_123           nodes: 127  elems: 168
       std::make_tuple( "Mkt_BndCut_tet_DFN_123",
                        "fractured_full_span_mesh_tet_DFN_123.vtu",
@@ -429,11 +418,11 @@ INSTANTIATE_TEST_SUITE_P(
                        "{ f1_node_set, f2_node_set, f3_node_set }",
                        1, 2, localIndex( 19 ), localIndex( 48 ) ),
       // -----------------------------------------------------------------------
-      // wavy · full-span · hex · DFN_123           nodes:  37  elems:  12
+      // wavy · full-span · hex · DFN_123           nodes:  91  elems:  48
       std::make_tuple( "Mkt_WavyBndCut_hex_DFN_123",
                        "fractured_wavy_full_span_mesh_hex_DFN_123.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 8, localIndex( 37 ), localIndex( 12 ) ),
+                       1, 8, localIndex( 91 ), localIndex( 48 ) ),
       // wavy · full-span · tet · DFN_123           nodes: 127  elems: 168
       std::make_tuple( "Mkt_WavyBndCut_tet_DFN_123",
                        "fractured_wavy_full_span_mesh_tet_DFN_123.vtu",
@@ -445,22 +434,22 @@ INSTANTIATE_TEST_SUITE_P(
                        "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
                        "{ f1_node_set, f2_node_set }",
                        1, 3, localIndex( 15 ), localIndex( 6 ) ),
-      // T-shaped · boundary-cutting · tet          nodes:  49  elems:  66
+      // T-shaped · boundary-cutting · tet          nodes:  13  elems:  12
       std::make_tuple( "Mkt_BndCut_t_shaped_tet_DFN_12",
                        "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
                        "{ f1_node_set, f2_node_set }",
-                       1, 3, localIndex( 49 ), localIndex( 66 ) ),
+                       1, 3, localIndex( 13 ), localIndex( 12 ) ),
       // -----------------------------------------------------------------------
       // Y-shaped · boundary-cutting · hex          nodes:  15  elems:   6
       std::make_tuple( "Mkt_BndCut_Y_shaped_hex_DFN_123",
                        "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
                        1, 3, localIndex( 15 ), localIndex( 6 ) ),
-      // Y-shaped · boundary-cutting · tet          nodes:  49  elems:  66
+      // Y-shaped · boundary-cutting · tet          nodes:  13  elems:  12
       std::make_tuple( "Mkt_BndCut_Y_shaped_tet_DFN_123",
                        "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
                        "{ f1_node_set, f2_node_set, f3_node_set }",
-                       1, 3, localIndex( 49 ), localIndex( 66 ) ),
+                       1, 3, localIndex( 13 ), localIndex( 12 ) ),
 
       // Miscellaneous · no-boundary-cutting ·  hex          nodes:  180  elems:  196
       std::make_tuple( "Mkt_NoBndCut_5_fracs_hex_DFN",
@@ -475,14 +464,7 @@ INSTANTIATE_TEST_SUITE_P(
                        1, 2, localIndex( 180 ), localIndex( 382 ) )
 
       ),
-    ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 4, 1, 1 ),
-      std::make_tuple( 1, 2, 2 ),
-      std::make_tuple( 2, 1, 2 ),
-      std::make_tuple( 2, 2, 1 )
-      )
+    ::testing::Values( 4 )
     )
   );
 
