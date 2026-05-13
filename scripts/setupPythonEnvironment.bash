@@ -131,11 +131,12 @@ do
         echo "  $p"
 
         # Try installing the package
-        if $VERBOSE
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p)
-            INSTALL_RC=$?
+        if [[ "${VERBOSE}" == true ]]
         then
-            INSTALL_MSG=$($PYTHON_TARGET -m $PIP_CMD install --upgrade $PACKAGE_DIR/$p 2>&1)
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m ${PIP_CMD} install --upgrade "${PACKAGE_DIR}/${p}")
+            INSTALL_RC=$?
+        else
+            INSTALL_MSG=$("${PYTHON_TARGET}" -m ${PIP_CMD} install --upgrade "${PACKAGE_DIR}/${p}" 2>&1)
             INSTALL_RC=$?
         fi
 
@@ -237,4 +238,3 @@ fi
 
 
 echo "Done!"
-
