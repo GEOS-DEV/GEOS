@@ -55,6 +55,11 @@ Required fields (all of them, always):
   the prefix before the first `-`, so a runner label like `streak2-32core` will reuse the
   `streak2` entry. Use `{}` for runners that do not need an LLNL-style outbound cert bundle.
 
+- `runner_cuda_architectures`
+  Map keyed by runner label, not by workflow role. Each value is forwarded to CMake as
+  `CMAKE_CUDA_ARCHITECTURES` for CUDA jobs on that runner. The same exact-match then prefix
+  fallback used by `runner_ca_bundle_host_paths` applies. Example: `{"streak2": "86"}`.
+
 - `runners`
   Map from runner role to runner label. Required roles:
   - `default`
