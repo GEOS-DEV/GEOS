@@ -170,5 +170,36 @@
       "NFACES": [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 ]
     },
     "explicit": []
+  },
+
+  "CompositionalMultiphaseBase_FluidUpdateKernel" : {
+    "vars": [
+      "POLICY_TYPE", "FLUID_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "POLICY_TYPE": [
+        "geos::parallelDevicePolicy<>",
+        "geos::serialPolicy"
+      ],
+      "FLUID_TYPE": [
+        "constitutive::BlackOilFluid",
+        "constitutive::CO2BrinePhillipsFluid",
+        "constitutive::CO2BrineEzrokhiFluid",
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
+      ]
+    },
+    "explicit": [
+      "geos::serialPolicy#constitutive::CompositionalMultiphaseFluidPVTPackage"
+    ]
   }
 }

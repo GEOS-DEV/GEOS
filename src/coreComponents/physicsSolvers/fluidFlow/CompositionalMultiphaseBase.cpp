@@ -719,14 +719,12 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
     using FluidType = TYPEOFREF( castedFluid );
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( dataGroup.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< ExecPolicy, FluidType >;
+    KernelType::launch( dataGroup.size(),
+                        fluidWrapper,
+                        pres,
+                        temp,
+                        compFrac );
   } );
 }
 
@@ -2177,14 +2175,12 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         using FluidType = TYPEOFREF( castedFluid );
         using ExecPolicy = typename FluidType::exec_policy;
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-        thermalCompositionalMultiphaseBaseKernels::
-          FluidUpdateKernel::
-          launch< ExecPolicy >( targetSet,
-                                fluidWrapper,
-                                bcPres,
-                                bcTemp,
-                                compFrac );
+        using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< ExecPolicy, FluidType >;
+        KernelType::launch( targetSet,
+                            fluidWrapper,
+                            bcPres,
+                            bcTemp,
+                            compFrac );
       } );
 
       arrayView1d< integer const > const ghostRank =

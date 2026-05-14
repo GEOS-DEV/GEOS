@@ -934,13 +934,12 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
     using FluidType = TYPEOFREF( castedFluid );
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    thermalCompositionalMultiphaseBaseKernels::
-      FluidUpdateKernel::
-      launch< ExecPolicy >( subRegion.size(),
-                            fluidWrapper,
-                            pres,
-                            temp,
-                            compFrac );
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< ExecPolicy, FluidType >;
+    KernelType::launch( subRegion.size(),
+                        fluidWrapper,
+                        pres,
+                        temp,
+                        compFrac );
   } );
 
 }
@@ -1128,15 +1127,14 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
         // 4) Back calculate component densities
         constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
         {
-          typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-          thermalCompositionalMultiphaseBaseKernels::
-            FluidUpdateKernel::
-            launch< serialPolicy >( subRegion.size(),
-                                    fluidWrapper,
-                                    wellElemPressure,
-                                    wellElemTemp,
-                                    wellElemCompFrac );
+          using FluidType = TYPEOFREF( castedFluid );
+          typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+          using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< serialPolicy, FluidType >;
+          KernelType::launch( subRegion.size(),
+                              fluidWrapper,
+                              wellElemPressure,
+                              wellElemTemp,
+                              wellElemCompFrac );
         } );
 
         compositionalMultiphaseWellKernels::

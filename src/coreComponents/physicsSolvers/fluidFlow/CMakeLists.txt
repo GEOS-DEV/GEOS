@@ -92,7 +92,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/DirichletFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
-     kernels/compositional/FluidUpdateKernel.hpp
+     kernels/compositional/FluidUpdateKernel_impl.hpp
      kernels/compositional/FluxComputeKernel.hpp
      kernels/compositional/FluxComputeKernelBase.hpp
      kernels/compositional/GlobalComponentFractionKernel.hpp
@@ -178,6 +178,7 @@ set( kernelTemplateFileList "" )
 # Keep only the templates that are unrelated to hybrid flux/dirichlet
 list( APPEND kernelTemplateFileList
       ReactiveCompositionalMultiphaseOBLKernels.cpp.template
+      CompositionalMultiphaseBase_FluidUpdateKernel.cpp.template
       CompositionalMultiphaseHybridFVMKernels_flux_grouped.cpp.template
       CompositionalMultiphaseHybridFVMKernels_dirichlet_grouped.cpp.template
       CompositionalMultiphaseHybridFVMKernels_bcprops.cpp.template
