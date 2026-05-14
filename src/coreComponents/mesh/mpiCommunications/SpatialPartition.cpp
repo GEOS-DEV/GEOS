@@ -28,6 +28,13 @@
 
 #include <cmath>
 #include <string>
+#include <array>
+#include <cstring>
+#include <functional>
+#include <limits>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace geos
 {
@@ -54,6 +61,248 @@ real64 Mod( real64 num, real64 denom )
 real64 MapValueToRange( real64 value, real64 min, real64 max )
 {
   return Mod( value-min, max-min )+min;
+}
+
+/**
+ * @brief Compact metadata record used during MPM ghost particle discovery.
+ *
+ * The receiver needs:
+ *  - x: position, to decide whether this particle lies in its ghost box.
+ *  - globalID: to decide whether this particle already exists locally.
+ *  - ownerLocalIndex: to request the full particle payload from the owner without
+ *    forcing the owner to do a globalID -> localID lookup later.
+ *
+ * This struct is intentionally file-local so SpatialPartition.hpp does not need
+ * to change.
+ */
+struct GhostParticleCandidate
+{
+  real64 x[3];
+  globalIndex globalID;
+  localIndex ownerLocalIndex;
+};
+
+static_assert( std::is_trivially_copyable< GhostParticleCandidate >::value,
+               "GhostParticleCandidate must remain trivially copyable because it is exchanged as raw bytes." );
+
+
+/**
+ * @brief Convert a byte count to a buffer_unit_type count.
+ *
+ * GEOS packed buffers are counted in buffer_unit_type units, not necessarily
+ * bytes. This helper keeps the raw-POD exchange below independent of the exact
+ * buffer_unit_type size.
+ */
+inline unsigned int bufferUnitsForBytes( size_t const numberOfBytes )
+{
+  size_t const unitSize = sizeof( buffer_unit_type );
+  size_t const numberOfUnits = numberOfBytes == 0 ? 0 : 1 + ( numberOfBytes - 1 ) / unitSize;
+
+  GEOS_ERROR_IF( numberOfUnits > std::numeric_limits< unsigned int >::max(),
+                 "SpatialPartition: raw POD message is too large for unsigned int buffer counts." );
+
+  return static_cast< unsigned int >( numberOfUnits );
+}
+
+
+/**
+ * @brief Pack an array1d of trivially-copyable records into a GEOS buffer.
+ *
+ * This is used only for file-local POD metadata. Full particle data is still
+ * packed through ParticleSubRegionBase::particlePack().
+ */
+template< typename POD_TYPE >
+unsigned int packPODArrayToBuffer( array1d< POD_TYPE > const & values,
+                                   buffer_type & buffer )
+{
+  static_assert( std::is_trivially_copyable< POD_TYPE >::value,
+                 "packPODArrayToBuffer only supports trivially-copyable types." );
+
+  size_t const numberOfValues = static_cast< size_t >( values.size() );
+
+  GEOS_ERROR_IF( numberOfValues > std::numeric_limits< size_t >::max() / sizeof( POD_TYPE ),
+                 "SpatialPartition: POD buffer byte-count overflow." );
+
+  size_t const numberOfBytes = numberOfValues * sizeof( POD_TYPE );
+  unsigned int const numberOfUnits = bufferUnitsForBytes( numberOfBytes );
+
+  buffer.resize( numberOfUnits );
+
+  // Zero the whole buffer so any padding bytes in the last buffer_unit_type are deterministic.
+  if( numberOfUnits > 0 )
+  {
+    std::memset( buffer.data(), 0, static_cast< size_t >( numberOfUnits ) * sizeof( buffer_unit_type ) );
+  }
+
+  if( numberOfBytes > 0 )
+  {
+    std::memcpy( buffer.data(), values.data(), numberOfBytes );
+  }
+
+  return numberOfUnits;
+}
+
+
+/**
+ * @brief Unpack a GEOS buffer into an array1d of trivially-copyable records.
+ */
+template< typename POD_TYPE >
+void unpackPODArrayFromBuffer( buffer_type const & buffer,
+                               unsigned int const numberOfValues,
+                               array1d< POD_TYPE > & values )
+{
+  static_assert( std::is_trivially_copyable< POD_TYPE >::value,
+                 "unpackPODArrayFromBuffer only supports trivially-copyable types." );
+
+  size_t const n = static_cast< size_t >( numberOfValues );
+
+  GEOS_ERROR_IF( n > std::numeric_limits< size_t >::max() / sizeof( POD_TYPE ),
+                 "SpatialPartition: POD buffer byte-count overflow." );
+
+  size_t const numberOfBytes = n * sizeof( POD_TYPE );
+  unsigned int const expectedUnits = bufferUnitsForBytes( numberOfBytes );
+
+  GEOS_ERROR_IF( static_cast< size_t >( buffer.size() ) < static_cast< size_t >( expectedUnits ),
+                 "SpatialPartition: received POD buffer is smaller than expected." );
+
+  values.resize( numberOfValues );
+
+  if( numberOfBytes > 0 )
+  {
+    std::memcpy( values.data(), buffer.data(), numberOfBytes );
+  }
+}
+
+
+/**
+ * @brief Exchange one POD list per neighbor.
+ *
+ * This mirrors the communication pattern used by sendListOfIndicesToNeighbors(),
+ * but it does not rely on bufferOps serialization for the file-local
+ * GhostParticleCandidate type.
+ *
+ * The exchange is two-stage:
+ *  1. exchange number of POD records,
+ *  2. exchange raw POD payload buffers.
+ *
+ * This is intended for homogeneous MPI jobs. Full particle payloads are not sent
+ * through this helper.
+ */
+template< typename POD_TYPE >
+void exchangePODListsWithNeighbors( stdVector< array1d< POD_TYPE > > const & listSendingToEachNeighbor,
+                                    MPI_iCommData & commData,
+                                    stdVector< array1d< POD_TYPE > > & listReceivedFromEachNeighbor,
+                                    stdVector< NeighborCommunicator > & neighbors )
+{
+  static_assert( std::is_trivially_copyable< POD_TYPE >::value,
+                 "exchangePODListsWithNeighbors only supports trivially-copyable types." );
+
+  GEOS_ERROR_IF( neighbors.size() > std::numeric_limits< unsigned int >::max(),
+                 "SpatialPartition: too many neighbors for unsigned int message counts." );
+
+  unsigned int const nn = static_cast< unsigned int >( neighbors.size() );
+
+  GEOS_ERROR_IF( listSendingToEachNeighbor.size() != nn,
+                 "SpatialPartition: send-list count does not match neighbor count." );
+
+  listReceivedFromEachNeighbor.resize( nn );
+
+  if( nn == 0 )
+  {
+    return;
+  }
+
+  GEOS_ERROR_IF( nn > static_cast< unsigned int >( std::numeric_limits< int >::max() ),
+                 "SpatialPartition: too many neighbors for MPI_Waitall count." );
+
+  int const mpiNeighborCount = static_cast< int >( nn );
+
+  stdVector< unsigned int > numberSending( nn );
+  stdVector< unsigned int > numberReceived( nn );
+
+  stdVector< unsigned int > sizeOfPackedSending( nn );
+  stdVector< unsigned int > sizeOfPackedReceived( nn );
+
+  stdVector< buffer_type > sendBuffer( nn );
+  stdVector< buffer_type > receiveBuffer( nn );
+
+  for( size_t n = 0; n < nn; ++n )
+  {
+    size_t const currentSize = static_cast< size_t >( listSendingToEachNeighbor[n].size() );
+
+    GEOS_ERROR_IF( currentSize > std::numeric_limits< unsigned int >::max(),
+                   "SpatialPartition: too many POD records for unsigned int message counts." );
+
+    numberSending[n] = static_cast< unsigned int >( currentSize );
+    sizeOfPackedSending[n] = packPODArrayToBuffer( listSendingToEachNeighbor[n], sendBuffer[n] );
+  }
+
+  // First exchange the number of POD records each neighbor will send.
+  {
+    array1d< MPI_Request > sendRequest( nn );
+    array1d< MPI_Status > sendStatus( nn );
+    array1d< MPI_Request > receiveRequest( nn );
+    array1d< MPI_Status > receiveStatus( nn );
+
+    for( size_t n = 0; n < nn; ++n )
+    {
+      sendRequest[n] = MPI_REQUEST_NULL;
+      receiveRequest[n] = MPI_REQUEST_NULL;
+
+      neighbors[n].mpiISendReceive( &( numberSending[n] ),
+                                    1,
+                                    sendRequest[n],
+                                    &( numberReceived[n] ),
+                                    1,
+                                    receiveRequest[n],
+                                    commData.commID(),
+                                    MPI_COMM_GEOS );
+    }
+
+    MPI_Waitall( mpiNeighborCount, sendRequest.data(), sendStatus.data() );
+    MPI_Waitall( mpiNeighborCount, receiveRequest.data(), receiveStatus.data() );
+  }
+
+  // Allocate receive buffers using the received POD counts.
+  for( size_t n = 0; n < nn; ++n )
+  {
+    size_t const numberOfBytes = static_cast< size_t >( numberReceived[n] ) * sizeof( POD_TYPE );
+    sizeOfPackedReceived[n] = bufferUnitsForBytes( numberOfBytes );
+    receiveBuffer[n].resize( sizeOfPackedReceived[n] );
+  }
+
+  // Exchange the raw POD payloads.
+  {
+    array1d< MPI_Request > sendRequest( nn );
+    array1d< MPI_Status > sendStatus( nn );
+    array1d< MPI_Request > receiveRequest( nn );
+    array1d< MPI_Status > receiveStatus( nn );
+
+    for( size_t n = 0; n < nn; ++n )
+    {
+      sendRequest[n] = MPI_REQUEST_NULL;
+      receiveRequest[n] = MPI_REQUEST_NULL;
+
+      neighbors[n].mpiISendReceive( sendBuffer[n].data(),
+                                    sizeOfPackedSending[n],
+                                    sendRequest[n],
+                                    receiveBuffer[n].data(),
+                                    sizeOfPackedReceived[n],
+                                    receiveRequest[n],
+                                    commData.commID(),
+                                    MPI_COMM_GEOS );
+    }
+
+    MPI_Waitall( mpiNeighborCount, sendRequest.data(), sendStatus.data() );
+    MPI_Waitall( mpiNeighborCount, receiveRequest.data(), receiveStatus.data() );
+  }
+
+  for( size_t n = 0; n < nn; ++n )
+  {
+    unpackPODArrayFromBuffer( receiveBuffer[n],
+                              numberReceived[n],
+                              listReceivedFromEachNeighbor[n] );
+  }
 }
 
 }
@@ -917,213 +1166,680 @@ void SpatialPartition::repartitionMasterParticles( DomainPartition & domain,
 }
 
 
+// void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
+//                                                                    const real64 & boundaryRadius )
+// {
+
+//   /*
+//    * Make a list of the coordinates and global IDs of all non-ghost objects on the current
+//    * partition.  These should all be interior to the partition domain (excluding the ghost
+//    * region).  Send this list to each neighbor.  Have each neighbor check the list for
+//    * objects within its bounding box (including ghost radius) that do not already exist
+//    * on the processor.  Send a request list for those objects.  Mark all ghost objects as
+//    * potentially abandoned.
+//    *
+//    */
+
+//   MPI_iCommData commData;
+//   commData.resize( domain.getNeighbors().size() );
+
+//   // MPM-specific code where we assume there are 2 mesh bodies and only one of them has particles
+//   dataRepository::Group & meshBodies = domain.getMeshBodies();
+//   MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >( 0 );
+//   MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >( 1 );
+//   MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
+//   ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
+
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     // (1) Identify any particles that are master on the current partition, but whose center lies
+//     // outside of the partition domain.  Rank() for particles is defined such that it always
+//     // equals the rank of the owning process. Thus a particle is master iff Rank==partition.rank
+//     //
+//     // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
+//     // requested by another partition, its ghost rank will be updated.  Any particle that still
+//     // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
+//     // should only happen if it has left the global domain (hopefully at an outflow b.c.).
+
+//     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
+//     arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
+//     arrayView1d< globalIndex > const particleGlobalID = subRegion.getParticleID();
+//     array1d< R1Tensor > inDomainMasterParticleCoordinates;   // Theoretically the same as particle position evaluated at
+//                                                              // subRegion.nonGhostIndices()?
+//     stdVector< globalIndex > inDomainMasterParticleGlobalIndices;
+//     unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
+
+//     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
+//       {
+//         bool inPartition = true;
+//         R1Tensor p_x;
+//         for( int i=0; i<3; i++ )
+//         {
+//           p_x[i] = particleCenter[p][i];
+//           inPartition = inPartition && isCoordInPartition( p_x[i], i );
+//         }
+//         if( particleRank[p]==this->m_rank && inPartition )
+//         {
+//           inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
+//           inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
+//                                                                                     // coordinate.
+//         }
+//       } );
+
+
+//     // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+
+//     stdVector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
+
+//     sendCoordinateListToNeighbors( inDomainMasterParticleCoordinates.toView(),          // input: Single list of coordinates sent to all
+//                                                                                         // neighbors
+//                                    commData,                                      // input: Solver MPI communicator
+//                                    particleCoordinatesReceivedFromNeighbors    // output: List of lists of coordinates received from each
+//                                                                                // neighbor.
+//                                    );
+
+
+//     // (3) Pack the list of particle global indices to each neighbor, and send the list to neighbors.
+
+//     stdVector< array1d< globalIndex > > particleGlobalIndicesSendingToNeighbors( nn );
+//     stdVector< array1d< globalIndex > > particleGlobalIndicesReceivedFromNeighbors( nn );
+
+//     for( size_t n=0; n<nn; ++n )
+//     {
+//       particleGlobalIndicesSendingToNeighbors[n].resize( inDomainMasterParticleGlobalIndices.size() );
+//       for( size_t i=0; i<inDomainMasterParticleGlobalIndices.size(); ++i )
+//       {
+//         particleGlobalIndicesSendingToNeighbors[n][i] = inDomainMasterParticleGlobalIndices[i];
+//       }
+//     }
+//     sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesSendingToNeighbors,
+//                                                  commData,
+//                                                  particleGlobalIndicesReceivedFromNeighbors );
+
+
+//     // (4) Look through the received coordinates and make a list of the particles that are within
+//     //     the bounding box (including ghost region) and for which the globalID does not already
+//     //     exist on the current partition.  Make a request list of the index (order in the list)
+//     //     of the particle.  This will be sent from the master as a new ghost on the current
+//     //     partition.
+
+//     stdVector< array1d< globalIndex > > particleGlobalIndicesRequestingFromNeighbors( nn );
+
+//     for( size_t n=0; n<nn; ++n )
+//     {
+//       for( localIndex i=0; i<particleCoordinatesReceivedFromNeighbors[n].size(); ++i )
+//       {
+//         if( isCoordInPartitionBoundingBox( particleCoordinatesReceivedFromNeighbors[n][i], boundaryRadius ) )
+//         {
+//           globalIndex gI = particleGlobalIndicesReceivedFromNeighbors[n][i];
+
+//           // This particle should be a ghost on the current processor. See if it already exists here.
+//           bool alreadyHere = false;
+//           forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
+//             {
+//               if( gI == particleGlobalID[p] )
+//               {
+//                 // The particle already exists as a ghost on this partition, so we should update its rank.
+//                 particleRank[p] = m_neighbors[n].neighborRank();
+//                 alreadyHere = true;
+//               }
+//             } );
+//           if( !alreadyHere )
+//           {
+//             // The global index is not represented on this partition, so we should add the particle.
+//             particleGlobalIndicesRequestingFromNeighbors[n].emplace_back( gI );
+//           }
+//         }
+//       }
+//     }
+
+
+//     // (5) Pack and send request list of Global Indices to each neighbor, receive and unpack
+//     //     this into a list requested from each neighbor.
+
+//     stdVector< array1d< globalIndex > > particleGlobalIndicesRequestedFromNeighbors( nn );
+
+//     sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesRequestingFromNeighbors,
+//                                                  commData,
+//                                                  particleGlobalIndicesRequestedFromNeighbors );
+
+
+//     // (6) Temporarily set the ghost rank of all ghosts to "-1".  After ghosts are unpacked from the
+//     //     masters, the ghost rank will be overwritten.  At the end of this function, any ghosts that
+//     //     still have ghostRank=-1 are orphans and need to be deleted.
+
+//     int partitionRank = this->m_rank;
+//     forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
+//       {
+//         if( particleRank[p] != partitionRank )
+//         {
+//           particleRank[p] = -1;
+//         }
+//       } );
+
+
+//     // (6.1) Resize particle subRegion to accommodate incoming particles.
+//     //       Keep track of the starting indices and number of particles coming from each neighbor.
+
+//     int oldSize = subRegion.size();
+//     int newSize = subRegion.size();
+//     stdVector< int > newParticleStartingIndices( nn );
+//     stdVector< int > numberOfIncomingParticles( nn );
+//     for( size_t n=0; n<nn; n++ )
+//     {
+//       numberOfIncomingParticles[n] = particleGlobalIndicesRequestingFromNeighbors[n].size();
+//       newParticleStartingIndices[n] = newSize;
+//       newSize += numberOfIncomingParticles[n];
+//     }
+//     if( newSize > oldSize )
+//     {
+//       subRegion.resize( newSize );   // TODO: Does this handle constitutive fields owned by the subregion's parent region?
+//     }
+
+
+//     // (7) Pack/Send/Receive/Unpack particles to be sent to each neighbor.
+
+//     {
+//       stdVector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
+
+//       for( size_t n=0; n<nn; n++ )
+//       {
+//         // make a list of the local indices corresponding to the global indices in the request list for the current neighbor.
+//         particleLocalIndicesRequestedFromNeighbors[n].resize( particleGlobalIndicesRequestedFromNeighbors[n].size() );
+//         for( localIndex i=0; i<particleLocalIndicesRequestedFromNeighbors[n].size(); ++i )
+//         {
+//           particleLocalIndicesRequestedFromNeighbors[n][i] = subRegion.globalToLocalMap( particleGlobalIndicesRequestedFromNeighbors[n][i] );
+//         }
+//       }
+//       // Send/receive the particles, which will add missing ghosts on the partition.
+//       sendParticlesToNeighbor( subRegion,
+//                                newParticleStartingIndices,
+//                                numberOfIncomingParticles,
+//                                commData,
+//                                particleLocalIndicesRequestedFromNeighbors );
+//     }
+
+
+//     // (8) Delete any particles that have ghostRank=-1.  These will be ghosts from
+//     //     a previous step for which the master is no longer in the ghost domain,
+//     // std::set< localIndex > indicesToErase;
+//     // arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
+//     // forAll< serialPolicy >( subRegion.size(), [=, &indicesToErase] GEOS_HOST ( localIndex const p ) // parallelize with atomics
+//     // {
+//     //   if( particleRankNew[p] == -1 )
+//     //   {
+//     //     indicesToErase.insert(p);
+//     //   }
+//     // } );
+//     // subRegion.erase(indicesToErase);
+
+//   } );
+// }
+
 void SpatialPartition::getGhostParticlesFromNeighboringPartitions( DomainPartition & domain,
                                                                    const real64 & boundaryRadius )
 {
-
   /*
-   * Make a list of the coordinates and global IDs of all non-ghost objects on the current
-   * partition.  These should all be interior to the partition domain (excluding the ghost
-   * region).  Send this list to each neighbor.  Have each neighbor check the list for
-   * objects within its bounding box (including ghost radius) that do not already exist
-   * on the processor.  Send a request list for those objects.  Mark all ghost objects as
-   * potentially abandoned.
+   * Faster MPM ghost particle refresh.
    *
+   * Main differences from the previous implementation:
+   *
+   *  1. Send only boundary-near master particles to the neighbors that can
+   *     actually need them as ghosts. The old implementation sent every owned
+   *     master particle to every neighbor.
+   *
+   *  2. Send coordinate, globalID, and owner-local-index together as one compact
+   *     metadata record. This removes a separate globalID metadata exchange and
+   *     avoids owner-side globalID -> localID lookup when servicing requests.
+   *
+   *  3. Build a globalID -> localIndex lookup map once. The old implementation
+   *     scanned the entire subRegion for every received candidate.
+   *
+   *  4. Invalidate old ghosts before processing candidates. The old ordering
+   *     refreshed existing ghost ranks and then overwrote them with -1.
+   *
+   *  5. Delete stale ghosts whose rank remains -1 after the refresh.
    */
 
   MPI_iCommData commData;
   commData.resize( domain.getNeighbors().size() );
 
-  // MPM-specific code where we assume there are 2 mesh bodies and only one of them has particles
+  unsigned int const nn = m_neighbors.size();
+
+  /*
+   * Build neighbor offset records in the same traversal order as addNeighbors().
+   *
+   * This lets us know whether m_neighbors[n] is the -x face neighbor, +x/+y edge
+   * neighbor, +x/+y/+z corner neighbor, etc., without changing NeighborCommunicator
+   * or SpatialPartition.hpp.
+   *
+   * Important: we intentionally preserve duplicate neighbor entries in periodic
+   * small decompositions because m_neighbors itself may contain those duplicates
+   * and the existing communication helpers expect one list per m_neighbors entry.
+   */
+  stdVector< std::array< int, 3 > > neighborOffsets;
+  neighborOffsets.reserve( nn );
+
+  {
+    int ncoords[3] = { 0, 0, 0 };
+    int offsets[3] = { 0, 0, 0 };
+
+    std::function< void( int ) > appendNeighborOffset;
+
+    appendNeighborOffset = [&]( int const idim )
+    {
+      if( idim == m_nsdof )
+      {
+        bool me = true;
+        for( int i = 0; i < m_nsdof; ++i )
+        {
+          if( ncoords[i] != this->m_coords( i ) )
+          {
+            me = false;
+            break;
+          }
+        }
+
+        if( !me )
+        {
+          neighborOffsets.emplace_back( std::array< int, 3 >{ { offsets[0], offsets[1], offsets[2] } } );
+        }
+
+        return;
+      }
+
+      localIndex const localDim = LvArray::integerConversion< localIndex >( idim );
+
+      int const dim = this->m_partitions( localDim );
+      bool const periodic = this->m_periodic( localDim );
+
+      for( int delta = -1; delta <= 1; ++delta )
+      {
+        offsets[idim] = delta;
+        ncoords[idim] = this->m_coords( localDim ) + delta;
+
+        bool ok = true;
+
+        if( periodic )
+        {
+          if( ncoords[idim] < 0 )
+          {
+            ncoords[idim] = dim - 1;
+          }
+          else if( ncoords[idim] >= dim )
+          {
+            ncoords[idim] = 0;
+          }
+        }
+        else
+        {
+          ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
+        }
+
+        if( ok )
+        {
+          appendNeighborOffset( idim + 1 );
+        }
+      }
+    };
+
+    appendNeighborOffset( 0 );
+  }
+
+  GEOS_ERROR_IF( neighborOffsets.size() != nn,
+                 GEOS_FMT( "SpatialPartition::getGhostParticlesFromNeighboringPartitions: "
+                           "neighbor offset count {} does not match m_neighbors count {}.",
+                           neighborOffsets.size(), nn ) );
+
+  /*
+   * Use the particle manager from whichever mesh body owns particles.
+   *
+   * This keeps the existing MPM-specific assumption in the original code:
+   * there are two mesh bodies, and only one has particles.
+   */
   dataRepository::Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >( 0 );
   MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >( 1 );
   MeshBody & particles = meshBody1.hasParticles() ? meshBody1 : meshBody2;
   ParticleManager & particleManager = particles.getBaseDiscretization().getParticleManager();
 
+  /*
+   * Coordinate used for boundary-slab tests.
+   *
+   * For periodic dimensions, a particle coordinate may be stored outside the
+   * nominal [gridMin, gridMax) interval. isCoordInPartition() already maps for
+   * ownership tests. The boundary-slab filter must do the same, otherwise a
+   * periodic particle near x = gridMin could be missed if it is stored as
+   * x = gridMax + epsilon, or vice versa.
+   */
+  auto mapCoordinateForPartitionTests =
+    [&]( real64 const x, int const d ) -> real64
+  {
+    if( this->m_periodic[d] && this->m_partitions[d] != 1 )
+    {
+      return MapValueToRange( x, this->m_gridMin[d], this->m_gridMax[d] );
+    }
+
+    return x;
+  };
+
+  /*
+   * Decide whether an owned particle can possibly be needed by a specific neighbor.
+   *
+   * For a face neighbor, this is a slab test.
+   * For an edge neighbor, this is an intersection of two slabs.
+   * For a corner neighbor, this is an intersection of three slabs.
+   *
+   * Example:
+   *   offset = {+1, 0, 0}
+   *     send only particles with x >= m_max[0] - boundaryRadius.
+   *
+   *   offset = {-1, +1, 0}
+   *     send only particles with
+   *       x <= m_min[0] + boundaryRadius and
+   *       y >= m_max[1] - boundaryRadius.
+   */
+  auto particleIsCandidateForNeighbor =
+    [&]( R1Tensor const & mappedCenter,
+         std::array< int, 3 > const & neighborOffset ) -> bool
+  {
+    for( int d = 0; d < 3; ++d )
+    {
+      if( this->m_partitions[d] == 1 || neighborOffset[d] == 0 )
+      {
+        continue;
+      }
+
+      if( neighborOffset[d] < 0 )
+      {
+        if( mappedCenter[d] > this->m_min[d] + boundaryRadius )
+        {
+          return false;
+        }
+      }
+      else
+      {
+        if( mappedCenter[d] < this->m_max[d] - boundaryRadius )
+        {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // (1) Identify any particles that are master on the current partition, but whose center lies
-    // outside of the partition domain.  Rank() for particles is defined such that it always
-    // equals the rank of the owning process. Thus a particle is master iff Rank==partition.rank
-    //
-    // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
-    // requested by another partition, its ghost rank will be updated.  Any particle that still
-    // has a Rank=-1 at the end of this function is lost and needs to be deleted.  This
-    // should only happen if it has left the global domain (hopefully at an outflow b.c.).
-
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView1d< localIndex > const particleRank = subRegion.getParticleRank();
     arrayView1d< globalIndex > const particleGlobalID = subRegion.getParticleID();
-    array1d< R1Tensor > inDomainMasterParticleCoordinates;   // Theoretically the same as particle position evaluated at
-                                                             // subRegion.nonGhostIndices()?
-    stdVector< globalIndex > inDomainMasterParticleGlobalIndices;
-    unsigned int nn = m_neighbors.size();   // Number of partition neighbors.
+
+    int const partitionRank = this->m_rank;
+
+    /*
+     * Build one metadata list per neighbor.
+     *
+     * This replaces the old all-owned-particles-to-all-neighbors exchange.
+     */
+    stdVector< array1d< GhostParticleCandidate > > particleCandidatesSendingToNeighbors( nn );
 
     forAll< serialPolicy >( subRegion.size(), [&, particleCenter, particleRank, particleGlobalID] GEOS_HOST ( localIndex const p )
-      {
-        bool inPartition = true;
-        R1Tensor p_x;
-        for( int i=0; i<3; i++ )
-        {
-          p_x[i] = particleCenter[p][i];
-          inPartition = inPartition && isCoordInPartition( p_x[i], i );
-        }
-        if( particleRank[p]==this->m_rank && inPartition )
-        {
-          inDomainMasterParticleCoordinates.emplace_back( p_x );  // Store the coordinate of the out-of-domain particle
-          inDomainMasterParticleGlobalIndices.push_back( particleGlobalID[p] );     // Store the local index "pp" for the current
-                                                                                    // coordinate.
-        }
-      } );
-
-
-    // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
-
-    stdVector< array1d< R1Tensor > > particleCoordinatesReceivedFromNeighbors( nn );
-
-    sendCoordinateListToNeighbors( inDomainMasterParticleCoordinates.toView(),          // input: Single list of coordinates sent to all
-                                                                                        // neighbors
-                                   commData,                                      // input: Solver MPI communicator
-                                   particleCoordinatesReceivedFromNeighbors    // output: List of lists of coordinates received from each
-                                                                               // neighbor.
-                                   );
-
-
-    // (3) Pack the list of particle global indices to each neighbor, and send the list to neighbors.
-
-    stdVector< array1d< globalIndex > > particleGlobalIndicesSendingToNeighbors( nn );
-    stdVector< array1d< globalIndex > > particleGlobalIndicesReceivedFromNeighbors( nn );
-
-    for( size_t n=0; n<nn; ++n )
     {
-      particleGlobalIndicesSendingToNeighbors[n].resize( inDomainMasterParticleGlobalIndices.size() );
-      for( size_t i=0; i<inDomainMasterParticleGlobalIndices.size(); ++i )
+      if( particleRank[p] != partitionRank )
       {
-        particleGlobalIndicesSendingToNeighbors[n][i] = inDomainMasterParticleGlobalIndices[i];
+        return;
+      }
+
+      bool inPartition = true;
+
+      R1Tensor rawCenter;
+      R1Tensor mappedCenter;
+
+      for( int d = 0; d < 3; ++d )
+      {
+        rawCenter[d] = particleCenter[p][d];
+        mappedCenter[d] = mapCoordinateForPartitionTests( rawCenter[d], d );
+
+        // Keep the original ownership check. If repartitioning invariants are
+        // made stronger later, this could become a debug-only check.
+        inPartition = inPartition && this->isCoordInPartition( rawCenter[d], d );
+      }
+
+      if( !inPartition )
+      {
+        return;
+      }
+
+      for( size_t n = 0; n < nn; ++n )
+      {
+        if( particleIsCandidateForNeighbor( mappedCenter, neighborOffsets[n] ) )
+        {
+          GhostParticleCandidate candidate;
+
+          candidate.x[0] = rawCenter[0];
+          candidate.x[1] = rawCenter[1];
+          candidate.x[2] = rawCenter[2];
+
+          candidate.globalID = particleGlobalID[p];
+
+          // This local index is meaningful only on the owning rank and only for
+          // this exchange. The receiver sends it back if it needs the full
+          // particle payload.
+          candidate.ownerLocalIndex = p;
+
+          particleCandidatesSendingToNeighbors[n].emplace_back( candidate );
+        }
+      }
+    } );
+
+    /*
+     * Exchange compact candidate metadata.
+     *
+     * Each received candidate is a master particle owned by the corresponding
+     * neighbor. This rank will request only the candidates that lie in its ghost
+     * box and are not already present locally.
+     */
+    stdVector< array1d< GhostParticleCandidate > > particleCandidatesReceivedFromNeighbors( nn );
+
+    exchangePODListsWithNeighbors( particleCandidatesSendingToNeighbors,
+                                   commData,
+                                   particleCandidatesReceivedFromNeighbors,
+                                   m_neighbors );
+
+    /*
+     * Build a globalID -> localIndex map once.
+     *
+     * The old code scanned subRegion.size() for every received candidate, which
+     * is typically the dominant CPU cost.
+     *
+     * Insert masters first so that, in the unlikely event of a duplicated
+     * globalID, a local master takes precedence over a ghost.
+     */
+    std::unordered_map< globalIndex, localIndex > localIndexByGlobalID;
+    localIndexByGlobalID.reserve( static_cast< size_t >( subRegion.size() ) * 2 );
+
+    for( localIndex p = 0; p < subRegion.size(); ++p )
+    {
+      if( particleRank[p] == partitionRank )
+      {
+        localIndexByGlobalID.emplace( particleGlobalID[p], p );
       }
     }
-    sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesSendingToNeighbors,
-                                                 commData,
-                                                 particleGlobalIndicesReceivedFromNeighbors );
 
-
-    // (4) Look through the received coordinates and make a list of the particles that are within
-    //     the bounding box (including ghost region) and for which the globalID does not already
-    //     exist on the current partition.  Make a request list of the index (order in the list)
-    //     of the particle.  This will be sent from the master as a new ghost on the current
-    //     partition.
-
-    stdVector< array1d< globalIndex > > particleGlobalIndicesRequestingFromNeighbors( nn );
-
-    for( size_t n=0; n<nn; ++n )
+    for( localIndex p = 0; p < subRegion.size(); ++p )
     {
-      for( localIndex i=0; i<particleCoordinatesReceivedFromNeighbors[n].size(); ++i )
+      if( particleRank[p] != partitionRank )
       {
-        if( isCoordInPartitionBoundingBox( particleCoordinatesReceivedFromNeighbors[n][i], boundaryRadius ) )
-        {
-          globalIndex gI = particleGlobalIndicesReceivedFromNeighbors[n][i];
+        localIndexByGlobalID.emplace( particleGlobalID[p], p );
+      }
+    }
 
-          // This particle should be a ghost on the current processor. See if it already exists here.
-          bool alreadyHere = false;
-          forAll< serialPolicy >( subRegion.size(), [&, particleGlobalID, particleRank] GEOS_HOST ( localIndex const p )
-            {
-              if( gI == particleGlobalID[p] )
-              {
-                // The particle already exists as a ghost on this partition, so we should update its rank.
-                particleRank[p] = m_neighbors[n].neighborRank();
-                alreadyHere = true;
-              }
-            } );
-          if( !alreadyHere )
+    /*
+     * Mark all existing ghosts stale before processing received candidates.
+     *
+     * If a ghost is still needed, the candidate-processing loop below will set
+     * its rank back to the owning neighbor rank.
+     */
+    forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )
+    {
+      if( particleRank[p] != partitionRank )
+      {
+        particleRank[p] = -1;
+      }
+    } );
+
+    /*
+     * For each neighbor, request only candidates that:
+     *  - lie inside this rank's ghost bounding box, and
+     *  - are not already present on this rank.
+     *
+     * The request is the owner-local-index, not the globalID. That lets the
+     * owner pack particles directly without a globalToLocalMap lookup.
+     */
+    stdVector< array1d< localIndex > > particleLocalIndicesRequestingFromNeighbors( nn );
+
+    std::unordered_set< globalIndex > pendingNewGhostGlobalIDs;
+
+    {
+      size_t totalReceivedCandidates = 0;
+      for( size_t n = 0; n < nn; ++n )
+      {
+        totalReceivedCandidates += static_cast< size_t >( particleCandidatesReceivedFromNeighbors[n].size() );
+      }
+      pendingNewGhostGlobalIDs.reserve( totalReceivedCandidates );
+    }
+
+    for( size_t n = 0; n < nn; ++n )
+    {
+      int const ownerRank = m_neighbors[n].neighborRank();
+
+      for( localIndex i = 0; i < particleCandidatesReceivedFromNeighbors[n].size(); ++i )
+      {
+        GhostParticleCandidate const & candidate = particleCandidatesReceivedFromNeighbors[n][i];
+
+        R1Tensor candidateCenter;
+        candidateCenter[0] = candidate.x[0];
+        candidateCenter[1] = candidate.x[1];
+        candidateCenter[2] = candidate.x[2];
+
+        if( !this->isCoordInPartitionBoundingBox( candidateCenter, boundaryRadius ) )
+        {
+          continue;
+        }
+
+        globalIndex const gI = candidate.globalID;
+
+        auto const iter = localIndexByGlobalID.find( gI );
+
+        if( iter != localIndexByGlobalID.end() )
+        {
+          localIndex const p = iter->second;
+
+          // Refresh existing ghosts. Never convert a local master into a ghost.
+          if( particleRank[p] != partitionRank )
           {
-            // The global index is not represented on this partition, so we should add the particle.
-            particleGlobalIndicesRequestingFromNeighbors[n].emplace_back( gI );
+            particleRank[p] = ownerRank;
+          }
+        }
+        else
+        {
+          /*
+           * Avoid requesting the same missing ghost more than once. This can
+           * happen with duplicate periodic neighbor entries or when a particle
+           * appears through more than one geometric neighbor relation.
+           */
+          if( pendingNewGhostGlobalIDs.insert( gI ).second )
+          {
+            particleLocalIndicesRequestingFromNeighbors[n].emplace_back( candidate.ownerLocalIndex );
           }
         }
       }
     }
 
+    /*
+     * Exchange request lists.
+     *
+     * After this call:
+     *  - particleLocalIndicesRequestingFromNeighbors[n] are particles this rank
+     *    wants to receive from neighbor n.
+     *  - particleLocalIndicesRequestedFromNeighbors[n] are local master
+     *    particles this rank must send to neighbor n.
+     */
+    stdVector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
 
-    // (5) Pack and send request list of Global Indices to each neighbor, receive and unpack
-    //     this into a list requested from each neighbor.
+    sendListOfIndicesToNeighbors< localIndex >( particleLocalIndicesRequestingFromNeighbors,
+                                                commData,
+                                                particleLocalIndicesRequestedFromNeighbors );
 
-    stdVector< array1d< globalIndex > > particleGlobalIndicesRequestedFromNeighbors( nn );
-
-    sendListOfIndicesToNeighbors< globalIndex >( particleGlobalIndicesRequestingFromNeighbors,
-                                                 commData,
-                                                 particleGlobalIndicesRequestedFromNeighbors );
-
-
-    // (6) Temporarily set the ghost rank of all ghosts to "-1".  After ghosts are unpacked from the
-    //     masters, the ghost rank will be overwritten.  At the end of this function, any ghosts that
-    //     still have ghostRank=-1 are orphans and need to be deleted.
-
-    int partitionRank = this->m_rank;
-    forAll< parallelHostPolicy >( subRegion.size(), [=] GEOS_HOST ( localIndex const p )   // TODO: Worth moving to device?
-      {
-        if( particleRank[p] != partitionRank )
-        {
-          particleRank[p] = -1;
-        }
-      } );
-
-
-    // (6.1) Resize particle subRegion to accommodate incoming particles.
-    //       Keep track of the starting indices and number of particles coming from each neighbor.
-
-    int oldSize = subRegion.size();
+    /*
+     * Resize this subRegion to hold incoming ghosts.
+     */
+    int const oldSize = subRegion.size();
     int newSize = subRegion.size();
+
     stdVector< int > newParticleStartingIndices( nn );
     stdVector< int > numberOfIncomingParticles( nn );
-    for( size_t n=0; n<nn; n++ )
+
+    for( size_t n = 0; n < nn; ++n )
     {
-      numberOfIncomingParticles[n] = particleGlobalIndicesRequestingFromNeighbors[n].size();
+      numberOfIncomingParticles[n] = particleLocalIndicesRequestingFromNeighbors[n].size();
       newParticleStartingIndices[n] = newSize;
       newSize += numberOfIncomingParticles[n];
     }
+
     if( newSize > oldSize )
     {
-      subRegion.resize( newSize );   // TODO: Does this handle constitutive fields owned by the subregion's parent region?
+      subRegion.resize( newSize );
     }
 
+    /*
+     * Send/receive the full particle payloads.
+     *
+     * The outgoing local-index lists are already owner-local indices, so no
+     * owner-side globalToLocalMap lookup is needed here.
+     */
+    sendParticlesToNeighbor( subRegion,
+                             newParticleStartingIndices,
+                             numberOfIncomingParticles,
+                             commData,
+                             particleLocalIndicesRequestedFromNeighbors );
 
-    // (7) Pack/Send/Receive/Unpack particles to be sent to each neighbor.
+    /*
+     * Delete ghosts that were not refreshed by this exchange.
+     *
+     * These are ghosts from previous steps whose masters are no longer inside
+     * this rank's ghost region.
+     */
+    arrayView1d< localIndex > const particleRankAfter = subRegion.getParticleRank();
 
+    std::set< localIndex > indicesToErase;
+
+    forAll< serialPolicy >( subRegion.size(), [&, particleRankAfter] GEOS_HOST ( localIndex const p )
     {
-      stdVector< array1d< localIndex > > particleLocalIndicesRequestedFromNeighbors( nn );
-
-      for( size_t n=0; n<nn; n++ )
+      if( particleRankAfter[p] == -1 )
       {
-        // make a list of the local indices corresponding to the global indices in the request list for the current neighbor.
-        particleLocalIndicesRequestedFromNeighbors[n].resize( particleGlobalIndicesRequestedFromNeighbors[n].size() );
-        for( localIndex i=0; i<particleLocalIndicesRequestedFromNeighbors[n].size(); ++i )
-        {
-          particleLocalIndicesRequestedFromNeighbors[n][i] = subRegion.globalToLocalMap( particleGlobalIndicesRequestedFromNeighbors[n][i] );
-        }
+        indicesToErase.insert( p );
       }
-      // Send/receive the particles, which will add missing ghosts on the partition.
-      sendParticlesToNeighbor( subRegion,
-                               newParticleStartingIndices,
-                               numberOfIncomingParticles,
-                               commData,
-                               particleLocalIndicesRequestedFromNeighbors );
+    } );
+
+    bool const subRegionSizeChanged = newSize != oldSize || !indicesToErase.empty();
+
+    if( !indicesToErase.empty() )
+    {
+      subRegion.erase( indicesToErase );
     }
 
-
-    // (8) Delete any particles that have ghostRank=-1.  These will be ghosts from
-    //     a previous step for which the master is no longer in the ghost domain,
-    // std::set< localIndex > indicesToErase;
-    // arrayView1d< localIndex > const particleRankNew = subRegion.getParticleRank();
-    // forAll< serialPolicy >( subRegion.size(), [=, &indicesToErase] GEOS_HOST ( localIndex const p ) // parallelize with atomics
-    // {
-    //   if( particleRankNew[p] == -1 )
-    //   {
-    //     indicesToErase.insert(p);
-    //   }
-    // } );
-    // subRegion.erase(indicesToErase);
-
+    /*
+     * Keep region-level particle fields consistent with the subRegion size,
+     * mirroring the pattern used in repartitionMasterParticles().
+     */
+    if( subRegionSizeChanged )
+    {
+      ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+      int const newRegionSize = region.getNumberOfParticles();
+      region.resize( newRegionSize );
+    }
   } );
 }
 
