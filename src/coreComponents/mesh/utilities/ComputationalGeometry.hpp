@@ -290,7 +290,11 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
     {
       GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
     }
-    GEOS_WARNING( "Null area found : " << area );
+#if defined(GEOS_DEVICE_COMPILE)
+    GEOS_ERROR( "Null area found" );
+#else
+    GEOS_ERROR( GEOS_FMT( "Null area found : {}", area ) );
+#endif
 
     return 0.0;
   }
