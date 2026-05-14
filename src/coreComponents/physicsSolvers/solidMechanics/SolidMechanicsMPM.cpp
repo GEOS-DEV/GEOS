@@ -5883,69 +5883,202 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   }
 }
 
-
 void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
 
-  int const numVelocityFields = m_numVelocityFields;;
+  /*
+   * Clear all grid fields every cycle.
+   *
+   *   - every node is cleared,
+   *   - every velocity/contact field at every node is cleared,
+   *   - no active-node shortcut is used,
+   *   - no fields are skipped based on enabled physics options.
+   *
+   *  TODO: figure out a way to only register and zero the fields needed for a sim.
+   */
 
-  // Scalars
-  arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView2d< real64 > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
-  arrayView2d< real64 > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
-  arrayView2d< real64 > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
-  arrayView2d< real64 > const gridFieldGradientAlignment = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() );
-  arrayView1d< real64 > const gridSurfaceMass = nodeManager.getReference< array1d< real64 > >( viewKeyStruct::gridSurfaceMassString() );
-  arrayView2d< real64 > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
-  arrayView1d< int > const gridCohesiveNode = nodeManager.getReference< array1d< int > >( viewKeyStruct::gridCohesiveNodeString() );
+  int const numVelocityFields = m_numVelocityFields;
 
-  // Vectors
-  arrayView3d< real64 > const gridDisplacement = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDisplacementString() );
-  arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
-  arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView3d< real64 > const gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
-  arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
-  arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
-  arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
-  arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
-  arrayView3d< real64 > const gridSurfaceTensionForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceTensionForceString() );
-  arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+  // ---------------------------------------------------------------------------
+  // Scalar fields.
+  // ---------------------------------------------------------------------------
 
-  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
-  arrayView2d< real64 > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
-  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
-  arrayView3d< real64 > const gridParticleSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridParticleMappedSurfaceNormalString() );
-  arrayView3d< real64 > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
-  arrayView2d< real64 > const gridSurfaceArea = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceAreaString() );
+  arrayView2d< real64 > const gridMass =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridMassString() );
 
-  arrayView3d< real64 > const gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
-  arrayView3d< real64 > const gridCenterOfVolume = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() );
+  arrayView2d< real64 > const gridMaterialVolume =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridMaterialVolumeString() );
 
-  arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
-  arrayView2d< real64 > const gridMassWeightedDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() );
+  arrayView2d< real64 > const gridDamage =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridDamageString() );
 
-  arrayView2d< real64 > const gridExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() );
-  arrayView2d< int > const gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
-  arrayView3d< real64 > const gridCohesiveArea = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveAreaString() );
-  arrayView3d< real64 > const gridCohesiveForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCohesiveForceString() );
+  arrayView2d< real64 > const gridMaxDamage =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridMaxDamageString() );
 
-  arrayView2d< real64 > const gridPrincipalExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() );
+  arrayView2d< real64 > const gridFieldGradientAlignment =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridFieldGradientAlignmentString() );
 
-  arrayView1d< globalIndex > const gridMaxMappedParticleID = nodeManager.getReference< array1d< globalIndex > >( viewKeyStruct::gridMaxMappedParticleIDString() );
+  arrayView1d< real64 > const gridSurfaceMass =
+    nodeManager.getReference< array1d< real64 > >(
+      viewKeyStruct::gridSurfaceMassString() );
 
-  arrayView2d< real64 > const gridBackgroundStress = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridBackgroundStressString() );
+  arrayView2d< real64 > const gridSurfaceFieldMass =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridSurfaceFieldMassString() );
 
-  // Development
-  arrayView3d< real64 > const gridBasedSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfaceNormalString() );
-  arrayView3d< real64 > const gridBasedSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridBasedSurfacePositionString() );
+  arrayView1d< int > const gridCohesiveNode =
+    nodeManager.getReference< array1d< int > >(
+      viewKeyStruct::gridCohesiveNodeString() );
 
-  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+  // ---------------------------------------------------------------------------
+  // Vector / tensor grid fields.
+  // ---------------------------------------------------------------------------
+
+  arrayView3d< real64 > const gridDisplacement =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridDisplacementString() );
+
+  arrayView3d< real64 > const gridMomentum =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridMomentumString() );
+
+  arrayView3d< real64 > const gridVelocity =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridVelocityString() );
+
+  arrayView3d< real64 > const gridDVelocity =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridDVelocityString() );
+
+  arrayView3d< real64 > const gridAcceleration =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridAccelerationString() );
+
+  arrayView2d< real64 > const gridDamageGradient =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridDamageGradientString() );
+
+  arrayView3d< real64 > const gridInternalForce =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridInternalForceString() );
+
+  arrayView3d< real64 > const gridExternalForce =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridExternalForceString() );
+
+  arrayView3d< real64 > const gridSurfaceTensionForce =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridSurfaceTensionForceString() );
+
+  arrayView3d< real64 > const gridContactForce =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridContactForceString() );
+
+  arrayView3d< real64 > const gridSurfaceNormal =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridSurfaceNormalString() );
+
+  arrayView2d< real64 > const gridSurfaceNormalWeights =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridSurfaceNormalWeightsString() );
+
+  arrayView2d< real64 > const gridSurfaceNormalWeightNormalization =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridSurfaceNormalWeightNormalizationString() );
+
+  arrayView3d< real64 > const gridParticleSurfaceNormal =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridParticleMappedSurfaceNormalString() );
+
+  arrayView3d< real64 > const gridSurfacePosition =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridSurfacePositionString() );
+
+  arrayView2d< real64 > const gridSurfaceArea =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridSurfaceAreaString() );
+
+  arrayView3d< real64 > const gridCenterOfMass =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridCenterOfMassString() );
+
+  arrayView3d< real64 > const gridCenterOfVolume =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridCenterOfVolumeString() );
+
+  arrayView3d< real64 > const gridNormalStress =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridNormalStressString() );
+
+  arrayView2d< real64 > const gridMassWeightedDamage =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridMassWeightedDamageString() );
+
+  arrayView2d< real64 > const gridExplicitSurfaceNormal =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridExplicitSurfaceNormalString() );
+
+  arrayView2d< int > const gridCohesiveFieldFlag =
+    nodeManager.getReference< array2d< int > >(
+      viewKeyStruct::gridCohesiveFieldFlagString() );
+
+  arrayView3d< real64 > const gridCohesiveArea =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridCohesiveAreaString() );
+
+  arrayView3d< real64 > const gridCohesiveForce =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridCohesiveForceString() );
+
+  arrayView2d< real64 > const gridPrincipalExplicitSurfaceNormal =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() );
+
+  arrayView1d< globalIndex > const gridMaxMappedParticleID =
+    nodeManager.getReference< array1d< globalIndex > >(
+      viewKeyStruct::gridMaxMappedParticleIDString() );
+
+  arrayView2d< real64 > const gridBackgroundStress =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridBackgroundStressString() );
+
+  // ---------------------------------------------------------------------------
+  // Development / diagnostic fields.
+  // ---------------------------------------------------------------------------
+
+  arrayView3d< real64 > const gridBasedSurfaceNormal =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridBasedSurfaceNormalString() );
+
+  arrayView3d< real64 > const gridBasedSurfacePosition =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridBasedSurfacePositionString() );
+
+  // ---------------------------------------------------------------------------
+  // Full-grid clear.
+  // ---------------------------------------------------------------------------
+
+  forAll< parallelDevicePolicy<> >(
+    nodeManager.size(),
+    [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
+    // -------------------------------------------------------------------------
+    // Node-only scalar fields.
+    // -------------------------------------------------------------------------
+
     gridCohesiveNode[g] = 0;
     gridSurfaceMass[g] = 0.0;
-
     gridMaxMappedParticleID[g] = -1;
+
+    // -------------------------------------------------------------------------
+    // Node-only 3-component fields.
+    // -------------------------------------------------------------------------
 
     for( int i = 0; i < 3; ++i )
     {
@@ -5954,10 +6087,18 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridPrincipalExplicitSurfaceNormal[g][i] = 0.0;
     }
 
+    // Background stress is stored in 6-component Voigt form.
     LvArray::tensorOps::fill< 6 >( gridBackgroundStress[g], 0.0 );
 
-    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    // -------------------------------------------------------------------------
+    // Fields indexed by node and velocity/contact field.
+    // -------------------------------------------------------------------------
+
+    for( localIndex fieldIndex = 0;
+         fieldIndex < numVelocityFields;
+         ++fieldIndex )
     {
+      // Scalar fields.
       gridSurfaceFieldMass[g][fieldIndex] = 0.0;
       gridCohesiveFieldFlag[g][fieldIndex] = 0;
 
@@ -5968,30 +6109,38 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridFieldGradientAlignment[g][fieldIndex] = 0.0;
       gridMassWeightedDamage[g][fieldIndex] = 0.0;
 
-      gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0;
+      gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0.0;
       gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
-
       gridSurfaceArea[g][fieldIndex] = 0.0;
 
-      LvArray::tensorOps::fill< 3 >( gridBasedSurfaceNormal[g][fieldIndex], 0.0 );
-      LvArray::tensorOps::fill< 3 >( gridBasedSurfacePosition[g][fieldIndex], 0.0 );
+      // Development / diagnostic vectors.
+      LvArray::tensorOps::fill< 3 >(
+        gridBasedSurfaceNormal[g][fieldIndex], 0.0 );
 
+      LvArray::tensorOps::fill< 3 >(
+        gridBasedSurfacePosition[g][fieldIndex], 0.0 );
+
+      // 3-component vector fields.
       for( int i = 0; i < 3; ++i )
       {
         gridCenterOfMass[g][fieldIndex][i] = 0.0;
         gridDisplacement[g][fieldIndex][i] = 0.0;
         gridCenterOfVolume[g][fieldIndex][i] = 0.0;
+
         gridVelocity[g][fieldIndex][i] = 0.0;
         gridDVelocity[g][fieldIndex][i] = 0.0;
         gridMomentum[g][fieldIndex][i] = 0.0;
         gridAcceleration[g][fieldIndex][i] = 0.0;
+
         gridInternalForce[g][fieldIndex][i] = 0.0;
         gridExternalForce[g][fieldIndex][i] = 0.0;
         gridSurfaceTensionForce[g][fieldIndex][i] = 0.0;
         gridContactForce[g][fieldIndex][i] = 0.0;
+
         gridNormalStress[g][fieldIndex][i] = 0.0;
         gridCohesiveArea[g][fieldIndex][i] = 0.0;
         gridCohesiveForce[g][fieldIndex][i] = 0.0;
+
         gridParticleSurfaceNormal[g][fieldIndex][i] = 0.0;
         gridSurfaceNormal[g][fieldIndex][i] = 0.0;
         gridSurfacePosition[g][fieldIndex][i] = 0.0;
@@ -5999,7 +6148,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     }
   } );
 }
-
 
 void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                        const real64 time_n,
