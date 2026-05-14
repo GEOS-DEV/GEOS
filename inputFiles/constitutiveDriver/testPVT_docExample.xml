@@ -41,7 +41,7 @@
       feedComposition="{ 1.0, 0.0 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
+      steps="50"
       output="pvtOutput.txt"
       logLevel="1"/>
   </Tasks>
