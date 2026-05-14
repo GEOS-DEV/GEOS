@@ -8,8 +8,8 @@
       feedComposition="{ 0.1, 0.9 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_hydrogenMixtureA.txt"
+      steps="50"
+      output="testPVT_hydrogenMixtureA.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -18,8 +18,8 @@
       feedComposition="{ 0.5, 0.5 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_hydrogenMixtureB.txt"
+      steps="50"
+      output="testPVT_hydrogenMixtureB.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -28,8 +28,8 @@
       feedComposition="{ 1.0, 0.0 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_CO2.txt"
+      steps="50"
+      output="testPVT_CO2.txt"
       logLevel="1"/>
 
     <PVTDriver
@@ -38,10 +38,15 @@
       feedComposition="{ 0.0, 1.0 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
-      baseline="testPVT_brine.txt"
+      steps="50"
+      output="testPVT_Brine.txt"
       logLevel="1"/>
   </Tasks>
+
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 
   <Events
     maxTime="1">
@@ -60,6 +65,12 @@
     <SoloEvent
       name="eventD"
       target="/Tasks/testBrine"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <Constitutive>
@@ -68,11 +79,8 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      pressureCoordinates="{1e6, 5e7}"
-      pressureInterval="1e6"
-      temperatureCoordinates="{340, 460}"
-      temperatureInterval="10"
-      salinity="1.0" />
+      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt" />
 
     <CompositionalMultiphaseFluid
       name="hydrogenMixture"
@@ -98,25 +106,4 @@
       coordinates="{ 0.0, 1.0 }"
       values="{ 350, 350 }"/>
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>
