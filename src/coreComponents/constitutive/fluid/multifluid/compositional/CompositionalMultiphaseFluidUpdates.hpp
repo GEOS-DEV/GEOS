@@ -340,7 +340,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
                           phaseEnthalpy,
                           std::make_index_sequence< NUM_PHASES >{} );
 
-  // 5. Convert derivatives from phase composition to total composition
+  // 4. Convert derivatives from phase composition to total composition
   stackArray1d< real64, maxNumDof > workSpace( numDof );
   for( integer ip = 0; ip < NUM_PHASES; ++ip )
   {
@@ -365,7 +365,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::compute(
     }
   }
 
-  // 4. Calculate the internal energy
+  // 5. Calculate the internal energy
   if constexpr (isThermalType())
   {
     computeInternalEnergy( pressure,
