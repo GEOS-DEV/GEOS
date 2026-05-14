@@ -1021,7 +1021,7 @@ MultiFluidBase::KernelWrapper::
   integer const numComp = numComponents();
 
   // Space for dummy derivatives
-  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > derivatives( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, 2*maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > derivatives( 2, 1, numPhase, numComp+2 );
 
   using SliceType = MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >;
 
@@ -1029,7 +1029,7 @@ MultiFluidBase::KernelWrapper::
                          SliceType { phaseFrac, derivatives[0][0] },
                          SliceType { phaseMassDens, derivatives[0][0] },
                          SliceType { phaseEnthalpy, derivatives[0][0] },
-                         SliceType { phaseInternalEnergy, derivatives[0][0] } );
+                         SliceType { phaseInternalEnergy, derivatives[1][0] } );
 }
 
 GEOS_HOST_DEVICE
