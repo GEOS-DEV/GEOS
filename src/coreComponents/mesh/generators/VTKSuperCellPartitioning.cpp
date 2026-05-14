@@ -122,7 +122,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
     if( visited.count( cell ) )
       return;
     visited.insert( cell );
-    cellToSuperCell.insert_or_assign( cell, superCellId );
+    cellToSuperCell.try_emplace( cell, superCellId );
     component.push_back( cell );
 
     // Recursively visit all neighbors
@@ -144,7 +144,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
       stdVector< vtkIdType > component;
       dfs( cell, nextSuperCellId, component );
 
-      superCellComponents.insert_or_assign( nextSuperCellId, component );
+      superCellComponents.try_emplace( nextSuperCellId, component );
       nextSuperCellId++;
     }
   }
@@ -159,8 +159,8 @@ SuperCellInfo tagCellsWithSuperCellIds(
 
   for( auto const & [scId, members] : superCellComponents )
   {
-    info.superCellToOriginalCells[scId] = members;
-    info.vertexWeights[scId] = computeSuperCellWeight( members.size(), fractureWeight );
+    info.superCellToOriginalCells.try_emplace( scId, members );
+    info.vertexWeights.try_emplace( scId, computeSuperCellWeight( members.size(), fractureWeight ) );
 
     if( members.size() > 1 )
     {
@@ -241,8 +241,8 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
 
   for( auto const & [scId, cells] : localSuperCells )
   {
-    info.superCellToOriginalCells[scId] = cells;
-    info.vertexWeights[scId] = computeSuperCellWeight( cells.size(), fractureWeight );
+    info.superCellToOriginalCells.try_emplace( scId, cells );
+    info.vertexWeights.try_emplace( scId, computeSuperCellWeight( cells.size(), fractureWeight ) );
 
     if( cells.size() > 1 )
     {
@@ -567,7 +567,7 @@ buildSuperCellGraph(
   stdMap< vtkIdType, pmet_idx_t > superCellIdToGlobalIdx;
   for( pmet_idx_t i = 0; i < numLocalSuperCells; ++i )
   {
-    superCellIdToGlobalIdx.insert_or_assign( orderedSuperCellIds[i], localGlobalStart + i );
+    superCellIdToGlobalIdx.try_emplace( orderedSuperCellIds[i], localGlobalStart + i );
   }
 
   // -----------------------------------------------------------------------
@@ -588,8 +588,8 @@ buildSuperCellGraph(
     vtkIdType vtkGlobalId = cellGlobalIds->GetValue( i );
     vtkIdType superCellId = superCellIdArray->GetValue( i );
 
-    localGlobalCellToSuperCell.insert_or_assign( vtkGlobalId, superCellId );
-    localParmetisToVtk.insert_or_assign( localParmetisStart + i, vtkGlobalId );
+    localGlobalCellToSuperCell.try_emplace( vtkGlobalId, superCellId );
+    localParmetisToVtk.try_emplace( localParmetisStart + i, vtkGlobalId );
   }
 
   // -----------------------------------------------------------------------
@@ -656,8 +656,8 @@ buildSuperCellGraph(
       vtkIdType const vtkId = allVtkIds[i];
       vtkIdType const superCellId = allSuperCellIds[i];
 
-      parmetisToVtk.insert_or_assign( parmetisIdx, vtkId );
-      vtkToSuperCell.insert_or_assign( vtkId, superCellId );
+      parmetisToVtk.try_emplace( parmetisIdx, vtkId );
+      vtkToSuperCell.try_emplace( vtkId, superCellId );
     }
   }
 
