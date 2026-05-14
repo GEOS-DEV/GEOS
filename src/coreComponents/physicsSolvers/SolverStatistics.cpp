@@ -143,7 +143,7 @@ void IterationsStatistics::updateTimeStepCut()
 
 void IterationsStatistics::writeIterationStatsToTable()
 {
-  if( m_numTimeSteps == 0 || !m_logOutputRequest || MpiWrapper::commRank() != 0 )
+  if( m_numTimeSteps == 0 || !m_logOutputRequest )
     return;
 
   m_iterationData.addRow( m_numTimeSteps,
@@ -157,18 +157,21 @@ void IterationsStatistics::writeIterationStatsToTable()
                           m_setupTime,
                           m_solveTime );
 
-  if( !m_CSVOutputOpened )
+  if( MpiWrapper::commRank() == 0 )
   {
-    m_logStream.open( m_iterationsFilename );
-    m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
-    m_logStream << m_iterationCSVFormatter->headerToString( );
-    m_CSVOutputOpened  = true;
+    if( !m_CSVOutputOpened )
+    {
+      m_logStream.open( m_iterationsFilename );
+      m_iterationCSVFormatter = std::make_unique< TableCSVFormatter >( m_iterationCSVLayout );
+      m_logStream << m_iterationCSVFormatter->headerToString( );
+      m_CSVOutputOpened  = true;
+    }
+
+    m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
+    m_logStream.flush();
   }
 
-  m_logStream << m_iterationCSVFormatter->dataToString( m_iterationData );
-  m_logStream.flush();
   m_iterationData.clear();
-
   resetSolverLinearTime();
 }
 
@@ -205,7 +208,7 @@ ConvergenceStatistics::ConvergenceStatistics():
 
 void ConvergenceStatistics::writeConvergenceStatsToTable()
 {
-  if( !m_CSVOutputRequest || MpiWrapper::commRank() != 0 )
+  if( !m_CSVOutputRequest )
     return;
   stdVector< TableData::CellData > residualsNormCells;
 
@@ -229,23 +232,27 @@ void ConvergenceStatistics::writeConvergenceStatsToTable()
 
   m_convergenceData.addRow( residualsNormCells );
 
-  if( !m_CSVOutputOpened )
+  if( MpiWrapper::commRank() == 0 )
   {
-    string_array header = {"Cycle number", "time_n (s)", "dt (s)", "iteration"};
-    for( auto const & residual : m_residuals )
+    if( !m_CSVOutputOpened )
     {
-      header.emplace_back( residual.first );
-    }
-    m_convergenceLayout.addColumns( header );
+      string_array header = {"Cycle number", "time_n (s)", "dt (s)", "iteration"};
+      for( auto const & residual : m_residuals )
+      {
+        header.emplace_back( residual.first );
+      }
+      m_convergenceLayout.addColumns( header );
 
-    m_logStream.open( m_convergenceFilename );
-    m_convergenceFormatter = std::make_unique< TableCSVFormatter >( m_convergenceLayout );
-    m_logStream << m_convergenceFormatter->headerToString( );
-    m_CSVOutputOpened  = true;
+      m_logStream.open( m_convergenceFilename );
+      m_convergenceFormatter = std::make_unique< TableCSVFormatter >( m_convergenceLayout );
+      m_logStream << m_convergenceFormatter->headerToString( );
+      m_CSVOutputOpened  = true;
+    }
+
+    m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );
+    m_logStream.flush();
   }
 
-  m_logStream << m_convergenceFormatter->dataToString( m_convergenceData );
-  m_logStream.flush();
   m_convergenceData.clear();
 }
 
