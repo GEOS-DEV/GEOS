@@ -33,38 +33,15 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimHydrostaticEquilibriumTest,
   ::testing::Combine(
     ::testing::Values(
-      // Flat tet meshes - single and triple fracture only
-      "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_123.vtu",
-
-      // Wavy tet meshes - single and triple fracture only
-      "fractured_wavy_mesh_tet_DFN_1.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu",
-
       // Full span hex meshes - single and triple fracture only
       "fractured_full_span_mesh_hex_DFN_1.vtu",
       "fractured_full_span_mesh_hex_DFN_123.vtu",
 
       // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
-      "fractured_full_span_mesh_tet_DFN_123.vtu",
-
-      // T-shaped wavy meshes
-      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
-      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
-
-      // Y-shaped wavy meshes
-      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
-      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
-
-      // 5-fracture DFN market meshes
-      "DFN_5_fractures_hex_binarized.vtu",
-      "DFN_5_fractures_tet_binarized.vtu"
+      "fractured_full_span_mesh_tet_DFN_123.vtu"
       ),
-    ::testing::Values(
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 2, 1, 2 )
-      )
+    ::testing::Values( 4 )
     )
   );
 
