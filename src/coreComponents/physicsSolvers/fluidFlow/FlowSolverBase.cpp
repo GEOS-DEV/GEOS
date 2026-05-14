@@ -112,14 +112,14 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 }
 
 template< typename POROUSWRAPPER_TYPE >
-void updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
-                                                                      SurfaceElementSubRegion & subRegion,
-                                                                      arrayView1d< real64 const > const & pressure,
-                                                                      arrayView1d< real64 const > const & oldHydraulicAperture,
-                                                                      arrayView1d< real64 const > const & newHydraulicAperture,
-                                                                      arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
-                                                                      arrayView2d< real64 const > const & dispJump,
-                                                                      arrayView2d< real64 const > const & fracTraction )
+void updatePorosityAndPermeabilityFromPressureApertureJumpAndTraction( POROUSWRAPPER_TYPE porousWrapper,
+                                                                       SurfaceElementSubRegion & subRegion,
+                                                                       arrayView1d< real64 const > const & pressure,
+                                                                       arrayView1d< real64 const > const & oldHydraulicAperture,
+                                                                       arrayView1d< real64 const > const & newHydraulicAperture,
+                                                                       arrayView1d< real64 const > const & dHydraulicAperture_dNormalJump,
+                                                                       arrayView2d< real64 const > const & dispJump,
+                                                                       arrayView2d< real64 const > const & fracTraction )
 {
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_DEVICE ( localIndex const k )
   {
@@ -699,9 +699,9 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
         arrayView2d< real64 const > const fractureTraction = subRegion.getField< fields::contact::traction >();
         /*dHydraulicAperture_dNormalJump dummy entry*/
         arrayView1d< real64 const > const unusedDeriv = subRegion.getField< flow::aperture0 >();
-        updatePorosityAndPermeabilityFromPressurApertureJumpAndTraction( porousWrapper,
-                                                                         subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
-                                                                         dispJump, fractureTraction );
+        updatePorosityAndPermeabilityFromPressureApertureJumpAndTraction( porousWrapper,
+                                                                          subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, unusedDeriv,
+                                                                          dispJump, fractureTraction );
       }
       else
       {
