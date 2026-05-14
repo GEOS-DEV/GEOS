@@ -153,7 +153,7 @@ private:
   arrayView1d< integer const > const m_phaseOrder;
 
   // Phase model kernel wrappers stored in a tuple
-  std::tuple< typename PHASES::KernelWrapper... > m_phases;
+  camp::tuple< typename PHASES::KernelWrapper... > m_phases;
 
   // Backup variables
   MultiFluidBase::PhaseComp::ViewValueType m_kValues;
@@ -244,7 +244,7 @@ void CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::computePhaseProper
   std::index_sequence< Is... > ) const
 {
   // Density computations
-  ( std::get< Is >( m_phases ).density.compute(
+  ( camp::get< Is >( m_phases ).density.compute(
       m_componentProperties,
       pressure,
       temperature,
@@ -256,7 +256,7 @@ void CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::computePhaseProper
       m_useMass ), ... );
 
   // Viscosity computations
-  ( std::get< Is >( m_phases ).viscosity.compute(
+  ( camp::get< Is >( m_phases ).viscosity.compute(
       m_componentProperties,
       pressure,
       temperature,
@@ -270,7 +270,7 @@ void CompositionalMultiphaseFluidUpdates< FLASH, PHASES... >::computePhaseProper
   if constexpr (isThermalType())
   {
     // Enthalpy computations
-    ( std::get< Is >( m_phases ).enthalpy.compute(
+    ( camp::get< Is >( m_phases ).enthalpy.compute(
         m_componentProperties,
         pressure,
         temperature,
