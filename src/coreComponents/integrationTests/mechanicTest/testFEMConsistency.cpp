@@ -23,16 +23,16 @@
 CommandLineOptions g_commandLineOptions;
 
 /**
- * @brief Serial execution test cases (single rank, partition 1x1x1).
+ * @brief Serial execution test cases (single rank, partition number 1).
  */
 INSTANTIATE_TEST_SUITE_P(
   FractureStressCasesSerial,
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-      // Flat hex meshes - single and triple fracture only
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_123.vtu",
+      // Wavy tet meshes - single and triple fracture only
+      "fractured_wavy_mesh_tet_DFN_1.vtu",
+      "fractured_wavy_mesh_tet_DFN_123.vtu",
 
       // Wavy hex meshes - single and triple fracture only
       "fractured_wavy_mesh_hex_DFN_1.vtu",
@@ -61,9 +61,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
-    ::testing::Values(
-      std::make_tuple( 1, 1, 1 )
-      )
+    ::testing::Values( 1 )
     )
   );
 
