@@ -32,6 +32,7 @@
 #include "MPMSolverFields.hpp"
 #include "events/mpmEvents/MPMEventManager.hpp"
 #include "mesh/CohesiveZoneManager.hpp"
+#include <bitset>
 
 namespace geos
 {
@@ -191,6 +192,165 @@ public:
     LogisticRegression,
     DFGAndVolumeIntegration
   };
+
+  /**
+   * @brief Grid fields owned by this solver.
+   *
+   * These ids are used to build a run-specific field-requirement set before
+   * fields are registered on the mesh.  All later grid registration, resizing,
+   * labeling, zeroing and communication lists should consult this set before
+   * touching a grid wrapper.
+   */
+  enum class GridFieldId : integer
+  {
+    ExternalForce,
+    InternalForce,
+    SurfaceTensionForce,
+    Displacement,
+    CenterOfVolume,
+    ParticleMappedSurfaceNormal,
+
+    Mass,
+    MaterialVolume,
+    Velocity,
+    DVelocity,
+    Momentum,
+    Acceleration,
+    ContactForce,
+    Damage,
+    DamageGradient,
+    MaxDamage,
+    FieldGradientAlignment,
+
+    SurfaceNormalWeights,
+    SurfaceNormalWeightNormalization,
+    SurfaceNormal,
+    SurfacePosition,
+    SurfaceArea,
+
+    CenterOfMass,
+    NormalStress,
+    MassWeightedDamage,
+    CohesiveNode,
+    ReferenceAreaVector,
+    ReferenceSurfacePosition,
+    ReferenceMaterialVolume,
+
+    BackgroundStress,
+
+    SurfaceMass,
+    SurfaceFieldMass,
+    ExplicitSurfaceNormal,
+    MaxMappedParticleID,
+    PrincipalExplicitSurfaceNormal,
+    CohesiveFieldFlag,
+    CohesiveArea,
+    CohesiveForce,
+
+    VPlus,
+    DVPlus,
+
+    BasedSurfaceNormal,
+    BasedSurfacePosition,
+
+    Count
+  };
+
+  /**
+   * @brief Particle fields owned by this solver.
+   *
+   * This intentionally includes both always-required fields and option-driven
+   * scratch/diagnostic fields.  The first migration stage keeps the many
+   * historically unconditional particle fields in the core set, but moves all
+   * option-driven fields behind the same central requirement mechanism used for
+   * grid fields.
+   */
+  enum class ParticleFieldId : integer
+  {
+    MaterialType,
+    Mass,
+    Density,
+    ReferenceVolume,
+    ReferencePorosity,
+    CrystalHealFlag,
+    DeleteFlag,
+    Wavespeed,
+    KineticEnergy,
+    CohesiveZoneFlag,
+    Color,
+
+    BodyForce,
+    Stress,
+    PlasticStrain,
+    DamageGradient,
+    ReferencePosition,
+    ReferenceMaterialDirection,
+    ReferenceSurfaceNormal,
+    ReferenceSurfacePosition,
+    ReferenceSurfaceTraction,
+    CohesiveForce,
+    ReferenceMappedNodes,
+    ReferenceShapeFunctionValues,
+    CohesiveFieldMapping,
+    CohesiveReferencePosition,
+    CohesiveReferenceSurfaceNormal,
+    CohesiveReferenceSurfacePosition,
+    CohesiveReferenceDeformationGradient,
+
+    ReferenceRVectors,
+    DeformationGradient,
+    FDot,
+    VelocityGradient,
+    ReferenceShapeFunctionGradientValues,
+
+    EstimatedSurfacePosition,
+    ReferenceTemperature,
+    DomainScaledFlag,
+    SPHJacobian,
+    Overlap,
+    SPHF,
+    SubdivideFlag,
+    CopyFlag,
+    HeatCapacity,
+    InternalEnergy,
+    ArtificialViscosity,
+    SurfaceCurvature,
+
+    Count
+  };
+
+private:
+  template< typename FIELD_ID, std::size_t N >
+  class FieldRequirementSet
+  {
+public:
+    void clear()
+    {
+      m_bits.reset();
+    }
+
+    void require( FIELD_ID const field )
+    {
+      m_bits.set( static_cast< std::size_t >( field ) );
+    }
+
+    template< typename ... FIELD_IDS >
+    void requireAll( FIELD_IDS const ... fields )
+    {
+      int const dummy[] = { 0, ( require( fields ), 0 )... };
+      (void) dummy;
+    }
+
+    bool has( FIELD_ID const field ) const
+    {
+      return m_bits.test( static_cast< std::size_t >( field ) );
+    }
+
+private:
+    std::bitset< N > m_bits;
+  };
+
+public:
 
   /**
    * Constructor
@@ -493,6 +653,52 @@ public:
   void computeOrthonormalBasis( const real64 * e1,  // input "normal" unit vector.
                                 real64 * e2,        // output "tangential" unit vector.
                                 real64 * e3 );      // output "tangential" unit vector.
+
+  void buildFieldRequirements( Group & meshBodies );
+
+  void requireCoreFieldSet();
+
+  void requireContactFieldSet();
+
+  void requireSurfaceGeometryFieldSet();
+
+  void requireCohesiveFieldSet();
+
+  void requireReferenceGridFieldSet();
+
+  void requireXPICFMPMFieldSet();
+
+  void requireThermalParticleFieldSet();
+
+  void registerGridFields( NodeManager & nodeManager );
+
+  void resizeGridFields( NodeManager & nodeManager,
+                         localIndex const numNodes );
+
+  bool isGridFieldRequired( GridFieldId const field ) const;
+
+  bool isParticleFieldRequired( ParticleFieldId const field ) const;
+
+  char const * gridFieldName( GridFieldId const field ) const;
+
+  void appendRequiredGridFieldName( stdVector< std::string > & fieldNames,
+                                    GridFieldId const field ) const;
+
+  void zeroCoreGridFields( NodeManager & nodeManager );
+
+  void zeroContactGridFields( NodeManager & nodeManager );
+
+  void zeroSurfaceGeometryGridFields( NodeManager & nodeManager );
+
+  void zeroCohesiveGridFields( NodeManager & nodeManager );
+
+  void zeroReferenceGridFields( NodeManager & nodeManager );
+
+  void zeroXPICFMPMGridFields( NodeManager & nodeManager );
+
+  void zeroSurfaceAreaGridField( NodeManager & nodeManager );
+
+  void zeroSurfaceTensionGridField( NodeManager & nodeManager );
 
   void setGridFieldLabels( NodeManager & nodeManager );
 
@@ -1240,6 +1446,11 @@ protected:
   // Misc
   int m_computeNodalArea;
   int m_useNodePosForArea;
+
+  FieldRequirementSet< GridFieldId,
+                       static_cast< std::size_t >( GridFieldId::Count ) > m_requiredGridFields;
+  FieldRequirementSet< ParticleFieldId,
+                       static_cast< std::size_t >( ParticleFieldId::Count ) > m_requiredParticleFields;
 
 private:
   struct BinKey
