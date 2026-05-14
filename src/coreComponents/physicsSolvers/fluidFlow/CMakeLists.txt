@@ -24,6 +24,7 @@ set( fluidFlowSolvers_headers
      CompositionalMultiphaseBaseFields.hpp
      CompositionalMultiphaseStatistics.hpp
      CompositionalMultiphaseFVM.hpp
+     CompositionalMultiphaseFVM_applyFaceDirichletBC.cpp
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
      ImmiscibleMultiphaseFlow.hpp
