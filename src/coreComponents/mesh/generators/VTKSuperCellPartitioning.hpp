@@ -50,10 +50,10 @@ enum class InitialDistributionStrategy
 struct SuperCellInfo
 {
   /// SuperCellId to global cell IDs
-  std::map< vtkIdType, std::vector< vtkIdType > > superCellToOriginalCells;
+  stdMap< vtkIdType, stdVector< vtkIdType > > superCellToOriginalCells;
 
   /// SuperCellId to vertex weight
-  std::map< vtkIdType, vtkIdType > vertexWeights;
+  stdMap< vtkIdType, vtkIdType > vertexWeights;
 
   /// SuperCellIds containing multiple cells
   std::set< vtkIdType > atomicSuperCells;
