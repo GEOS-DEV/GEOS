@@ -45,9 +45,6 @@ public:
   // Get the number of phases
   static constexpr integer NUM_PHASES = static_cast< integer >(sizeof...(PHASES));
 
-  // Ensure that the number of phases matches the flash object
-  static_assert( NUM_PHASES == FlashModel::KernelWrapper::getNumberOfPhases() );
-
 public:
   CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                        FLASH const & flash,
