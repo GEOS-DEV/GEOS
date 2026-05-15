@@ -56,7 +56,7 @@ extern CommandLineOptions g_commandLineOptions;
  * - bool: Whether to run the flow solver (true) or just check initialization (false).
  * - tuple<int, int, int>: Number of partitions in the x, y, z directions.
  */
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, std::tuple< int, int, int > > >
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, int > >
 {
 protected:
   void SetUp() override
@@ -181,10 +181,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
   bool const runSolver = std::get< 1 >( GetParam() );
-  std::tuple< int, int, int > const & partitions = std::get< 2 >( GetParam() );
-  int const xPartitions = std::get< 0 >( partitions );
-  int const yPartitions = std::get< 1 >( partitions );
-  int const zPartitions = std::get< 2 >( partitions );
+  int const n_partitions = std::get< 2 >( GetParam() );
 
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
@@ -214,9 +211,9 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
     options->inputFileNames.push_back( xmlPath );
     options->problemName = "test_mixed_dim_single_phase_flow";
 
-    options->xPartitionsOverride = xPartitions;
-    options->yPartitionsOverride = yPartitions;
-    options->zPartitionsOverride = zPartitions;
+    options->xPartitionsOverride = n_partitions;
+    options->yPartitionsOverride = 0;
+    options->zPartitionsOverride = 0;
     options->overridePartitionNumbers = true;
 
     GeosxState state( std::move( options ) );

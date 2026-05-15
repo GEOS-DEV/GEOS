@@ -16,10 +16,18 @@ on:
       CMAKE_BUILD_TYPE:
         required: true
         type: string
+      CMAKE_CUDA_ARCHITECTURES:
+        required: false
+        type: string
+        default: ''
       CODE_COVERAGE:
         required: false
         type: boolean
         default: false
+      CTEST_PARALLEL_LEVEL:
+        required: false
+        type: string
+        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -626,6 +634,9 @@ jobs:
         if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
           script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
         fi
+        if [ ! -z "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}" ]; then
+          script_args+=(--cmake-cuda-architectures "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}")
+        fi
 
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
         # are passed as scripts parameters. Specific care must be taken to be sure
@@ -669,6 +680,10 @@ jobs:
         fi
         docker_args+=(--name ${CONTAINER_NAME})
 
+
+        if [[ -n "${{ inputs.CTEST_PARALLEL_LEVEL }}" ]]; then
+          script_args+=(--ctest-parallel-level "${{ inputs.CTEST_PARALLEL_LEVEL }}")
+        fi
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
@@ -859,4 +874,3 @@ jobs:
           -v "${GITHUB_WORKSPACE}:/tmp/geos" \
           alpine:3.20 \
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
-
