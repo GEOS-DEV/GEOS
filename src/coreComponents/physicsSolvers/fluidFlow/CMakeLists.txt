@@ -147,7 +147,6 @@ set( fluidFlowSolvers_headers
 set( fluidFlowSolvers_sources
      CompositionalMultiphaseBase.cpp
      CompositionalMultiphaseFVM.cpp
-     CompositionalMultiphaseFVM_applyFaceDirichletBC.cpp
      CompositionalMultiphaseStatistics.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
