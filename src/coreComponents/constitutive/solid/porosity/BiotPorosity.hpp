@@ -22,6 +22,7 @@
 
 #include "PorosityBase.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -191,11 +192,11 @@ public:
     m_shearModulus[k] = shearModulus;
 
     GEOS_THROW_IF( m_bulkModulus[k] <= 0,
-                   GEOS_FMT( "{}: the rock bulk modulus {} must be strictly positive", getFullName(), k ),
+                   GEOS_FMT( "Element {}: the rock bulk modulus must be strictly positive", k ),
                    InputError );
 
     GEOS_THROW_IF_GT_MSG( m_bulkModulus[k], m_grainBulkModulus[k],
-                          GEOS_FMT( "{}: the rock bulk modulus {} cannot be greater than the grain bulk modulus {}", getFullName(), k ),
+                          GEOS_FMT( "Element {}: the rock bulk modulus cannot be greater than the grain bulk modulus", k ),
                           InputError );
 
     m_biotCoefficient[k] =  1.0 - bulkModulus / m_grainBulkModulus[k];
