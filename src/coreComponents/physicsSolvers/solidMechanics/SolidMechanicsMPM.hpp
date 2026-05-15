@@ -341,6 +341,7 @@ public:
     static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
     static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
     static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
+    static constexpr char const * gridUncontactedVelocityString() { return "gridUncontactedVelocity"; }
     static constexpr char const * gridVelocityString() { return "gridVelocity"; }
     static constexpr char const * gridVPlusString() { return "gridVPlus"; }
     static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
@@ -441,6 +442,33 @@ public:
   void updateGridDynamicsAndContactForExplicitStep( real64 const dt,
                                                     ParticleManager & particleManager,
                                                     NodeManager & nodeManager );
+
+  /**
+   * @brief Applies already-computed essential boundary constraints to the FMPM uncontacted seed velocity.
+   *
+   * The uncontacted seed is saved before material contact, then constrained after the usual essential-boundary
+   * pass so Net contact can distinguish prescribed boundary motion from material-contact impulse.
+   */
+  void applyFMPMUncontactedVelocityBoundaryConditions( NodeManager & nodeManager );
+
+  /**
+   * @brief Applies homogeneous moving/symmetry boundary constraints to one FMPM velocity increment.
+   *
+   * The first-order FMPM seed contains the prescribed boundary velocity. Higher-order increments must therefore
+   * have zero constrained components so the accumulated FMPM velocity preserves the prescribed motion.
+   */
+  void applyFMPMVelocityIncrementBoundaryConditions( NodeManager & nodeManager,
+                                                    arrayView3d< real64 > const velocityIncrement );
+
+  /**
+   * @brief Copies constrained boundary components from one FMPM grid velocity field to another.
+   *
+   * Unconstrained components are left unchanged in the destination field. Buffer-node values are rebuilt from the
+   * destination interior field with the same moving-grid mirror relation used by the explicit boundary update.
+   */
+  void copyConstrainedFMPMBoundaryVelocity( NodeManager & nodeManager,
+                                            arrayView3d< real64 > const destinationVelocity,
+                                            arrayView3d< real64 const > const sourceVelocity );
 
   void applyPrescribedDeformationAndBoundaryConditionsForExplicitStep( real64 const dt,
                                                                        real64 const time_n,
@@ -575,7 +603,59 @@ public:
                              ParticleManager & particleManager,
                              NodeManager & nodeManager );
 
+  /**
+   * @brief Computes the cumulative material-contact impulse target for FMPM Net contact.
+   *
+   * The target is evaluated from the accumulated uncorrected FMPM velocity. The caller applies only the
+   * difference between this target and the previously applied cumulative impulse to the current increment.
+   */
+  void computeFMPMNetContactMomentumTarget( real64 const dt,
+                                            ParticleManager & particleManager,
+                                            NodeManager & nodeManager,
+                                            arrayView3d< real64 const > const vUncorrectedTotal,
+                                            arrayView3d< real64 > const contactMomentumTarget );
+
   void initializeFrictionCoefficients();
+
+  /**
+   * @brief Computes the impulse form of the pairwise nodal contact law.
+   *
+   * This helper mirrors computePairwiseNodalContactForce, but returns contact impulse directly so FMPM Net
+   * contact can accumulate and compare total momentum corrections between FMPM orders.
+   */
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
+                                           OverlapCorrectionOption const & overlapCorrection,
+                                           real64 const (&hEl) [3],
+                                           int const & planeStrain,
+                                           real64 const & smallMass,
+                                           int const & useSurfacePositionForContact,
+                                           int const & useCohesiveTangentialForces,
+                                           int & separable,
+                                           real64 const & dt,
+                                           real64 const & frictionCoefficient,
+                                           real64 ( &nAB )[3],
+                                           real64 const & mA,
+                                           real64 const & mB,
+                                           real64 const & VA,
+                                           real64 const & VB,
+                                           arraySlice1d< real64 const > const vA,
+                                           arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
+                                           real64 const & qA0,
+                                           real64 const & qA1,
+                                           real64 const & qA2,
+                                           real64 const & qB0,
+                                           real64 const & qB1,
+                                           real64 const & qB2,
+                                           real64 const spmA,
+                                           real64 const spmB,
+                                           arraySlice1d< real64 const > const sA,
+                                           arraySlice1d< real64 const > const sB,
+                                           arraySlice1d< real64 const > const xA,
+                                           arraySlice1d< real64 const > const xB,
+                                           arraySlice1d< real64 > const jA,
+                                           arraySlice1d< real64 > const jB );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
@@ -919,11 +999,32 @@ public:
                           DomainPartition & domain,
                           MeshLevel & mesh );
 
+  /**
+   * @brief Performs the revised incremental FMPM particle update.
+   *
+   * The method builds v^{+(k)} from round-trip grid-particle-grid velocity increments, constrains each
+   * higher-order increment on moving/symmetry boundaries, optionally applies FMPM Net material contact, and maps
+   * the corrected velocity back to particles for velocity, position, and velocity-gradient updates.
+   */
   void performFMPMUpdate( real64 dt,
                           ParticleManager & particleManager,
                           NodeManager & nodeManager,
                           DomainPartition & domain,
                           MeshLevel & mesh );
+
+  /**
+   * @brief Applies one FMPM Net material-contact correction to the current velocity increment.
+   *
+   * The update is Delta v <- Delta v + ( J_target - J_previous ) / M. After the correction, J_previous is replaced
+   * by J_target.
+   */
+  void applyFMPMNetContactCorrection( real64 const dt,
+                                      ParticleManager & particleManager,
+                                      NodeManager & nodeManager,
+                                      arrayView3d< real64 const > const vUncorrectedTotal,
+                                      arrayView3d< real64 > const contactMomentumNet,
+                                      arrayView3d< real64 > const contactMomentumTarget,
+                                      arrayView3d< real64 > const velocityIncrement );
 
   void updateSolverDependencies( ParticleManager & particleManager );
 

@@ -1762,6 +1762,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the material volume on the nodes." );
 
+      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "An array that holds the grid velocity before material-contact enforcement." );
+
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVelocityString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
@@ -2363,6 +2368,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() ).resize( numNodes, m_numVelocityFields );
 
+  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() ).resize( numNodes, m_numVelocityFields, 3 );
@@ -2866,8 +2872,40 @@ void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 cons
                                                                      NodeManager & nodeManager )
 {
   gridTrialUpdate( dt, nodeManager );
+
+  /*
+   * FMPM Net contact needs two first-order grid velocities. gridVelocity is
+   * about to become the ordinary lumped velocity after material contact, while
+   * gridUncontactedVelocity stores the same trial velocity before material
+   * contact. The FMPM contact correction then measures the cumulative contact
+   * impulse as:
+   *
+   *   J_contact = M * ( v_contacted - v_uncontacted ).
+   */
+  arrayView3d< real64 > const gridUncontactedVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() );
+  arrayView3d< real64 const > const gridVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+  int const numVelocityFields = m_numVelocityFields;
+
+  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      for( int i = 0; i < 3; ++i )
+      {
+        gridUncontactedVelocity[g][fieldIndex][i] = gridVelocity[g][fieldIndex][i];
+      }
+    }
+  } );
+
   if( m_enableContact == 1 && m_hasContact == 1 )
   {
+    /*
+     * Ordinary lumped contact is still applied to the first-order velocity.
+     * performFMPMUpdate() will use gridUncontactedVelocity to initialize the
+     * Net-method cumulative material-contact impulse.
+     */
     enforceContact( dt,
                     particleManager,
                     nodeManager );
@@ -2876,6 +2914,356 @@ void SolidMechanicsMPM::updateGridDynamicsAndContactForExplicitStep( real64 cons
   {
     computeNodalAreas( nodeManager );
   }
+}
+
+/**
+ * @brief Copies only constrained boundary velocity components from one grid velocity field to another.
+ *
+ * This is used by FMPM Net contact to build the first-order uncontacted seed velocity. The destination
+ * velocity remains free of material-contact corrections in unconstrained components, while prescribed
+ * normal moving-boundary values and optional prescribed transverse values are copied from the already
+ * constrained source velocity. Buffer nodes are rebuilt from the destination interior field so their
+ * normal component remains consistent with the moving-grid mirror condition:
+ *
+ *   v_buffer,n = -v_interior,n + 2 v_boundary,n.
+ *
+ * The function intentionally copies only constrained components. For FMPM Net
+ * contact, unconstrained components of the destination are allowed to remain
+ * material-contact-free so they can represent the uncorrected velocity used by
+ * the incremental contact target.
+ */
+void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
+  NodeManager & nodeManager,
+  arrayView3d< real64 > const destinationVelocity,
+  arrayView3d< real64 const > const sourceVelocity )
+{
+  localIndex const numDims =
+    m_numDims;
+
+  localIndex const numVelocityFields =
+    m_numVelocityFields;
+
+  integer nEl[3] = {};
+  // Tensor equation: nEl = m_nEl.
+  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  real64 xLocalMin[3] = {};
+  // Tensor equation: xLocalMin = m_xLocalMin.
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+
+  arrayView3d< localIndex const > const ijkMap =
+    m_ijkMap;
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+
+  Group & nodeSets =
+    nodeManager.sets();
+
+  array1d< SortedArray< localIndex > > & boundaryNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+
+  array1d< SortedArray< localIndex > > & bufferNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( BoundaryConditionOption::Contact ),
+                   "FMPM boundary contact requires a dedicated incremental boundary-contact law." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    int const positiveNormal =
+      face % 2;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const boundaryNodesView =
+      boundaryNodes[face].toView();
+
+    for( localIndex gg = 0; gg < boundaryNodesView.size(); ++gg )
+    {
+      localIndex const g =
+        boundaryNodesView[gg];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir0] =
+            sourceVelocity[g][fieldIndex][dir0];
+        }
+
+        if( constrainTransverseComponents && dir1 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir1] =
+            sourceVelocity[g][fieldIndex][dir1];
+        }
+
+        if( constrainTransverseComponents && dir2 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir2] =
+            sourceVelocity[g][fieldIndex][dir2];
+        }
+      }
+    }
+
+    SortedArrayView< localIndex const > const bufferNodesView =
+      bufferNodes[face].toView();
+
+    for( localIndex gg = 0; gg < bufferNodesView.size(); ++gg )
+    {
+      localIndex const g =
+        bufferNodesView[gg];
+
+      int ijk[3] = {};
+      ijk[dir0] =
+        positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * 2;
+      ijk[dir1] =
+        LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+      ijk[dir2] =
+        LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+      localIndex const gFrom =
+        ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      ijk[dir0] =
+        positiveNormal * ( nEl[dir0] - 1 ) + ( 1 - positiveNormal ) * 1;
+
+      localIndex const gBoundary =
+        ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir0] =
+            -destinationVelocity[gFrom][fieldIndex][dir0] +
+            2.0 * destinationVelocity[gBoundary][fieldIndex][dir0];
+        }
+
+        if( dir1 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir1] =
+            destinationVelocity[gFrom][fieldIndex][dir1];
+        }
+
+        if( dir2 < numDims )
+        {
+          destinationVelocity[g][fieldIndex][dir2] =
+            destinationVelocity[gFrom][fieldIndex][dir2];
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @brief Applies homogeneous essential velocity constraints to an FMPM velocity increment.
+ *
+ * The first-order FMPM seed already contains the full prescribed moving-boundary velocity. Higher-order
+ * FMPM increments must therefore have zero constrained boundary components. Buffer increments use the
+ * homogeneous version of the moving-grid mirror condition:
+ *
+ *   Delta v_buffer,n = -Delta v_interior,n,
+ *   Delta v_buffer,t =  Delta v_interior,t,
+ *
+ * because Delta v_boundary,n = 0 for a prescribed boundary component.
+ *
+ * This is the homogeneous counterpart of applyEssentialBCs(). It should be
+ * applied to every higher-order FMPM increment, not to the accumulated FMPM
+ * velocity, so the first-order prescribed velocity remains the only nonzero
+ * contribution on controlled components.
+ */
+void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
+  NodeManager & nodeManager,
+  arrayView3d< real64 > const velocityIncrement )
+{
+  localIndex const numDims =
+    m_numDims;
+
+  localIndex const numVelocityFields =
+    m_numVelocityFields;
+
+  integer nEl[3] = {};
+  // Tensor equation: nEl = m_nEl.
+  LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
+
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  real64 xLocalMin[3] = {};
+  // Tensor equation: xLocalMin = m_xLocalMin.
+  LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
+
+  arrayView3d< localIndex const > const ijkMap =
+    m_ijkMap;
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+
+  Group & nodeSets =
+    nodeManager.sets();
+
+  array1d< SortedArray< localIndex > > & boundaryNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+
+  array1d< SortedArray< localIndex > > & bufferNodes =
+    nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::bufferNodesString() );
+
+  for( int face = 0; face < 6; ++face )
+  {
+    int const boundaryType =
+      m_boundaryConditionTypes[face];
+
+    if( boundaryType == static_cast< int >( BoundaryConditionOption::Outflow ) )
+    {
+      continue;
+    }
+
+    GEOS_ERROR_IF( boundaryType == static_cast< int >( BoundaryConditionOption::Contact ),
+                   "FMPM with boundary contact requires a dedicated per-increment boundary-contact correction." );
+
+    int const dir0 =
+      face / 2;
+
+    int const dir1 =
+      ( dir0 + 1 ) % 3;
+
+    int const dir2 =
+      ( dir0 + 2 ) % 3;
+
+    int const positiveNormal =
+      face % 2;
+
+    bool const constrainTransverseComponents =
+      boundaryType == static_cast< int >( BoundaryConditionOption::Moving ) &&
+      m_enablePrescribedBoundaryTransverseVelocities[face] == 1;
+
+    SortedArrayView< localIndex const > const boundaryNodesView =
+      boundaryNodes[face].toView();
+
+    for( localIndex gg = 0; gg < boundaryNodesView.size(); ++gg )
+    {
+      localIndex const g =
+        boundaryNodesView[gg];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir0] =
+            0.0;
+        }
+
+        if( constrainTransverseComponents && dir1 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir1] =
+            0.0;
+        }
+
+        if( constrainTransverseComponents && dir2 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir2] =
+            0.0;
+        }
+      }
+    }
+
+    SortedArrayView< localIndex const > const bufferNodesView =
+      bufferNodes[face].toView();
+
+    for( localIndex gg = 0; gg < bufferNodesView.size(); ++gg )
+    {
+      localIndex const g =
+        bufferNodesView[gg];
+
+      int ijk[3] = {};
+      ijk[dir0] =
+        positiveNormal * ( nEl[dir0] - 2 ) + ( 1 - positiveNormal ) * 2;
+      ijk[dir1] =
+        LvArray::math::round( ( gridPosition[g][dir1] - xLocalMin[dir1] ) / hEl[dir1] );
+      ijk[dir2] =
+        LvArray::math::round( ( gridPosition[g][dir2] - xLocalMin[dir2] ) / hEl[dir2] );
+
+      localIndex const gFrom =
+        ijkMap[ijk[0]][ijk[1]][ijk[2]];
+
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        if( dir0 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir0] =
+            -velocityIncrement[gFrom][fieldIndex][dir0];
+        }
+
+        if( dir1 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir1] =
+            velocityIncrement[gFrom][fieldIndex][dir1];
+        }
+
+        if( dir2 < numDims )
+        {
+          velocityIncrement[g][fieldIndex][dir2] =
+            velocityIncrement[gFrom][fieldIndex][dir2];
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @brief Applies already-computed essential velocity constraints to the FMPM no-contact seed velocity.
+ *
+ * gridUncontactedVelocity is saved immediately after the grid trial update and before material-contact
+ * enforcement. After applyEssentialBCs updates gridVelocity, copy only constrained boundary values
+ * from gridVelocity back to gridUncontactedVelocity and rebuild moving-grid buffer values from the
+ * uncontacted interior field. This keeps the FMPM Net contact seed velocity free of material-contact
+ * impulses in unconstrained components while remaining consistent with prescribed/symmetric boundaries.
+ *
+ * In the explicit step this is called immediately after applyEssentialBCs(). At
+ * that point gridVelocity has the final first-order boundary values, and this
+ * helper copies those values into the stored uncontacted seed only where the
+ * boundary condition actually constrains motion.
+ */
+void SolidMechanicsMPM::applyFMPMUncontactedVelocityBoundaryConditions( NodeManager & nodeManager )
+{
+  if( m_updateMethod != UpdateMethodOption::FMPM )
+  {
+    return;
+  }
+
+  arrayView3d< real64 > const gridUncontactedVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() );
+  arrayView3d< real64 const > const gridVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+
+  copyConstrainedFMPMBoundaryVelocity( nodeManager,
+                                       gridUncontactedVelocity,
+                                       gridVelocity );
 }
 
 /**
@@ -2893,6 +3281,7 @@ void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplic
                                              particleManager,
                                              partition );
   applyEssentialBCs( dt, time_n, nodeManager );
+  applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
   if( m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) ) )
   {
     computeXProfile( cycleNumber,
@@ -5869,6 +6258,7 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
 
   // Apply labels to vector multi-fields
   stdVector< std::string > keys3d = { viewKeyStruct::gridVelocityString(), // 3
+                                      viewKeyStruct::gridUncontactedVelocityString(), // 3
                                       viewKeyStruct::gridDVelocityString(), // 3
                                       viewKeyStruct::gridDisplacementString(), // 3
                                       viewKeyStruct::gridMomentumString(), // 3
@@ -6074,6 +6464,10 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridSurfaceTensionForceString() );
 
+  arrayView3d< real64 > const gridUncontactedVelocity =
+    nodeManager.getReference< array3d< real64 > >(
+      viewKeyStruct::gridUncontactedVelocityString() );
+
   arrayView3d< real64 > const gridVelocity =
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridVelocityString() );
@@ -6147,6 +6541,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridDisplacement[g][fieldIndex][i] = 0.0;
         gridCenterOfVolume[g][fieldIndex][i] = 0.0;
 
+        gridUncontactedVelocity[g][fieldIndex][i] = 0.0;
         gridVelocity[g][fieldIndex][i] = 0.0;
         gridDVelocity[g][fieldIndex][i] = 0.0;
         gridMomentum[g][fieldIndex][i] = 0.0;
@@ -15201,6 +15596,373 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 }
 
 /**
+ * @brief Computes the total FMPM Net material-contact momentum target.
+ *
+ * The target is the cumulative nodal impulse that would enforce the current
+ * material-contact law for the supplied uncorrected total FMPM velocity. The
+ * FMPM loop applies only the difference between this target and the previously
+ * applied cumulative target to the current velocity increment.
+ *
+ * This mirrors computeContactForces(), but it evaluates the contact law on
+ * vUncorrectedTotal and writes impulse J rather than force F. For each active
+ * nodal field pair A/B, the result is the total contact momentum that would be
+ * required if the FMPM velocity through the current order were accepted without
+ * contact correction.
+ */
+void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
+                                                             ParticleManager & particleManager,
+                                                             NodeManager & nodeManager,
+                                                             arrayView3d< real64 const > const vUncorrectedTotal,
+                                                             arrayView3d< real64 > const contactMomentumTarget )
+{
+  real64 hEl[3] = {};
+  // Tensor equation: hEl = m_hEl.
+  LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  ContactNormalTypeOption const contactNormalType = m_contactNormalType;
+  ContactGapCorrectionOption const contactGapCorrection = m_contactGapCorrection;
+  OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
+
+  int const planeStrain = m_planeStrain;
+  int const damageFieldPartitioning = m_damageFieldPartitioning;
+  int const maxLRIterations = m_maxLRIterations;
+  real64 const LRtolerance = m_LRtolerance;
+  int const preventCZInterpenetration = m_preventCZInterpenetration;
+  int const treatFullyDamagedAsSingleField = m_treatFullyDamagedAsSingleField;
+  int const useSurfacePositionForContact = m_useSurfacePositionForContact;
+
+  int const numContactGroups = m_numContactGroups;
+  int const numVelocityFields = m_numVelocityFields;
+
+  real64 const smallMass = m_smallMass;
+  real64 const neighborRadius = m_neighborRadius;
+  real64 const separabilityMinDamage = m_separabilityMinDamage;
+  real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
+
+  array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
+  for( int i = 0; i < numContactGroups; ++i )
+  {
+    for( int j = 0; j < numContactGroups; ++j )
+    {
+      frictionCoefficientTableCopy[i][j] = m_frictionCoefficientTable[i][j];
+    }
+  }
+  arrayView2d< real64 const > const frictionCoefficientTable = frictionCoefficientTableCopy;
+
+  // Grid fields
+  arrayView2d< int const > const gridCohesiveFieldFlag = nodeManager.getReference< array2d< int > >( viewKeyStruct::gridCohesiveFieldFlagString() );
+  arrayView2d< real64 const > const gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
+  arrayView2d< real64 > const gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+  arrayView2d< real64 const > const gridFieldGradientAlignment = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridFieldGradientAlignmentString() );
+  arrayView2d< real64 const > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+  arrayView2d< real64 const > const gridMaxDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView2d< real64 const > const gridSurfaceFieldMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() );
+  arrayView2d< real64 const > const gridSurfaceNormalWeights = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceNormalWeightsString() );
+  arrayView3d< real64 const > const gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
+  arrayView3d< real64 > const gridSurfaceNormal = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfaceNormalString() );
+  arrayView3d< real64 const > const gridSurfacePosition = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridSurfacePositionString() );
+
+  // Particle Accessors
+  ParticleManager::ParticleViewAccessor< arrayView1d< localIndex const > > particleGroupAccessor = particleManager.constructArrayViewAccessor< localIndex, 1 >( "particleGroup" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleDamageGradientAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleDamageGradient" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particlePositionAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleCenter" );
+  ParticleManager::ParticleViewAccessor< arrayView2d< real64 const > > particleSurfaceNormalAccessor = particleManager.constructArrayViewAccessor< real64, 2 >( "particleSurfaceNormal" );
+  ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroupView =  particleGroupAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradientView =  particleDamageGradientAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePositionView =  particlePositionAccessor.toNestedViewConst();
+  ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormalView =  particleSurfaceNormalAccessor.toNestedViewConst();
+  arrayView1d< localIndex const > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborRegions = m_nodalNeighborList.m_toParticleRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborSubRegions = m_nodalNeighborList.m_toParticleSubRegion.toViewConst();
+  ArrayOfArraysView< localIndex const > const neighborIndices = m_nodalNeighborList.m_toParticleIndex.toViewConst();
+
+  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    /*
+     * contactMomentumTarget is an absolute target for the current FMPM order,
+     * not an increment. Reset it before looping over field pairs so each call
+     * returns J_target( v_uncorrected_total ).
+     */
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      // Tensor equation: contactMomentumTarget[g][fieldIndex] = 0.0 component-wise.
+      LvArray::tensorOps::fill< 3 >( contactMomentumTarget[g][fieldIndex], 0.0 );
+    }
+
+    for( localIndex A = 0; A < numVelocityFields - 1; ++A )
+    {
+      for( localIndex B = A + 1; B < numVelocityFields; ++B )
+      {
+        // Make sure both fields in the pair are active
+        // Tensor equation: active = (gridMass[g][A] > smallMass) && (||gridSurfaceNormal[g][A]||^2 > 1.0e-16).
+        bool active = ( gridMass[g][A] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][A] ) > 1.0e-16 )
+                      and
+                      // Tensor equation: gridSurfaceNormal[g][B]: l2NormSquared(gridSurfaceNormal[g][B]).
+                      ( gridMass[g][B] > smallMass ) && ( LvArray::tensorOps::l2NormSquared< 3 >( gridSurfaceNormal[g][B] ) > 1.0e-16 ); // CC:
+                                                                                                                                         // Should
+                                                                                                                                         // grid
+                                                                                                                                         // surface
+                                                                                                                                         // normal
+                                                                                                                                         // min
+                                                                                                                                         // magnitude
+                                                                                                                                         // be
+                                                                                                                                         // DBL_MIN
+                                                                                                                                         // instead?
+
+        real64 frictionCoefficient = frictionCoefficientTable[A % numContactGroups][B % numContactGroups];
+
+        if( active )
+        {
+          // Evaluate the separability criterion for the contact pair.
+          int separable = 0;
+          int useCohesiveTangentialForces = 0;
+          // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
+          // tangential forces //
+          // Don't think this is needed if friction coefficient is set to zero
+          if( gridCohesiveFieldFlag[g][A] && gridCohesiveFieldFlag[g][B] ) // Eventually this will need to check that both fields correspond
+                                                                           // to pairs for which a cohesive law is
+                                                                           // defined
+          {
+            if( preventCZInterpenetration != 1 )
+            {
+              return;
+            }
+
+            separable = 1;
+            frictionCoefficient = 0.0;
+            useCohesiveTangentialForces = 1;
+          }
+          else
+          {
+
+            // Surface quality is defined by the average alignment between DFG of the mapped particles and the grid
+            // node.
+            real64 surfaceQuality = ( gridFieldGradientAlignment[g][A] + gridFieldGradientAlignment[g][B] ) / ( gridMaterialVolume[g][A] + gridMaterialVolume[g][B] );
+
+            separable = evaluateSeparabilityCriterion( planeStrain,
+                                                       numContactGroups,
+                                                       treatFullyDamagedAsSingleField,
+                                                       separabilityMinDamage,
+                                                       thinFeatureDFGThreshold,
+                                                       neighborRadius,
+                                                       A,
+                                                       B,
+                                                       gridDamage[g][A],
+                                                       gridDamage[g][B],
+                                                       gridMaxDamage[g][A],
+                                                       gridMaxDamage[g][B],
+                                                       gridDamageGradient[g],
+                                                       gridCenterOfMass[g][A],
+                                                       gridCenterOfMass[g][B],
+                                                       surfaceQuality );
+          }
+
+          // Compute shared normal for contact pair
+          real64 mA = gridMass[g][A];
+          real64 mB = gridMass[g][B];
+          real64 VA = gridMaterialVolume[g][A];
+          real64 VB = gridMaterialVolume[g][B];
+
+          real64 nA[3] = {};
+          real64 nB[3] = {};
+          // Tensor equations:
+          //   nA = gridSurfaceNormal[g][A].
+          //   nB = gridSurfaceNormal[g][B].
+          LvArray::tensorOps::copy< 3 >( nA, gridSurfaceNormal[g][A] );
+          LvArray::tensorOps::copy< 3 >( nB, gridSurfaceNormal[g][B] );
+
+          // Outward normal of field A with respect to field B.
+          real64 nAB[3] = {};
+
+          // contact normal averaging: 0: simple, 1: mass weighted, 2: follow larger mass (useful for platens)
+          switch( contactNormalType )
+          {
+            case ContactNormalTypeOption::Difference:
+              // Tensor equation: nAB = nA - nB.
+              LvArray::tensorOps::copy< 3 >( nAB, nA );
+              LvArray::tensorOps::subtract< 3 >( nAB, nB );
+              break;
+            case ContactNormalTypeOption::MassWeighted:
+              // Tensor equation: nAB = mA * nA + -mB * nB.
+              LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+              LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+              break;
+            case ContactNormalTypeOption::LargerMass:
+              if( mA > mB )
+              {
+                // Tensor equation: nAB = nA.
+                LvArray::tensorOps::copy< 3 >( nAB, nA );
+              }
+              else
+              {
+                // Tensor equation: nAB = -nB.
+                LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+              }
+              break;
+            case ContactNormalTypeOption::Mixed:
+              {
+                // If density is similar use mass weighted average
+                real64 rhoA = mA / VA;
+                real64 rhoB = mB / VB;
+                if( isZero( rhoA - rhoB, 0.1 * rhoA ) )
+                {
+                  for( int i=0; i<3; ++i )
+                  {
+                    // Tensor equation: nAB = mA * nA + -mB * nB.
+                    LvArray::tensorOps::scaledCopy< 3 >( nAB, nA, mA );
+                    LvArray::tensorOps::scaledAdd< 3 >( nAB, nB, -mB );
+                  }
+                }
+                else
+                {
+                  // if one field is significantly more dense,
+                  // Use the surface normal for whichever field has higher density.
+                  // This should be good for corners against flat surfaces.
+                  if( rhoA > rhoB )
+                  {
+                    // Tensor equation: nAB = nA.
+                    LvArray::tensorOps::copy< 3 >( nAB, nA );
+                  }
+                  else
+                  {
+                    // Tensor equation: nAB = -nB.
+                    LvArray::tensorOps::scaledCopy< 3 >( nAB, nB, -1 );
+                  }
+                }
+                break;
+              }
+            case ContactNormalTypeOption::Aligned:
+              {
+                real64 tempA[3] = {};
+                real64 tempB[3] = {};
+                real64 wA = gridSurfaceNormalWeights[g][A];
+                real64 wB = gridSurfaceNormalWeights[g][B];
+
+                // LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, pow(wA, m_contactNormalExponent) );
+                // LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, pow(wB, m_contactNormalExponent) );
+                real64 threshold = 0.9;
+                real64 xxA = LvArray::math::min( LvArray::math::max((wA-threshold)/threshold, 0.0 ), 1.0 );
+                real64 xxB = LvArray::math::min( LvArray::math::max((wB-threshold)/threshold, 0.0 ), 1.0 );
+                // Tensor equations:
+                //   tempA = 3*LvArray::math::pow(xxA, 2)-2*LvArray::math::pow(xxA, 3) * nA.
+                //   tempB = 3*LvArray::math::pow(xxB, 2)-2*LvArray::math::pow(xxB, 3) * nB.
+                //   nAB = 3*LvArray::math::pow(xxA, 2)-2*LvArray::math::pow(xxA, 3) * nA - tempB.
+                LvArray::tensorOps::scaledCopy< 3 >( tempA, nA, 3*LvArray::math::pow( xxA, 2 )-2*LvArray::math::pow( xxA, 3 ));
+                LvArray::tensorOps::scaledCopy< 3 >( tempB, nB, 3*LvArray::math::pow( xxB, 2 )-2*LvArray::math::pow( xxB, 3 ));
+                LvArray::tensorOps::copy< 3 >( nAB, tempA );
+                LvArray::tensorOps::subtract< 3 >( nAB, tempB );
+              }
+              break;
+            case ContactNormalTypeOption::LogisticRegression:
+              {
+                real64 n0[3] = {};
+                // Tensor equation: n0 = mA * nA + -mB * nB.
+                LvArray::tensorOps::scaledCopy< 3 >( n0, nA, mA );
+                LvArray::tensorOps::scaledAdd< 3 >( n0, nB, -mB );
+
+                real64 dumby[3] = {};
+                logisticRegression( planeStrain,
+                                    numContactGroups,
+                                    damageFieldPartitioning,
+                                    maxLRIterations,
+                                    LRtolerance,
+                                    hEl,
+                                    A,
+                                    B,
+                                    numNeighborsAll[g],
+                                    neighborRegions[g],
+                                    neighborSubRegions[g],
+                                    neighborIndices[g],
+                                    particleGroupView,
+                                    particleDamageGradientView,
+                                    particleSurfaceNormalView,
+                                    particlePositionView,
+                                    gridPosition[g],
+                                    gridDamageGradient[g],
+                                    n0,
+                                    nAB,
+                                    dumby );
+              }
+              break;
+            default:
+              GEOS_ERROR( "Unrecognized contact normal type!" );
+              break;
+          }
+
+          // Make sure the surface normal is a well-defined unit vector, consistent with plane strain assumption.
+          // Tensor equation: norm = ||nAB||.
+          real64 norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
+          bool recomputeNormal = false;
+          if( norm < 1e-20 )
+          {
+            // If normals are randomly defined as in the case of a fully damaged region, just default to normal A
+            // since the two fields should not be separable
+            // Tensor equation: nAB = nA.
+            LvArray::tensorOps::copy< 3 >( nAB, nA );
+            recomputeNormal = true;
+          }
+          if( planeStrain == 1)
+          {
+            // Enforce plane strain
+            nAB[2] = 0.0;
+            recomputeNormal = true;
+          }
+          if (recomputeNormal)
+          {
+            // Tensor equation: norm = ||nAB||.
+            norm = LvArray::tensorOps::l2Norm< 3 >( nAB );
+          }
+
+          // Normalize the effective surface normal
+          // Tensor equations:
+          //   nAB = 1 / norm * (nAB).
+          //   gridSurfaceNormal[g][A] = 1 / norm * (nAB).
+          //   gridSurfaceNormal[g][B] = -(1 / norm * (nAB)).
+          LvArray::tensorOps::scale< 3 >( nAB, 1 / norm );
+          LvArray::tensorOps::copy< 3 >( gridSurfaceNormal[g][A], nAB );
+          LvArray::tensorOps::scaledCopy< 3 >( gridSurfaceNormal[g][B], nAB, -1.0 );
+
+          computePairwiseNodalContactImpulse( contactGapCorrection,
+                                              overlapCorrection,
+                                              hEl,
+                                              planeStrain,
+                                              smallMass,
+                                              useSurfacePositionForContact,
+                                              useCohesiveTangentialForces,
+                                              separable,
+                                              dt,
+                                              frictionCoefficient,
+                                              nAB,
+                                              gridMass[g][A],
+                                              gridMass[g][B],
+                                              gridMaterialVolume[g][A],
+                                              gridMaterialVolume[g][B],
+                                              vUncorrectedTotal[g][A],
+                                              vUncorrectedTotal[g][B],
+                                              gridMass[g][A] * vUncorrectedTotal[g][A][0],
+                                              gridMass[g][A] * vUncorrectedTotal[g][A][1],
+                                              gridMass[g][A] * vUncorrectedTotal[g][A][2],
+                                              gridMass[g][B] * vUncorrectedTotal[g][B][0],
+                                              gridMass[g][B] * vUncorrectedTotal[g][B][1],
+                                              gridMass[g][B] * vUncorrectedTotal[g][B][2],
+                                              gridSurfaceFieldMass[g][A],
+                                              gridSurfaceFieldMass[g][B],
+                                              gridSurfacePosition[g][A],
+                                              gridSurfacePosition[g][B],
+                                              gridCenterOfMass[g][A],
+                                              gridCenterOfMass[g][B],
+                                              contactMomentumTarget[g][A],
+                                              contactMomentumTarget[g][B] );
+        }
+      }
+    }
+  } );
+}
+
+
+/**
  * @brief Evaluates separability criterion.
  *
  * Executable statements are unchanged; comments document intent where practical.
@@ -15289,6 +16051,221 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
   }
 
   return separable;
+}
+
+/**
+ * @brief Computes pairwise nodal contact impulse.
+ *
+ * This is the impulse form of the nodal contact law. The standard contact-force
+ * update uses the same kinematics with impulse divided by dt. FMPM Net contact
+ * uses the impulse directly to form a cumulative target momentum correction.
+ *
+ * Conceptually, this computes a pairwise target impulse for nodal fields A/B:
+ *
+ *   J_A = contact_law( v_A, v_B, n_AB, gap, friction, ... ),
+ *   J_B = -J_A.
+ *
+ * The caller decides whether J is converted to a force or used directly as the
+ * Net-method cumulative material-contact momentum.
+ */
+void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
+                                                            OverlapCorrectionOption const & overlapCorrection,
+                                                            real64 const (&hEl)[3],
+                                                            int const & planeStrain,
+                                                            real64 const & smallMass,
+                                                            int const & useSurfacePositionForContact,
+                                                            int const & useCohesiveTangentialForces,
+                                                            int & separable,
+                                                            real64 const & dt,
+                                                            real64 const & frictionCoefficient,
+                                                            real64 (& nAB)[3],
+                                                            real64 const & mA,
+                                                            real64 const & mB,
+                                                            real64 const & VA,
+                                                            real64 const & VB,
+                                                            arraySlice1d< real64 const > const vA,
+                                                            arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
+                                                            real64 const & qA0,
+                                                            real64 const & qA1,
+                                                            real64 const & qA2,
+                                                            real64 const & qB0,
+                                                            real64 const & qB1,
+                                                            real64 const & qB2,
+                                                            real64 const spmA,
+                                                            real64 const spmB,
+                                                            arraySlice1d< real64 const > const spA,
+                                                            arraySlice1d< real64 const > const spB,
+                                                            arraySlice1d< real64 const > const xA,
+                                                            arraySlice1d< real64 const > const xB,
+                                                            arraySlice1d< real64 > const jA,
+                                                            arraySlice1d< real64 > const jB )
+{
+  real64 const mAB = mA + mB;
+
+  real64 vAB[3] = {};
+  vAB[0] = ( qA0 + qB0 ) / mAB;
+  vAB[1] = ( qA1 + qB1 ) / mAB;
+  vAB[2] = ( qA2 + qB2 ) / mAB;
+
+  real64 s1AB[3] = {},
+         s2AB[3] = {};
+  computeOrthonormalBasis( nAB, s1AB, s2AB );
+
+  real64 jnor =  mA * ( (vAB[0] - vA[0]) * nAB[0]  + (vAB[1] - vA[1]) * nAB[1]  + (vAB[2] - vA[2]) * nAB[2] );
+  real64 jtan1 = mA * ( (vAB[0] - vA[0]) * s1AB[0] + (vAB[1] - vA[1]) * s1AB[1] + (vAB[2] - vA[2]) * s1AB[2] );
+  real64 jtan2 = mA * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
+  real64 djA[3] = {};
+
+  if( separable == 0 )
+  {
+    djA[0] = jnor * nAB[0] + jtan1 * s1AB[0] + jtan2 * s2AB[0];
+    djA[1] = jnor * nAB[1] + jtan1 * s1AB[1] + jtan2 * s2AB[1];
+    djA[2] = jnor * nAB[2] + jtan1 * s1AB[2] + jtan2 * s2AB[2];
+    jA[0] += djA[0];
+    jA[1] += djA[1];
+    jA[2] += djA[2];
+    jB[0] -= djA[0];
+    jB[1] -= djA[1];
+    jB[2] -= djA[2];
+    return;
+  }
+
+  real64 gap0;
+  if( planeStrain == 1 )
+  {
+    gap0 = 1/LvArray::math::sqrt( LvArray::math::pow( nAB[0]/hEl[0], 2 ) + LvArray::math::pow( nAB[1]/hEl[1], 2 ) );
+  }
+  else
+  {
+    gap0 = 1/LvArray::math::sqrt( LvArray::math::pow( nAB[0]/hEl[0], 2 ) + LvArray::math::pow( nAB[1]/hEl[1], 2 ) + LvArray::math::pow( nAB[2]/hEl[2], 2 ));
+  }
+
+  real64 gapScale = 0.0;
+  real64 surfacePosA[3] = {};
+  if( spmA > smallMass && useSurfacePositionForContact )
+  {
+    // Tensor equation: surfacePosA = spA.
+    LvArray::tensorOps::copy< 3 >( surfacePosA, spA );
+  }
+  else
+  {
+    // Tensor equation: surfacePosA = xA.
+    LvArray::tensorOps::copy< 3 >( surfacePosA, xA );
+    gapScale += 0.5;
+  }
+
+  real64 surfacePosB[3] = {};
+  if( spmB > smallMass && useSurfacePositionForContact )
+  {
+    // Tensor equation: surfacePosB = spB.
+    LvArray::tensorOps::copy< 3 >( surfacePosB, spB );
+  }
+  else
+  {
+    // Tensor equation: surfacePosB = xB.
+    LvArray::tensorOps::copy< 3 >( surfacePosB, xB );
+    gapScale += 0.5;
+  }
+
+  real64 gap = (surfacePosB[0] - surfacePosA[0]) * nAB[0] + (surfacePosB[1] - surfacePosA[1]) * nAB[1] + (surfacePosB[2] - surfacePosA[2]) * nAB[2] - gapScale*gap0;
+
+  real64 contact = 0.0;
+  real64 temp[3] = {};
+  // Tensor equations:
+  //   temp = vA - vAB.
+  //   test = dot(temp, nAB).
+  LvArray::tensorOps::copy< 3 >( temp, vA );
+  LvArray::tensorOps::subtract< 3 >( temp, vAB );
+  real64 test = LvArray::tensorOps::AiBi< 3 >( temp, nAB );
+
+  switch( contactGapCorrection )
+  {
+    case ContactGapCorrectionOption::Simple:
+      contact = test > 0.0 ? 1.0 : 0.0;
+      break;
+    case ContactGapCorrectionOption::Implicit:
+      contact = ( test > 0.0 && gap < 0.0 ) ? 1.0 : 0.0;
+      break;
+    case ContactGapCorrectionOption::Softened:
+      if( test > 0 )
+      {
+        if( gap <= 0.0 )
+        {
+          contact = 1.0;
+        }
+        else if( gap < gap0 )
+        {
+          contact = 1.0 - gap/gap0;
+        }
+      }
+      break;
+    default:
+      GEOS_ERROR( "Unknown contact gap correction type specified" );
+      break;
+  }
+
+  jnor *= contact;
+
+  real64 jgap = 0.0;
+  if( overlapCorrection == OverlapCorrectionOption::NormalForce )
+  {
+    real64 cellSpacing[3] = {};
+    // Tensor equation: cellSpacing = hEl.
+    LvArray::tensorOps::copy< 3 >( cellSpacing, hEl );
+
+    real64 normalSpacing[3] = {};
+    normalSpacing[0] = LvArray::math::abs( nAB[0] );
+    normalSpacing[1] = LvArray::math::abs( nAB[1] );
+    normalSpacing[2] = LvArray::math::abs( nAB[2] );
+
+    real64 cellVolume = hEl[0] * hEl[1] * hEl[2];
+    // Tensor equation: cellLength = dot(normalSpacing, cellSpacing).
+    real64 cellLength = LvArray::tensorOps::AiBi< 3 >( normalSpacing, cellSpacing );
+    real64 cellArea = cellVolume / cellLength;
+    real64 overlapLength = planeStrain ? ( 2.*VA + 2.*VB - cellVolume ) / cellArea : ( VA + VB - cellVolume ) / cellArea;
+
+    if( ( overlapLength > ( m_overlapThreshold1 - 1.0 ) * cellLength ) &&
+        ( overlapLength < ( m_overlapThreshold2 - 1.0 ) * cellLength ) )
+    {
+      real64 overlap = planeStrain ? ( VA + VB ) / (0.5*cellVolume) : ( VA + VB ) / cellVolume;
+      real64 correctionScale = LvArray::math::min(
+        1.0,
+        LvArray::math::max( 0.0, ( overlap - m_overlapThreshold1 ) / ( m_overlapThreshold2 - m_overlapThreshold1 ) ) );
+
+      real64 maxVelocity = sqrt( m_maxParticleVelocitySquared );
+      real64 maxGapImpulseMagnitude = 0.05*LvArray::math::min( mA, mB ) * maxVelocity;
+      jgap = correctionScale*LvArray::math::max(
+        -maxGapImpulseMagnitude,
+        -2.0 * overlapLength * mA * mB / ( dt * ( mA + mB ) ) );
+    }
+  }
+
+  real64 jtanMag = sqrt( jtan1 * jtan1 + jtan2 * jtan2 );
+
+  real64 sAB[3] = {};
+  if( jtanMag > 0.0 )
+  {
+    sAB[0] = (s1AB[0] * jtan1 + s2AB[0] * jtan2) / jtanMag;
+    sAB[1] = (s1AB[1] * jtan1 + s2AB[1] * jtan2) / jtanMag;
+    sAB[2] = (s1AB[2] * jtan1 + s2AB[2] * jtan2) / jtanMag;
+  }
+
+  if( useCohesiveTangentialForces == 1 )
+  {
+    jtan1 = 0.0;
+    jtan2 = 0.0;
+  }
+
+  real64 jtan = LvArray::math::min( frictionCoefficient * LvArray::math::abs( jnor ), jtanMag );
+  djA[0] = ( jnor + jgap ) * nAB[0] + jtan * sAB[0];
+  djA[1] = ( jnor + jgap ) * nAB[1] + jtan * sAB[1];
+  djA[2] = ( jnor + jgap ) * nAB[2] + jtan * sAB[2];
+  jA[0] += djA[0];
+  jA[1] += djA[1];
+  jA[2] += djA[2];
+  jB[0] -= djA[0];
+  jB[1] -= djA[1];
+  jB[2] -= djA[2];
 }
 
 /**
@@ -18506,9 +19483,70 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
 
 /**
- * @brief Performs fmpm update.
+ * @brief Applies the Net incremental material-contact correction for one FMPM velocity increment.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * The target contact momentum is the total cumulative impulse required by the
+ * contact law for the current uncorrected total FMPM velocity. The increment is
+ * corrected by the difference between that target and the cumulative contact
+ * impulse already applied in earlier FMPM orders.
+ *
+ * Net-method update for each node/field/component:
+ *
+ *   Delta J = J_target( v_uncorrected_total ) - J_net_previous,
+ *   Delta v_corrected = Delta v_uncorrected + M^{-1} Delta J,
+ *   J_net = J_target.
+ */
+void SolidMechanicsMPM::applyFMPMNetContactCorrection( real64 const dt,
+                                                       ParticleManager & particleManager,
+                                                       NodeManager & nodeManager,
+                                                       arrayView3d< real64 const > const vUncorrectedTotal,
+                                                       arrayView3d< real64 > const contactMomentumNet,
+                                                       arrayView3d< real64 > const contactMomentumTarget,
+                                                       arrayView3d< real64 > const velocityIncrement )
+{
+  GEOS_MARK_FUNCTION;
+
+  computeFMPMNetContactMomentumTarget( dt,
+                                       particleManager,
+                                       nodeManager,
+                                       vUncorrectedTotal,
+                                       contactMomentumTarget );
+
+  localIndex const numDims = m_numDims;
+  localIndex const numVelocityFields = m_numVelocityFields;
+  real64 const smallMass = m_smallMass;
+
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+
+  forAll< parallelDevicePolicy<> >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      if( gridMass[g][fieldIndex] > smallMass )
+      {
+        for( localIndex i = 0; i < numDims; ++i )
+        {
+          // Apply only the change in cumulative target impulse for this order.
+          real64 const incrementalMomentum =
+            contactMomentumTarget[g][fieldIndex][i] - contactMomentumNet[g][fieldIndex][i];
+
+          velocityIncrement[g][fieldIndex][i] +=
+            incrementalMomentum / gridMass[g][fieldIndex];
+
+          contactMomentumNet[g][fieldIndex][i] =
+            contactMomentumTarget[g][fieldIndex][i];
+        }
+      }
+    }
+  } );
+}
+
+/**
+ * @brief Performs the full-mass-matrix MPM particle update.
+ *
+ * Computes the FMPM corrected grid velocity, applies per-increment essential
+ * boundary constraints, and maps the corrected velocity back to particles.
  */
 void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
                                            ParticleManager & particleManager,
@@ -18516,62 +19554,215 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
                                            DomainPartition & domain,
                                            MeshLevel & mesh )
 {
+  GEOS_MARK_FUNCTION;
+
+  /*
+   * ---------------------------------------------------------------------------
+   * FMPM particle update overview
+   * ---------------------------------------------------------------------------
+   *
+   * This routine implements the revised incremental FMPM loop. The first-order
+   * seed is the ordinary lumped grid velocity after forces, material contact,
+   * and essential boundary conditions:
+   *
+   *   vFmpm = vPrev = v^{+(1)}.
+   *
+   * For each order ell >= 2, the code applies one grid-particle-grid round trip
+   * to the previous velocity increment:
+   *
+   *   vNext = S+ S vPrev,
+   *   vPrev = vPrev - vNext,
+   *   vFmpm = vFmpm + vPrev.
+   *
+   * Here S maps grid velocities to particles and S+ maps particle velocities
+   * back to grid velocities with the lumped inverse mass. This is equivalent to
+   * applying the FMPM correction operator A = I - S+S to each increment.
+   *
+   * Essential moving/symmetry boundaries are handled incrementally: the seed
+   * velocity contains the prescribed value, while every higher-order increment
+   * has zero constrained components. This prevents FMPM corrections from
+   * changing prescribed boundary motion.
+   *
+   * Material contact uses the Net incremental method. The code tracks the total
+   * uncorrected FMPM velocity and the cumulative contact impulse already applied;
+   * each order applies only the difference between the current target impulse
+   * and that cumulative impulse.
+   *
+   * The CPU path uses the effective/coalesced mapping arrays populated by
+   * populateMappingArraysForActiveParticles. The device path keeps the existing
+   * on-the-fly shape-function computation.
+   */
+
+  GEOS_ERROR_IF( m_updateOrder < 1,
+                 "FMPM requires updateOrder >= 1." );
+
+  bool const useIncrementalMaterialContact =
+    m_enableContact == 1 && m_hasContact == 1;
+
+  bool hasContactBoundary = false;
+  for( int face = 0; face < 6; ++face )
+  {
+    hasContactBoundary = hasContactBoundary ||
+                         m_boundaryConditionTypes[face] == static_cast< int >( BoundaryConditionOption::Contact );
+  }
+  GEOS_ERROR_IF( hasContactBoundary,
+                 "FMPM with boundary contact requires an incremental boundary-contact correction inside the FMPM "
+                 "loop. The current FMPM implementation intentionally rejects this configuration instead of "
+                 "silently using a contact-inconsistent update." );
+
+  // ---------------------------------------------------------------------------
+  // Solver constants.
+  // ---------------------------------------------------------------------------
+
+  int const damageFieldPartitioning =
+    m_damageFieldPartitioning;
+
+  int const numContactGroups =
+    m_numContactGroups;
+
+  int const numDims =
+    m_numDims;
+
+  int const numVelocityFields =
+    m_numVelocityFields;
+
+  int const updateOrder =
+    m_updateOrder;
+
+  real64 const smallMass =
+    m_smallMass;
+
+#ifndef GEOS_USE_DEVICE
+  GEOS_UNUSED_VAR( damageFieldPartitioning );
+  GEOS_UNUSED_VAR( numContactGroups );
+#endif
+
+  // ---------------------------------------------------------------------------
+  // Data needed by the device/on-the-fly mapping path.
+  // ---------------------------------------------------------------------------
+
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
-  real64 xLocalMax[3] = {};
-  // Tensor equation: xLocalMax = m_xLocalMax.
-  LvArray::tensorOps::copy< 3 >( xLocalMax, m_xLocalMax );
-  arrayView3d< localIndex const > const ijkMap = m_ijkMap;
+  arrayView3d< localIndex const > const ijkMap =
+    m_ijkMap;
 
-  // Grid fields
-  arrayView2d< real64 const > const & gridDamageGradient = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
-  arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
-  arrayView3d< real64 const > const & gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-  arrayView3d< real64 > const & gridVPlus = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVPlusString() );
+  // ---------------------------------------------------------------------------
+  // Grid fields.
+  // ---------------------------------------------------------------------------
 
-  int numNodes = nodeManager.size();
-  int const numDims = m_numDims;
-  int const damageFieldPartitioning = m_damageFieldPartitioning;
-  int const numContactGroups = m_numContactGroups;
-  int const numVelocityFields = m_numVelocityFields;
-  int const updateOrder = m_updateOrder;
+  arrayView2d< real64 const > const gridDamageGradient =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageGradientString() );
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition =
+    nodeManager.referencePosition();
+  arrayView3d< real64 const > const gridUncontactedVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridUncontactedVelocityString() );
+  arrayView3d< real64 const > const gridVelocity =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+  arrayView3d< real64 > const gridVPlus =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVPlusString() );
 
-  // Added these as fields to nodeManager to easily sync them in parallelization for each iteration (technically only
-  // vPlus needs to be
-  // synced )
-  // For iterative FMPM solve
-  array3d< real64 > vStar( numNodes, numVelocityFields, numDims );
-  array3d< real64 > vMinus( numNodes, numVelocityFields, numDims );
+#ifndef GEOS_USE_DEVICE
+  GEOS_UNUSED_VAR( gridDamageGradient );
+  GEOS_UNUSED_VAR( gridPosition );
+  GEOS_UNUSED_VAR( hEl );
+  GEOS_UNUSED_VAR( ijkMap );
+  GEOS_UNUSED_VAR( xLocalMin );
+#endif
 
-  // Initialize FMPM variables
-  for( int n=0; n < numNodes; ++n )
+  /*
+   * The FMPM seed velocity already satisfies the full essential moving/symmetric
+   * boundary condition. Each higher-order FMPM increment is constrained by
+   * applyFMPMVelocityIncrementBoundaryConditions(), which applies the
+   * homogeneous version of the same boundary rule.
+   */
+
+  // ---------------------------------------------------------------------------
+  // FMPM state arrays.
+  // ---------------------------------------------------------------------------
+
+  int const numNodes =
+    nodeManager.size();
+
+  /*
+   * State arrays used by the incremental FMPM loop:
+   *
+   *   vFmpm               accumulated corrected grid velocity v^{+(ell)},
+   *   vPrev               current corrected increment Delta v_ell,
+   *   vUncorrectedTotal   accumulated velocity before material-contact correction,
+   *   contactMomentumNet  cumulative contact impulse already applied,
+   *   contactMomentumTarget target cumulative impulse for the current order.
+   */
+  array3d< real64 > contactMomentumNet( numNodes, numVelocityFields, numDims );
+  array3d< real64 > contactMomentumTarget( numNodes, numVelocityFields, numDims );
+  array3d< real64 > vFmpm( numNodes, numVelocityFields, numDims );
+  array3d< real64 > vPrev( numNodes, numVelocityFields, numDims );
+  array3d< real64 > vUncorrectedTotal( numNodes, numVelocityFields, numDims );
+
+  arrayView3d< real64 > const contactMomentumNetView = contactMomentumNet.toView();
+  arrayView3d< real64 > const contactMomentumTargetView = contactMomentumTarget.toView();
+  arrayView3d< real64 > const vFmpmView = vFmpm.toView();
+  arrayView3d< real64 > const vPrevView = vPrev.toView();
+  arrayView3d< real64 > const vUncorrectedTotalView = vUncorrectedTotal.toView();
+  arrayView3d< real64 const > const vUncorrectedTotalConstView = vUncorrectedTotal.toViewConst();
+
+  /*
+   * Initialize order-one quantities. gridVelocity is the contacted/BC-corrected
+   * v^{+(1)}. gridUncontactedVelocity is the corresponding no-material-contact
+   * velocity after the same essential boundary constraints. Their difference,
+   * multiplied by nodal mass, is the first-order cumulative contact impulse.
+   */
+  for( int n = 0; n < numNodes; ++n )
   {
-    for( int cg=0; cg < numVelocityFields; cg++ )
+    for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
       for( localIndex i = 0; i < numDims; ++i )
       {
-        vStar[n][cg][i] = updateOrder * gridVelocity[n][cg][i];
-        vMinus[n][cg][i] = vStar[n][cg][i];
+        contactMomentumTarget[n][fieldIndex][i] = 0.0;
+
+        vFmpm[n][fieldIndex][i] =
+          gridVelocity[n][fieldIndex][i];
+
+        vPrev[n][fieldIndex][i] =
+          gridVelocity[n][fieldIndex][i];
+
+        vUncorrectedTotal[n][fieldIndex][i] =
+          gridUncontactedVelocity[n][fieldIndex][i];
+
+        contactMomentumNet[n][fieldIndex][i] =
+          useIncrementalMaterialContact ?
+          gridMass[n][fieldIndex] * ( gridVelocity[n][fieldIndex][i] - gridUncontactedVelocity[n][fieldIndex][i] ) :
+          0.0;
       }
     }
   }
 
-  // Perform FMPM order iterations
-  for( int r=2; r <= updateOrder; ++r )
+  // ---------------------------------------------------------------------------
+  // FMPM order iterations.
+  // ---------------------------------------------------------------------------
+
+  for( int order = 2; order <= updateOrder; ++order )
   {
-    // Zero out vPlus for each order iteration
-    for( int n=0; n < numNodes; ++n )
+    /*
+     * Compute one FMPM correction order. gridVPlus is used as vNext, the
+     * round-trip projection S+S applied to the previous increment.
+     */
+    // Zero the grid projection accumulator:
+    //   gridVPlus = vNext = 0.
+    for( int n = 0; n < numNodes; ++n )
     {
-      for( int cg=0; cg < numVelocityFields; cg++ )
+      for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numDims; ++i )
         {
-          gridVPlus[n][cg][i] = 0.0;
+          gridVPlus[n][fieldIndex][i] =
+            0.0;
         }
       }
     }
@@ -18579,222 +19770,496 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     localIndex subRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-      // Registered by subregion
-      arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
-      arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-      arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-      arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-      arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-      arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+      // -----------------------------------------------------------------------
+      // Particle fields.
+      // -----------------------------------------------------------------------
 
-      // Get views to mapping arrays
-      int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
+      arrayView1d< int const > const particleGroup =
+        subRegion.getParticleGroup();
+      arrayView1d< real64 const > const particleMass =
+        subRegion.getField< fields::mpm::particleMass >();
+      arrayView2d< real64 const > const particleDamageGradient =
+        subRegion.getField< fields::mpm::particleDamageGradient >();
+      arrayView2d< real64 > const particlePosition =
+        subRegion.getParticleCenter();
+      arrayView2d< real64 const > const particleSurfaceNormal =
+        subRegion.getParticleSurfaceNormal();
+      arrayView3d< real64 const > const particleRVectors =
+        subRegion.getParticleRVectors();
 
-      ParticleType const particleType = subRegion.getParticleType();
+      localIndex const numberOfMappedNodesPerParticle =
+        8 * subRegion.numberOfVerticesPerParticle();
 
-      // Map to particles
-      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+      SortedArrayView< localIndex const > const activeParticleIndices =
+        subRegion.activeParticleIndices();
 
-// Update dVStar
-      #ifndef GEOS_USE_DEVICE
-        // Get views to mapping arrays
-        arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
-        arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
-        arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
-        GEOS_UNUSED_VAR( particleRVectors );
-        GEOS_UNUSED_VAR( particleType );
-        GEOS_UNUSED_VAR( ijkMap );
-      #endif
+      ParticleType const particleType =
+        subRegion.getParticleType();
 
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-    {
-      localIndex const p = activeParticleIndices[pp];
+#ifndef GEOS_USE_DEVICE
 
-      #ifdef GEOS_USE_DEVICE
-      // On-the-fly shape function computation
-      localIndex mappedNodes[64] = { };
-      real64 shapeFunctionValues[64] = { };
-      real64 shapeFunctionGradientValues[64][3] = { };
-      mapNodesAndComputeShapeFunctionsForSingleParticle( ijkMap,
-                                        xLocalMin,
-                                        hEl,
-                                        particleType,
-                                        particlePosition[p],
-                                        particleRVectors[p],
-                                        gridPosition,
-                                        mappedNodes,
-                                        shapeFunctionValues,
-                                        shapeFunctionGradientValues );
-      #endif
+      arrayView1d< localIndex const > const numEffectiveMappedNodes =
+        m_numEffectiveMappedNodes[subRegionIndex];
+      arrayView2d< integer const > const effectiveMappedFields =
+        m_effectiveMappedFields[subRegionIndex];
+      arrayView2d< localIndex const > const effectiveMappedNodes =
+        m_effectiveMappedNodes[subRegionIndex];
+      arrayView2d< real64 const > const effectiveShapeFunctionValues =
+        m_effectiveShapeFunctionValues[subRegionIndex];
 
-      for( int gi = 0; gi < 8 * numberOfVerticesPerParticle; ++gi )
+      GEOS_UNUSED_VAR( numberOfMappedNodesPerParticle );
+      GEOS_UNUSED_VAR( particleDamageGradient );
+      GEOS_UNUSED_VAR( particleGroup );
+      GEOS_UNUSED_VAR( particlePosition );
+      GEOS_UNUSED_VAR( particleRVectors );
+      GEOS_UNUSED_VAR( particleSurfaceNormal );
+      GEOS_UNUSED_VAR( particleType );
+
+#endif
+
+      forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+        [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p =
+          activeParticleIndices[pp];
+
+#ifdef GEOS_USE_DEVICE
+
+        localIndex mappedNodesForParticle[64] = {};
+        real64 shapeFunctionValuesForParticle[64] = {};
+        real64 shapeFunctionGradientValuesForParticle[64][3] = {};
+
+        mapNodesAndComputeShapeFunctionsForSingleParticle(
+          ijkMap,
+          xLocalMin,
+          hEl,
+          particleType,
+          particlePosition[p],
+          particleRVectors[p],
+          gridPosition,
+          mappedNodesForParticle,
+          shapeFunctionValuesForParticle,
+          shapeFunctionGradientValuesForParticle );
+
+        localIndex const numberOfEffectiveMappedNodesPerParticle =
+          numberOfMappedNodesPerParticle;
+
+#else
+
+        localIndex const numberOfEffectiveMappedNodesPerParticle =
+          numEffectiveMappedNodes[pp];
+
+#endif
+
+        real64 vPrevAtParticle[3] = {};
+
+        /*
+         * Apply S: gather the current grid increment to this particle. This
+         * replaces the original O(nMapped^2) FMPM double sum with an equivalent
+         * gather/scatter form.
+         */
+        // Gather the previous FMPM increment to the particle:
+        //   vPrev_p = sum_J N_Jp * vPrev_J.
+        for( localIndex g = 0;
+             g < numberOfEffectiveMappedNodesPerParticle;
+             ++g )
         {
-          #ifdef GEOS_USE_DEVICE
-          localIndex const mappedNodeI = mappedNodes[gi];
-          real64 const shapeFunctionValueI = shapeFunctionValues[gi];
-          #else
-          localIndex const mappedNodeI = mappedNodes[pp][gi];
-          real64 const shapeFunctionValueI = shapeFunctionValues[pp][gi];
-          #endif
+#ifdef GEOS_USE_DEVICE
+          localIndex const mappedNode =
+            mappedNodesForParticle[g];
 
-          // int const nodeFlagI = ( damageFieldPartitioning == 1 && LvArray::tensorOps::AiBi< 3 >(
-          // gridDamageGradient[mappedNodeI],
-          // particleDamageGradient[p] ) < 0.0 ) ? 1 : 0;
-          // localIndex const fieldIndexI = nodeFlagI * numContactGroups + particleGroup[p]; // This ranges from 0 to
-          // nMatFields-1
-          localIndex const fieldIndexI = partitionField( numContactGroups,
-                                                         damageFieldPartitioning,
-                                                         particleGroup[p],
-                                                         particleDamageGradient[p],
-                                                         particleSurfaceNormal[p],
-                                                         gridDamageGradient[mappedNodeI] );
+          real64 const shapeFunctionValue =
+            shapeFunctionValuesForParticle[g];
 
-          if( gridMass[mappedNodeI][fieldIndexI] > m_smallMass )
+          localIndex const fieldIndex =
+            partitionField( numContactGroups,
+                            damageFieldPartitioning,
+                            particleGroup[p],
+                            particleDamageGradient[p],
+                            particleSurfaceNormal[p],
+                            gridDamageGradient[mappedNode] );
+#else
+          localIndex const mappedNode =
+            effectiveMappedNodes[pp][g];
+
+          real64 const shapeFunctionValue =
+            effectiveShapeFunctionValues[pp][g];
+
+          localIndex const fieldIndex =
+            effectiveMappedFields[pp][g];
+#endif
+
+          for( localIndex i = 0; i < numDims; ++i )
           {
-            real64 Splus = particleMass[p] * shapeFunctionValueI / gridMass[mappedNodeI][fieldIndexI];
+            vPrevAtParticle[i] +=
+              shapeFunctionValue * vPrev[mappedNode][fieldIndex][i];
+          }
+        }
 
-            for( int gj = 0; gj < 8 * numberOfVerticesPerParticle; ++gj )
+        /*
+         * Apply S+: scatter the gathered particle increment back to the grid
+         * with the lumped inverse grid mass. Atomic adds are required because
+         * multiple particles can contribute to the same node/field.
+         */
+        // Scatter the gathered particle increment back to the grid:
+        //   vNext_I += m_p * N_Ip / M_I * vPrev_p.
+        for( localIndex g = 0;
+             g < numberOfEffectiveMappedNodesPerParticle;
+             ++g )
+        {
+#ifdef GEOS_USE_DEVICE
+          localIndex const mappedNode =
+            mappedNodesForParticle[g];
+
+          real64 const shapeFunctionValue =
+            shapeFunctionValuesForParticle[g];
+
+          localIndex const fieldIndex =
+            partitionField( numContactGroups,
+                            damageFieldPartitioning,
+                            particleGroup[p],
+                            particleDamageGradient[p],
+                            particleSurfaceNormal[p],
+                            gridDamageGradient[mappedNode] );
+#else
+          localIndex const mappedNode =
+            effectiveMappedNodes[pp][g];
+
+          real64 const shapeFunctionValue =
+            effectiveShapeFunctionValues[pp][g];
+
+          localIndex const fieldIndex =
+            effectiveMappedFields[pp][g];
+#endif
+
+          if( gridMass[mappedNode][fieldIndex] > smallMass )
+          {
+            real64 const massShapeOverGridMass =
+              particleMass[p] * shapeFunctionValue / gridMass[mappedNode][fieldIndex];
+
+            for( localIndex i = 0; i < numDims; ++i )
             {
-              #ifdef GEOS_USE_DEVICE
-              localIndex const mappedNodeJ = mappedNodes[gj];
-              real64 const shapeFunctionValueJ = shapeFunctionValues[gj];
-              #else
-              localIndex const mappedNodeJ = mappedNodes[pp][gj];
-              real64 const shapeFunctionValueJ = shapeFunctionValues[pp][gj];
-              #endif
-
-              localIndex const fieldIndexJ = partitionField( numContactGroups,
-                                                             damageFieldPartitioning,
-                                                             particleGroup[p],
-                                                             particleDamageGradient[p],
-                                                             particleSurfaceNormal[p],
-                                                             gridDamageGradient[mappedNodeJ] );
-
-              for( localIndex i = 0; i < numDims; ++i )
-              {
-                gridVPlus[mappedNodeI][fieldIndexI][i] += Splus * shapeFunctionValueJ * vMinus[mappedNodeJ][fieldIndexJ][i];;
-              }
+              RAJA::atomicAdd( parallelDeviceAtomic{},
+                               &gridVPlus[mappedNode][fieldIndex][i],
+                               massShapeOverGridMass * vPrevAtParticle[i] );
             }
           }
         }
       } );
+
       ++subRegionIndex;
     } );
 
-    syncGridFields( { viewKeyStruct::gridVPlusString() }, domain, nodeManager, mesh, MPI_SUM );
+    syncGridFields( { viewKeyStruct::gridVPlusString() },
+                    domain,
+                    nodeManager,
+                    mesh,
+                    MPI_SUM );
 
-    // Update vStar
-    real64 orderCoefficient = LvArray::math::pow( -1.0, 1.0+r ) * ( updateOrder - r + 1.0 ) / r;
-    for( int n=0; n < numNodes; ++n )
+    /*
+     * Apply the FMPM correction operator A = I - S+S to the previous
+     * increment. The resulting vPrev is the uncorrected increment for the
+     * current order until boundary/contact constraints below are applied.
+     */
+    // Form the next FMPM increment:
+    //   vPrev = vPrev - vNext.
+    for( int n = 0; n < numNodes; ++n )
     {
-      for( int cg=0; cg < numVelocityFields; cg++ )
+      for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         for( localIndex i = 0; i < numDims; ++i )
         {
-          vStar[n][cg][i] += orderCoefficient * gridVPlus[n][cg][i];
-          vMinus[n][cg][i] = gridVPlus[n][cg][i];
+          vPrev[n][fieldIndex][i] -=
+            gridVPlus[n][fieldIndex][i];
         }
       }
     }
-  } //End of updateOrder iterations
+
+    /*
+     * Preserve prescribed/symmetric velocity components after each FMPM
+     * increment. The first-order gridVelocity already has the full essential BC
+     * applied by applyEssentialBCs(); higher-order increments must not change
+     * the controlled components.
+     */
+    applyFMPMVelocityIncrementBoundaryConditions( nodeManager, vPrevView );
+
+    if( useIncrementalMaterialContact )
+    {
+      /*
+       * Net contact evaluates the contact law on the accumulated uncorrected
+       * velocity, not just on the current increment. This is what lets contact
+       * activate/deactivate consistently as higher-order FMPM corrections are
+       * accumulated.
+       */
+      // Track the total uncorrected FMPM velocity before the Net contact correction:
+      //   v_uncorrected_total += Delta v_uncorrected.
+      for( int n = 0; n < numNodes; ++n )
+      {
+        for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+        {
+          for( localIndex i = 0; i < numDims; ++i )
+          {
+            vUncorrectedTotal[n][fieldIndex][i] +=
+              vPrev[n][fieldIndex][i];
+          }
+        }
+      }
+
+      copyConstrainedFMPMBoundaryVelocity( nodeManager,
+                                          vUncorrectedTotalView,
+                                          gridUncontactedVelocity );
+
+      applyFMPMNetContactCorrection( dt,
+                                     particleManager,
+                                     nodeManager,
+                                     vUncorrectedTotalConstView,
+                                     contactMomentumNetView,
+                                     contactMomentumTargetView,
+                                     vPrevView );
+
+      applyFMPMVelocityIncrementBoundaryConditions( nodeManager, vPrevView );
+    }
+
+    // Accumulate the corrected increment:
+    //   vFmpm = vFmpm + vPrev.
+    for( int n = 0; n < numNodes; ++n )
+    {
+      for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        for( localIndex i = 0; i < numDims; ++i )
+        {
+          vFmpm[n][fieldIndex][i] +=
+            vPrev[n][fieldIndex][i];
+        }
+      }
+    }
+  }
+
+  /*
+   * Re-impose constrained boundary components on the final accumulated velocity.
+   * This is mostly redundant with the per-increment constraints, but it provides
+   * a final consistency pass for buffer-node mirror values.
+   */
+  copyConstrainedFMPMBoundaryVelocity( nodeManager,
+                                       vFmpmView,
+                                       gridVelocity );
+
+  if( useIncrementalMaterialContact )
+  {
+    arrayView3d< real64 > const gridContactForce =
+      nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+
+    /*
+     * Store the final cumulative material-contact impulse as an equivalent
+     * average force over the step for diagnostics and output:
+     *
+     *   F_contact = J_contact / dt.
+     */
+    for( int n = 0; n < numNodes; ++n )
+    {
+      for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+      {
+        for( localIndex i = 0; i < numDims; ++i )
+        {
+          gridContactForce[n][fieldIndex][i] =
+            contactMomentumNet[n][fieldIndex][i] / dt;
+        }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Final FMPM particle update.
+  // ---------------------------------------------------------------------------
+  /*
+   * Map the corrected full-mass grid velocity back to particles. The position
+   * update uses the midpoint form:
+   *
+   *   x_p^{n+1} = x_p^n + 0.5 * dt * ( v_p^n + v_p^{n+1} ),
+   *   v_p^{n+1} = S vFmpm.
+   *
+   * The velocity gradient uses the same corrected FMPM velocity for the
+   * stress/strain kinematics.
+   */
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // Registered by subregion
-    arrayView1d< int const > const particleGroup = subRegion.getParticleGroup();
-    arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
-    arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
-    arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
+    arrayView1d< int const > const particleGroup =
+      subRegion.getParticleGroup();
+    arrayView2d< real64 const > const particleDamageGradient =
+      subRegion.getField< fields::mpm::particleDamageGradient >();
+    arrayView2d< real64 > const particlePosition =
+      subRegion.getParticleCenter();
+    arrayView2d< real64 const > const particleSurfaceNormal =
+      subRegion.getParticleSurfaceNormal();
+    arrayView2d< real64 > const particleVelocity =
+      subRegion.getParticleVelocity();
+    arrayView3d< real64 const > const particleRVectors =
+      subRegion.getParticleRVectors();
+    arrayView3d< real64 > const particleVelocityGradient =
+      subRegion.getField< fields::mpm::particleVelocityGradient >();
 
-    // arrayView1d< real64 > const particleMass = subRegion.getField< fields::mpm::particleMass >();
-    arrayView2d< real64 const > const particleDamageGradient = subRegion.getField< fields::mpm::particleDamageGradient >();
-    arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
+    localIndex const numberOfMappedNodesPerParticle =
+      8 * subRegion.numberOfVerticesPerParticle();
 
-    // Update particles positions and velocities now
-    int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    ParticleType const particleType = subRegion.getParticleType();
+    SortedArrayView< localIndex const > const activeParticleIndices =
+      subRegion.activeParticleIndices();
 
-// Update dVStar
-      #ifndef GEOS_USE_DEVICE
-        // Get views to mapping arrays
-        arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
-        arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
-        arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
-        GEOS_UNUSED_VAR( particleRVectors );
-        GEOS_UNUSED_VAR( particleType );
-        GEOS_UNUSED_VAR( ijkMap );
-      #endif
+    ParticleType const particleType =
+      subRegion.getParticleType();
 
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#ifndef GEOS_USE_DEVICE
+
+    arrayView1d< localIndex const > const numEffectiveMappedNodes =
+      m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< integer const > const effectiveMappedFields =
+      m_effectiveMappedFields[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes =
+      m_effectiveMappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const effectiveShapeFunctionValues =
+      m_effectiveShapeFunctionValues[subRegionIndex];
+    arrayView3d< real64 const > const effectiveShapeFunctionGradientValues =
+      m_effectiveShapeFunctionGradientValues[subRegionIndex];
+
+    GEOS_UNUSED_VAR( numberOfMappedNodesPerParticle );
+    GEOS_UNUSED_VAR( particleDamageGradient );
+    GEOS_UNUSED_VAR( particleGroup );
+    GEOS_UNUSED_VAR( particleRVectors );
+    GEOS_UNUSED_VAR( particleSurfaceNormal );
+    GEOS_UNUSED_VAR( particleType );
+
+#endif
+
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+      [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
-      localIndex const p = activeParticleIndices[pp];
+      localIndex const p =
+        activeParticleIndices[pp];
 
-      #ifdef GEOS_USE_DEVICE
-      // On-the-fly shape function computation
-      localIndex mappedNodes[64] = { };
-      real64 shapeFunctionValues[64] = { };
-      real64 shapeFunctionGradientValues[64][3] = { };
-      mapNodesAndComputeShapeFunctionsForSingleParticle( ijkMap,
-                                        xLocalMin,
-                                        hEl,
-                                        particleType,
-                                        particlePosition[p],
-                                        particleRVectors[p],
-                                        gridPosition,
-                                        mappedNodes,
-                                        shapeFunctionValues,
-                                        shapeFunctionGradientValues );
-      #endif
+#ifdef GEOS_USE_DEVICE
+
+      localIndex mappedNodesForParticle[64] = {};
+      real64 shapeFunctionValuesForParticle[64] = {};
+      real64 shapeFunctionGradientValuesForParticle[64][3] = {};
+
+      mapNodesAndComputeShapeFunctionsForSingleParticle(
+        ijkMap,
+        xLocalMin,
+        hEl,
+        particleType,
+        particlePosition[p],
+        particleRVectors[p],
+        gridPosition,
+        mappedNodesForParticle,
+        shapeFunctionValuesForParticle,
+        shapeFunctionGradientValuesForParticle );
+
+      localIndex const numberOfEffectiveMappedNodesPerParticle =
+        numberOfMappedNodesPerParticle;
+
+#else
+
+      localIndex const numberOfEffectiveMappedNodesPerParticle =
+        numEffectiveMappedNodes[pp];
+
+#endif
 
       for( localIndex i = 0; i < numDims; ++i )
       {
-        particlePosition[p][i] += 0.5 * dt * particleVelocity[p][i];
-        particleVelocity[p][i] = 0.0;
+        particlePosition[p][i] +=
+          0.5 * dt * particleVelocity[p][i];
 
-        for( int j=0; j < numDims; ++j )
-        {
-          particleVelocityGradient[p][i][j] = 0.0;
-        }
+        particleVelocity[p][i] =
+          0.0;
       }
 
-      for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
+      // Tensor equation: particleVelocityGradient[p] = 0.0 component-wise.
+      LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
+
+      for( localIndex g = 0;
+           g < numberOfEffectiveMappedNodesPerParticle;
+           ++g )
       {
-        #ifdef GEOS_USE_DEVICE
-          localIndex const mappedNode = mappedNodes[g];
-          real64 const shapeFunctionValue = shapeFunctionValues[g];
-          real64 shapeFunctionGradientValue[3] = {};
-          // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[g].
-          LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[g] );
-        #else
-          localIndex const mappedNode = mappedNodes[pp][g];
-          real64 const shapeFunctionValue = shapeFunctionValues[pp][g];
-          real64 shapeFunctionGradientValue[3] = {};
-          // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[pp][g].
-          LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
-        #endif
+#ifdef GEOS_USE_DEVICE
+        localIndex const mappedNode =
+          mappedNodesForParticle[g];
 
-        localIndex const fieldIndex = partitionField( numContactGroups,
-                                                      damageFieldPartitioning,
-                                                      particleGroup[p],
-                                                      particleDamageGradient[p],
-                                                      particleSurfaceNormal[p],
-                                                      gridDamageGradient[mappedNode] );
+        real64 const shapeFunctionValue =
+          shapeFunctionValuesForParticle[g];
 
-        for( localIndex i=0; i < numDims; ++i )
+        real64 const grad0 =
+          shapeFunctionGradientValuesForParticle[g][0];
+
+        real64 const grad1 =
+          shapeFunctionGradientValuesForParticle[g][1];
+
+        real64 const grad2 =
+          shapeFunctionGradientValuesForParticle[g][2];
+
+        localIndex const fieldIndex =
+          partitionField( numContactGroups,
+                          damageFieldPartitioning,
+                          particleGroup[p],
+                          particleDamageGradient[p],
+                          particleSurfaceNormal[p],
+                          gridDamageGradient[mappedNode] );
+#else
+        localIndex const mappedNode =
+          effectiveMappedNodes[pp][g];
+
+        real64 const shapeFunctionValue =
+          effectiveShapeFunctionValues[pp][g];
+
+        real64 const grad0 =
+          effectiveShapeFunctionGradientValues[pp][g][0];
+
+        real64 const grad1 =
+          effectiveShapeFunctionGradientValues[pp][g][1];
+
+        real64 const grad2 =
+          effectiveShapeFunctionGradientValues[pp][g][2];
+
+        localIndex const fieldIndex =
+          effectiveMappedFields[pp][g];
+#endif
+
+        for( localIndex i = 0; i < numDims; ++i )
         {
-          particlePosition[p][i] += 0.5 * dt * shapeFunctionValue * vStar[mappedNode][fieldIndex][i];
-          particleVelocity[p][i] += shapeFunctionValue * vStar[mappedNode][fieldIndex][i];
+          real64 const vFmpmI =
+            vFmpm[mappedNode][fieldIndex][i];
 
-          for( int j=0; j < numDims; ++j )
+          particlePosition[p][i] +=
+            0.5 * dt * shapeFunctionValue * vFmpmI;
+
+          particleVelocity[p][i] +=
+            shapeFunctionValue * vFmpmI;
+
+          /*
+           * FMPM interprets the corrected grid velocity v^{+(k)} as the
+           * approximate full-mass-matrix velocity. Use that same corrected
+           * velocity for the stress/strain kinematics:
+           *
+           *   L_p += v_I^{+(k)} outer grad N_Ip.
+           */
+          particleVelocityGradient[p][i][0] +=
+            vFmpmI * grad0;
+
+          if( numDims > 1 )
           {
-            particleVelocityGradient[p][i][j] += vStar[mappedNode][fieldIndex][i] * shapeFunctionGradientValue[j];
+            particleVelocityGradient[p][i][1] +=
+              vFmpmI * grad1;
+          }
+
+          if( numDims > 2 )
+          {
+            particleVelocityGradient[p][i][2] +=
+              vFmpmI * grad2;
           }
         }
       }
     } );
+
     ++subRegionIndex;
   } );
 }
