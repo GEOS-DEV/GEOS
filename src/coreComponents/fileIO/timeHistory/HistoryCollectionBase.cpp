@@ -128,7 +128,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         GEOS_THROW_IF( !bodyFound,
                        GEOS_FMT( "MeshBody ({}) is specified, but not found.",
                                  targetTokens[0] ),
-                       std::domain_error );
+                       geos::DomainError );
       }
 
       string const meshBodyName = targetTokens[0];
@@ -158,7 +158,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           GEOS_THROW_IF( !levelFound,
                          GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
                                    targetTokens[1] ),
-                         std::domain_error );
+                         geos::DomainError );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
@@ -179,7 +179,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         GEOS_THROW_IF( targetTokens.size() <= 4,
                        GEOS_FMT( " Object Path '{}' does not target any element sub region",
                                  objectPath ),
-                       std::runtime_error );
+                       geos::RuntimeError );
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
         string const elemRegionName = targetTokens[3];
         ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
@@ -198,9 +198,11 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           }
           else
           {
-            GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
-                        objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
-                        std::domain_error );
+            GEOS_THROW( GEOS_FMT( "{} not found in path {}\n{}",
+                                  targetTokens[pathLevel],
+                                  objectPath,
+                                  targetGroup->dumpSubGroupsNames() ),
+                        geos::DomainError );
           }
         }
       }
@@ -209,6 +211,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
   }
   catch( std::exception const & e )
   {
+    ErrorLogger::global().modifyCurrentExceptionMessage()
+      .addToMsg( getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" )
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }

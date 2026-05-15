@@ -43,7 +43,7 @@ class ThermalCompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 public:
 
   using DensRelationType      = ExponentialRelation< real64, DENS_EAT, 3 >;
-  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT >;
+  using ViscRelationType      = ExponentialRelation< real64, VISC_EAT, 3 >;
   using IntEnergyRelationType = ExponentialRelation< real64, INTENERGY_EAT >;
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
@@ -114,10 +114,9 @@ public:
                         real64 & dEnthalpy_dPressure,
                         real64 & dEnthalpy_dTemperature ) const override
   {
-    m_viscRelation.compute( pressure, viscosity, dViscosity_dPressure );
-    dViscosity_dTemperature = 0.0;
-
     m_densRelation.compute( pressure, temperature, density, dDensity_dPressure, dDensity_dTemperature );
+
+    m_viscRelation.compute( pressure, temperature, viscosity, dViscosity_dPressure, dViscosity_dTemperature );
 
     /// Compute the internal energy (only sensitive to temperature)
     m_intEnergyRelation.compute( temperature, internalEnergy, dInternalEnergy_dTemperature );
@@ -126,7 +125,6 @@ public:
     enthalpy = internalEnergy - m_refIntEnergy;
     dEnthalpy_dPressure = 0.0;
     dEnthalpy_dTemperature = dInternalEnergy_dTemperature;
-
   }
 
   GEOS_HOST_DEVICE
@@ -148,6 +146,30 @@ public:
                        localIndex const q,
                        real64 const pressure,
                        real64 const temperature ) const override
+  {
+    compute( pressure,
+             temperature,
+             m_density[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
+             m_dDensity[k][q][DerivOffset::dT],
+             m_viscosity[k][q],
+             m_dViscosity[k][q][DerivOffset::dP],
+             m_dViscosity[k][q][DerivOffset::dT],
+             m_internalEnergy[k][q],
+             m_dInternalEnergy[k][q][DerivOffset::dP],
+             m_dInternalEnergy[k][q][DerivOffset::dT],
+             m_enthalpy[k][q],
+             m_dEnthalpy[k][q][DerivOffset::dP],
+             m_dEnthalpy[k][q][DerivOffset::dT] );
+  }
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const temperature,
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
   {
     compute( pressure,
              temperature,
@@ -216,6 +238,7 @@ public:
   struct viewKeyStruct : public CompressibleSinglePhaseFluid::viewKeyStruct
   {
     static constexpr char const * thermalExpansionCoeffString() { return "thermalExpansionCoeff"; }
+    static constexpr char const * temperatureViscosityCoefficient() { return "temperatureViscosityCoefficient"; }
     static constexpr char const * specificHeatCapacityString() { return "specificHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
     static constexpr char const * referenceInternalEnergyString() { return "referenceInternalEnergy"; }
@@ -230,6 +253,9 @@ private:
 
   /// scalar fluid thermal expansion coefficient
   real64 m_thermalExpansionCoeff;
+
+  /// scalar fluid temperature-viscosity coefficient
+  real64 m_temperatureViscosityCoefficient;
 
   /// scalar fluid volumetric heat capacity coefficient
   real64 m_specificHeatCapacity;

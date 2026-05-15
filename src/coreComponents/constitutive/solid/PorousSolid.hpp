@@ -450,8 +450,6 @@ private:
   using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getPermModel;
 };
 
-
-
 }
 } /* namespace geos */
 

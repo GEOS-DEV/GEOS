@@ -636,8 +636,13 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       }
       catch( std::exception const & e )
       {
-        throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                       getWrapperDataContext( viewKeyStruct::functionNameString() ) ) );
+        string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                          getWrapperDataContext( viewKeyStruct::functionNameString() ) );
+        ErrorLogger::global().modifyCurrentExceptionMessage()
+          .addToMsg( errorMsg )
+          .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo()
+                             .setPriority( 1 ) );
+        throw InputError( e, errorMsg );
       }
     }();
 

@@ -61,6 +61,31 @@
 ///@}
 
 /**
+ * @name NVCC diagnostic suppression helpers.
+ *
+ * Work around nvcc erroneously requiring device-compatible destructors for
+ * reference parameters of host lambdas that contain device kernel launches.
+ * Place GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS before the lambda and
+ * GEOS_NV_HOST_DEVICE_DIAG_DEFAULT after it to restore the default behavior.
+ * On non-NVCC compilers the macros expand to nothing.
+ */
+///@{
+
+#if defined(__NVCC__)
+/// Suppress nvcc diagnostics 20011/20014 (calling __host__ from __host__ __device__).
+#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS _Pragma("nv_diag_suppress 20011") _Pragma("nv_diag_suppress 20014")
+/// Restore nvcc diagnostics 20011/20014 to default.
+#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT  _Pragma("nv_diag_default 20011")  _Pragma("nv_diag_default 20014")
+#else
+/// @cond DO_NOT_DOCUMENT
+#define GEOS_NV_HOST_DEVICE_DIAG_SUPPRESS
+#define GEOS_NV_HOST_DEVICE_DIAG_DEFAULT
+/// @endcond
+#endif
+
+///@}
+
+/**
  * @name Unused variable markers.
  *
  * These macros are used to explicitly mark a variable/argument as unused
@@ -132,5 +157,90 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 #define GEOS_MAYBE_UNUSED
     #endif
 #endif
+
+/**
+ * @name Parameters processing internal macros
+ *
+ * These internal macros allow to craft macros with multiple count of parameters.
+ */
+///@{
+
+/// internal macro for GEOS_DETAIL_MORE_THAN_ONE_ARG
+#define GEOS_DETAIL_MORE_THAN_ONE_ARG_VALUE( _00, _01, _02, _03, _04, _05, _06, _07, \
+                                             _08, _09, _10, _11, _12, _13, _14, _15, \
+                                             _INDEX, ... ) _INDEX
+
+/**
+ * @return 1 if variadic argument has more than 1 element, 0 otherwise.
+ * @note Undefined behaviour if variadic argument has more that 16 elements.
+ */
+#define GEOS_DETAIL_MORE_THAN_ONE_ARG( ... ) \
+  GEOS_DETAIL_MORE_THAN_ONE_ARG_VALUE( __VA_ARGS__, \
+                                       true, true, true, true, true, true, true, true, \
+                                       true, true, true, true, true, true, true, false, false )
+
+/// @cond DO_NOT_DOCUMENT
+
+/// internal macros for GEOS_DETAIL_FIRST_ARG
+#define GEOS_DETAIL_FIRST_ARG_false( FIRST ) FIRST
+#define GEOS_DETAIL_FIRST_ARG_true( FIRST, ... ) FIRST
+#define GEOS_DETAIL_FIRST_ARG_FUNC( COND ) GEOS_DETAIL_FIRST_ARG_ ## COND
+#define GEOS_DETAIL_FIRST_ARG_DISPATCH( COND, ... ) GEOS_DETAIL_FIRST_ARG_FUNC( COND )(__VA_ARGS__)
+
+/// internal macros for GEOS_DETAIL_LAST_ARG
+#define GEOS_DETAIL_REST_ARGS_false( FIRST )
+#define GEOS_DETAIL_REST_ARGS_true( FIRST, ... ) __VA_ARGS__
+#define GEOS_DETAIL_REST_ARGS_FUNC( COND ) GEOS_DETAIL_REST_ARGS_ ## COND
+#define GEOS_DETAIL_REST_ARGS_DISPATCH( COND, ... ) GEOS_DETAIL_REST_ARGS_FUNC( COND )(__VA_ARGS__)
+
+/// internal macros for GEOS_DETAIL_LAST_ARG_PREP
+#define GEOS_DETAIL_REST_PREP_ARGS_false( FIRST )
+#define GEOS_DETAIL_REST_PREP_ARGS_true( FIRST, ... ) , __VA_ARGS__
+#define GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND ) GEOS_DETAIL_REST_PREP_ARGS_ ## COND
+#define GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( COND, ... ) GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND )(__VA_ARGS__)
+
+/// @endcond
+
+/**
+ * @return Return the first parameter of the variadic parameters (__VA_ARGS__).
+ * @note Undefined behaviour if variadic argument has more that 16 elements.
+ */
+#define GEOS_DETAIL_FIRST_ARG( ... ) GEOS_DETAIL_FIRST_ARG_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
+                                                                     __VA_ARGS__ )
+
+/**
+ * @return Return the parameters following the first of the variadic parameters (__VA_ARGS__).
+ * @note Undefined behaviour if variadic argument has more that 16 elements.
+ */
+#define GEOS_DETAIL_REST_ARGS( ... ) GEOS_DETAIL_REST_ARGS_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
+                                                                     __VA_ARGS__ )
+
+/**
+ * @return Return the parameters following the first of the variadic parameters (__VA_ARGS__),
+ *         prepended with a comma when not empty.
+ * @note Undefined behaviour if variadic argument has more that 16 elements.
+ */
+#define GEOS_DETAIL_REST_PREP_ARGS( ... ) GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
+                                                                               __VA_ARGS__ )
+
+namespace geos::internal
+{
+
+/**
+ * @brief Minimal "ostream-like" sink used to type-check stream-insertion expressions
+ *        in device compilation, without pulling in iostreams.
+ */
+struct DeviceNullStream
+{
+  template< class T >
+  GEOS_HOST_DEVICE constexpr DeviceNullStream & operator<<( T const & ) noexcept
+  {
+    return *this;
+  }
+};
+
+}
+
+///@}
 
 #endif // GEOS_COMMON_GEOSXMACROS_HPP_

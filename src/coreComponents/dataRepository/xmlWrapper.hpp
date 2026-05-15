@@ -351,12 +351,13 @@ std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
 stringToInputVariable( T & target, string const & value, Regex const & regex )
 {
   validateString( value, regex );
-
-  std::istringstream ss( value );
+  string_view stringTrimed = stringutilities::trimSpaces( value );
+  std::istringstream ss( (string( stringTrimed )) );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
-                 "Error detected while parsing string \"" << value <<
-                 "\" to type " << LvArray::system::demangleType< T >(),
+                 GEOS_FMT( "Error detected while parsing string \"{}\" to type {}",
+                           value,
+                           LvArray::system::demangleType< T >() ),
                  InputError );
 }
 
@@ -462,7 +463,11 @@ template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
 readAttributeAsType( T &, string const & name, Regex const &, xmlNode const &, U const & )
 {
-  GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOS_THROW( GEOS_FMT( "Cannot parse key with name ({}) with the given type {}",
+                        name,
+                        LvArray::system::demangleType< T >() ),
+              InputError );
+  return false;
 }
 
 /**

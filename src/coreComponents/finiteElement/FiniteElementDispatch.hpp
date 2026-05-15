@@ -123,7 +123,7 @@ struct FiniteElementDispatchHandler<>
   dispatch3D( FiniteElementBase const & input,
               LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_ERROR( GEOS_FMT( "finiteElement::dispatch3D() is not implemented for input of {}", typeid( input ).name() ) );
     GEOS_UNUSED_VAR( input );
   }
 
@@ -132,7 +132,7 @@ struct FiniteElementDispatchHandler<>
   dispatch3D( FiniteElementBase & input,
               LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOS_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
+    GEOS_ERROR( GEOS_FMT( "finiteElement::dispatch3D() is not implemented for input of {}", typeid( input ).name() ) );
     GEOS_UNUSED_VAR( input );
   }
 
@@ -141,7 +141,8 @@ struct FiniteElementDispatchHandler<>
   dispatch2D( FiniteElementBase const & input,
               LAMBDA && GEOS_UNUSED_PARAM( lambda ) )
   {
-    GEOS_ERROR( "finiteElement::dispatch2D() is not implemented for input of: "<<LvArray::system::demangleType( &input ) );
+    GEOS_ERROR( GEOS_FMT( "finiteElement::dispatch2D() is not implemented for input of: {}",
+                          LvArray::system::demangleType( &input ) ) );
     GEOS_UNUSED_VAR( input );
   }
 };
@@ -159,14 +160,13 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch3D( FiniteElementBase const & input,
               LAMBDA && lambda )
   {
-    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    if( auto const * const wrapper = dynamic_cast< FE_TYPE const * >(&input) )
     {
-      lambda( *ptr );
+      lambda( *wrapper->getImpl() );
+      return;
     }
-    else
-    {
-      FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
-    }
+
+    FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
   }
 
   template< typename LAMBDA >
@@ -174,14 +174,13 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch3D( FiniteElementBase & input,
               LAMBDA && lambda )
   {
-    if( auto * const ptr = dynamic_cast< FE_TYPE * >(&input) )
+    if( auto * const wrapper = dynamic_cast< FE_TYPE * >(&input) )
     {
-      lambda( *ptr );
+      lambda( *wrapper->getImpl() );
+      return;
     }
-    else
-    {
-      FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
-    }
+
+    FiniteElementDispatchHandler< FE_TYPES... >::dispatch3D( input, lambda );
   }
 
   template< typename LAMBDA >
@@ -189,14 +188,13 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch2D( FiniteElementBase const & input,
               LAMBDA && lambda )
   {
-    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    if( auto const * const wrapper = dynamic_cast< FE_TYPE const * >(&input) )
     {
-      lambda( *ptr );
+      lambda( *wrapper->getImpl() );
+      return;
     }
-    else
-    {
-      FiniteElementDispatchHandler< FE_TYPES... >::dispatch2D( input, lambda );
-    }
+
+    FiniteElementDispatchHandler< FE_TYPES... >::dispatch2D( input, lambda );
   }
 };
 
@@ -207,32 +205,31 @@ void
 dispatchlowOrder3D( FiniteElementBase const & input,
                     LAMBDA && lambda )
 {
-  if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
+  if( auto const * const wrapper1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
   {
-    lambda( *ptr1 );
+    lambda( *wrapper1->getImpl() );
   }
-  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
+  else if( auto const * const wrapper2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
   {
-    lambda( *ptr2 );
+    lambda( *wrapper2->getImpl() );
   }
-  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
+  else if( auto const * const wrapper3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
   {
-    lambda( *ptr3 );
+    lambda( *wrapper3->getImpl() );
   }
-  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
+  else if( auto const * const wrapper4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
   {
-    lambda( *ptr4 );
+    lambda( *wrapper4->getImpl() );
   }
   else
   {
-    GEOS_ERROR( "finiteElement::dispatchlowOrder3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
+    GEOS_ERROR( GEOS_FMT( "finiteElement::dispatchlowOrder3D() is not implemented for input of {}",
+                          LvArray::system::demangleType( &input ) ) );
   }
 }
 
 } // namespace finiteElement
 
 } // namespace geos
-
-
 
 #endif /* GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */

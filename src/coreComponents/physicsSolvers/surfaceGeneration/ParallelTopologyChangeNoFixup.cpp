@@ -269,7 +269,9 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator & neighbor,
   // poll for pack completion here
   waitAllDeviceEvents( packEvents );
   GEOS_ERROR_IF( bufferSize != packedSize,
-                 "Allocated Buffer Size ("<<bufferSize<<") is not equal to packed buffer size("<<packedSize<<")" );
+                 GEOS_FMT( "Allocated Buffer Size ({}) is not equal to packed buffer size({})",
+                           bufferSize,
+                           packedSize ) );
 
 
 }
@@ -928,6 +930,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                 ModifiedObjectLists & receivedObjects,
                                 int mpiCommOrder )
 {
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();

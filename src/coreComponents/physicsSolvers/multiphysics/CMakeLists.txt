@@ -23,6 +23,7 @@ set( multiPhysicsSolvers_headers
     CoupledReservoirAndWellsBase.hpp
     CoupledReservoirAndWellKernels.hpp
     CoupledSolver.hpp
+    FieldApplicator.hpp
     PoromechanicsSolver.hpp
     PoromechanicsConformingFractures.hpp
     FlowProppantTransportSolver.hpp
@@ -31,6 +32,7 @@ set( multiPhysicsSolvers_headers
     MultiphasePoromechanics.hpp
     OneWayCoupledFractureFlowContactMechanics.hpp
     MultiphasePoromechanicsConformingFractures.hpp
+    MultiphasePoromechanicsConformingFracturesALM.hpp
     PhaseFieldFractureSolver.hpp
     PhaseFieldPoromechanicsSolver.hpp
     PoromechanicsInitialization.hpp
@@ -60,6 +62,7 @@ set( multiPhysicsSolvers_headers
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanicsConformingFractures.hpp
+    SinglePhasePoromechanicsConformingFracturesALM.hpp
     SinglePhaseReservoirAndWells.hpp )
 
 # Specify solver sources
@@ -68,20 +71,23 @@ set( multiPhysicsSolvers_sources
     CoupledReservoirAndWellsBase.cpp
     FlowProppantTransportSolver.cpp
     HydrofractureSolver.cpp
+    FieldApplicator.cpp
     MultiphasePoromechanics.cpp
     OneWayCoupledFractureFlowContactMechanics.cpp
     MultiphasePoromechanicsConformingFractures.cpp
+    MultiphasePoromechanicsConformingFracturesALM.cpp
     PhaseFieldFractureSolver.cpp
     PhaseFieldPoromechanicsSolver.cpp
     PoromechanicsInitialization.cpp
     SinglePhasePoromechanics.cpp
     SinglePhasePoromechanicsEmbeddedFractures.cpp
     SinglePhasePoromechanicsConformingFractures.cpp
+    SinglePhasePoromechanicsConformingFracturesALM.cpp
     SinglePhaseReservoirAndWells.cpp )
 
 #include(poromechanicsKernels/PoromechanicsKernels.cmake)
 
-set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers )
+set( dependencyList ${parallelDeps} fluidFlowSolvers simplePDESolvers solidMechanicsSolvers surfaceGeneration )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

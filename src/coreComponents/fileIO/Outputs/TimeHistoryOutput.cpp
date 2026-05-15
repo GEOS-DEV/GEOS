@@ -143,8 +143,13 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                        getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
+      ErrorLogger::global().modifyCurrentExceptionMessage()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
+                           .setPriority( 1 ) );
+      throw InputError( e, errorMsg );
     }
   }
 }
