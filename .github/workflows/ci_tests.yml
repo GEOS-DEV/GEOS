@@ -16,51 +16,22 @@ concurrency:
 # Please define `build.args.GEOS_TPL_TAG` in `.devcontainer/devcontainer.json`
 
 jobs:
-  # Checks if PR title follows conventional semantics
-  semantic_pull_request:    
-    permissions:
-      pull-requests: write  # for amannn/action-semantic-pull-request to analyze PRs and 
-      statuses: write  # for amannn/action-semantic-pull-request to mark status of analyzed PR
-      contents: read    
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Check if the PR name has conventional semantics
-        if: github.event_name == 'pull_request'
-        uses: amannn/action-semantic-pull-request@v5.5.3
-        id: lint_pr_title
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          wip: true
-          # Configure that a scope doesn't need to be provided.
-          requireScope: false
-    
-      - name: Skip the check on develop branch
-        if:  github.ref_name == 'develop'
-        run: |
-          echo "This in't a Pull-Request, skipping"
-
   # Jobs will be cancelled if PR is a draft.
   # PR status must be "Open" to run CI.
   is_not_draft_pull_request:
     # if: ${{ always() }}
-    needs: [semantic_pull_request]
-    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions
-    # to ensure maximum support of google cloud's sdk.
+    # Everywhere in this workflow, we use the most recent ubuntu distribution available in Github Actions.
     runs-on: ubuntu-22.04
     outputs:
       DOCKER_IMAGE_TAG: ${{ steps.extract_docker_image_tag.outputs.DOCKER_IMAGE_TAG }}
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
       run: |
         set -euo pipefail
 
         if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          draft_status=$( curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}" | jq -r '.draft')
+          draft_status="${{ github.event.pull_request.draft }}"
 
           echo "Draft status of PR is ${draft_status}."
           if [[ "${draft_status}" == "true" ]]; then
@@ -68,11 +39,10 @@ jobs:
           fi
         fi
 
-
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.
     - name: Checkout .devcontainer/devcontainer.json
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         sparse-checkout: |
           .devcontainer/devcontainer.json
@@ -85,6 +55,210 @@ jobs:
       run: |
         echo "DOCKER_IMAGE_TAG=$(jq '.build.args.GEOS_TPL_TAG' -r .devcontainer/devcontainer.json)" >> "$GITHUB_OUTPUT"
 
+  # Resolve CI settings once and keep the build jobs declarative.
+  #
+  # Two checked-in files drive behavior:
+  #   .github/ci/orgs/<github.repository_owner>.json
+  #     Per-org choices: storage provider name, sccache profile name, integrated-tests bucket
+  #     path, public URL base and bucket-scoping, runner labels, and per-runner CA bundle paths.
+  #     Every field is required; there are no defaults. See .github/ci/README.md for the schema.
+  #   .github/ci/providers/<storage_provider>.json
+  #     Provider-level CLI details: the shell commands that upload artifacts and the URI scheme.
+  #     Reused by any org that selects this provider. Every field is required.
+  #
+  # Provider payloads (credentials, sccache profiles) are supplied through inherited secrets:
+  # - SCCACHE_PROFILES_JSON
+  # - ARTIFACT_PROVIDER_CREDENTIALS_JSON
+  # Direct one-off overrides remain available in the reusable workflow via SCCACHE_* and
+  # ARTIFACT_UPLOAD_CREDENTIALS_JSON.
+  #
+  # SECURITY: the artifact_upload_command and artifact_upload_pre_command strings in each
+  # provider JSON file are passed to `eval` on the runner. A change to those strings is a
+  # change to executable shell, not a data-config tweak. Review edits to
+  # .github/ci/providers/*.json with the same scrutiny as workflow YAML. Do not populate
+  # those values from PR- or user-controllable sources.
+  resolve_ci_provider:
+    runs-on: ubuntu-22.04
+    outputs:
+      STORAGE_PROVIDER: ${{ steps.resolve.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ steps.resolve.outputs.SCCACHE_PROFILE }}
+      INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH: ${{ steps.resolve.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      DOCKER_CA_BUNDLE_HOST_PATHS_JSON: ${{ steps.resolve.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON }}
+      CMAKE_CUDA_ARCHITECTURES_JSON: ${{ steps.resolve.outputs.CMAKE_CUDA_ARCHITECTURES_JSON }}
+      RUNNER_LABELS_JSON: ${{ steps.resolve.outputs.RUNNER_LABELS_JSON }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_COMMAND }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
+      ARTIFACT_UPLOAD_URI_ROOT: ${{ steps.resolve.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
+      ARTIFACT_PUBLIC_URL_ROOT: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
+      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED: ${{ steps.resolve.outputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}
+    env:
+      CI_REPOSITORY_OWNER: ${{ github.repository_owner }}
+    steps:
+    - name: Checkout CI config
+      uses: actions/checkout@v6.0.2
+      with:
+        sparse-checkout: |
+          .github/ci/orgs
+          .github/ci/providers
+        sparse-checkout-cone-mode: false
+        submodules: false
+        lfs: false
+        fetch-depth: 1
+    - id: resolve
+      run: |
+        set -euo pipefail
+
+        # --- Locate the org config file. Owners are matched case-insensitively. ---
+        REPOSITORY_OWNER_LOWER="$(printf '%s' "${CI_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')"
+        ORG_CONFIG_PATH=''
+        for candidate in \
+          "${GITHUB_WORKSPACE}/.github/ci/orgs/${CI_REPOSITORY_OWNER}.json" \
+          "${GITHUB_WORKSPACE}/.github/ci/orgs/${REPOSITORY_OWNER_LOWER}.json"
+        do
+          if [[ -f "${candidate}" ]]; then
+            ORG_CONFIG_PATH="${candidate}"
+            break
+          fi
+        done
+
+        if [[ -z "${ORG_CONFIG_PATH}" ]]; then
+          echo "::error::No CI organization config was found for repository owner '${CI_REPOSITORY_OWNER}'. Expected .github/ci/orgs/${CI_REPOSITORY_OWNER}.json or .github/ci/orgs/${REPOSITORY_OWNER_LOWER}.json."
+          exit 1
+        fi
+
+        if ! jq -e 'type == "object"' "${ORG_CONFIG_PATH}" >/dev/null; then
+          echo "::error::Invalid JSON object in ${ORG_CONFIG_PATH}."
+          exit 1
+        fi
+
+        ORG_CONFIG_JSON="$(jq -c . "${ORG_CONFIG_PATH}")"
+
+        # --- Validate the full org schema. Every field is required; there are no defaults. ---
+        if ! jq -e '
+          (.storage_provider | type == "string" and length > 0)
+          and (.sccache_profile | type == "string" and length > 0)
+          and (.integrated_tests_artifact_bucket_path | type == "string" and length > 0)
+          and (.artifact_public_url_base | type == "string")
+          and (.artifact_public_url_bucket_scoped | type == "boolean")
+          and (.runner_ca_bundle_host_paths | type == "object")
+          and (.runner_ca_bundle_host_paths | all(.[]; type == "string"))
+          and (.runner_cuda_architectures | type == "object")
+          and (.runner_cuda_architectures | all(.[]; type == "string" and length > 0))
+          and (.runners | type == "object")
+          and (.runners.default | type == "string" and length > 0)
+          and (.runners.cpu_heavy | type == "string" and length > 0)
+          and (.runners.integrated_tests | type == "string" and length > 0)
+          and (.runners.code_coverage | type == "string" and length > 0)
+          and (.runners.cuda | type == "string" and length > 0)
+        ' <<< "${ORG_CONFIG_JSON}" >/dev/null; then
+          echo "::error::${ORG_CONFIG_PATH} must define every required field: storage_provider, sccache_profile, integrated_tests_artifact_bucket_path, artifact_public_url_base, artifact_public_url_bucket_scoped, runner_ca_bundle_host_paths, runner_cuda_architectures, and runners.{default,cpu_heavy,integrated_tests,code_coverage,cuda}. See .github/ci/README.md for the full schema."
+          exit 1
+        fi
+
+        # --- Extract org values. ---
+        STORAGE_PROVIDER="$(jq -r '.storage_provider' <<< "${ORG_CONFIG_JSON}")"
+        SCCACHE_PROFILE="$(jq -r '.sccache_profile' <<< "${ORG_CONFIG_JSON}")"
+        INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH="$(jq -r '.integrated_tests_artifact_bucket_path' <<< "${ORG_CONFIG_JSON}")"
+        ARTIFACT_PUBLIC_URL_ROOT="$(jq -r '.artifact_public_url_base' <<< "${ORG_CONFIG_JSON}")"
+        ARTIFACT_PUBLIC_URL_BUCKET_SCOPED="$(jq -r '.artifact_public_url_bucket_scoped' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_LABELS_JSON="$(jq -c '.runners' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -c '.runner_ca_bundle_host_paths' <<< "${ORG_CONFIG_JSON}")"
+        RUNNER_CUDA_ARCHITECTURES_JSON="$(jq -c '.runner_cuda_architectures' <<< "${ORG_CONFIG_JSON}")"
+
+        # --- Resolve per-runner-role CA bundle paths. ---
+        # Each runner role picks up the bundle path for its label; if no exact match,
+        # fall back to the prefix before the first '-' (so "streak2-32core" reuses "streak2").
+        DOCKER_CA_BUNDLE_HOST_PATHS_JSON="$(jq -cn \
+          --argjson runners "${RUNNER_LABELS_JSON}" \
+          --argjson cert_paths "${RUNNER_CA_BUNDLE_HOST_PATHS_JSON}" '
+          def resolve_path($runner_label):
+            ($cert_paths[$runner_label]
+             // (($runner_label | split("-")[0]) as $runner_prefix | $cert_paths[$runner_prefix])
+             // "");
+          {
+            default: resolve_path($runners.default),
+            cpu_heavy: resolve_path($runners.cpu_heavy),
+            integrated_tests: resolve_path($runners.integrated_tests),
+            code_coverage: resolve_path($runners.code_coverage),
+            cuda: resolve_path($runners.cuda)
+          }'
+        )"
+
+        # --- Resolve CUDA architectures by runner role. ---
+        # Like CA bundle paths, CUDA architectures are keyed by runner label and use prefix fallback.
+        CMAKE_CUDA_ARCHITECTURES_JSON="$(jq -cn \
+          --argjson runners "${RUNNER_LABELS_JSON}" \
+          --argjson cuda_architectures "${RUNNER_CUDA_ARCHITECTURES_JSON}" '
+          def resolve_arch($runner_label):
+            ($cuda_architectures[$runner_label]
+             // (($runner_label | split("-")[0]) as $runner_prefix | $cuda_architectures[$runner_prefix])
+             // "");
+          {
+            default: resolve_arch($runners.default),
+            cpu_heavy: resolve_arch($runners.cpu_heavy),
+            integrated_tests: resolve_arch($runners.integrated_tests),
+            code_coverage: resolve_arch($runners.code_coverage),
+            cuda: resolve_arch($runners.cuda)
+          }'
+        )"
+
+        CUDA_RUNNER_LABEL="$(jq -r '.cuda' <<< "${RUNNER_LABELS_JSON}")"
+        if ! jq -e '.cuda | type == "string" and length > 0' <<< "${CMAKE_CUDA_ARCHITECTURES_JSON}" >/dev/null; then
+          echo "::error::${ORG_CONFIG_PATH} must define runner_cuda_architectures for CUDA runner '${CUDA_RUNNER_LABEL}'."
+          exit 1
+        fi
+
+        # --- Load and validate the provider file. ---
+        # storage_provider names a file under .github/ci/providers/.
+        # Restrict the allowed characters so the provider name cannot escape the directory.
+        if ! [[ "${STORAGE_PROVIDER}" =~ ^[A-Za-z0-9_-]+$ ]]; then
+          echo "::error::storage_provider '${STORAGE_PROVIDER}' contains disallowed characters. Allowed: letters, digits, '_', '-'."
+          exit 1
+        fi
+        PROVIDER_CONFIG_PATH="${GITHUB_WORKSPACE}/.github/ci/providers/${STORAGE_PROVIDER}.json"
+        if [[ ! -f "${PROVIDER_CONFIG_PATH}" ]]; then
+          echo "::error::No provider config file at ${PROVIDER_CONFIG_PATH} for storage_provider '${STORAGE_PROVIDER}' (selected in ${ORG_CONFIG_PATH})."
+          exit 1
+        fi
+
+        if ! jq -e 'type == "object"' "${PROVIDER_CONFIG_PATH}" >/dev/null; then
+          echo "::error::Invalid JSON object in ${PROVIDER_CONFIG_PATH}."
+          exit 1
+        fi
+
+        PROVIDER_CONFIG_JSON="$(jq -c . "${PROVIDER_CONFIG_PATH}")"
+
+        if ! jq -e '
+          (.artifact_upload_command | type == "string" and length > 0)
+          and (.artifact_upload_pre_command | type == "string" and length > 0)
+          and (.artifact_upload_uri_root | type == "string" and length > 0)
+        ' <<< "${PROVIDER_CONFIG_JSON}" >/dev/null; then
+          echo "::error::${PROVIDER_CONFIG_PATH} must define artifact_upload_command, artifact_upload_pre_command, and artifact_upload_uri_root as non-empty strings."
+          exit 1
+        fi
+
+        ARTIFACT_UPLOAD_COMMAND="$(jq -r '.artifact_upload_command' <<< "${PROVIDER_CONFIG_JSON}")"
+        ARTIFACT_UPLOAD_PRE_COMMAND="$(jq -r '.artifact_upload_pre_command' <<< "${PROVIDER_CONFIG_JSON}")"
+        ARTIFACT_UPLOAD_URI_ROOT="$(jq -r '.artifact_upload_uri_root' <<< "${PROVIDER_CONFIG_JSON}")"
+
+        {
+          echo "STORAGE_PROVIDER=${STORAGE_PROVIDER}"
+          echo "SCCACHE_PROFILE=${SCCACHE_PROFILE}"
+          echo "INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH=${INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH}"
+          echo "DOCKER_CA_BUNDLE_HOST_PATHS_JSON=${DOCKER_CA_BUNDLE_HOST_PATHS_JSON}"
+          echo "CMAKE_CUDA_ARCHITECTURES_JSON=${CMAKE_CUDA_ARCHITECTURES_JSON}"
+          echo "RUNNER_LABELS_JSON=${RUNNER_LABELS_JSON}"
+          echo "ARTIFACT_UPLOAD_COMMAND<<__EOF__"
+          printf '%s\n' "${ARTIFACT_UPLOAD_COMMAND}"
+          echo "__EOF__"
+          echo "ARTIFACT_UPLOAD_PRE_COMMAND<<__EOF__"
+          printf '%s\n' "${ARTIFACT_UPLOAD_PRE_COMMAND}"
+          echo "__EOF__"
+          echo "ARTIFACT_UPLOAD_URI_ROOT=${ARTIFACT_UPLOAD_URI_ROOT}"
+          echo "ARTIFACT_PUBLIC_URL_ROOT=${ARTIFACT_PUBLIC_URL_ROOT}"
+          echo "ARTIFACT_PUBLIC_URL_BUCKET_SCOPED=${ARTIFACT_PUBLIC_URL_BUCKET_SCOPED}"
+        } >> "$GITHUB_OUTPUT"
+
   # PR must be assigned to be merged.
   # This job will fail if this is not the case.
   if_not_unassigned_pull_request:
@@ -92,12 +266,19 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: If this is a PR, Check that it is assigned
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
-        if [[ ${{github.event_name}} != 'pull_request' ]]; then exit 0 ; fi
-        pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-        NUM_ASSIGNEES=$(echo ${pr_json} | jq '.assignees | length')
+        set -euo pipefail
+
+        if [[ "${{ github.event_name }}" != 'pull_request' ]]; then exit 0 ; fi
+        PR_JSON=$(curl --fail --silent --show-error \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
+        NUM_ASSIGNEES=$(jq -r '.assignees | length' <<< "${PR_JSON}")
         echo "There are ${NUM_ASSIGNEES} assignees on this PR."
-        if [[ $NUM_ASSIGNEES == 0 ]]; then exit 1 ; fi
+        if [[ "${NUM_ASSIGNEES}" == 0 ]]; then exit 1 ; fi
 
   # Validates that the PR is still pointing to the HEAD of the main branch of the submodules repositories.
   # (There are exceptions, read the script about those).
@@ -108,7 +289,7 @@ jobs:
     # The integrated test submodule repository contains large data (using git lfs).
     # To save time (and money) we do not let Github Actions automatically clone all our (lfs) subrepositories and do it by hand.
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         # Let script update submodules; Github Actions submodule history causes error
         submodules: false
@@ -136,7 +317,7 @@ jobs:
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       HOST_CONFIG: /spack-generated.cmake
-      DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
+      DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
 
@@ -160,103 +341,108 @@ jobs:
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
   cpu_builds:
     name: ${{ matrix.name }}
-    needs: [is_not_draft_pull_request]
+    needs: [is_not_draft_pull_request, resolve_ci_provider]
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
       matrix:
         include:
-          - name: Ubuntu (20.04, gcc 9.4.0, open-mpi 4.0.3)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
-            BUILD_SHARED_LIBS: ON
-            ENABLE_HYPRE: OFF
-            ENABLE_TRILINOS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            HOST_CONFIG: /spack-generated.cmake
+          # - name: Ubuntu 24.04 - gcc 12
+          #   CMAKE_BUILD_TYPE: Release
+          #   BUILD_AND_TEST_CLI_ARGS: "--use-native-architecture"
+          #   DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
+          #   GCP_BUCKET: geosx/ubuntu24.04-gcc12
+          #   BUILD_SHARED_LIBS: ON
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   GEOS_ENABLE_BOUNDS_CHECK: ON
+          #   RUNNER_KEY: cpu_heavy
+          #   NPROC: 8
+          #   DOCKER_RUN_ARGS: "--cpus=8 --memory=192g"
+          #   HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu debug (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
+          - name: Ubuntu 24.04 - gcc 13 debug
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
             CMAKE_BUILD_TYPE: Debug
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
             BUILD_SHARED_LIBS: ON
-            ENABLE_HYPRE: OFF
-            ENABLE_TRILINOS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
-
-            HOST_CONFIG: /spack-generated.cmake
-
-          - name: Ubuntu (20.04, gcc 10.5.0, open-mpi 4.0.3) - github codespaces
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc10
-            BUILD_SHARED_LIBS: ON
-            ENABLE_HYPRE: OFF
-            ENABLE_TRILINOS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            HOST_CONFIG: /spack-generated.cmake
-
-          - name: Ubuntu (22.04, gcc 11.4.0, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: OFF
-            GCP_BUCKET: geosx/ubuntu22.04-gcc11
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            # Resolved from .github/ci/orgs/<github.repository_owner>.json.
+            RUNNER_KEY: cpu_heavy
+            NPROC: 4
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=192g"
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2)
+          - name: Ubuntu 24.04 - gcc 13
             CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+            GCP_BUCKET: geosx/ubuntu24.04-gcc13
+            BUILD_SHARED_LIBS: ON
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: ON
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2, +hypredrive)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12-hypredrive
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12-hypredrive
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            BUILD_SHARED_LIBS: ON
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            HOST_CONFIG: /spack-generated.cmake
+          # this keeps missing sccache so we are skipping it for now.
+          # - name: Ubuntu 24.04 - clang 19
+          #   CMAKE_BUILD_TYPE: Release
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+          #   DOCKER_REPOSITORY: geosx/ubuntu24.04-clang19
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   BUILD_SHARED_LIBS: ON
+          #   GEOS_ENABLE_BOUNDS_CHECK: ON
+          #   HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, gcc 12.3.0, open-mpi 4.1.2) - NO BOUNDS CHECK
+          - name: Ubuntu 24.04 - clang 20 - NO BOUNDS CHECK
             CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
-            GCP_BUCKET: geosx/ubuntu22.04-gcc12
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-clang20
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             BUILD_SHARED_LIBS: ON
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
 
-          #- name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
-          #  CMAKE_BUILD_TYPE: Release
-          #  DOCKER_REPOSITORY: geosx/ubuntu22.04-clang15
-          #  ENABLE_HYPRE: ON
-          #  ENABLE_TRILINOS: OFF
-          #  GEOS_ENABLE_BOUNDS_CHECK: ON
-          #  BUILD_SHARED_LIBS: ON
-          #  HOST_CONFIG: /spack-generated.cmake
+          - name: Rocky Linux 8 - gcc 12
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/rockylinux8-gcc12
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
-          #- name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
-          #  CMAKE_BUILD_TYPE: Release
-          #  DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-openblas0.3.10-zlib1.2.11
-          #  ENABLE_HYPRE: ON
-          #  ENABLE_TRILINOS: OFF
-          #  GEOS_ENABLE_BOUNDS_CHECK: OFF
-          #  GCP_BUCKET: geosx/Sherlock-CPU
-          #  HOST_CONFIG: /spack-generated.cmake
-#         #   HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
-          #  BUILD_SHARED_LIBS: ON
+          - name: Rocky Linux 8 - gcc 13
+            CMAKE_BUILD_TYPE: Release
+            DOCKER_REPOSITORY: geosx/rockylinux8-gcc13
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
+
+          - name: Rocky Linux 8 - clang 19
+            CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+            DOCKER_REPOSITORY: geosx/rockylinux8-clang19
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
+
+          - name: Rocky Linux 9 - clang 22
+            CMAKE_BUILD_TYPE: Release
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+            DOCKER_REPOSITORY: geosx/rockylinux9-clang22
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            BUILD_SHARED_LIBS: ON
+            GEOS_ENABLE_BOUNDS_CHECK: ON
+            HOST_CONFIG: /spack-generated.cmake
 
     uses: ./.github/workflows/build_and_test.yml
     with:
@@ -269,10 +455,12 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC || '' }}
-      RUNS_ON: ${{ matrix.RUNS_ON || 'ubuntu-22.04' }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}')[matrix.RUNNER_KEY || 'default'] || '' }}
+      RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON)[matrix.RUNNER_KEY || 'default'] }}
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
@@ -280,22 +468,31 @@ jobs:
   run_integrated_tests:
     needs:
       - is_not_draft_pull_request
+      - resolve_ci_provider
       - cpu_builds
     uses: ./.github/workflows/build_and_test.yml
     secrets: inherit
     with:
-      BUILD_AND_TEST_CLI_ARGS: --build-exe-only
+      BUILD_AND_TEST_CLI_ARGS: "--build-exe-only"
       BUILD_TYPE: integrated_tests
       CMAKE_BUILD_TYPE: Release
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc12
+      DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc12
       ENABLE_HYPRE: ON
       ENABLE_TRILINOS: OFF
       GEOS_ENABLE_BOUNDS_CHECK: ON
-      GCP_BUCKET: geosx/integratedTests
-      RUNS_ON: streak2-32core
+      STORAGE_PROVIDER: ${{ needs.resolve_ci_provider.outputs.STORAGE_PROVIDER }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
+      ARTIFACT_UPLOAD_BUCKET_PATH: ${{ needs.resolve_ci_provider.outputs.INTEGRATED_TESTS_ARTIFACT_BUCKET_PATH }}
+      ARTIFACT_UPLOAD_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_COMMAND }}
+      ARTIFACT_UPLOAD_PRE_COMMAND: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_PRE_COMMAND }}
+      ARTIFACT_UPLOAD_URI_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_UPLOAD_URI_ROOT }}
+      ARTIFACT_PUBLIC_URL_ROOT: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_ROOT }}
+      ARTIFACT_PUBLIC_URL_BUCKET_SCOPED: ${{ needs.resolve_ci_provider.outputs.ARTIFACT_PUBLIC_URL_BUCKET_SCOPED }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').integrated_tests || '' }}
+      RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).integrated_tests }}
       NPROC: 32
-      DOCKER_RUN_ARGS: "--cpus=32 --memory=384g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+      DOCKER_RUN_ARGS: "--cpus=32 --memory=256g"
       REQUIRED_LABEL: "ci: run integrated tests"
       LOCAL_BASELINE_DIR: /data/GEOS/baselines
       HOST_CONFIG: /spack-generated.cmake
@@ -305,7 +502,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         submodules: false
         lfs: false
@@ -315,26 +512,27 @@ jobs:
     - name: Check that the baseline logs are modified if rebaselines are detected
       run: "scripts/check_baseline_log.sh"
 
-  code_coverage:
-    needs:
-      - is_not_draft_pull_request
-    uses: ./.github/workflows/build_and_test.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
-    with:
-      BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
-      CMAKE_BUILD_TYPE: Debug
-      CODE_COVERAGE: true
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: geosx/ubuntu22.04-gcc11
-      ENABLE_HYPRE: ON
-      ENABLE_TRILINOS: OFF
-      RUNS_ON: streak2
-      REQUIRED_LABEL: "ci: run code coverage"
-      HOST_CONFIG: /spack-generated.cmake
-      NPROC: 8
-      DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+  # code_coverage:
+  #   needs:
+  #     - is_not_draft_pull_request
+  #     - resolve_ci_provider
+  #   uses: ./.github/workflows/build_and_test.yml
+  #   secrets: inherit
+  #   with:
+  #     BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests"
+  #     CMAKE_BUILD_TYPE: Debug
+  #     CODE_COVERAGE: true
+  #     DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+  #     DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13
+  #     ENABLE_HYPRE: ON
+  #     ENABLE_TRILINOS: OFF
+  #     SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
+  #     RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON).code_coverage }}
+  #     DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}').code_coverage || '' }}
+  #     REQUIRED_LABEL: "ci: run code coverage"
+  #     HOST_CONFIG: /spack-generated.cmake
+  #     NPROC: 4
+  #     DOCKER_RUN_ARGS: "--cpus=8 --memory=256g"
 
 
   # mac_builds:
@@ -353,54 +551,70 @@ jobs:
     name: ${{ matrix.name }}
     needs:
       - is_not_draft_pull_request
+      - resolve_ci_provider
     strategy:
       # In-progress jobs will not be cancelled if there is a failure
       fail-fast : false
       matrix:
         include:
-          - name: Ubuntu CUDA debug (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+          - name: Ubuntu 24.04 - clang 19 + CUDA 12.9.1 debug
             BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
             CMAKE_BUILD_TYPE: Debug
             BUILD_GENERATOR: "--ninja"
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-clang19-cuda12.9.1
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            RUNS_ON: streak2
+            # Resolved from .github/ci/orgs/<github.repository_owner>.json.
+            RUNNER_KEY: cuda
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia"
             HOST_CONFIG: /spack-generated.cmake
       
-          - name: Ubuntu CUDA (20.04, clang 10.0.0 + gcc 9.4.0, open-mpi 4.0.3, cuda-11.8.89)
+          - name: Ubuntu 24.04 - gcc 13 + CUDA 12.9.1
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             BUILD_GENERATOR: "--ninja"
-            DOCKER_REPOSITORY: geosx/ubuntu20.04-clang10.0.0-cuda11.8.89
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-gcc13-cuda12.9.1
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            RUNS_ON: streak2
+            RUNNER_KEY: cuda
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia"
             HOST_CONFIG: /spack-generated.cmake
           
-          - name: Rockylinux CUDA (8, clang 17.0.6, cuda 12.9.1)
-            BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
+          - name: Ubuntu 24.04 - clang 19 + CUDA 12.9.1
+            BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             BUILD_GENERATOR: "--ninja"
+            DOCKER_REPOSITORY: geosx/ubuntu24.04-clang19-cuda12.9.1
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
-            DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.9.1
-            RUNS_ON: streak2
+            RUNNER_KEY: cuda
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia"
             HOST_CONFIG: /spack-generated.cmake
+
+          # - name: Rocky Linux 8 - clang 19 + CUDA 12.9.1
+          #   BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
+          #   CMAKE_BUILD_TYPE: Release
+          #   BUILD_GENERATOR: "--ninja"
+          #   ENABLE_HYPRE_DEVICE: CUDA
+          #   ENABLE_HYPRE: ON
+          #   ENABLE_TRILINOS: OFF
+          #   GEOS_ENABLE_BOUNDS_CHECK: OFF
+          #   DOCKER_REPOSITORY: geosx/rockylinux8-clang19-cuda12.9.1
+          #   RUNNER_KEY: cuda
+          #   NPROC: 8
+          #   DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all"
+          #   HOST_CONFIG: /spack-generated.cmake
           
-          - name: Rockylinux CUDA (8, gcc 13.3, cuda 12.9.1)
+          - name: Rocky Linux 8 - gcc 13 + CUDA 12.9.1
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
             CMAKE_BUILD_TYPE: Release
             BUILD_GENERATOR: "--ninja"
@@ -409,27 +623,10 @@ jobs:
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-gcc13-cuda12.9.1
-            RUNS_ON: streak2
+            RUNNER_KEY: cuda
             NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia"
             HOST_CONFIG: /spack-generated.cmake
-
-          #- name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 12.4.0,)
-          #  BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
-          #  BUILD_GENERATOR: "--ninja"
-          #  CMAKE_BUILD_TYPE: Release
-          #  DOCKER_REPOSITORY: geosx/sherlock-gcc10.1.0-openmpi4.1.2-cuda12.4.0-openblas0.3.10-zlib1.2.11
-          #  ENABLE_HYPRE_DEVICE: CUDA
-          #  ENABLE_HYPRE: ON
-          #  ENABLE_TRILINOS: OFF
-          #  GEOS_ENABLE_BOUNDS_CHECK: OFF
-          #  GCP_BUCKET: geosx/Sherlock-GPU
-          #  RUNS_ON: streak2
-          #  NPROC: 8
-          #  DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
-          #  DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
-          #  DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
-          #  HOST_CONFIG: /spack-generated.cmake
 
           # Below this line, jobs that deploy to Google Cloud.
 
@@ -437,6 +634,7 @@ jobs:
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_CLI_ARGS }}
       CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+      CMAKE_CUDA_ARCHITECTURES: ${{ fromJSON(needs.resolve_ci_provider.outputs.CMAKE_CUDA_ARCHITECTURES_JSON)[matrix.RUNNER_KEY || 'default'] }}
       BUILD_GENERATOR: ${{ matrix.BUILD_GENERATOR }}
       DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
       DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
@@ -445,10 +643,11 @@ jobs:
       ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+      SCCACHE_PROFILE: ${{ needs.resolve_ci_provider.outputs.SCCACHE_PROFILE }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
-      RUNS_ON: ${{ matrix.RUNS_ON }}
+      DOCKER_CA_BUNDLE_HOST_PATH: ${{ fromJSON(needs.resolve_ci_provider.outputs.DOCKER_CA_BUNDLE_HOST_PATHS_JSON || '{}')[matrix.RUNNER_KEY || 'default'] || '' }}
+      RUNS_ON: ${{ fromJSON(needs.resolve_ci_provider.outputs.RUNNER_LABELS_JSON)[matrix.RUNNER_KEY || 'default'] }}
       REQUIRED_LABEL: "ci: run CUDA builds"
     secrets: inherit
 
