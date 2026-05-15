@@ -50,16 +50,12 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase const & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
-// Including these in a CUDA build will lead to compiler segfault.
-// Need to split compilation units for all the options
-#if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
                                CompositionalKValuePhillipsBrine,
                                CompositionalKValueLohrenzBrayClarkViscosity,
-#endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
@@ -77,16 +73,12 @@ void constitutiveUpdatePassThru( constitutive::MultiFluidBase & fluid,
                                CO2BrinePhillipsFluid,
                                CO2BrineEzrokhiFluid,
                                CO2BrinePhillipsThermalFluid,
-// Including these in a CUDA build will lead to compiler segfault.
-// Need to split compilation units for all the options"
-#if !defined(GEOS_DEVICE_COMPILE)
                                CO2BrineEzrokhiThermalFluid,
                                CompositionalTwoPhaseLohrenzBrayClarkViscosity,
                                CompositionalThreePhaseLohrenzBrayClarkViscosity,
                                CompositionalTwoPhasePhillipsBrine,
                                CompositionalKValuePhillipsBrine,
                                CompositionalKValueLohrenzBrayClarkViscosity,
-#endif
                                CompositionalTwoPhaseConstantViscosity
                                >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }

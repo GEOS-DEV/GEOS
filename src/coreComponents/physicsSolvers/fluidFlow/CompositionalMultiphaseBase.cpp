@@ -1374,32 +1374,33 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       {
         using FluidType = TYPEOFREF( castedFluid );
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel;
+        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel< typename FluidType::KernelWrapper >;
+        using KernelReturnType = typename Kernel::ReturnType;
 
         // note: This is a serial Kernel (due to the nature of the problem being solved). So values do not need to go onto the GPU
-        Kernel::ReturnType const returnValue = Kernel::launch( numPointsInTable,
-                                                               numComps,
-                                                               numPhases,
-                                                               ipGas,
-                                                               ipOil,
-                                                               ipWater,
-                                                               ipInit,
-                                                               maxNumEquilIterations,
-                                                               phaseContacts,
-                                                               phaseMinVolumeFraction,
-                                                               equilTolerance,
-                                                               gravVector,
-                                                               datumElevation,
-                                                               datumPressure,
-                                                               fluidWrapper,
-                                                               compFracTableWrappers.toViewConst(),
-                                                               tempTableWrapper,
-                                                               elevationValues.toNestedView(),
-                                                               pressureValues.toView(),
-                                                               phaseDens.toView(),
-                                                               phaseCompFrac.toView() );
+        KernelReturnType const returnValue = Kernel::launch( numPointsInTable,
+                                                             numComps,
+                                                             numPhases,
+                                                             ipGas,
+                                                             ipOil,
+                                                             ipWater,
+                                                             ipInit,
+                                                             maxNumEquilIterations,
+                                                             phaseContacts,
+                                                             phaseMinVolumeFraction,
+                                                             equilTolerance,
+                                                             gravVector,
+                                                             datumElevation,
+                                                             datumPressure,
+                                                             fluidWrapper,
+                                                             compFracTableWrappers.toViewConst(),
+                                                             tempTableWrapper,
+                                                             elevationValues.toNestedView(),
+                                                             pressureValues.toView(),
+                                                             phaseDens.toView(),
+                                                             phaseCompFrac.toView() );
 
-        GEOS_THROW_IF( returnValue == Kernel::ReturnType::FAILED_TO_CONVERGE,
+        GEOS_THROW_IF( returnValue == KernelReturnType::FAILED_TO_CONVERGE,
                        GEOS_FMT( "hydrostatic pressure initialization failed to converge in region {}! \n"
                                  "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
                                  "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
@@ -1408,7 +1409,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
         if( singlePhaseInitialisation )
         {
-          GEOS_LOG_RANK_0_IF( returnValue == Kernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+          GEOS_LOG_RANK_0_IF( returnValue == KernelReturnType::DETECTED_MULTIPHASE_FLOW,
                               getCatalogName() << " " << getDataContext() <<
                               ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                               "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<

@@ -28,16 +28,16 @@ namespace geos
 {
   namespace isothermalCompositionalMultiphaseFVMKernels
   {
-    template class @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>;
+    template class @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>;
 
-    template void @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>::
+    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
     computeFlux( localIndex const,
-                 typename @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>::StackVariables &,
+                 typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
                  NoOpFunc&& ) const;
 
-    template void @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>::
+    template void @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::
     complete( localIndex const,
-              typename @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>::StackVariables &,
+              typename @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>::StackVariables &,
               NoOpFunc&& ) const;
   }
 }

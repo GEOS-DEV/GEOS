@@ -14,22 +14,20 @@
  */
 
 /**
- * @file CompositionalMultiphaseFVM_ThermalDirichletFluxComputeKernels.cpp
+ * @file CompositionalMultiphaseBase_HydrostaticPressureKernel.cpp
  */
 
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalDirichletFluxComputeKernel_impl.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel_impl.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
 namespace geos
 {
-  namespace thermalCompositionalMultiphaseFVMKernels
+  namespace isothermalCompositionalMultiphaseBaseKernels
   {
-    template class @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@>;
-  }
-  namespace isothermalCompositionalMultiphaseFVMKernels
-  {
-    template class @NAME@<@FLUID_TYPE@::KernelWrapper, @DirichletFluxPolicy@, @NCOMP@, @NCOMP@+2>;
-  }
-}
+
+    template struct HydrostaticPressureKernel<@FLUID_TYPE@::KernelWrapper>;
+
+  } // namespace isothermalCompositionalMultiphaseBaseKernels
+} // namespace geos
