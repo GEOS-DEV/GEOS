@@ -58,10 +58,10 @@ public:
 
   GEOS_HOST_DEVICE
   virtual void updateFromPorosityAndStrain( localIndex const k,
-                                            real64 const & volStrain,
-                                            real64 const & porosity ) const
+                                            real64 const & currentPorosity,
+                                            real64 const & referencePorosity ) const
   {
-    GEOS_UNUSED_VAR( k, volStrain, porosity );
+    GEOS_UNUSED_VAR( k, currentPorosity, referencePorosity );
   }
 
   GEOS_HOST_DEVICE

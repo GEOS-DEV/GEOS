@@ -71,14 +71,6 @@ DECLARE_FIELD( dPerm_dTraction,
                WRITE_AND_READ,
                "Derivative of rock permeability with respect to the traction vector" );
 
-DECLARE_FIELD( dPerm_dVolStrain,
-               "dPerm_dVolStrain",
-               array3d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Derivative of rock permeability with respect to volumetric strain" );
-
 DECLARE_FIELD( permeabilityMultiplier,
                "permeabilityMultiplier",
                array3d< real64 >,

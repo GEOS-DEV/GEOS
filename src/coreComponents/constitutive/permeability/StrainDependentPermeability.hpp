@@ -36,14 +36,10 @@ public:
   StrainDependentPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                      arrayView3d< real64 > const & dPerm_dPressure,
                                      arrayView3d< real64 > const & dPerm_dPorosity,
-                                     arrayView3d< real64 > const & dPerm_dVolStrain,
-                                     arrayView1d< real64 > const & referencePorosity,
                                      arrayView3d< real64 > const & referencePermeability,
                                      R1Tensor const strainDependenceConstants )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dPorosity( dPerm_dPorosity ),
-    m_dPerm_dVolStrain( dPerm_dVolStrain ),
-    m_referencePorosity( referencePorosity ),
     m_referencePermeability( referencePermeability ),
     m_strainDependenceConstants( strainDependenceConstants )
   {}
@@ -52,43 +48,33 @@ public:
   void compute( real64 const & referencePorosity,
                 real64 const (&referencePermeability)[3],
                 R1Tensor const strainDependenceConstants,
-                real64 const & volStrain,
+                real64 const & currentPorosity,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dPorosity,
-                arraySlice1d< real64 > const & dPerm_dVolStrain ) const;
+                arraySlice1d< real64 > const & dPerm_dPorosity ) const;
 
   GEOS_HOST_DEVICE
   virtual void updateFromPorosityAndStrain( localIndex const k,
-                                            real64 const & volStrain,
-                                            real64 const & porosity ) const override
+                                            real64 const & currentPorosity,
+                                            real64 const & referencePorosity ) const override
   {
-    GEOS_UNUSED_VAR( porosity );
-
     real64 referencePermeability[3];
 
     referencePermeability[0] = m_referencePermeability[k][0][0];
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
 
-    compute( m_referencePorosity[k],
+    compute( referencePorosity,
              referencePermeability,
              m_strainDependenceConstants,
-             volStrain,
+             currentPorosity,
              m_permeability[k][0],
-             m_dPerm_dPorosity[k][0],
-             m_dPerm_dVolStrain[k][0] );
+             m_dPerm_dPorosity[k][0] );
   }
 
 private:
 
   /// dPermeability_dPorosity
   arrayView3d< real64 > m_dPerm_dPorosity;
-
-  /// dPermeability_dVolumetricStrain
-  arrayView3d< real64 > m_dPerm_dVolStrain;
-
-  /// Reference porosity
-  arrayView1d< real64 > m_referencePorosity;
 
   /// Reference permeability
   arrayView3d< real64 > m_referencePermeability;
@@ -126,10 +112,8 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dPorosity,
-                          m_dPerm_dVolStrain,                          
-                          m_referencePorosity,
                           m_referencePermeability,
-                          m_strainDependenceConstants);
+                          m_strainDependenceConstants );
   }
 
 
@@ -137,9 +121,7 @@ public:
   {
     static constexpr char const * referencePermeabilityComponentsString() { return "referencePermeabilityComponents"; }
     static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
-    static constexpr char const * dPerm_dVolStrainString() { return "dPerm_dVolStrain"; }
     static constexpr char const * strainDependenceConstantsString() { return "strainDependenceConstants"; }
-    static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * referencePermeabilityString() { return "referencePermeability"; }
   };
 
@@ -157,12 +139,6 @@ private:
   /// dPermeability_dPorosity
   array3d< real64 > m_dPerm_dPorosity;
 
-  /// dPermeability_dVolumetricStrain
-  array3d< real64 > m_dPerm_dVolStrain;
-
-  /// Reference porosity
-  array1d< real64 > m_referencePorosity;
-
   /// Reference permeability
   array3d< real64 > m_referencePermeability;
 
@@ -173,28 +149,19 @@ private:
 
 GEOS_HOST_DEVICE
 inline
-void StrainDependentPermeabilityUpdate::compute( real64 const & referencePorosity,                                                 
+void StrainDependentPermeabilityUpdate::compute( real64 const & referencePorosity,
                                                  real64 const (&referencePermeability)[3],
                                                  R1Tensor const strainDependenceConstants,
-                                                 real64 const & volStrain,
+                                                 real64 const & currentPorosity,
                                                  arraySlice1d< real64 > const & permeability,
-                                                 arraySlice1d< real64 > const & dPerm_dPorosity,
-                                                 arraySlice1d< real64 > const & dPerm_dVolStrain ) const
-{ 
-  (void)dPerm_dPorosity;
+                                                 arraySlice1d< real64 > const & dPerm_dPorosity ) const
+{
+  real64 const porosityRatio = currentPorosity / referencePorosity;
 
-  std::cout << "volStrain = " << volStrain << std::endl;
-
-  real64 const por = 1 - (1 - referencePorosity) * LvArray::math::exp(-volStrain);
-  
   for( localIndex i = 0; i < permeability.size(); ++i )
   {
-    real64 const permMultiplier = std::pow( por/referencePorosity, strainDependenceConstants[i] );
-
-    real64 const dpermMultiplier_dVolStrain = strainDependenceConstants[i] * std::pow( por/referencePorosity, strainDependenceConstants[i]-1 ) /referencePorosity * ((1 - referencePorosity) * LvArray::math::exp(-volStrain));
-
-    permeability[i] = permMultiplier * referencePermeability[i];
-    dPerm_dVolStrain[i] = dpermMultiplier_dVolStrain * referencePermeability[i];
+    permeability[i] = referencePermeability[i] * pow( porosityRatio, strainDependenceConstants[i] );
+    dPerm_dPorosity[i] = strainDependenceConstants[i] * permeability[i] / currentPorosity;
   }
 }
 

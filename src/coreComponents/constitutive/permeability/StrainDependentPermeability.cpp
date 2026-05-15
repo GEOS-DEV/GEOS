@@ -19,8 +19,6 @@
 
 #include "StrainDependentPermeability.hpp"
 
-#include "constitutive/permeability/PermeabilityFields.hpp"
-
 namespace geos
 {
 
@@ -47,7 +45,7 @@ StrainDependentPermeability::StrainDependentPermeability( string const & name, G
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Reference permeability field" );
 
-  registerField< fields::permeability::dPerm_dVolStrain >( &m_dPerm_dVolStrain );
+  registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -61,7 +59,7 @@ void StrainDependentPermeability::allocateConstitutiveData( Group & parent,
                                                             localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dVolStrain.resize( 0, 1, 3 );
+  m_dPerm_dPorosity.resize( 0, 1, 3 );
 
   m_referencePermeability.resize( 0, 1, 3 );
 

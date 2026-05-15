@@ -246,13 +246,8 @@ private:
   GEOS_HOST_DEVICE
   void updateMatrixPermeability( localIndex const k ) const
   {
-    // Use the averaged volumetric strain from all quadrature points to get the cell-centered permeability
-    real64 const avgStrain[6] = m_solidUpdate.m_avgStrain[k];
-
-    real64 const volStrain = avgStrain[0] + avgStrain[1] + avgStrain[2];
-
-    // Use the averaged porosity from all quadrature points to get the cell-centered permeability
-    integer const numQuad = m_solidUpdate.m_strain[k].size();
+    // Compute averaged porosity over all quadrature points for the cell-centered permeability
+    integer const numQuad = m_porosityUpdate.numGauss();
 
     real64 avgPorosity = 0.0;
 
@@ -261,11 +256,11 @@ private:
       avgPorosity += m_porosityUpdate.getPorosity( k, q );
     }
 
-    avgPorosity = avgPorosity/numQuad;
-    
-    m_permUpdate.updateFromPorosityAndStrain( k,                                                                               
-                                              volStrain,
-                                              avgPorosity );
+    avgPorosity /= numQuad;
+
+    m_permUpdate.updateFromPorosityAndStrain( k,
+                                              avgPorosity,
+                                              m_porosityUpdate.getReferencePorosity( k ) );
   }
 
   GEOS_HOST_DEVICE
