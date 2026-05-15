@@ -24,8 +24,8 @@ namespace geos
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
-DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
+DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
 DirichletFluxComputeKernel( integer const numPhases,
                             globalIndex const rankOffset,
                             FaceManager const & faceManager,
@@ -59,11 +59,18 @@ DirichletFluxComputeKernel( integer const numPhases,
   m_fluidWrapper( fluidWrapper )
 {}
 
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
+launchKernel( localIndex const numConnections )
+{
+  this->template launch< POLICY >( numConnections, *this );
+}
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::setup( localIndex const iconn,
-                                                                           StackVariables & stack ) const
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
+setup( localIndex const iconn,
+       StackVariables & stack ) const
 {
   globalIndex const offset =
     m_dofNumber[m_seri( iconn, BoundaryStencil::Order::ELEM )][m_sesri( iconn, BoundaryStencil::Order::ELEM )][m_sei( iconn, BoundaryStencil::Order::ELEM )];
@@ -74,12 +81,13 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::setup( local
   }
 }
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux( localIndex const iconn,
-                                                                                 StackVariables & stack,
-                                                                                 FUNC && compFluxKernelOp ) const
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
+computeFlux( localIndex const iconn,
+             StackVariables & stack,
+             FUNC && compFluxKernelOp ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
   using Order = BoundaryStencil::Order;
@@ -273,10 +281,10 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux(
   }
 }
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
 complete( localIndex const iconn,
           StackVariables & stack,
           FUNC && assemblyKernelOp ) const

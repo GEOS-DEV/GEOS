@@ -36,11 +36,12 @@ namespace isothermalCompositionalMultiphaseFVMKernels
 /**
  * @class DirichletFluxComputeZFormulationKernel
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
+ * @tparam POLICY the type of the policy used in the RAJA kernel
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF = NUM_COMP + 1 >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF = NUM_COMP + 1 >
 class DirichletFluxComputeZFormulationKernel : public FluxComputeKernel< NUM_COMP,
                                                                          NUM_DOF,
                                                                          BoundaryStencilWrapper >
@@ -163,6 +164,11 @@ public:
     real64 localFluxJacobian[numEqn][numDof]{};
   };
 
+  /**
+   * @brief Launch the kernel for a given number of connections
+   * @details Delegates to the base class launcher
+   */
+  void launchKernel( localIndex const numConnections );
 
   /**
    * @brief Performs the setup phase for the kernel.

@@ -28,8 +28,8 @@ namespace geos
 namespace thermalCompositionalMultiphaseFVMKernels
 {
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
-DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
+DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
 DirichletFluxComputeKernel( integer const numPhases,
                             globalIndex const rankOffset,
                             FaceManager const & faceManager,
@@ -67,9 +67,16 @@ DirichletFluxComputeKernel( integer const numPhases,
   m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) )
 {}
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
+launchKernel( localIndex const numConnections )
+{
+  this->template launch< POLICY >( numConnections, *this );
+}
+
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
 computeFlux( localIndex const iconn,
              StackVariables & stack ) const
 {
@@ -229,9 +236,9 @@ computeFlux( localIndex const iconn,
   }
 }
 
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+void DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >::
 complete( localIndex const iconn,
           StackVariables & stack ) const
 {

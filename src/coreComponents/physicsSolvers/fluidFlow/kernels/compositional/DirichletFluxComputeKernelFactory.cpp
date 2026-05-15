@@ -57,7 +57,7 @@ DirichletFluxComputeKernelFactory< POLICY >::createAndLaunch( integer const numC
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = DirichletFluxComputeKernel< typename FluidType::KernelWrapper, NUM_COMP, NUM_DOF >;
+    using kernelType = DirichletFluxComputeKernel< typename FluidType::KernelWrapper, POLICY, NUM_COMP, NUM_DOF >;
     typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
     typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -66,7 +66,7 @@ DirichletFluxComputeKernelFactory< POLICY >::createAndLaunch( integer const numC
     kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                        dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                        dt, localMatrix, localRhs, kernelFlags );
-    kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    kernel.launchKernel( stencilWrapper.size() );
   } );
 }
 
@@ -103,7 +103,7 @@ createAndLaunch( integer const numComps,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using KernelType = DirichletFluxComputeKernel< typename FluidType::KernelWrapper, NUM_COMP, NUM_DOF >;
+    using KernelType = DirichletFluxComputeKernel< typename FluidType::KernelWrapper, POLICY, NUM_COMP, NUM_DOF >;
     typename KernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
     typename KernelType::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
     typename KernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
@@ -116,15 +116,13 @@ createAndLaunch( integer const numComps,
                        dofNumberAccessor, compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                        capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                        dt, localMatrix, localRhs, kernelFlags );
-    KernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    kernel.launchKernel( stencilWrapper.size() );
   } );
 }
 
 } // namespace thermalCompositionalMultiphaseFVMKernels
 
 template class isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< parallelDevicePolicy<> >;
-template class isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< serialPolicy >;
 template class thermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< parallelDevicePolicy<>, BoundaryStencilWrapper >;
-template class thermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory< serialPolicy, BoundaryStencilWrapper >;
 
 } // namespace geos

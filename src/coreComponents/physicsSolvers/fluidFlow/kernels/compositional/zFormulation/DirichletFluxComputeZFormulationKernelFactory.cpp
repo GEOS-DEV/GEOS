@@ -57,7 +57,7 @@ createAndLaunch( integer const numComps,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = DirichletFluxComputeZFormulationKernel< typename FluidType::KernelWrapper, NUM_COMP, NUM_DOF >;
+    using kernelType = DirichletFluxComputeZFormulationKernel< typename FluidType::KernelWrapper, POLICY, NUM_COMP, NUM_DOF >;
     typename kernelType::CompFlowAccessors compFlowAccessors( elemManager, solverName );
     typename kernelType::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -66,12 +66,11 @@ createAndLaunch( integer const numComps,
     kernelType kernel( numPhases, rankOffset, faceManager, stencilWrapper, fluidWrapper,
                        dofNumberAccessor, compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                        dt, localMatrix, localRhs, kernelFlags );
-    kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+    kernel.launchKernel( stencilWrapper.size() );
   } );
 }
 
 template class DirichletFluxComputeZFormulationKernelFactory< parallelDevicePolicy<> >;
-template class DirichletFluxComputeZFormulationKernelFactory< serialPolicy >;
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 

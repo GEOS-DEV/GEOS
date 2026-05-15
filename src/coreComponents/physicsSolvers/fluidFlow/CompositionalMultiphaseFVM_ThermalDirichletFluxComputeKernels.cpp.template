@@ -22,16 +22,14 @@
 
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
-using DirichletFluxComputeKernelPolicy = @POLICY_TYPE@;
-
 namespace geos
 {
   namespace thermalCompositionalMultiphaseFVMKernels
   {
-    template class @NAME@<@KERNEL_TYPE@::KernelWrapper, @NCOMP@>;
+    template class @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@>;
   }
   namespace isothermalCompositionalMultiphaseFVMKernels
   {
-    template class @NAME@<@KERNEL_TYPE@::KernelWrapper, @NCOMP@, @NCOMP@+2>;
+    template class @NAME@<@KERNEL_TYPE@::KernelWrapper, @POLICY_TYPE@, @NCOMP@, @NCOMP@+2>;
   }
 }

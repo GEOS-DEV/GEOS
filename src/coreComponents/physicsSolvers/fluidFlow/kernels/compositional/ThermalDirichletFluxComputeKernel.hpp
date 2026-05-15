@@ -35,12 +35,14 @@ namespace thermalCompositionalMultiphaseFVMKernels
 /**
  * @class DirichletFluxComputeKernel
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
+ * @tparam POLICY the type of the execution policy
  * @tparam NUM_COMP number of fluid components
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF = NUM_COMP + 2 >
+template< typename FLUIDWRAPPER, typename POLICY, integer NUM_COMP, integer NUM_DOF = NUM_COMP + 2 >
 class DirichletFluxComputeKernel : public isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< FLUIDWRAPPER,
+                                                                                                                   POLICY,
                                                                                                                    NUM_COMP,
                                                                                                                    NUM_DOF >
 {
@@ -71,7 +73,7 @@ public:
   using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
 
-  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernel< FLUIDWRAPPER, POLICY, NUM_COMP, NUM_DOF >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -173,6 +175,12 @@ public:
     real64 dEnergyFlux_dC[numComp]{};
 
   };
+
+  /**
+   * @brief Launch the kernel for a given number of connections
+   * @details Delegates to the base class launcher
+   */
+  void launchKernel( localIndex const numConnections );
 
   /**
    * @brief Compute the local flux contributions to the residual and Jacobian
