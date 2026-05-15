@@ -440,8 +440,6 @@ public:
     constexpr static char const * componentString() { return "component"; }
     /// @return The key for direction
     constexpr static char const * directionString() { return "direction"; }
-    /// @return The key for bcApplicationTableName
-    constexpr static char const * bcApplicationTableNameString() { return "bcApplicationTableName"; }
     /// @return The key for scale
     constexpr static char const * scaleString() { return "scale"; }
     /// @return The key for functionName
@@ -759,9 +757,6 @@ private:
 
   /// Time after which the bc will no longer be applied.
   real64 m_endTime;
-
-  /// The name of a function used to turn on and off the boundary condition.
-  string m_bcApplicationFunctionName;
 
   /// Enum containing the possible output modes when an error occur
   SetErrorMode m_emptySetErrorMode;

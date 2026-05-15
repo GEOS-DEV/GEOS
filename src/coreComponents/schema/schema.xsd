@@ -1347,8 +1347,6 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="aquiferWaterPhaseComponentNames" type="string_array" default="{}" />
 		<!--aquiferWaterViscosity => Aquifer water viscosity [Pa.s]-->
 		<xsd:attribute name="aquiferWaterViscosity" type="real64" use="required" />
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--direction => Direction to apply boundary condition to.-->
@@ -1385,8 +1383,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="DirichletType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.
@@ -1423,8 +1419,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="FieldSpecificationType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.
@@ -1461,8 +1455,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="HydrostaticEquilibriumType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--componentFractionVsElevationTableNames => Names of the tables specifying the (component fraction vs elevation) relationship for each component-->
@@ -1507,8 +1499,6 @@ When set to "error", output a throw.
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PMLType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.
@@ -1554,8 +1544,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SourceFluxType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--component => Component of field (if tensor) to apply boundary condition to.
@@ -1589,8 +1577,6 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TractionType">
-		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
-		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
 		<!--direction => Direction to apply boundary condition to.-->
