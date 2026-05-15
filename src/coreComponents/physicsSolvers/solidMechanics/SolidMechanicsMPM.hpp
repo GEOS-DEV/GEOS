@@ -20,25 +20,23 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
-
 #include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
+#include "events/mpmEvents/MPMEventManager.hpp"
+#include "LvArray/src/tensorOps.hpp"
 #include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
+#include "mesh/CohesiveZoneManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#include "MPMSolverFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
-#include "MPMSolverFields.hpp"
-#include "events/mpmEvents/MPMEventManager.hpp"
-#include "mesh/CohesiveZoneManager.hpp"
-#include <bitset>
 
 namespace geos
 {
 
 class SpatialPartition;
-
 
 /**
  * @class SolidMechanicsMPM
@@ -164,7 +162,6 @@ public:
     Volume
   };
 
-
   /**
    * @enum CohesiveLawOption
    *
@@ -194,172 +191,12 @@ public:
   };
 
   /**
-   * @brief Grid fields owned by this solver.
-   *
-   * These ids are used to build a run-specific field-requirement set before
-   * fields are registered on the mesh.  All later grid registration, resizing,
-   * labeling, zeroing and communication lists should consult this set before
-   * touching a grid wrapper.
-   */
-  enum class GridFieldId : integer
-  {
-    ExternalForce,
-    InternalForce,
-    SurfaceTensionForce,
-    Displacement,
-    CenterOfVolume,
-    ParticleMappedSurfaceNormal,
-
-    Mass,
-    MaterialVolume,
-    Velocity,
-    DVelocity,
-    Momentum,
-    Acceleration,
-    ContactForce,
-    Damage,
-    DamageGradient,
-    MaxDamage,
-    FieldGradientAlignment,
-
-    SurfaceNormalWeights,
-    SurfaceNormalWeightNormalization,
-    SurfaceNormal,
-    SurfacePosition,
-    SurfaceArea,
-
-    CenterOfMass,
-    NormalStress,
-    MassWeightedDamage,
-    CohesiveNode,
-    ReferenceAreaVector,
-    ReferenceSurfacePosition,
-    ReferenceMaterialVolume,
-
-    BackgroundStress,
-
-    SurfaceMass,
-    SurfaceFieldMass,
-    ExplicitSurfaceNormal,
-    MaxMappedParticleID,
-    PrincipalExplicitSurfaceNormal,
-    CohesiveFieldFlag,
-    CohesiveArea,
-    CohesiveForce,
-
-    VPlus,
-    DVPlus,
-
-    BasedSurfaceNormal,
-    BasedSurfacePosition,
-
-    Count
-  };
-
-  /**
-   * @brief Particle fields owned by this solver.
-   *
-   * This intentionally includes both always-required fields and option-driven
-   * scratch/diagnostic fields.  The first migration stage keeps the many
-   * historically unconditional particle fields in the core set, but moves all
-   * option-driven fields behind the same central requirement mechanism used for
-   * grid fields.
-   */
-  enum class ParticleFieldId : integer
-  {
-    MaterialType,
-    Mass,
-    Density,
-    ReferenceVolume,
-    ReferencePorosity,
-    CrystalHealFlag,
-    DeleteFlag,
-    Wavespeed,
-    KineticEnergy,
-    CohesiveZoneFlag,
-    Color,
-
-    BodyForce,
-    Stress,
-    PlasticStrain,
-    DamageGradient,
-    ReferencePosition,
-    ReferenceMaterialDirection,
-    ReferenceSurfaceNormal,
-    ReferenceSurfacePosition,
-    ReferenceSurfaceTraction,
-    CohesiveForce,
-    ReferenceMappedNodes,
-    ReferenceShapeFunctionValues,
-    CohesiveFieldMapping,
-    CohesiveReferencePosition,
-    CohesiveReferenceSurfaceNormal,
-    CohesiveReferenceSurfacePosition,
-    CohesiveReferenceDeformationGradient,
-
-    ReferenceRVectors,
-    DeformationGradient,
-    FDot,
-    VelocityGradient,
-    ReferenceShapeFunctionGradientValues,
-
-    EstimatedSurfacePosition,
-    ReferenceTemperature,
-    DomainScaledFlag,
-    SPHJacobian,
-    Overlap,
-    SPHF,
-    SubdivideFlag,
-    CopyFlag,
-    HeatCapacity,
-    InternalEnergy,
-    ArtificialViscosity,
-    SurfaceCurvature,
-
-    Count
-  };
-
-private:
-  template< typename FIELD_ID, std::size_t N >
-  class FieldRequirementSet
-  {
-public:
-    void clear()
-    {
-      m_bits.reset();
-    }
-
-    void require( FIELD_ID const field )
-    {
-      m_bits.set( static_cast< std::size_t >( field ) );
-    }
-
-    template< typename ... FIELD_IDS >
-    void requireAll( FIELD_IDS const ... fields )
-    {
-      int const dummy[] = { 0, ( require( fields ), 0 )... };
-      (void) dummy;
-    }
-
-    bool has( FIELD_ID const field ) const
-    {
-      return m_bits.test( static_cast< std::size_t >( field ) );
-    }
-
-private:
-    std::bitset< N > m_bits;
-  };
-
-public:
-
-  /**
    * Constructor
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
   SolidMechanicsMPM( const string & name,
                      Group * const parent );
-
 
   SolidMechanicsMPM( SolidMechanicsMPM const & ) = delete;
   SolidMechanicsMPM( SolidMechanicsMPM && ) = default;
@@ -373,7 +210,8 @@ public:
   virtual ~SolidMechanicsMPM() override {}
 
   /**
-   * @return The string that may be used to generate a new instance from the PhysicsSolverBase::CatalogInterface::CatalogType
+   * @return The string that may be used to generate a new instance from the
+   * PhysicsSolverBase::CatalogInterface::CatalogType
    */
   static string catalogName() { return "SolidMechanics_MPM"; }
 
@@ -422,7 +260,6 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
             typename ... PARAMS >
@@ -432,81 +269,93 @@ public:
                        arrayView1d< real64 > const & localRhs,
                        PARAMS && ... params );
 
-
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  string_array const & targetRegions,
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
-                                 
+
   struct groupKeyStruct : PhysicsSolverBase::groupKeyStruct
   {
-    static constexpr char const * mpmEventManagerString() { return "MPMEvents"; };
     static constexpr char const * cohesiveZoneManagerString() { return "CohesiveZoneManager"; };
+    static constexpr char const * mpmEventManagerString() { return "MPMEvents"; };
   };
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * cflFactorString() { return "cflFactor"; }
-    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
-    static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
-
-    static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
-    static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
+    // Boundary conditions / loading
+    static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
     static constexpr char const * gridSurfaceTensionForceString() { return "gridSurfaceTensionForce"; }
-    static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
-    static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
-    static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
 
-    static constexpr char const * gridMassString() { return "gridMass"; }
-    static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
-    static constexpr char const * gridVelocityString() { return "gridVelocity"; }
-    static constexpr char const * gridDVelocityString() { return "gridDVelocity"; }
-    static constexpr char const * gridMomentumString() { return "gridMomentum"; }
-    static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
+    // Contact
     static constexpr char const * gridContactForceString() { return "gridContactForce"; }
-    static constexpr char const * gridDamageString() { return "gridDamage"; }
-    static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
-    static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
-    static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
 
-    static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
-    static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
-    static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
-    static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
-    static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
-
-    static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
-    static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
-    static constexpr char const * gridMassWeightedDamageString() { return "gridMassWeightedDamage"; }
+    // Cohesive zone
+    static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
+    static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
+    static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
     static constexpr char const * gridCohesiveNodeString() { return "gridCohesiveNode"; }
     static constexpr char const * gridReferenceAreaVectorString() { return "gridReferenceAreaVector"; }
-    static constexpr char const * gridReferenceSurfacePositionString() { return "gridReferenceSurfacePosition"; }
     static constexpr char const * gridReferenceMaterialVolumeString() { return "gridReferenceMaterialVolume"; }
+    static constexpr char const * gridReferenceSurfacePositionString() { return "gridReferenceSurfacePosition"; }
 
-    static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
+    // Damage / DFG / crack tips
+    static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
+    static constexpr char const * gridDamageString() { return "gridDamage"; }
+    static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
+    static constexpr char const * gridMassWeightedDamageString() { return "gridMassWeightedDamage"; }
+    static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
-    static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
-    static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
-    static constexpr char const * gridExplicitSurfaceNormalString() { return "gridExplicitSurfaceNormal"; }
+    // Integration / update
+    static constexpr char const * gridInternalForceString() { return "gridInternalForce"; }
+    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; }
+
+    // Mapping / shape functions
     static constexpr char const * gridMaxMappedParticleIDString() { return "gridMaxMappedParticleID"; }
-    static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
-    static constexpr char const * gridCohesiveFieldFlagString() { return "gridCohesiveFieldFlag"; }
-    static constexpr char const * gridCohesiveAreaString() { return "gridCohesiveArea"; }
-    static constexpr char const * gridCohesiveForceString() { return "gridCohesiveForce"; }
+    static constexpr char const * gridParticleMappedSurfaceNormalString() { return "gridParticleMappedSurfaceNormal"; }
 
-    static constexpr char const * boundaryNodesString() { return "boundaryNodes"; }
+    // Miscellaneous
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
-
-    static constexpr char const * gridVPlusString() { return "gridVPlus"; }
-    static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
-
+    static constexpr char const * cflFactorString() { return "cflFactor"; }
+    static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
+    static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
     static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
     static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
+    static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
+    static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
+    static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
+    static constexpr char const * gridDVelocityString() { return "gridDVelocity"; }
+    static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
+    static constexpr char const * gridExplicitSurfaceNormalString() { return "gridExplicitSurfaceNormal"; }
+    static constexpr char const * gridExternalForceString() { return "gridExternalForce"; }
+    static constexpr char const * gridMassString() { return "gridMass"; }
+    static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
+    static constexpr char const * gridMomentumString() { return "gridMomentum"; }
+    static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
+    static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
+    static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
+    static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
+    static constexpr char const * gridSurfaceMassString() { return "gridSurfaceMass"; }
+    static constexpr char const * gridSurfaceNormalString() { return "gridSurfaceNormal"; }
+    static constexpr char const * gridSurfaceNormalWeightNormalizationString() { return "gridSurfaceNormalWeightNormalization"; }
+    static constexpr char const * gridSurfaceNormalWeightsString() { return "gridSurfaceNormalWeights"; }
+    static constexpr char const * gridSurfacePositionString() { return "gridSurfacePosition"; }
+    static constexpr char const * gridVelocityString() { return "gridVelocity"; }
+    static constexpr char const * gridVPlusString() { return "gridVPlus"; }
+    static constexpr char const * solidMaterialNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
+
+  struct ExplicitStepManagers
+  {
+    SpatialPartition & partition;
+    arrayView1d< int const > periodic;
+    ParticleManager & particleManager;
+    MeshLevel & mesh;
+    NodeManager & nodeManager;
+  };
 
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
@@ -555,10 +404,124 @@ public:
                           const real64 time_n,
                           NodeManager & nodeManager );
 
+  ExplicitStepManagers getExplicitStepManagers( DomainPartition & domain );
+
+  bool hasPeriodicBoundary( arrayView1d< int const > const periodic ) const;
+
+  void initializeAndResetExplicitStepState( int const cycleNumber,
+                                            NodeManager & nodeManager,
+                                            ParticleManager & particleManager,
+                                            SpatialPartition & partition );
+
+  void prepareParticleTopologyForExplicitStep( real64 const dt,
+                                               real64 const time_n,
+                                               int const cycleNumber,
+                                               DomainPartition & domain,
+                                               ParticleManager & particleManager,
+                                               SpatialPartition & partition,
+                                               arrayView1d< int const > const periodic );
+
+  void buildNeighborhoodAndContactStateForExplicitStep( real64 const dt,
+                                                        real64 const time_n,
+                                                        int const cycleNumber,
+                                                        ParticleManager & particleManager );
+
+  void populateParticleGridMappingForExplicitStep( ParticleManager & particleManager,
+                                                  NodeManager & nodeManager );
+
+  void updateDamageAndSurfaceFieldsForExplicitStep( DomainPartition & domain,
+                                                    ParticleManager & particleManager,
+                                                    NodeManager & nodeManager,
+                                                    MeshLevel & mesh );
+
+  void computeParticleLoadsAndBackgroundFieldsForExplicitStep( real64 const time_n,
+                                                               ParticleManager & particleManager,
+                                                               NodeManager & nodeManager );
+
+  void updateGridDynamicsAndContactForExplicitStep( real64 const dt,
+                                                    ParticleManager & particleManager,
+                                                    NodeManager & nodeManager );
+
+  void applyPrescribedDeformationAndBoundaryConditionsForExplicitStep( real64 const dt,
+                                                                       real64 const time_n,
+                                                                       int const cycleNumber,
+                                                                       ParticleManager & particleManager,
+                                                                       NodeManager & nodeManager,
+                                                                       SpatialPartition & partition );
+
+  void updateParticleKinematicsForExplicitStep( real64 const dt,
+                                                real64 const time_n,
+                                                ParticleManager & particleManager,
+                                                SpatialPartition & partition );
+
+  void updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
+                                                         ParticleManager & particleManager );
+
+  real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
+                                                              real64 const dt,
+                                                              ParticleManager & particleManager );
+
+  void resizeGridAndCleanParticlesForExplicitStep( real64 const dt,
+                                                   DomainPartition & domain,
+                                                   ParticleManager & particleManager,
+                                                   NodeManager & nodeManager,
+                                                   SpatialPartition & partition,
+                                                   arrayView1d< int const > const periodic );
+
+  void logAndProfile( std::string const & label );
+
+  void logAndProfile( std::string const & label,
+                      ParticleManager & particleManager,
+                      NodeManager & nodeManager );
+
   void logMomentumSum( std::string label, // For tagging code location of output
-                         ParticleManager & particleManager,
-                         NodeManager & nodeManager );
-                                       
+                       ParticleManager & particleManager,
+                       NodeManager & nodeManager );
+
+  void moveParticleWrappersToHost( ParticleManager & particleManager );
+
+  void performExplicitStepParticleGhosting( DomainPartition & domain,
+                                            ParticleManager & particleManager,
+                                            SpatialPartition & partition );
+
+  void setActiveParticleIndices( ParticleManager & particleManager );
+
+  void updateContactFlagsFromBoundaryConditions();
+
+  void disableSurfaceNormalsAndPositionsOnDamagedParticles( ParticleManager & particleManager );
+
+  void updateNodalNeighborListRequirement();
+
+  void zeroParticleCohesiveForces( ParticleManager & particleManager );
+
+  void resetCohesiveSurfaceFlags( ParticleManager & particleManager );
+
+  void updateCohesiveZonesForExplicitStep( real64 const dt,
+                                           DomainPartition & domain,
+                                           ParticleManager & particleManager,
+                                           NodeManager & nodeManager,
+                                           MeshLevel & mesh );
+
+  void performParticleToGridForExplicitStep( real64 const time_n,
+                                             integer const cycleNumber,
+                                             ParticleManager & particleManager,
+                                             NodeManager & nodeManager );
+
+  void syncGridFieldsForExplicitStep( DomainPartition & domain,
+                                      NodeManager & nodeManager,
+                                      MeshLevel & mesh );
+
+  void enforceGridFieldSymmetryAndNormalize( NodeManager & nodeManager );
+
+  void updatePrescribedKinematicsForExplicitStep( real64 const dt,
+                                                  real64 const time_n,
+                                                  ParticleManager & particleManager,
+                                                  SpatialPartition & partition );
+
+  void repartitionParticlesForExplicitStep( DomainPartition & domain,
+                                            ParticleManager & particleManager,
+                                            SpatialPartition & partition,
+                                            arrayView1d< int const > const periodic );
 
   void applySuperimposedVelocityGradient( const real64 dt,
                                           ParticleManager & particleManager,
@@ -604,8 +567,6 @@ public:
   void computeNodalAreas( NodeManager & nodeManager );
 
   void normalizeGridSurfaceNormalsAndPositions( NodeManager & nodeManager );
-
-  // void normalizeGridSurfacePositions( NodeManager & nodeManager );
 
   void computeGridSurfaceNormalWeights( ParticleManager & particleManager,
                                         NodeManager & nodeManager );
@@ -654,55 +615,7 @@ public:
                                 real64 * e2,        // output "tangential" unit vector.
                                 real64 * e3 );      // output "tangential" unit vector.
 
-  void buildFieldRequirements( Group & meshBodies );
-
-  void requireCoreFieldSet();
-
-  void requireContactFieldSet();
-
-  void requireSurfaceGeometryFieldSet();
-
-  void requireCohesiveFieldSet();
-
-  void requireReferenceGridFieldSet();
-
-  void requireXPICFMPMFieldSet();
-
-  void requireThermalParticleFieldSet();
-
-  void registerGridFields( NodeManager & nodeManager );
-
-  void resizeGridFields( NodeManager & nodeManager,
-                         localIndex const numNodes );
-
-  bool isGridFieldRequired( GridFieldId const field ) const;
-
-  bool isParticleFieldRequired( ParticleFieldId const field ) const;
-
-  char const * gridFieldName( GridFieldId const field ) const;
-
-  void appendRequiredGridFieldName( stdVector< std::string > & fieldNames,
-                                    GridFieldId const field ) const;
-
-  void zeroCoreGridFields( NodeManager & nodeManager );
-
-  void zeroContactGridFields( NodeManager & nodeManager );
-
-  void zeroSurfaceGeometryGridFields( NodeManager & nodeManager );
-
-  void zeroCohesiveGridFields( NodeManager & nodeManager );
-
-  void zeroReferenceGridFields( NodeManager & nodeManager );
-
-  void zeroXPICFMPMGridFields( NodeManager & nodeManager );
-
-  void zeroSurfaceAreaGridField( NodeManager & nodeManager );
-
-  void zeroSurfaceTensionGridField( NodeManager & nodeManager );
-
   void setGridFieldLabels( NodeManager & nodeManager );
-
-  void solverProfiling( std::string label );
 
   real64 computeNeighborList( ParticleManager & particleManager );
 
@@ -910,32 +823,8 @@ public:
                        ParticleManager & particleManager,
                        NodeManager & nodeManager );
 
-  // These were used to test performance in p2g, and were usually worse than atomics
-  // but will be saved here as comment blocks for a while.                       
-  // void particleToGrid_reduction( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-  // void particleToGrid_noAtomics( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-  // void particleToGrid_randomMix( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-  // void particleToGrid_minimalAtomics( real64 const time_n,
-  //                                     integer const cycleNumber,
-  //                                     ParticleManager & particleManager,
-  //                                     NodeManager & nodeManager );
-
-  // void particleToGrid_colors( real64 const time_n,
-  //                             integer const cycleNumber,
-  //                             ParticleManager & particleManager,
-  //                             NodeManager & nodeManager );
+  // XXX Legacy P2G performance variants were usually worse than atomics.
+  // XXX Retained only as inactive reference; delete when the archive is no longer useful.
 
   void computeSPHSurfaceCurvature( ParticleManager & particleManager );
 
@@ -1047,8 +936,6 @@ public:
   void computeSurfaceFlags( ParticleManager & particleManager );
 
   void computeSphF( ParticleManager & particleManager );
-
-  // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
@@ -1179,8 +1066,6 @@ public:
                                              real64 const dt,
                                              ParticleManager & particleManager );
 
-
-
   void computeBodyForce( ParticleManager & particleManager );
 
   void computeArtificialViscosity( ParticleManager & particleManager );
@@ -1234,223 +1119,175 @@ protected:
 
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
-  stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
-                                                    // # of particles, # of nodes a particle on the subregion maps to}
-  stdVector< array2d< integer > > m_mappedFields;
-  stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
-                                                        // subregions, # of particles, # of nodes a particle on the subregion maps to}
-  stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
-                                                                // value][direction]. dims = {# of subregions, # of particles, # of nodes
-                                                                // a particle on the subregion maps to, 3}
-
-  // Domain options
-  int m_numDims;
-  int m_planeStrain;
-  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
-  array1d< real64 > m_hEl;                // Grid spacing in x-y-z
-  array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
-  array1d< real64 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
-  array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
-  array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
-  array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
-  array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
-  array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
+  // Member fields are ordered alphabetically by member name to match the constructor initializer list.
+  AreaIntegrationOption m_areaIntegrationMethod;
+  real64 m_artificialViscosityQ0;
+  real64 m_artificialViscosityQ1;
+  array2d< real64 > m_bcTable;
+  int m_binSizeMultiplier;
+  array1d< real64 > m_bodyForce;
+  real64 m_boreholeRadius;
+  array1d< real64 > m_boreholeStress;
+  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
+  array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
+  array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
+  int m_boxAverageHistory;
+  array1d< real64 > m_boxAverageMax;
+  array1d< real64 > m_boxAverageMin;
+  int m_boxAverageResizeWithDomain;  // 0 use constant box_average domain, 1: resize with domainL
+  real64 m_boxAverageWriteInterval;
+  int m_computeInternalEnergyAndTemperature;
+  int m_computeNodalArea;
+  int m_computeParticleSurfaceNormalsAndPositions;
+  int m_computeSPHJacobian;
+  int m_computeXProfile;
+  array1d< real64 > m_confiningPressureBoxMax;
+  array1d< real64 > m_confiningPressureBoxMin;
+  array1d< real64 > m_confiningStress;
+  ContactGapCorrectionOption m_contactGapCorrection;
+  real64 m_contactNormalExponent;
+  ContactNormalTypeOption m_contactNormalType;
+  int m_cpdiDomainScaling;
+  real64 m_crackTipDetectionThreshold;
+  int m_damageFieldPartitioning;
+  int m_directionalOverlapCorrection;
+  int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
+  int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
   array1d< real64 > m_domainExtent;       // Length of each edge of global domain excluding buffer cells
+  array1d< real64 > m_domainF;
+  array1d< real64 > m_domainL;
+  array1d< real64 > m_domainStress;
+  real64 m_domainTemperature;
+  real64 m_domainTemperatureRate;
+  stdVector< array2d< integer > > m_effectiveMappedFields;
+  stdVector< array2d< localIndex > > m_effectiveMappedNodes;
+  stdVector< array3d< real64 > > m_effectiveShapeFunctionGradientValues;
+  stdVector< array2d< real64 > > m_effectiveShapeFunctionValues;
+  int m_enableBoreholePressure;
+  int m_enableConfiningPressure;
+  int m_enableContact;
+  array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
+  int m_enableSurfaceTension;
+  int m_exactJIntegration;
+  real64 m_explicitSurfaceNormalInfluence;
+  real64 m_frictionCoefficient;
+  array2d< real64 > m_frictionCoefficientTable;
+  int m_FSubcycles;
+  array2d< real64 > m_fTable;
+  InterpolationOption m_fTableInterpType;
+  int m_generalizedVortexMMS;
+  array1d< real64 > m_globalFaceReactions;
+  GPUSchemeOption m_gpuScheme;
+  int m_hasContact;
+  array1d< real64 > m_hEl;                // Grid spacing in x-y-z
   array3d< localIndex > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
-  localIndex m_numberOfSubRegions;
-  real64 m_smallMass;
-
-  // Debugging / Profiling options
-  int m_solverProfiling;
+  int m_LBar;
+  real64 m_LBarScale;
   int m_logMomentum;
   int m_logStartCycle;
-  stdVector< real64 > m_profilingTimes;
-  stdVector< std::string > m_profilingLabels;
-  
-
-  
-  // Plotting options
+  real64 m_LRtolerance;
+  stdVector< array2d< integer > > m_mappedFields;
+  stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
+                                                    // # of particles, # of nodes a particle on the subregion maps to}
+  int m_maxLRIterations;
+  int m_maxNodalNeighbors;
+  real64 m_maxParticleJacobian;
+  real64 m_maxParticleVelocity;
+  real64 m_maxParticleVelocitySquared;
+  real64 m_minParticleJacobian;
+  int m_needsNeighborList;
+  int m_needsNodalNeighborList;
+  real64 m_neighborRadius;
+  array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
+  real64 m_nextBoxAverageWriteTime;
+  real64 m_nextParticleDataWriteTime;
+  real64 m_nextReactionWriteTime;
+  real64 m_nextXProfileWriteTime;
+  OrderedVariableToManyParticleRelation m_nodalNeighborList;
+  NormalsAndPositionsMethodOption m_normalAndPositionMethod;
+  localIndex m_numberOfSubRegions;
+  int m_numContactFlags;
+  int m_numContactGroups;
+  int m_numDims;
+  stdVector< array1d< localIndex > > m_numEffectiveMappedNodes;
+  int m_numSurfaceIntegrationPoints;
+  int m_numVelocityFields;
+  OverlapCorrectionOption m_overlapCorrection;
+  real64 m_overlapThreshold1;
+  real64 m_overlapThreshold2;
+  int m_overwriteExistingNormalsAndPositions;
+  real64 m_particleDataWriteInterval;
+  array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
+  int m_planeStrain;
   int m_plotGridFields;
   string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
   int m_plotUnscaledParticles;
-
-  // Output options
-  int m_boxAverageHistory;
-  int m_boxAverageResizeWithDomain;  // 0 use constant box_average domain, 1: resize with domainL
-  real64 m_boxAverageWriteInterval;
-  real64 m_nextBoxAverageWriteTime;
-  array1d< real64 > m_boxAverageMin;
-  array1d< real64 > m_boxAverageMax;
-
+  real64 m_polymerCZThickness;
+  int m_prescribedBcTable;
+  int m_prescribedBoundaryFTable;
+  array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces
+  int m_prescribedFTable;
+  int m_preventCZInterpenetration;
+  stdVector< std::string > m_profilingLabels;
+  stdVector< real64 > m_profilingTimes;
   int m_reactionHistory;
   real64 m_reactionWriteInterval;
-  real64 m_nextReactionWriteTime;
-
-  int m_writeParticleData;
-  real64 m_particleDataWriteInterval;
-  real64 m_nextParticleDataWriteTime;
-
-  int m_computeXProfile;
-  real64 m_xProfileWriteInterval;
-  real64 m_nextXProfileWriteTime;
-  real64 m_xProfileVx0;
-
-  // Integration options
-  TimeIntegrationOption m_timeIntegrationOption;
-  UpdateMethodOption m_updateMethod;
-  int m_updateOrder;
-  int m_FSubcycles;
-  int m_LBar;
-  real64 m_LBarScale;
-  int m_exactJIntegration;
-  int m_useAPIC;
-  int m_useInteralForceAsFaceReaction;
-
-  // Boundary condition options
-  int m_prescribedBcTable;
-  array2d< real64 > m_bcTable;
-  array1d< int > m_boundaryConditionTypes; // TODO: Surely there's a way to have just one variable here
-  array1d< real64 > m_boundaryFaceCoefficientsOfRestitution;
-  array1d< real64 > m_boundaryFaceFrictionCoefficients; // Ignored unless face has boundary condition type 3
-
-  int m_prescribedFTable;
-  int m_prescribedBoundaryFTable;
-  InterpolationOption m_fTableInterpType;
-  array2d< real64 > m_fTable;
-  array1d< real64 > m_domainF;
-  array1d< real64 > m_domainL;
-
-  array1d< int > m_enablePrescribedBoundaryTransverseVelocities;
-  array2d< real64 > m_prescribedBoundaryTransverseVelocities; // 2 in-plane directions * 6 faces
-
-  array1d< real64 > m_globalFaceReactions;
-
-  array1d< int > m_stressControl;
-  InterpolationOption m_stressTableInterpType;
-  array2d< real64 > m_stressTable;
-  real64 m_stressControlKp;
-  real64 m_stressControlKi;
-  real64 m_stressControlKd;
-  array1d< real64 > m_stressControlLastError;
-  array1d< real64 > m_stressControlITerm;
-  array1d< real64 > m_domainStress;
-
-  array1d< real64 > m_bodyForce;
-
-  int m_enableSurfaceTension;
-  real64 m_surfaceTensionCoefficient;
-
-  // Borehole options - borehole fluid pressure and radius used in the boreholePressure event.
-  int m_enableBoreholePressure;
-  array1d< real64 > m_boreholeStress;
-  real64 m_boreholeRadius;
-
-  int m_enableConfiningPressure;
-  array1d< real64 > m_confiningStress;
-  array1d< real64 > m_confiningPressureBoxMin;
-  array1d< real64 > m_confiningPressureBoxMax;
-
-  // Temperature options
-  InterpolationOption m_temperatureTableInterpType;
-  array2d< real64 > m_temperatureTable;
-  real64 m_domainTemperature;
-  int m_setDomainTemperature;
-  real64 m_domainTemperatureRate;
-  int m_setDomainTemperatureRate;
-
-  int m_shockHeating;
-  int m_computeInternalEnergyAndTemperature;
-  int m_useArtificialViscosity;
-  real64 m_artificialViscosityQ0;
-  real64 m_artificialViscosityQ1;
-
-  // DFG options
-  int m_damageFieldPartitioning;
-  int m_numContactGroups;
-  int m_numContactFlags;
-  int m_numVelocityFields;
-  real64 m_separabilityMinDamage;
-  real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
-  int m_treatFullyDamagedAsSingleField;
-  real64 m_thinFeatureDFGThreshold;
-  int m_useDamageAsSurfaceFlag;
-
-  // Contact options
-  int m_enableContact;
-  int m_hasContact;
-  ContactNormalTypeOption m_contactNormalType;
-  ContactGapCorrectionOption m_contactGapCorrection;
-  int m_useSurfacePositionForContact;
-  real64 m_explicitSurfaceNormalInfluence;
-  int m_computeParticleSurfaceNormalsAndPositions;
-  real64 m_frictionCoefficient;
-  array2d< real64 > m_frictionCoefficientTable;
-  NormalsAndPositionsMethodOption m_normalAndPositionMethod;
-  int m_overwriteExistingNormalsAndPositions;
-  real64 m_contactNormalExponent;
-  int m_maxLRIterations;
-  real64 m_LRtolerance;
-  int m_surfaceDetection;
-
-  // Performance options
-  GPUSchemeOption m_gpuScheme;
-
-  // Cohesive zone options
-  AreaIntegrationOption m_areaIntegrationMethod;
-  int m_numSurfaceIntegrationPoints;
-  int m_preventCZInterpenetration;
-  real64 m_totalBinderVolume;
-  real64 m_polymerCZThickness;
-
-  // Neighborlist options
-  int m_needsNeighborList;
-  real64 m_neighborRadius;
-  int m_binSizeMultiplier;
-  int m_needsNodalNeighborList;
-  OrderedVariableToManyParticleRelation m_nodalNeighborList;
-  int m_maxNodalNeighbors;
-
-  // Conditioning options
-  int m_cpdiDomainScaling;
-  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
-  real64 m_maxParticleVelocity;
-  real64 m_maxParticleVelocitySquared;
-  real64 m_minParticleJacobian;
-  real64 m_maxParticleJacobian;
-  int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
-  int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
-  real64 m_surfaceNormalAndPositionDamageThreshold;
   int m_resetDefGradForFullyDamagedParticles;
   int m_resetDefGradForScaledSurfaceParticles;
-  int m_useReferenceVectorsForParticleUpdate;
-
-  // Overlap correction options
-  OverlapCorrectionOption m_overlapCorrection;
-  real64 m_overlapThreshold1;
-  real64 m_overlapThreshold2;
-  int m_computeSPHJacobian;
-  int m_directionalOverlapCorrection;
-
-  // Crack Tip options - parameters for crack-tip detection used for stress concentration factor
-  int m_useCrackTipDetection;
-  real64 m_crackTipDetectionThreshold;
-
-  // Event options
-  int m_useEvents;                   // Events flag
+  real64 m_separabilityMinDamage;
+  int m_setDomainTemperature;
+  int m_setDomainTemperatureRate;
+  stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
+                                                                // value][direction]. dims = {# of subregions, # of
+                                                                // particles, # of nodes
+                                                                // a particle on the subregion maps to, 3}
+  stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
+                                                        // subregions, # of particles, # of nodes a particle on the
+                                                        // subregion maps to}
+  int m_shockHeating;
+  real64 m_smallMass;
+  int m_solverProfiling;
+  array1d< int > m_stressControl;
+  array1d< real64 > m_stressControlITerm;
+  real64 m_stressControlKd;
+  real64 m_stressControlKi;
+  real64 m_stressControlKp;
+  array1d< real64 > m_stressControlLastError;
+  array2d< real64 > m_stressTable;
+  InterpolationOption m_stressTableInterpType;
+  int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
+  int m_surfaceDetection;
   int m_surfaceHealing;
-
-  // Method of manufactured solutions (MMS) options
-  int m_generalizedVortexMMS;
-
-  // Misc
-  int m_computeNodalArea;
+  real64 m_surfaceNormalAndPositionDamageThreshold;
+  real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
+  real64 m_surfaceTensionCoefficient;
+  array2d< real64 > m_temperatureTable;
+  InterpolationOption m_temperatureTableInterpType;
+  real64 m_thinFeatureDFGThreshold;
+  TimeIntegrationOption m_timeIntegrationOption;
+  real64 m_totalBinderVolume;
+  int m_treatFullyDamagedAsSingleField;
+  UpdateMethodOption m_updateMethod;
+  int m_updateOrder;
+  int m_useAPIC;
+  int m_useArtificialViscosity;
+  int m_useCrackTipDetection;
+  int m_useDamageAsSurfaceFlag;
+  int m_useEvents;                   // Events flag
+  int m_useInteralForceAsFaceReaction;
   int m_useNodePosForArea;
-
-  FieldRequirementSet< GridFieldId,
-                       static_cast< std::size_t >( GridFieldId::Count ) > m_requiredGridFields;
-  FieldRequirementSet< ParticleFieldId,
-                       static_cast< std::size_t >( ParticleFieldId::Count ) > m_requiredParticleFields;
+  int m_useReferenceVectorsForParticleUpdate;
+  int m_useSurfacePositionForContact;
+  int m_writeParticleData;
+  array1d< real64 > m_xGlobalMax;         // Maximum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_xGlobalMin;         // Minimum global grid coordinate excluding buffer nodes
+  array1d< real64 > m_xLocalMax;          // Maximum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
+  array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
+  array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
+  real64 m_xProfileVx0;
+  real64 m_xProfileWriteInterval;
 
 private:
   struct BinKey
@@ -1523,7 +1360,6 @@ ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
               "BruteForce",
               "Mesh" );
 
-
 ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
               "Off",
               "NormalForce",
@@ -1548,10 +1384,48 @@ ENUM_STRINGS( SolidMechanicsMPM::NormalsAndPositionsMethodOption,
               "DFGAndVolumeIntegration" );
 
 //**********************************************************************************************************************
-//**********************************************************************************************************************
-//**********************************************************************************************************************
 
+// -----------------------------------------------------------------------------------------------------------------
+// XXX Legacy commented-out function versions moved from earlier locations in this file.
+// XXX Preserved for reference only and inactive; delete once no longer needed.
+// -----------------------------------------------------------------------------------------------------------------
+
+// Legacy block 1: // void normalizeGridSurfacePositions( NodeManager & nodeManager );
+  // void normalizeGridSurfacePositions( NodeManager & nodeManager );
+
+// Legacy block 2: // void particleToGrid_reduction( real64 const time_n,
+  // void particleToGrid_reduction( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
+
+// Legacy block 3: // void particleToGrid_noAtomics( real64 const time_n,
+  // void particleToGrid_noAtomics( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
+
+// Legacy block 4: // void particleToGrid_randomMix( real64 const time_n,
+  // void particleToGrid_randomMix( real64 const time_n,
+  //                                integer const cycleNumber,
+  //                                ParticleManager & particleManager,
+  //                                NodeManager & nodeManager );
+
+// Legacy block 5: // void particleToGrid_minimalAtomics( real64 const time_n,
+  // void particleToGrid_minimalAtomics( real64 const time_n,
+  //                                     integer const cycleNumber,
+  //                                     ParticleManager & particleManager,
+  //                                     NodeManager & nodeManager );
+
+// Legacy block 6: // void particleToGrid_colors( real64 const time_n,
+  // void particleToGrid_colors( real64 const time_n,
+  //                             integer const cycleNumber,
+  //                             ParticleManager & particleManager,
+  //                             NodeManager & nodeManager );
+
+// Legacy block 7: // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
+  // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
 
 } /* namespace geos */
 
-#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSMPM_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_ */
