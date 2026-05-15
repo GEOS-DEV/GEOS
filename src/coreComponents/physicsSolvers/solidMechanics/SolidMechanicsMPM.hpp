@@ -1383,49 +1383,6 @@ ENUM_STRINGS( SolidMechanicsMPM::NormalsAndPositionsMethodOption,
               "LogisticRegression",
               "DFGAndVolumeIntegration" );
 
-//**********************************************************************************************************************
-
-// -----------------------------------------------------------------------------------------------------------------
-// XXX Legacy commented-out function versions moved from earlier locations in this file.
-// XXX Preserved for reference only and inactive; delete once no longer needed.
-// -----------------------------------------------------------------------------------------------------------------
-
-// Legacy block 1: // void normalizeGridSurfacePositions( NodeManager & nodeManager );
-  // void normalizeGridSurfacePositions( NodeManager & nodeManager );
-
-// Legacy block 2: // void particleToGrid_reduction( real64 const time_n,
-  // void particleToGrid_reduction( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-// Legacy block 3: // void particleToGrid_noAtomics( real64 const time_n,
-  // void particleToGrid_noAtomics( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-// Legacy block 4: // void particleToGrid_randomMix( real64 const time_n,
-  // void particleToGrid_randomMix( real64 const time_n,
-  //                                integer const cycleNumber,
-  //                                ParticleManager & particleManager,
-  //                                NodeManager & nodeManager );
-
-// Legacy block 5: // void particleToGrid_minimalAtomics( real64 const time_n,
-  // void particleToGrid_minimalAtomics( real64 const time_n,
-  //                                     integer const cycleNumber,
-  //                                     ParticleManager & particleManager,
-  //                                     NodeManager & nodeManager );
-
-// Legacy block 6: // void particleToGrid_colors( real64 const time_n,
-  // void particleToGrid_colors( real64 const time_n,
-  //                             integer const cycleNumber,
-  //                             ParticleManager & particleManager,
-  //                             NodeManager & nodeManager );
-
-// Legacy block 7: // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
-  // void directionalOverlapCorrection( real64 dt, ParticleManager & particleManager );
-
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_ */
