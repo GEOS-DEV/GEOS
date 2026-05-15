@@ -24,12 +24,12 @@
 
 namespace geos
 {
+
 /**
  * A scope for field traits.
  */
 namespace fields
 {
-
 namespace mpm
 {
 
@@ -49,6 +49,15 @@ DECLARE_FIELD( particleDeleteFlag,
                WRITE_AND_READ,
                "An array that remembers particles that should be deleted at the end of the time step." );
 
+DECLARE_FIELD( particleConstitutiveUpdateFlag,
+               "constitutiveUpdateFlag",
+               array2d< int >,
+               0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "An optional per-gauss-point constitutive-model update flag copied back to the solver. "
+               "Negative values at gauss point 0 flag particles for deletion." );
+
 DECLARE_FIELD( particleCrystalHealFlag,
                "particleCrystalHealFlag",
                array1d< int >,
@@ -63,7 +72,8 @@ DECLARE_FIELD( particleMaterialType,
                0,
                LEVEL_1,
                WRITE_AND_READ,
-               "An array that stores index of particle material type (assumes single material for each particle region)." );
+               "An array that stores index of particle material type "
+               "(assumes single material for each particle region)." );
 
 DECLARE_FIELD( particleWavespeed,
                "particleWavespeed",
@@ -432,10 +442,9 @@ DECLARE_FIELD( particleEstimatedSurfacePosition,
                LEVEL_0,
                WRITE_AND_READ,
                "particleEstimatedSurfacePosition" );
-}
 
-}
-
-}
+} // namespace mpm
+} // namespace fields
+} // namespace geos
 
 #endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPMSOLVERBASEFIELDS_HPP_

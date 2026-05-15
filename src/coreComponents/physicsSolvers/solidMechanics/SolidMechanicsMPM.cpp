@@ -1575,8 +1575,9 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleCohesiveZoneFlag >( getName() );
         subRegion.registerField< particleColor >( getName() );
 
-        // Double-indexed fields (vectors and symmetric tensors stored in Voigt notation)
+        // Double-indexed fields (Gauss-point fields, vectors, and symmetric tensors stored in Voigt notation)
         subRegion.registerField< particleBodyForce >( getName() ).reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< particleConstitutiveUpdateFlag >( getName() ).reference().resizeDimension< 1 >( 1 );
         subRegion.registerField< particleStress >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
         subRegion.registerField< particlePlasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
         subRegion.registerField< particleDamageGradient >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -5995,6 +5996,8 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
     arrayView1d< int > const particleDeleteFlag = subRegion.getField< fields::mpm::particleDeleteFlag >();
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
     arrayView2d< int > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
+    arrayView2d< int > const particleConstitutiveUpdateFlag =
+      subRegion.getField< fields::mpm::particleConstitutiveUpdateFlag >();
     arrayView2d< real64 > const particleBodyForce = subRegion.getField< fields::mpm::particleBodyForce >();
     arrayView2d< real64 > const particleCohesiveForce = subRegion.getField< fields::mpm::particleCohesiveForce >();
     arrayView2d< real64 > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
@@ -6083,6 +6086,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       particleReferencePorosity[p] = particlePorosity[p];
 
       // Initialize particle flags
+      particleConstitutiveUpdateFlag[p][0] = 0;
       particleDeleteFlag[p] = 0;
       particleCrystalHealFlag[p] = 0;
 
@@ -20686,6 +20690,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   real64 const numeric_max = std::numeric_limits< real64 >::max();
   int const useReferenceVectorsForParticleUpdate = m_useReferenceVectorsForParticleUpdate;
 
+  RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesConstitutiveUpdateFailed( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesIllConditionedJacobian( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesVelocityOverflowed( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesOverMaxVelocity( 0 );
@@ -20701,6 +20706,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
     arrayView1d< real64 const > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView2d< int const > const particleConstitutiveUpdateFlag =
+      subRegion.getField< fields::mpm::particleConstitutiveUpdateFlag >();
     arrayView2d< real64 const > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
     arrayView2d< real64 const > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
     arrayView2d< real64 const > const particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
@@ -20733,6 +20740,12 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
 
       bool flaggedForDeletion = false;
+      if( particleConstitutiveUpdateFlag[p][0] < 0 )
+      {
+        numParticlesConstitutiveUpdateFailed += 1;
+        flaggedForDeletion = true;
+      }
+
       if( detF <= minParticleJacobian || detF >= maxParticleJacobian )
       {
         numParticlesIllConditionedJacobian += 1;
@@ -20943,11 +20956,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     subRegion.setActiveParticleIndices();
   } );
 
+  int numParticlesConstitutiveUpdateFailedGlobal = MpiWrapper::sum( numParticlesConstitutiveUpdateFailed.get() );
   int numParticlesIllConditionedJacobianGlobal = MpiWrapper::sum( numParticlesIllConditionedJacobian.get() );
   int numParticlesVelocityOverflowedGlobal = MpiWrapper::sum( numParticlesVelocityOverflowed.get() );
   int numParticlesOverMaxVelocityGlobal = MpiWrapper::sum( numParticlesOverMaxVelocity.get() );
 
   GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection, "At least one particle material direction had zero magnitude during kinematic update!" );
+
+  GEOS_LOG_RANK_0_IF( numParticlesConstitutiveUpdateFailedGlobal > 0,
+                      "Flagged " << numParticlesConstitutiveUpdateFailedGlobal
+                                  << " particles with negative constitutiveUpdateFlag for deletion!" );
 
   GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0,
                       "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<
@@ -21242,6 +21260,25 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+    if( constitutiveModel.hasWrapper( "constitutiveUpdateFlag" ) )
+    {
+      arrayView1d< int > const particleDeleteFlag =
+        subRegion.getField< fields::mpm::particleDeleteFlag >();
+      arrayView2d< int const > const constitutiveUpdateFlag =
+        constitutiveModel.getReference< array2d< int > >( "constitutiveUpdateFlag" );
+      arrayView2d< int > const particleConstitutiveUpdateFlag =
+        subRegion.getField< fields::mpm::particleConstitutiveUpdateFlag >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleConstitutiveUpdateFlag[p][0] = constitutiveUpdateFlag[p][0];
+        if( particleConstitutiveUpdateFlag[p][0] < 0 )
+        {
+          particleDeleteFlag[p] = 1;
+        }
+      } );
+    }
 
     if( constitutiveModel.hasWrapper( "damage" ) ) // Fragile code because someone could change the damage key without our knowledge. TODO:
                                                    // Make an

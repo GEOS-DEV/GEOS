@@ -28,6 +28,8 @@
 #include "mesh/FaceElementSubRegion.hpp"
 #include "mesh/InterObjectRelation.hpp"
 
+#include <set>
+
 #include "silo.h"
 
 /// _PMPIO_baton_t struct forward declaration
@@ -41,6 +43,9 @@ namespace geos
 
 class DomainPartition;
 class MeshLevel;
+class ParticleManager;
+class ParticleRegion;
+class ParticleRegionBase;
 
 namespace constitutive
 {
@@ -266,6 +271,49 @@ public:
                        real64 * coords[3],
                        int const cycleNumber,
                        real64 const problemTime );
+
+  /**
+   * @brief Write all particle regions as CPDI/CPTI particle-domain meshes.
+   * @param particleManager manager containing particle regions to write
+   * @param cycleNum current cycle number
+   * @param problemTime current problem time
+   * @param isRestart whether restart-only data should be written
+   */
+  void writeParticleRegions( ParticleManager const & particleManager,
+                             int const cycleNum,
+                             real64 const problemTime,
+                             bool const isRestart );
+
+  /**
+   * @brief Write a particle region as a Silo UCD mesh.
+   * @details CPDI and CPDI2 particles are written as hexahedral zones whose
+   *          nodes are the particle corners. CPTI particles are written as
+   *          tetrahedral zones.
+   * @param particleRegion particle region to write
+   * @param meshName name of the Silo mesh object
+   * @param cycleNumber current cycle number
+   * @param problemTime current problem time
+   */
+  void writeParticleMeshObject( ParticleRegion const & particleRegion,
+                                string const & meshName,
+                                int const cycleNumber,
+                                real64 const problemTime );
+
+  /**
+   * @brief Write particle-region fields onto a particle-domain mesh.
+   * @param particleRegion particle region whose subregion fields will be written
+   * @param siloDirName name of Silo directory containing the fields
+   * @param meshName name of the Silo mesh object the fields are attached to
+   * @param cycleNum current cycle number
+   * @param problemTime current problem time
+   * @param isRestart whether restart-only data should be written
+   */
+  void writeParticleRegionSilo( ParticleRegionBase const & particleRegion,
+                                string const & siloDirName,
+                                string const & meshName,
+                                int const cycleNum,
+                                real64 const problemTime,
+                                bool const isRestart );
 
   /**
    * @brief write a beam mesh to silo file

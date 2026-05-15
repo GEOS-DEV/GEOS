@@ -90,6 +90,7 @@ public:
    * @param[in] plasticStrain The ArrayView holding the plastic strain for each quadrature point.
    * @param[in] porosity The ArrayView holding the porosity for each quadrature point.
    * @param[in] damage The ArrayView holding the damage for each quardrature point.
+   * @param[in] constitutiveUpdateFlag The ArrayView holding the constitutive update status for each quadrature point.
    * @param[in] temperature The ArrayView holding the temperature for each quardrature point.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
@@ -163,6 +164,7 @@ public:
                        arrayView3d< real64 > const plasticStrain,
                        arrayView2d< real64 > const porosity,
                        arrayView2d< real64 > const damage,
+                       arrayView2d< integer > const constitutiveUpdateFlag,
                        arrayView1d< real64 > const temperature,
                        arrayView1d< real64 > const lengthScale,
                        arrayView1d< real64 > const strengthScale,
@@ -243,9 +245,11 @@ public:
     m_plasticStrain( plasticStrain ),
     m_porosity( porosity ),
     m_damage( damage ),
+    m_constitutiveUpdateFlag( constitutiveUpdateFlag ),
     m_temperature( temperature ),
     m_lengthScale( lengthScale ),
-    m_strengthScale( strengthScale )
+    m_strengthScale( strengthScale ),
+    m_geomechanicsDisableInelasticity( disableInelasticity )
   {
     GEOS_UNUSED_VAR( m_g3 );
     GEOS_UNUSED_VAR( m_g4 );  
@@ -253,10 +257,8 @@ public:
     GEOS_UNUSED_VAR( m_p4 );
     GEOS_UNUSED_VAR( m_t1RateDependence );
     GEOS_UNUSED_VAR( m_t2RateDependence );
-    GEOS_UNUSED_VAR( m_plasticStrainTolerance );
-    GEOS_UNUSED_VAR( m_stressReturnTolerance );
-    GEOS_UNUSED_VAR( m_maxAllowedSubcycles );
-    GEOS_UNUSED_VAR( m_failedStepResponse );
+    GEOS_UNUSED_VAR( m_fluidBulkModulus );
+    GEOS_UNUSED_VAR( m_fluidInitialPressure );
   }
 
   /// Default copy constructor
@@ -336,7 +338,8 @@ public:
                    real64 & coher_p,                     
                    real64 & porosity_p,                  
                    real64 ( & sigma_p )[6],   
-                   real64 ( & ep_p )[6] ) const;  
+                   real64 ( & ep_p )[6],
+                   int & constitutiveUpdateFlag ) const;  
 
   GEOS_HOST_DEVICE
   void computeElasticProperties( real64 & bulk,
@@ -427,7 +430,8 @@ public:
 		                        const real64 & Kf,       
 		                        const real64 & C1,       
 		                        const real64 & ev0,      
-		                        const real64 & phi_i ) const;   
+		                        const real64 & phi_i,
+                                int & constitutiveUpdateFlag ) const;   
 
   GEOS_HOST_DEVICE
   int computeSubstep( real64 const ( & D )[6],        
@@ -483,6 +487,7 @@ public:
                              const real64 & coher,
                              const real64 & hardening,
                              const real64 & strengthScale,
+                             const real64 & buckling,
                              const real64 & a1,
                              const real64 & a2,
                              const real64 & a3,
@@ -497,6 +502,7 @@ public:
 										            const real64 & coher,
                                 const real64 & hardening,
                                 const real64 & strengthScale,
+                                const real64 & buckling,
 										            const real64 & a1,
 										            const real64 & a2,
 										            const real64 & a3,
@@ -511,6 +517,7 @@ public:
 									          const real64 & coher,
                             const real64 & hardening,
                             const real64 & strengthScale,
+                            const real64 & buckling,
 									          const real64 & a1,
 									          const real64 & a2,
 									          const real64 & a3,
@@ -539,6 +546,47 @@ public:
   using SolidBaseUpdates::saveConvergedState;
 
 private:
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  int failStep( real64 const & Zeta_n,
+                real64 const & coher_n,
+                real64 const & porosity_n,
+                real64 const ( & sigma_n )[6],
+                real64 const ( & ep_n )[6],
+                real64 & Zeta_p,
+                real64 & coher_p,
+                real64 & porosity_p,
+                real64 ( & sigma_p )[6],
+                real64 ( & ep_p )[6] ) const;
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  int failSubstep( real64 const ( & sigma_old )[6],
+                   real64 const ( & ep_old )[6],
+                   real64 const & X_old,
+                   real64 const & Zeta_old,
+                   real64 const & coher_old,
+                   real64 ( & sigma_new )[6],
+                   real64 ( & ep_new )[6],
+                   real64 & X_new,
+                   real64 & Zeta_new,
+                   real64 & coher_new ) const;
+
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  void applyCreepRelaxation( real64 const & Dt,
+                             real64 const & temperature,
+                             real64 const & phi_i,
+                             real64 const & Km,
+                             real64 const & Kf,
+                             real64 const & C1,
+                             real64 const & ev0,
+                             real64 const & fluid_pressure_initial,
+                             real64 const & buckling,
+                             real64 ( & sigma )[6],
+                             real64 ( & ep )[6],
+                             real64 & X ) const;
+
   real64 const & m_b0;
   real64 const & m_b1;
   real64 const & m_b2;
@@ -600,7 +648,7 @@ private:
   /// A reference to the ArrayView holding the bulk modulus for each element/particle.
   arrayView1d< real64 > const m_bulkModulus;
   
-  /// A reference to the ArrayView holding the shear modulus for each element/particle.+
+  /// A reference to the ArrayView holding the shear modulus for each element/particle.
   arrayView1d< real64 > const m_shearModulus;
 
   /// A reference to the ArrayView holding the velocity gradient for each element/particle.
@@ -612,7 +660,7 @@ private:
   /// A reference to the ArrayView holding the deformation gradient for each element/particle.
   arrayView3d< real64 > const m_deformationGradient;
 
-  /// A reference to the ArrayView holding the damage for each quadrature point.
+  /// A reference to the ArrayView holding the plastic strain for each quadrature point.
   arrayView3d< real64 > const m_plasticStrain;
 
   /// A reference to the ArrayView holding the porosity for each quadrature point.
@@ -621,14 +669,21 @@ private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
   arrayView2d< real64 > const m_damage;
 
-    /// A reference to the ArrayView holding the temperature for each quadrature point.
+  /// A reference to the ArrayView holding the constitutive update status for each quadrature point.
+  ///  0 = good update, 1 = warning/retried or capped subcycling, -1 = failed update/delete flag.
+  arrayView2d< integer > const m_constitutiveUpdateFlag;
+
+  /// A reference to the ArrayView holding the temperature for each quadrature point.
   arrayView1d< real64 > const m_temperature;
 
   /// A reference to the ArrayView holding the length scale for each element/particle.
   arrayView1d< real64 > const m_lengthScale;
 
-  /// A reference to the ArrayView holding the length scale for each element/particle.
+  /// A reference to the ArrayView holding the strength scale for each element/particle.
   arrayView1d< real64 > const m_strengthScale;
+
+  /// Local copy of the inelasticity-disable flag, used by this update kernel.
+  bool const & m_geomechanicsDisableInelasticity;
 };
 
 
@@ -647,7 +702,9 @@ void GeomechanicsUpdates::smallStrainUpdate( localIndex const k,
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
   GEOS_UNUSED_VAR( stiffness );
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   GEOS_ERROR( "smallStrainUpdate not implemented for Geomechanics model" );
+#endif
 }
 
 GEOS_HOST_DEVICE
@@ -665,7 +722,9 @@ void GeomechanicsUpdates::smallStrainUpdate( localIndex const k,
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
   GEOS_UNUSED_VAR( stiffness );
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   GEOS_ERROR( "smallStrainUpdate not implemented for Geomechanics model" );
+#endif
 }
 
 GEOS_HOST_DEVICE
@@ -681,7 +740,9 @@ void GeomechanicsUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( strainIncrement );
   GEOS_UNUSED_VAR( stress );
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
   GEOS_ERROR( "smallStrainUpdateStressOnly overload not implemented for Geomechanics model" );
+#endif
 }
 
 GEOS_HOST_DEVICE
@@ -790,9 +851,14 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( temp, m_deformationGradient[k], materialDirection  );
       J = LvArray::tensorOps::AiBi< 3 >( temp, materialDirection);
     }
-    else{
-      GEOS_LOG_RANK( "unsupported buckling type: " << m_enableBuckling );
+    else
+    {
+      // Invalid buckling flags are rejected during input validation. Keep the
+      // multiplier neutral here in case a device kernel reaches this branch.
+      J = 1.0;
     }
+
+    J = std::max( J, 1.0e-16 );
 
     real64 ev0 = m_p0 / ( 2.*m_b0 );
     real64 ev1 = ev0 - m_p3;
@@ -827,15 +893,16 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Note stress gets un-rotated in solid utilities hypo update 2 
   
-  // unrotated beginning-of-step plastic strain
+  // Unrotated beginning-of-step plastic strain. The stored state uses engineering
+  // shear components, while Rij_eq_AikSymBklAjl expects tensor shear components.
+  // Convert a local copy only; do not mutate particle state during the update.
   real64 oldPlasticStrain[6] = { 0.0 };
-  m_plasticStrain[k][q][3] *= 0.5;
-  m_plasticStrain[k][q][4] *= 0.5;
-  m_plasticStrain[k][q][5] *= 0.5;
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( oldPlasticStrain, beginningRotationTranspose, m_plasticStrain[k][q] );
-  m_plasticStrain[k][q][3] *= 2.0;
-  m_plasticStrain[k][q][4] *= 2.0;
-  m_plasticStrain[k][q][5] *= 2.0; // This gets overriden at end of scope so might not need to correct it again, but here just in case
+  real64 storedPlasticStrain[6] = { 0.0 };
+  LvArray::tensorOps::copy< 6 >( storedPlasticStrain, m_plasticStrain[k][q] );
+  storedPlasticStrain[3] *= 0.5;
+  storedPlasticStrain[4] *= 0.5;
+  storedPlasticStrain[5] *= 0.5;
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( oldPlasticStrain, beginningRotationTranspose, storedPlasticStrain );
   oldPlasticStrain[3] *= 2.0;
   oldPlasticStrain[4] *= 2.0;
   oldPlasticStrain[5] *= 2.0;
@@ -844,6 +911,9 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   
   real64 strengthScale = m_strengthScale[k];
   real64 temperature = m_temperature[k];
+
+  m_constitutiveUpdateFlag[k][q] = 0;
+  int constitutiveUpdateFlag = 0;
 
   real64 oldZeta = 0.0;
   real64 oldCoher = 1.0 - m_damage[k][q];
@@ -854,81 +924,81 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 newStress[6] = {0.};
   real64 newPlasticStrain[6] = {0.};
 
-  // TODO: make elastic properties temperature dependent
+  // TODO: make elastic properties temperature dependent. Fluid effects are
+  // intentionally disabled in this implementation until a persistent fluid
+  // backstress state is added.
   computeElasticProperties( oldStress,
                             oldPlasticStrain,
-		                        0.,
-		                        0.,
-		                        0.,             // Matrix bulk modulus
-		                        0,             // Fluid bulk modulus
-		                        0.,             // Term to simplify the fluid model expressions
-		                        0.,            // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-		                        0.,			    // Initial porosity (inferred from crush curve, used for fluid model/
-		                        m_bulkModulus[k],
-		                        m_shearModulus[k] = m_g0
-  );
+                            0.0,
+                            0.0,
+                            0.0,             // Matrix bulk modulus, unused when Kf=0
+                            0.0,             // Fluid bulk modulus disabled
+                            0.0,             // Term to simplify the fluid model expressions
+                            0.0,             // Zero fluid pressure volumetric strain
+                            0.0,             // Initial porosity, unused when Kf=0
+                            m_bulkModulus[k],
+                            m_shearModulus[k] );
 
-    // // Update effective elastic properties
-    // m_bulkModulus[k] = m_b0 + m_b1;
-    // m_shearModulus[k] = m_g0;
-  
-  // MH:TODO set wavespeed based on actual pressure-dependent bulk modulus, not the high-pressure limit.
-  // m_wavespeed[k][0] = sqrt( ( m_bulkModulus[k] + (4.0/3.0) * m_shearModulus[k] ) / m_density[k][0] );
-  m_wavespeed[k][0] = sqrt( ( m_b0 + m_b1 + (4.0/3.0) * m_g0 ) / m_density[k][q] );  //MH: should this be [0] or [q]?
+  // Use a conservative CFL stiffness: at least the current tangent stiffness and
+  // at least the high-pressure dry-material limit.
+  real64 cflBulk = 0.0;
+  real64 cflShear = 0.0;
+  computeElasticProperties( cflBulk, cflShear );
+  cflBulk = std::max( cflBulk, m_bulkModulus[k] );
+  cflShear = std::max( cflShear, m_shearModulus[k] );
+  real64 const cflModulus = std::max( 0.0, cflBulk + ( 4.0 / 3.0 ) * cflShear );
+  m_wavespeed[k][q] = m_density[k][q] > 0.0 ? sqrt( cflModulus / m_density[k][q] ) : 0.0;
 
-  int errorFlag = computeStep( D,               // strain "rate"
-               timeIncrement,                     // time step (s)
-               characteristicLength,                    // length scale
-               strengthScale,           // scaler for strength
-               temperature,             // scalar for temperature
-               oldZeta,                 // trace of isotropic backstress at start of step(t_n)
-               oldCoher,                // scalar-valued coherence at start of step(t_n)
-						   oldPorosity,             // scalar-valued coherence at start of step(t_n)
-               buckling,                // buckling strength multiplier.
-						   oldStress,         // unrotated stress at start of step(t_n)
-               oldPlasticStrain,            // plastic strain at start of step(t_n)
-               newZeta,                        // trace of isotropic backstress at end of step(t_n+1)
-               newCoher,                       // scalar-valued coherence at end of step(t_n+1)
-						   newPorosity,                    // scalar-valued porosity at end of step(t_n+1)
-						   newStress,         // unrotated stress at end of step(t_n+1)
-               newPlasticStrain );           // plastic strain at end of step(t_n+1)
-
-
-
-  if (errorFlag == 1)
+  int errorFlag = 0;
+  if( m_geomechanicsDisableInelasticity )
   {
-    GEOS_LOG_RANK( "k: " << k << ", " << 
-                  "errorFlag: " << errorFlag << ", "
-                   "oldPorosity: " << oldPorosity << ", " << 
-                   "newPorosity: " << newPorosity << ", " << 
-                   "damage: " << m_damage[k] << ", " << 
-                   "temperature: " << m_temperature[k] << ", " << 
-                   "oldStress: {" << oldStress[0] << ", " << 
-                                     oldStress[1] << ", " << 
-                                     oldStress[2] << ", " << 
-                                     oldStress[3] << ", " << 
-                                     oldStress[4] << ", " << 
-                                     oldStress[5] << "}, " << 
-                  "strainRate: {" << D[0] << ", " << 
-                                     D[1] << ", " << 
-                                     D[2] << ", " << 
-                                     D[3] << ", " << 
-                                     D[4] << ", " << 
-                                     D[5] << "}, " << 
-                  "oldPlasticStrain: {" << oldPlasticStrain[0] << ", " << 
-                                     oldPlasticStrain[1] << ", " << 
-                                     oldPlasticStrain[2] << ", " << 
-                                     oldPlasticStrain[3] << ", " << 
-                                     oldPlasticStrain[4] << ", " << 
-                                     oldPlasticStrain[5] << "}, " << 
-                   "newStress: {" << newStress[0] << ", " << 
-                                  newStress[1] << ", " << 
-                                  newStress[2] << ", " << 
-                                  newStress[3] << ", " << 
-                                  newStress[4] << ", " << 
-                                  newStress[5] << "}" );
-    GEOS_ERROR( "Geomechanics model failed to converge." );
+    computeHypoelasticTrialStress( timeIncrement,
+                                   m_bulkModulus[k],
+                                   m_shearModulus[k],
+                                   oldStress,
+                                   D,
+                                   newStress );
+    LvArray::tensorOps::copy< 6 >( newPlasticStrain, oldPlasticStrain );
+    newZeta = oldZeta;
+    newCoher = oldCoher;
+    newPorosity = oldPorosity;
   }
+  else
+  {
+    errorFlag = computeStep( D,               // strain "rate"
+                 timeIncrement,              // time step (s)
+                 characteristicLength,        // length scale
+                 strengthScale,               // scaler for strength
+                 temperature,                 // scalar for temperature
+                 oldZeta,                     // trace of isotropic backstress at start of step(t_n)
+                 oldCoher,                    // scalar-valued coherence at start of step(t_n)
+                 oldPorosity,                 // scalar-valued porosity at start of step(t_n)
+                 buckling,                    // buckling strength multiplier.
+                 oldStress,                   // unrotated stress at start of step(t_n)
+                 oldPlasticStrain,            // plastic strain at start of step(t_n)
+                 newZeta,                     // trace of isotropic backstress at end of step(t_n+1)
+                 newCoher,                    // scalar-valued coherence at end of step(t_n+1)
+                 newPorosity,                 // scalar-valued porosity at end of step(t_n+1)
+                 newStress,                   // unrotated stress at end of step(t_n+1)
+                 newPlasticStrain,            // plastic strain at end of step(t_n+1)
+                 constitutiveUpdateFlag );     // update status for solver warning/delete handling
+  }
+
+  if ( errorFlag == 1 )
+  {
+    constitutiveUpdateFlag = -1;
+#if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__)
+    if ( m_failedStepResponse == 1 || m_failedStepResponse == 2 || m_failedStepResponse == 3 )
+    {
+      GEOS_LOG_RANK( "Geomechanics model failed to converge for material point " << k <<
+                     ", quadrature point " << q << ". Reverting to the beginning-of-step state and setting constitutiveUpdateFlag=-1." );
+    }
+#endif
+    // The solver owns particle deletion. A failed constitutive update is exposed
+    // through constitutiveUpdateFlag=-1 while the state is reverted by computeStep.
+  }
+
+  m_constitutiveUpdateFlag[k][q] = constitutiveUpdateFlag;
 
   // Note stress gets re-rotated in solid utilities hypo update 2 
   LvArray::tensorOps::copy< 6 >( stress, newStress ); // Copy to material data:
@@ -950,6 +1020,231 @@ void GeomechanicsUpdates::smallStrainUpdateHelper( localIndex const k,
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
+int GeomechanicsUpdates::failStep( real64 const & Zeta_n,
+                                   real64 const & coher_n,
+                                   real64 const & porosity_n,
+                                   real64 const ( & sigma_n )[6],
+                                   real64 const ( & ep_n )[6],
+                                   real64 & Zeta_p,
+                                   real64 & coher_p,
+                                   real64 & porosity_p,
+                                   real64 ( & sigma_p )[6],
+                                   real64 ( & ep_p )[6] ) const
+{
+  Zeta_p = Zeta_n;
+  coher_p = coher_n;
+  porosity_p = porosity_n;
+
+  LvArray::tensorOps::copy< 6 >( sigma_p, sigma_n );
+  LvArray::tensorOps::copy< 6 >( ep_p, ep_n );
+
+  return 1;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+int GeomechanicsUpdates::failSubstep( real64 const ( & sigma_old )[6],
+                                      real64 const ( & ep_old )[6],
+                                      real64 const & X_old,
+                                      real64 const & Zeta_old,
+                                      real64 const & coher_old,
+                                      real64 ( & sigma_new )[6],
+                                      real64 ( & ep_new )[6],
+                                      real64 & X_new,
+                                      real64 & Zeta_new,
+                                      real64 & coher_new ) const
+{
+  LvArray::tensorOps::copy< 6 >( sigma_new, sigma_old );
+  LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
+
+  X_new = X_old;
+  Zeta_new = Zeta_old;
+  coher_new = coher_old;
+
+  return 1;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void GeomechanicsUpdates::applyCreepRelaxation( real64 const & Dt,
+                                                real64 const & temperature,
+                                                real64 const & phi_i,
+                                                real64 const & Km,
+                                                real64 const & Kf,
+                                                real64 const & C1,
+                                                real64 const & ev0,
+                                                real64 const & fluid_pressure_initial,
+                                                real64 const & buckling,
+                                                real64 ( & sigma )[6],
+                                                real64 ( & ep )[6],
+                                                real64 & X ) const
+{
+  if( m_enableCreep != 1 )
+  {
+    return;
+  }
+
+  // Creep is applied once over the full explicit step. The plasticity retry loop
+  // then starts from this relaxed state for every subcycle attempt.
+  real64 referenceTemperature = m_initialTemperature;
+  real64 gasConstantR = 8.314;
+  real64 creepActivationEnergy = m_Q;
+
+  real64 creepRateTemperatureMultiplier = 1.0;
+  if( temperature > 1.0e-10 && referenceTemperature > 1.0e-10 )
+  {
+    creepRateTemperatureMultiplier = exp( -creepActivationEnergy *
+                                          ( 1.0 / ( gasConstantR * temperature ) -
+                                            1.0 / ( gasConstantR * referenceTemperature ) ) );
+  }
+
+  real64 const equilibriumPorosityPressureExponent = m_creepD;
+  real64 const equilibriumPorosityOffset = m_creepE;
+  real64 const compactionRatePressureExponent = m_creepF;
+  real64 const rootTwoThirds = 0.81649658092772603273242802490196;
+
+  real64 stress_iso[6] = { 0.0 };
+  real64 stress_dev[6] = { 0.0 };
+  real64 iso_old = 0.0;
+  real64 vonMisesStress_old = 0.0;
+  twoInvariant::stressDecomposition( sigma,
+                                     iso_old,
+                                     vonMisesStress_old,
+                                     stress_dev );
+  LvArray::tensorOps::scale< 6 >( stress_dev, rootTwoThirds * vonMisesStress_old );
+  stress_iso[0] = iso_old;
+  stress_iso[1] = iso_old;
+  stress_iso[2] = iso_old;
+
+  real64 ep_iso[6] = { 0.0 };
+  real64 ep_dev[6] = { 0.0 };
+  real64 ep_iso_old = 0.0;
+  real64 ep_rootJ2_old = 0.0;
+  twoInvariant::stressDecomposition( ep,
+                                     ep_iso_old,
+                                     ep_rootJ2_old,
+                                     ep_dev );
+  LvArray::tensorOps::scale< 6 >( ep_dev, rootTwoThirds * ep_rootJ2_old );
+  ep_iso[0] = ep_iso_old;
+  ep_iso[1] = ep_iso_old;
+  ep_iso[2] = ep_iso_old;
+
+  real64 bulk = 0.0;
+  real64 shear = 0.0;
+  computeElasticProperties( sigma,
+                            ep,
+                            m_p3,
+                            fluid_pressure_initial,
+                            Km,
+                            Kf,
+                            C1,
+                            ev0,
+                            phi_i,
+                            bulk,
+                            shear );
+
+  if( shear > 0.0 )
+  {
+    real64 const elasticVMShearStrain = vonMisesStress_old / ( 3.0 * shear );
+
+    if( elasticVMShearStrain > 1.0e-12 && m_creepC2 > 1.0e-16 )
+    {
+      real64 const equilibriumShearStrainConstant = m_creepC0;
+      real64 const equilibriumShearStrainExponent = m_creepC1;
+      real64 const shearStrainRateConstant = creepRateTemperatureMultiplier * m_creepC2;
+
+      real64 const plasticVMshearStrain = rootTwoThirds * ep_rootJ2_old;
+      real64 const equilibriumVMShearStrain = equilibriumShearStrainConstant *
+                                              std::pow( vonMisesStress_old,
+                                                        equilibriumShearStrainExponent );
+      real64 creepVMStrainIncrement = Dt * shearStrainRateConstant *
+                                       std::max( equilibriumVMShearStrain - plasticVMshearStrain, 0.0 );
+      creepVMStrainIncrement = std::min( elasticVMShearStrain, creepVMStrainIncrement );
+
+      real64 const devStressCreepScale = std::max( elasticVMShearStrain - creepVMStrainIncrement, 0.0 ) /
+                                         elasticVMShearStrain;
+
+      real64 creepStrainIncrement[6] = { 0.0 };
+      LvArray::tensorOps::copy< 6 >( creepStrainIncrement, stress_dev );
+      LvArray::tensorOps::scale< 6 >( creepStrainIncrement,
+                                      0.5 / shear * ( 1.0 - devStressCreepScale ) );
+
+      LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
+      LvArray::tensorOps::scale< 6 >( stress_dev, devStressCreepScale );
+    }
+  }
+
+  // Volumetric creep. Pressure p is positive in compression.
+  real64 const p = -iso_old;
+  real64 const evp = ep[0] + ep[1] + ep[2];
+  real64 const phi_p = std::max( 1.0e-10, 1.0 + exp( -evp ) * ( phi_i - 1.0 ) );
+
+  real64 pressureTerm = 0.0;
+  if( p > 1.0e-12 && m_creepB > 0.0 )
+  {
+    pressureTerm = std::pow( p / m_creepB, equilibriumPorosityPressureExponent );
+  }
+
+  real64 const phi_e = std::max( 1.0e-10,
+                                 m_creepA * exp( -pressureTerm ) +
+                                 equilibriumPorosityOffset +
+                                 ( -3.0e-6 * std::pow( std::max( temperature - referenceTemperature, 0.0 ), 2.0 ) ) -
+                                 ( 0.0002 * std::max( temperature - referenceTemperature, 0.0 ) ) );
+
+  if( phi_p - phi_e > 1.0e-10 &&
+      p > 1.0e-12 &&
+      m_creepC > 1.0e-16 &&
+      m_creepG > 0.0 &&
+      evp + m_p3 > 1.0e-10 &&
+      bulk > 0.0 )
+  {
+    real64 const dphidt = -creepRateTemperatureMultiplier *
+                          std::pow( p / m_creepG, compactionRatePressureExponent ) *
+                          m_creepC * ( phi_p - phi_e );
+
+    real64 const phi_c = std::max( phi_e, phi_p + dphidt * Dt );
+    real64 evp_c = log( ( phi_i - 1.0 ) / ( phi_c - 1.0 ) );
+    evp_c = std::max( evp_c, -0.99999999 * m_p3 );
+    real64 devp = evp_c - evp;
+
+    real64 p_c = 0.0;
+    if( devp < -p / bulk )
+    {
+      devp = -p / bulk;
+      p_c = 0.0;
+      evp_c = evp + devp;
+    }
+    else
+    {
+      p_c = std::max( 0.0, p + bulk * devp );
+    }
+
+    stress_iso[0] = -p_c;
+    stress_iso[1] = -p_c;
+    stress_iso[2] = -p_c;
+    ep_iso[0] = evp_c / 3.0;
+    ep_iso[1] = evp_c / 3.0;
+    ep_iso[2] = evp_c / 3.0;
+
+    X = computeX( evp_c,
+                  phi_i,
+                  Km,
+                  Kf,
+                  C1,
+                  ev0,
+                  fluid_pressure_initial,
+                  buckling );
+  }
+
+  LvArray::tensorOps::copy< 6 >( sigma, stress_dev );
+  LvArray::tensorOps::add< 6 >( sigma, stress_iso );
+
+  LvArray::tensorOps::copy< 6 >( ep, ep_dev );
+  LvArray::tensorOps::add< 6 >( ep, ep_iso );
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // strain "rate"
                                       const real64 & Dt,                     // time step (s)
                                       const real64 & lch,                    // length scale
@@ -957,430 +1252,210 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                                       const real64 & temperature,            // temperature
                                       const real64 & Zeta_n,                 // trace of isotropic backstress at start of step(t_n)
                                       const real64 & coher_n,                // scalar-valued coherence at start of step(t_n)
-						                          const real64 & porosity_n,             // scalar-valued coherence at start of step(t_n)
+                                      const real64 & porosity_n,             // scalar-valued porosity at start of step(t_n)
                                       const real64 & buckling,               // scalar-valued buckling multiplier at start of step(t_n)
-						                          real64 const ( & sigma_n )[6],         // unrotated stress at start of step(t_n)
+                                      real64 const ( & sigma_n )[6],         // unrotated stress at start of step(t_n)
                                       real64 const ( & ep_n )[6],            // plastic strain at start of step(t_n)
-                                      real64 & Zeta_p,                        // trace of isotropic backstress at end of step(t_n+1)
-                                      real64 & coher_p,                       // scalar-valued coherence at end of step(t_n+1)
-						                          real64 & porosity_p,                    // scalar-valued porosity at end of step(t_n+1)
-						                          real64 ( & sigma_p )[6],         // unrotated stress at end of step(t_n+1)
-                                      real64 ( & ep_p )[6]            // plastic strain at end of step(t_n+1)
+                                      real64 & Zeta_p,                       // trace of isotropic backstress at end of step(t_n+1)
+                                      real64 & coher_p,                      // scalar-valued coherence at end of step(t_n+1)
+                                      real64 & porosity_p,                   // scalar-valued porosity at end of step(t_n+1)
+                                      real64 ( & sigma_p )[6],               // unrotated stress at end of step(t_n+1)
+                                      real64 ( & ep_p )[6],                  // plastic strain at end of step(t_n+1)
+                                      int & constitutiveUpdateFlag            // 0 good, 1 warning, -1 failed
 ) const
 {
-	
-  // Figure out where to initialize and set these and use pressure dependence to get value for each
-  // particle correctly.
+  constitutiveUpdateFlag = 0;
 
-  real64 fluid_B0 = m_fluidBulkModulus; // Fluid bulk modulus (K_f)
-	real64 fluid_pressure_initial = m_fluidInitialPressure; // Zero strain Fluid Pressure (Pf0)
+  // Fluid effects are intentionally disabled until a persistent fluid/backstress
+  // state is added following the original Arensica/Homel implementation.
+  real64 const fluid_B0 = 0.0;
+  real64 const fluid_pressure_initial = 0.0;
 
-	// These  variables are computed from input parameters and are used throughout the code
-	// The are evaluates here to avoid repeated computation, or to simplify expressions.
+  real64 const phi_i = 1.0 - exp( -m_p3 );
+  real64 const Km = m_b0 + m_b1;
+  real64 const Kf = fluid_B0;
+  real64 const C1 = Kf * ( 1.0 - phi_i ) + Km * phi_i;
+  real64 const ev0 = Kf > 0.0 ? C1 * fluid_pressure_initial / ( Kf * Km ) : 0.0;
 
-	// This phi_i value is not modified by the disaggregation strain, because
-	// it is the same for all particles.  Thus disaggregation strain is
-	// not supported when there is a pore fluid.
-	real64 phi_i = 1.0 - exp( -m_p3 );                                 // Initial porosity (inferred from crush curve, used for fluid model/
-	real64 Km = m_b0 + m_b1;                                           // Matrix bulk modulus
-	real64 Kf = fluid_B0;                                          // Fluid bulk modulus
-	real64 C1 = Kf * ( 1.0 - phi_i ) + Km * ( phi_i );                     // Term to simplify the fluid model expressions
-	real64 ev0 = Kf > 0 ? C1 * fluid_pressure_initial / ( Kf * Km ) : 0.0; // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+  real64 const evp_n = LvArray::tensorOps::symTrace< 3 >( ep_n );
+  real64 const X_n = computeX( evp_n,
+                               phi_i,
+                               Km,
+                               Kf,
+                               C1,
+                               ev0,
+                               fluid_pressure_initial,
+                               buckling );
 
-  // All stress values within computeStep are quasistatic.
-  int n,
-      chimax = 1,                                   // max allowed subcycle multiplier
-      chi = 1,                                      // subcycle multiplier
-      stepFlag,                                     // 0/1 good/bad step
-      substepFlag;                                  // 0/1 good/bad substep
+  // Conservative elastic properties are used for the initial trial stress and
+  // substep-count estimate.
+  real64 bulk = 0.0;
+  real64 shear = 0.0;
+  computeElasticProperties( bulk, shear );
 
-  // int m_mat_geo_subcycling_characteristic_number = 256; // allowable subcycles
+  real64 sigma_trial[6] = { 0.0 };
+  computeHypoelasticTrialStress( Dt,
+                                 bulk,
+                                 shear,
+                                 sigma_n,
+                                 D,
+                                 sigma_trial );
 
-  real64 evp_n = LvArray::tensorOps::symTrace< 3 >( ep_n ); // ep_n.Trace(); // Volumetric plastic strain at start of step.
-  
-  // hydrostatic compressive strength at start of step(t_n)
-  real64 X_n = computeX( evp_n,
-                          phi_i,
-                          Km,
-                          Kf,
-                          C1,
-                          ev0,
-                          fluid_pressure_initial,
-                          buckling );
-  
-  real64 dt,                                        // substep time increment
-          X_old,                                     // X at start of substep
-          X_new,                                     // X at end of substep
-          Zeta_old = Zeta_n,                         // Zeta at start of substep
-          Zeta_new,                                  // Zeta at end of substep
-          coher_old, 							                  // coher at start of substep
-          coher_new;  								                // coher at end of substep
-
-
-  real64 sigma_old[6] = { 0.0 };                                // sigma at start of substep
-  real64 sigma_new[6] = { 0.0 };                                // sigma at end of substep
-  real64 ep_old[6] = { 0.0 };                                   // plastic strain at start of substep
-  real64 ep_new[6] = { 0.0 };                                   // plastic strain at end of substep
-
-  real64 bulk, shear;
-
-
-
-
-  // (1) Define conservative elastic properties based on the high-pressure
-  // limit of the bulk modulus function. The bulk modulus function can be
-  // without stress and plastic strain arguments to return the
-  // high pressure limit.  These values are used only for computing number
-  // of substeps and stable time steps.
-  computeElasticProperties( bulk, 
-                            shear ); 
-
-  //Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
-  real64 sigma_trial[6] = { 0 };
-  computeHypoelasticTrialStress( Dt,              // full time step
-                                 bulk,            // bulk modulus
-                                 shear,           // shear modulus
-                                 sigma_n,         // stress at start of step.
-                                 D,               // D=sym(L)
-                                 sigma_trial );   // stress at end of step
-
-  real64 I1_trial,
-        J2_trial,
-        rJ2_trial;
-
-  real64 d_e[6],
-         S_trial[6];
-
-  computeInvariants( sigma_trial,
-                     S_trial,
-                     I1_trial,
-                     J2_trial,
-                     rJ2_trial);
-
-  // (2) Determine the number of substeps (nsub) based on the magnitude of
-  // the trial stress increment relative to the characteristic dimensions
-  // of the yield surface.  Also compare the value of the pressure dependent
-  // elastic properties as sigma_old and sigma_trial and adjust nsub if
-  // there is a large change to ensure an accurate solution for nonlinear
-  // elasticity even with fully elastic loading.
   int nsub = computeStepDivisions( X_n,
-                                  Zeta_n,
-                                  ep_n,
-                                  sigma_n,
-                                  sigma_trial,
-                                  fluid_B0,
-                                  fluid_pressure_initial,
-                                  Km,
-                                  Kf,
-                                  C1,
-                                  ev0,
-                                  phi_i);
+                                   Zeta_n,
+                                   ep_n,
+                                   sigma_n,
+                                   sigma_trial,
+                                   fluid_B0,
+                                   fluid_pressure_initial,
+                                   Km,
+                                   Kf,
+                                   C1,
+                                   ev0,
+                                   phi_i,
+                                   constitutiveUpdateFlag );
 
-  if ( nsub < 0 ) { 
-    // step divisions asked for nsub > nmax (e.g. 256) subdivisions.
-    // The time step is too big for this strain rate, and so we will
-    // delete the particle.  you could change nmax, but if running
-    // with this much deformation in a single step, you might want
-    // to run with small er actual time steps so you get better
-    // kinematics (here D would be constant for all substeps)
-    goto failedStep;
+  if( nsub < 0 )
+  {
+    constitutiveUpdateFlag = -1;
+    return failStep( Zeta_n,
+                     coher_n,
+                     porosity_n,
+                     sigma_n,
+                     ep_n,
+                     Zeta_p,
+                     coher_p,
+                     porosity_p,
+                     sigma_p,
+                     ep_p );
   }
 
-  // (3) Compute a subdivided time step:
-  stepDivide:
-    dt = Dt / ( chi * nsub );
-    // d_e = (D*dt);
-    // d_e = D;
-    // d_e *= dt;
-    LvArray::tensorOps::copy< 6 >( d_e, D );
-    LvArray::tensorOps::scale< 6 >( d_e, dt );
+  nsub = std::max( 1, nsub );
+  int const chimax = std::max( 1, m_maxAllowedSubcycles / nsub );
 
-  // (4) Set {sigma_old,X_old,Zeta_old,ep_old}={sigma_n,X_n,Zeta_n,ep_n} to their
-  // values at the start of the step, and set n = 1:
-  X_old = X_n;
-  Zeta_old = Zeta_n;
-  coher_old = coher_n;
-  // sigma_old = sigma_n;
-  // ep_old    = ep_n;
-  LvArray::tensorOps::copy< 6 >( sigma_old, sigma_n );
-  LvArray::tensorOps::copy< 6 >( ep_old, ep_n );
-  n = 1;
+  real64 stepSigma[6] = { 0.0 };
+  real64 stepEp[6] = { 0.0 };
+  LvArray::tensorOps::copy< 6 >( stepSigma, sigma_n );
+  LvArray::tensorOps::copy< 6 >( stepEp, ep_n );
+  real64 stepX = X_n;
 
-	// -------------------------------------------------------------------------------
-	// Apply creep to relax deviatoric stress for the whole step, this will be
-  // the starting point for the plasticity solution.
-	if ( m_enableCreep == 1 )
-	{
-    // This is where temperature will modify creep rate parameters.
-    // If creep rate is A*exp[-E_a/(R*T)], where E_a is an activation energy
-    // and R is the gas constant, and T is absolute temperature, then the
-    // rate multiplier going from reference temperature T0 to temperature T
-    // is ( A*exp[-E_a/(R*T)] ) / ( A*exp[-E_a/(R*T0)] ) = Exp[-Ea*( 1/(R*T) - 1./(R*T0) )]
+  applyCreepRelaxation( Dt,
+                        temperature,
+                        phi_i,
+                        Km,
+                        Kf,
+                        C1,
+                        ev0,
+                        fluid_pressure_initial,
+                        buckling,
+                        stepSigma,
+                        stepEp,
+                        stepX );
 
-    real64 m_referenceTemperature =  m_initialTemperature; // We require 
-    real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, TODO: this should be a user input 
-                                    // to allow for other unit systems.
-    real64 m_creepActivationEnergy = m_Q;  // This will be a user input that can be used to fit temperature dependence.
+  int chi = 1;
+  while( chi <= chimax )
+  {
+    int const totalSubsteps = chi * nsub;
+    real64 const dt = Dt / real64( totalSubsteps );
 
-    real64 creepRateTemperatureMultiplier = 1.0;
-    if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
+    real64 X_old = stepX;
+    real64 X_new = stepX;
+    real64 Zeta_old = Zeta_n;
+    real64 Zeta_new = Zeta_n;
+    real64 coher_old = coher_n;
+    real64 coher_new = coher_n;
+    real64 sigma_old[6] = { 0.0 };
+    real64 sigma_new[6] = { 0.0 };
+    real64 ep_old[6] = { 0.0 };
+    real64 ep_new[6] = { 0.0 };
+
+    LvArray::tensorOps::copy< 6 >( sigma_old, stepSigma );
+    LvArray::tensorOps::copy< 6 >( ep_old, stepEp );
+
+    bool attemptFailed = false;
+    for( int substep = 0; substep < totalSubsteps; ++substep )
     {
-    creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
-    }
+      int const substepFlag = computeSubstep( D,
+                                              dt,
+                                              lch,
+                                              strengthScale,
+                                              sigma_old,
+                                              ep_old,
+                                              X_old,
+                                              Zeta_old,
+                                              coher_old,
+                                              buckling,
+                                              fluid_pressure_initial,
+                                              Km,
+                                              Kf,
+                                              C1,
+                                              ev0,
+                                              phi_i,
+                                              sigma_new,
+                                              ep_new,
+                                              X_new,
+                                              Zeta_new,
+                                              coher_new );
 
-    real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
-    real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
-    real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
-
-
-    real64 rootTwoThirds = 0.81649658092772603273242802490196; 
-
-    real64 stress_iso[6] = { 0 };
-    real64 stress_dev[6] = { 0 };
-    real64 iso_old;
-    real64 vonMisesStress_old;
-    twoInvariant::stressDecomposition( sigma_old,
-                                       iso_old,
-                                       vonMisesStress_old,
-                                       stress_dev); //This gives unit vector in direction of dev stress
-    LvArray::tensorOps::scale< 6 >( stress_dev, rootTwoThirds * vonMisesStress_old); // rescale to have actual deviator
-    stress_iso[0] = iso_old;
-    stress_iso[1] = iso_old;
-    stress_iso[2] = iso_old;
-
-    real64 ep_iso[6] = { 0 };
-    real64 ep_dev[6] = { 0 };
-    real64 ep_iso_old;
-    real64 ep_rootJ2_old;
-    twoInvariant::stressDecomposition( ep_old,
-                                       ep_iso_old,
-                                       ep_rootJ2_old, // root J2 invariant of the plastic strain tensor
-                                       ep_dev); //This gives unit vector in direction of dev p. strain 
-    LvArray::tensorOps::scale< 6 >( ep_dev, rootTwoThirds * ep_rootJ2_old);                                       
-    ep_iso[0] = ep_iso_old;
-    ep_iso[1] = ep_iso_old;
-    ep_iso[2] = ep_iso_old;
-
-  // Compute actual elastic properties, above we computed the "conservative" upper limit
-  // for elastic properties to be used in the step division calc.
-   computeElasticProperties( sigma_old,
-                              ep_old,
-                              m_p3,
-                              fluid_pressure_initial,
-                              Km,             // Matrix bulk modulus
-                              Kf,             // Fluid bulk modulus
-                              C1,             // Term to simplify the fluid model expressions
-                              ev0,            // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-                              phi_i,			    // Initial porosity (inferred from crush curve, used for fluid model/
-                              bulk,
-                              shear
-    );
-    // Von Mises equivalent elastic shear strain: 
-    // gamma_e = sqrt( 2/3 * epsilon_dev : epsilon_dev ) = sqrt( 2/3 * S/(2G) : S/(2G) ) = 1/(3G)*sqrt( 3/2 * S:S) = sigma_vm / 3G 
-		real64 elasticVMShearStrain = vonMisesStress_old / ( 3. * shear ); 
-
-    //std::cout<<"vonMisesStress_old = "<<vonMisesStress_old<<", elasticVMShearStrain = "<<elasticVMShearStrain<<", c0 = "<<c0<<", c1 = "<<c1<<", c2 = "<<c2<<std::endl;
-
-		if ( ( elasticVMShearStrain > 1.e-12 ) && ( m_creepC2 > 1.e-16 ) )
-		{  // only apply creep if there is elastic strain
-      //shear strain for TXCr tests
-      real64 equilibriumShearStrainConstant = m_creepC0;
-      real64 equilibriumShearStrainExponent = m_creepC1;
-      real64 shearStrainRateConstant = creepRateTemperatureMultiplier*m_creepC2;
-
-      // relax shear stress until equivalent plastic shear strain reaches the equilibrium value for the current level of shear stress.
-      real64 plasticVMshearStrain = rootTwoThirds*ep_rootJ2_old;
-      real64 equilibriumVMShearStrain = equilibriumShearStrainConstant * std::pow(vonMisesStress_old , equilibriumShearStrainExponent);
-      real64 creepVMStrainIncrement =  Dt * shearStrainRateConstant * std::max(equilibriumVMShearStrain - plasticVMshearStrain , 0.0);
-      creepVMStrainIncrement = std::min(elasticVMShearStrain, creepVMStrainIncrement);  // prevent excess accumulation of plastic vm strain.
-
-      // scale back stress deviatoric tensor based on creep strain increment (creep turns elastic strain into plastic strain)
-			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
-
-      //std::cout<<"equilibriumVMShearStrain = "<<equilibriumVMShearStrain<<", plasticVMshearStrain = "<<plasticVMshearStrain<<", creepVMStrainIncrement = "<<creepVMStrainIncrement<<", devStressCreepScale = "<<devStressCreepScale<<std::endl;
-
-			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
-			real64 creepStrainIncrement[6];  
-
-			// creepStrainIncrement = stress_dev; // this is temporarily the dev stress
-			// creepStrainIncrement *= 0.5/g0*( 1.0 - devStressCreepScale ); // this is now the change in elastic deviatoric strain
-			// ep_old += creepStrainIncrement; // increment plastic strain such that total strain is constant
-      LvArray::tensorOps::copy< 6 >( creepStrainIncrement, stress_dev );
-      LvArray::tensorOps::scale< 6 >( creepStrainIncrement,  0.5/shear*( 1.0 - devStressCreepScale ) ); // CC: TODO check if this needs to double off-diagonal components
-
-      //std::cout<<"creepStrainIncrement = ["<<creepStrainIncrement[0]<<", "<<creepStrainIncrement[1]<<", "<<creepStrainIncrement[2]<<", "<<creepStrainIncrement[3]<<", "<<creepStrainIncrement[4]<<", "<<creepStrainIncrement[5]<<"]"<<std::endl;
-      //std::cout<<"Before: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
-      LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
-      //std::cout<<"After: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
-
-			// relax elastic deviatoric stress due to creep
-			// stress_dev *= devStressCreepScale;
-      LvArray::tensorOps::scale< 6 >( stress_dev, devStressCreepScale );
-		}
-
-	  // volumetric creep ----------------
-    real64 p = -iso_old;  // hydrostatic pressure, positive in compression
-
-    // volumetric plastic strain, negative in compression
- 	  real64 evp = ep_old[0] + ep_old[1] + ep_old[2]; 
-    // unloaded porosity at the start of the step.
-    real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
-    // equilibrium porosity at the start of the step.
-    // TODO: make the temperature dependence of the equilibrium porosity based on input parameters not these hard-wired terms
-    real64 phi_e = std::max(1.e-10 , 
-                            m_creepA * exp( -std::pow( p / m_creepB ,equilibriumPorosityPressureExponent) ) 
-                            + equilibriumPorosityOffset  
-                            + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) 
-                            - (0.0002 * std::max(temperature - m_referenceTemperature, 0.0))
-                            );    
-
-    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && ( m_creepC > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
-    {  // creep compaction
-      real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow( p / m_creepG ,compactionRatePressureExponent)*m_creepC*( phi_p - phi_e );  // creep compaction rate:
-      real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
-      real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
-      evp_c = std::max( evp_c, -0.99999999*m_p3 ); // don't let porosity go negative.
-      real64 devp = evp_c - evp;  // creep vol. strain increment
-
-      real64 p_c;  // pressure after relaxation.
-
-      // We don't want to allow more plastic vol strain than the current elastic vol strain.
-      if ( devp < - p / bulk )
-      { // increment in p. vol strain is greater than current elastic vol strain.
-        devp = -p/bulk;
-        p_c = 0.;
-        evp_c = evp + devp;
-      }
-      else
+      if( substepFlag != 0 )
       {
-        p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
+        attemptFailed = true;
+        break;
       }
 
-      // update stress and plastic strain values after creep
-      stress_iso[0] = -1.0*p_c;
-      stress_iso[1] = -1.0*p_c;
-      stress_iso[2] = -1.0*p_c;
-      ep_iso[0] = evp_c/3.;
-      ep_iso[1] = evp_c/3.;
-      ep_iso[2] = evp_c/3.;
-
-      // update cap function to be consistent with new vol. plastic
-      X_old = computeX( evp_c,
-      phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
-      bulk, // matrix bulk modulus
-      0.0, // Fluid bulk modulus
-      0.0, // Term to simplify the fluid model expressions
-      0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-      0.0,
-      buckling );
-
-      //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
+      if( substep + 1 < totalSubsteps )
+      {
+        X_old = X_new;
+        Zeta_old = Zeta_new;
+        coher_old = coher_new;
+        LvArray::tensorOps::copy< 6 >( sigma_old, sigma_new );
+        LvArray::tensorOps::copy< 6 >( ep_old, ep_new );
+      }
     }
 
+    if( !attemptFailed )
+    {
+      Zeta_p = Zeta_new;
+      coher_p = coher_new;
+      LvArray::tensorOps::copy< 6 >( sigma_p, sigma_new );
+      LvArray::tensorOps::copy< 6 >( ep_p, ep_new );
 
-	    // Reassemble the stress with a scaled deviatoric stress tensor
-      LvArray::tensorOps::copy< 6 >( sigma_old, stress_dev );
-      LvArray::tensorOps::add< 6 >( sigma_old, stress_iso );
+      real64 const evp_p = LvArray::tensorOps::symTrace< 3 >( ep_new );
+      porosity_p = 1.0 + exp( -evp_p ) * ( phi_i - 1.0 );
+      porosity_p = std::min( 1.0, std::max( 0.0, porosity_p ) );
 
-      LvArray::tensorOps::copy< 6 >( ep_old, ep_dev );
-      LvArray::tensorOps::add< 6 >( ep_old, ep_iso );
-	}
+      if( chi > 1 && constitutiveUpdateFlag == 0 )
+      {
+        constitutiveUpdateFlag = 1;
+      }
 
-
-	// -------------------------------------------------------------------------------
-
-  // (5) Call substep function {sigma_new,ep_new,X_new,Zeta_new}
-  //                               = computeSubstep(D,dt,sigma_old,ep_old,X_old,Zeta_old)
-  computeSubstep:
-    substepFlag = computeSubstep( D,
-                                  dt,
-                                  lch,
-                                  strengthScale,
-                                  sigma_old,
-                                  ep_old,
-                                  X_old,
-                                  Zeta_old,
-                                  coher_old,
-                                  buckling,         // scalar valued buckling crush-curve modifier
-                                  fluid_pressure_initial,
-                                  Km,
-                                  Kf,
-                                  C1,
-                                  ev0,
-                                  phi_i,
-                                  sigma_new,
-                                  ep_new,
-                                  X_new,
-                                  Zeta_new,
-                                  coher_new );
-
-    // These are temp variables used for debugging.
-    // real64 p_old;
-    // real64 evp_old;
-    // real64 p_new;
-    // real64 evp_new;
-    // real64 trDdt;
-    // p_old = (-1./3.)*( sigma_old[0] + sigma_old[1] + sigma_old[2] );
-    // evp_old = ( ep_old[0] + ep_old[1] + ep_old[2] );
-    // p_new = (-1./3.)*( sigma_new[0] + sigma_new[1] + sigma_new[2] );
-    // evp_new = ( ep_new[0] + ep_new[1] + ep_new[2] );
-    // trDdt = ( D[0] + D[1] + D[2] )*dt;
-    //std::cout<<"Substep: trDdt = "<<trDdt<<", p_old = "<<p_old<<", evp_old = "<<evp_old<<", X_old = "<<X_old<<", p_new = "<<p_new<<", evp_new = "<<evp_new<<", X_new = "<<X_new<<std::endl;
-
-
-
-  // (6) Check error flag from substep calculation:
-  if (substepFlag == 0) { // no errors in substep calculation
-    if (n < (chi*nsub)) { // update and keep substepping
-      X_old     = X_new;
-      Zeta_old  = Zeta_new;
-      coher_old = coher_new;
-      // sigma_old = sigma_new;
-      // ep_old    = ep_new;
-      LvArray::tensorOps::copy< 6 >( sigma_old, sigma_new );
-      LvArray::tensorOps::copy< 6 >( ep_old, ep_new );
-      n++;
-      goto computeSubstep;
+      return 0;
     }
-    else goto successfulStep; // n = chi*nsub, Step is done
-  }
-  else
-  {  // failed substep
-    if (chi < chimax)   {       // errors in substep calculation
-      chi = 2*chi;
-      goto stepDivide;
+
+    if( chi >= chimax )
+    {
+      break;
     }
-    else goto failedStep;     // bad substep and chi>=chimax, Step failed even with substepping
+
+    int const nextChi = std::min( 2 * chi, chimax );
+    if( nextChi <= chi )
+    {
+      break;
+    }
+    chi = nextChi;
   }
 
-  // (7) Successful step, set value at end of step to value at end of last substep.
-  successfulStep:
-    Zeta_p    = Zeta_new;
-    coher_p = coher_new;
-    // sigma_p   = sigma_new;
-    // ep_p      = ep_new;
-    LvArray::tensorOps::copy< 6 >( sigma_p, sigma_new );
-    LvArray::tensorOps::copy< 6 >( ep_p, ep_new );
-    // porosity_p = 1 + exp( ep_new.Trace() )*( phi_i - 1 );
-    porosity_p = 1 + exp( LvArray::tensorOps::symTrace< 3 >( ep_new ) )*( phi_i - 1 );
-
-    stepFlag  = 0;
-    return stepFlag;
-
-  // (8) Failed step, Send ParticleDelete Flag to Host Code, Store Inputs to particle data:
-  // CC: TODO pass model particle delete flag
-  failedStep:
-    // input values for sigma_new,X_new,Zeta_new,ep_new, along with error flag
-    Zeta_p    = Zeta_n;
-    coher_p = coher_n;
-    // sigma_p   = sigma_n;
-    // ep_p      = ep_n;
-    LvArray::tensorOps::copy< 6 >( sigma_p, sigma_n );
-    LvArray::tensorOps::copy< 6 >( ep_p, ep_n );
-    porosity_p = porosity_n;
-    stepFlag  = 1;
-
-    return stepFlag;
+  constitutiveUpdateFlag = -1;
+  return failStep( Zeta_n,
+                   coher_n,
+                   porosity_n,
+                   sigma_n,
+                   ep_n,
+                   Zeta_p,
+                   coher_p,
+                   porosity_p,
+                   sigma_p,
+                   ep_p );
 }
 
 GEOS_HOST_DEVICE
@@ -1433,10 +1508,12 @@ void GeomechanicsUpdates::computeElasticProperties( real64 & bulk,
     {
       real64 nu = m_g1 + m_g2; // high-pressure limit.
 
-      // Force 0<nu<0.5
-      nu = std::min( std::max( nu, 0.5 ), 0.0  );
+      // Force 0 <= nu < 0.5.
+      nu = std::min( std::max( nu, 0.0 ), 0.499999 );
       shear = 1.5 * bulk * ( 1.0 - 2.0 * nu ) / ( 1.0 + nu );
     }
+
+    shear = fmax( shear, m_g0 );
 }
 
 GEOS_HOST_DEVICE
@@ -1532,8 +1609,8 @@ void GeomechanicsUpdates::computeElasticProperties( real64 const ( &stress )[6],
     {
       nu += m_g2 * exp( m_g3 / I1 );
     }
-    // Force 0<nu<0.5
-    nu = std::min( std::max( nu, 0.5 ), 0.0  );
+    // Force 0 <= nu < 0.5.
+    nu = std::min( std::max( nu, 0.0 ), 0.499999 );
 		shear = 1.5 * bulk * ( 1.0 - 2.0 * nu ) / ( 1.0 + nu );
 	}
 
@@ -1554,15 +1631,14 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
 		                                           const real64 & Kf,          // Fluid bulk modulus
 		                                           const real64 & C1,          // Term to simplify the fluid model expressions
 		                                           const real64 & ev0,         // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-		                                           const real64 & phi_i			// Initial porosity (inferred from crush curve, used for fluid model/
+		                                           const real64 & phi_i,        // Initial porosity (inferred from crush curve, used for fluid model/
+                                                   int & constitutiveUpdateFlag // Set to 1 if requested subcycles are capped.
 ) const
 {
   // compute the number of step divisions (substeps) based on a comparison
   // of the trial stress relative to the size of the yield surface, as well
   // as change in elastic properties between sigma_n and sigma_trial.
-  int subcycling_characteristic_number = 256;
-  int nmax = ceil(subcycling_characteristic_number);
-  //   int nmax = m_maxAllowedSubcycles;
+  int const nmax = std::max( 1, m_maxAllowedSubcycles );
 
   // Compute change in bulk modulus:
   real64 bulk_n,
@@ -1602,12 +1678,15 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   LvArray::tensorOps::copy< 6 >( d_sigma, sigma_trial );
   LvArray::tensorOps::subtract< 6 >( d_sigma, sigma_n );
 
-  real64 size = 0.5*(m_peakI1 - X);
+  real64 size = fabs( 0.5*( m_peakI1 - X ) );
 
   if( m_stren > 0.0 )
   {
 	  size = std::min( size, m_stren );
   }
+
+  real64 const sizeFloor = 1.0e-16 * std::max( 1.0, fabs( m_peakI1 ) + fabs( X ) + fabs( m_stren ) );
+  size = std::max( size, sizeFloor );
 
   d_sigma[3] *= 2.0;
   d_sigma[4] *= 2.0;
@@ -1622,21 +1701,23 @@ int GeomechanicsUpdates::computeStepDivisions( const real64 & X,
   int nsub = std::max( n_bulk, n_yield);
 
   //if( nsub > nmax && ( m_failedStepResponse == 2 || m_failedStepResponse == 3 ) )
-  if( nsub > subcycling_characteristic_number )
+  if( nsub > nmax )
   {
-    // We could return an error here (set nsub=-1) if the code is asking for more than
-    // the allowable max number of substeps, or just set n=nmax and run.
-    // doing the latter will let the plastic strain convergence criteria determine
-    // whether subcycling is necessary.  
-    GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
-    nsub = -1;
+    // Response 0/1 accepts a capped subcycle count and lets the return mapping
+    // convergence decide whether the step is usable. Response 2/3 reports
+    // failure to the caller. Logging is handled outside device-callable code.
+    if( m_failedStepResponse <= 1 )
+    {
+      constitutiveUpdateFlag = 1;
+      nsub = nmax;
+    }
+    else
+    {
+      nsub = -1;
+    }
   }
   else
   {
-    //if (nsub > nmax && m_failedStepResponse == 1)
-    //{
-    //  GEOS_LOG_RANK( "Requesting too many subcycles in geomechanics model, solution may be innaccurate" );
-    //}
     nsub = std::min( std::max( nsub, 1 ), nmax  );
   }
   return nsub;
@@ -1929,43 +2010,39 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // strain "rate" for substep D=sym(L)
-		                                     const real64 & dt,               // substep time interval
+                                         const real64 & dt,               // substep time interval
                                          const real64 & lch,              // length scale
                                          const real64 & strengthScale,    // strength scale
-		                                     real64 const ( & sigma_old )[6], // stress at start of substep
-		                                     real64 const ( & ep_old )[6],    // plastic strain at start of substep
-		                                     const real64 & X_old,            // hydrostatic compressive strength at start of substep
-		                                     const real64 & Zeta_old,         // trace of isotropic backstress at start of substep
-		                                     const real64 & coher_old,        // scalar valued coherence = 1-Damage
+                                         real64 const ( & sigma_old )[6], // stress at start of substep
+                                         real64 const ( & ep_old )[6],    // plastic strain at start of substep
+                                         const real64 & X_old,            // hydrostatic compressive strength at start of substep
+                                         const real64 & Zeta_old,         // trace of isotropic backstress at start of substep
+                                         const real64 & coher_old,        // scalar valued coherence = 1-Damage
                                          const real64 & buckling,         // scalar valued buckling crush-curve modifier
-		                                     const real64 & fluid_pressure_initial,
-		                                     const real64 & Km,
-		                                     const real64 & Kf,
-		                                     const real64 & C1,
-		                                     const real64 & ev0,
-		                                     const real64 & phi_i,
-		                                     real64 ( & sigma_new )[6],            // stress at end of substep
-		                                     real64 ( & ep_new )[6],               // plastic strain at end of substep
-		                                     real64 & X_new,                       // hydrostatic compressive strength at end of substep
-		                                     real64 & Zeta_new,                    // trace of isotropic backstress at end of substep
-		                                     real64 & coher_new	                 // coherence at the end of step.
+                                         const real64 & fluid_pressure_initial,
+                                         const real64 & Km,
+                                         const real64 & Kf,
+                                         const real64 & C1,
+                                         const real64 & ev0,
+                                         const real64 & phi_i,
+                                         real64 ( & sigma_new )[6],       // stress at end of substep
+                                         real64 ( & ep_new )[6],          // plastic strain at end of substep
+                                         real64 & X_new,                  // hydrostatic compressive strength at end of substep
+                                         real64 & Zeta_new,               // trace of isotropic backstress at end of substep
+                                         real64 & coher_new               // coherence at the end of substep
 ) const
 {
   // Computes the updated stress state for a substep that may be either elastic, plastic, or
-  // partially elastic.   Returns an integer flag 0/1 for a good/bad update.
-  int substepFlag,
-		  returnFlag;
+  // partially elastic. Returns an integer flag 0/1 for a good/bad update.
+  int returnFlag = 0;
 
-  real64 one_third = 1.0 / 3.0;
-  real64 identity[6] = {1.0,1.0,1.0,0.0,0.0,0.0};
+  real64 const one_third = 1.0 / 3.0;
+  real64 identity[6] = { 1.0, 1.0, 1.0, 0.0, 0.0, 0.0 };
 
-
-
-  // (1)  Compute the elastic properties based on the stress and plastic strain at
-  // the start of the substep.  These will be constant over the step unless elastic-plastic
-  // is used to modify the tangent stiffness in the consistency bisection iteration.
-  real64 bulk,
-         shear;
+  // (1) Compute the elastic properties based on the stress and plastic strain at
+  // the start of the substep.
+  real64 bulk = 0.0;
+  real64 shear = 0.0;
   computeElasticProperties( sigma_old,
                             ep_old,
                             m_p3,
@@ -1976,52 +2053,41 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                             ev0,
                             phi_i,
                             bulk,
-                            shear);
+                            shear );
 
-  // (3) Compute the trial stress: [sigma_trail] = computeTrialStress(sigma_old,d_e,K,G)
-  real64 sigma_trial[6],
-         S_trial[6];
+  // (3) Compute the trial stress: [sigma_trial] = computeTrialStress(sigma_old,d_e,K,G)
+  real64 sigma_trial[6] = { 0.0 };
+  real64 S_trial[6] = { 0.0 };
+  computeHypoelasticTrialStress( dt,
+                                 bulk,
+                                 shear,
+                                 sigma_old,
+                                 D,
+                                 sigma_trial );
 
-  computeHypoelasticTrialStress( dt,              // time step
-  		                           bulk,            // bulk modulus
-  		                           shear,           // shear modulus
-  		                           sigma_old,       // stress at start of step.
-  		                           D,               // D=sym(L)
-  		                           sigma_trial );   // stress at end of step
-
-  real64 I1_trial,
-         J2_trial,
-         rJ2_trial;
-  computeInvariants( sigma_trial, 
+  real64 I1_trial = 0.0;
+  real64 J2_trial = 0.0;
+  real64 rJ2_trial = 0.0;
+  computeInvariants( sigma_trial,
                      S_trial,
                      I1_trial,
                      J2_trial,
                      rJ2_trial );
 
-  // (4) Evaluate the yield function at the trial stress:
-  // Compute the limit parameters based on the value of coher.  These are then passed down
-  // to the computeYieldFunction, to avoid the expense of repeatedly computing a3
-
-  // Compute strain hardening applied to the STREN parameter
+  // (4) Evaluate the yield function at the trial stress.
   real64 hardening = 0.0;
-   if (m_strainHardeningK > 0)
-   {
+  if( m_strainHardeningK > 0.0 )
+  {
+    real64 const ep_J2 = ep_old[0] * ep_old[0] + ep_old[1] * ep_old[1] + ep_old[2] * ep_old[2]
+                         + 3.0 * ep_old[3] * ep_old[3] + 3.0 * ep_old[4] * ep_old[4] + 3.0 * ep_old[5] * ep_old[5]
+                         - ep_old[1] * ep_old[2] - ep_old[0] * ep_old[1] - ep_old[0] * ep_old[2];
 
-	   // This experssion is incomplete until the (2./3.)*sqrt(equilivantPlasticStrain) is applied below.
-	  //  real64 equilivantPlasticStrain = ep_old(0,0)*ep_old(0,0) + ep_old(1,1)*ep_old(1,1) + ep_old(2,2)*ep_old(2,2)
-		// 	   + 3*ep_old(0,1)*ep_old(0,1) + 3*ep_old(0,2)*ep_old(0,2) + 3*ep_old(1,2)*ep_old(1,2)
-		// 	   - ep_old(1,1)*ep_old(2,2) - ep_old(0,0)*ep_old(1,1) - ep_old(0,0)*ep_old(2,2);
-
-   	real64 ep_J2 = ep_old[0]*ep_old[0] + ep_old[1]*ep_old[1] + ep_old[2]*ep_old[2]
-		 	   + 3*ep_old[3]*ep_old[3] + 3*ep_old[4]*ep_old[4] + 3*ep_old[5]*ep_old[5]
-		 	   - ep_old[1]*ep_old[2] - ep_old[0]*ep_old[1] - ep_old[0]*ep_old[2]; 
-
-		if (ep_J2 > 0.)
-		{
-			real64 equilivantPlasticStrain = (2./3.)*sqrt(ep_J2);
-			hardening = m_strainHardeningK*( 1.0 - exp(-1.0*m_strainHardeningN*equilivantPlasticStrain) );
-		}
-   }
+    if( ep_J2 > 0.0 )
+    {
+      real64 const equilivantPlasticStrain = ( 2.0 / 3.0 ) * sqrt( ep_J2 );
+      hardening = m_strainHardeningK * ( 1.0 - exp( -m_strainHardeningN * equilivantPlasticStrain ) );
+    }
+  }
 
   real64 a1 = 0.0;
   real64 a2 = 0.0;
@@ -2043,130 +2109,132 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                     coher_old,
                                     hardening,
                                     strengthScale,
+                                    buckling,
                                     a1,
                                     a2,
                                     a3,
                                     a4 );
 
-  if (YIELD == -1)
-  { // elastic substep
+  if( m_geomechanicsDisableInelasticity )
+  {
+    YIELD = -1;
+  }
+
+  if( YIELD <= 0 )
+  {
     X_new = X_old;
     Zeta_new = Zeta_old;
     coher_new = coher_old;
-    // sigma_new = sigma_trial;
-    // ep_new = ep_old;
     LvArray::tensorOps::copy< 6 >( sigma_new, sigma_trial );
     LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
-    substepFlag = 0;
-    goto successfulSubstep;
+    return 0;
   }
 
-  if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
-  // (5) Compute non-hardening return to initial yield surface:
-  //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
-    real64 I1_0,       // I1 at stress update for non-hardening return
-           rJ2_0,      // rJ2 at stress update for non-hardening return
-           TOL = 1e-10; // bisection convergence tolerance on vol. plastic strain (if decreased, you may need to change imax)
-    real64 S_0[6],        // S (deviator) at stress update for non-hardening return
-           d_ep_0[6],     // increment in plastic strain for non-hardening return
-           S_old[6];
-    real64 I1_old,
-           J2_old,
-           rJ2_old,
-           evp_old = LvArray::tensorOps::symTrace< 3 >( ep_old ); //ep_old.Trace();
-    computeInvariants( sigma_old,
-                       S_old,
-                       I1_old,
-                       J2_old,
-                       rJ2_old );
-
-    // returnFlag would be != 0 if there was an error in the nonHardeningReturn call, but
-    // there are currently no tests in that function that could detect such an error.
-    real64 d_e[6];
-    // real64 D_copy[6]; // = D;
- 
-    // d_e = D; // d_e=D*dt
-    // d_e *= dt;
-    LvArray::tensorOps::copy< 6 >( d_e, D );
-    LvArray::tensorOps::scale< 6 >( d_e, dt);
-
-    returnFlag = nonHardeningReturn( I1_trial,
-                                     rJ2_trial,
-                                     S_trial,
-									                   I1_old,
-                                     rJ2_old,
-                                     S_old,
-									                   d_e,
-                                     X_old,
-                                     Zeta_old,
-                                     coher_old,
-                                     hardening,
-                                     strengthScale,
-                                     buckling,
-                                     bulk,
-                                     shear,
-									                   I1_0,
-                                     rJ2_0,
-                                     S_0,
-                                     d_ep_0 );
-
-	if (returnFlag!=0){
-		goto failedSubstep;
-	}
-
-	// If there is no porosity (p3=0) and no fluid effects (Kf=0) then the nonhardening
-	// return will be the solution
-	if ( isZero( m_p3 ) && isZero( Kf ) )
+  if( YIELD != 1 )
   {
-    Zeta_new = Zeta_old,
-		X_new = X_old;
+    return failSubstep( sigma_old,
+                        ep_old,
+                        X_old,
+                        Zeta_old,
+                        coher_old,
+                        sigma_new,
+                        ep_new,
+                        X_new,
+                        Zeta_new,
+                        coher_new );
+  }
 
-    //MH: TODO: add computeCohere here to update damage for non-porous material.
+  // (5) Compute non-hardening return to the initial yield surface.
+  real64 I1_0 = 0.0;
+  real64 rJ2_0 = 0.0;
+  real64 const TOL = std::max( m_plasticStrainTolerance, 1.0e-16 );
+  real64 S_0[6] = { 0.0 };
+  real64 d_ep_0[6] = { 0.0 };
+  real64 S_old[6] = { 0.0 };
+  real64 I1_old = 0.0;
+  real64 J2_old = 0.0;
+  real64 rJ2_old = 0.0;
+  real64 const evp_old = LvArray::tensorOps::symTrace< 3 >( ep_old );
+  computeInvariants( sigma_old,
+                     S_old,
+                     I1_old,
+                     J2_old,
+                     rJ2_old );
 
-		// ep_new = ep_old; // ep_old + d_ep_0;
-		// ep_new += d_ep_0;
+  real64 d_e[6] = { 0.0 };
+  LvArray::tensorOps::copy< 6 >( d_e, D );
+  LvArray::tensorOps::scale< 6 >( d_e, dt );
+
+  returnFlag = nonHardeningReturn( I1_trial,
+                                   rJ2_trial,
+                                   S_trial,
+                                   I1_old,
+                                   rJ2_old,
+                                   S_old,
+                                   d_e,
+                                   X_old,
+                                   Zeta_old,
+                                   coher_old,
+                                   hardening,
+                                   strengthScale,
+                                   buckling,
+                                   bulk,
+                                   shear,
+                                   I1_0,
+                                   rJ2_0,
+                                   S_0,
+                                   d_ep_0 );
+
+  if( returnFlag != 0 )
+  {
+    return failSubstep( sigma_old,
+                        ep_old,
+                        X_old,
+                        Zeta_old,
+                        coher_old,
+                        sigma_new,
+                        ep_new,
+                        X_new,
+                        Zeta_new,
+                        coher_new );
+  }
+
+  // If there is no porosity (p3=0) and no fluid effects (Kf=0), the non-hardening
+  // return is the solution.
+  if( isZero( m_p3 ) && isZero( Kf ) )
+  {
+    Zeta_new = Zeta_old;
+    X_new = X_old;
+    coher_new = coher_old;
+
     LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
     LvArray::tensorOps::add< 6 >( ep_new, d_ep_0 );
 
-		// sigma_new = Identity;  // one_third*I1_0*Identity + S_0;
-		// sigma_new *= one_third*I1_0;
-		// sigma_new += S_0;
     LvArray::tensorOps::copy< 6 >( sigma_new, identity );
-    LvArray::tensorOps::scale< 6 >( sigma_new, one_third*I1_0 );
+    LvArray::tensorOps::scale< 6 >( sigma_new, one_third * I1_0 );
     LvArray::tensorOps::add< 6 >( sigma_new, S_0 );
 
-		goto successfulSubstep;
-	}
+    return 0;
+  }
 
-    real64 d_evp_0 = LvArray::tensorOps::symTrace<3>( d_ep_0 ); //d_ep_0.Trace();
+  real64 const d_evp_0 = LvArray::tensorOps::symTrace< 3 >( d_ep_0 );
 
   // (6) Iterate to solve for plastic volumetric strain consistent with the updated
-  //     values for the cap (X) and isotropic backstress (Zeta).  Use a bisection method
-  //     based on the multiplier eta,  where  0<eta<1
+  // values for the cap (X) and isotropic backstress (Zeta). Use a bounded bisection
+  // on the multiplier eta, where 0 < eta < 1.
+  real64 eta_out = 1.0;
+  real64 eta_in = 0.0;
+  real64 const dZetadevp = computedZetadevp( fluid_pressure_initial, Km, Kf, ev0, phi_i, Zeta_old, evp_old );
+  int const imax = std::max( 93, int( std::ceil( std::log( TOL ) / std::log( 0.5 ) ) ) + 2 );
+  bool forcedLowerBracket = false;
 
-    real64 eta_out = 1.0,
-           eta_in = 0.0,
-           eta_mid,
-           d_evp;
-    int i = 0,
-        imax = 93;  // imax = ceil(-10.0*log(TOL)); // Update this if TOL changes
+  for( int i = 1; i <= imax + 1; ++i )
+  {
+    real64 const eta_mid = 0.5 * ( eta_out + eta_in );
+    real64 const d_evp = eta_mid * d_evp_0;
 
-    real64 dZetadevp = computedZetadevp(fluid_pressure_initial,Km,Kf,ev0,phi_i,Zeta_old,evp_old);
-
-  // (7) Update Internal State Variables based on Last Non-Hardening Return:
-  //
-  updateISV:
-    i++;
-    eta_mid   = 0.5 * ( eta_out + eta_in );
-    d_evp     = eta_mid * d_evp_0;
-
-    // Update X exactly
+    // Update X exactly.
     real64 evp_new = evp_old + d_evp;
-
-    // computeBuckling(buckling,       // this is overwritten
-    //                 evp_new,        // buckling strain, could be evp, directional strain, log(J), etc. 
-    //                 lengthScale);   // element
-
     X_new = computeX( evp_new,
                       phi_i,
                       Km,
@@ -2176,70 +2244,84 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                       fluid_pressure_initial,
                       buckling );
 
-    // update the damage variable.  this is untested, and only active if Gf > 0
-    computeCoher( a1,a2,a3,a4,
-                  d_evp,         // increment in vol plastic strain
-                  d_ep_0,        // increment in plastic strain 
-                  I1_trial,      // trial value of I1
-                  rJ2_trial,  // trial value of rootJ2
-			            I1_0,          // I1 value on yield surface
-                  rJ2_0,         // rJ2 value on yield surface
-                  lch,           // length scale
-                  strengthScale, // strengthScale
-                  coher_old,     // old coherence = 1-damage
-                  coher_new     // OUPUT: new value of coherconst real64 & lch,       // length scale
-                  );
+    // Update the damage variable. This is untested and only active if Gf > 0.
+    computeCoher( a1,
+                  a2,
+                  a3,
+                  a4,
+                  d_evp,
+                  d_ep_0,
+                  I1_trial,
+                  rJ2_trial,
+                  I1_0,
+                  rJ2_0,
+                  lch,
+                  strengthScale,
+                  coher_old,
+                  coher_new );
 
-
-
-    // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
+    // Update zeta. min() eliminates tensile fluid pressure from explicit integration error.
     Zeta_new = std::min( Zeta_old + dZetadevp * d_evp, 0.0 );
 
-    // (8) Check if the updated yield surface encloses trial stres.  If it does, there is too much
-    //     plastic strain for this iteration, so we adjust the bisection parameters and recompute
-    //     the state variable update.
-    //
-    //  TODO: put strain hardening update in loop and adjust the solver to find consistent shear.
+    real64 a1_new = 0.0;
+    real64 a2_new = 0.0;
+    real64 a3_new = 0.0;
+    real64 a4_new = 0.0;
+    computeLimitParameters( a1_new,
+                            a2_new,
+                            a3_new,
+                            a4_new,
+                            coher_new,
+                            hardening,
+                            strengthScale,
+                            buckling );
 
+    // (8) Check if the updated yield surface encloses trial stress. If it does not,
+    // there is too much plastic strain for this iteration, so adjust the bisection bracket.
     if( computeYieldFunction( I1_trial,
                               rJ2_trial,
                               X_new,
                               Zeta_new,
-                              coher_old,
+                              coher_new,
                               hardening,
                               strengthScale,
-                              a1,
-                              a2,
-                              a3,
-                              a4 ) !=1 )
+                              buckling,
+                              a1_new,
+                              a2_new,
+                              a3_new,
+                              a4_new ) != 1 )
     {
-      eta_out = eta_mid;
-      if( i >= imax ){
-        // solution failed to converge within the allowable iterations, which means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-        // loading will respond as though there is no porosity.  If there is dilatation
-        // in subsequent loading, the porosity will be recovered.
+      if( i >= imax )
+      {
+        if( forcedLowerBracket )
+        {
+          return failSubstep( sigma_old,
+                              ep_old,
+                              X_old,
+                              Zeta_old,
+                              coher_old,
+                              sigma_new,
+                              ep_new,
+                              X_new,
+                              Zeta_new,
+                              coher_new );
+        }
         eta_out = eta_in;
+        forcedLowerBracket = true;
       }
-      goto updateISV;
+      else
+      {
+        eta_out = eta_mid;
+      }
+      continue;
     }
 
-    // (9) Recompute the elastic properties based on the midpoint of the updated step:
-    //     [K,G] = computeElasticProperties( (sigma_old+sigma_new)/2,ep_old+d_ep/2 )
-    //     and compute return to updated surface.
-    //    MH! change this when elastic-plastic coupling is used.
-    //    R2Tensor sigma_new = ...,
-    //            ep_new    = ...,
-    //    computeElasticProperties((sigma_old+sigma_new)/2,(ep_old+ep_new)/2,bulk,shear);
-    real64 I1_new,
-           rJ2_new,
-           d_evp_new;
-    real64 S_new[6],
-           d_ep_new[6];
+    // (9) Recompute the non-hardening return to the updated surface.
+    real64 I1_new = 0.0;
+    real64 rJ2_new = 0.0;
+    real64 d_evp_new = 0.0;
+    real64 S_new[6] = { 0.0 };
+    real64 d_ep_new[6] = { 0.0 };
     returnFlag = nonHardeningReturn( I1_trial,
                                      rJ2_trial,
                                      S_trial,
@@ -2249,7 +2331,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      d_e,
                                      X_new,
                                      Zeta_new,
-                                     coher_old,
+                                     coher_new,
                                      hardening,
                                      strengthScale,
                                      buckling,
@@ -2260,155 +2342,132 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
                                      S_new,
                                      d_ep_new );
 
-    if( returnFlag !=0 )
+    if( returnFlag != 0 )
     {
-      goto failedSubstep;
+      return failSubstep( sigma_old,
+                          ep_old,
+                          X_old,
+                          Zeta_old,
+                          coher_old,
+                          sigma_new,
+                          ep_new,
+                          X_new,
+                          Zeta_new,
+                          coher_new );
     }
 
     // (10) Check whether the isotropic component of the return has changed sign, as this
-    //      would indicate that the cap apex has moved past the trial stress, indicating
-    //      too much plastic strain in the return.
-
-    //if(fabs(I1_trial - I1_new)>(m_mat_geo_B0[p_mat]*TOL) && Sign(I1_trial - I1_new)!=Sign(I1_trial - I1_0)){
-    real64 sgnI1tmn = ( (I1_trial - I1_new) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
-    real64 sgnI1tm0 = ( (I1_trial - I1_0) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
-    if( abs( sgnI1tmn - sgnI1tm0 ) > 1e-12 ){
-      eta_out = eta_mid;
-      if( i >= imax ){
-        // solution failed to converge within the allowable iterations, which means
-        // the solution requires a plastic strain that is less than TOL*d_evp_0
-        // In this case we are near the zero porosity limit, so the response should
-        // be that of no porosity. By setting eta_out=eta_in, the next step will
-        // converge with the cap position of the previous iteration.  In this case,
-        // we set evp=-p3 (which corresponds to X=1e12*p0) so subsequent compressive
-        // loading will respond as though there is no porosity.  If there is dilatation
-        // in subsequent loading, the porosity will be recovered.
+    // would indicate that the cap apex has moved past the trial stress.
+    real64 const sgnI1tmn = ( ( I1_trial - I1_new ) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
+    real64 const sgnI1tm0 = ( ( I1_trial - I1_0 ) < 0.0 ) ? ( -1.0 ) : ( 1.0 );
+    if( fabs( sgnI1tmn - sgnI1tm0 ) > 1.0e-12 )
+    {
+      if( i >= imax )
+      {
+        if( forcedLowerBracket )
+        {
+          return failSubstep( sigma_old,
+                              ep_old,
+                              X_old,
+                              Zeta_old,
+                              coher_old,
+                              sigma_new,
+                              ep_new,
+                              X_new,
+                              Zeta_new,
+                              coher_new );
+        }
         eta_out = eta_in;
+        forcedLowerBracket = true;
       }
-      goto updateISV;
+      else
+      {
+        eta_out = eta_mid;
+      }
+      continue;
     }
 
-    // Compare magnitude of plastic strain with prior update
-    d_evp_new = LvArray::tensorOps::symTrace< 3 >( d_ep_new ); //d_ep_new.Trace();   // Increment in vol. plastic strain for return to new surface
-    // ep_new = ep_old; //ep_old + d_ep_new;
-    // ep_new += d_ep_new;
+    // Compare magnitude of plastic strain with prior update.
+    d_evp_new = LvArray::tensorOps::symTrace< 3 >( d_ep_new );
     LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
     LvArray::tensorOps::add< 6 >( ep_new, d_ep_new );
 
-    // Check for convergence
-    // This could be a check against m_plasticStrainTolerance where we actually look at the strain
-    // error.  In the current version the tolerance is bigger if |d_evp_new-d_evp_0| is bigger 
-    if( fabs(eta_out-eta_in) < TOL ){ // Solution is converged
-       // sigma_new = Identity; // one_third*I1_new*Identity + S_new;
-      // sigma_new *= one_third*I1_new;
-      // sigma_new += S_new;
+    if( fabs( eta_out - eta_in ) < TOL )
+    {
       LvArray::tensorOps::copy< 6 >( sigma_new, identity );
-      LvArray::tensorOps::scale< 6 >( sigma_new, one_third*I1_new );
+      LvArray::tensorOps::scale< 6 >( sigma_new, one_third * I1_new );
       LvArray::tensorOps::add< 6 >( sigma_new, S_new );
 
       // If out of range, scale back isotropic plastic strain.
-      if( LvArray::tensorOps::symTrace< 3 >( ep_new ) < -m_p3 ) //ep_new.Trace()<-p3){
-      { // decompose new uncorrected plastic strain:
-        // // force value to be maximum limit evp=-p3
-        // evp_new = -m_p3;
-        // // increment in evp (used for fluid backstress update.)
-        // d_evp_new = evp_new - LvArray::tensorOps::symTrace< 3 >( ep_old ); //ep_old.Trace();
-        // LvArray::tensorOps::addIdentity<6>(ep_new,one_third*(evp_new - LvArray::tensorOps::symTrace<3>(ep_new)));
-
-        real64 ep_new_iso[6];
-        real64 ep_new_dev[6];
+      if( LvArray::tensorOps::symTrace< 3 >( ep_new ) < -m_p3 )
+      {
+        real64 ep_new_iso[6] = { 0.0 };
+        real64 ep_new_dev[6] = { 0.0 };
         LvArray::tensorOps::copy< 6 >( ep_new_iso, identity );
-        LvArray::tensorOps::scale< 6 >( ep_new_iso, one_third*LvArray::tensorOps::symTrace< 3 >( ep_new ) );
+        LvArray::tensorOps::scale< 6 >( ep_new_iso, one_third * LvArray::tensorOps::symTrace< 3 >( ep_new ) );
         LvArray::tensorOps::copy< 6 >( ep_new_dev, ep_new );
-        LvArray::tensorOps::subtract< 6 >( ep_new_dev, ep_new_iso );    
+        LvArray::tensorOps::subtract< 6 >( ep_new_dev, ep_new_iso );
 
-        // force value to be maximum limit evp=-p3
+        // Force value to be maximum limit evp=-p3.
         evp_new = -m_p3;
-        // increment in evp (used for fluid backstress update.)
-        d_evp_new = evp_new - LvArray::tensorOps::symTrace< 3 >( ep_old ); //ep_old.Trace();
+        d_evp_new = evp_new - LvArray::tensorOps::symTrace< 3 >( ep_old );
 
-        // Scale the vol plastic strain back to so evp=-p3, exactly.
-        // reconstruct, and then compute increment
         LvArray::tensorOps::copy< 6 >( ep_new_iso, identity );
-        LvArray::tensorOps::scale< 6 >( ep_new_iso, one_third*evp_new );
+        LvArray::tensorOps::scale< 6 >( ep_new_iso, one_third * evp_new );
         LvArray::tensorOps::copy< 6 >( ep_new, ep_new_dev );
         LvArray::tensorOps::add< 6 >( ep_new, ep_new_iso );
       }
 
-      // Update X exactly
-      real64 evp;
-      evp = LvArray::tensorOps::symTrace< 3 >( ep_new ); //ep_new.Trace();
-
-      X_new = computeX(	evp,
-        					      phi_i, 
-                        Km, 
-                        Kf, 
-                        C1, 
+      // Update X exactly.
+      real64 const evp = LvArray::tensorOps::symTrace< 3 >( ep_new );
+      X_new = computeX( evp,
+                        phi_i,
+                        Km,
+                        Kf,
+                        C1,
                         ev0,
-        					      fluid_pressure_initial,
+                        fluid_pressure_initial,
                         buckling );
 
-      // Update zeta. min() eliminates tensile fluid pressure from explicit integration error
-      Zeta_new = std::min(Zeta_old + dZetadevp*d_evp_new,0.0);
-
-      goto successfulSubstep;
-    }
-    if( i >= imax ){
-      // Solution failed to converge but not because of too much plastic strain
-      // (which would have been caught by the checks above).  In this case we
-      // go to the failed substep return, which will trigger subcycling and
-      // particle deletion (if subcycling doesn't work).
-      //
-      // This code was never reached in testing, but is here to catch
-      // unforseen errors.
-      goto failedSubstep;
+      Zeta_new = std::min( Zeta_old + dZetadevp * d_evp_new, 0.0 );
+      return 0;
     }
 
-// (11) Compare magnitude of the volumetric plastic strain and bisect on eta
-//
-    if( fabs(d_evp_new) > eta_mid*fabs(d_evp_0) ){
+    if( i >= imax )
+    {
+      return failSubstep( sigma_old,
+                          ep_old,
+                          X_old,
+                          Zeta_old,
+                          coher_old,
+                          sigma_new,
+                          ep_new,
+                          X_new,
+                          Zeta_new,
+                          coher_new );
+    }
+
+    // (11) Compare magnitude of the volumetric plastic strain and bisect on eta.
+    if( fabs( d_evp_new ) > eta_mid * fabs( d_evp_0 ) )
+    {
       eta_in = eta_mid;
     }
-    else {
+    else
+    {
       eta_out = eta_mid;
     }
-    goto updateISV;
   }
 
-// (12) Compute softening, collapse yield surface, and compute nonhardening return
-// to collapse yield surface.
-//
-// This is not rigorous, since the treatment of softening is not included as a
-// hardenining mechanism in the computation of the increment in plastic strain.
-//
-// Figure out where to put this:
-// coher = max(coher - d_ep_new.Norm()/m_mat_geo_failure_strain[p_mat]);
-//  //
-//  returnFlag = nonHardeningReturn(I1_trial,rJ2_trial,S_trial,
-//								  I1_old,rJ2_old,S_old,
-//								  d_e,X_new,Zeta_new,coher,bulk,shear,
-//								  I1_new,rJ2_new,S_new,d_ep_new);
-//  if (returnFlag!=0){
-//	  goto failedSubstep;
-
-
-
-// (13) Return updated values for successful/unsuccessful steps
-//
-successfulSubstep:
-  substepFlag = 0;
-  return substepFlag;
-
-failedSubstep:
-  // sigma_new = sigma_old;
-  // ep_new = ep_old;
-  LvArray::tensorOps::copy< 6 >( sigma_new, sigma_old );
-  LvArray::tensorOps::copy< 6 >( ep_new, ep_old );
-  coher_new = coher_old;
-  X_new = X_old;
-  Zeta_new = Zeta_old;
-  substepFlag = 1;
-  return substepFlag;
+  return failSubstep( sigma_old,
+                      ep_old,
+                      X_old,
+                      Zeta_old,
+                      coher_old,
+                      sigma_new,
+                      ep_new,
+                      X_new,
+                      Zeta_new,
+                      coher_new );
 }
 
 // Compute nonhardening return from trial stress to some yield surface
@@ -2548,6 +2607,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                           coher,
                           hardening,
                           strengthScale,
+                          buckling,
                           a1,
                           a2,
                           a3,
@@ -2581,6 +2641,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
                                      coher,
                                      hardening,
                                      strengthScale,
+                                     buckling,
                                      a1,
                                      a2,
                                      a3,
@@ -2676,6 +2737,7 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
 									                             const real64 & coher,
                                                const real64 & hardening,
                                                const real64 & strengthScale,
+                                               const real64 & buckling,
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2697,12 +2759,12 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
   real64 eta_out = 1.0,
          eta_in  = 0.0,
          eta_mid,
-         TOL = 1.0e-6,
+         TOL = std::max( m_stressReturnTolerance, 1.0e-16 ),
          r_test,
          z_test;
 
   // (2) Test for convergence
-  while (eta_out-eta_in > TOL){ // TODO: use m_stressReturnTolerance
+  while (eta_out-eta_in > TOL){
 
     // (3) Transformed test point
     eta_mid = 0.5*(eta_out+eta_in);
@@ -2716,6 +2778,7 @@ void GeomechanicsUpdates::transformedBisection(real64 & z_0,
                                    coher,
                                    hardening,
                                    strengthScale,
+                                   buckling,
                                    a1,
                                    a2,
                                    a3,
@@ -2745,6 +2808,7 @@ int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
 										                               const real64 & coher,
                                                    const real64 & hardening,
                                                    const real64 & strengthScale,
+                                                   const real64 & buckling,
 										                               const real64 & a1,
 										                               const real64 & a2,
 										                               const real64 & a3,
@@ -2768,6 +2832,7 @@ int GeomechanicsUpdates::transformedYieldFunction( const real64 & z,
                                        coher,
                                        hardening,
                                        strengthScale,
+                                       buckling,
                                        a1,
                                        a2,
                                        a3,
@@ -2785,6 +2850,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 									                             const real64 & coher,
                                                const real64 & hardening,
                                                const real64 & strengthScale,
+                                               const real64 & buckling,
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2809,7 +2875,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
   // Parameters modified by damage and/or hardening
   real64 peakI1_h, cr_h; //
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  peakI1_h = ( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale;
+  peakI1_h = buckling*( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale;
 
   // Branch point after hardening with limits (not this doesn't affect brittle-ductile transition)
   // point used to determine damamage evolution.
@@ -3013,7 +3079,13 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else
   {
-	  std::cout<<"bad limit surface parameters."<<std::endl;
+    // Invalid combinations are rejected during host-side input validation where
+    // possible. Leave a zero surface here so the caller returns a failed step
+    // instead of using host I/O from device-callable code.
+    a1 = 0.0;
+    a2 = 0.0;
+    a3 = 0.0;
+    a4 = 0.0;
   }
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
@@ -3270,6 +3342,9 @@ public:
     /// string/key for quadrature point damage value
     static constexpr char const * damageString() { return "damage"; }
 
+    /// string/key for quadrature point constitutive update status value
+    static constexpr char const * constitutiveUpdateFlagString() { return "constitutiveUpdateFlag"; }
+
     /// string/key for quadrature point temperature value
     static constexpr char const * temperatureString() { return "temperature"; }
 
@@ -3292,8 +3367,8 @@ public:
                                 m_b3,
                                 m_b4,
                                 m_dstrendh,
-                                m_dpeakI1dh,
                                 m_dfslopedh,
+                                m_dpeakI1dh,
                                 m_dcrdh,
                                 m_g0,
                                 m_g1,
@@ -3351,6 +3426,7 @@ public:
                                 m_plasticStrain,
                                 m_porosity,
                                 m_damage,
+                                m_constitutiveUpdateFlag,
                                 m_temperature,
                                 m_lengthScale,
                                 m_strengthScale,
@@ -3379,8 +3455,8 @@ public:
                           m_b3,
                           m_b4,
                           m_dstrendh,
-                          m_dpeakI1dh,
                           m_dfslopedh,
+                          m_dpeakI1dh,
                           m_dcrdh,
                           m_g0,
                           m_g1,
@@ -3438,6 +3514,7 @@ public:
                           m_plasticStrain,
                           m_porosity,
                           m_damage,
+                          m_constitutiveUpdateFlag,
                           m_temperature,
                           m_lengthScale,
                           m_strengthScale,
@@ -3634,6 +3711,10 @@ protected:
 
   /// State variable: The damage values for each quadrature point
   array2d< real64 > m_damage;
+
+  /// State variable: Constitutive update status for each quadrature point.
+  ///  0 = good update, 1 = warning/retried or capped subcycling, -1 = failed update/delete flag.
+  array2d< integer > m_constitutiveUpdateFlag;
 
   /// State variable: The temperature values for each quadrature point
   array1d< real64 > m_temperature;

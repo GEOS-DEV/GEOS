@@ -36,6 +36,9 @@
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "mesh/ParticleManager.hpp"
+#include "mesh/ParticleRegion.hpp"
+#include "mesh/ParticleSubRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 
 #include <iostream>
@@ -676,7 +679,19 @@ void SiloFile::writePointMesh( string const & meshName,
   DBoptlist * optlist = DBMakeOptlist( 2 );
   DBAddOption( optlist, DBOPT_CYCLE, const_cast< int * >(&cycleNumber));
   DBAddOption( optlist, DBOPT_DTIME, const_cast< real64 * >(&problemTime));
-  DBPutPointmesh ( m_dbFilePtr, meshName.c_str(), 3, coords, numPoints, datatype, optlist );
+
+  if( numPoints == 0 )
+  {
+    char pwd[256];
+    DBGetDir( m_dbFilePtr, pwd );
+    string emptyObject = pwd;
+    emptyObject += "/" + meshName;
+    m_emptyMeshes.emplace_back( emptyObject );
+  }
+  else
+  {
+    DBPutPointmesh ( m_dbFilePtr, meshName.c_str(), 3, coords, numPoints, datatype, optlist );
+  }
 
 
   //----write multimesh object
@@ -691,6 +706,7 @@ void SiloFile::writePointMesh( string const & meshName,
     }
   }
 
+  DBFreeOptlist( optlist );
 }
 
 void SiloFile::writeMaterialMapsFullStorage( ElementRegionBase const & elemRegion,
@@ -1377,6 +1393,52 @@ static int toSiloShapeType( ElementType const elementType )
   return -1;
 }
 
+static stdVector< int > getSiloNodeOrdering( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:
+    case ParticleType::CPDI:
+    case ParticleType::CPDI2:
+    {
+      // Same ordering used by the VTK MPM particle-domain writer and by
+      // the existing hexahedron Silo element path.
+      return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    }
+    case ParticleType::CPTI:
+    {
+      return { 0, 1, 2, 3 };
+    }
+    default:
+    {
+      GEOS_ERROR( "Unsupported particle type for Silo particle-domain output: " << particleType );
+    }
+  }
+  return {};
+}
+
+static int toSiloShapeType( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:
+    case ParticleType::CPDI:
+    case ParticleType::CPDI2:
+    {
+      return DB_ZONETYPE_HEX;
+    }
+    case ParticleType::CPTI:
+    {
+      return DB_ZONETYPE_TET;
+    }
+    default:
+    {
+      GEOS_ERROR( "Unsupported particle type for Silo particle-domain output: " << particleType );
+    }
+  }
+  return -1;
+}
+
 void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                                  NodeManager const & nodeManager,
                                  string const & meshName,
@@ -1585,6 +1647,232 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
   }
 }
 
+void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
+                                        string const & meshName,
+                                        int const cycleNumber,
+                                        real64 const problemTime )
+{
+  localIndex const numParticles = particleRegion.getNumberOfParticles();
+
+  array2d< real64 > const particleCorners = particleRegion.getParticleCorners();
+  localIndex const numCorners = particleCorners.size( 0 );
+
+  array1d< real64 > xcoords( numCorners );
+  array1d< real64 > ycoords( numCorners );
+  array1d< real64 > zcoords( numCorners );
+
+  for( localIndex k = 0; k < numCorners; ++k )
+  {
+    xcoords[k] = particleCorners[k][0];
+    ycoords[k] = particleCorners[k][1];
+    zcoords[k] = particleCorners[k][2];
+  }
+
+  real64 * coords[3];
+  coords[0] = xcoords.data();
+  coords[1] = ycoords.data();
+  coords[2] = zcoords.data();
+
+  localIndex const numParticleShapes = particleRegion.numSubRegions();
+
+  array1d< localIndex * > meshConnectivity( numParticleShapes );
+  array1d< int > shapecnt( numParticleShapes );
+  array1d< int > shapetype( numParticleShapes );
+  array1d< int > shapesize( numParticleShapes );
+
+  array1d< array1d< localIndex > > particleToCornerMap( numParticleShapes );
+
+  array1d< char > ghostNodeFlag( numCorners );
+  array1d< char > ghostZoneFlag( numParticles );
+
+  for( localIndex i = 0; i < numCorners; ++i )
+  {
+    ghostNodeFlag[i] = 0;
+  }
+  for( localIndex i = 0; i < numParticles; ++i )
+  {
+    ghostZoneFlag[i] = 0;
+  }
+
+  localIndex particleOffset = 0;
+  localIndex cornerOffset = 0;
+
+  particleRegion.forParticleSubRegionsIndex< ParticleSubRegion >( [&]( localIndex const psr,
+                                                                       ParticleSubRegion const & subRegion )
+  {
+    stdVector< int > const nodeOrdering = getSiloNodeOrdering( subRegion.getParticleType() );
+    int const numCornersPerParticle = LvArray::integerConversion< int >( nodeOrdering.size() );
+
+    particleToCornerMap[psr].resize( subRegion.size() * numCornersPerParticle );
+
+    arrayView1d< int const > const particleRank = subRegion.getParticleRank();
+
+    for( localIndex p = 0; p < subRegion.size(); ++p )
+    {
+      char const ghostFlag = particleRank[p] >= 0 ? 1 : 0;
+
+      ghostZoneFlag[particleOffset + p] = ghostFlag;
+
+      for( int a = 0; a < numCornersPerParticle; ++a )
+      {
+        localIndex const sourceCorner = cornerOffset + p * numCornersPerParticle + nodeOrdering[a];
+        particleToCornerMap[psr][p * numCornersPerParticle + a] = sourceCorner;
+        ghostNodeFlag[sourceCorner] = ghostFlag;
+      }
+    }
+
+    meshConnectivity[psr] = particleToCornerMap[psr].data();
+    shapecnt[psr] = LvArray::integerConversion< int >( subRegion.size() );
+    shapetype[psr] = toSiloShapeType( subRegion.getParticleType() );
+    shapesize[psr] = numCornersPerParticle;
+
+    particleOffset += subRegion.size();
+    cornerOffset += subRegion.size() * numCornersPerParticle;
+  } );
+
+  GEOS_ERROR_IF_NE_MSG( particleOffset,
+                        numParticles,
+                        "Mismatch between ParticleRegion particle count and accumulated ParticleSubRegion sizes." );
+  GEOS_ERROR_IF_NE_MSG( cornerOffset,
+                        numCorners,
+                        "Mismatch between ParticleRegion corner count and particle connectivity." );
+
+  writeMeshObject( meshName,
+                   numCorners,
+                   coords,
+                   nullptr,
+                   ghostNodeFlag.data(),
+                   ghostZoneFlag.data(),
+                   LvArray::integerConversion< int >( numParticleShapes ),
+                   shapecnt.data(),
+                   meshConnectivity.data(),
+                   nullptr,
+                   shapetype.data(),
+                   shapesize.data(),
+                   cycleNumber,
+                   problemTime );
+}
+
+void SiloFile::writeParticleRegionSilo( ParticleRegionBase const & particleRegion,
+                                        string const & siloDirName,
+                                        string const & meshName,
+                                        int const cycleNum,
+                                        real64 const problemTime,
+                                        bool const isRestart )
+{
+  // This mirrors writeElementRegionSilo(): flatten all particle subregion
+  // wrappers onto a temporary group whose first dimension is the total number
+  // of particles in the region. The resulting fields are attached as
+  // zone-centered variables on the particle-domain UCD mesh.
+  conduit::Node conduitNode;
+  Group fakeGroup( particleRegion.getName(), conduitNode );
+
+  localIndex numParticles = 0;
+  stdVector< stdMap< string, WrapperBase const * > > viewPointers;
+
+  viewPointers.resize( particleRegion.numSubRegions() );
+  particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >( [&]( localIndex const psr,
+                                                                           ParticleSubRegionBase const & subRegion )
+  {
+    numParticles += subRegion.size();
+
+    for( auto const & wrapperIter : subRegion.wrappers() )
+    {
+      WrapperBase const & wrapper = *wrapperIter.second;
+
+      if( isFieldPlotEnabled( wrapper ) )
+      {
+        string const & fieldName = wrapper.getName();
+        viewPointers[psr].get_inserted( fieldName ) = &wrapper;
+
+        types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+        {
+          using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+          Wrapper< ArrayType > const & sourceWrapper = Wrapper< ArrayType >::cast( wrapper );
+          Wrapper< ArrayType > & newWrapper = fakeGroup.registerWrapper< ArrayType >( fieldName );
+
+          newWrapper.setPlotLevel( PlotLevel::LEVEL_0 );
+          newWrapper.reference().resize( ArrayType::NDIM, sourceWrapper.reference().dims() );
+        }, wrapper );
+      }
+    }
+  } );
+  fakeGroup.resize( numParticles );
+
+  for( auto & wrapperIter : fakeGroup.wrappers() )
+  {
+    WrapperBase & wrapper = *wrapperIter.second;
+    string const & fieldName = wrapper.getName();
+
+    types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
+    {
+      using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+      Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+      ArrayType & targetArray = wrapperT.reference();
+
+      localIndex counter = 0;
+      particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >( [&]( localIndex const psr,
+                                                                               ParticleSubRegionBase const & subRegion )
+      {
+        // check if the field actually exists / plotted on the current subregion
+        if( viewPointers[psr].count( fieldName ) > 0 )
+        {
+          auto const & sourceWrapper = Wrapper< std::remove_reference_t< decltype( targetArray ) > >::cast( *( viewPointers[psr].at( fieldName ) ) );
+          auto const sourceArray = sourceWrapper.reference().toViewConst();
+
+          localIndex const offset = counter * targetArray.strides()[0];
+          GEOS_ERROR_IF_GT( sourceArray.size(), targetArray.size() - offset );
+
+          for( localIndex i = 0; i < sourceArray.size(); ++i )
+          {
+            targetArray.data()[i + offset] = sourceArray.data()[i];
+          }
+
+          counter += sourceArray.size( 0 );
+        }
+        else
+        {
+          counter += subRegion.size();
+        }
+      } );
+    }, wrapper );
+  }
+
+  writeGroupSilo( fakeGroup,
+                  siloDirName,
+                  meshName,
+                  DB_ZONECENT,
+                  cycleNum,
+                  problemTime,
+                  isRestart,
+                  localIndex_array() );
+
+  fakeGroup.getConduitNode().parent()->remove( fakeGroup.getName() );
+}
+
+void SiloFile::writeParticleRegions( ParticleManager const & particleManager,
+                                     int const cycleNum,
+                                     real64 const problemTime,
+                                     bool const isRestart )
+{
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
+  {
+    string const meshName = region.getName() + "_ParticleDomains";
+
+    writeParticleMeshObject( region,
+                             meshName,
+                             cycleNum,
+                             problemTime );
+
+    writeParticleRegionSilo( region,
+                             meshName + "_ParticleFields",
+                             meshName,
+                             cycleNum,
+                             problemTime,
+                             isRestart );
+  } );
+}
+
 void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
                                int const cycleNum,
                                real64 const problemTime,
@@ -1641,13 +1929,26 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
   coords[2] = zcoords.data();
 
   ElementRegionManager const & elementManager = meshLevel.getElemManager();
+  ParticleManager const & particleManager = meshLevel.getParticleManager();
 
   if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
   {
-    outputUtilities::checkFieldRegistration( elementManager,
-                                             nodeManager,
-                                             m_fieldNames,
-                                             "SiloOutput" );
+    std::set< string > nonParticleFieldNames( m_fieldNames );
+    particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase const & subRegion )
+    {
+      for( auto const & wrapperIter : subRegion.wrappers() )
+      {
+        nonParticleFieldNames.erase( wrapperIter.first );
+      }
+    } );
+
+    if( !nonParticleFieldNames.empty() )
+    {
+      outputUtilities::checkFieldRegistration( elementManager,
+                                               nodeManager,
+                                               nonParticleFieldNames,
+                                               "SiloOutput" );
+    }
     m_requireFieldRegistrationCheck = false;
   }
 
@@ -1666,6 +1967,11 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
                       problemTime,
                       writeArbitraryPolygon );
   } );
+
+  writeParticleRegions( particleManager,
+                        cycleNum,
+                        problemTime,
+                        isRestart );
 
 
   if( m_writeFaceMesh )
@@ -2021,7 +2327,7 @@ void SiloFile::writeWrappersToSilo( string const & meshname,
   {
     auto const & wrapper = wrapperIter.second;
 
-    if( wrapper->getPlotLevel() <= m_plotLevel )
+    if( isFieldPlotEnabled( *wrapper ) )
     {
       // the field name is the key to the map
       string const & fieldName = wrapper->getName();
