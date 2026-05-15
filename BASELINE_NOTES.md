@@ -5,9 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4034 (2026-05-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4034-16517-aef69ab.tar.gz>
-=====================
 Add scales, functionNames and regionNames attribute to FieldSpecification
+PR #4029 (2026-05-06) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4029-16507-7e3d8b5.tar.gz>
+Add single phase viscosity dependency on temperature
 
 PR #3959 (2026-05-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3959-16478-faf1698.tar.gz>
 Add reference thermal conductivity
