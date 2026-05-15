@@ -73,7 +73,7 @@ extern CommandLineOptions g_commandLineOptions;
  * - real64: Applied stress component ZZ (s_zz).
  * - tuple<int, int, int>: Number of partitions in the x, y, z directions.
  */
-class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64, std::tuple< int, int, int > > >
+class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64, int > >
 {
 protected:
   void SetUp() override
@@ -111,8 +111,8 @@ protected:
       tolJumpT="1.e-4" 
       discretization="FE1" 
       targetRegions="{ Region, Fracture }" 
-      logLevel="1">
-      <NonlinearSolverParameters newtonTol="1.0e-7" newtonMaxIter="20" logLevel="1"/>
+      logLevel="0">
+      <NonlinearSolverParameters newtonTol="1.0e-7" newtonMaxIter="20" logLevel="0"/>
       <LinearSolverParameters directParallel="0"/>
     </SolidMechanicsAugmentedLagrangianContact>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9"/>
@@ -172,10 +172,7 @@ TEST_P( ConsistencyTest, Run )
   real64 const s_xx = std::get< 1 >( params );
   real64 const s_yy = std::get< 2 >( params );
   real64 const s_zz = std::get< 3 >( params );
-  std::tuple< int, int, int > const & partitions = std::get< 4 >( params );
-  int const xPartitions = std::get< 0 >( partitions );
-  int const yPartitions = std::get< 1 >( partitions );
-  int const zPartitions = std::get< 2 >( partitions );
+  int const nPartitions = std::get< 4 >( params );
   std::string xmlPath = testBinaryDir + "/test_fem_consistency_" + meshFileName + ".xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
@@ -229,9 +226,9 @@ TEST_P( ConsistencyTest, Run )
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_fem_consistency";
 
-  options->xPartitionsOverride = xPartitions;
-  options->yPartitionsOverride = yPartitions;
-  options->zPartitionsOverride = zPartitions;
+  options->xPartitionsOverride = nPartitions;
+  options->yPartitionsOverride = 0;
+  options->zPartitionsOverride = 0;
   options->overridePartitionNumbers = true;
 
   // Scoped state to ensure cleanup
