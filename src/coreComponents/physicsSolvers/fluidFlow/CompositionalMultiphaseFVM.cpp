@@ -1360,19 +1360,19 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
         using KernelType = thermalCompositionalMultiphaseFVMKernels::DirichletFluxComputeKernelFactory<
           parallelDevicePolicy<>,
           BoundaryStencilWrapper >;
-        tKernelType::createAndLaunch( m_numComponents,
-                                      m_numPhases,
-                                      dofManager.rankOffset(),
-                                      kernelFlags,
-                                      elemDofKey,
-                                      getName(),
-                                      faceManager,
-                                      elemManager,
-                                      stencilWrapper,
-                                      multiFluidBase,
-                                      dt,
-                                      localMatrix,
-                                      localRhs );
+        KernelType::createAndLaunch( m_numComponents,
+                                     m_numPhases,
+                                     dofManager.rankOffset(),
+                                     kernelFlags,
+                                     elemDofKey,
+                                     getName(),
+                                     faceManager,
+                                     elemManager,
+                                     stencilWrapper,
+                                     multiFluidBase,
+                                     dt,
+                                     localMatrix,
+                                     localRhs );
       }
       else
       {
