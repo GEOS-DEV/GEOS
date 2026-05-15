@@ -5,7 +5,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3977 (2026-05-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3977-16557-abd84a6.tar.gz>
+PR #3977 (2026-05-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3977-16644-9fc03e7.tar.gz>
 Change face normal, centers and area for local Newell's formula
 
 PR #3999 (2026-05-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3999-16602-542583d.tar.gz>
