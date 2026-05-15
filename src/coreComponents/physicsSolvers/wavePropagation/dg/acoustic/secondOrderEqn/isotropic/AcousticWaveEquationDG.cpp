@@ -160,7 +160,6 @@ real32 AcousticWaveEquationDG::getGlobalMinWavespeed( MeshLevel & mesh, string_a
   return globalMinWavespeed;
 }
 
-
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                               string_array const & regionNames )
 {
@@ -195,7 +194,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Tetrahedron,
                    "Invalid type of element, the acoustic DG solver is designed for tetrahedral meshes only  ",
-                   InputError );
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes = baseMesh.getElemManager().getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).nodeList();
@@ -287,7 +286,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
       {
         GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Tetrahedron,
                        "Invalid type of element, the acoustic DG solver is designed for tetrahedral meshes only  ",
-                       InputError );
+                       InputError, getDataContext() );
 
 
         finiteElement::FiniteElementBase const &
@@ -384,7 +383,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
 real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 {
-  GEOS_ERROR( getDataContext() << ":  Time-Step computation for  acoustic dg wave propagator not yet implemented" );
+  GEOS_ERROR( " Time-Step computation for  acoustic dg wave propagator not yet implemented", getDataContext() );
   return dtOut;
 }
 
@@ -392,7 +391,7 @@ real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time, domain );
-  GEOS_ERROR( getDataContext() << ":  Free-Surface computation for acoustic dg wave propagator not yet implemented" );
+  GEOS_ERROR( " Free-Surface computation for acoustic dg wave propagator not yet implemented", getDataContext() );
 //  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 //  FunctionManager const & functionManager = FunctionManager::getInstance();
 //

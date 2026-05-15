@@ -35,6 +35,22 @@ set( linearAlgebra_headers
      interfaces/InterfaceTypes.hpp
      interfaces/MatrixBase.hpp
      interfaces/VectorBase.hpp
+     multiscale/LevelBuilderBase.hpp
+     multiscale/MultiscalePreconditioner.hpp
+     multiscale/mesh/DofManager.hpp
+     multiscale/mesh/MeshData.hpp
+     multiscale/mesh/MeshLevel.hpp
+     multiscale/mesh/MeshObjectManager.hpp
+     multiscale/mesh/MeshUtils.hpp
+     multiscale/mesh/coarsening/CartesianPartitioner.hpp
+     multiscale/mesh/coarsening/Coarsening.hpp
+     multiscale/mesh/coarsening/GraphPartitioner.hpp
+     multiscale/mesh/coarsening/PartitionerBase.hpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.hpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.hpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.hpp
+     multiscale/msrsb/MsrsbLevelBuilder.hpp
+     multiscale/msrsb/MsrsbUtils.hpp
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
@@ -67,6 +83,21 @@ set( linearAlgebra_headers
 #
 set( linearAlgebra_sources
      DofManager.cpp
+     multiscale/LevelBuilderBase.cpp
+     multiscale/MultiscalePreconditioner.cpp
+     multiscale/mesh/DofManager.cpp
+     multiscale/mesh/MeshLevel.cpp
+     multiscale/mesh/MeshObjectManager.cpp
+     multiscale/mesh/MeshUtils.cpp
+     multiscale/mesh/coarsening/CartesianPartitioner.cpp
+     multiscale/mesh/coarsening/Coarsening.cpp
+     multiscale/mesh/coarsening/GraphPartitioner.cpp
+     multiscale/mesh/coarsening/PartitionerBase.cpp
+     multiscale/mesh/coarsening/SemistructuredPartitioner.cpp
+     multiscale/msrsb/MsrsbLevelBuilderBase.cpp
+     multiscale/msrsb/MsrsbLevelBuilderCoupled.cpp
+     multiscale/msrsb/MsrsbLevelBuilder.cpp
+     multiscale/msrsb/MsrsbUtils.cpp
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
@@ -144,6 +175,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalCompositionalMultiphaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/ThermalSinglePhaseReservoirFVM.hpp
           interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp )
     list( APPEND linearAlgebra_sources
           interfaces/hypre/HypreExport.cpp
@@ -157,6 +189,14 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreVector.cpp )
 
     list( APPEND tplDependencyList hypre umpire )
+
+    if( ENABLE_HYPREDRV )
+        list( APPEND linearAlgebra_headers
+              interfaces/hypre/hypredrive.hpp )
+        list( APPEND linearAlgebra_sources
+              interfaces/hypre/hypredrive.cpp )
+        list( APPEND tplDependencyList HYPREDRV::HYPREDRV )
+    endif()
 
 endif()
 
@@ -183,6 +223,20 @@ if( ENABLE_PETSC )
 
 endif()
 
+# Optionally depend on METIS for multiscale coarsening
+if( ENABLE_METIS )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/MetisInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/MetisInterface.cpp )
+    list( APPEND tplDependencyList metis )
+endif()
+
+# Optionally depend on SCOTCH for multiscale coarsening
+if( ENABLE_SCOTCH )
+    list( APPEND linearAlgebra_headers multiscale/mesh/coarsening/ScotchInterface.hpp )
+    list( APPEND linearAlgebra_sources multiscale/mesh/coarsening/ScotchInterface.cpp )
+    list( APPEND tplDependencyList SCOTCH::scotch SCOTCH::scotcherr )
+endif()
+
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
@@ -200,5 +254,6 @@ install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( utilities/unitTests )
 endif( )
 

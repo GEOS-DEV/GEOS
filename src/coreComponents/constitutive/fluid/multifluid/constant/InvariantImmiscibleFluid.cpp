@@ -22,7 +22,7 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
 
   registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
-    .setDescription( "Molar weights of components" );
+    .setDescription( "Component molar weights [kg/mol]" );
 
   // Densities: constant phase densities
   registerWrapper( "densities", &m_densities )
@@ -54,14 +54,14 @@ void InvariantImmiscibleFluid::postInputInitialization()
   integer numPhase = numFluidPhases();
   // check densities and viscosities size
   GEOS_THROW_IF_NE_MSG( m_densities.size(), numPhase,
-                        GEOS_FMT( "%s: 'Densities' must have %d values", getFullName(), numPhase ), InputError );
+                        GEOS_FMT( "'Densities' must have %d values", numPhase ), InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( m_viscosities.size(), numPhase,
-                        GEOS_FMT( "%s: 'Viscosities' must have %d values", getFullName(), numPhase ), InputError );
+                        GEOS_FMT( "'Viscosities' must have %d values", numPhase ), InputError, getDataContext() );
 
   integer numComponents = numFluidComponents();
   // check tacit assumption of one component per phase
   GEOS_THROW_IF_NE_MSG( numComponents, numPhase,
-                        GEOS_FMT( "%d number of components must be equato to %d number of phases", getFullName(), numPhase ), InputError );
+                        GEOS_FMT( "number of components must be equato to %d number of phases", numPhase ), InputError, getDataContext() );
 }
 
 InvariantImmiscibleFluid::KernelWrapper InvariantImmiscibleFluid::createKernelWrapper() const

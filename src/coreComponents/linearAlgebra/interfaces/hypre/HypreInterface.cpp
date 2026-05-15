@@ -19,7 +19,11 @@
 
 #include "HypreInterface.hpp"
 
+#include "common/GeosxConfig.hpp"
 #include "linearAlgebra/interfaces/direct/SuiteSparse.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
@@ -33,6 +37,12 @@
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
+#endif
+
+#if defined(GEOS_USE_HYPREDRV) && defined(HYPRE_CHECK_MIN_VERSION)
+#define GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT HYPRE_CHECK_MIN_VERSION( 23100, 0 )
+#else
+#define GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT 0
 #endif
 
 namespace geos
@@ -52,11 +62,21 @@ void HypreInterface::initialize()
                       );
 #endif
 
+#ifdef GEOS_USE_HYPREDRV
+  hypre::hypredrive::initializeRuntime();
+#else
   HYPRE_Initialize();
+#endif
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   HYPRE_SetExecutionPolicy( HYPRE_EXEC_DEVICE );
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA
   HYPRE_SetSpGemmUseVendor( 0 );
+#else
+  HYPRE_SetSpGemmUseVendor( 1 );
+#endif
+#if !GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
   HYPRE_DeviceInitialize();
+#endif
 #endif
   HYPRE_SetMemoryLocation( hypre::memoryLocation );
   HYPRE_SetPrintErrorMode( 1 );
@@ -73,12 +93,23 @@ void HypreInterface::initialize()
 
 void HypreInterface::finalize()
 {
+#ifdef GEOS_USE_HYPREDRV
+  hypre::hypredrive::finalizeRuntime();
+#else
   HYPRE_Finalize();
+#endif
 }
 
 std::unique_ptr< LinearSolverBase< HypreInterface > >
 HypreInterface::createSolver( LinearSolverParameters params )
 {
+#ifdef GEOS_USE_HYPREDRV
+  if( hypre::hypredrive::shouldUse( params ) )
+  {
+    return std::make_unique< HypredriveSolver >( std::move( params ) );
+  }
+#endif
+
   if( params.solverType == LinearSolverParameters::SolverType::direct )
   {
     if( params.direct.parallel )
@@ -86,7 +117,7 @@ HypreInterface::createSolver( LinearSolverParameters params )
 #if defined(GEOS_USE_SUPERLU_DIST)
       return std::make_unique< SuperLUDist< HypreInterface > >( std::move( params ) );
 #else
-      GEOS_ERROR( "GEOSX is configured without support for SuperLU_dist." );
+      GEOS_ERROR( "GEOS is configured without support for SuperLU_dist." );
       return std::unique_ptr< LinearSolverBase< HypreInterface > >( nullptr );
 #endif
     }
@@ -113,5 +144,7 @@ geos::HypreInterface::createPreconditioner( LinearSolverParameters params,
 {
   return std::make_unique< HyprePreconditioner >( std::move( params ), nearNullKernel );
 }
+
+#undef GEOS_HYPREDRV_OWNS_HYPRE_DEVICE_INIT
 
 }

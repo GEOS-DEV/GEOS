@@ -60,40 +60,28 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
     setDescription( "List of viscosity TableFuncion names from the Function block. \n"
                     "The user must provide one TableFunction per phase, respecting the order provided in \"phaseNames\"." );
 
-  registerField( fields::twophaseimmisciblefluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseDensity{}, &m_phaseDensity.derivs );
-  registerField( fields::twophaseimmisciblefluid::phaseDensity_n{}, &m_phaseDensity_n );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity >( &m_phaseDensity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( &m_phaseDensity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( &m_phaseDensity_n );
 
-  registerField( fields::twophaseimmisciblefluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseViscosity >( &m_phaseViscosity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( &m_phaseViscosity.derivs );
 }
 
 
-std::unique_ptr< ConstitutiveBase >
-TwoPhaseImmiscibleFluid::deliverClone( string const & name, Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-
-void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
+void TwoPhaseImmiscibleFluid::allocateConstitutiveData( Group & parent,
+                                                        localIndex const numPts )
 {
   // Assume sole dependency on pressure, i.e. one derivative
-  m_phaseDensity.value.resize( size, numPts, 2 );
-  m_phaseDensity.derivs.resize( size, numPts, 2, 1 );
+  m_phaseDensity.value.resize( 0, numPts, 2 );
+  m_phaseDensity.derivs.resize( 0, numPts, 2, 1 );
 
-  m_phaseDensity_n.resize( size, numPts, 2 );
+  m_phaseDensity_n.resize( 0, numPts, 2 );
 
-  m_phaseViscosity.value.resize( size, numPts, 2 );
-  m_phaseViscosity.derivs.resize( size, numPts, 2, 1 );
-}
+  m_phaseViscosity.value.resize( 0, numPts, 2 );
+  m_phaseViscosity.derivs.resize( 0, numPts, 2, 1 );
 
-
-void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                        localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 
@@ -103,9 +91,9 @@ void TwoPhaseImmiscibleFluid::postInputInitialization()
 
   // Ensure that we have two phases defined
   GEOS_THROW_IF_NE_MSG( m_phaseNames.size(), 2,
-                        GEOS_FMT( "{}: invalid number of phases. There should be 2 phases defined by {}", getFullName(),
+                        GEOS_FMT( "invalid number of phases. There should be 2 phases defined by {}",
                                   viewKeyStruct::phaseNamesString() ),
-                        InputError );
+                        InputError, getDataContext() );
 
   // Input relationships can be provided either as text files or TableFunctions.
   m_tableFiles.empty() ? readInputDataFromTableFunctions() : readInputDataFromFileTableFunctions();
@@ -125,8 +113,8 @@ void TwoPhaseImmiscibleFluid::fillData( integer const ip,
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
     GEOS_THROW_IF_NE_MSG( tableValues[i].size(), 3,
-                          GEOS_FMT( "{}: three columns (pressure, density, and viscosity) are expected", getFullName() ),
-                          InputError );
+                          "three columns (pressure, density, and viscosity) are expected",
+                          InputError, getDataContext() );
 
     pressureCoords[0][i] = tableValues[i][0];
     density[i] = tableValues[i][1];
@@ -158,14 +146,14 @@ void TwoPhaseImmiscibleFluid::readInputDataFromFileTableFunctions()
 {
   // Check for ambiguous definition
   GEOS_THROW_IF( !(m_densityTableNames.empty() && m_viscosityTableNames.empty()),
-                 GEOS_FMT( "{}: input is redundant (both TableFunction names and text files)", getFullName() ),
-                 InputError );
+                 "input is redundant (both TableFunction names and text files)",
+                 InputError, getDataContext() );
 
 
   // Check that we have exactly two table files (one per phase)
   GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), 2,
-                        GEOS_FMT( "{}: expecting two table files (one per phase)", getFullName() ),
-                        InputError );
+                        "expecting two table files (one per phase)",
+                        InputError, getDataContext() );
 
   array1d< array1d< real64 > > tableValues;
   for( integer ip = 0; ip < 2; ++ip )
@@ -181,17 +169,17 @@ void TwoPhaseImmiscibleFluid::readInputDataFromTableFunctions()
 {
   // Check for ambiguous definition
   GEOS_THROW_IF( !m_tableFiles.empty(),
-                 GEOS_FMT( "{}: input is redundant (both TableFunction names and text files)", getFullName() ),
-                 InputError );
+                 "input is redundant (both TableFunction names and text files)",
+                 InputError, getDataContext() );
 
   // Since we are considering a two phase fluid, we should have exactly 2 tables per property
   GEOS_THROW_IF_NE_MSG( m_densityTableNames.size(), 2,
-                        GEOS_FMT( "{}: one density table must be provided for each phase", getFullName() ),
-                        InputError );
+                        "one density table must be provided for each phase",
+                        InputError, getDataContext() );
 
   GEOS_THROW_IF_NE_MSG( m_viscosityTableNames.size(), 2,
-                        GEOS_FMT( "{}: one viscosity table must be provided for each phase", getFullName() ),
-                        InputError );
+                        "one viscosity table must be provided for each phase",
+                        InputError, getDataContext() );
 
 
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -199,12 +187,12 @@ void TwoPhaseImmiscibleFluid::readInputDataFromTableFunctions()
   for( integer iph = 0; iph < 2; ++iph )
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_densityTableNames[iph] ),
-                   GEOS_FMT( "{}: density table '{}' not found", getFullName(), m_densityTableNames[iph] ),
-                   InputError );
+                   GEOS_FMT( "density table '{}' not found", m_densityTableNames[iph] ),
+                   InputError, getDataContext() );
 
     GEOS_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
-                   GEOS_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
-                   InputError );
+                   GEOS_FMT( "viscosity table '{}' not found", m_viscosityTableNames[iph] ),
+                   InputError, getDataContext() );
   }
 }
 
@@ -240,8 +228,8 @@ void TwoPhaseImmiscibleFluid::checkTableConsistency() const
     for( localIndex i = 1; i < density.size(); ++i )
     {
       GEOS_THROW_IF( density[i] - density[i-1] < 0,
-                     GEOS_FMT( "{}: in table '{}' density values must be increasing", getFullName(), densityTable.getName() ),
-                     InputError );
+                     GEOS_FMT( "in table '{}' density values must be increasing", densityTable.getName() ),
+                     InputError, getDataContext() );
     }
   }
 }

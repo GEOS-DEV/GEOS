@@ -81,9 +81,6 @@ public:
    */
   LinearIsotropicDispersion( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   static string catalogName() { return "LinearIsotropicDispersion"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -108,7 +105,7 @@ public:
   struct viewKeyStruct : public DispersionBase::viewKeyStruct
   {
     static constexpr char const * longitudinalDispersivityString() { return "longitudinalDispersivity"; }
-  } viewKeys;
+  };
 
 protected:
 

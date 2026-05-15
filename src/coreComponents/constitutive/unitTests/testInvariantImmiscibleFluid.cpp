@@ -59,8 +59,15 @@ public:
     Base::createFluid( "InvariantImmiscibleFluid", [this]( InvariantImmiscibleFluid & fluid ){
       setupFluidConfiguration( fluid );
 
-      // Use proper public initialization instead of protected postInputInitialization
-      fluid.initialize( 1, 1 );
+      // create a dummy discretization with one quadrature point for
+      // storing constitutive data
+
+      conduit::Node node;
+      dataRepository::Group rootGroup( "root", node );
+      dataRepository::Group discretization( "discretization", &rootGroup );
+
+      discretization.resize( 1 );   // one element
+      fluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
       fluid.initializeState();
     } );
   }
@@ -176,7 +183,15 @@ public:
       fluid.setMassFlag( USE_MASS );
 
       // Need to allocate data for the fluid properties since we're now using KernelWrapper
-      fluid.initialize( 1, 1 );
+      // create a dummy discretization with one quadrature point for
+      // storing constitutive data
+
+      conduit::Node node;
+      dataRepository::Group rootGroup( "root", node );
+      dataRepository::Group discretization( "discretization", &rootGroup );
+
+      discretization.resize( 1 );   // one element
+      fluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
 
       // Initialize the fluid by computing properties with a test composition
       StackArray< real64, 2, 3, compflow::LAYOUT_COMP > compositionData( 1, 3 );

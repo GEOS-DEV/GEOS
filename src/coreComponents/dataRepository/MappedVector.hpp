@@ -59,7 +59,7 @@ public:
   using mapped_type   = T_PTR;
 
   /// the type of the lookup map
-  using LookupMapType          = std::unordered_map< KEY_TYPE, INDEX_TYPE >;
+  using LookupMapType          = stdUnorderedMap< KEY_TYPE, INDEX_TYPE >;
 
   /// the type of the values held in the vector
   using value_type             = typename std::pair< KEY_TYPE, T_PTR >;
@@ -517,9 +517,10 @@ T * MappedVector< T, T_PTR, KEY_TYPE, INDEX_TYPE >::insert( KEY_TYPE const & key
       }
       else if( typeid( source ) != typeid( m_values[index].second ) )
       {
-        GEOS_ERROR( "MappedVector::insert(): Tried to insert existing key (" << keyName <<
-                    ") with a different type without overwrite flag\n " << " " << LvArray::system::demangleType( source ) <<
-                    " != " << LvArray::system::demangleType( m_values[ index ].second ) );
+        GEOS_ERROR( GEOS_FMT( "MappedVector::insert(): Tried to insert existing key ({}) with a different type without overwrite flag\n  {} != {}",
+                              keyName,
+                              LvArray::system::demangleType( source ),
+                              LvArray::system::demangleType( m_values[ index ].second ) ) );
       }
       else
       {

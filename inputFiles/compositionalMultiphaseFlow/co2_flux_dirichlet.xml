@@ -188,6 +188,7 @@
 
   </FieldSpecifications>
 
+  <!-- SPHINX_FIELD_CASE_CSV_OUTPUT -->
   <Tasks>
 
     <CompositionalMultiphaseStatistics
@@ -199,6 +200,7 @@
       computeRegionStatistics="1"/>
     
   </Tasks>
+  <!-- SPHINX_FIELD_CASE_CSV_OUTPUT_END -->
   
   <Functions>
     <TableFunction

@@ -29,27 +29,11 @@ namespace constitutive
 {
 
 ProppantPorosity::ProppantPorosity( string const & name, Group * const parent ):
-  PorosityBase( name, parent ),
-  m_maxProppantConcentration()
+  PorosityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Maximum proppant concentration " );
-}
-
-ProppantPorosity::~ProppantPorosity() = default;
-
-std::unique_ptr< ConstitutiveBase >
-ProppantPorosity::deliverClone( string const & name,
-                                Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-void ProppantPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void ProppantPorosity::postInputInitialization()

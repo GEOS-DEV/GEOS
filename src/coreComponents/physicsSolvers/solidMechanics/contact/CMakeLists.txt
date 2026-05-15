@@ -17,7 +17,9 @@ set( solidMechanicsSolvers_headers
      contact/kernels/SolidMechanicsALMKernelsBase.hpp
      contact/kernels/SolidMechanicsALMKernels.hpp
      contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
+     contact/kernels/SolidMechanicsConformingPressureContributionKernels.hpp
      contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
+     contact/kernels/SolidMechanicsPressureFaceBubbleKernels.hpp
      contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
      PARENT_SCOPE )
 

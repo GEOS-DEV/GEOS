@@ -54,6 +54,11 @@ private:
    */
   string toString() const override;
 
+  /**
+   * @brief Return contextual information here it is a data path
+   * @return ErrorContext ErrorLogger instance updated with context information
+   */
+  ErrorContext getContextInfo() const override;
 };
 
 

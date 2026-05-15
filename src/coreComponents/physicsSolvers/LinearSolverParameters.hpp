@@ -52,7 +52,7 @@ public:
   /// Postprocessing of input
   virtual void postInputInitialization() override;
 
-  void print();
+  void print() const;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
@@ -69,6 +69,8 @@ public:
     static constexpr char const * solverTypeString() { return "solverType"; }
     /// Preconditioner type key
     static constexpr char const * preconditionerTypeString() { return "preconditionerType"; }
+    /// Authoritative hypredrive YAML file key
+    static constexpr char const * hypredriveInputFileString() { return "hypredriveInputFile"; }
     /// stop if error key
     static constexpr char const * stopIfErrorString() { return "stopIfError"; }
 
@@ -86,6 +88,8 @@ public:
     static constexpr char const * directIterRefString() { return "directIterRef"; }
     /// direct solver parallelism key
     static constexpr char const * directParallelString() { return "directParallel"; }
+    /// reuse factorization key
+    static constexpr char const * reuseFactorizationString() { return "reuseFactorization"; }
 
     /// Krylov max iterations key
     static constexpr char const * krylovMaxIterString() { return "krylovMaxIter"; }
@@ -155,6 +159,7 @@ public:
   struct groupKeyStruct
   {
     static constexpr char const * blockString() { return "Block"; }
+    static constexpr char const * multiscaleString() { return "Multiscale"; }
   };
 
 private:

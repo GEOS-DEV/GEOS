@@ -91,7 +91,7 @@ char const * parseBuffer( char const * first,
  * @param issep function that returns true if given character is a value separator
  * @return @p last if the entire buffer has been processed, or pointer to
  *         the start of the unprocessed part if a parsing error occurred
- * @throws std::runtime_error if file IO or parsing error occurred
+ * @throws geos::RuntimeError if file IO or parsing error occurred
  */
 template< typename CONTAINER, typename SEPFUNC >
 void parseFile( string const & filename,
@@ -134,13 +134,13 @@ void parseFile( string const & filename,
       GEOS_THROW( GEOS_FMT( "Unable to parse value in file {} at position {}: {}...",
                             filename, static_cast< std::streamoff >( inputStream.tellg() ) - left,
                             string( ptr, std::min( left, std::ptrdiff_t{32} ) ) ),
-                  std::runtime_error );
+                  geos::RuntimeError );
     }
   }
 
   GEOS_THROW_IF( inputStream.fail() && !inputStream.eof(),
                  GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
-                 std::runtime_error );
+                 geos::RuntimeError );
 }
 
 } // namespace geos

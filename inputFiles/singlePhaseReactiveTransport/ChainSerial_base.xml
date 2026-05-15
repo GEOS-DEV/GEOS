@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosity_referencePorosity"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="PorosityMedium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="rockPorosity_referencePorosity"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressureMedium"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Medium"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-200"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="logPrimarySpeciesCollection"
+      objectPath="ElementRegions/Medium/cb-1_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesCollection }"
+      filename="logPrimarySpeciesHistory"/>
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

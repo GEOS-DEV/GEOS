@@ -7,7 +7,7 @@ Model: Viscoplasticity
 The classical `Perzyna-type viscoplasticity models <https://www.sciencedirect.com/science/article/abs/pii/S0065215608700097>`__ are not suitable for rate-dependent viscoplastic models with nonsmooth multisurface, because of using unclearly defined nested viscoplastic loading surfaces. As an alternative, the `Duvaut-Lions viscoplastic theory <https://onlinelibrary.wiley.com/doi/abs/10.1002/nme.1620261003>`__, precludes these difficulties by excluding the concept of nested viscoplastic loading surfaces. The viscoplastic constitutive equation that relates the stress :math:`\boldsymbol{\sigma}` and the viscoplastic strain rate :math:`\dot{\boldsymbol{\epsilon}^{vp}}` is given by:
 
 .. math::
-   \boldsymbol{\sigma} - \bar{\boldsymbol{\sigma}} = \frac{1}{t_*}\tensor{c}:\dot{\boldsymbol{\epsilon}^{vp}}
+   \boldsymbol{\sigma} - \bar{\boldsymbol{\sigma}} = t_*(\tensor{c}:\dot{\boldsymbol{\epsilon}^{vp}})
 
 Here, :math:`\bar{\boldsymbol{\sigma}}` represents the inviscid stress, which is the rate-independent elasto-plastic stress part that can be solved by using elasto-plastic solvers (such as Drucker-Prager, CamClay, etc.). :math:`\tensor{c}` is the tangent stiffness tensor and :math:`t_*` is the relaxation time, which is measured in units of time. The viscoplastic strain rate :math:`\dot{\boldsymbol{\epsilon}}^{vp}` can be approximated using the following finite difference formula:
 

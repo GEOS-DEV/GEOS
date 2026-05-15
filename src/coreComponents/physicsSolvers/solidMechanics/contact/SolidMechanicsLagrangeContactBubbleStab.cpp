@@ -27,7 +27,7 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
@@ -43,13 +43,12 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
                                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
-
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
@@ -59,7 +58,7 @@ SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleSta
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
                                                             real64 const & dt,
-                                                            const integer cycleNumber,
+                                                            integer const cycleNumber,
                                                             DomainPartition & domain )
 {
   if( cycleNumber == 0 )
@@ -73,23 +72,6 @@ real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_
 
     {
       fieldSpecificationManager.applyInitialConditions( mesh );
-      // Would like to do it like this but it is not working. There is a cast in Object path that tries to cast
-      // all objects that derive from ElementSubRegionBase to the specified type so this obviously fails.
-      //   fieldSpecificationManager.forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
-      //   {
-      //     if( fs.initialCondition() )
-      //     {
-      //       fs.apply< SurfaceElementSubRegion >( mesh,
-      //                                            [&]( FieldSpecificationBase const & bc,
-      //                                                 string const &,
-      //                                                 SortedArrayView< localIndex const > const & targetSet,
-      //                                                 SurfaceElementSubRegion & targetGroup,
-      //                                                 string const fieldName )
-      //       {
-      //         bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, fieldName );
-      //       } );
-      //     }
-      //   } );
     } );
   }
 
@@ -130,6 +112,54 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
         reference().resizeDimension< 1 >( 3 );
     } );
   } );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::initializePostInitialConditionsPreSubGroups()
+{
+  ContactSolverBase::initializePostInitialConditionsPreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  validateTetrahedralQuadrature( domain.getMeshBodies() );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::validateTetrahedralQuadrature( Group & meshBodies )
+{
+  string const discretizationName = getDiscretizationName();
+
+  NumericalMethodsManager const & numericalMethodManager =
+    this->getGroupByPath< DomainPartition >( "/Problem/domain" ).getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( discretizationName );
+
+
+  integer const useHighOrderQuadrature =
+    feDiscretization.getReference< integer >( "useHighOrderQuadratureRule" );
+
+  bool hasTetrahedra = false;
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions< CellElementRegion >( regionNames, [&]( localIndex const,
+                                                                          CellElementRegion const & region )
+    {
+      region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+      {
+        if( subRegion.getElementType() == ElementType::Tetrahedron )
+        {
+          hasTetrahedra = true;
+        }
+      } );
+    } );
+  } );
+
+  GEOS_ERROR_IF( hasTetrahedra && useHighOrderQuadrature != 1,
+                 GEOS_FMT( "{}: Tetrahedral meshes require useHighOrderQuadratureRule=\"1\" for correct integration of bubble contributions. "
+                           "Please add this attribute to your FiniteElements/{} XML block.",
+                           getName(), discretizationName ) );
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const & domain,
@@ -190,16 +220,55 @@ void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const &
                           meshTargets );
 }
 
+void SolidMechanicsLagrangeContactBubbleStab::postInputInitialization()
+{
+  ContactSolverBase::postInputInitialization();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( getDiscretizationName() );
+
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", feDiscretization.factory( ElementType::Quadrilateral )} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", feDiscretization.factory( ElementType::Triangle )} );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} using finite element discretization {}:",
+                             getName(), getDiscretizationName() ) );
+  for( auto const & [name, fePtr] : m_faceTypeToFiniteElements )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "  {} face elements: {} quadrature points",
+                               name, fePtr->getNumQuadraturePoints() ) );
+  }
+}
+
 void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & domain,
                                                            DofManager & dofManager,
                                                            CRSMatrix< real64, globalIndex > & localMatrix,
                                                            ParallelVector & rhs,
                                                            ParallelVector & solution,
-                                                           bool const GEOS_UNUSED_PARAM( setSparsity ) )
+                                                           bool const setSparsity )
 {
-
-
   // setup monolithic coupled system
+
+  // Ensure kf1 node ordering is consistent with kf0 for conforming contact kernels.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      if( subRegion.size() > 0 )
+      {
+        subRegion.orderKf1NodesConsistentlyWithKf0( faceManager, nodeManager );
+      }
+    } );
+  } );
 
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
@@ -210,50 +279,42 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
 
-  dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
+  computeRotationMatrices( domain );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::setSparsityPattern( DomainPartition & domain,
+                                                                  DofManager & dofManager,
+                                                                  CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                  SparsityPattern< globalIndex > & pattern )
+{
   // Set the sparsity pattern without the Abu and Aub blocks.
   SparsityPattern< globalIndex > patternDiag;
   dofManager.setSparsityPattern( patternDiag );
 
   // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  array1d< localIndex > rowLengths( patternDiag.numRows());
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
   // Add the number of nonzeros induced by coupling
-  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
   // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
   }
 
   // Add the nonzeros from coupling
-  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  computeRotationMatrices( domain );
-
+  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPartition & domain ) const
@@ -467,7 +528,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+  real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+
+  return totalResidual;
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( DomainPartition const & domain,
@@ -510,10 +573,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+  getConvergenceStats().setResidualValue( "Rt", stickResidual );
 
   return sqrt( stickResidual * stickResidual );
 }
@@ -896,6 +958,11 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
     arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
+    // Ensure the stick/slip maps contain an entry for this mesh even when
+    // the fracture face type map is empty (no fracture elements).
+    this->m_faceTypesToFaceElementsStick.get_inserted( meshName );
+    this->m_faceTypesToFaceElementsSlip.get_inserted( meshName );
+
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const & finiteElementName,
                                                           finiteElement::FiniteElementBase const &,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -962,8 +1029,8 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      this->m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
+      this->m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -986,6 +1053,16 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
+    // When there are no fracture face elements, insert empty lists so that
+    // downstream .at( meshName ) lookups do not throw.
+    if( subRegion.size() == 0 )
+    {
+      this->m_faceTypesToFaceElements.get_inserted( meshName );
+      return;
+    }
+
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1001,7 +1078,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( elemsToFaces[kfe][0] );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
@@ -1044,8 +1121,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    this->m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    this->m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 
 }
@@ -1061,6 +1138,13 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+
+    // Nothing to do when there are no fracture face elements.
+    if( subRegion.size() == 0 )
+    {
+      return;
+    }
+
     // Array to store face indexes
     array1d< localIndex > tmpSpace( 2*subRegion.size());
     SortedArray< localIndex > faceIdList;
@@ -1081,6 +1165,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
     // Sort indexes to enable efficient searching using binary search.
     RAJA::stable_sort< parallelDevicePolicy<> >( tmpSpace_v );
+    // Move data back to host: after the device sort the buffer lives on the GPU,
+    // but SortedArray::insert is a host-only operation that dereferences the iterators.
+    tmpSpace_v.move( LvArray::MemorySpace::host );
     faceIdList.insert( tmpSpace_v.begin(), tmpSpace_v.end());
 
     // Search for bubble element on each CellElementSubRegion and
@@ -1102,6 +1189,9 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
       arrayView1d< localIndex > const perms_v = perms.toView();
       arrayView1d< localIndex > const vals_v = vals.toView();
       arrayView1d< localIndex > const localFaceIds_v = localFaceIds.toView();
+      // Move faceIdList to device so that the SortedArrayView can be safely
+      // accessed inside the GPU kernel (faceIdList was populated on the host).
+      faceIdList.move( parallelDeviceMemorySpace );
       SortedArrayView< localIndex const > const faceIdList_v = faceIdList.toViewConst();
 
       forAll< parallelDevicePolicy<> >( cellElementSubRegion.size(),

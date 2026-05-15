@@ -29,17 +29,11 @@
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
-#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE GEOS_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE GEOS_HOST_DEVICE
-#else
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE
-#endif
+/**
+ * @def GEOS_HYPRE_DEVICE
+ * @brief Host/device annotation used by hypre wrappers.
+ */
+#define GEOS_HYPRE_DEVICE GEOS_HOST_DEVICE
 
 namespace geos
 {
@@ -131,7 +125,7 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 
 #endif
 
-// Check matching requirements on index/value types between GEOSX and Hypre
+// Check matching requirements on index/value types between GEOS and Hypre
 
 // WARNING. We don't have consistent types between HYPRE_Int and localIndex.
 //          Decision needs to be made either to use bigint option, or change
@@ -167,8 +161,9 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
 }
 
 /**
- * @brief Check for previous device errors and report with line information.
- * @param msg custom message to add
+ * @def GEOS_HYPRE_CHECK_DEVICE_ERRORS
+ * @brief Check for previous device errors and report with file/line information.
+ * @param msg Custom message to add.
  */
 #define GEOS_HYPRE_CHECK_DEVICE_ERRORS( msg ) ::geos::hypre::checkDeviceErrors( msg, __FILE__, __LINE__ )
 
@@ -182,7 +177,7 @@ static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
                "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a non-const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -192,7 +187,7 @@ inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -556,7 +551,8 @@ enum class MGRRestrictionType : HYPRE_Int
   approximateInverse = 3,  //!< Approximate inverse
   blockJacobi = 12,        //!< Block-Jacobi
   cprLike = 13,            //!< CPR-like restriction
-  blockColLumped = 14      //!< Block column-lumped approximation
+  blockColLumped = 14,     //!< Block column-lumped approximation
+  partialColLumped = 15    //!< Partial column-lumped approximation
 };
 
 /**

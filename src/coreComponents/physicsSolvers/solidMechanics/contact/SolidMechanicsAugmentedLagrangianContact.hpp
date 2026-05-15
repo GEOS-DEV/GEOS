@@ -47,7 +47,11 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -58,6 +62,11 @@ public:
                             ParallelVector & rhs,
                             ParallelVector & solution,
                             bool const setSparsity = true ) override final;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
@@ -74,6 +83,19 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  void assembleContact( real64 const time,
+                        real64 const dt,
+                        DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+
+  void assembleForceResidualPressureContribution( DomainPartition & domain,
+                                                  real64 const & dt,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
+
   virtual real64 calculateResidualNorm( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition const & domain,
@@ -88,7 +110,8 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override final;
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter ) override final;
 
 
   /**
@@ -102,8 +125,8 @@ public:
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
 
-    std::map< string,
-              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+    stdMap< string,
+            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
@@ -129,7 +152,7 @@ public:
 
     bool const isStickState = true;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -156,7 +179,7 @@ public:
 
     bool const isStickState = false;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsSlip.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -195,6 +218,12 @@ public:
 private:
 
   /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
+
+  /**
    * @brief add the number of non-zero elements induced by the coupling between
    *   nodal and bubble displacement.
    * @param domain the physical domain object
@@ -217,17 +246,34 @@ private:
 
   void computeTolerances( DomainPartition & domain ) const;
 
+  /**
+   * @brief Initialize the traction field from the stress in adjacent volume elements.
+   * @param domain The physical domain object
+   *
+   * This function computes the initial traction on each fracture element by:
+   * 1. Getting the stress tensor from both adjacent volume elements (one on each side of the fracture)
+   * 2. Computing the traction vector as t = sigma * n (where n is the face normal) for each side
+   * 3. Averaging the tractions from both sides
+   * 4. Rotating the averaged traction to the local coordinate system of the fracture
+   * 5. Validating the traction against the Coulomb friction law and warning if inconsistent
+   *
+   * This initialization ensures that the ALM traction field starts with a physically
+   * consistent value rather than zero, which is important for proper convergence
+   * when the domain is under stress.
+   */
+  void initializeTractionFromAdjacentCellStress( DomainPartition & domain ) const;
+
   /// Finite element type to face element index map
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElements;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 
   /// Finite element type to face element index map (stick mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
 
   /// Finite element type to face element index map (slip mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
 
   /// Finite element type to finite element object map
-  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+  stdMap< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
