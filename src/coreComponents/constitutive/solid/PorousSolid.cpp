@@ -20,6 +20,7 @@
 
 #include "PorousSolid.hpp"
 #include "ElasticIsotropic.hpp"
+#include "ElasticIsotropicPressureDependent.hpp"
 #include "ElasticTransverseIsotropic.hpp"
 #include "ElasticOrthotropic.hpp"
 #include "DelftEgg.hpp"
@@ -74,6 +75,7 @@ typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended >, CarmanKozenyPerm
 typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay >, CarmanKozenyPermeability > PorousViscoModifiedCamClayCK;
 typedef PorousSolid< ModifiedCamClay, CarmanKozenyPermeability > PorousModifiedCamClayCK;
 typedef PorousSolid< ElasticIsotropic, StrainDependentPermeability > PorousElasticIsotropicSD;
+typedef PorousSolid< ElasticIsotropicPressureDependent, StrainDependentPermeability > PorousElasticIsotropicPressureDependentSD;
 typedef PorousSolid< ElasticTransverseIsotropic, StrainDependentPermeability > PorousElasticTransverseIsotropicSD;
 typedef PorousSolid< ElasticOrthotropic, StrainDependentPermeability > PorousElasticOrthotropicSD;
 typedef PorousSolid< DelftEgg, StrainDependentPermeability > PorousDelftEggSD;
@@ -106,6 +108,7 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerCK, string con
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtendedCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClayCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropicSD, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropicPressureDependentSD, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropicSD, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticOrthotropicSD, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDelftEggSD, string const &, Group * const )
