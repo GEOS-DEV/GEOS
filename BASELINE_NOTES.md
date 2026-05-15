@@ -5,6 +5,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4034 (2026-05-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4034-16638-94cbfde.tar.gz>
+=====================
+Add scales, functionNames and regionNames attribute to FieldSpecification
+
 PR #3999 (2026-05-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3999-16602-542583d.tar.gz>
 Fault Perm Update for Contact solvers
 
