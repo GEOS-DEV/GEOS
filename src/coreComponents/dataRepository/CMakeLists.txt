@@ -28,6 +28,7 @@ set( dataRepository_headers
      ConduitRestart.hpp
      DefaultValue.hpp
      ExecutableGroup.hpp
+     GlobalViewKeys.hpp
      Group.hpp
      HistoryDataSpec.hpp
      InputFlags.hpp
