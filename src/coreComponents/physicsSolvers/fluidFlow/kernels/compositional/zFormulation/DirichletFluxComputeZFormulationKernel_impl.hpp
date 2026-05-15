@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 Total, S.A
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
@@ -14,32 +14,36 @@
  */
 
 /**
- * @file DirichletFluxComputeKernel_impl.hpp
+ * @file DirichletFluxComputeZFormulationKernel_impl.hpp
  */
 
-#include "DirichletFluxComputeKernel.hpp"
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_IMPL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_IMPL_HPP
+
+#include "DirichletFluxComputeZFormulationKernel.hpp"
 
 namespace geos
 {
+
 namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
 template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
-DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
-DirichletFluxComputeKernel( integer const numPhases,
-                            globalIndex const rankOffset,
-                            FaceManager const & faceManager,
-                            BoundaryStencilWrapper const & stencilWrapper,
-                            FLUIDWRAPPER const & fluidWrapper,
-                            DofNumberAccessor const & dofNumberAccessor,
-                            CompFlowAccessors const & compFlowAccessors,
-                            MultiFluidAccessors const & multiFluidAccessors,
-                            CapPressureAccessors const & capPressureAccessors,
-                            PermeabilityAccessors const & permeabilityAccessors,
-                            real64 const dt,
-                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                            arrayView1d< real64 > const & localRhs,
-                            BitFlags< KernelFlags > kernelFlags )
+DirichletFluxComputeZFormulationKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+DirichletFluxComputeZFormulationKernel( integer const numPhases,
+                                        globalIndex const rankOffset,
+                                        FaceManager const & faceManager,
+                                        BoundaryStencilWrapper const & stencilWrapper,
+                                        FLUIDWRAPPER const & fluidWrapper,
+                                        DofNumberAccessor const & dofNumberAccessor,
+                                        CompFlowAccessors const & compFlowAccessors,
+                                        MultiFluidAccessors const & multiFluidAccessors,
+                                        CapPressureAccessors const & capPressureAccessors,
+                                        PermeabilityAccessors const & permeabilityAccessors,
+                                        real64 const dt,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs,
+                                        BitFlags< KernelFlags > kernelFlags )
   : Base( numPhases,
           rankOffset,
           stencilWrapper,
@@ -59,11 +63,10 @@ DirichletFluxComputeKernel( integer const numPhases,
   m_fluidWrapper( fluidWrapper )
 {}
 
-
 template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::setup( localIndex const iconn,
-                                                                           StackVariables & stack ) const
+void DirichletFluxComputeZFormulationKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::setup( localIndex const iconn,
+                                                                                       StackVariables & stack ) const
 {
   globalIndex const offset =
     m_dofNumber[m_seri( iconn, BoundaryStencil::Order::ELEM )][m_sesri( iconn, BoundaryStencil::Order::ELEM )][m_sei( iconn, BoundaryStencil::Order::ELEM )];
@@ -77,9 +80,9 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::setup( local
 template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux( localIndex const iconn,
-                                                                                 StackVariables & stack,
-                                                                                 FUNC && compFluxKernelOp ) const
+void DirichletFluxComputeZFormulationKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux( localIndex const iconn,
+                                                                                             StackVariables & stack,
+                                                                                             FUNC && compFluxKernelOp ) const
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
   using Order = BoundaryStencil::Order;
@@ -133,7 +136,6 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux(
     // working variables
     real64 dDensMean_dC[numComp]{};
     real64 dF_dC[numComp]{};
-    real64 dProp_dC[numComp]{};
 
     real64 phaseFlux = 0.0;   // for the lambda
     real64 dPhaseFlux_dP = 0.0;
@@ -141,19 +143,12 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux(
 
 
     // Step 3.1: compute the average phase mass density at the face
-
-    applyChainRule( numComp,
-                    m_dCompFrac_dCompDens[er][esr][ei],
-                    m_dPhaseMassDens[er][esr][ei][0][ip],
-                    dProp_dC,
-                    Deriv::dC );
-
     // average density and derivatives
     real64 const densMean = 0.5 * ( m_phaseMassDens[er][esr][ei][0][ip] + facePhaseMassDens[0][0][ip] );
     real64 const dDensMean_dP = 0.5 * m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dP];
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      dDensMean_dC[jc] = 0.5 * dProp_dC[jc];
+      dDensMean_dC[jc] = 0.5 * m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dC+jc];
     }
 
 
@@ -214,14 +209,9 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux(
         stack.compFlux[ic] += phaseFlux * ycp;
         stack.dCompFlux_dP[ic] += dPhaseFlux_dP * ycp + phaseFlux * dPhaseCompFracSub[ic][Deriv::dP];
 
-        applyChainRule( numComp,
-                        m_dCompFrac_dCompDens[er][esr][ei],
-                        dPhaseCompFracSub[ic],
-                        dProp_dC,
-                        Deriv::dC );
         for( integer jc = 0; jc < numComp; ++jc )
         {
-          stack.dCompFlux_dC[ic][jc] += dPhaseFlux_dC[jc] * ycp + phaseFlux * dProp_dC[jc];
+          stack.dCompFlux_dC[ic][jc] += dPhaseFlux_dC[jc] * ycp + phaseFlux * dPhaseCompFracSub[ic][Deriv::dC+jc];
         }
       }
 
@@ -276,7 +266,7 @@ void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::computeFlux(
 template< typename FLUIDWRAPPER, integer NUM_COMP, integer NUM_DOF >
 template< typename FUNC >
 GEOS_HOST_DEVICE
-void DirichletFluxComputeKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
+void DirichletFluxComputeZFormulationKernel< FLUIDWRAPPER, NUM_COMP, NUM_DOF >::
 complete( localIndex const iconn,
           StackVariables & stack,
           FUNC && assemblyKernelOp ) const
@@ -319,3 +309,5 @@ complete( localIndex const iconn,
 
 } // namespace isothermalCompositionalMultiphaseFVMKernels
 } // namespace geos
+
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_DIRICHLETFLUXCOMPUTEZFORMULATIONKERNEL_IMPL_HPP

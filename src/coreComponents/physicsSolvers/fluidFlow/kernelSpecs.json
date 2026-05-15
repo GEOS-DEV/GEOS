@@ -65,64 +65,65 @@
     "explicit": []
   },
 
-  "IsothermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_IsothermalDirichletFluxComputeKernels": {
     "vars": [
+      "POLICY_TYPE",
       "NAME",
-      "NCOMP_NDOF",
+      "NCOMP",
       "KERNEL_TYPE"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
+      "POLICY_TYPE": [
+        "geos::parallelDevicePolicy<>"
+      ],
       "NAME": [
-        "DirichletFluxComputeKernel"
+        "DirichletFluxComputeKernel",
+        "DirichletFluxComputeZFormulationKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
+      "NCOMP": [ 2, 3, 4, 5 ],
       "KERNEL_TYPE": [
-        "constitutive::InvariantImmiscibleFluid",
-        "constitutive::DeadOilFluid",
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",
         "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid",
+        "constitutive::CompositionalKValuePhillipsBrine",
+        "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalMultiphaseFluidPVTPackage",
+        "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhaseConstantViscosity",
+        "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
+        "constitutive::CompositionalTwoPhasePhillipsBrine",
+        "constitutive::DeadOilFluid",
+        "constitutive::InvariantImmiscibleFluid"
       ]
     },
-    "explicit": []
+    "explicit": [
+    ]
   },
 
-  "ThermalCompositionalMultiphaseFVM_DirichletFluxComputeKernels": {
+  "CompositionalMultiphaseFVM_ThermalDirichletFluxComputeKernels": {
     "vars": [
+      "POLICY_TYPE",
       "NAME",
-      "NCOMP_NDOF",
+      "NCOMP",
       "KERNEL_TYPE"
     ],
     "constants": [
-      [ "DirichletFluxComputeKernelPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
     ],
     "combinations": {
+      "POLICY_TYPE": [
+        "geos::parallelDevicePolicy<>"
+      ],
       "NAME": [
         "DirichletFluxComputeKernel"
       ],
-      "NCOMP_NDOF": [
-        "1, 2",
-        "2, 3",
-        "3, 4",
-        "4, 5",
-        "5, 6"
-      ],
+      "NCOMP": [ 2, 3, 4, 5 ],
       "KERNEL_TYPE": [
-        "constitutive::DeadOilFluid",
-        "constitutive::BlackOilFluid",
-        "constitutive::CO2BrinePhillipsFluid",
-        "constitutive::CO2BrineEzrokhiFluid",
-        "constitutive::CO2BrinePhillipsThermalFluid"
+        "constitutive::CO2BrinePhillipsThermalFluid",
+        "constitutive::CO2BrineEzrokhiThermalFluid"
       ]
     },
     "explicit": []
