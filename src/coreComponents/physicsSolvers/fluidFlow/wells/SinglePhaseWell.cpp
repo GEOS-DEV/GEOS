@@ -1254,7 +1254,8 @@ void SinglePhaseWell::printRates( real64 const & time_n,
         GEOS_FMT( "Total {} volumetric rate [{}m3/s]", conditionKey, unitKey )
       };
 
-      string const fileName = m_ratesOutputDir + "/" + wellControlsName + ".csv";
+      std::filesystem::path const fileName =
+        std::filesystem::path( m_ratesOutputDir ) / ( wellControlsName + ".csv" );
 
       auto const writeCSVRow = [&]( TableData const & data )
       {
@@ -1266,7 +1267,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
           std::ofstream outputFile( fileName );
           csvFormatter.headerToStream( outputFile );
           outputFile.close();
-          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName.string() ) );
         }
         std::ofstream outputFile( fileName, std::ios_base::app );
         TableCSVFormatter const csvFormatter;

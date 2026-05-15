@@ -2252,7 +2252,8 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
         return row;
       };
 
-      string const fileName = m_ratesOutputDir + "/" + wellControlsName + ".csv";
+      std::filesystem::path const fileName =
+        std::filesystem::path( m_ratesOutputDir ) / ( wellControlsName + ".csv" );
 
       auto const writeCSVRow = [&]( TableData const & data )
       {
@@ -2264,7 +2265,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           std::ofstream outputFile( fileName );
           csvFormatter.headerToStream( outputFile );
           outputFile.close();
-          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
+          GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName.string() ) );
         }
         std::ofstream outputFile( fileName, std::ios_base::app );
         TableCSVFormatter const csvFormatter;
