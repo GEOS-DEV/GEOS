@@ -1109,10 +1109,10 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
   {
     GEOS_UNUSED_VAR( scale, functionName );
     integer const comp = ( component >= 0 ) ? component : 0;
-    forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, component] GEOS_HOST_DEVICE ( localIndex const i )
+    forAll< POLICY >( targetSet.size(), [targetSet, dofMap, matrix, comp] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const a = targetSet[ i ];
-      globalIndex const dof = dofMap[ a ] + component;
+      globalIndex const dof = dofMap[ a ] + comp;
 
       arraySlice1d< real64 > const entries = matrix.getEntries( dof );
       localIndex const numEntries = matrix.numNonZeros( dof );
