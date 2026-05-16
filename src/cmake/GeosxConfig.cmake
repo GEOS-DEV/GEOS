@@ -12,6 +12,7 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           HYPRE
                           LINEARALGEBRA
                           CONSTITUTIVE_DRIVERS
+                          CONSTITUTIVE_MPM_ONLY
                           MATHPRESSO
                           METIS
                           MKL

@@ -29,9 +29,11 @@
 #include "common/MpiWrapper.hpp"
 #include "common/TypeDispatch.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#if !defined(GEOS_USE_CONSTITUTIVE_MPM_ONLY)
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/contact/FrictionBase.hpp"
+#endif
 #include "constitutive/NullModel.hpp"
 #include "fileIO/Outputs/OutputUtilities.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -1626,6 +1628,7 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
 
     localIndex const numSolids = regionSolidMaterialList.size();
 
+#if !defined(GEOS_USE_CONSTITUTIVE_MPM_ONLY)
     string_array regionFluidMaterialList = elementRegion.getConstitutiveNames< SingleFluidBase >();
     string_array regionMultiPhaseFluidList = elementRegion.getConstitutiveNames< MultiFluidBase >();
 
@@ -1634,11 +1637,20 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
       regionFluidMaterialList.emplace_back( matName );
     }
     localIndex const numFluids = regionFluidMaterialList.size();
+#else
+    string_array regionFluidMaterialList;
+    localIndex const numFluids = 0;
+#endif
 
+#if !defined(GEOS_USE_CONSTITUTIVE_MPM_ONLY)
     string_array
       fractureContactMaterialList = elementRegion.getConstitutiveNames< FrictionBase >();
 
     localIndex const numContacts = fractureContactMaterialList.size();
+#else
+    string_array fractureContactMaterialList;
+    localIndex const numContacts = 0;
+#endif
 
     string_array
       nullModelMaterialList = elementRegion.getConstitutiveNames< NullModel >();

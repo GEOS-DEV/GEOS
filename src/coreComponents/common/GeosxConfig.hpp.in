@@ -44,6 +44,9 @@
 /// Enables standalone constitutive driver executables/libraries (CMake option GEOS_ENABLE_CONSTITUTIVE_DRIVERS)
 #cmakedefine GEOS_USE_CONSTITUTIVE_DRIVERS
 
+/// Builds only constitutive models required by explicit MPM (CMake option GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY)
+#cmakedefine GEOS_USE_CONSTITUTIVE_MPM_ONLY
+
 /// Enables use of Mathpresso library (CMake option ENABLE_MATHPRESSO)
 #cmakedefine GEOS_USE_MATHPRESSO
 
