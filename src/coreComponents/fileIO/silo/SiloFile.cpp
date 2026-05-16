@@ -45,6 +45,7 @@
 
 #include <sstream>
 #include <algorithm>
+#include <cctype>
 #include <iterator>
 #include <sys/stat.h>
 
@@ -243,6 +244,40 @@ template<> int GetTensorRank< string >()
 
 using namespace constitutive;
 using namespace dataRepository;
+
+namespace
+{
+
+/**
+ * @brief Return true for particle-mapping work arrays that are too large and not useful for Silo plotting.
+ *
+ * This intentionally keeps the filter narrow. It excludes particle shape-function values,
+ * particle shape-function gradients, and mapped-node arrays, but it does not exclude other
+ * scientifically useful gradients such as particleDamageGradient or particleDeformationGradient.
+ */
+bool isParticleMappingAuxiliaryField( string const & fieldName )
+{
+  string lowerName = fieldName;
+  std::transform( lowerName.begin(), lowerName.end(), lowerName.begin(),
+                  []( unsigned char c )
+                  {
+                    return static_cast< char >( std::tolower( c ) );
+                  } );
+
+  bool const isShapeFunctionField =
+    lowerName.find( "shapefunction" ) != string::npos ||
+    lowerName.find( "shape_function" ) != string::npos ||
+    lowerName.find( "dndx" ) != string::npos ||
+    lowerName.find( "dn_dx" ) != string::npos;
+
+  bool const isMappedNodeField =
+    lowerName.find( "mapped" ) != string::npos &&
+    lowerName.find( "node" ) != string::npos;
+
+  return isShapeFunctionField || isMappedNodeField;
+}
+
+} // namespace
 
 // *********************************************************************************************************************
 /// Default Constructor
@@ -1368,9 +1403,23 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
     m_requireFieldRegistrationCheck = false;
   }
 
-  // Preserve the legacy Silo behavior for mesh body 0. This writes the
-  // background-grid side of the output using the existing object names.
-  writeMeshLevel( primaryMesh, cycleNum, problemTime, isRestart );
+  // Preserve the legacy Silo behavior for mesh body 0 only when some
+  // background-grid output is requested. This makes XML options such as
+  // writeCellElementMesh="0", writeFaceElementMesh="0", writeEdgeMesh="0",
+  // and writeFEMFaces="0" act as a true particle-only Silo output path.
+  // Without this guard, writeMeshLevel() still writes CellRegion1_ElementFields,
+  // which can trigger DBMkDir/DBSetDir failures on long MPM runs and also
+  // creates unwanted background-grid objects in VisIt.
+  bool const writePrimaryMeshBody =
+    ( m_writeCellElementMesh != 0 ) ||
+    ( m_writeFaceElementMesh != 0 ) ||
+    ( m_writeFaceMesh != 0 ) ||
+    ( m_writeEdgeMesh != 0 );
+
+  if( writePrimaryMeshBody )
+  {
+    writeMeshLevel( primaryMesh, cycleNum, problemTime, isRestart );
+  }
 
   // Write particle-domain meshes from non-primary mesh bodies. Do not call
   // writeMeshLevel() on these bodies because that can create duplicate objects
@@ -1844,9 +1893,10 @@ void SiloFile::writeParticleRegionSilo( ParticleRegionBase const & particleRegio
     {
       WrapperBase const & wrapper = *wrapperIter.second;
 
-      if( isFieldPlotEnabled( wrapper ) )
+      string const & fieldName = wrapper.getName();
+
+      if( isFieldPlotEnabled( wrapper ) && !isParticleMappingAuxiliaryField( fieldName ) )
       {
-        string const & fieldName = wrapper.getName();
         viewPointers[psr].get_inserted( fieldName ) = &wrapper;
 
         types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
@@ -2016,21 +2066,24 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
     m_requireFieldRegistrationCheck = false;
   }
 
-  elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
+  if( m_writeCellElementMesh != 0 || m_writeFaceElementMesh != 0 )
   {
-    string const & regionName = elemRegion.getName();
+    elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
+    {
+      string const & regionName = elemRegion.getName();
 
-    writeElementMesh( elemRegion,
-                      nodeManager,
-                      regionName,
-                      numNodes,
-                      coords,
-                      nodeManager.localToGlobalMap().data(),
-                      ghostNodeFlag.data(),
-                      cycleNum,
-                      problemTime,
-                      writeArbitraryPolygon );
-  } );
+      writeElementMesh( elemRegion,
+                        nodeManager,
+                        regionName,
+                        numNodes,
+                        coords,
+                        nodeManager.localToGlobalMap().data(),
+                        ghostNodeFlag.data(),
+                        cycleNum,
+                        problemTime,
+                        writeArbitraryPolygon );
+    } );
+  }
 
   writeParticleRegions( particleManager,
                         cycleNum,
