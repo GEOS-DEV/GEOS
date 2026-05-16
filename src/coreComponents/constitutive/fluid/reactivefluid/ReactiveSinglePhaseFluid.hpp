@@ -113,6 +113,8 @@ public:
 
   integer numKineticReactions() const { return m_numKineticReactions; }
 
+  real64 solventDensity() const { return m_solventDensity; }
+
   /**
    * @brief Kernel wrapper class for ReactiveSinglePhaseFluid.
    */
@@ -365,6 +367,8 @@ protected:
   array4d< real64, constitutive::reactivefluid::LAYOUT_SPECIES_DC >  m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations;
 
   ChemicalSystemType m_chemicalSystemType;
+
+  real64 m_solventDensity;
 };
 
 // these aliases are useful in constitutive dispatch
