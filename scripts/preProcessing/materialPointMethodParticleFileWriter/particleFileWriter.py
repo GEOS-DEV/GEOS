@@ -2,22 +2,12 @@
 """
 Created on Wed Mar 1 09:00:00 2017
 
-@author: homel1
-         crook5
+@author: homel1, crook5
 
-Script to automate generation of a GEOSX-MPM input file and particle file
+Script to automate generation of a GEOS-MPM input file and particle file
 based on geometric objects.
-
-Particle file format:
-  |x0|y0|z0|vx|vy|vz|mat|r1x|r1y|r1z|r2x|r2y|r2z|r3x|r3y|r3z|
-
-  - mat# is 0-3 currently, specifying a type of built in material module
-  - group = contact group
-  - the r vectors are center-to-face.
-
-Particle file format depends on specified plotting fields.
-
 """
+
 from __future__ import print_function    # (at top of module)
 from __future__ import division
 from __future__ import unicode_literals
@@ -25,30 +15,37 @@ import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree # nearest neighbor search with KDTree
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import datetime
 import time
 import datetime                               # used for date stamp
 import os                                     # operating sys commands, pwd, etc.
-from subprocess import call                   # lets you call shell commands, i.e. call(["ln", "-s",".","run_dir"])
 import subprocess                             # lets you call msub and get jobid
 import sys                                    # to access command arguments.
+import shutil
 import importlib
+import pathlib
 import random                                 # used to define a random material type
 import pfw_geometryObjects as geom            # this contains all the geometry object functions for pfw
 import math
 import getpass
 import platform
 import difflib
+import argparse
+from typing import Any
+
+parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
+parser.add_argument('input_file', help="PFW input file", type=str)
+args = parser.parse_args()
+
 
 # ============================================================================================
 # MACHINE-SPECIFIC Calculations.
 # ============================================================================================
 
-# List of cores per node of LC (or other) machines.  TODO: allow user to append this in user defs.
+
+# List of cores per node of LC (or other) machines.  
 machineList = {
-  'lassen':44,
+  'tuolumne':96,
   'dane':112,
-  'ruby':56,
   'rzhound':56,
   'tioga':64
 }
@@ -59,10 +56,13 @@ for key, value in machineList.items():
     machine = key
     coresPerNode = value
     # This could be unsafe if someone added a machines name we use elsewhere.
-    # Currently we test if lassen=True for various MPI tasks.
+    # Currently we test if tuolumne=True for various MPI tasks.
     exec(key+'=True')
   else:
     exec(key+'=False')
+
+# Check if machine uses Flux scheduler otherwise assume SLURM
+flux = True if machine == 'tuolumne' else False
 
 # # MPI specific variables
 # there seems to be an issue with mpi4py and subprocess launching 
@@ -71,7 +71,7 @@ for key, value in machineList.items():
 # issues when launching subprocesses from this script, even if no MPI commands are used
 # or if num_ranks=0.
 #
-if lassen:
+if flux:
   rank = 0
   num_ranks = 1
 else:
@@ -80,14 +80,11 @@ else:
   rank = comm.Get_rank()  # gets rank of current process 
   num_ranks = comm.Get_size() # total number of processes
 
-print('running pfw on ',num_ranks,' ranks.  I am rank ',rank)
-
-
-
 
 # ============================================================================================
 # BEGIN FUNCTION DEFINITIONS
 # ============================================================================================
+
 
 #This code calculates the similarity between two strings using the ndiff method from the difflib library. 
 def compute_similarity(input_string, reference_string):
@@ -101,6 +98,7 @@ def compute_similarity(input_string, reference_string):
 # calculates the similarity by subtracting the ratio of the number of deleted characters to the length of the input string from 1
     return 1 - (diff_count / len(input_string))
 
+
 # ============================================================================================
 # END FUNCTION DEFINITIONS
 # ============================================================================================
@@ -111,9 +109,11 @@ def compute_similarity(input_string, reference_string):
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+
 # ===========================================
-# READ FROM USER INPUT FILE
+# READ FROM USER USER DEFS FILE
 # ===========================================
+
 
 username = getpass.getuser()
 userDefsFile = str('userDefs_'+str(username))
@@ -122,26 +122,72 @@ try:
   f = open(userDefsFile+".py")
   # Do something with the file
 except IOError:
-  print("Please create a version of userDefs_OUN.py consistent with your user name and geosx location")
+  print("Please create a version of userDefs_OUN.py consistent with your user name and geos location")
 finally:
   f.close()
 
 userDefs = importlib.import_module(userDefsFile)
 geosPath = userDefs.geosPath
+pfwPath = userDefs.pfwPath # Copy all dependencies from the input file, which should be defined relative to pfwPath
 
-# read timeStamp as argument.  If it's missing give a warning.
-if len(sys.argv) < 2:
-  print("usage : particleFileWriter.py fileName \nYou must specify the fileName as arguments")
-  sys.exit(1)
 
 # inputFile name (strip the extension just in case it was called that way)
-inputFile = (str(sys.argv[1])).replace('.py',"")
+inputFile = args.input_file.replace('.py',"")
 
-# Temporarily check if you want to regenerate the particle file
-generateParticleFile = True
-if len(sys.argv) > 2:
-  generateParticleFile = bool(int(sys.argv[2]))
-print("Generate particle file? ", generateParticleFile)
+
+# ===========================================
+# COPY DEPENDENCIES
+# ===========================================
+# Before importing the input file, we will first check to see if there are 
+# any dependencies that need to be copied to the run directory, other than the
+# standard pfw files.  These will need to be listed in the input file with 
+# the [pfw_dependency] tag.
+dependencyPaths = []
+with open(inputFile+".py","r") as fileText:
+    for line in fileText: 
+        strippedLine = line.replace(" ", "").replace("\n","")
+        if strippedLine.startswith("#[pfw_dependency]"):
+            filePath = pfwPath+"/"+strippedLine[17:]
+            dependencyPaths.append(filePath)
+print("Dependency file paths to be copied: ",dependencyPaths)
+dest = './' # could be './pfw_dependencies' if we wanted to keep them together.
+
+# Copy the files from the dependency list to the run directory
+if rank == 0:
+  from pathlib import Path
+  if not os.path.exists(f'{dest}'):
+      os.makedirs(f'{dest}')
+  for source in dependencyPaths:
+      fileName = os.path.basename(source)
+      # we do a copy and rename because rename is an atomic operation and will ensure copy is
+      # complete before subsequent import_module.
+      shutil.copyfile(source, f'{dest}'+fileName+'.temp')
+      os.rename(f'{dest}'+fileName+'.temp', f'{dest}'+fileName)
+      # This is something to make sure the file is visible to python, defending against
+      # stale metadata on lustre filesystems which resulted in non-deterministic behavior
+      # where the import would sometimes fail even if the file showed as copied.
+        
+        # Wait for all mpi processes to finish generating particles
+      if flux:
+        print('PFW does not support MPI on flux currently')
+      else:
+        comm.Barrier()
+        
+      dst = Path(f'{dest}') / fileName
+      # after your copy operation completes:
+      deadline = time.time() + 5.0  # seconds
+      while time.time() < deadline:
+        if dst.exists() and dst.stat().st_size > 0:
+          break
+        time.sleep(0.05)
+
+# ===========================================
+# READ INPUT FILE AND IMPORT PFW DICTIONARY
+# ===========================================
+# Before importing we clear caches that might store out-dated metadata on the available
+# files, resulting in failure of imports of dependencies within the inputfile.
+importlib.invalidate_caches()
+
 
 #import inputFile as job    # Input parameters in separate file.
 job = importlib.import_module(inputFile)
@@ -164,12 +210,17 @@ PWD = os.getcwd()
 # If a specific variable needs a check before being written to solver string a handle to that function is added as a value in the dictionary below
 # Value contains ( default value, flag to include in xml mpm solver parameter string if not specified or not )
 parameters = { 'runDebug' : ( False, False ),
-               'stopTime' : ( False, False),
+               'runCheckTime' : ( "00:02:00", False ),
+               'outputType' : ("vtk", False),
+               'generateParticleFile': ( True, False ),
+               'runContinuation': (False, False ),
+               'restartJobDir': ('.', False),
+               'restartCycleNum': ( 0, False ),
+               'mCores': ( 1, False ),
+               'mNodes': ( 1, False ), 
                'mBank' : ( None, False ),
                'mWallTime' : ( "00:30:00", False ),
                'mBatch' : ( True, False ),
-               'mCores' : ( 1, False ),
-               'mNodes' : ( 1, False ), 
                'mSubmitJobs' : ( False, False ),
                'autoRestart' : ( False, False ),
                'mPartition' : ( "pbatch", False ),
@@ -212,6 +263,15 @@ parameters = { 'runDebug' : ( False, False ),
                'prescribedBoundaryFTable': ( None, True ),
                'fTable': ( None, True ),
                'fTableInterpType': ( None, True ),
+               'FSubcycles': (None, False),
+               'resetDefGradForFullyDamagedParticles': (None, True),
+               'treatFullyDamagedAsSingleField': (None, True),
+               'plotUnscaledParticles': (None, True),
+               'contactGapCorrection': (None, True),
+               'explicitSurfaceNormalInfluence': (None, True),
+               'useSurfacePositionForContact': (None, True),
+               'disableSurfaceNormalsAndPositionsOnCPDIScaling': (None, True),
+               'separabilityMinDamage': ( 0.5, True ),
                'stressControl': ( None, True ),
                'stressTable': ( None, True ),
                'stressControlKp': ( None, True ),
@@ -223,7 +283,6 @@ parameters = { 'runDebug' : ( False, False ),
                'useEvents': ( None, True ),
                'bodyForce' : ( None, True ),
                'generalizedVortexMMS' : ( None, True ),
-               'debugFlag' : ( None, True ),
                'frictionCoefficient' : ( None, True ),
                'frictionCoefficientTable' : ( None, True ),
                'frictionCoefficientRuleOfMixtures' : ( None, True ),
@@ -231,7 +290,7 @@ parameters = { 'runDebug' : ( False, False ),
                'neighborRadius' : ( None, True ),
                'minParticleJacobian' : ( None, True ),
                'maxParticleJacobian' : ( None, True ), 
-               'debugFlag' : ( None, True ),
+               'logLevel' : ( None, True ),
                'materials' : ( None, False ),
                'materialPropertyString' : ( None, False ),
                'endTime' : ( 1.0, False ),
@@ -250,7 +309,7 @@ parameters = { 'runDebug' : ( False, False ),
                'characteristicTangentialDisplacement' : ( 0.01, True ),
                'maxCohesiveNormalDisplacement' : ( 0.01, True ),
                'maxCohesiveTangentialDisplacement' : ( 0.01, True ),
-               'prescribedBoundaryTransverseVelocities' : ( [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], False ),
+               'prescribedBoundaryTransverseVelocities' : ( [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], True ),
                'particleFileFields' : (["Velocity",  # +3
                                         "MaterialType", # +1
                                         "ContactGroup", # +1
@@ -266,6 +325,7 @@ particleFieldOrder=["Velocity",
                     "Porosity",
                     "Temperature",
                     "StrengthScale",
+                    "CZTag",
                     "RVector",
                     "MaterialDirection",
                     "SurfaceNormal",
@@ -273,11 +333,118 @@ particleFieldOrder=["Velocity",
                     "SurfaceTraction",
                     "ShrinkageFlag"]
 
-
 # New dictionary input approach
 pfw = job.pfw if hasattr(job, 'pfw') else {}
 
+"""
+Normalize a nested dict (pfw) so that converting it to a string does not show
+NumPy dtype wrappers like "float64(...)", "int32(...)", etc.
 
+- Walks dicts, lists/tuples, and NumPy arrays.
+- Converts NumPy scalars (np.generic) to native Python scalars via .item().
+- For object arrays, converts each element similarly.
+- For non-object arrays, converts to nested Python lists of Python scalars.
+- Leaves plain str/int/float/bool/None unchanged.
+"""
+def to_python_scalar(x: Any) -> Any:
+    # NumPy scalar types: np.float64, np.int32, np.bool_, np.str_, etc.
+    if isinstance(x, np.generic):
+        return x.item()
+    return x
+
+
+def normalize_ndarray(a: np.ndarray) -> Any:
+    # If this is an object array, normalize each element recursively
+    if a.dtype == object:
+        out = np.empty(a.shape, dtype=object)
+        it = np.nditer(a, flags=["multi_index", "refs_ok", "zerosize_ok"], op_flags=["readonly"])
+        for x in it:
+            out[it.multi_index] = normalize_no_numpy_wrappers(x.item())
+        return out.tolist()
+
+    # For numeric (or other non-object) arrays, convert to nested lists of Python scalars
+    # .tolist() will produce Python scalars for typical numeric dtypes
+    return a.tolist()
+
+
+def normalize_no_numpy_wrappers(obj: Any) -> Any:
+    """
+    Return a deep-normalized copy of obj, converting NumPy scalars/arrays into
+    Python-native types so str()/repr() won't show numpy dtype constructors.
+    """
+    # Dict
+    if isinstance(obj, dict):
+        return {normalize_no_numpy_wrappers(k): normalize_no_numpy_wrappers(v) for k, v in obj.items()}
+
+    # List / tuple
+    if isinstance(obj, list):
+        return [normalize_no_numpy_wrappers(x) for x in obj]
+    if isinstance(obj, tuple):
+        return tuple(normalize_no_numpy_wrappers(x) for x in obj)
+
+    # NumPy ndarray
+    if isinstance(obj, np.ndarray):
+        return _normalize_ndarray(obj)
+
+    # NumPy scalar
+    obj2 = to_python_scalar(obj)
+    if obj2 is not obj:
+        return normalize_no_numpy_wrappers(obj2)
+
+    # Everything else (str/int/float/bool/None, and unknown objects)
+    return obj
+
+
+def find_numpy_wrappers(obj: Any, path: str = "pfw") -> list[str]:
+    """
+    Scan for NumPy scalars/arrays that are likely to stringify with dtype wrappers
+    (or otherwise indicate NumPy-typed content). Returns paths to hits.
+    """
+    hits: list[str] = []
+
+    if isinstance(obj, np.generic):
+        hits.append(f"{path} (numpy scalar: {type(obj).__name__})")
+        return hits
+
+    if isinstance(obj, np.ndarray):
+        hits.append(f"{path} (ndarray dtype={obj.dtype}, shape={obj.shape})")
+        # If object array, also scan elements
+        if obj.dtype == object:
+            it = np.nditer(obj, flags=["multi_index", "refs_ok", "zerosize_ok"], op_flags=["readonly"])
+            for x in it:
+                idx = it.multi_index
+                hits.extend(find_numpy_wrappers(x.item(), f"{path}[{idx}]"))
+        return hits
+
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            hits.extend(find_numpy_wrappers(k, f"{path}.<key>"))
+            hits.extend(find_numpy_wrappers(v, f"{path}[{k!r}]"))
+        return hits
+
+    if isinstance(obj, list):
+        for i, x in enumerate(obj):
+            hits.extend(find_numpy_wrappers(x, f"{path}[{i}]"))
+        return hits
+
+    if isinstance(obj, tuple):
+        for i, x in enumerate(obj):
+            hits.extend(find_numpy_wrappers(x, f"{path}[{i}]"))
+        return hits
+
+    return hits
+
+print("The pfw dictionary defined in this input file has NumPy dtype wrappers that will be removed")
+for h in find_numpy_wrappers(pfw):
+    print(" -", h)
+
+pfw = normalize_no_numpy_wrappers(pfw)
+
+print("\nAfter editing the following wrappers remain. ")
+for h in find_numpy_wrappers(pfw):
+    print(" -", h)
+
+print("\nHopefully that looks ok.")
 
 tabIndent = 3*"  "  
 parameterStrings = []
@@ -310,7 +477,21 @@ for paramName, paramValue in pfw.items():
       print( paramName + " parameter not found")
 
     parameterStrings.append(tabIndent + paramName + '="' + str(paramValue).replace('[','{').replace(']','}').replace('\'','') + '"' + '\n')
-    
+
+if "dependencies" not in pfw:
+  pfw["dependencies"] = []
+for filePath in dependencyPaths:
+  pfw["dependencies"].append(os.path.basename(filePath))
+print("Dependency files: ",pfw["dependencies"] )
+
+# Check if particleFields contains all necessary particle fields based on specified pfw parameters
+if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in pfw or ('mpmEventsString' in pfw and 'CohesiveZoneReference' in pfw["mpmEventsString"]):
+  if 'SurfaceNormal' not in particleFileFields:
+    particleFileFields.append('SurfaceNormal')
+    print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface normals were not included in particleFileFields. Surface normals are added automatically.')
+  if 'SurfacePosition' not in particleFileFields:
+    particleFileFields.append('SurfacePosition')
+    print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface positions were not included in particleFileFields. Surface positions are added automatically.')
 
 # Remove new line from last parameter to be added (for xml formatting)
 parameterStrings[-1] = parameterStrings[-1].replace('\n','')
@@ -320,7 +501,7 @@ mpmSolverParameterString = ''.join(parameterStrings)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
 
 # Interior Domain
-# The geosx input xml file specifies and xmin,xmax, ni, etc. based on the total domain
+# The GEOS input xml file specifies and xmin,xmax, ni, etc. based on the total domain
 # size (with ghost cells).  The user inputs in the python input file will be physical
 # domain size (interior only) and actual number of grid cells, to make partitioning
 # easier.  here we calculate the true domain extents and particle sizes.
@@ -332,24 +513,29 @@ ppcx = ppcx if ppcx != None else ppc
 ppcy = ppcy if ppcy != None else ppc
 ppcz = ppcz if ppcz != None else ppc
 
- 
+# list of geometry creation objects
+# if objects == None:
+#   objects = job.make_objects()
 
-# User can specify a list of objects or a function that generates objects
-# the latter is prefered if objects are slow to generate (like those requiring
-# voronoi tesselations.  If there are a large number of objects, like for granular
-# systems, it is useful for each rank to only generate the objects it will contain.
-# For this, the user can define a job.make_objects(rankxmin,rankxmax) based on
-# x slices.  TODO: make objects have a construc() method that can be called by
-# pfw, so the list of objects can be generated cheaply and the user doesn't have
-# to worry about rank slicing.
+# Batch parameters for GEOS runs.  An error will result if there are too many cores for
+ 
+# TO DO -- add code for parallel file generation to only construct pfw objects in rank particle slice
+# # User can specify a list of objects or a function that generates objects
+# # the latter is prefered if objects are slow to generate (like those requiring
+# # voronoi tesselations.  If there are a large number of objects, like for granular
+# # systems, it is useful for each rank to only generate the objects it will contain.
+# # For this, the user can define a job.make_objects(rankxmin,rankxmax) based on
+# # x slices.  TODO: make objects have a construc() method that can be called by
+# # pfw, so the list of objects can be generated cheaply and the user doesn't have
+# # to worry about rank slicing.
 if ('objects' in pfw):
   objects = pfw["objects"]
 elif ( hasattr(job, 'make_objects') ):
-# list of geometry creation objects
+  # list of geometry creation objects
   from inspect import signature
   if str(signature(job.make_objects)) == '()':
     # Old version, all ranks construct all objects:
-    objects = job.make_objects(rankxmin,rankxmax)
+    objects = job.make_objects()
   else:
     # This will be used to make objects only be created if their bounding box contains the current
     # ranks slice.
@@ -360,8 +546,9 @@ else:
   # Throw error if no objects defined.  you can still specify objects=[] to run with no objects.
   # but this will error if no objects or make objects function exists in input file.
   print( "You don't have any objects" )
-
+  
 # Batch parameters for GEOSX runs.  An error will result if there are too many cores for
+
 # a low resolution simulation.  If there is insufficient run-time to obtain a signal
 # for a given run, that run will have its results ommited from the Hugoniot analysis.
 mPartition = mPartition if not runDebug else "pdebug" 
@@ -375,7 +562,6 @@ mCores = int(xpar*ypar*zpar)
 mNodes= int(np.ceil(float(mCores)/float(coresPerNode))) 
 print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode)
 
-
 if mBank == None:
   # Get default bank from userdefs
   username = getpass.getuser()
@@ -383,18 +569,14 @@ if mBank == None:
   userDefs = importlib.import_module(userDefsFile)
   mBank = userDefs.defaultBank
 
-
-
-
 [wH,wM,wS]=mWallTime.split(":")
-wallTimeMinutes=int(wH)*60+int(wM)
-if wallTimeMinutes > 60 and runDebug:
+mWallTimeMinutes=int(wH)*60+int(wM)
+if mWallTimeMinutes > 60 and runDebug:
   print("Wall time of debug job exceeded 60 minutes and was reset")
-  wallTimeMinutes = 60
+  mWallTimeMinutes = 60
   mWallTime="01:00:00"
 
-maxRestartTime = wallTimeMinutes*60 - min(wallTimeMinutes,lastRestartBufferInSeconds)
-mWallTimeMinutes=str(wallTimeMinutes)
+maxRestartTime = mWallTimeMinutes*60 - min(mWallTimeMinutes, lastRestartBufferInSeconds)
 
 coreHours = float(int(mCores))*(float(int(wH))+float(int(wM))/60.+float(int(wS))/3600.)
 cpuTimeCost = (23295./2000000.)*coreHours
@@ -407,39 +589,56 @@ if materials == None:
   comm.abort()
 
 matsOrig = materials
+numMats = len(matsOrig)
 mats = str(matsOrig).replace("[",'"{')
 mats = mats.replace("]",'}"')
 mats = mats.replace("'","")
 
+# Gather list of subregions from geometry objects (each subregion constitutes a unique material and particleType ID, regions hold subregions of the same material type)
+subregions_all = []
+for obj in objects:
+  subregions = obj.getSubregions()
+  subregions_all.extend(subregions)
+
 particleTypesPerMat = [set() for m in materials]
+for s in subregions_all:
+  particleTypesPerMat[s[0]].add(s[1])
 
-print('particleTypesPerMat = ',particleTypesPerMat)
+numSubRegions = 0
+for s in particleTypesPerMat:
+  numSubRegions += len(s)
+print("Num subregions:", numSubRegions)
 
-particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(len(materials)) ]# Create list of size materials all ones
+particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(numMats) ]  # Create list of size materials all ones
+
 
 # ============================================================================================
 # ERROR Checking
 # ============================================================================================
+
+
 if rank == 0:
   no_errors = True
 
-  if ( planeStrain and NK != 3):
+  if ( planeStrain == 1 and NK != 3):
     print('nK should = 3 for plane Strain!!')
     no_errors = False
 
-  if ( planeStrain and zpar != 1):
+  if ( planeStrain == 1 and zpar != 1):
     print('zpar should = 1 for plane Strain!!')
     no_errors = False
 
   if not no_errors:
-    if not lassen:
+    if not flux:
       comm.Abort()
     else:
       sys.exit()
 
+
 # ============================================================================================
 # CREATE PARTICLE FILE
 # ============================================================================================
+
 
 timer = time.time()
 particleFileName = 'mpmParticleFile_'+inputFile.replace('pfw_input_',"")
@@ -447,7 +646,7 @@ particleFileName = 'mpmParticleFile_'+inputFile.replace('pfw_input_',"")
 # interior discretizatiom
 nI = NI if periodic[0] else NI-2   # interior grid cells in the x-direction
 nJ = NJ if periodic[1] else NJ-2   # interior grid cells in the y-direction
-nK = NK if periodic[2] else NK-2   # interior grid cells in the z-direction
+nK = NK-2 if planeStrain == 1 or not periodic[2] else NK   # interior grid cells in the z-direction
 
 # grid cell spacing
 dX = (xmax - xmin)/nI
@@ -459,24 +658,24 @@ XMIN = xmin if periodic[0] else xmin - dX
 XMAX = xmax if periodic[0] else xmax + dX
 YMIN = ymin if periodic[1] else ymin - dY
 YMAX = ymax if periodic[1] else ymax + dY
-ZMIN = zmin if periodic[2] else zmin - dZ
-ZMAX = zmax if periodic[2] else zmax + dZ
+ZMIN = zmin - dZ if planeStrain == 1 or not periodic[2] else zmin
+ZMAX = zmax + dZ if planeStrain == 1 or not periodic[2] else zmax
 
 # particles in each direction
 ni = ppcx*nI
 nj = ppcy*nJ
-nk = 1 if planeStrain else ppcz*nK
+nk = 1 if planeStrain == 1 else ppcz*nK
 
 # particle dimensions
 dx = dX/ppcx
 dy = dY/ppcy
-dz = dZ if planeStrain else dZ/ppcz
-
+dz = dZ if planeStrain == 1 else dZ/ppcz
 
 # Sum particle volume to compute volume fraction.
 particleVolume = 0.
 domainVolume = ( pfw["xmax"] - pfw["xmin"] )*( pfw["ymax"] - pfw["ymin"] )*( pfw["zmax"] - pfw["zmin"] ) 
 
+generateParticleFile = generateParticleFile if not runContinuation else False
 if generateParticleFile:
   print('Writing particle file...')
 
@@ -486,8 +685,8 @@ if generateParticleFile:
   rank_particleFileName = particleFileName + '_' + str(rank)
   particleFile = open(rank_particleFileName, 'w')
 
-  if(planeStrain):
-    surfaceDepth = np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
+  if planeStrain == 1:
+    surfaceDepth = 1.2*np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy) #np.sqrt(dX*dX + dY*dY) / min(ppcx, ppcy)
   else:
     surfaceDepth = np.sqrt(dX*dX + dY*dY + dZ*dZ) / min(ppcx, min( ppcy, ppcz))
 
@@ -500,7 +699,7 @@ if generateParticleFile:
   for p in range(ypar):
     jpc[p] = np.ceil( (p+0.5)*ppcy*NJ/ypar ) - ppcy
   for p in range(zpar):
-    if planeStrain:
+    if planeStrain == 1:
       kpc[p] = 1
     else:
       kpc[p] = np.ceil( (p+0.5)*ppcz*NK/zpar ) - ppcz
@@ -512,16 +711,14 @@ if generateParticleFile:
 
     # loop through domain and fill particles.
 
-    print("ni=",ni,"nj=",nj,",nk=",nk)
+    print("ni =",ni,", nj =",nj,", nk =",nk)
 
   # Make sure no errors are detected on rank 0 before proceeding with particle generation
-  if not lassen:
+  if not flux:
     comm.Barrier()
 
   max_num_particles = ni*nj*nk
   
-
-
   n_p = 0
   for i in range(1+math.ceil(ni*rank/num_ranks), math.ceil(ni*(rank+1)/num_ranks)+1):
     print('creating files, row',i,'/',ni,', estimated time remaining = ',(ni-i)/i*(time.time()-timer),'s')
@@ -560,7 +757,7 @@ if generateParticleFile:
                 if hasattr(object, 'getVelocity'):
                   velocity = object.getVelocity( pt )
                 else:
-                  velocity = object.v( object, pt ) if callable( object.v ) else object.v
+                  velocity = object.vel( object, pt ) if callable( object.vel ) else object.vel
 
               if "Damage" in particleFileFields:
                 # set the particle damage to be the object damage unless
@@ -594,16 +791,15 @@ if generateParticleFile:
                 else: # temperature is constant for the object:
                   temperature = object.temperature(object, pt ) if callable( object.temperature ) else object.temperature
 
-
               # Particle Surface Flags:
               #  enum struct SurfaceFlag : integer
               #  {
               #    0: Interior,
               #    1: FullyDamaged,
               #    2: Surface,
-              #    3: Cohesive    
+              #    3: Cohesive   
+              #    4: Damaged Cohesive 
               #  };
-
 
               if "SurfaceFlag" in particleFileFields:
                 # Surface flags need to be 2 for polymer model to not crash
@@ -615,7 +811,10 @@ if generateParticleFile:
                 
               surfaceNormal = np.array([0.0, 0.0, 0.0])
               if "SurfaceNormal" in particleFileFields and surfaceFlag != 0:
-                surfaceNormal = object.getSurfaceNormal( pt )
+                surfaceNormal = np.array(object.getSurfaceNormal( pt ))
+                
+                if (np.linalg.norm(surfaceNormal) < 0.0001 ):
+                  print("Near zero surface normal specfied for surface flagged particle.")
 
               surfaceTraction = np.array([0.0,0.0,0.0])  
               if "SurfaceTraction" in particleFileFields and surfaceFlag != 0:
@@ -663,6 +862,16 @@ if generateParticleFile:
                       strengthScale = object.strengthScale( object, pt ) if callable(object.strengthScale) else object.strengthScale
                     else:
                       strengthScale = 1.0
+              
+              czTag = 0
+              if "CZTag" in particleFileFields and surfaceFlag == 3:
+                if hasattr(object,'getCZTag'):
+                    czTag = object.getCZTag( pt )
+                else:
+                    if hasattr(object, 'getCZTag'):
+                      czTag = object.getCZTag( object, pt ) if callable(object.getCZTag) else object.getCZTag
+                    else:
+                      czTag = 0
 
               # Check for fields with None values
               # Get the particle type, default is CPDI
@@ -718,17 +927,19 @@ if generateParticleFile:
                 print("Strengthscale value from", object.name,"was None!")
                 sys.exit(0)
 
-              particleTypesPerMat[mat].add( particleType )
+              if "CZTag" in particleFileFields and czTag == None:
+                print("CZTag value from", object.name, "was None!")
+                sys.exit(0)
 
-              #print('mat = ',mat,', particleTypesPerMat = ',particleTypesPerMat)
+              # particleTypesPerMat[mat].add( particleType )
 
               dxr = dx/particleRefinement[mat]
               dyr = dy/particleRefinement[mat]
-              dzr = dz if planeStrain else dz/particleRefinement[mat]
+              dzr = dz if planeStrain == 1 else dz/particleRefinement[mat]
               
               for ri in range(particleRefinement[mat]):
                 for rj in range(particleRefinement[mat]):
-                  for rk in range( ( 1 if planeStrain else particleRefinement[mat] ) ):
+                  for rk in range( ( 1 if planeStrain == 1 else particleRefinement[mat] ) ):
                     xr = x - 0.5*dx + (ri + 0.5)*dxr
                     yr = y - 0.5*dy + (rj + 0.5)*dyr
                     zr = z - 0.5*dz + (rk + 0.5)*dzr
@@ -749,7 +960,7 @@ if generateParticleFile:
                       if "Velocity" in particleFileFields:
                         pString = pString + delim + str(velocity[0]) + delim \
                                                   + str(velocity[1]) + delim \
-                                                  + str(velocity[2])
+                                                  + str(0.0 if planeStrain == 1 else velocity[2])
 
                       if "MaterialType" in particleFileFields:
                         pString = pString + delim + str(mat)
@@ -772,6 +983,9 @@ if generateParticleFile:
                       if "StrengthScale" in particleFileFields:
                         pString = pString + delim + str(strengthScale)
 
+                      if "CZTag" in particleFileFields:
+                        pString = pString + delim + str(czTag)
+
                       if "RVector" in particleFileFields:
                         pString = pString + delim + str(dxr*0.5) + delim \
                                                   + str(0) + delim \
@@ -784,35 +998,45 @@ if generateParticleFile:
                                                   + str(dzr*0.5)
 
                       if "MaterialDirection" in particleFileFields:
-                        pString = pString + delim + str(matDir[0][0]) + delim \
-                                                  + str(matDir[0][1]) + delim \
-                                                  + str(matDir[0][2]) 
-
-                      # if "MaterialDirection" in particleFileFields:
-                      #   pString = pString + delim + str(matDir[0][0]) + delim \
-                      #                             + str(matDir[0][1]) + delim \
-                      #                             + str(matDir[0][2]) + delim \
-                      #                             + str(matDir[1][0]) + delim \
-                      #                             + str(matDir[1][1]) + delim \
-                      #                             + str(matDir[1][2]) + delim \
-                      #                             + str(matDir[2][0]) + delim \
-                      #                             + str(matDir[2][1]) + delim \
-                      #                             + str(matDir[2][2])
+                        if (np.array(matDir).size == 9):
+                          pString = pString + delim + str(matDir[0][0]) + delim \
+                                                    + str(matDir[0][1]) + delim \
+                                                    + str(matDir[0][2]) + delim \
+                                                    + str(matDir[1][0]) + delim \
+                                                    + str(matDir[1][1]) + delim \
+                                                    + str(matDir[1][2]) + delim \
+                                                    + str(matDir[2][0]) + delim \
+                                                    + str(matDir[2][1]) + delim \
+                                                    + str(matDir[2][2])
+                        elif (np.array(matDir).size == 3):  # fill the 2nd and 3rd row with nonsense since unspecified.  BEWARE!!!
+                          pString = pString + delim + str(matDir[0]) + delim \
+                                                    + str(matDir[1]) + delim \
+                                                    + str(matDir[2]) + delim + "0" + delim + "1" + delim + "0" + delim + "0" + delim + "0" + delim + "1"
+                        else:
+                          print("matDir isn't the size 3 or 3x3")
 
                       if "SurfaceNormal" in particleFileFields:
-                        pString = pString + delim + str(surfaceNormal[0]) + delim \
+                        if ( planeStrain == 1 and surfaceNormal[2] != 0.0 ):
+                          # enforce plane strain and renormalize:
+                          norm = float( np.sqrt( surfaceNormal[0]*surfaceNormal[0] + surfaceNormal[1]*surfaceNormal[1] ) )
+                          pString = pString + delim + str(surfaceNormal[0]/norm) + delim \
+                                            + str(surfaceNormal[1]/norm) + delim \
+                                            + str(0.0)                     
+                        else:
+                          # assume normal is alread unit vector:
+                          pString = pString + delim + str(surfaceNormal[0]) + delim \
                                                   + str(surfaceNormal[1]) + delim \
-                                                  + str(surfaceNormal[2])
+                                            + str(surfaceNormal[2]) 
                       
                       if "SurfacePosition" in particleFileFields:
                         pString = pString + delim + str(surfacePosition[0]) + delim \
                                                   + str(surfacePosition[1]) + delim \
-                                                  + str(surfacePosition[2])
+                                                  + str(0.0 if planeStrain == 1 else surfacePosition[2])
 
                       if "SurfaceTraction" in particleFileFields:
                         pString = pString + delim + str(surfaceTraction[0]) + delim \
                                                   + str(surfaceTraction[1]) + delim \
-                                                  + str(surfaceTraction[2])
+                                                  + str(0.0 if planeStrain == 1 else surfaceTraction[2])
 
                       if "ShrinkageFlag" in particleFileFields:
                         pString = pString + delim + str( object.flag if hasattr( object, 'flag') else 0)
@@ -823,8 +1047,8 @@ if generateParticleFile:
   particleFile.close()
 
   # Wait for all mpi processes to finish generating particles
-  if lassen:
-    print('Lassen does not mpi')
+  if flux:
+    print('PFW does not support MPI on flux currently')
   else:
     comm.Barrier()
 
@@ -838,10 +1062,10 @@ if generateParticleFile:
       for field in particleFieldOrder:
         fieldString = field
 
-        if field == "Velocity" or field == "SurfaceNormal" or field == "SurfacePosition" or field == "SurfaceTraction" or field == "MaterialDirection":
+        if field == "Velocity" or field == "SurfaceNormal" or field == "SurfacePosition" or field == "SurfaceTraction":
           fieldString = field + "X" + delim + field + "Y" + delim + field + "Z"
 
-        if field == "RVector":
+        if field == "RVector" or field == "MaterialDirection":
           fieldString =  field + "XX" + delim + \
                          field + "XY" + delim + \
                          field + "XZ" + delim + \
@@ -851,20 +1075,6 @@ if generateParticleFile:
                          field + "ZX" + delim + \
                          field + "ZY" + delim + \
                          field + "ZZ"
-
-        # if field == "Velocity" or field == "SurfaceNormal" or field == "SurfacePosition":
-        #   fieldString = field + "X" + delim + field + "Y" + delim + field + "Z"
-
-        # if field == "RVector" or field == "MaterialDirection":
-        #   fieldString =  field + "XX" + delim + \
-        #                  field + "XY" + delim + \
-        #                  field + "XZ" + delim + \
-        #                  field + "YX" + delim + \
-        #                  field + "YY" + delim + \
-        #                  field + "YZ" + delim + \
-        #                  field + "ZX" + delim + \
-        #                  field + "ZY" + delim + \
-        #                  field + "ZZ"
 
         columnNames = columnNames + delim + fieldString
 
@@ -877,32 +1087,80 @@ if generateParticleFile:
             n_p = n_p + 1
             # replace the per-rank id with an ordered global particle id:
             outfile.write(str(n_p) + ' ' + line.split(delim, 1)[1])
-        call(["rm",particleFileName+'_'+str(r)],cwd=PWD)
+        subprocess.call(["rm",particleFileName+'_'+str(r)],cwd=PWD)
 
-    print('Created n_p = ',n_p,' particles in t = ',time.time()-timer)
-    print('Particle volume = ',particleVolume,', Domain volume = ',domainVolume )
-    print('Particle volume fraction = ',particleVolume/domainVolume )
-
-# only create the restart event if a restart interval was specified.
-if (restartInterval == None):
-  restartEventString = """
-  """
+    print('Created n_p =',n_p,' particles in t = ',time.time()-timer)
+    print('Particle volume =',particleVolume,', Domain volume = ',domainVolume )
+    print('Particle volume fraction =', particleVolume/domainVolume )
+    print('Average number of particles per rank =', n_p/mCores)
 else:
-  restartEventString = """ <PeriodicEvent
-      name="restart"
-      timeFrequency=""" + '"' + str( restartInterval ) + '"' + """
-      target="/Outputs/restartOutput"/> 
-    <HaltEvent
-      maxRuntime=""" + '"' + str( maxRestartTime ) + '"' + """/>
-  """
+  print('Skipping particle file generation...')
+
+# ===========================================
+# CONTINUATION OF PREVIOUS JOB
+# ===========================================
+
+restartStr = ''
+if runContinuation:
+  restart_job_dir = job.pfw["restartJobDir"]
+  restart_cycle_num = job.pfw["restartCycleNum"]
+
+  assert os.path.isdir(restart_job_dir), "Could not find job directory with name:" + restart_job_dir
+
+  path = pathlib.Path(restart_job_dir)
+  # runLocation = path.parent
+  jobName = path.name
+
+  restart_file = 'mpm_' + jobName + '_restart_' + '{:09d}'.format(restart_cycle_num)
+
+  restartStr = '-r ' + restart_file 
+
+  shutil.copytree(os.path.join(path, restart_file), restart_file)
+  shutil.copy(os.path.join(path, restart_file + '.root'),  '.')
+
+  # Copy particle file and rename even though it will no tbe used since we are reading from restart file
+  shutil.copy(os.path.join(path, 'mpmParticleFile_' + jobName), particleFileName )
+
+# Select between default vst or new silo output option
+if outputType == 'vtk':
+  periodicEventOutputString = 'vtkOutput'
+  outputBlockOutputString="""<VTK
+    name="vtkOutput"
+    format="ascii"/>"""
+elif outputType == 'silo':
+  if "parallelThreads" not in pfw:
+    pfw["parallelThreads"] = min( mCores , coresPerNode ) 
+  periodicEventOutputString = 'siloOutput'
+  outputBlockOutputString=f"""<Silo
+    name="siloOutput"
+    plotFileRoot="mpm_cpdi"
+    plotLevel="1"
+    parallelThreads="{pfw["parallelThreads"]}"
+    writeCellElementMesh="1"
+    writeFaceElementMesh="0"
+    writeEdgeMesh="0"
+    writeFEMFaces="0"/>"""
+else:
+  print( 'pfw["outputType"] should be "vtk" or "silo"' )
 
 # ===========================================
 # CREATE INPUT FILE
 # ===========================================
-# print('rank = ',rank)
-# print('matsOrig = ',matsOrig)
-# print('particleTypesPerMat = ',particleTypesPerMat)
 
+# # Gather particleTypesPerMat from each process
+# recv_particleTypesPerMat = None
+# for r in range(1,num_ranks):
+#   for m in range(numMats):
+#     if rank == r:
+#       comm.send(particleTypesPerMat[m], dest=0, tag=11)
+#       # print("Rank 0 sent data: ", particleTypesPerMat[m])
+#     elif rank == 0:
+#       data = comm.recv(source=r, tag=11)
+#       for d in data:
+#         particleTypesPerMat[m].add(d)
+#       # print("Rank", r, "received data: ", data)
+
+print('rank = ',rank)
 if rank == 0:
   print('Writing input file...')
 
@@ -911,7 +1169,6 @@ if rank == 0:
   particleRegionString=""
   targetRegionsString=""
   blockIndex = 0
-  numMats = len(matsOrig)
   for i in range(numMats):
     numTypes = len(particleTypesPerMat[i])
     types = list(particleTypesPerMat[i])
@@ -933,10 +1190,11 @@ if rank == 0:
         print("Unknown particle type!")
         sys.exit(0)
       
-      if j < numTypes-1:
+      if j < numTypes - 1:
         regionBlocksStr+=", "
-      if i < numMats-1:
+      if blockIndex < numSubRegions - 1:
         particleTypeString+=", "
+
       blockIndex += 1
     
     particleBlockString += regionBlocksStr
@@ -944,62 +1202,63 @@ if rank == 0:
     if i < numMats-1:
       particleBlockString+=", "
       targetRegionsString+=", "
-    particleRegionString+="""
+    particleRegionString+=f"""
     <ParticleRegion
-        name="ParticleRegion"""+str(i+1)+""""
+        name="ParticleRegion{i+1}"
         meshBody="particles"
-        particleBlocks="{ """+ regionBlocksStr + """ }"
-        materialList="{ """ + matsOrig[i] + """ }"/>"""
+        particleBlocks="{{ {regionBlocksStr} }}"
+        materialList="{{ {matsOrig[i]} }}"/>"""
 
-  geosxInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
-  geosxInputFile = open(geosxInputFileName, 'w')
+  geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
+  geosInputFile = open(geosInputFileName, 'w')
 
-  geosxInputFileString = """<?xml version="1.0" ?>
+  geosInputFileString = f"""<?xml version="1.0" ?>
 <!-- 
-srun -p pdebug -n """+str(mNodes)+""" """+geosPath+""" -i """+geosxInputFileName+"""
-srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+"""
+srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 -->
 <Problem>
 
   <Mesh>
     <InternalMesh
       name="backgroundGrid"
-      elementTypes="{ C3D8 }"
-      xCoords=""" + '"{' + str(XMIN) + "," + str(XMAX) + '}"' + """
-      yCoords=""" + '"{' + str(YMIN) + "," + str(YMAX) + '}"' + """
-      zCoords=""" + '"{' + str(ZMIN) + "," + str(ZMAX) + '}"' + """
-      nx="""+'"{'+str(NI)+'}"'+"""
-      ny="""+'"{'+str(NJ)+'}"'+"""
-      nz="""+'"{'+str(NK)+'}"'+"""
-      periodic=""" + '"{ ' + str(int(periodic[0])) + ', ' + str(int(periodic[1])) + ', ' + str(int(periodic[2])) + '}"' + """
-      cellBlockNames="{ cb1 }"/>
+      elementTypes="{{ C3D8 }}"
+      xCoords="{{ {XMIN}, {XMAX} }}"
+      yCoords="{{ {YMIN}, {YMAX} }}"
+      zCoords="{{ {ZMIN}, {ZMAX} }}"
+      nx="{{ {NI} }}"
+      ny="{{ {NJ} }}"
+      nz="{{ {NK} }}"
+      periodic="{{ {int(periodic[0])}, {int(periodic[1])}, {int(False if planeStrain == 1 else periodic[2])} }}"
+      cellBlockNames="{{ cb1 }}"/>
       
     <ParticleMesh
       name="particles"
-      particleFile="""+'"'+particleFileName+'"'+"""
-      particleBlockNames="{ """+particleBlockString+""" }"
-      particleTypes="{ """+particleTypeString+""" }"/>
+      particleFile="{particleFileName}"
+      particleBlockNames="{{ {particleBlockString} }}"
+      particleTypes="{{ {particleTypeString} }}"/>
   </Mesh>
 
   <ElementRegions>
     <CellElementRegion
       name="CellRegion1"
       meshBody="backgroundGrid"
-      cellBlocks="{ cb1 }"
-      materialList="{ null }"/>
+      cellBlocks="{{ cb1 }}"
+      materialList="{{ null }}"/>
   </ElementRegions>
 
-  <ParticleRegions>"""+particleRegionString+"""
+  <ParticleRegions>{particleRegionString}
   </ParticleRegions>
 
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+    gravityVector="{{ 0.0, 0.0, 0.0 }}">
     <SolidMechanics_MPM
       name="mpmsolve"
       discretization="FE1"
-      targetRegions="{ backgroundGrid/CellRegion1, """+targetRegionsString+""" }"
-"""+mpmSolverParameterString+""">
-""" + mpmEventsString.replace('\n', '\n      ') + """
+      targetRegions="{{ backgroundGrid/CellRegion1, {targetRegionsString} }}"
+{mpmSolverParameterString}>""" + ( f"""
+      <MPMEvents>
+      {mpmEventsString}
+      </MPMEvents>""" if mpmEventsString else "" ) + f"""
     </SolidMechanics_MPM>
   </Solvers>
 
@@ -1009,19 +1268,24 @@ srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+"""
       defaultDensity="1000"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"/>
-    """ + str(materialPropertyString).replace('\n','\n    ') + """
+{materialPropertyString}
   </Constitutive>
 
   <Events
-    maxTime="""+'"'+str(endTime)+'"'+""">
+    maxTime="{endTime}">
     <PeriodicEvent
       name="solverApplications"
       target="/Solvers/mpmsolve"/>
     <PeriodicEvent
       name="outputs"
-      timeFrequency="""+'"'+str( plotInterval )+'"'+"""
-      target="/Outputs/vtkOutput"/>
-"""+restartEventString+"""
+      timeFrequency="{plotInterval}"
+      target="/Outputs/{periodicEventOutputString}"/>
+    <PeriodicEvent
+      name="restart"
+      timeFrequency="{restartInterval}"
+      target="/Outputs/restartOutput"/> 
+    <HaltEvent
+      maxRuntime="{maxRestartTime}"/>
   </Events>
 
   <NumericalMethods>
@@ -1033,97 +1297,108 @@ srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+"""
   </NumericalMethods>
 
   <Outputs>
-    <VTK
-      name="vtkOutput"
-      format="ascii"/>
+    {outputBlockOutputString}
     <Restart
       name="restartOutput"/>
   </Outputs>
 
-</Problem>
+</Problem>"""
 
-"""
-
-  geosxInputFile.write(geosxInputFileString)
-  geosxInputFile.close()
-
-
+  geosInputFile.write(geosInputFileString)
+  geosInputFile.close()
 
 
   # ===========================================
-  #  Make a SLURM script to run GEOSX.
+  #  Make a SLURM script to run GEOS.
   # ===========================================
-
   # This will run the job.
   # #SBATCH --export=NONE is needed because we are using mpi4py, which modifies
   # the environment, and that somehow gets passed through slurm and messes
   # up the srun command, causing it to hang unless we include this line.
+  #
+  # There was a failure was caused by PSM2 trying to use a kernel-assisted/CMA 
+  # shared-memory transfer path that is broken or unavailable on that allocation, 
+  # node, permission context, or runtime configuration.
+  # It happened only in parallel, and was fixed by including
+  #
+  # export MV2_SMP_USE_CMA=0
+  # export PSM2_KASSIST_MODE=none
+  #
+  # The cause is unknown.
+  
 
-  if lassen:
-    slurmScript = """#!/bin/bash
-### LSF syntax
-#BSUB -nnodes """+str(mNodes)+""" #number of nodes
-#BSUB -W """+mWallTimeMinutes+""" #walltime in minutes
-#BSUB -G """+mBank+""" #account
-#BSUB -J """+str(inputFile+"_RUN")+""" #name of job
-#BSUB -q """ + mPartition +  """ #queue to use
+  if flux:
+    slurmScript = f"""#!/bin/bash
+
+#flux: --job-name={jobName}
+#flux: -N {mNodes:d} # number of nodes
+#flux: -t {mWallTimeMinutes:d} # walltime in minutes
+#flux: -B {mBank} # account
+#flux: -q {mPartition} # queue to use
+#flux: -l # Add task rank prefixes to each line of output.
+
+export MPICH_GPU_SUPPORT_ENABLED=1
+export HSA_XNACK=1
 
 echo "Launching jsrun command..."
-jsrun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """
+export OMP_NUM_THREADS=1
+flux run --env=* -N{mNodes:d} -n{mCores:d} {geosPath} -i {geosInputFileName} -x {xpar:d} -y {ypar:d} -z {zpar:d} {restartStr}
 echo "srun command has completed, good bye."
 """
-    fileName = timeStamp+"_runGEOSX.sh"
+    fileName = timeStamp+"_runGEOS.sh"
     file = open(fileName, 'w')
     file.write(slurmScript)
     file.close()
   else:  
-    slurmScript = """#!/bin/bash
-#SBATCH -t """+mWallTime+"""
-#SBATCH -N """+str(mNodes)+"""
-#SBATCH -A """+mBank+"""
+    slurmScript = f"""#!/bin/bash
+#SBATCH -t {mWallTime}
+#SBATCH -N {mNodes:d}
+#SBATCH -n {mCores:d}
+#SBATCH -A {mBank}
 #SBATCH --export=NONE
-#SBATCH -p """+ mPartition + """
+#SBATCH -p {mPartition}
 
 echo "Launching srun command..."
-srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """
+export OMP_NUM_THREADS=1
+srun --export=ALL,MV2_SMP_USE_CMA=0,PSM2_KASSIST_MODE=none -n {mCores:d} {geosPath} -i {geosInputFileName} -x {xpar:d} -y {ypar:d} -z {zpar:d} {restartStr}
 echo "srun command has completed, good bye."
 """
-    fileName = timeStamp+"_runGEOSX.sh"
-    file = open(fileName, 'w')
-    file.write(slurmScript)
-    file.close()
+
+  fileName = f"{timeStamp}_runGEOS.sh"
+  with open(fileName, 'w') as file:
+      file.write(slurmScript)
 
   if mSubmitJobs:
+      print(f'submitting job: {fileName} using Popen')
+      if flux:
+          output = subprocess.Popen(["flux batch", fileName], stdout=subprocess.PIPE).communicate()[0]
+      else:
+          output = subprocess.Popen(["sbatch", fileName], stdout=subprocess.PIPE).communicate()[0]
 
-    print('submitting job: '+fileName+' using Popen')
-    if lassen:
-      output = subprocess.Popen(["bsub", fileName], stdout=subprocess.PIPE).communicate()[0]
-    else:
-      output = subprocess.Popen(["sbatch", fileName], stdout=subprocess.PIPE).communicate()[0]
+      output = str(output, 'UTF8').strip('Submitted batch job ')
+      jobID = output.strip()
+      print(f'Submitted job with ID = {jobID}')
 
-    output = str(output, 'UTF8')
-    output = output.strip('Submitted batch job ')
-    jobID = output.strip()
-    print('Submitted job with ID = ',output.strip())
-
-  if ( mSubmitJobs and autoRestart ):
-    if lassen:
-      print('XXXX  autoRestart not supported with lassen')
-    print('Auto restart enabled')
-    print('run_check output = ',output.strip())
-    slurmScript = """#!/bin/bash
-#SBATCH -t 00:02:00
+  if mSubmitJobs and autoRestart:
+      if flux:
+          print('XXXX  autoRestart not supported with flux scheduler')
+      print('Auto restart enabled')
+      print(f'run_check output = {output.strip()}')
+      
+      slurmScript = f"""#!/bin/bash
+#SBATCH -t {runCheckTime}
 #SBATCH -N 1
-#SBATCH -p """+ mPartition +"""
-#SBATCH -A """+mBank+"""
-#SBATCH --dependency=afterany:"""+jobID+"""
-echo "launching pfw_check script..."
-python3 pfw_check.py """+inputFile+""" """+jobID+"""
-echo "pfw_check script has completed, good bye."
+#SBATCH -p {mPartition}
+#SBATCH -A {mBank}
+#SBATCH --dependency=afterany:{jobID}
 
+echo "launching pfw_check script..."
+python3 pfw_check.py {inputFile} {jobID}
+echo "pfw_check script has completed, good bye."
 """
-    fileName = timeStamp+"_runCheck.sh"
-    file = open(fileName, 'w')
-    file.write(slurmScript)
-    file.close()    
-    call(["sbatch",fileName], cwd=PWD)
+
+      fileName = f"{timeStamp}_runCheck.sh"
+      with open(fileName, 'w') as file:
+          file.write(slurmScript)
+
+      subprocess.call(["sbatch", fileName], cwd=PWD)

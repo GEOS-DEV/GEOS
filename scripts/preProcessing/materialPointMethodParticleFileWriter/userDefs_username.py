@@ -5,6 +5,9 @@
 import platform
 lassen = 'lassen' in platform.node()
 
+# Paths used to copy dependencies.
+pfwPath = "~/particleFileWriter"  # absolute path of the particleFileWriter directory
+
 #Should the particleStressHistory be in a sbatch wrapper so if the os hangs it isn't using job time
   
 if lassen:

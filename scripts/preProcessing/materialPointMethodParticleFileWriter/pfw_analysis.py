@@ -9,10 +9,11 @@ import importlib
 from cycler import cycler
 import logging
 from pfw_geometryObjects import countFileLines
+from typing import List
 import argparse
 
 
-def reverse_readline(filename, buf_size=8192):
+def reverse_readline(filename: str, buf_size: int=8192):
     """A generator that returns the lines of a file in reverse order"""
     with open(filename, 'rb') as fh:
         segment = None
@@ -50,14 +51,14 @@ def reverse_readline(filename, buf_size=8192):
 # =================================================================
 
 
-def has_mpm_file(path):
+def has_mpm_file(path: str):
   for p in os.listdir(path):
-    if re.match(".*pfw_input_.*\.py", p):
+    if re.match(".*pfw_input_.*\\.py", p):
       return True
   return False
 
 
-def format_file_paths(runLocations, paths):
+def format_file_paths(runLocations: List[str], paths: List[str]):
   files = []
   # Base condition path must be a directory, not a file
   for runLocation in runLocations:
@@ -73,8 +74,8 @@ def format_file_paths(runLocations, paths):
   return files
 
 
-def read_from_reaction_file(filename):
-  #First line are the headers so index starts at 1
+def read_from_reaction_file(filename: str):
+  # First line are the headers so index starts at 1
   # time,F00,F11,F22,Rx-,Rx+,Ry-,Ry+,Rz-,Rz+
   react_data = np.genfromtxt(filename, delimiter=',')
   time = DataObj("Time", react_data[1:,0])
@@ -97,7 +98,7 @@ def read_from_reaction_file(filename):
   return time, F00, F11, F22, Lx, Ly, Lz, Rxm, Rxp, Rym, Ryp, Rzm, Rzp
 
 
-def read_from_box_average_file(filename):
+def read_from_box_average_file(filename: str):
   box_data = np.genfromtxt(filename, delimiter=',')
 
   time = DataObj("Time", box_data[1:,0])
@@ -122,7 +123,7 @@ def read_from_box_average_file(filename):
   return time, sxx, syy, szz, sxy, syz, sxz, density, damage, internalEnergy, kineticEnergy, epxx, epyy, epzz, epyz, epxz, epxy, matVol
 
 
-def write_data_to_csv(filename, data_array):
+def write_data_to_csv(filename: str, data_array):
   num_fields = len(data_array)
   headers = []
   num_entries = 0
@@ -149,7 +150,7 @@ def write_data_to_csv(filename, data_array):
         f.write("\n")
 
 
-def write_data_to_console(filename, data_array):
+def write_data_to_console(filename: str, data_array):
   num_fields = len(data_array)
   headers = []
   num_entries = 0
@@ -190,7 +191,7 @@ class Trim:
 
 class RemoveNonMonotonicEntries:
   def __init__(self, x_in):
-    self.x_in = x_in
+    self.x_in = np.copy(x_in)
     self.maxX = 0.0
     self.mask = np.ones(len(self.x_in), dtype=bool)
     for ii,t in enumerate(self.x_in):
@@ -204,7 +205,7 @@ class RemoveNonMonotonicEntries:
 
 
 class MedianFilter:
-  def __init__(self, window_size):
+  def __init__(self, window_size: int=5):
     self.window_size = window_size
 
   # Could probably use numpy matrices to speed this up
@@ -250,7 +251,7 @@ class SubSample:
     #     sys.exit(-1)
     
 
-def compute_domain_strain(F00, F11, F22, engineeringStrain=False):
+def compute_domain_strain(F00, F11, F22, engineeringStrain: bool=False):
   if engineeringStrain:
       exx=F00-1.0
       eyy=F11-1.0
@@ -265,7 +266,7 @@ def compute_domain_strain(F00, F11, F22, engineeringStrain=False):
   return DataObj("exx", exx), DataObj("eyy", eyy), DataObj("ezz", ezz), DataObj("J", J)
 
 
-def compute_domain_stress(Axx0, Ayy0, Azz0, F00, F11, F22, Rxm, Rxp, Rym, Ryp, Rzm, Rzp, engineeringStress=False):
+def compute_domain_stress(Axx0, Ayy0, Azz0, F00, F11, F22, Rxm, Rxp, Rym, Ryp, Rzm, Rzp, engineeringStress: bool=False):
   Ax=Axx0
   Ay=Ayy0
   Az=Azz0
@@ -301,7 +302,7 @@ def compute_pressure(bsxx, bsyy, bszz):
 # =================================================================
 
 
-def lighten_color(color, amount=0.5):
+def lighten_color(color, amount: float=0.5):
     """
     Lightens the given color by multiplying (1-luminosity) by the given amount.
     Input can be matplotlib color string, hex string, or RGB tuple.
@@ -349,7 +350,7 @@ class AnalysisOptions:
 
 
 class MPMJob:
-  def __init__(self, job_dir_path):
+  def __init__(self, job_dir_path: str):
       self.job_dir_path = job_dir_path
       self.job_name = os.path.basename(os.path.normpath(self.job_dir_path))
       self.job_input_file = 'pfw_input_'+ self.job_name + '.py'
@@ -383,14 +384,15 @@ class MPMJob:
       self.hasReactionFile = os.path.isfile(os.path.join(self.job_dir_path, "reactionHistory.csv"))
       self.hasBoxAverageFile = os.path.isfile(os.path.join(self.job_dir_path, "boxAverageHistory.csv"))
 
-      self.domainWidth0 = job.domainWidth
-      self.domainLength0 = job.domainLength
-      self.domainHeight0 = job.domainHeight
-      self.domainVolume0 = self.domainWidth0*self.domainLength0*self.domainHeight0
+      self.domainX0 = job.domainX if hasattr( job, 'domainX' ) else (pfw["xmax"] - pfw["xmin"])
+      self.domainY0 = job.domainY if hasattr( job, 'domainY' ) else (pfw["ymax"] - pfw["ymin"])
+      self.domainZ0 = job.domainZ if hasattr( job, 'domainZ' ) else (pfw["zmax"] - pfw["zmin"])
 
-      self.sampleWidth = job.sampleWidth if hasattr( job, 'sampleWidth' ) else self.domainWidth0
-      self.sampleHeight = job.sampleHeight if hasattr( job, 'sampleHeight' ) else self.domainHeight0
-      self.sampleLength = job.sampleLength if hasattr( job, 'sampleLength' ) else self.domainLength0
+      self.domainVolume0 = self.domainX0*self.domainY0*self.domainZ0
+
+      self.sampleX = job.sampleX if hasattr( job, 'sampleX' ) else self.domainX0
+      self.sampleY = job.sampleY if hasattr( job, 'sampleY' ) else self.domainY0
+      self.sampleZ = job.sampleZ if hasattr( job, 'sampleZ' ) else self.domainZ0
       
       self.periodic = pfw["periodic"] if "periodic" in pfw else [False, False, False]
 
@@ -420,14 +422,14 @@ class MPMJob:
       self.dZ = (self.zmax - self.zmin)/(self.nK * self.ppcz)
       
       # Eventually this should be generalized as an input for different deformation directions
-      self.Axx0 = self.sampleHeight*self.sampleLength
-      self.Ayy0 = self.sampleWidth*self.sampleLength
-      self.Azz0 = self.sampleWidth*self.sampleHeight
-      self.V0 = self.sampleWidth*self.sampleHeight*self.sampleLength
+      self.Axx0 = self.sampleY*self.sampleZ
+      self.Ayy0 = self.sampleX*self.sampleZ
+      self.Azz0 = self.sampleX*self.sampleY
+      self.V0 = self.sampleX*self.sampleY*self.sampleZ
 
       self.numParticles = geom.countFileLines( os.path.join(self.job_dir_path, "mpmParticleFile_" + self.job_name) )
 
-      self.planeStrain = job.planeStrain == 1 if hasattr( job, 'planeStrain' ) else False
+      self.planeStrain = pfw["planeStrain"] == 1 if "planeStrain" in pfw else False
 
       # Report metadata
       print("Meta data read from " + self.job_input_file + ":")
@@ -435,7 +437,7 @@ class MPMJob:
       print("\tDensity =", self.density)
       print("\thasReactionFile? =", self.hasReactionFile)
       print("\thasBoxAverageFile? =", self.hasBoxAverageFile)
-      print("\tInitial Domain (Width, Height, Length) = (",self.domainWidth0,",", self.domainHeight0,",", self.domainLength0,")")
+      print("\tInitial Domain (Width (x), Height (y), Length (z)) = (",self.domainX0,",", self.domainY0,",", self.domainZ0,")")
       print("\tPeriodic? = ", self.periodic)
       print("\tPlaneStrain? =", self.planeStrain)
       print("\tNum Particles =", self.numParticles)     
@@ -485,11 +487,15 @@ class MPMJob:
     self.registerField(DataObj("Bepxz", box_data[1:,15])) # plastic strain xx
     self.registerField(DataObj("Bepxy", box_data[1:,16])) # plastic strain xx
     self.registerField(DataObj("BMatVol", box_data[1:,17])) # material volume
+    self.registerField(DataObj("BTemp", box_data[1:,18])) # temperature
+    self.registerField(DataObj("BF00", box_data[1:,19])) # F00
+    self.registerField(DataObj("BF11", box_data[1:,20])) # F11
+    self.registerField(DataObj("BF22", box_data[1:,21])) # F22
 
   def registerField(self, field):
     self.fields[field.name] = field
 
-  def applyPostProcess(self, fieldname, filter):
+  def applyPostProcess(self, fieldname: str, filter):
     if fieldname == "all":
       for name, field in self.fields.items():
         field.applyPostProcess(filter)
@@ -497,7 +503,7 @@ class MPMJob:
       self.fields[fieldname].applyPostProcess(filter)
 
 
-  def compute_domain_strain(self, engineeringStrain=False):
+  def compute_domain_strain(self, engineeringStrain: bool=False):
     if engineeringStrain:
         exx=self.fields["F00"].getData()-1.0
         eyy=self.fields["F11"].getData()-1.0
@@ -515,7 +521,7 @@ class MPMJob:
     self.registerField(DataObj("J", J))
 
 
-  def compute_domain_stress(self, engineeringStress=False):
+  def compute_domain_stress(self, engineeringStress: bool=False):
     Ax=self.Axx0
     Ay=self.Ayy0
     Az=self.Azz0
@@ -536,10 +542,10 @@ class MPMJob:
         
 
 class DataObj:
-    def __init__(self, name, data, format=".6f"):
+    def __init__(self, name: str, data, format=".6f"):
       self.name = name
       self.data = data
-      self.format =format
+      self.format = format
       self.processedData = self.data
 
     def applyPostProcess(self, filter):
@@ -554,10 +560,18 @@ if __name__ == "__main__":
   parser.add_argument('jobdir', help="location of job to analyze")
   parser.add_argument('-i', '--interactive', action='store_true', help="display plot interactively")
   parser.add_argument('-c','--console',action='store_true', default=False, help="flag to write output to console")
-  parser.add_argument('-x', '--xyz', default="xyz", help="list of directions to plot reactions and displacements")
+  parser.add_argument('-x', '--x', action='store_true', default=False, help="Plot data for x-direction")
+  parser.add_argument('-y', '--y', action='store_true', default=False, help="Plot data for y-direction")
+  parser.add_argument('-z', '--z', action='store_true', default=False, help="Plot data for z-direction")
+  
+  # parser.add_argument('-dt', '--displacementTime', action='store_true', default=False, help='')
+  # parser.add_argument('-fd', '--forceDisplacement',action='store_true', default=False, help='' )
+  # parser.add_argument('-ss', '--stressStrain', action='store_true', default=False, help='')
+  # parser.add_argument('-st', '--stressTime', action='store_true', default=False, help='')
+  
   parser.add_argument('-e', '--export', action='store_true', default=False, help="write output to csv")
   parser.add_argument('-s', '--save', default=False, help="flag to save plot to png file")
-  parser.add_argument('-p', '--plot', default=None, help="plot job data (Default reactions and FTable)")
+  parser.add_argument('-p', '--plot', default=[], nargs='+', help="plot job data (Default reactions and FTable)")
   parser.add_argument('-f','--fields', nargs='+', help="list of field names to output", type=str)
   parser.add_argument('-o', '--output', default="out", help="name of output files")
   args = parser.parse_args()
@@ -567,11 +581,102 @@ if __name__ == "__main__":
 
   job = MPMJob(args.jobdir)
 
-  if args.plot is not None:
-    if args.plot=="reactions":
-      job.read_reaction_file()
+  if args.plot:
+    m = {p: i for i,p in enumerate(args.plot)}
+    
+    num_subplots = len(args.plot)
+    fig, axes = plt.subplots(num_subplots, 1, figsize=(16, 16))
+    if not isinstance(axes, (np.ndarray, list)):
+      axes = [axes]
 
-      fig = plt.figure()
-      ax = fig.add_subplot()
-      ax.plot(job.fields["Time"].getData(), job.fields["Ryp"].getData())
-      plt.show()
+    if "displacementTime" in args.plot:
+      plotIndex = m["displacementTime"]
+      job.read_reaction_file()
+      if args.x:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["F00"].getData(), linestyle='-',color='r',linewidth=1,label="F00")
+      if args.y:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["F11"].getData(), linestyle='-',color='g',linewidth=1,label="F11")
+      if args.z:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["F22"].getData(), linestyle='-',color='b',linewidth=1,label="F22")
+      axes[plotIndex].set_xlabel('Time (us)')
+      axes[plotIndex].set_ylabel('F (-)')
+      axes[plotIndex].legend()
+
+    if "reactions" in args.plot:
+      plotIndex = m["reactions"]
+      job.read_reaction_file()
+      if args.x:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rxp"].getData(), linestyle='-', alpha=0.5, color='r',linewidth=1,label="+x")
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rxm"].getData(), linestyle='--',color='r',linewidth=1,label="-x")
+      if args.y:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Ryp"].getData(), linestyle='-', alpha=0.5,color='g',linewidth=1,label="+y")
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rym"].getData(), linestyle='--',color='g',linewidth=1,label="-y")
+      if args.z:
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rzp"].getData(), linestyle='-', alpha=0.5,color='b',linewidth=1,label="+z")
+        axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["Rzm"].getData(), linestyle='--',color='b',linewidth=1,label="-z")
+      axes[plotIndex].set_xlabel('Time (us)')
+      axes[plotIndex].set_ylabel('Reactions (mN)')
+      axes[plotIndex].legend()
+    
+    if "stressStrain" in args.plot:
+      plotIndex = m["stressStrain"]
+      job.read_from_box_average_file()
+      job.compute_domain_strain()
+      job.compute_domain_stress()
+      if args.x:
+        axes[plotIndex].plot(job.fields["exx"].getData(), job.fields["Rsxx"].getData(), linestyle='--',color='r',linewidth=1,label="Sxx")
+        # axes[plotIndex].plot(job.fields["exx"].getData(), job.fields["BSxx"].getData(), linestyle='-', alpha=0.5, color='r',linewidth=2,label="BSxx")
+      if args.y:
+        axes[plotIndex].plot(job.fields["eyy"].getData(), job.fields["Rsyy"].getData(), linestyle='--',color='g',linewidth=1,label="Syy")
+        # axes[plotIndex].plot(job.fields["eyy"].getData(), job.fields["BSyy"].getData(), linestyle='-', alpha=0.5, color='g',linewidth=2,label="BSyy")
+      if args.z:
+        axes[plotIndex].plot(job.fields["ezz"].getData(), job.fields["Rszz"].getData(), linestyle='--',color='b',linewidth=1,label="Szz")
+        # axes[plotIndex].plot(job.fields["ezz"].getData(), job.fields["BSzz"].getData(), linestyle='-', alpha=0.5, color='b',linewidth=2,label="BSzz")
+      axes[plotIndex].set_xlabel('Strain (-)')
+      axes[plotIndex].set_ylabel('Stress (GPa)')
+      axes[plotIndex].legend()
+    
+    if "boxStressStrain" in args.plot:
+      plotIndex = m["boxStressStrain"]
+      job.read_from_box_average_file()
+      job.compute_domain_strain()
+      job.compute_domain_stress()
+      if args.x:
+        # axes[plotIndex].plot(job.fields["exx"].getData(), job.fields["Rsxx"].getData(), linestyle='--',color='r',linewidth=1,label="Sxx")
+        axes[plotIndex].plot(job.fields["exx"].getData(), job.fields["BSxx"].getData(), linestyle='-', alpha=0.5, color='r',linewidth=2,label="BSxx")
+      if args.y:
+        # axes[plotIndex].plot(job.fields["eyy"].getData(), job.fields["Rsyy"].getData(), linestyle='--',color='g',linewidth=1,label="Syy")
+        axes[plotIndex].plot(job.fields["eyy"].getData(), job.fields["BSyy"].getData(), linestyle='-', alpha=0.5, color='g',linewidth=2,label="BSyy")
+      if args.z:
+        # axes[plotIndex].plot(job.fields["ezz"].getData(), job.fields["Rszz"].getData(), linestyle='--',color='b',linewidth=1,label="Szz")
+        axes[plotIndex].plot(job.fields["ezz"].getData(), job.fields["BSzz"].getData(), linestyle='-', alpha=0.5, color='b',linewidth=2,label="BSzz")
+      axes[plotIndex].set_xlabel('Strain (-)')
+      axes[plotIndex].set_ylabel('Stress (GPa)')
+      axes[plotIndex].legend()
+
+    if "tempTime" in args.plot:
+      plotIndex = m["tempTime"]
+      job.read_from_box_average_file()
+      axes[plotIndex].plot(job.fields["Time"].getData(), job.fields["BTemp"].getData(), linestyle='-',color='k',linewidth=1,label="Temp")
+      axes[plotIndex].set_xlabel('Time (us)')
+      axes[plotIndex].set_ylabel('Temp (C/K)')
+    
+    if "forceDisplacement" in args.plot:
+      plotIndex = m["forceDisplacement"]
+      dx = job.domainX0*(job.fields["F00"].getData()-1.0)
+      dy = job.domainY0*(job.fields["F11"].getData()-1.0)
+      dz = job.domainZ0*(job.fields["F22"].getData()-1.0)
+      if args.x:
+        axes[plotIndex].plot(dx, job.fields["Rxp"].getData(), linestyle='-', alpha=0.5, color='r',linewidth=1,label="+x")
+        axes[plotIndex].plot(dx, job.fields["Rxm"].getData(), linestyle='--',color='r',linewidth=1,label="-x")
+      if args.y:
+        axes[plotIndex].plot(dy, job.fields["Ryp"].getData(), linestyle='-', alpha=0.5,color='g',linewidth=1,label="+y")
+        axes[plotIndex].plot(dy, job.fields["Rym"].getData(), linestyle='--',color='g',linewidth=1,label="-y")
+      if args.z:
+        axes[plotIndex].plot(dz, job.fields["Rzp"].getData(), linestyle='-', alpha=0.5,color='b',linewidth=1,label="+z")
+        axes[plotIndex].plot(dz, job.fields["Rzm"].getData(), linestyle='--',color='b',linewidth=1,label="-z")
+
+    plt.show()
+
+    if args.save:
+      fig.savefig( args.output + ".png", bbox_inches="tight")

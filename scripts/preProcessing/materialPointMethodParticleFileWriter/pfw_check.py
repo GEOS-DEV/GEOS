@@ -6,11 +6,9 @@ import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree # nearest neighbor search with KDTree
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import datetime
 import time
 import datetime                               # used for date stamp
 import os                                     # operating sys commands, pwd, etc.
-from subprocess import call                   # lets you call shell commands, i.e. call(["ln", "-s",".","run_dir"])
 import subprocess                             # lets you call msub and get jobid
 import sys                                    # to access command arguments.
 import platform                               # gives access to node name for machine-specific changes.
@@ -108,9 +106,10 @@ job = importlib.import_module(inputFile)
 
 pfw = job.pfw
 
-
+runDebug = pfw["runDebug"] if "runDebug" in pfw else False
 
 # parameters for batch job:
+mPartition = "pbatch" if not runDebug else "pdebug" 
 mBatch = pfw["mBatch"]
 mBank = pfw["mBank"]
 mWallTime = pfw["mWallTime"]
@@ -122,20 +121,16 @@ mCores = pfw["mCores"]
 mNodes= int(np.ceil(float(mCores)/float(coresPerNode))) 
 print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode)
 
-
 xpar = pfw["xpar"]
 ypar = pfw["ypar"]
 zpar = pfw["zpar"]
 
-
-
 [wH,wM,wS]=mWallTime.split(":")
 mWallTimeMinutes=int(wH)*60+int(wM)
-mWallTime = mWallTimeMinutes
-partition = "pbatch"
-if pfw["runDebug"]:
-  mWallTimeMinutes=min(mWallTimeMinutes,60) # in minutes
-  partition="pdebug"
+if mWallTimeMinutes > 60 and runDebug:
+  print("Wall time of debug job exceeded 60 minutes and was reset")
+  mWallTimeMinutes = 60
+  mWallTime="01:00:00"
 
 # Current working directory
 PWD = os.getcwd()
@@ -202,13 +197,15 @@ if needsRestart:
   # ===========================================
 
   # This will run the job.
-  slurmScript = """#!/bin/bash
-#SBATCH -t """+str(mWallTimeMinutes)+"""
-#SBATCH -N """+str(mNodes)+"""
-#SBATCH -p """+ partition +"""
-#SBATCH -A """+mBank+"""
+  slurmScript = f"""#!/bin/bash
+#SBATCH -t {mWallTime}
+#SBATCH -N {mNodes:d}
+#SBATCH -n {mCores:d}
+#SBATCH -p {mPartition}
+#SBATCH -A {mBank}
 
-srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """ -r """+restartFile+"""
+export OMP_NUM_THREADS=1
+srun --export=ALL -n {mCores:d} {geosPath} -i {geosInputFileName} -x {xpar:d} -y {ypar:d} -z {zpar:d} -r {restartFile}
 """
 
   fileName = timeStamp+"_restartGEOS.sh"
@@ -222,14 +219,14 @@ srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosInputFileName+""" -x """
   jobID = output.strip()
   print('run_check output = ',output.strip())
 
-  slurmScript = """#!/bin/bash
+  slurmScript = f"""#!/bin/bash
 #SBATCH -t 00:02:00
 #SBATCH -N 1
-#SBATCH -p """+ partition +"""
-#SBATCH -A """+mBank+"""
-#SBATCH --dependency=afterany:"""+jobID+"""
+#SBATCH -p {mPartition}
+#SBATCH -A {mBank}
+#SBATCH --dependency=afterany:{jobID}
 
-python3 pfw_check.py """+inputFile+""" """+jobID+"""
+python3 pfw_check.py {inputFile}  {jobID}
 """
 
   fileName = timeStamp+"_runCheck.sh"
@@ -237,5 +234,5 @@ python3 pfw_check.py """+inputFile+""" """+jobID+"""
   file.write(slurmScript)
   file.close()
   
-  call(["sbatch",fileName], cwd=PWD)
+  subprocess.call(["sbatch",fileName], cwd=PWD)
 

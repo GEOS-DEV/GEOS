@@ -17,7 +17,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # The Mathematica notebook 'rotateParticles.nb' can be used to rotate particles in-place to see the effect of grid-alignment.
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 stopTime = 25.0
 
 # DOMAIN ---------------------------------------------------------------------------------
@@ -52,10 +52,9 @@ pfw["ppc"]=2               # particles per cell in each direction
 # BATCH PARAMETERS  --------------------------------------------------------
 
 pfw["mBatch"]=True
-pfw["mWallTime"]="00:30:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=False
+pfw["mWallTime"]="00:05:00"
+pfw["mSubmitJobs"]=True
+
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
@@ -65,7 +64,7 @@ pfw["restartInterval"]=stopTime
 pfw['lastRestartBufferInSeconds'] = 0.
 
 pfw["timeIntegrationOption"]="ExplicitDynamic"
-pfw["cflFactor"]=0.25  
+pfw["cflFactor"]=0.25
 pfw["initialDt"]=1e-16
 pfw["reactionHistory"]=1
 pfw["reactionWriteInterval"]=stopTime/2000
@@ -77,6 +76,9 @@ pfw["frictionCoefficient"]=0.25
 
 pfw["updateMethod"]="XPIC"
 pfw["updateOrder"]=2
+
+pfw["useAPIC"]=0
+pfw["useInteralForceAsFaceReaction"]=1
 
 # DEFORMATION -----------------------------------------------------------------------------
 
@@ -106,5 +108,5 @@ pfw["materialPropertyString"]="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],v=[0.0,0.0,0.0],mat=0,group=0)
+block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[block]

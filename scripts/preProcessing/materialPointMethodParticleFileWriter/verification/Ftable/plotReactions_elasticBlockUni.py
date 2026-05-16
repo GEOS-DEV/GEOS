@@ -81,47 +81,47 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1,figsize=(15,12))
 fig.suptitle('F table benchmark with uniaxial strain & stress')
 #fig2, (ax4,ax5,ax6) = plt.subplots(3, 1,figsize=(16,12))
 
-# plot box sum data and compute initial volume fraction
-# for i,file in enumerate(files):
-# 	print(file)
-# 	reactionFile=runLocation+file+'/boxSumHistory.csv'
+#plot box sum data and compute initial volume fraction
+for i,file in enumerate(files):
+	print(file)
+	reactionFile=runLocation+file+'/boxAverageHistory.csv'
 
-# 	# time,sxx,syy,szz,sxy,syz,sxz,rho,energy
-# 	data = np.genfromtxt(reactionFile, delimiter=',')
-# 	time = data[:,0]
-# 	sxx = data[:,1]
-# 	syy = data[:,2]
-# 	szz = data[:,3]
-# 	sxy = data[:,4]
-# 	syz = data[:,5]
-# 	sxz = data[:,6]
-# 	rho = data[:,7]
-# 	e = data[:,8]
+	# time,sxx,syy,szz,sxy,syz,sxz,rho,energy
+	data = np.genfromtxt(reactionFile, delimiter=',')
+	time = data[:,0]
+	sxx = data[:,1]
+	syy = data[:,2]
+	szz = data[:,3]
+	sxy = data[:,4]
+	syz = data[:,5]
+	sxz = data[:,6]
+	rho = data[:,7]
+	e = data[:,8]
 
-# 	# this hids all non-monotic time entries, so restart data files are cleaned:
-# 	maxt = 0.0
-# 	mask = np.ones(len(time), dtype=bool)
-# 	for ii,t in enumerate(time):
-# 		if (t<=maxt):
-# 			mask[ii] = False
-# 		else:
-# 			maxt = t
-# 	time = time[mask,...]
-# 	sxx = sxx[mask,...]
-# 	syy = syy[mask,...]
-# 	szz = szz[mask,...]
-# 	sxy = sxy[mask,...]
-# 	syz = syz[mask,...]
-# 	sxz = sxz[mask,...]
-# 	rho = rho[mask,...]
-# 	e = e[mask,...]
+	# this hids all non-monotic time entries, so restart data files are cleaned:
+	maxt = 0.0
+	mask = np.ones(len(time), dtype=bool)
+	for ii,t in enumerate(time):
+		if (t<=maxt):
+			mask[ii] = False
+		else:
+			maxt = t
+	time = time[mask,...]
+	sxx = sxx[mask,...]
+	syy = syy[mask,...]
+	szz = szz[mask,...]
+	sxy = sxy[mask,...]
+	syz = syz[mask,...]
+	sxz = sxz[mask,...]
+	rho = rho[mask,...]
+	e = e[mask,...]
 
 
-# 	# p=(-1.0/3.0)*(sxx+syy+szz)
-# 	# vm=np.sqrt(0.5*( np.square(sxx-syy)+np.square(syy-szz)+np.square(szz-sxx) ) )
-# 	ax3.plot(time,1000*sxx,linestyle=':',color=cm.gist_rainbow(0),linewidth=1,label='box: sxx')
-# 	ax3.plot(time,1000*syy,linestyle=':',color=cm.gist_rainbow(0.33),linewidth=1,label='box: syy')
-# 	ax3.plot(time,1000*szz,linestyle=':',color=cm.gist_rainbow(0.67),linewidth=1,label='box: szz')
+	# p=(-1.0/3.0)*(sxx+syy+szz)
+	# vm=np.sqrt(0.5*( np.square(sxx-syy)+np.square(syy-szz)+np.square(szz-sxx) ) )
+	ax3.plot(time,1000*sxx,linestyle='-',color=cm.gist_rainbow(0),linewidth=6,alpha=0.25,label='box: sxx')
+	ax3.plot(time,1000*syy,linestyle='-',color=cm.gist_rainbow(0.33),linewidth=6,alpha=0.25,label='box: syy')
+	ax3.plot(time,1000*szz,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=6,alpha=0.25,label='box: szz')
 
 
 # print("VF0 = ",VF0) 
@@ -146,6 +146,9 @@ for i,file in enumerate(files):
 	Ryp = data[:,10]
 	Rzm = data[:,11]
 	Rzp = data[:,12]
+	L00  = data[:,13]
+	L11  = data[:,14]
+	L22  = data[:,15]
 
 	# this hides all non-monotic time entries, so restart data files are cleaned:
 	maxt = 0.0
@@ -165,6 +168,9 @@ for i,file in enumerate(files):
 	Ryp = Ryp[mask,...]
 	Rzm = Rzm[mask,...]
 	Rzp = Rzp[mask,...]
+	L00 = L00[mask,...]
+	L11 = L11[mask,...]
+	L22 = L22[mask,...]
 
 	# strain
 	exx=np.log(F00)
@@ -190,6 +196,9 @@ for i,file in enumerate(files):
 	ax1.plot(time,F00,linestyle='-',color=cm.gist_rainbow(0),linewidth=1,label='F00')
 	ax1.plot(time,F11,linestyle='-',color=cm.gist_rainbow(0.33),linewidth=1,label='F11')
 	ax1.plot(time,F22,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=1,label='F22')
+	ax1.plot(time,Ax,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=1,label='Ax')
+	ax1.plot(time,Ay,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=1,label='Ay')
+	ax1.plot(time,Az,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=1,label='Az')
 
 	ax2.plot(exx,-1000*Rxm/Ax,linestyle='-',color=cm.gist_rainbow(0),linewidth=2,label='x_minus')
 	ax2.plot(exx,1000.0*Rxp/Ax,linestyle='--',color=lighten_color(cm.gist_rainbow(0),1.5),linewidth=2,label='x_plus')
@@ -208,6 +217,11 @@ for i,file in enumerate(files):
 	ax3.plot(time,1000.0*Ryp/Ay,linestyle='--',color=lighten_color(cm.gist_rainbow(0.33),1.5),linewidth=2,label='y_plus')
 	ax3.plot(time,-1000*Rzm/Az,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=2,label='z_minus')
 	ax3.plot(time,1000.0*Rzp/Az,linestyle='--',color=lighten_color(cm.gist_rainbow(0.67),1.5),linewidth=2,label='z_plus')
+ 
+ 
+	# ax4.plot(time,L00,linestyle='-',color=cm.gist_rainbow(0),linewidth=1,label='L00')
+	# ax4.plot(time,L11,linestyle='-',color=cm.gist_rainbow(0.33),linewidth=1,label='L11')
+	# ax4.plot(time,L22,linestyle='-',color=cm.gist_rainbow(0.67),linewidth=1,label='L22')
 
 
 
@@ -229,8 +243,8 @@ ax1.grid()
 ax2.set_xlabel('Applied Strain (mm/mm)', fontsize=16)
 #ax2.set_xlim(0,1.2)
 #ax2.set_ylim(0,600)
-#ax2.set_yscale("log")
-#ax2.set_ylim(0.001,1000)
+# ax2.set_yscale("log")
+# ax2.set_ylim(0.001,1000)
 
 ax2.set_ylabel(r'$\sigma$ (MPa)', fontsize=16)
 ax2.tick_params(axis='both', which='major', labelsize=16)
@@ -244,10 +258,10 @@ ax3.set_xlabel('time', fontsize=16)
 ax3.set_ylabel(r'$\sigma$ (MPa)', fontsize=16)
 ax3.legend(bbox_to_anchor=(1.04,1), loc="upper left",fontsize='medium')
 
-ax3.set_xlim(0.00,25)
-ax3.set_ylim(0.00,200)
+#ax3.set_xlim(0.00,2.5)
+#ax3.set_ylim(0.00,1.)
 #ax3.set_yscale("log")
-#ax3.set_ylim(0.001,1000)
+#ax3.set_ylim(0.001,100)
 
 
 fig.tight_layout()

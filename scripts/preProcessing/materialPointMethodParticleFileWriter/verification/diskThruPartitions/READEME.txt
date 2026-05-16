@@ -1,0 +1,5 @@
+This is a parallel capability test. It simulates two 2D disks colliding in a square domain that's been 2x2 partitioned. The following capabilities are tested:
+-particle mesh generation in each partition
+-syncing of grid mass and momentum at partition boundaries
+-dynamic particle repartitioning
+-multiple velocity fields with frictional contact
