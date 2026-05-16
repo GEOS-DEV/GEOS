@@ -19516,7 +19516,7 @@ void SolidMechanicsMPM::applyFMPMNetContactCorrection( real64 const dt,
                                        vUncorrectedTotal,
                                        contactMomentumTarget );
 
-  localIndex const numDims = m_numDims;
+  localIndex const numVectorComponents = 3;
   localIndex const numVelocityFields = m_numVelocityFields;
   real64 const smallMass = m_smallMass;
 
@@ -19529,7 +19529,7 @@ void SolidMechanicsMPM::applyFMPMNetContactCorrection( real64 const dt,
     {
       if( gridMass[g][fieldIndex] > smallMass )
       {
-        for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           // Apply only the change in cumulative target impulse for this order.
           real64 const incrementalMomentum =
@@ -19627,6 +19627,8 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   int const numDims =
     m_numDims;
 
+  int const numVectorComponents = 3;
+
   int const numVelocityFields =
     m_numVelocityFields;
 
@@ -19702,12 +19704,16 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
    *   vUncorrectedTotal   accumulated velocity before material-contact correction,
    *   contactMomentumNet  cumulative contact impulse already applied,
    *   contactMomentumTarget target cumulative impulse for the current order.
+   *
+   * These scratch arrays are always 3-component grid-vector fields, even in
+   * plane-strain runs, because contact normals/impulses and grid vector fields
+   * are stored and evaluated as 3-vectors throughout the MPM contact routines.
    */
-  array3d< real64 > contactMomentumNet( numNodes, numVelocityFields, numDims );
-  array3d< real64 > contactMomentumTarget( numNodes, numVelocityFields, numDims );
-  array3d< real64 > vFmpm( numNodes, numVelocityFields, numDims );
-  array3d< real64 > vPrev( numNodes, numVelocityFields, numDims );
-  array3d< real64 > vUncorrectedTotal( numNodes, numVelocityFields, numDims );
+  array3d< real64 > contactMomentumNet( numNodes, numVelocityFields, numVectorComponents );
+  array3d< real64 > contactMomentumTarget( numNodes, numVelocityFields, numVectorComponents );
+  array3d< real64 > vFmpm( numNodes, numVelocityFields, numVectorComponents );
+  array3d< real64 > vPrev( numNodes, numVelocityFields, numVectorComponents );
+  array3d< real64 > vUncorrectedTotal( numNodes, numVelocityFields, numVectorComponents );
 
   arrayView3d< real64 > const contactMomentumNetView = contactMomentumNet.toView();
   arrayView3d< real64 > const contactMomentumTargetView = contactMomentumTarget.toView();
@@ -19726,7 +19732,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
   {
     for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      for( localIndex i = 0; i < numDims; ++i )
+      for( localIndex i = 0; i < numVectorComponents; ++i )
       {
         contactMomentumTarget[n][fieldIndex][i] = 0.0;
 
@@ -19763,7 +19769,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     {
       for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           gridVPlus[n][fieldIndex][i] =
             0.0;
@@ -19893,7 +19899,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
             effectiveMappedFields[pp][g];
 #endif
 
-          for( localIndex i = 0; i < numDims; ++i )
+          for( localIndex i = 0; i < numVectorComponents; ++i )
           {
             vPrevAtParticle[i] +=
               shapeFunctionValue * vPrev[mappedNode][fieldIndex][i];
@@ -19941,7 +19947,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
             real64 const massShapeOverGridMass =
               particleMass[p] * shapeFunctionValue / gridMass[mappedNode][fieldIndex];
 
-            for( localIndex i = 0; i < numDims; ++i )
+            for( localIndex i = 0; i < numVectorComponents; ++i )
             {
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridVPlus[mappedNode][fieldIndex][i],
@@ -19971,7 +19977,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     {
       for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           vPrev[n][fieldIndex][i] -=
             gridVPlus[n][fieldIndex][i];
@@ -20001,7 +20007,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
       {
         for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
         {
-          for( localIndex i = 0; i < numDims; ++i )
+          for( localIndex i = 0; i < numVectorComponents; ++i )
           {
             vUncorrectedTotal[n][fieldIndex][i] +=
               vPrev[n][fieldIndex][i];
@@ -20030,7 +20036,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     {
       for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           vFmpm[n][fieldIndex][i] +=
             vPrev[n][fieldIndex][i];
@@ -20063,7 +20069,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
     {
       for( int fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
-        for( localIndex i = 0; i < numDims; ++i )
+        for( localIndex i = 0; i < numVectorComponents; ++i )
         {
           gridContactForce[n][fieldIndex][i] =
             contactMomentumNet[n][fieldIndex][i] / dt;
@@ -20173,12 +20179,12 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
       {
         particlePosition[p][i] +=
           0.5 * dt * particleVelocity[p][i];
-
-        particleVelocity[p][i] =
-          0.0;
       }
 
-      // Tensor equation: particleVelocityGradient[p] = 0.0 component-wise.
+      // Tensor equations:
+      //   particleVelocity[p] = 0.0 component-wise.
+      //   particleVelocityGradient[p] = 0.0 component-wise.
+      LvArray::tensorOps::fill< 3 >( particleVelocity[p], 0.0 );
       LvArray::tensorOps::fill< 3, 3 >( particleVelocityGradient[p], 0.0 );
 
       for( localIndex g = 0;
