@@ -2,19 +2,32 @@ set( subdirs
      math
      common
      codingUtilities
-     dataRepository
-     denseLinearAlgebra
+     dataRepository )
+
+if( GEOS_ENABLE_DENSE_LINEARALGEBRA )
+  list( APPEND subdirs denseLinearAlgebra )
+endif()
+
+if( GEOS_ENABLE_LINEARALGEBRA )
+  list( APPEND subdirs linearAlgebra )
+endif()
+
+list( APPEND subdirs
      functions
-     constitutive
+     constitutive )
+
+if( GEOS_ENABLE_CONSTITUTIVE_DRIVERS )
+  list( APPEND subdirs constitutiveDrivers )
+endif()
+
+list( APPEND subdirs
      schema
      finiteElement
      mesh
      fieldSpecification
      finiteVolume
-     linearAlgebra
      discretizationMethods
      events
-     constitutiveDrivers
      fileIO
      physicsSolvers
      mainInterface )

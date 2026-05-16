@@ -24,22 +24,34 @@ Contains:
 # Specify solver headers
 #
 set( physicsSolversBase_headers
-     LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
      SolverStatistics.hpp
      FieldStatisticsBase.hpp )
+
+if( GEOS_ENABLE_LINEARALGEBRA )
+  list( APPEND physicsSolversBase_headers
+        LinearSolverParameters.hpp )
+endif()
 #
 # Specify solver sources
 #
 set( physicsSolversBase_sources
-     LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverBase.cpp
      SolverStatistics.cpp )
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+if( GEOS_ENABLE_LINEARALGEBRA )
+  list( APPEND physicsSolversBase_sources
+        LinearSolverParameters.cpp )
+endif()
+
+set( dependencyList ${parallelDeps} fileIO discretizationMethods events )
+
+if( GEOS_ENABLE_LINEARALGEBRA )
+  list( APPEND dependencyList linearAlgebra )
+endif()
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolversBase_headers

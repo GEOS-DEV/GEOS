@@ -110,9 +110,11 @@ set( linearAlgebra_sources
 set( dependencyList ${parallelDeps} mesh denseLinearAlgebra finiteVolume )
 set( tplDependencyList "" )
 
-list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
-list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
-list( APPEND tplDependencyList suitesparse )
+if( ENABLE_SUITESPARSE )
+  list( APPEND linearAlgebra_headers interfaces/direct/SuiteSparse.hpp )
+  list( APPEND linearAlgebra_sources interfaces/direct/SuiteSparse.cpp )
+  list( APPEND tplDependencyList suitesparse )
+endif()
 
 if( ENABLE_SUPERLU_DIST )
       list( APPEND linearAlgebra_headers interfaces/direct/SuperLUDist.hpp )

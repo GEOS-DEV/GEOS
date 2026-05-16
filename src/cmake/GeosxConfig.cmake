@@ -1,4 +1,5 @@
 set( PREPROCESSOR_DEFINES BOUNDS_CHECK
+                          ADIAK
                           CALIPER
                           CHAI
                           CUDA
@@ -9,6 +10,8 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           FORTRAN_MANGLE_NO_UNDERSCORE
                           FPE
                           HYPRE
+                          LINEARALGEBRA
+                          CONSTITUTIVE_DRIVERS
                           MATHPRESSO
                           METIS
                           MKL

@@ -24,7 +24,6 @@
 #include "common/TimingMacros.hpp"
 #include "events/mpmEvents/MPMEventManager.hpp"
 #include "LvArray/src/tensorOps.hpp"
-#include "kernels/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "kernels/ExplicitMPM.hpp"
 #include "mesh/CohesiveZoneManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -259,15 +258,6 @@ public:
                         integer const eventCounter,
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
-
-  template< typename CONSTITUTIVE_BASE,
-            typename KERNEL_WRAPPER,
-            typename ... PARAMS >
-  void assemblyLaunch( DomainPartition & domain,
-                       DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                       arrayView1d< real64 > const & localRhs,
-                       PARAMS && ... params );
 
   template< typename ... PARAMS >
   real64 explicitKernelDispatch( MeshLevel & mesh,

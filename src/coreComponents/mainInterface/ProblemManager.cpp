@@ -17,6 +17,7 @@
 
 // Source includes
 #include "ProblemManager.hpp"
+#include "common/GeosxConfig.hpp"
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
@@ -24,7 +25,9 @@
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#if defined(GEOS_USE_CONSTITUTIVE_DRIVERS)
 #include "constitutiveDrivers/solid/TriaxialDriver.hpp"
+#endif
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
 #include "dataRepository/KeyNames.hpp"
@@ -154,7 +157,9 @@ ProblemManager::~ProblemManager()
     // but this applies "--no-as-needed" to all targets that link to constitutiveDrivers, which is not what we want.
     // Also "--no-as-needed" is not supported on all platforms, so we have to guard the use of it.
     // This is a workaround until we can figure out in cmake without too much trouble.
+#if defined(GEOS_USE_CONSTITUTIVE_DRIVERS)
     TriaxialDriver dummy( "dummy", this );
+#endif
   }
 }
 

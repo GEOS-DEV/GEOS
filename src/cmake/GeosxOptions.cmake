@@ -7,6 +7,16 @@ message( "CMAKE_HOST_APPLE = ${CMAKE_HOST_APPLE}" )
 option( GEOS_ENABLE_FPE "Enables floating point exceptions" ON )
 option( GEOS_ENABLE_TESTS "Enables unit tests" ON )
 option( ENABLE_CALIPER "Enables Caliper instrumentation" OFF )
+option( ENABLE_ADIAK "Enables Adiak metadata support" OFF )
+
+# GEOS build profiles
+option( GEOS_ENABLE_MPM_MINIMAL_TPL "Build an MPM-only profile with non-MPM TPLs disabled" OFF )
+
+# Core packages that can be removed for an explicit MPM-only build.
+option( GEOS_ENABLE_LINEARALGEBRA "Enable GEOS implicit linear algebra package" ON )
+option( GEOS_ENABLE_CONSTITUTIVE_DRIVERS "Enable standalone constitutive driver package" ON )
+option( GEOS_ENABLE_DENSE_LINEARALGEBRA "Enable GEOS dense BLAS/LAPACK linear algebra package" ON )
+option( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY "Build only constitutive models required by explicit MPM" OFF )
 
 option( ENABLE_MATHPRESSO "" ON )
 
@@ -77,12 +87,32 @@ endif()
 
 ### LAI SETUP ###
 
-set( supported_LAI Trilinos Hypre Petsc )
-set( GEOS_LA_INTERFACE "Hypre" CACHE STRING "Linear algebra interface to use in solvers" )
+set( supported_LAI None Trilinos Hypre Petsc )
+set( GEOS_LA_INTERFACE "Hypre" CACHE STRING "Linear algebra interface to use in solvers; use None only when GEOS_ENABLE_LINEARALGEBRA=OFF" )
+
+if( GEOS_ENABLE_MPM_MINIMAL_TPL )
+  set( GEOS_ENABLE_LINEARALGEBRA OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_CONSTITUTIVE_DRIVERS OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_DENSE_LINEARALGEBRA OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY ON CACHE BOOL "" FORCE )
+  set( GEOS_LA_INTERFACE "None" CACHE STRING "" FORCE )
+endif()
 message( STATUS "GEOS_LA_INTERFACE = ${GEOS_LA_INTERFACE}" )
 
 if( NOT ( GEOS_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOS_LA_INTERFACE must be one of: ${supported_LAI}" )
+endif()
+
+if( GEOS_ENABLE_LINEARALGEBRA AND GEOS_LA_INTERFACE STREQUAL "None" )
+  message( FATAL_ERROR "GEOS_LA_INTERFACE=None requires GEOS_ENABLE_LINEARALGEBRA=OFF" )
+endif()
+
+if( ( NOT GEOS_ENABLE_LINEARALGEBRA ) AND NOT ( GEOS_LA_INTERFACE STREQUAL "None" ) )
+  message( FATAL_ERROR "GEOS_ENABLE_LINEARALGEBRA=OFF requires GEOS_LA_INTERFACE=None" )
+endif()
+
+if( GEOS_ENABLE_LINEARALGEBRA AND NOT GEOS_ENABLE_DENSE_LINEARALGEBRA )
+  message( FATAL_ERROR "GEOS_ENABLE_LINEARALGEBRA=ON requires GEOS_ENABLE_DENSE_LINEARALGEBRA=ON" )
 endif()
 
 ### MPI/OMP/CUDA/HIP SETUP ###
@@ -128,8 +158,51 @@ option( GEOS_ENABLE_INDUCEDSEISMICITY "Enables induced seismicity physics packag
 option( GEOS_ENABLE_MULTIPHYSICS "Enables multiphysics physics package" OFF )
 option( GEOS_ENABLE_SIMPLEPDE "Enables simple PDE physics package" OFF )
 option( GEOS_ENABLE_SOLIDMECHANICS "Enables solid mechanics physics package" ON )
+option( GEOS_ENABLE_SOLIDMECHANICS_MPM "Enable the Material Point Method solid mechanics solver" ON )
+option( GEOS_ENABLE_SOLIDMECHANICS_FEM "Enable the Lagrangian FEM solid mechanics solvers" ON )
 option( GEOS_ENABLE_SURFACEGENERATION "Enables surface generation physics package" OFF )
 option( GEOS_ENABLE_WAVEPROPAGATION "Enables wave propagation physics package" OFF )
+
+if( GEOS_ENABLE_MPM_MINIMAL_TPL )
+  set( GEOS_ENABLE_TESTS OFF CACHE BOOL "" FORCE )
+  set( GEOS_INSTALL_SCHEMA OFF CACHE BOOL "" FORCE )
+
+  set( GEOS_ENABLE_CONTACT OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_FLUIDFLOW OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_INDUCEDSEISMICITY OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_MULTIPHYSICS OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_SIMPLEPDE OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_SOLIDMECHANICS ON CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_SOLIDMECHANICS_MPM ON CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_SOLIDMECHANICS_FEM OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_SURFACEGENERATION OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_WAVEPROPAGATION OFF CACHE BOOL "" FORCE )
+
+  set( GEOS_ENABLE_DENSE_LINEARALGEBRA OFF CACHE BOOL "" FORCE )
+  set( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY ON CACHE BOOL "" FORCE )
+
+  set( ENABLE_CALIPER OFF CACHE BOOL "" FORCE )
+  set( ENABLE_ADIAK OFF CACHE BOOL "" FORCE )
+  set( ENABLE_MATHPRESSO OFF CACHE BOOL "" FORCE )
+  set( ENABLE_PVTPackage OFF CACHE BOOL "" FORCE )
+  set( ENABLE_HPCREACT OFF CACHE BOOL "" FORCE )
+  set( ENABLE_METIS OFF CACHE BOOL "" FORCE )
+  set( ENABLE_PARMETIS OFF CACHE BOOL "" FORCE )
+  set( ENABLE_SCOTCH OFF CACHE BOOL "" FORCE )
+  set( ENABLE_SILO OFF CACHE BOOL "" FORCE )
+  set( ENABLE_VTK OFF CACHE BOOL "" FORCE )
+  set( ENABLE_SUPERLU_DIST OFF CACHE BOOL "" FORCE )
+  set( ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
+  set( ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
+  set( ENABLE_PETSC OFF CACHE BOOL "" FORCE )
+  set( ENABLE_SUITESPARSE OFF CACHE BOOL "" FORCE )
+  set( ENABLE_PYGEOSX OFF CACHE BOOL "" FORCE )
+  set( ENABLE_DOCS OFF CACHE BOOL "" FORCE )
+  set( ENABLE_DOXYGEN OFF CACHE BOOL "" FORCE )
+  set( ENABLE_SPHINX OFF CACHE BOOL "" FORCE )
+  set( ENABLE_UNCRUSTIFY OFF CACHE BOOL "" FORCE )
+  set( ENABLE_XML_UPDATES OFF CACHE BOOL "" FORCE )
+endif()
 
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)

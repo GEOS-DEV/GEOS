@@ -17,86 +17,106 @@ Package: solidMechanicsSolvers
 Contains:
 #]]
 
-# Specify solver headers
+if( NOT GEOS_ENABLE_SOLIDMECHANICS_MPM AND NOT GEOS_ENABLE_SOLIDMECHANICS_FEM )
+  message( FATAL_ERROR "GEOS_ENABLE_SOLIDMECHANICS requires at least one of GEOS_ENABLE_SOLIDMECHANICS_MPM or GEOS_ENABLE_SOLIDMECHANICS_FEM" )
+endif()
+
+# SolidMechanicsFields is shared by MPM and FEM. State reset and statistics
+# currently depend on SolidMechanicsLagrangianFEM and are added with FEM below.
 set( solidMechanicsSolvers_headers
-     SolidMechanicsFields.hpp
-     SolidMechanicsLagrangianFEM.hpp
-     SolidMechanicsLagrangianFEM.hpp
-     kernels/SolidMechanicsLagrangianFEMKernels.hpp
-     SolidMechanicsMPM.hpp
-     MPMSolverFields.hpp
-     kernels/ExplicitFiniteStrain.hpp
-     kernels/ExplicitFiniteStrain_impl.hpp
-     kernels/ExplicitMPM.hpp
-     kernels/ExplicitSmallStrain.hpp
-     kernels/ExplicitSmallStrain_impl.hpp
-     kernels/FixedStressThermoPoromechanics.hpp
-     kernels/FixedStressThermoPoromechanics_impl.hpp
-     kernels/ImplicitSmallStrainNewmark.hpp
-     kernels/ImplicitSmallStrainNewmark_impl.hpp
-     kernels/ImplicitSmallStrainQuasiStatic.hpp
-     kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
-     SolidMechanicsStateReset.hpp
-     SolidMechanicsStatistics.hpp
-     contact/ContactSolverBase.hpp
-     contact/FractureState.hpp
-     contact/ContactFields.hpp
-     contact/SolidMechanicsEmbeddedFractures.hpp
-     contact/SolidMechanicsLagrangeContact.hpp
-     contact/SolidMechanicsLagrangeContactBubbleStab.hpp
-     contact/SolidMechanicsAugmentedLagrangianContact.hpp
-     contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp
-     contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp
-     contact/kernels/SolidMechanicsEFEMKernelsBase.hpp
-     contact/kernels/SolidMechanicsEFEMKernels.hpp
-     contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp
-     contact/kernels/SolidMechanicsEFEMKernelsHelper.hpp
-     contact/kernels/SolidMechanicsALMKernelsBase.hpp
-     contact/kernels/SolidMechanicsALMKernels.hpp
-     contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
-     contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
-     contact/kernels/SolidMechanicsLagrangeContactKernels.hpp 
-     contact/LogLevelsInfo.hpp )
+     SolidMechanicsFields.hpp )
 
-# Specify solver sources
-set( solidMechanicsSolvers_sources
-     SolidMechanicsLagrangianFEM.cpp
-     SolidMechanicsMPM.cpp
-     SolidMechanicsStateReset.cpp
-     SolidMechanicsStatistics.cpp
-     contact/ContactSolverBase.cpp
-     contact/SolidMechanicsEmbeddedFractures.cpp
-     contact/SolidMechanicsLagrangeContact.cpp
-     contact/SolidMechanicsLagrangeContactBubbleStab.cpp
-     contact/SolidMechanicsAugmentedLagrangianContact.cpp )
+set( solidMechanicsSolvers_sources )
 
-#include( kernels/SolidMechanicsKernels.cmake)
+if( GEOS_ENABLE_SOLIDMECHANICS_MPM )
+  list( APPEND solidMechanicsSolvers_headers
+        SolidMechanicsMPM.hpp
+        MPMSolverFields.hpp
+        kernels/ExplicitMPM.hpp )
+
+  list( APPEND solidMechanicsSolvers_sources
+        SolidMechanicsMPM.cpp )
+endif()
+
+if( GEOS_ENABLE_SOLIDMECHANICS_FEM )
+  list( APPEND solidMechanicsSolvers_headers
+        SolidMechanicsLagrangianFEM.hpp
+        SolidMechanicsStateReset.hpp
+        SolidMechanicsStatistics.hpp
+        kernels/SolidMechanicsLagrangianFEMKernels.hpp
+        kernels/ExplicitFiniteStrain.hpp
+        kernels/ExplicitFiniteStrain_impl.hpp
+        kernels/ExplicitSmallStrain.hpp
+        kernels/ExplicitSmallStrain_impl.hpp
+        kernels/FixedStressThermoPoromechanics.hpp
+        kernels/FixedStressThermoPoromechanics_impl.hpp
+        kernels/ImplicitSmallStrainNewmark.hpp
+        kernels/ImplicitSmallStrainNewmark_impl.hpp
+        kernels/ImplicitSmallStrainQuasiStatic.hpp
+        kernels/ImplicitSmallStrainQuasiStatic_impl.hpp )
+
+  list( APPEND solidMechanicsSolvers_sources
+        SolidMechanicsLagrangianFEM.cpp
+        SolidMechanicsStateReset.cpp
+        SolidMechanicsStatistics.cpp )
+endif()
+
+if( GEOS_ENABLE_CONTACT )
+  if( NOT GEOS_ENABLE_SOLIDMECHANICS_FEM )
+    message( FATAL_ERROR "GEOS_ENABLE_CONTACT requires GEOS_ENABLE_SOLIDMECHANICS_FEM=ON" )
+  endif()
+
+  list( APPEND solidMechanicsSolvers_headers
+        contact/ContactSolverBase.hpp
+        contact/FractureState.hpp
+        contact/ContactFields.hpp
+        contact/SolidMechanicsEmbeddedFractures.hpp
+        contact/SolidMechanicsLagrangeContact.hpp
+        contact/SolidMechanicsLagrangeContactBubbleStab.hpp
+        contact/SolidMechanicsAugmentedLagrangianContact.hpp
+        contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp
+        contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp
+        contact/kernels/SolidMechanicsEFEMKernelsBase.hpp
+        contact/kernels/SolidMechanicsEFEMKernels.hpp
+        contact/kernels/SolidMechanicsEFEMStaticCondensationKernels.hpp
+        contact/kernels/SolidMechanicsEFEMKernelsHelper.hpp
+        contact/kernels/SolidMechanicsALMKernelsBase.hpp
+        contact/kernels/SolidMechanicsALMKernels.hpp
+        contact/kernels/SolidMechanicsConformingContactKernelsHelper.hpp
+        contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp
+        contact/kernels/SolidMechanicsLagrangeContactKernels.hpp
+        contact/LogLevelsInfo.hpp )
+
+  list( APPEND solidMechanicsSolvers_sources
+        contact/ContactSolverBase.cpp
+        contact/SolidMechanicsEmbeddedFractures.cpp
+        contact/SolidMechanicsLagrangeContact.cpp
+        contact/SolidMechanicsLagrangeContactBubbleStab.cpp
+        contact/SolidMechanicsAugmentedLagrangianContact.cpp )
+endif()
 
 set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 
+if( GEOS_ENABLE_SOLIDMECHANICS_FEM )
+  file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
+  set( kernelTemplateFileList
+       kernels/SolidMechanicsKernels.cpp.template
+       kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
 
-file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
-set( kernelTemplateFileList "" )
+  foreach( kernelTemplateFile ${kernelTemplateFileList} )
+    get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
+    generateKernels( TEMPLATE ${kernelTemplateFile}
+                     JSON kernelSpecs
+                     KEY ${jsonKey}
+                     HEADERS headerFiles
+                     SOURCES sourceFiles )
 
-  list( APPEND kernelTemplateFileList 
-        kernels/SolidMechanicsKernels.cpp.template
-        kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
-
-
-foreach( kernelTemplateFile ${kernelTemplateFileList} )
-  get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
-  generateKernels( TEMPLATE ${kernelTemplateFile}
-                   JSON kernelSpecs
-                   KEY ${jsonKey}
-                   HEADERS headerFiles
-                   SOURCES sourceFiles )
-
-list(APPEND solidMechanicsSolvers_headers ${headerFiles})
-list(APPEND solidMechanicsSolvers_sources ${sourceFiles})
-endforeach()
-
+    list( APPEND solidMechanicsSolvers_headers ${headerFiles} )
+    list( APPEND solidMechanicsSolvers_sources ${sourceFiles} )
+  endforeach()
+endif()
 
 blt_add_library( NAME       solidMechanicsSolvers
                  SOURCES    ${solidMechanicsSolvers_sources}

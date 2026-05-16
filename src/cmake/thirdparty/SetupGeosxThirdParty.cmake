@@ -129,47 +129,64 @@ set(thirdPartyLibs "")
 ################################
 # BLAS/LAPACK
 ################################
-include(cmake/thirdparty/FindMathLibraries.cmake)
+set( GEOS_NEEDS_BLAS_LAPACK ${GEOS_ENABLE_DENSE_LINEARALGEBRA} )
+foreach( _tpl_requires_blas_lapack
+         ENABLE_SUPERLU_DIST
+         ENABLE_SUITESPARSE
+         ENABLE_HYPRE
+         ENABLE_TRILINOS
+         ENABLE_PETSC )
+  if( ${_tpl_requires_blas_lapack} )
+    set( GEOS_NEEDS_BLAS_LAPACK ON )
+  endif()
+endforeach()
 
-blt_import_library(NAME blas
-                   TREAT_INCLUDES_AS_SYSTEM ON
-                   LIBRARIES ${BLAS_LIBRARIES})
+if( GEOS_NEEDS_BLAS_LAPACK )
+  include(cmake/thirdparty/FindMathLibraries.cmake)
 
-blt_import_library(NAME lapack
-                   DEPENDS_ON blas
-                   TREAT_INCLUDES_AS_SYSTEM ON
-                   LIBRARIES ${LAPACK_LIBRARIES})
+  blt_import_library(NAME blas
+                     TREAT_INCLUDES_AS_SYSTEM ON
+                     LIBRARIES ${BLAS_LIBRARIES})
 
-################################
-# Intel MKL
-################################
-if(ENABLE_MKL)
-    message(STATUS "Using Intel MKL")
-
-    blt_import_library(NAME mkl
-                         INCLUDES ${MKL_INCLUDE_DIRS}
-                         LIBRARIES ${MKL_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
-
-    set(TRILINOS_DEPENDS mkl)
-    set(thirdPartyLibs ${thirdPartyLibs} mkl)
-
-################################
-# IBM ESSL
-################################
-elseif(ENABLE_ESSL)
-    message(STATUS "Using up IBM ESSL")
-
-    blt_import_library(NAME essl
-                         INCLUDES ${ESSL_INCLUDE_DIRS}
-                         LIBRARIES ${ESSL_LIBRARIES}
-                         TREAT_INCLUDES_AS_SYSTEM ON)
-
-    set(TRILINOS_DEPENDS essl)
-    set(thirdPartyLibs ${thirdPartyLibs} essl)
+  blt_import_library(NAME lapack
+                     DEPENDS_ON blas
+                     TREAT_INCLUDES_AS_SYSTEM ON
+                     LIBRARIES ${LAPACK_LIBRARIES})
 else()
-    set(TRILINOS_DEPENDS blas lapack)
-    set(thirdPartyLibs ${thirdPartyLibs} blas lapack)
+  message( STATUS "Not using BLAS/LAPACK." )
+endif()
+
+################################
+# Intel MKL / IBM ESSL / fallback BLAS-LAPACK targets
+################################
+if( GEOS_NEEDS_BLAS_LAPACK )
+    if(ENABLE_MKL)
+        message(STATUS "Using Intel MKL")
+
+        blt_import_library(NAME mkl
+                             INCLUDES ${MKL_INCLUDE_DIRS}
+                             LIBRARIES ${MKL_LIBRARIES}
+                             TREAT_INCLUDES_AS_SYSTEM ON)
+
+        set(TRILINOS_DEPENDS mkl)
+        set(thirdPartyLibs ${thirdPartyLibs} mkl)
+
+    elseif(ENABLE_ESSL)
+        message(STATUS "Using up IBM ESSL")
+
+        blt_import_library(NAME essl
+                             INCLUDES ${ESSL_INCLUDE_DIRS}
+                             LIBRARIES ${ESSL_LIBRARIES}
+                             TREAT_INCLUDES_AS_SYSTEM ON)
+
+        set(TRILINOS_DEPENDS essl)
+        set(thirdPartyLibs ${thirdPartyLibs} essl)
+    else()
+        set(TRILINOS_DEPENDS blas lapack)
+        set(thirdPartyLibs ${thirdPartyLibs} blas lapack)
+    endif()
+else()
+    set(TRILINOS_DEPENDS "")
 endif()
 
 ################################
@@ -421,7 +438,7 @@ endif()
 ################################
 # Adiak
 ################################
-if(DEFINED ADIAK_DIR)
+if(DEFINED ADIAK_DIR AND ENABLE_ADIAK)
     message(STATUS "ADIAK_DIR = ${ADIAK_DIR}")
 
     find_package(adiak REQUIRED
@@ -460,7 +477,7 @@ endif()
 ################################
 # Caliper
 ################################
-if(DEFINED CALIPER_DIR)
+if(DEFINED CALIPER_DIR AND ENABLE_CALIPER)
     message(STATUS "CALIPER_DIR = ${CALIPER_DIR}")
 
     find_package(caliper REQUIRED
@@ -495,7 +512,7 @@ endif()
 ################################
 # MATHPRESSO
 ################################
-if(DEFINED MATHPRESSO_DIR)
+if(DEFINED MATHPRESSO_DIR AND ENABLE_MATHPRESSO)
     message(STATUS "MATHPRESSO_DIR = ${MATHPRESSO_DIR}")
 
     find_and_import(NAME mathpresso
@@ -518,7 +535,7 @@ endif()
 ################################
 # METIS
 ################################
-if(DEFINED METIS_DIR)
+if(DEFINED METIS_DIR AND ENABLE_METIS)
     message(STATUS "METIS_DIR = ${METIS_DIR}")
 
     find_and_import(NAME metis
@@ -548,7 +565,7 @@ endif()
 ################################
 # PARMETIS
 ################################
-if(DEFINED PARMETIS_DIR)
+if(DEFINED PARMETIS_DIR AND ENABLE_PARMETIS)
     message(STATUS "PARMETIS_DIR = ${PARMETIS_DIR}")
 
     find_and_import(NAME parmetis
@@ -578,7 +595,7 @@ endif()
 ################################
 # SCOTCH
 ################################
-if(DEFINED SCOTCH_DIR)
+if(DEFINED SCOTCH_DIR AND ENABLE_SCOTCH)
     message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
 
     find_package(SCOTCH REQUIRED
@@ -604,7 +621,7 @@ endif()
 ################################
 # SUPERLU_DIST
 ################################
-if(DEFINED SUPERLU_DIST_DIR)
+if(DEFINED SUPERLU_DIST_DIR AND ENABLE_SUPERLU_DIST)
     message(STATUS "SUPERLU_DIST_DIR = ${SUPERLU_DIST_DIR}")
 
     find_and_import(NAME superlu_dist
@@ -635,7 +652,7 @@ endif()
 ################################
 # SUITESPARSE
 ################################
-if(DEFINED SUITESPARSE_DIR)
+if(DEFINED SUITESPARSE_DIR AND ENABLE_SUITESPARSE)
     message(STATUS "SUITESPARSE_DIR = ${SUITESPARSE_DIR}")
 
     find_and_import(NAME suitesparse
@@ -813,7 +830,7 @@ endif()
 ################################
 # VTK
 ################################
-if(DEFINED VTK_DIR)
+if(DEFINED VTK_DIR AND ENABLE_VTK)
     message(STATUS "VTK_DIR = ${VTK_DIR}")
     find_package(VTK REQUIRED
                  PATHS ${VTK_DIR}
@@ -918,8 +935,10 @@ endif()
 # LAI
 ################################
 string(TOUPPER "${GEOS_LA_INTERFACE}" upper_LAI)
-if(NOT ENABLE_${upper_LAI})
-  message(FATAL_ERROR "${GEOS_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
+if( NOT GEOS_LA_INTERFACE STREQUAL "None" )
+  if(NOT ENABLE_${upper_LAI})
+    message(FATAL_ERROR "${GEOS_LA_INTERFACE} LA interface is selected, but ENABLE_${upper_LAI} is OFF")
+  endif()
 endif()
 option(GEOS_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 

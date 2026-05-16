@@ -23,7 +23,9 @@
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
+#if defined(GEOS_USE_LINEARALGEBRA)
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
+#endif
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 #include "common/Timer.hpp"
@@ -44,9 +46,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   ExecutableGroup( name, parent ),
   m_cflFactor(),
   m_nextDt( 1e99 ),
+#if defined(GEOS_USE_LINEARALGEBRA)
   m_dofManager( name ),
   m_usePhysicsScaling( 1 ),
   m_linearSolverParameters( groupKeyStruct::linearSolverParametersString(), this ),
+#endif
   m_nonlinearSolverParameters( groupKeyStruct::nonlinearSolverParametersString(), this ),
   m_solverStatistics( groupKeyStruct::solverStatisticsString(), this ),
   m_systemSetupTimestamp( 0 )
@@ -84,6 +88,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
+#if defined(GEOS_USE_LINEARALGEBRA)
   registerWrapper( viewKeyStruct::writeLinearSystemString(), &m_writeLinearSystem ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -100,6 +105,8 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Enable physics-based scaling of the linear system. Default: true." );
+
+#endif
 
   registerWrapper( viewKeyStruct::numTimestepsSinceLastDtCutString(), &m_numTimestepsSinceLastDtCut ).
     setApplyDefaultValue( -1 ).
@@ -125,12 +132,16 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
   addLogLevel< logInfo::TimeStep >();
   addLogLevel< logInfo::Timers >();
 
+#if defined(GEOS_USE_LINEARALGEBRA)
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
+#endif
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
   registerGroup( groupKeyStruct::solverStatisticsString(), &m_solverStatistics );
 
+#if defined(GEOS_USE_LINEARALGEBRA)
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
+#endif
 }
 
 void PhysicsSolverBase::postInputInitialization()
@@ -248,11 +259,15 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
 
 bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & funcType )
 {
+#if defined(GEOS_USE_LINEARALGEBRA)
   if( std::type_index( funcType ) == std::type_index( typeid( std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > ) ) )
   {
     m_assemblyCallback = *reinterpret_cast< std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > * >( func );
     return true;
   }
+#else
+  GEOS_UNUSED_VAR( func, funcType );
+#endif
 
   return false;
 }
@@ -263,6 +278,11 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+#if !defined(GEOS_USE_LINEARALGEBRA)
+  GEOS_UNUSED_VAR( time_n, cycleNumber, domain );
+  GEOS_ERROR( "PhysicsSolverBase::solverStep requires GEOS_ENABLE_LINEARALGEBRA=ON. Explicit solvers must override solverStep()." );
+  return dt;
+#else
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
@@ -286,6 +306,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   }
 
   return dt_return;
+#endif
 }
 
 bool PhysicsSolverBase::execute( real64 const time_n,
@@ -526,6 +547,7 @@ real64 PhysicsSolverBase::setNextDtBasedOnIterNumber( real64 const & currentDt )
   return nextDt;
 }
 
+#if defined(GEOS_USE_LINEARALGEBRA)
 real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
                                               real64 const & dt,
                                               integer const cycleNumber,
@@ -1169,6 +1191,8 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
   return isNewtonConverged;
 }
 
+#endif
+
 real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                         real64 const & GEOS_UNUSED_PARAM( dt ),
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
@@ -1178,6 +1202,7 @@ real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
   return 0;
 }
 
+#if defined(GEOS_USE_LINEARALGEBRA)
 void PhysicsSolverBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                            DomainPartition & GEOS_UNUSED_PARAM( domain ) )
@@ -1515,6 +1540,8 @@ void PhysicsSolverBase::applySystemSolution( DofManager const & GEOS_UNUSED_PARA
 {
   GEOS_ERROR( "PhysicsSolverBase::applySystemSolution called!. Should be overridden." );
 }
+
+#endif
 
 void PhysicsSolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {

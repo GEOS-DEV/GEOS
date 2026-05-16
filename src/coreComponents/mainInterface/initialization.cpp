@@ -17,9 +17,12 @@
 #include "version.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/GeosxConfig.hpp"
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
+#if defined(GEOS_USE_LINEARALGEBRA)
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#endif
 
 // TPL includes
 #include <optionparser.h>
@@ -296,7 +299,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool const parseCommandLine )
 {
   setupEnvironment( argc, argv );
+#if defined(GEOS_USE_LINEARALGEBRA)
   setupLAI();
+#endif
 
   if( parseCommandLine )
   {
@@ -311,7 +316,9 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void basicCleanup()
 {
+#if defined(GEOS_USE_LINEARALGEBRA)
   finalizeLAI();
+#endif
   cleanupEnvironment();
 }
 

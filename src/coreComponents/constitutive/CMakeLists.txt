@@ -380,7 +380,41 @@ set( constitutive_sources
      thermalConductivity/SinglePhaseThermalConductivityBase.cpp
    )
 
-set( dependencyList ${parallelDeps} functions denseLinearAlgebra )
+
+if( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY )
+  # Explicit MPM dispatches through ConstitutivePassThruMPM<ContinuumBase>
+  # and ConstitutivePassThruCohesiveZone<CohesiveZoneBase>.  Keep only the
+  # concrete models used by those two dispatch lists, plus their bases.
+  set( constitutive_sources
+       ConstitutiveBase.cpp
+       ConstitutiveManager.cpp
+       NullModel.cpp
+       ContinuumBase.cpp
+       gas/Gas.cpp
+       cohesiveZone/CohesiveZoneBase.cpp
+       cohesiveZone/UncoupledCohesiveZone.cpp
+       cohesiveZone/CoupledCohesiveZone.cpp
+       cohesiveZone/PolymerCohesiveZone.cpp
+       cohesiveZone/BicrystalCohesiveZone.cpp
+       solid/SolidBase.cpp
+       solid/ElasticIsotropic.cpp
+       solid/ElasticTransverseIsotropic.cpp
+       solid/Hyperelastic.cpp
+       solid/HyperelasticMMS.cpp
+       solid/PerfectlyPlastic.cpp
+       solid/Graphite.cpp
+       solid/Geomechanics.cpp
+       solid/StrainHardeningPolymer.cpp
+       solid/Chiumenti.cpp
+       solid/VonMisesJ.cpp
+       solid/CeramicDamage.cpp )
+endif()
+
+set( dependencyList ${parallelDeps} functions )
+
+if( GEOS_ENABLE_DENSE_LINEARALGEBRA )
+  list( APPEND dependencyList denseLinearAlgebra )
+endif()
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

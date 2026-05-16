@@ -22,15 +22,18 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/GeosxConfig.hpp"
 #include "common/format/LogPart.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
 #include "dataRepository/RestartFlags.hpp"
+#if defined(GEOS_USE_LINEARALGEBRA)
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
+#include "physicsSolvers/LinearSolverParameters.hpp"
+#endif
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
-#include "physicsSolvers/LinearSolverParameters.hpp"
 #include "physicsSolvers/SolverStatistics.hpp"
 
 #include <limits>
@@ -140,6 +143,7 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /**
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
@@ -199,6 +203,8 @@ public:
    * @return a reference to linear system matrix of this solver
    */
   CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
+
+  #endif
 
   /**
    * @defgroup Solver Interface Functions
@@ -263,6 +269,7 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain );
 
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /**
    * @brief Function for a nonlinear implicit integration step
    * @param time_n time at the beginning of the step
@@ -614,6 +621,8 @@ public:
                        real64 const dt,
                        DomainPartition & domain );
 
+  #endif
+
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
@@ -809,6 +818,7 @@ public:
    */
   virtual void saveSequentialIterationState( DomainPartition & domain );
 
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /**
    * @brief accessor for the linear solver parameters.
    * @return the linear solver parameter list
@@ -826,6 +836,8 @@ public:
   {
     return m_linearSolverParameters.get();
   }
+
+  #endif
 
   /**
    * @brief accessor for the nonlinear solver parameters.
@@ -1005,6 +1017,7 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /**
    * @brief Eisenstat-Walker adaptive tolerance
    *
@@ -1033,6 +1046,8 @@ protected:
   real64 eisenstatWalker( real64 const newNewtonNorm,
                           real64 const oldNewtonNorm,
                           LinearSolverParameters::Krylov const & krylovParams );
+
+  #endif
 
   /**
    * @brief Get the Constitutive Name object
@@ -1133,6 +1148,10 @@ protected:
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
 
+  /// Parameter for outputing statistics information
+  StatsOutputType m_writeStatisticsCSV;
+
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /// Data structure to handle degrees of freedom
   DofManager m_dofManager;
 
@@ -1163,14 +1182,13 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// Parameter for outputing statistics information
-  StatsOutputType m_writeStatisticsCSV;
-
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
 
   /// Result of the last linear solver
   LinearSolverResult m_linearSolverResult;
+
+  #endif
 
   /// Nonlinear solver parameters
   NonlinearSolverParameters m_nonlinearSolverParameters;
@@ -1181,8 +1199,10 @@ protected:
   /// Timestamp of the last call to setup system
   Timestamp m_systemSetupTimestamp;
 
+#if defined(GEOS_USE_LINEARALGEBRA)
   /// Callback function for assembly step
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
+#endif
 
   /// Timers for the aggregate profiling of the solver
   stdMap< std::string, std::chrono::system_clock::duration > m_timers;
@@ -1206,6 +1226,7 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); }
   virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOS_UNUSED_VAR( subRegion ); } // particle overload
 
+  #if defined(GEOS_USE_LINEARALGEBRA)
   /**
    * @brief Solve a nonlinear system using a Newton method
    * @param time_n the time at the beginning of the step
@@ -1218,6 +1239,8 @@ private:
                              real64 const & dt,
                              integer const cycleNumber,
                              DomainPartition & domain );
+
+  #endif
 
   /**
    * @brief output information about the cycle to the log

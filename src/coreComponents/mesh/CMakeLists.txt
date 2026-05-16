@@ -92,7 +92,6 @@ set( mesh_headers
      generators/InternalWellboreGenerator.hpp
      generators/MeshComponentBase.hpp
      generators/MeshGeneratorBase.hpp
-     generators/ParMETISInterface.hpp
      particleGenerators/ParticleBlock.hpp
      particleGenerators/ParticleBlockABC.hpp
      particleGenerators/ParticleBlockManager.hpp
@@ -189,7 +188,6 @@ set( mesh_sources
      generators/InternalWellboreGenerator.cpp
      generators/MeshComponentBase.cpp
      generators/MeshGeneratorBase.cpp
-     generators/ParMETISInterface.cpp
      particleGenerators/ParticleMeshGeneratorBase.cpp
      particleGenerators/ParticleMeshGenerator.cpp
      generators/Region.cpp

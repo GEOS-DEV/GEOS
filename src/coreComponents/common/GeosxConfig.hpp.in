@@ -38,6 +38,12 @@
 /// Enables use of CHAI (CMake option ENABLE_CHAI)
 #cmakedefine GEOS_USE_CHAI
 
+/// Enables the GEOS implicit linear algebra package (CMake option GEOS_ENABLE_LINEARALGEBRA)
+#cmakedefine GEOS_USE_LINEARALGEBRA
+
+/// Enables standalone constitutive driver executables/libraries (CMake option GEOS_ENABLE_CONSTITUTIVE_DRIVERS)
+#cmakedefine GEOS_USE_CONSTITUTIVE_DRIVERS
+
 /// Enables use of Mathpresso library (CMake option ENABLE_MATHPRESSO)
 #cmakedefine GEOS_USE_MATHPRESSO
 
@@ -118,6 +124,8 @@
 #cmakedefine GEOS_LA_INTERFACE_HYPRE
 /// Macro defined when PETSc interface is selected
 #cmakedefine GEOS_LA_INTERFACE_PETSC
+/// Macro defined when no linear algebra interface is selected
+#cmakedefine GEOS_LA_INTERFACE_NONE
 
 /// Platform-dependent mangling of fortran function names (CMake option FORTRAN_MANGLE_NO_UNDERSCORE)
 #cmakedefine FORTRAN_MANGLE_NO_UNDERSCORE
