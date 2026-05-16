@@ -1330,8 +1330,68 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-  writeMeshLevel( mesh, cycleNum, problemTime, isRestart );
+  MeshLevel const & primaryMesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+
+  // MPM inputs commonly have two mesh bodies:
+  //   mesh body 0: InternalMesh backgroundGrid
+  //   mesh body 1: ParticleMesh particles
+  // The historical Silo writer only visited mesh body 0, so particle regions in
+  // the separate ParticleMesh were never written. Also make the field-name
+  // registration check particle-aware across all mesh bodies before writeMeshLevel()
+  // performs its element/node check.
+  if( m_requireFieldRegistrationCheck && !m_fieldNames.empty() )
+  {
+    std::set< string > nonParticleFieldNames( m_fieldNames );
+
+    domain.forMeshBodies( [&]( MeshBody const & meshBody )
+    {
+      MeshLevel const & meshLevel = meshBody.getBaseDiscretization();
+      ParticleManager const & particleManager = meshLevel.getParticleManager();
+
+      particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase const & subRegion )
+      {
+        for( auto const & wrapperIter : subRegion.wrappers() )
+        {
+          nonParticleFieldNames.erase( wrapperIter.first );
+        }
+      } );
+    } );
+
+    if( !nonParticleFieldNames.empty() )
+    {
+      outputUtilities::checkFieldRegistration( primaryMesh.getElemManager(),
+                                               primaryMesh.getNodeManager(),
+                                               nonParticleFieldNames,
+                                               "SiloOutput" );
+    }
+
+    m_requireFieldRegistrationCheck = false;
+  }
+
+  // Preserve the legacy Silo behavior for mesh body 0. This writes the
+  // background-grid side of the output using the existing object names.
+  writeMeshLevel( primaryMesh, cycleNum, problemTime, isRestart );
+
+  // Write particle-domain meshes from non-primary mesh bodies. Do not call
+  // writeMeshLevel() on these bodies because that can create duplicate objects
+  // such as MeshLevel, face_mesh, or edge_mesh in the Silo database.
+  domain.forMeshBodiesIndex( [&]( localIndex const meshBodyIndex,
+                                  MeshBody const & meshBody )
+  {
+    if( meshBodyIndex != 0 )
+    {
+      MeshLevel const & particleMesh = meshBody.getBaseDiscretization();
+      ParticleManager const & particleManager = particleMesh.getParticleManager();
+
+      if( meshBody.hasParticles() || particleManager.numRegions() > 0 )
+      {
+        writeParticleRegions( particleManager,
+                              cycleNum,
+                              problemTime,
+                              isRestart );
+      }
+    }
+  } );
 
   if( isRestart )
   {
@@ -1706,10 +1766,14 @@ void SiloFile::writeParticleMeshObject( ParticleRegion const & particleRegion,
     particleToCornerMap[psr].resize( subRegion.size() * numCornersPerParticle );
 
     arrayView1d< int const > const particleRank = subRegion.getParticleRank();
+    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOS );
 
     for( localIndex p = 0; p < subRegion.size(); ++p )
     {
-      char const ghostFlag = particleRank[p] >= 0 ? 1 : 0;
+      // For ParticleSubRegion, particleRank stores the rank that owns the
+      // particle. The active/non-ghost particles are those owned by the
+      // current rank, matching ParticleSubRegionBase::setActiveParticleIndices().
+      char const ghostFlag = particleRank[p] == mpiRank ? 0 : 1;
 
       ghostZoneFlag[particleOffset + p] = ghostFlag;
 
