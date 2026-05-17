@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
+CASE='borehole_Ghareb'
+PASSTHRU=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python)
+      [ "$#" -ge 2 ] || { echo "--python requires an argument" >&2; exit 2; }
+      PYTHON_CMD="$2"
+      PASSTHRU+=("--python" "$2")
+      shift 2
+      ;;
+    --case|--variant)
+      [ "$#" -ge 2 ] || { echo "$1 requires an argument" >&2; exit 2; }
+      CASE="$2"
+      shift 2
+      ;;
+    --help|-h)
+      echo "Usage: ./runProblem [--case CASE] [--python PYTHON] [runner options]"
+      echo "Cases: borehole_Ghareb borehole_Damage_Ghareb"
+      "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" --help || true
+      exit 0
+      ;;
+    *)
+      PASSTHRU+=("$1")
+      shift
+      ;;
+  esac
+done
+
+case "$CASE" in
+    Ghareb) CASE='borehole_Ghareb' ;;
+    Damage_Ghareb) CASE='borehole_Damage_Ghareb' ;;
+esac
+
+case "$CASE" in
+    borehole_Ghareb) INPUT='pfw_input_boreholeCollapse2D_Ghareb_borehole.py'; PREFIX='borehole_Ghareb'; INITIAL_VAR='StrengthScale'; FINAL_VAR='Damage'; VIEW='xy' ;;
+    borehole_Damage_Ghareb) INPUT='pfw_input_boreholeCollapse2D_Damage_Ghareb_borehole.py'; PREFIX='borehole_Damage_Ghareb'; INITIAL_VAR='StrengthScale'; FINAL_VAR='Damage'; VIEW='xy' ;;
+    *) echo "Unknown case '$CASE'. Valid cases: borehole_Ghareb borehole_Damage_Ghareb" >&2; exit 2 ;;
+esac
+
+exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py"   --case-id "$CASE"   --source-dir "$SCRIPT_DIR"   --input "$INPUT"   --output-prefix "$PREFIX"   --initial-variable "$INITIAL_VAR"   --final-variable "$FINAL_VAR"   --view "$VIEW"   "${PASSTHRU[@]}"

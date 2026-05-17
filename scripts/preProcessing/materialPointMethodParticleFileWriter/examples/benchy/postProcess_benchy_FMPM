@@ -1,0 +1,348 @@
+#!/usr/bin/env bash
+# Post-process the GEOS-MPM Benchy STL/contact example.
+#
+# This script is safe to rerun.  It checks that GEOS completed, optionally
+# runs the Benchy VisIt renderer, and always attempts to copy any PNG/log
+# products from the Lustre run directory back to the source-tree output folder.
+
+set -euo pipefail
+
+CASE_NAME="benchy_FMPM"
+RUN_DIR="$(pwd -P)"
+OUTPUT_DIR=""
+GEOS_JOB_ID=""
+VISIT_COMMAND=""
+VISIT_SCRIPT_NAME="visitRender_benchy.py"
+SKIP_SLURM_CHECK=0
+FORCE_OVERWRITE=0
+SKIP_RENDER=0
+
+usage() {
+  cat <<'USAGE'
+Usage: ./postProcess_benchy_FMPM [options]
+
+Options:
+  --run-dir DIR          Run directory containing siloFiles/ and VisIt scripts.
+  --output-dir DIR       Destination output directory in the source tree.
+  --job-id ID            GEOS Slurm job id whose slurm-ID.out should be checked.
+  --case-name NAME       Case name used for output files. Default: benchy_FMPM.
+  --visit-command PATH   VisIt executable. Default: /usr/gapps/visit/bin/visit, then visit.
+  --skip-slurm-check     Do not inspect the GEOS Slurm output.
+  --copy-only            Do not launch VisIt; only copy existing visit_frames/ PNGs and logs.
+  --skip-render          Same as --copy-only.
+  -y, --yes, --force     Overwrite existing copied output products without prompting.
+  -h, --help             Show this help.
+USAGE
+}
+
+log() { printf '[%s post] %s\n' "$CASE_NAME" "$*"; }
+warn() { printf '[%s post] WARNING: %s\n' "$CASE_NAME" "$*" >&2; }
+fail() { printf '[%s post] ERROR: %s\n' "$CASE_NAME" "$*" >&2; exit 1; }
+
+expand_path() {
+  local path="$1"
+  case "$path" in
+    '~') printf '%s\n' "$HOME" ;;
+    '~/'*) printf '%s/%s\n' "$HOME" "${path#~/}" ;;
+    *) printf '%s\n' "$path" ;;
+  esac
+}
+
+abs_path() {
+  local path dir base
+  path=$(expand_path "$1")
+  if [ -d "$path" ]; then
+    (cd "$path" && pwd -P)
+  else
+    dir=$(dirname "$path")
+    base=$(basename "$path")
+    if [ -d "$dir" ]; then
+      (cd "$dir" && printf '%s/%s\n' "$(pwd -P)" "$base")
+    else
+      case "$path" in
+        /*) printf '%s\n' "$path" ;;
+        *) printf '%s/%s\n' "$(pwd -P)" "$path" ;;
+      esac
+    fi
+  fi
+}
+
+detect_visit() {
+  local requested="${1:-}"
+  local candidates=()
+  [ -n "$requested" ] && candidates+=("$requested")
+  [ -n "${VISIT_COMMAND:-}" ] && candidates+=("$VISIT_COMMAND")
+  candidates+=("/usr/gapps/visit/bin/visit" "visit")
+
+  local cmd
+  for cmd in "${candidates[@]}"; do
+    [ -z "$cmd" ] && continue
+    if [ -x "$cmd" ]; then printf '%s\n' "$cmd"; return 0; fi
+    if command -v "$cmd" >/dev/null 2>&1; then command -v "$cmd"; return 0; fi
+  done
+  return 1
+}
+
+slurm_output_for_job() {
+  local job_id="$1"
+  local candidates=("$RUN_DIR/slurm-${job_id}.out" "$RUN_DIR/slurm-${job_id}_0.out")
+  local path
+  for path in "${candidates[@]}"; do
+    [ -f "$path" ] && { printf '%s\n' "$path"; return 0; }
+  done
+  find "$RUN_DIR" -maxdepth 1 -type f -name "slurm-${job_id}*.out" -print -quit 2>/dev/null || true
+}
+
+plot_database_exists() {
+  [ -d "$RUN_DIR/siloFiles" ] || return 1
+  find "$RUN_DIR/siloFiles" -maxdepth 1 -type f -name 'mpm_cpdi_*' -print -quit 2>/dev/null | grep -q .
+}
+
+sacct_geos_state() {
+  [ -n "$GEOS_JOB_ID" ] || return 1
+  command -v sacct >/dev/null 2>&1 || return 1
+
+  local raw=""
+  if command -v timeout >/dev/null 2>&1; then
+    raw=$(timeout 20 sacct -j "$GEOS_JOB_ID" -X -n -P -o JobID,State,ExitCode 2>/dev/null || true)
+  else
+    raw=$(sacct -j "$GEOS_JOB_ID" -X -n -P -o JobID,State,ExitCode 2>/dev/null || true)
+  fi
+  printf '%s\n' "$raw" | awk -F'|' '$1 ~ /^[0-9]+$/ && NF >= 3 {print; exit}'
+}
+
+check_sacct_completed_or_failed() {
+  local line state exit_code
+  line=$(sacct_geos_state || true)
+  [ -n "$line" ] || return 1
+
+  state=$(printf '%s\n' "$line" | awk -F'|' '{print $2}')
+  exit_code=$(printf '%s\n' "$line" | awk -F'|' '{print $3}')
+  log "sacct state for GEOS job $GEOS_JOB_ID: state=$state exit=$exit_code"
+
+  case "$state" in
+    COMPLETED)
+      if [ "$exit_code" = "0:0" ]; then
+        log "sacct confirms GEOS job completed successfully"
+        return 0
+      fi
+      fail "sacct reports GEOS job completed with nonzero exit code $exit_code"
+      ;;
+    FAILED|CANCELLED|TIMEOUT|NODE_FAIL|PREEMPTED|OUT_OF_MEMORY|BOOT_FAIL|DEADLINE)
+      fail "sacct reports GEOS job state $state with exit code $exit_code"
+      ;;
+    RUNNING|PENDING|CONFIGURING|COMPLETING|SUSPENDED)
+      fail "sacct reports GEOS job is not complete yet: $state"
+      ;;
+  esac
+  return 1
+}
+
+check_geos_completed() {
+  [ "$SKIP_SLURM_CHECK" -eq 1 ] && { log "skipping GEOS slurm completion check"; return 0; }
+  [ -n "$GEOS_JOB_ID" ] || { log "no --job-id provided; skipping GEOS slurm completion check"; return 0; }
+
+  local slurm_file check_log
+  slurm_file=$(slurm_output_for_job "$GEOS_JOB_ID")
+  check_log="$RUN_DIR/${CASE_NAME}_geos_slurm_check.log"
+
+  if [ -z "$slurm_file" ]; then
+    if check_sacct_completed_or_failed; then return 0; fi
+    if plot_database_exists; then
+      warn "no Slurm output found for job $GEOS_JOB_ID, but siloFiles/mpm_cpdi_* exists; continuing"
+      return 0
+    fi
+    fail "could not find Slurm output for GEOS job $GEOS_JOB_ID in $RUN_DIR"
+  fi
+
+  log "checking GEOS slurm output: $slurm_file"
+  {
+    printf 'case=%s\n' "$CASE_NAME"
+    printf 'job_id=%s\n' "$GEOS_JOB_ID"
+    printf 'slurm_file=%s\n' "$slurm_file"
+    printf -- '--- tail -c 200000 %s ---\n' "$slurm_file"
+    LC_ALL=C tail -c 200000 "$slurm_file" 2>&1 || true
+  } > "$check_log"
+
+  if grep -qiE '\*\*\*\*\* EXCEPTION|XML parsing error|Input string validation failed|Segmentation fault|segmentation fault|slurmstepd: error|DUE TO TIME LIMIT|TIME LIMIT|CANCELLED|FAILED|NODE_FAIL|MPI_Abort|std::exception|Traceback' "$check_log"; then
+    log "GEOS failure marker found in $check_log"
+    tail -n 80 "$check_log" >&2 || true
+    fail "GEOS slurm output indicates failure; not rendering"
+  fi
+
+  if grep -qiE 'Job complete|GEOS terminated normally|Run exited normally|terminated normally|Total Problem Run Time' "$check_log"; then
+    log "GEOS completion marker found"
+    return 0
+  fi
+
+  if check_sacct_completed_or_failed; then return 0; fi
+
+  if plot_database_exists; then
+    warn "GEOS completion marker was not found, but siloFiles/mpm_cpdi_* exists and no failure marker was found; continuing"
+    return 0
+  fi
+
+  tail -n 80 "$check_log" >&2 || true
+  fail "GEOS completion marker not found in $slurm_file; use --skip-slurm-check to render/copy anyway"
+}
+
+output_dir_has_products() {
+  [ -d "$OUTPUT_DIR" ] || return 1
+  local found
+  found=$(find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -print -quit 2>/dev/null || true)
+  [ -n "$found" ]
+}
+
+clear_output_if_requested() {
+  mkdir -p "$OUTPUT_DIR"
+  if output_dir_has_products; then
+    if [ "$FORCE_OVERWRITE" -ne 1 ]; then
+      if [ ! -t 0 ]; then
+        fail "existing output would be overwritten; use --force in batch/noninteractive mode"
+      fi
+      local reply
+      read -r -p "Overwrite previous ${CASE_NAME} post-process output? [y/N] " reply
+      case "$reply" in
+        [yY]|[yY][eE][sS]) ;;
+        *) log "not overwriting previous output; exiting"; exit 0 ;;
+      esac
+    fi
+    log "clearing existing output products in $OUTPUT_DIR"
+    find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -exec rm -rf -- {} +
+  fi
+}
+
+copy_products() {
+  mkdir -p "$OUTPUT_DIR"
+  log "copying VisIt products back to output directory"
+
+  local copied=0
+  local file
+
+  if [ -d "$FRAME_DIR" ]; then
+    log "searching for PNGs in $FRAME_DIR"
+    while IFS= read -r -d '' file; do
+      cp -f -- "$file" "$OUTPUT_DIR/"
+      copied=$((copied + 1))
+      log "copied $(basename "$file")"
+    done < <(find "$FRAME_DIR" -maxdepth 1 -type f -iname '*.png' -print0 2>/dev/null | sort -z)
+  else
+    warn "frame directory does not exist: $FRAME_DIR"
+  fi
+
+  log "searching for PNGs in $RUN_DIR"
+  while IFS= read -r -d '' file; do
+    cp -f -- "$file" "$OUTPUT_DIR/"
+    copied=$((copied + 1))
+    log "copied $(basename "$file")"
+  done < <(find "$RUN_DIR" -maxdepth 1 -type f -iname '*.png' -print0 2>/dev/null | sort -z)
+
+  for file in "$VISIT_LOG" "$RUN_DIR/${CASE_NAME}_geos_slurm_check.log"; do
+    [ -f "$file" ] && cp -f -- "$file" "$OUTPUT_DIR/" || true
+  done
+  for file in reactionHistory.csv boxAverageHistory.csv; do
+    [ -f "$RUN_DIR/$file" ] && cp -f -- "$RUN_DIR/$file" "$OUTPUT_DIR/" || true
+  done
+
+  log "copied $copied PNG file(s) to $OUTPUT_DIR"
+  if [ "$copied" -eq 0 ]; then
+    warn "no PNG files were found to copy"
+    log "contents of $FRAME_DIR:"
+    find "$FRAME_DIR" -maxdepth 1 -type f -print 2>/dev/null | sort || true
+    log "contents of $RUN_DIR matching likely image names:"
+    find "$RUN_DIR" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' \) -print 2>/dev/null | sort || true
+    return 1
+  fi
+  return 0
+}
+
+run_visit_renderer() {
+  [ -f "$VISIT_SCRIPT" ] || fail "missing renderer in run directory: $VISIT_SCRIPT"
+  local visit_exe visit_status
+  visit_exe=$(detect_visit "$VISIT_COMMAND") || fail "VisIt command not found; use --visit-command /path/to/visit"
+  log "VisIt command: $visit_exe"
+
+  set +e
+  (
+    cd "$RUN_DIR"
+    "$visit_exe" -nowin -cli -s "$VISIT_SCRIPT" \
+      --run-dir "$RUN_DIR" \
+      --output-dir "$FRAME_DIR" \
+      --case-name "$CASE_NAME" \
+      --states initial,final \
+      --view iso \
+      --mesh CellRegion1 \
+      --boat-region ParticleRegion1 \
+      --ball-region ParticleRegion2 \
+      --colortable hot_desaturated \
+      --list-databases \
+      --list-variables
+  ) 2>&1 | tee "$VISIT_LOG"
+  visit_status=${PIPESTATUS[0]}
+  set -e
+
+  if [ "$visit_status" -ne 0 ]; then
+    warn "VisIt exited with status $visit_status; copy-back will still be attempted"
+  else
+    log "VisIt completed successfully"
+  fi
+  return "$visit_status"
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --run-dir) [ "$#" -ge 2 ] || fail "$1 requires a value"; RUN_DIR=$(abs_path "$2"); shift 2 ;;
+    --output-dir) [ "$#" -ge 2 ] || fail "$1 requires a value"; OUTPUT_DIR=$(abs_path "$2"); shift 2 ;;
+    --job-id) [ "$#" -ge 2 ] || fail "$1 requires a value"; GEOS_JOB_ID="$2"; shift 2 ;;
+    --case-name) [ "$#" -ge 2 ] || fail "$1 requires a value"; CASE_NAME="$2"; shift 2 ;;
+    --visit-command) [ "$#" -ge 2 ] || fail "$1 requires a value"; VISIT_COMMAND="$2"; shift 2 ;;
+    --skip-slurm-check) SKIP_SLURM_CHECK=1; shift ;;
+    --copy-only|--skip-render) SKIP_RENDER=1; shift ;;
+    --force|--yes|-y) FORCE_OVERWRITE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) fail "Unknown option: $1" ;;
+  esac
+done
+
+RUN_DIR=$(abs_path "$RUN_DIR")
+if [ -z "$OUTPUT_DIR" ]; then
+  OUTPUT_DIR="$RUN_DIR/output"
+else
+  OUTPUT_DIR=$(abs_path "$OUTPUT_DIR")
+fi
+FRAME_DIR="$RUN_DIR/visit_frames"
+VISIT_LOG="$RUN_DIR/${CASE_NAME}_visit_render.log"
+VISIT_SCRIPT="$RUN_DIR/$VISIT_SCRIPT_NAME"
+
+[ -d "$RUN_DIR" ] || fail "run directory does not exist: $RUN_DIR"
+
+log "run directory: $RUN_DIR"
+log "output directory: $OUTPUT_DIR"
+log "visit frames directory: $FRAME_DIR"
+
+check_geos_completed
+clear_output_if_requested
+mkdir -p "$FRAME_DIR" "$OUTPUT_DIR"
+
+visit_status=0
+if [ "$SKIP_RENDER" -eq 1 ]; then
+  log "copy-only mode: not launching VisIt"
+else
+  run_visit_renderer || visit_status=$?
+fi
+
+copy_status=0
+copy_products || copy_status=$?
+
+if [ "$copy_status" -ne 0 ]; then
+  if [ "$visit_status" -ne 0 ]; then
+    fail "VisIt exited with status $visit_status and no PNG files were copied"
+  fi
+  fail "no PNG files were copied; inspect $VISIT_LOG"
+fi
+
+if [ "$visit_status" -ne 0 ]; then
+  warn "post-processing copied existing PNGs, but VisIt returned status $visit_status; inspect $VISIT_LOG"
+fi
+
+log "post-processing complete"

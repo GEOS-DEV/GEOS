@@ -1,0 +1,335 @@
+#!/usr/bin/env python3
+"""Run/report the GEOS-MPM examples suite."""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+
+EXAMPLES = [
+    {"id":"brazilianDisk_FMPM","dir":"brazilianDisk_FMPM","prefix":"brazilianDisk_FMPM","family":"Brazilian disk","label":"FMPM","description":"Plane-strain Brazilian disk compression with quartz damage, Weibull strength scaling, and CPDI particles.","features":["FMPM update","quartz damage material","moving y boundaries","periodic x boundaries","reaction history"],"initial":"brazilianDisk_FMPM_initial_particleStrengthScale.png","final":"brazilianDisk_FMPM_final_particleDamage.png","reaction":"brazilianDisk_FMPM_reactions_y.png","args":[]},
+    {"id":"brazilianDisk_FLIP","dir":"brazilianDisk_FLIP","prefix":"brazilianDisk_FLIP","family":"Brazilian disk","label":"FLIP","description":"Brazilian disk variant using FLIP grid-to-particle velocity transfer.","features":["FLIP update","quartz damage material","reaction history"],"initial":"brazilianDisk_FLIP_initial_particleStrengthScale.png","final":"brazilianDisk_FLIP_final_particleDamage.png","reaction":"brazilianDisk_FLIP_reactions_y.png","args":[]},
+    {"id":"brazilianDisk_PIC","dir":"brazilianDisk_PIC","prefix":"brazilianDisk_PIC","family":"Brazilian disk","label":"PIC","description":"Brazilian disk variant using PIC velocity transfer.","features":["PIC update","quartz damage material","reaction history"],"initial":"brazilianDisk_PIC_initial_particleStrengthScale.png","final":"brazilianDisk_PIC_final_particleDamage.png","reaction":"brazilianDisk_PIC_reactions_y.png","args":[]},
+    {"id":"brazilianDisk_XPIC","dir":"brazilianDisk_XPIC","prefix":"brazilianDisk_XPIC","family":"Brazilian disk","label":"XPIC","description":"Brazilian disk variant using XPIC velocity transfer.","features":["XPIC update","quartz damage material","reaction history"],"initial":"brazilianDisk_XPIC_initial_particleStrengthScale.png","final":"brazilianDisk_XPIC_final_particleDamage.png","reaction":"brazilianDisk_XPIC_reactions_y.png","args":[]},
+    {"id":"benchy","dir":"benchy","prefix":"benchy_FMPM","family":"Benchy STL/contact","label":"Benchy FMPM","description":"STL import and prescribed multi-field contact between a copper 3DBenchy boat and a steel ball.","features":["STL geometry import","copper and steel material helpers","separate particle regions/contact groups","multi-region VisIt rendering"],"initial":"benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.png","final":"benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocityMagnitude.png","reaction":"","args":[]},
+    {'id': 'bar', 'dir': 'bar', 'prefix': 'bar', 'family': 'Elastic bar', 'label': 'Elastic bar smoke problem', 'description': 'A small elastic bar represented by box geometry.  This is a lightweight smoke test for basic PFW staging, particle generation, GEOS submission, and VisIt rendering.', 'features': ['ElasticIsotropic material', 'box geometry', 'explicit dynamic MPM', 'Silo output'], 'initial': 'bar_initial_', 'final': 'bar_final_', 'reaction': 'bar_reactions.png', 'args': []},
+    {'id': 'borehole_Ghareb', 'dir': 'borehole', 'prefix': 'borehole_Ghareb', 'family': 'Borehole collapse', 'label': 'Ghareb geomechanics borehole pressure drawdown', 'description': 'A plane-strain borehole collapse demonstration using the Ghareb geomechanics parameterization from pfw_materials.py.  The pressure events initialize confinement and unload the borehole wall.', 'features': ['Geomechanics material model', 'borehole pressure MPM event', 'confining pressure event', 'Voronoi-Weibull flaw field', 'plane strain CPDI'], 'initial': 'borehole_Ghareb_initial_', 'final': 'borehole_Ghareb_final_', 'reaction': 'borehole_Ghareb_reactions.png', 'args': ['--case', 'borehole_Ghareb']},
+    {'id': 'borehole_Damage_Ghareb', 'dir': 'borehole', 'prefix': 'borehole_Damage_Ghareb', 'family': 'Borehole collapse', 'label': 'Ghareb geomechanics borehole with damage-focused setup', 'description': 'A damage-focused variant of the Ghareb borehole example.  It uses the same material helper in pfw_materials.py and the same robust example workflow.', 'features': ['Geomechanics material model', 'damage-enabled FMPM', 'borehole pressure MPM event', 'plane strain CPDI'], 'initial': 'borehole_Damage_Ghareb_initial_', 'final': 'borehole_Damage_Ghareb_final_', 'reaction': 'borehole_Damage_Ghareb_reactions.png', 'args': ['--case', 'borehole_Damage_Ghareb']},
+    {'id': 'collidingDisks', 'dir': 'collidingDisks', 'prefix': 'collidingDisks', 'family': 'Colliding disks', 'label': 'Two elastic disks colliding with XPIC update', 'description': 'Two disk-shaped particle bodies move toward one another in plane strain.  The case exercises moving material points, contact-like interactions, and the XPIC update path.', 'features': ['cylinder disk geometry', 'XPIC update', 'multi-object particle initialization', 'reaction and box-average output'], 'initial': 'collidingDisks_initial_', 'final': 'collidingDisks_final_', 'reaction': 'collidingDisks_reactions.png', 'args': []},
+    {'id': 'elasticDisk', 'dir': 'elasticDisk', 'prefix': 'elasticDisk', 'family': 'Elastic disk', 'label': 'Compressed elastic disk', 'description': 'An elastic disk compressed by prescribed boundary motion.  It is a compact example of F-table interpolation, reaction history, and elastic response.', 'features': ['ElasticIsotropic material helper', 'cosine F-table boundary motion', 'reaction-history output', 'plane strain CPDI'], 'initial': 'elasticDisk_initial_', 'final': 'elasticDisk_final_', 'reaction': 'elasticDisk_reactions.png', 'args': []},
+    {'id': 'expandingRing', 'dir': 'expandingRing', 'prefix': 'expandingRing', 'family': 'Expanding ring', 'label': 'Damageable expanding ring', 'description': 'A ring expands dynamically from an imposed initial velocity.  The example exercises annular geometry, damage fields, and surface detection during dynamic fragmentation.', 'features': ['annular/cylinder geometry', 'initial radial velocity', 'damage and surface fields', 'FMPM/DFG-style fields'], 'initial': 'expandingRing_initial_', 'final': 'expandingRing_final_', 'reaction': 'expandingRing_reactions.png', 'args': []},
+    {'id': 'pdc', 'dir': 'pdc', 'prefix': 'pdc', 'family': 'PDC cutter', 'label': 'PDC cutter interaction with substrate', 'description': 'A small PDC cutter example with a cutter interacting with a substrate.  It demonstrates prescribed transverse boundary velocities, periodic boundaries, and cutter/substrate contact fields.', 'features': ['periodic x boundary', 'prescribed transverse boundary velocity', 'PDC cutter/substrate geometry', 'implicit contact gap correction', 'damage material'], 'initial': 'pdc_initial_', 'final': 'pdc_final_', 'reaction': 'pdc_reactions.png', 'args': ['--case', 'pdc']},
+    {'id': 'pdc_r4', 'dir': 'pdc', 'prefix': 'pdc_r4', 'family': 'PDC cutter', 'label': 'Higher-refinement PDC cutter variant', 'description': 'A higher-refinement variant of the PDC example.  It is included as a separate suite case because it exercises the same workflow with a larger particle set.', 'features': ['higher PDC grid refinement', 'periodic x boundary', 'prescribed transverse velocity', 'damage material'], 'initial': 'pdc_r4_initial_', 'final': 'pdc_r4_final_', 'reaction': 'pdc_r4_reactions.png', 'args': ['--case', 'pdc_r4']},
+    {'id': 'plateImpact', 'dir': 'plateImpact', 'prefix': 'plateImpact', 'family': 'Plate impact', 'label': 'Symmetric plate impact with central hole', 'description': 'Two elastic plates move toward one another with a central hole removed.  The case exercises boolean geometry operations and impact-style initial velocities.', 'features': ['box and cylinder difference geometry', 'opposing initial velocities', 'ElasticIsotropic material helper', 'plane strain CPDI'], 'initial': 'plateImpact_initial_', 'final': 'plateImpact_final_', 'reaction': 'plateImpact_reactions.png', 'args': []},
+]
+CASE_BY_ID = {c["id"]: c for c in EXAMPLES}
+CASE_BY_ID["benchy_FMPM"] = CASE_BY_ID.get("benchy", {})
+
+SACCT_FORMATS = [
+    ["JobIDRaw", "JobID", "JobName%40", "State", "ExitCode", "Elapsed", "ElapsedRaw", "TotalCPU", "CPUTimeRAW", "AllocCPUS", "NNodes", "Account", "Partition"],
+    ["JobID", "JobName%40", "State", "ExitCode", "Elapsed", "ElapsedRaw", "TotalCPU", "CPUTimeRAW", "AllocCPUS", "NNodes"],
+]
+
+
+def parse_args():
+    p = argparse.ArgumentParser(description="Dispatch GEOS-MPM examples and build a PDF report")
+    p.add_argument("command", nargs="?", default="all", choices=("run", "report", "all"))
+    p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
+    p.add_argument("--case", action="append", choices=sorted(CASE_BY_ID), help="Run/report one selected case; may be repeated")
+    p.add_argument("--force", "-y", action="store_true")
+    p.add_argument("--no-wait", action="store_true")
+    p.add_argument("--no-visit", action="store_true")
+    p.add_argument("--post-walltime", default="00:05:00")
+    p.add_argument("--post-partition", default="pdebug")
+    p.add_argument("--report-dir", default="examples_suite_report")
+    p.add_argument("--timing-retries", type=int, default=5)
+    p.add_argument("--timing-sleep", type=float, default=6.0)
+    return p.parse_args()
+
+
+def selected(args):
+    if args.case:
+        return [CASE_BY_ID[c] for c in args.case]
+    return [c for c in EXAMPLES if (Path(__file__).resolve().parent / c["dir"]).is_dir()]
+
+
+def run_cmd(cmd, cwd):
+    print("+ " + " ".join(str(c) for c in cmd))
+    proc = subprocess.run(cmd, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    print(proc.stdout, end="")
+    return proc.returncode, proc.stdout
+
+
+def output_dir(root, case):
+    return root / case["dir"] / "output"
+
+
+def dispatch(root, args):
+    jobs = []
+    for case in selected(args):
+        cdir = root / case["dir"]
+        if not (cdir / "runProblem").exists():
+            print(f"WARNING: skipping {case['id']}; no runProblem in {cdir}")
+            continue
+        cmd = ["./runProblem", "--python", args.python_cmd, "--post-walltime", args.post_walltime, "--post-partition", args.post_partition]
+        cmd += case.get("args", [])
+        if args.force:
+            cmd.append("--force")
+        if args.no_visit:
+            cmd.append("--no-visit")
+        code, out = run_cmd(cmd, cdir)
+        if code != 0:
+            raise SystemExit(f"{case['id']} failed with {code}")
+        geos = re.findall(r"GEOS job id:\s*([0-9]+)", out)
+        post = re.findall(r"post-process job id:\s*([0-9]+)", out)
+        rec = {"case": case["id"], "geos": geos[-1] if geos else "", "post": post[-1] if post else ""}
+        jobs.append(rec)
+        odir = output_dir(root, case)
+        odir.mkdir(parents=True, exist_ok=True)
+        (odir / f"{case['prefix']}_jobs.json").write_text(json.dumps({"case": case["id"], "jobs": rec}, indent=2) + "\n")
+    rdir = root / args.report_dir
+    rdir.mkdir(exist_ok=True)
+    (rdir / "examples_suite_jobs.json").write_text(json.dumps({"generated_at": datetime.now().isoformat(timespec="seconds"), "cases": jobs}, indent=2) + "\n")
+    return jobs
+
+
+def wait_jobs(jobs):
+    ids = [j.get("post", "") for j in jobs if j.get("post")]
+    if not ids or shutil.which("squeue") is None:
+        return
+    joined = ",".join(ids)
+    print("Waiting for postprocess jobs: " + joined)
+    while True:
+        proc = subprocess.run(["squeue", "-h", "-j", joined], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        if proc.returncode != 0 or not proc.stdout.strip():
+            break
+        print("still queued/running: " + " ".join(line.split()[0] for line in proc.stdout.splitlines() if line.strip()))
+        time.sleep(30)
+
+
+def read_json(path, default):
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return default
+
+
+def load_jobs(root, args):
+    data = read_json(root / args.report_dir / "examples_suite_jobs.json", {})
+    records = data.get("cases", []) if isinstance(data, dict) else []
+    by_case = {r.get("case"): r for r in records if isinstance(r, dict)}
+    for case in selected(args):
+        j = read_json(output_dir(root, case) / f"{case['prefix']}_jobs.json", {})
+        if isinstance(j, dict) and j.get("jobs"):
+            rec = j["jobs"]
+            by_case.setdefault(case["id"], {"case": case["id"], "geos": rec.get("geos", ""), "post": rec.get("post", "")})
+    return [by_case[c["id"]] for c in selected(args) if c["id"] in by_case]
+
+
+def sacct_rows(job_ids):
+    if not job_ids or shutil.which("sacct") is None:
+        return {}, "sacct unavailable or no job ids"
+    joined = ",".join(job_ids)
+    for fields in SACCT_FORMATS:
+        proc = subprocess.run(["sacct", "-j", joined, "-X", "-n", "-P", "-o", ",".join(fields)], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if proc.returncode != 0:
+            continue
+        clean = [f.split("%", 1)[0] for f in fields]
+        rows = {}
+        for line in proc.stdout.splitlines():
+            parts = line.split("|")
+            row = dict(zip(clean, parts + [""] * (len(clean)-len(parts))))
+            jid = (row.get("JobIDRaw") or row.get("JobID") or "").split(".",1)[0].split("_",1)[0]
+            if jid in job_ids and jid not in rows:
+                rows[jid] = row
+        if rows:
+            return rows, ""
+    return {}, "sacct returned no rows"
+
+
+def query_timing(root, args, jobs):
+    ids = []
+    for j in jobs:
+        for key in ("geos", "post"):
+            jid = str(j.get(key, ""))
+            if jid and jid not in ids:
+                ids.append(jid)
+    rows, note = {}, ""
+    for attempt in range(max(1, args.timing_retries)):
+        rows, note = sacct_rows(ids)
+        if rows or attempt == args.timing_retries - 1:
+            break
+        time.sleep(args.timing_sleep)
+    payload = {"generated_at": datetime.now().isoformat(timespec="seconds"), "note": note, "jobs": jobs, "sacct_by_job_id": rows, "cases": {}}
+    for rec in jobs:
+        payload["cases"][rec["case"]] = {"jobs": {"geos": rec.get("geos", ""), "post": rec.get("post", "")}, "timing": {"geos": rows.get(rec.get("geos", ""), {}), "post": rows.get(rec.get("post", ""), {})}}
+    rdir = root / args.report_dir
+    rdir.mkdir(exist_ok=True)
+    (rdir / "examples_suite_timing.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    with (rdir / "examples_suite_timing.csv").open("w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["case", "phase", "job_id", "state", "exit", "elapsed", "total_cpu", "cpu_time_raw", "alloc_cpus"])
+        for case_id, rec in payload["cases"].items():
+            for phase in ("geos", "post"):
+                row = rec["timing"].get(phase, {})
+                writer.writerow([case_id, phase, rec["jobs"].get(phase, ""), row.get("State", ""), row.get("ExitCode", ""), row.get("Elapsed", ""), row.get("TotalCPU", ""), row.get("CPUTimeRAW", ""), row.get("AllocCPUS", "")])
+    return payload
+
+
+def latex_escape(s):
+    return str(s).replace("\\", r"\textbackslash{} ").replace("&", r"\&").replace("%", r"\%").replace("$", r"\$").replace("#", r"\#").replace("_", r"\_").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}")
+
+
+def include_graphics(path, report_dir, width="0.31\\textwidth"):
+    path = Path(path)
+    if path.is_file():
+        rel = os.path.relpath(path, report_dir)
+        return r"\includegraphics[width=" + width + "]{" + rel.replace("\\", "/") + "}"
+    return r"\fbox{\begin{minipage}[c][0.22\textheight][c]{" + width + r"}\centering missing\\" + latex_escape(path.name) + r"\end{minipage}}"
+
+
+def find_prefixed_png(odir: Path, prefix: str, token: str):
+    exact = odir / token
+    if exact.is_file():
+        return exact
+    matches = sorted(odir.glob(prefix + "*" + token + "*.png")) if not token.endswith(".png") else []
+    if not matches:
+        low = token.lower().replace(".png", "")
+        matches = [p for p in sorted(odir.glob(prefix + "*.png")) if low in p.name.lower()]
+    return matches[0] if matches else odir / (prefix + "_" + token)
+
+
+def schematic(case):
+    family = case["family"].lower()
+    if "brazilian" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(12,12){\framebox(96,58){}}\put(60,41){\circle{38}}\put(44,41){\vector(0,-1){18}}\put(76,41){\vector(0,1){18}}\put(25,73){moving y+}\put(25,3){moving y-}\put(6,31){\rotatebox{90}{periodic x}}\put(109,31){\rotatebox{-90}{periodic x}}\end{picture}"
+    if "benchy" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(8,10){\framebox(112,60){background grid}}\put(34,30){\line(1,0){42}}\put(28,40){\line(1,0){54}}\put(38,50){\line(1,0){34}}\put(40,42){STL boat}\put(98,40){\circle{12}}\put(88,40){\vector(-1,0){20}}\put(91,52){ball}\end{picture}"
+    if "borehole" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(15,10){\framebox(90,62){rock}}\put(60,41){\circle{16}}\put(52,39){hole}\put(80,41){\vector(-1,0){18}}\put(18,70){confining pressure}\put(45,18){borehole pressure}\end{picture}"
+    if "pdc" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(10,12){\framebox(100,35){substrate}}\put(66,47){\line(1,1){14}}\put(80,61){\line(1,-1){20}}\put(100,41){\line(-1,-1){34}}\put(72,62){PDC cutter}\put(54,55){\vector(0,-1){18}}\end{picture}"
+    if "ring" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(60,41){\circle{46}}\put(60,41){\circle{24}}\put(60,64){\vector(0,1){12}}\put(83,41){\vector(1,0){12}}\put(60,18){\vector(0,-1){12}}\put(37,41){\vector(-1,0){12}}\put(40,38){expanding ring}\end{picture}"
+    if "plate" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(15,25){\framebox(45,30){left plate}}\put(70,25){\framebox(45,30){right plate}}\put(65,40){\circle{12}}\put(30,65){\vector(1,0){22}}\put(100,65){\vector(-1,0){22}}\end{picture}"
+    if "disk" in family:
+        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(34,30){\circle{25}}\put(82,52){\circle{25}}\put(34,30){\vector(1,1){18}}\put(82,52){\vector(-1,-1){18}}\end{picture}"
+    return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(12,12){\framebox(96,58){background grid}}\put(22,40){\vector(1,0){32}}\put(60,41){particles}\end{picture}"
+
+
+def timing_cell(timing, case_id, phase, key):
+    return timing.get("cases", {}).get(case_id, {}).get("timing", {}).get(phase, {}).get(key, "") if isinstance(timing, dict) else ""
+
+
+def job_id(timing, case_id, phase):
+    return timing.get("cases", {}).get(case_id, {}).get("jobs", {}).get(phase, "") if isinstance(timing, dict) else ""
+
+
+def timing_table(timing, cases):
+    lines = [r"\begin{table}[H]", r"\centering", r"\scriptsize", r"\begin{tabular}{llrrrrrr}", r"\toprule", r"Example & Family & GEOS job & GEOS state & GEOS wall & GEOS CPU & Post wall & Post CPU \\", r"\midrule"]
+    for c in cases:
+        cid = c["id"]
+        lines.append(" & ".join(latex_escape(x) for x in [cid, c["family"], job_id(timing,cid,"geos"), timing_cell(timing,cid,"geos","State"), timing_cell(timing,cid,"geos","Elapsed"), timing_cell(timing,cid,"geos","TotalCPU") or timing_cell(timing,cid,"geos","CPUTimeRAW"), timing_cell(timing,cid,"post","Elapsed"), timing_cell(timing,cid,"post","TotalCPU") or timing_cell(timing,cid,"post","CPUTimeRAW")]) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+    return "\n".join(lines)
+
+
+def generate_report(root, args, timing):
+    rdir = root / args.report_dir
+    rdir.mkdir(exist_ok=True)
+    cases = selected(args)
+    lines = [
+        r"\documentclass[11pt]{article}",
+        r"\usepackage[margin=0.75in]{geometry}",
+        r"\usepackage{graphicx}",
+        r"\usepackage{float}",
+        r"\usepackage{booktabs}",
+        r"\usepackage{rotating}",
+        r"\setlength{\parindent}{0pt}",
+        r"\setlength{\parskip}{0.5em}",
+        r"\begin{document}",
+        r"\title{GEOS-MPM Examples Suite Report}",
+        r"\author{Generated by examples/runExampleSuite}",
+        r"\date{\today}",
+        r"\maketitle",
+        r"\section*{Running and rerunning}",
+        r"Each example directory contains a copyable \texttt{pfw\_input\_*.py} and a \texttt{runProblem} wrapper.  The wrapper stages an isolated case directory under \texttt{testRunDirectory}, copies the needed PFW files, runs the particle-file writer, submits GEOS, submits dependent post-processing, and copies figures/logs back to the example \texttt{output/} directory.",
+        r"\begin{verbatim}",
+        r"cd scripts/preProcessing/materialPointMethodParticleFileWriter/examples",
+        r"./runExampleSuite all --python /usr/tce/bin/python3 --force",
+        r"./runExampleSuite all --case borehole_Ghareb --python /usr/tce/bin/python3 --force",
+        r"./runExampleSuite report --python /usr/tce/bin/python3",
+        r"\end{verbatim}",
+        r"If output exists, \texttt{runProblem} prompts before overwriting. Use \texttt{--force} for noninteractive reruns.",
+        r"\section*{Timing summary}",
+        timing_table(timing, cases),
+    ]
+    for c in cases:
+        odir = output_dir(root, c)
+        prefix = c["prefix"]
+        if c["initial"].endswith("_"):
+            initial = find_prefixed_png(odir, prefix, "initial")
+            final = find_prefixed_png(odir, prefix, "final")
+        else:
+            initial = odir / c["initial"]
+            final = odir / c["final"]
+        reaction = odir / c.get("reaction", "") if c.get("reaction") else None
+        if reaction and not reaction.is_file():
+            matches = list(odir.glob(prefix + "*reaction*.png")) + list(odir.glob(prefix + "*reactions*.png"))
+            reaction = matches[0] if matches else reaction
+        lines += [r"\clearpage", r"\section*{" + latex_escape(c["id"]) + r"}", latex_escape(c["description"]), r"\begin{figure}[H]", r"\centering", schematic(c), r"\caption{Schematic for " + latex_escape(c["id"]) + r".}", r"\end{figure}", r"\textbf{Code features exercised.}", r"\begin{itemize}"]
+        for feat in c.get("features", []):
+            lines.append(r"\item " + latex_escape(feat))
+        lines += [r"\end{itemize}", r"\begin{figure}[H]", r"\centering"]
+        if reaction:
+            lines.append(include_graphics(initial, rdir, "0.31\\textwidth") + "\n" + include_graphics(final, rdir, "0.31\\textwidth") + "\n" + include_graphics(reaction, rdir, "0.31\\textwidth"))
+            lines.append(r"\caption{Initial state, final state, and reaction history for " + latex_escape(c["id"]) + r".}")
+        else:
+            lines.append(include_graphics(initial, rdir, "0.45\\textwidth") + "\n" + include_graphics(final, rdir, "0.45\\textwidth"))
+            lines.append(r"\caption{Initial and final state for " + latex_escape(c["id"]) + r".}")
+        lines += [r"\end{figure}"]
+    lines.append(r"\end{document}")
+    tex = rdir / "examples_suite_report.tex"
+    tex.write_text("\n".join(lines) + "\n")
+    print("wrote " + str(tex))
+    pdflatex = shutil.which("pdflatex")
+    if pdflatex:
+        for _ in range(2):
+            proc = subprocess.run([pdflatex, "-interaction=nonstopmode", "-halt-on-error", tex.name], cwd=rdir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            (rdir / "pdflatex.log").write_text(proc.stdout)
+            if proc.returncode != 0:
+                print(proc.stdout[-4000:])
+                raise SystemExit("pdflatex failed; see " + str(rdir / "pdflatex.log"))
+        print("wrote " + str(rdir / "examples_suite_report.pdf"))
+    else:
+        print("pdflatex not found; generated LaTeX only")
+
+
+def main():
+    args = parse_args()
+    root = Path(__file__).resolve().parent
+    jobs = []
+    timing = None
+    if args.command in ("run", "all"):
+        jobs = dispatch(root, args)
+        if not args.no_wait:
+            wait_jobs(jobs)
+            timing = query_timing(root, args, jobs)
+    if args.command in ("report", "all"):
+        if timing is None:
+            jobs = load_jobs(root, args)
+            timing = query_timing(root, args, jobs)
+        generate_report(root, args, timing)
+
+
+if __name__ == "__main__":
+    main()

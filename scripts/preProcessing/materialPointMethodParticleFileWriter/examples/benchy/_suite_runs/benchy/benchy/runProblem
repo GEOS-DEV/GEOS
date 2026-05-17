@@ -1,0 +1,21 @@
+#!/bin/bash
+set -euo pipefail
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+PFW_ROOT="$SCRIPT_DIR"
+while [ ! -f "$PFW_ROOT/pfw_suite.py" ] && [ "$PFW_ROOT" != "/" ]; do
+  PFW_ROOT=$(dirname "$PFW_ROOT")
+done
+if [ ! -f "$PFW_ROOT/pfw_suite.py" ]; then
+  echo "Could not locate pfw_suite.py" >&2
+  exit 2
+fi
+action="${1:-run}"
+case "$action" in
+  run|list|preflight|status|report)
+    shift || true
+    exec python3 "$PFW_ROOT/pfw_suite.py" "$action" --suite-root "$SCRIPT_DIR" --suite-name "$(basename "$SCRIPT_DIR")" --no-recursive "$@"
+    ;;
+  *)
+    exec python3 "$PFW_ROOT/pfw_suite.py" run --suite-root "$SCRIPT_DIR" --suite-name "$(basename "$SCRIPT_DIR")" --no-recursive "$@"
+    ;;
+esac
