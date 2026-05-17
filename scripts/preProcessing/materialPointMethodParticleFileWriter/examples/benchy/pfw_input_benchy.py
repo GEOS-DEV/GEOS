@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# ---- GEOS-MPM example input metadata ----
+# Purpose: STL import and prescribed multi-field contact demonstration.
+# Solver/PFW features: Copper 3DBenchy boat and steel ball use separate particle regions/contact groups.
+# Workflow note: keep this file as a copyable problem definition.  Run directories,
+# Slurm submission, rerun cleanup, and suite reporting belong in runProblem or
+# examples/mpm_example_runner.py, not in the pfw dictionary below.
+# ---- end example input metadata ----
+
 """3DBenchy FMPM contact example.
 
 Purpose
@@ -35,7 +43,6 @@ import numpy as np
 import pfw_geometryObjects as geom
 import pfw_materials as matdb
 
-
 # =============================================================================
 # Problem size and run duration
 # =============================================================================
@@ -62,43 +69,35 @@ pfw["nK"] = pfw["zpar"] * cpp
 
 # Candidate particles per cell direction before material refinement.  PFW then
 # writes CPDI particles using the RVector field requested below.
-pfw["ppc"] = 2
 
 # The old Benchy input used the STL's natural extents
-# x=[-29.176,30.825], y=[-15.502,15.502], z=[0,48] mm.  This domain adds room
 # to the left for the incoming ball and a small free space around the boat.
 pfw["xmin"] = -50.0
-pfw["xmax"] =  40.0
+pfw["xmax"] = 40.0
 pfw["ymin"] = -25.0
-pfw["ymax"] =  25.0
-pfw["zmin"] =   0.0
-pfw["zmax"] =  60.0
+pfw["ymax"] = 25.0
+pfw["zmin"] = 0.0
+pfw["zmax"] = 60.0
 
 # This is a fully 3D problem.  The Brazilian disk examples use planeStrain=1;
 # Benchy keeps all three dimensions active.
 pfw["planeStrain"] = 0
-pfw["periodic"] = [False, False, False]
 
 # Sorting lets PFW skip objects whose x-bounds do not overlap the current x-slice.
 # This is useful here because the STL boat and ball occupy different x ranges.
 pfw["sortObjects"] = True
 
-
 # =============================================================================
 # Batch settings used by particleFileWriter.py
 # =============================================================================
 
-# mBatch=True writes a Slurm script.  mSubmitJobs=True submits it immediately.
 # Bank/account, GEOS executable, default run directory, and default Python command
 # are read from userDefs_$USER.py.
-pfw["mBatch"] = True
 pfw["mWallTime"] = "00:10:00"
 pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 pfw["mSubmitJobs"] = True
 
 # Keep this example simple: no automatic restart machinery.
-pfw["autoRestart"] = False
-
 
 # =============================================================================
 # GEOS MPM solver controls
@@ -157,7 +156,6 @@ pfw["particleFileFields"] = [
     "RVector",
 ]
 
-
 # =============================================================================
 # Materials
 # =============================================================================
@@ -170,7 +168,6 @@ pfw["materialPropertyString"] = matdb.copper["materialString"] + "\n" + matdb.st
 COPPER_BOAT = 0
 STEEL_BALL = 1
 
-
 # =============================================================================
 # Geometry
 # =============================================================================
@@ -181,16 +178,16 @@ STEEL_BALL = 1
 # positioned with the bottom at z=0, so no scale or translation is needed.
 boat = geom.stl(
     "copper_3DBenchy",
-    fileName="3DBenchy.stl",
-    scale=1.0,
-    x0=[0.0, 0.0, 0.0],
-    vel=[0.0, 0.0, 0.0],
-    mat=COPPER_BOAT,
-    group=0,
-    particleType=2,       # CPDI particles
-    rayAxis=0,            # +x ray through yz bins for inside/outside tests
-    binCounts=(96, 96),   # Larger values reduce triangles checked per ray
-    kNearest=64,          # Triangles checked for nearest surface projection
+    fileName = "3DBenchy.stl",
+    scale = 1.0,
+    x0 = [0.0, 0.0, 0.0],
+    vel = [0.0, 0.0, 0.0],
+    mat = COPPER_BOAT,
+    group = 0,
+    particleType = 2,       # CPDI particles
+    rayAxis = 0,            # +x ray through yz bins for inside/outside tests
+    binCounts = (96, 96),   # Larger values reduce triangles checked per ray
+    kNearest = 64,          # Triangles checked for nearest surface projection
 )
 
 # A steel ball starts to the left of the STL and moves in +x toward the boat.
@@ -199,17 +196,16 @@ ball = geom.sphere(
     "steel_ball",
     [-42.0, 0.0, 26.0],
     5.0,
-    vel=[200.0, 0.0, 0.0],
-    mat=STEEL_BALL,
-    group=1,
-    particleType=2,
+    vel = [200.0, 0.0, 0.0],
+    mat = STEEL_BALL,
+    group = 1,
+    particleType = 2,
 )
 
 # Object order matters for overlapping geometry: the first matching object wins.
 # The ball starts outside the boat, but listing it first makes the intended
 # material/contact group unambiguous if a user moves it into overlap for testing.
 pfw["objects"] = [ball, boat]
-
 
 # =============================================================================
 # Boundary conditions

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Borehole collapse example wrapper.
+# The retained borehole case is borehole_Ghareb.  The source pfw_input file is
+# kept as a copyable problem definition; workflow-only staging and reporting are
+# delegated to examples/mpm_example_runner.py.
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
 PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
@@ -20,8 +26,8 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --help|-h)
-      echo "Usage: ./runProblem [--case CASE] [--python PYTHON] [runner options]"
-      echo "Cases: borehole_Ghareb borehole_Damage_Ghareb"
+      echo "Usage: ./runProblem [--case borehole_Ghareb] [--python PYTHON] [runner options]"
+      echo "Cases: borehole_Ghareb"
       "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" --help || true
       exit 0
       ;;
@@ -33,14 +39,16 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$CASE" in
-    Ghareb) CASE='borehole_Ghareb' ;;
-    Damage_Ghareb) CASE='borehole_Damage_Ghareb' ;;
+  Ghareb|borehole_Ghareb) ;;
+  *) echo "Unknown case '$CASE'. Valid case: borehole_Ghareb" >&2; exit 2 ;;
 esac
 
-case "$CASE" in
-    borehole_Ghareb) INPUT='pfw_input_boreholeCollapse2D_Ghareb_borehole.py'; PREFIX='borehole_Ghareb'; INITIAL_VAR='Pressure'; FINAL_VAR='PlasticStrainMagnitude'; VIEW='xy' ;;
-    borehole_Damage_Ghareb) INPUT='pfw_input_boreholeCollapse2D_Damage_Ghareb_borehole.py'; PREFIX='borehole_Damage_Ghareb'; INITIAL_VAR='Pressure'; FINAL_VAR='PlasticStrainMagnitude'; VIEW='xy' ;;
-    *) echo "Unknown case '$CASE'. Valid cases: borehole_Ghareb borehole_Damage_Ghareb" >&2; exit 2 ;;
-esac
-
-exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py"   --case-id "$CASE"   --source-dir "$SCRIPT_DIR"   --input "$INPUT"   --output-prefix "$PREFIX"   --initial-variable "$INITIAL_VAR"   --final-variable "$FINAL_VAR"   --view "$VIEW"   "${PASSTHRU[@]}"
+exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" \
+  --case-id borehole_Ghareb \
+  --source-dir "$SCRIPT_DIR" \
+  --input pfw_input_boreholeCollapse2D_Ghareb_borehole.py \
+  --output-prefix borehole_Ghareb \
+  --initial-variable Pressure \
+  --final-variable PlasticStrainMagnitude \
+  --view xy \
+  "${PASSTHRU[@]}"

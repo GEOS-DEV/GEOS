@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+# ---- GEOS-MPM example input metadata ----
+# Purpose: Brazilian disk compression with XPIC velocity update.
+# Solver/PFW features: Strength-scale initialization, quartz damage, moving y boundaries, and reaction history.
+# Workflow note: keep this file as a copyable problem definition.  Run directories,
+# Slurm submission, rerun cleanup, and suite reporting belong in runProblem or
+# examples/mpm_example_runner.py, not in the pfw dictionary below.
+# ---- end example input metadata ----
+
 """
 Brazilian disk XPIC example for GEOS MPM.
 
@@ -33,13 +41,11 @@ import numpy as np
 
 import pfw_geometryObjects as geom
 
-
 # The particle file writer imports this module and reads the pfw dictionary.
 # Keys with XML-facing behavior are mirrored into the generated GEOS input file;
 # keys that control discretization/batch behavior are consumed by PFW itself.
 pfw = {}
 
-# runDebug=True selects a debug-oriented partition/default behavior in
 # particleFileWriter.py. Set to False for production-scale runs where the user
 # wants to choose a normal batch queue/partition.
 pfw["runDebug"] = True
@@ -48,7 +54,6 @@ pfw["runDebug"] = True
 # last plot states, so plotInterval is set equal to stopTime below. Restart
 # output is disabled by setting restartInterval greater than the end time.
 stopTime = 1.0
-
 
 # -----------------------------------------------------------------------------
 # Material model
@@ -66,7 +71,6 @@ quartz = matFile.quartz
 # integer index; mat=0 below selects quartz.
 pfw["materials"] = [quartz["name"]]
 pfw["materialPropertyString"] = quartz["materialString"]
-
 
 # -----------------------------------------------------------------------------
 # Computational domain and particle/grid resolution
@@ -91,7 +95,6 @@ pfw["nK"] = 3
 # ppc is particles per cell per active direction. In plane strain PFW creates a
 # single layer of particles through thickness, but ppc still controls in-plane
 # particle density.
-pfw["ppc"] = 2
 
 domainHeight = 1.0
 domainWidth = 1.5 * domainHeight
@@ -111,22 +114,17 @@ pfw["ymax"] = domainHeight
 pfw["zmin"] = -0.5 * domainLength
 pfw["zmax"] = 0.5 * domainLength
 
-
 # -----------------------------------------------------------------------------
 # Batch settings used by particleFileWriter.py
 # -----------------------------------------------------------------------------
-# mBatch=True asks PFW to write a Slurm batch script. mSubmitJobs=True submits it
 # immediately. The bank/account, GEOS executable, default run directory, and
 # Python command come from userDefs_$USER.py, not from this input file.
-pfw["mBatch"] = True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
 pfw["mSubmitJobs"] = True
 
 # This example is short enough that the wrapper can simply report failure rather
 # than asking PFW to resubmit from restart files.
-pfw["autoRestart"] = False
-
 
 # -----------------------------------------------------------------------------
 # GEOS MPM solver controls
@@ -156,7 +154,6 @@ pfw["cpdiDomainScaling"] = 1
 pfw["damageFieldPartitioning"] = 1
 
 # Plane strain uses one active particle layer through thickness. PFW requires
-# nK=3 and zpar=1 for this mode.
 pfw["planeStrain"] = 1
 
 # Update method comparison knob. The four Brazilian disk examples differ only in
@@ -193,7 +190,6 @@ pfw["particleFileFields"] = [
     "RVector",
 ]
 
-
 # -----------------------------------------------------------------------------
 # Boundary conditions and loading
 # -----------------------------------------------------------------------------
@@ -219,7 +215,6 @@ pfw["fTable"] = [
     [stopTime, 1.00, 0.80, 1.00],
 ]
 
-
 # -----------------------------------------------------------------------------
 # Geometry and particle attributes
 # -----------------------------------------------------------------------------
@@ -232,9 +227,9 @@ disk1 = geom.cylinder(
     [0.0, domainHeight / 2.0, pfw["zmin"]],
     [0.0, domainHeight / 2.0, pfw["zmax"]],
     domainHeight / 2.0,
-    vel=[1.0, 0.0, 0.0],
-    mat=0,
-    group=0,
+    vel = [1.0, 0.0, 0.0],
+    mat = 0,
+    group = 0,
 )
 
 # Wrap the disk with a Voronoi-Weibull strength-scale field. The wrapper samples
@@ -248,25 +243,25 @@ weibullFlawSize = 6.0 * DX
 
 weibullSample = geom.voronoiWeibullBoxWrapper(
     "weibullSubstrate",
-    subObject=disk1,
-    x0=np.array([
+    subObject = disk1,
+    x0 = np.array([
         pfw["xmin"] - weibullFlawSize,
         pfw["ymin"] - weibullFlawSize,
         pfw["zmin"] - weibullFlawSize,
     ]),
-    x1=np.array([
+    x1 = np.array([
         pfw["xmax"] + weibullFlawSize,
         pfw["ymax"] + weibullFlawSize,
         pfw["zmax"] + weibullFlawSize,
     ]),
-    flawSize=weibullFlawSize,
-    weibullVolume=quartz["weibullReferenceVolume"],
-    weibullModulus=quartz["weibullModulus"],
-    weibullSeed=1,
-    vMin=DX**3,
-    vpts=None,
-    dim=3,
-    randomMatDir=False,
+    flawSize = weibullFlawSize,
+    weibullVolume = quartz["weibullReferenceVolume"],
+    weibullModulus = quartz["weibullModulus"],
+    weibullSeed = 1,
+    vMin = DX**3,
+    vpts = None,
+    dim = 3,
+    randomMatDir = False,
 )
 
 # PFW loops over pfw["objects"] to decide which candidate particles are inside

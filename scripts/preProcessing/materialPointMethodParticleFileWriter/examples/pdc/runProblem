@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+# PDC cutter example wrapper.
+# The source pfw_input_pdc.py is a copyable problem definition.  Runtime
+# staging, overwrite prompts, Slurm submission, and post-processing are handled
+# by examples/mpm_example_runner.py.
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
 PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
@@ -20,8 +26,8 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --help|-h)
-      echo "Usage: ./runProblem [--case CASE] [--python PYTHON] [runner options]"
-      echo "Cases: pdc pdc_r4"
+      echo "Usage: ./runProblem [--case pdc] [--python PYTHON] [runner options]"
+      echo "Cases: pdc"
       "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" --help || true
       exit 0
       ;;
@@ -33,13 +39,16 @@ while [ "$#" -gt 0 ]; do
 done
 
 case "$CASE" in
-    r4) CASE='pdc_r4' ;;
+  pdc) ;;
+  *) echo "Unknown case '$CASE'. Valid case: pdc" >&2; exit 2 ;;
 esac
 
-case "$CASE" in
-    pdc) INPUT='pfw_input_pdc.py'; PREFIX='pdc'; INITIAL_VAR='MaterialType'; FINAL_VAR='Damage'; VIEW='xy' ;;
-    pdc_r4) INPUT='pfw_input_pdc_r4.py'; PREFIX='pdc_r4'; INITIAL_VAR='MaterialType'; FINAL_VAR='Damage'; VIEW='xy' ;;
-    *) echo "Unknown case '$CASE'. Valid cases: pdc pdc_r4" >&2; exit 2 ;;
-esac
-
-exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py"   --case-id "$CASE"   --source-dir "$SCRIPT_DIR"   --input "$INPUT"   --output-prefix "$PREFIX"   --initial-variable "$INITIAL_VAR"   --final-variable "$FINAL_VAR"   --view "$VIEW"   "${PASSTHRU[@]}"
+exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" \
+  --case-id pdc \
+  --source-dir "$SCRIPT_DIR" \
+  --input pfw_input_pdc.py \
+  --output-prefix pdc \
+  --initial-variable MaterialType \
+  --final-variable Damage \
+  --view xy \
+  "${PASSTHRU[@]}"

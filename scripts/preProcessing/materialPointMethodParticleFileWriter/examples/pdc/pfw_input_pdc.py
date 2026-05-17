@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+# ---- GEOS-MPM example input metadata ----
+# Purpose: PDC cutter interaction with a damageable substrate.
+# Solver/PFW features: Periodic x boundary, prescribed transverse boundary velocity, surface-position contact fields, and damage evolution.
+# Workflow note: keep this file as a copyable problem definition.  Run directories,
+# Slurm submission, rerun cleanup, and suite reporting belong in runProblem or
+# examples/mpm_example_runner.py, not in the pfw dictionary below.
+# ---- end example input metadata ----
+
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
-from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
-import math
 
-pfw = {} 
-pfw['particleFileFields'] = ["Velocity",  # +3
+pfw = {}
+pfw["particleFileFields"] = ["Velocity",  # +3
                             "MaterialType", # +1
                             "ContactGroup", # +1
                             "SurfaceFlag", # +1
@@ -42,73 +48,69 @@ damagedMaterialFrictionSlope = 0.5773502691896258
 
 # Domain ---------------------------------------------------------------------------------
 
-refine=2
-cpp=12
-pfw["xpar"]=4*refine  # grid partitions
-pfw["ypar"]=3*refine
-pfw["zpar"]=1*refine
+refine = 2
+cpp = 12
+pfw["xpar"] = 4*refine  # grid partitions
+pfw["ypar"] = 3*refine
+pfw["zpar"] = 1*refine
 
-pfw["nI"]=pfw["xpar"]*cpp   	# grid cells in the x-direction
-pfw["nJ"]=pfw["ypar"]*cpp 	# grid cells in the y-direction
-pfw["nK"]=pfw["zpar"]*cpp  			# grid cells in the z-direction
-pfw["ppc"]=2   		# particles per cell in each direction
+pfw["nI"] = pfw["xpar"]*cpp   	# grid cells in the x-direction
+pfw["nJ"] = pfw["ypar"]*cpp 	# grid cells in the y-direction
+pfw["nK"] = pfw["zpar"]*cpp  			# grid cells in the z-direction
 
 domainX = sampleX
 domainY = sampleY + pdcDiameter*np.cos(pdcBackRakeAngle)
 domainZ = sampleZ
-                
+
 # Define all the geometric objects -------------------------------------------------------
 pfw["xmin"] = 0.0
 pfw["xmax"] = domainX
 pfw["ymin"] = 0.0	# m
-pfw["ymax"] = pfw["ymin"] + domainY 
+pfw["ymax"] = pfw["ymin"] + domainY
 pfw["zmin"] = 0.0
 pfw["zmax"] = domainZ
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-pfw["mBatch"]=True
-pfw["mWallTime"]="12:00:00"
-pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=True
-pfw["autoRestart"]=False
+pfw["mWallTime"] = "12:00:00"
+pfw["mCores"] = pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
+pfw["mSubmitJobs"] = True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
-pfw["outputType"]="silo"
+pfw["outputType"] = "silo"
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
-pfw["endTime"]=stopTime            
-pfw["plotInterval"]=stopTime/100
-pfw["restartInterval"]=stopTime/5 # Don't need restarts for now
+pfw["endTime"] = stopTime
+pfw["plotInterval"] = stopTime/100
+pfw["restartInterval"] = 2.0 * stopTime
 
-pfw["timeIntegrationOption"]="ExplicitDynamic"
-pfw["cflFactor"]=0.25 
-pfw["initialDt"]=1e-16
-pfw["cpdiDomainScaling"]=1
-pfw["damageFieldPartitioning"]=1
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["cflFactor"] = 0.25
+pfw["initialDt"] = 1e-16
+pfw["cpdiDomainScaling"] = 1
+pfw["damageFieldPartitioning"] = 1
 
-pfw["frictionCoefficient"]=0.25
+pfw["frictionCoefficient"] = 0.25
 
 # Exact contact surface options.
-pfw["contactGapCorrection"]="Implicit"
-pfw["explicitSurfaceNormalInfluence"]= 1000.  # 1000
-pfw["useSurfacePositionForContact"]= 1  # 1
-
+pfw["contactGapCorrection"] = "Implicit"
+pfw["explicitSurfaceNormalInfluence"] = 1000.  # 1000
+pfw["useSurfacePositionForContact"] = 1  # 1
 
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------
 
 # Deformation ---------------------------------------------------------------------------------
 pfw["periodic"] = [ True, False, False]
-pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
+pfw["boundaryConditionTypes"] = [ 0, 0, 2, 2, 1, 1 ]
 
 # "enablePrescribedBoundaryTransverseVelocities must be of length 6. "
-# "The 6 entries correspond to transverse velocity BCs on the x-, x+, y-, y+, z- and z+ faces." 
-pfw['enablePrescribedBoundaryTransverseVelocities'] = [0, 0, 1, 1, 0, 0]
-pfw['prescribedBoundaryTransverseVelocities'] = [ [0., 0.], [0.,0.], [0.0, -pdcVelocity], [0.0, 0.0], [0., 0.], [0.,0.] ]
-pfw["fTableInterpType"]="Smoothstep"
-pfw["prescribedBoundaryFTable"]=1
-pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
+# "The 6 entries correspond to transverse velocity BCs on the x-, x+, y-, y+, z- and z+ faces."
+pfw["enablePrescribedBoundaryTransverseVelocities"] = [0, 0, 1, 1, 0, 0]
+pfw["prescribedBoundaryTransverseVelocities"] = [ [0., 0.], [0.,0.], [0.0, -pdcVelocity], [0.0, 0.0], [0., 0.], [0.,0.] ]
+pfw["fTableInterpType"] = "Smoothstep"
+pfw["prescribedBoundaryFTable"] = 1
+pfw["fTable"] = [[0,        1.00, 1.00, 1.00],
                [stopTime, 1.00, (domainY - 2.0*pdcDepth)/domainY, 1.00]
                ]
 
@@ -116,7 +118,7 @@ pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
 
 pdc_x1 = np.array( [ 0.5*domainX + 0.5*pdcLength*np.cos(pdcBackRakeAngle), pfw["ymin"] + sampleY + 0.5*pdcDiameter*np.cos(pdcBackRakeAngle) , 0.0 ] )
 pdc_x2 = pdc_x1 + pdcLength*np.array([-np.cos(pdcBackRakeAngle), + np.sin(pdcBackRakeAngle), 0.0 ] )
-                      
+
 cutter = geom.cylinder('pdc',
                       x1 = pdc_x1,
                       x2 = pdc_x2,
@@ -128,31 +130,31 @@ cutter = geom.cylinder('pdc',
 substrate = geom.box('substrate',
     [pfw["xmin"], pfw["ymin"], pfw["zmin"]],
     [pfw["xmax"], pfw["ymin"] + sampleY, pfw["zmax"]],
-    vel=[-pdcVelocity, 0.0, 0.0], mat=1, group=0, dim=3, flaggedSurfaces=[False, False, False, True, False, False])
+    vel = [-pdcVelocity, 0.0, 0.0], mat=1, group=0, dim=3, flaggedSurfaces=[False, False, False, True, False, False])
 
 DX = domainX/pfw["nI"]
 weibullFlawSize = 6.0*DX
 weibullVolume = 1000 # mm^3
 grainWeibullModulus = 6.0
 
-weibullSubstrate = geom.voronoiWeibullBoxWrapper('weibullSubstrate',                                                     
-    subObject=substrate,       
+weibullSubstrate = geom.voronoiWeibullBoxWrapper('weibullSubstrate',
+    subObject = substrate,
     x0 = np.array( [ pfw["xmin"] - weibullFlawSize, pfw["ymin"] - weibullFlawSize, pfw["zmin"] - weibullFlawSize ] ),
     x1 = np.array( [ pfw["xmax"] + weibullFlawSize, pfw["ymin"] + sampleY + weibullFlawSize, pfw["zmax"] + weibullFlawSize ] ),
-    flawSize=weibullFlawSize,
-    weibullVolume=weibullVolume,
-    weibullModulus=grainWeibullModulus,
-    weibullSeed=1,
-    vMin=(DX)**3.,
-    vpts=None,
-    dim=3,
+    flawSize = weibullFlawSize,
+    weibullVolume = weibullVolume,
+    weibullModulus = grainWeibullModulus,
+    weibullSeed = 1,
+    vMin = (DX)**3.,
+    vpts = None,
+    dim = 3,
     randomMatDir = False
     )
 
-pfw["objects"]=[cutter, weibullSubstrate]
+pfw["objects"] = [cutter, weibullSubstrate]
 
 pfw["materials"] = [ "diamond", "sand" ]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = """
 <CeramicDamage
 	name="sand"
 	defaultDensity="""+'"'+str(density)+'"'+"""
