@@ -76,7 +76,7 @@ pfw["materialPropertyString"] ="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-block = geom.box('block',[-sampleWidth/2,0.0,-sampleLength/2],[sampleWidth/2,sampleHeight,sampleLength/2],,vel=[0.0,0.0,0.0],mat=0,group=0)
+block = geom.box('block',[-sampleWidth/2,0.0,-sampleLength/2],[sampleWidth/2,sampleHeight,sampleLength/2], vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[block]
 
 # DEFORMATION ---------------------------------------------------------------------------------

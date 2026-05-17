@@ -262,6 +262,32 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         particleRVectors[index][2][1] = 0.0;
         particleRVectors[index][2][2] = a;
       }
+      else if( particleType == "SinglePointBSpline" )
+      {
+        // Mapping is single-point B-spline. CPDI-style r-vectors are retained
+        // for particle-domain output and the existing particle-volume
+        // initialization convention.
+        double x1, y1, z1, x2, y2, z2, x3, y3, z3;
+        x1 = particleData[particleType][i][15];
+        y1 = particleData[particleType][i][16];
+        z1 = particleData[particleType][i][17];
+        x2 = particleData[particleType][i][18];
+        y2 = particleData[particleType][i][19];
+        z2 = particleData[particleType][i][20];
+        x3 = particleData[particleType][i][21];
+        y3 = particleData[particleType][i][22];
+        z3 = particleData[particleType][i][23];
+        particleRVectors[index][0][0] = x1;
+        particleRVectors[index][0][1] = y1;
+        particleRVectors[index][0][2] = z1;
+        particleRVectors[index][1][0] = x2;
+        particleRVectors[index][1][1] = y2;
+        particleRVectors[index][1][2] = z2;
+        particleRVectors[index][2][0] = x3;
+        particleRVectors[index][2][1] = y3;
+        particleRVectors[index][2][2] = z3;
+        particleVolume[index] = 8.0*std::fabs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
+      }
       else if( particleType == "CPDI" )
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;

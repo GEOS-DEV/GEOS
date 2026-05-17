@@ -245,7 +245,7 @@ pfw["materialPropertyString"]="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-block = geom.box('block',[-0.5*sampleX,-0.5*sampleY,pfw["zmin"]],[0.5*sampleX,0.5*sampleY,pfw["zmax"]],v=[0.0,0.0,0.0],mat=0,group=0)
+block = geom.box('block',[-0.5*sampleX,-0.5*sampleY,pfw["zmin"]],[0.5*sampleX,0.5*sampleY,pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[block]
 
 # DEFORMATION -----------------------------------------------------------------------------

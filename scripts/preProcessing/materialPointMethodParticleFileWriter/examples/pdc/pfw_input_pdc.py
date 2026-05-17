@@ -74,6 +74,8 @@ pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
+pfw["outputType"]="silo"
+
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
 pfw["endTime"]=stopTime            
@@ -119,14 +121,14 @@ cutter = geom.cylinder('pdc',
                       x1 = pdc_x1,
                       x2 = pdc_x2,
                       r = pdcDiameter*0.5,
-                      v = [0.0,0,0],
+                      vel = [0.0,0,0],
                       mat = 0,
                       group = 0)
 
 substrate = geom.box('substrate',
     [pfw["xmin"], pfw["ymin"], pfw["zmin"]],
     [pfw["xmax"], pfw["ymin"] + sampleY, pfw["zmax"]],
-    v=[-pdcVelocity, 0.0, 0.0], mat=1, group=0, dim=3, flaggedSurfaces=[False, False, False, True, False, False])
+    vel=[-pdcVelocity, 0.0, 0.0], mat=1, group=0, dim=3, flaggedSurfaces=[False, False, False, True, False, False])
 
 DX = domainX/pfw["nI"]
 weibullFlawSize = 6.0*DX

@@ -109,7 +109,7 @@ def make_objects():
         x2=[0.0,0.0,0.5*DZ],
         ri=0.5*innerDiameter,
         r=0.5*outerDiameter,
-        v=getVelocity,
+        vel=getVelocity,
         mat=0,
         group=0)
 

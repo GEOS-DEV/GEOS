@@ -55,6 +55,8 @@ pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
+pfw["outputType"]="silo"
+
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
 pfw["endTime"]=stopTime            
@@ -82,7 +84,7 @@ pfw["frictionCoefficient"]=0.25
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
 
-pfw["fTableInterpType"]=2
+pfw["fTableInterpType"]="Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
 		       [stopTime, 1.00, 0.80, 1.00]]

@@ -421,7 +421,7 @@ ax3.legend(bbox_to_anchor=(1.04,1), loc="upper left",fontsize='medium')
 ax3.grid()
 
 
-ax4.set_xlabel('$-\epsilon_{axial and lateral}$', fontsize=16)
+ax4.set_xlabel(r'$-\epsilon_{axial and lateral}$', fontsize=16)
 ax4.set_ylabel(r'$-\sigma_{differential}$ (GPa)', fontsize=16)
 ax4.legend(bbox_to_anchor=(1.04,1), loc="upper left",fontsize='medium')
 ax4.grid()

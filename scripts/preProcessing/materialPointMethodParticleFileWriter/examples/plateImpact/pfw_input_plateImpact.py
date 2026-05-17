@@ -2,6 +2,9 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+# [pfw_dependency] pfw_materials.py
+import importlib
+matdb = importlib.import_module('pfw_materials')
 
 pfw = {} 
 pfw["runDebug"] = True
@@ -42,6 +45,8 @@ pfw["mSubmitJobs"]=True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
+pfw["outputType"]="silo"
+
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
 pfw["endTime"]=stopTime
@@ -66,24 +71,18 @@ pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 1, 1, 1, 1, 1, 1 ]    
 
 pfw["prescribedBoundaryFTable"]=0
-pfw["fTableInterpType"]=0  
+pfw["fTableInterpType"]="Linear"  
 
 # Define all the geometric objects -------------------------------------------------------
 
 crop=1.0
 plate1 = geom.box('plate1',[pfw["xmin"],crop*pfw["ymin"],pfw["zmin"]],[0,crop*pfw["ymax"],pfw["zmax"]],vel=[100,0,0],mat=0,group=0)
 plate2 = geom.box('plate2',[0,crop*pfw["ymin"],pfw["zmin"]],[pfw["xmax"],crop*pfw["ymax"],pfw["zmax"]],vel=[-100,0,0],mat=0,group=0)
-hole = geom.cylinder('hole',[0,0,pfw["zmin"]],[0,0,pfw["zmax"]],2,[0,0,0],0,0,0)
-plateWithHole1 = geom.difference(plate1,hole)
-plateWithHole2 = geom.difference(plate2,hole)
+hole = geom.cylinder('hole',[0,0,pfw["zmin"]],[0,0,pfw["zmax"]],r=2,vel=[0,0,0],mat=0,group=0)
+plateWithHole1 = geom.difference('plateWithHole1',plate1,hole)
+plateWithHole2 = geom.difference('plateWithHole2',plate2,hole)
 
 pfw["objects"]=[plateWithHole1,plateWithHole2]
 
-pfw["materials"] = [ "aluminum" ]
-pfw["materialPropertyString"]="""
-<ElasticIsotropic
-	name="aluminum"
-	defaultDensity="2700"
-	defaultBulkModulus="70.0e8"
-	defaultShearModulus="24.0e8"/>
-"""
+pfw["materials"] = [ matdb.elasticAluminumSI["name"] ]
+pfw["materialPropertyString"] = matdb.elasticAluminumSI["materialString"]

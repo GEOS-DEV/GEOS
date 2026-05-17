@@ -402,6 +402,14 @@ public:
         m_numVerticesPerParticle = 1;
         break;
       }
+      case ParticleType::SinglePointBSpline:
+      {
+        // Cubic single-point B-spline MPM maps to 4^3 = 64 grid/control nodes.
+        // The existing mapping-array sizing is 8 * numberOfVerticesPerParticle,
+        // so use the CPDI-sized raw map. The r-vectors are not used by mapping.
+        m_numVerticesPerParticle = 8;
+        break;
+      }
       case ParticleType::CPDI:
       {
         m_numVerticesPerParticle = 8;

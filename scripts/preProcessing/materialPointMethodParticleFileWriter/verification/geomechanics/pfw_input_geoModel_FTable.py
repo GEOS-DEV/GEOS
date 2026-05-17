@@ -195,7 +195,7 @@ pfw["materialPropertyString"]="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],v=[0.0,0.0,0.0],mat=0,group=0)
+block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[block]
 
 # DEFORMATION -----------------------------------------------------------------------------
@@ -207,18 +207,17 @@ pfw["prescribedBoundaryFTable"]=1
 #                [.8*stopTime,	 0.996,	0.998,	0.998],
 #                [stopTime,	 1,	    1,	1]
 #                ]
-pfw["fTable"]=[[0,	          1.000,	    1,	1],
-[.1*stopTime,	 0.995,0.995,0.995]
-[.2*stopTime,	 0.998,0.998,0.998]
-[.3*stopTime,	 0.980,0.980,0.980]
-[.4*stopTime,	 0.985,0.985,0.985]
-[.5*stopTime,	 0.960,0.960,0.960]
-[.6*stopTime,	 0.965,0.965,0.965]
-[.7*stopTime,	 0.940,0.940,0.940]
-[.8*stopTime,	 0.945,0.945,0.945]
-[.9*stopTime,	 0.920,0.920,0.920]
-[stopTime,	     0.925,0.925,0.925]
-]
+pfw["fTable"]=[[0,             1.000, 1.000, 1.000],
+               [.1*stopTime, 0.995, 0.995, 0.995],
+               [.2*stopTime, 0.998, 0.998, 0.998],
+               [.3*stopTime, 0.980, 0.980, 0.980],
+               [.4*stopTime, 0.985, 0.985, 0.985],
+               [.5*stopTime, 0.960, 0.960, 0.960],
+               [.6*stopTime, 0.965, 0.965, 0.965],
+               [.7*stopTime, 0.940, 0.940, 0.940],
+               [.8*stopTime, 0.945, 0.945, 0.945],
+               [.9*stopTime, 0.920, 0.920, 0.920],
+               [stopTime,    0.925, 0.925, 0.925]]
 
 # prescribed deformation (moving pistons) at all faces
 pfw["boundaryConditionTypes"]=[2, 2, 2, 2, 2, 2]

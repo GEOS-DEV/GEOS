@@ -2,13 +2,17 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+# [pfw_dependency] pfw_materials.py
+import importlib
+matdb = importlib.import_module('pfw_materials')
 
 
 # 2-D plane strain borhole collapse simulation,
 # inner diameter will have pressure BC
 # outer boundary will have rigid stress-controlled motion.
 
-pfw = {} 
+pfw = {}
+pfw["outputType"]="silo" 
 pfw["runDebug"] = True
 
 stopTime = 1000.0
@@ -117,7 +121,7 @@ def make_objects():
         x2=[0.0,0.0,pfw["zmax"]+10],
         ri=0.5*boreholeDiameter,
         r=0.95*domainSize,
-        v=np.array([0.,0.,0.]),
+        vel=np.array([0.,0.,0.]),
         mat=0,
         group=0)
 
@@ -242,56 +246,8 @@ pfi = 0.0  # initial fluid pressure (GPa) - set to 0
 t1RateDependence=0.0 # - set to 0
 t2RateDependence=0.0 # - set to 0
 
-pfw["materials"] = [ "ghareb" ]
-pfw["materialPropertyString"]="""
-<Geomechanics
-   name="ghareb"
-   defaultDensity="""+'"'+str(density)+'"'+"""
-   b0="""+'"'+str(b0)+'"'+"""
-   b1="""+'"'+str(b1)+'"'+"""
-   b2="""+'"'+str(b2)+'"'+"""
-   b3="""+'"'+str(b3)+'"'+"""
-   b4="""+'"'+str(b4)+'"'+"""
-   g0="""+'"'+str(g0)+'"'+"""
-   g1="""+'"'+str(g1)+'"'+"""
-   g2="""+'"'+str(g2)+'"'+"""
-   g3="""+'"'+str(g3)+'"'+"""
-   g4="""+'"'+str(g4)+'"'+"""
-   p0="""+'"'+str(p0)+'"'+"""
-   p1="""+'"'+str(p1)+'"'+"""
-   p2="""+'"'+str(p2)+'"'+"""
-   p3="""+'"'+str(p3)+'"'+"""
-   p4="""+'"'+str(p4)+'"'+"""
-   cr="""+'"'+str(CR)+'"'+"""
-   fluidBulkModulus="""+'"'+str(Kf)+'"'+"""
-   fluidInitialPressure="""+'"'+str(pfi)+'"'+"""
-   t1RateDependence="""+'"'+str(t1RateDependence)+'"'+"""
-   t2RateDependence="""+'"'+str(t2RateDependence)+'"'+"""
-   peakI1="""+'"'+str(PEAKI1)+'"'+"""
-   fSlope="""+'"'+str(FSLOPE)+'"'+"""
-   fSlopeFailed="""+'"'+str(FSLOPEFAILED)+'"'+"""
-   stren="""+'"'+str(STREN)+'"'+"""
-   ySlope="""+'"'+str(YSLOPE)+'"'+"""
-   beta="""+'"'+str(BETA_nonassociativity)+'"'+"""
-   enableCreep="""+'"'+str(enableCreep)+'"'+"""
-   creepC0="""+'"'+str(creepc0)+'"'+"""
-   creepC1="""+'"'+str(creepc1)+'"'+"""
-   creepC2="""+'"'+str(creepc2)+'"'+"""
-   creepA="""+'"'+str(creepA)+'"'+"""
-   creepB="""+'"'+str(creepB)+'"'+"""
-   creepC="""+'"'+str(creepC)+'"'+"""
-   creepD="""+'"'+str(creepD)+'"'+"""
-   creepE="""+'"'+str(creepE)+'"'+"""
-   creepF="""+'"'+str(creepF)+'"'+"""
-   strainHardeningN="""+'"'+str(strainHardeningn)+'"'+"""
-   strainHardeningK="""+'"'+str(strainHardeningK)+'"'+"""
-   fractureEnergyReleaseRate="""+'"'+str(fractureEnergyReleaseRate)+'"'+"""
-   fractureSofteningExponent="""+'"'+str(fractureSofteningExponent)+'"'+"""
-   fractureStress="""+'"'+str(fractureStress)+'"'+"""
-   damageEvolutionCriterion="""+'"'+str(damageEvolutionCriterion)+'"'+"""
-   brittleDuctileTransition="""+'"'+str(brittleDuctileTransition)+'"'+"""
-   />
-"""
+pfw["materials"] = [ matdb.ghareb["name"] ]
+pfw["materialPropertyString"] = matdb.ghareb["materialString"]
 
 # DEFORMATION ---------------------------------------------------------------------------------
 # This could be [0,0,0,0,1,1], but then the material might drift out of the domain and get 
@@ -304,30 +260,28 @@ pfw["boundaryConditionTypes"]=[1,1,1,1,1,1]
 # the box should be interior to the domain in the dimensions where
 # the pressure is to be applied (XY, in this case) but the box
 # shouldn't overlap with the borholePressure region
-pfw["mpmEventsString"]="""
-<MPMEvents>
-    <InitializeStress 
-        time="0.0"
-        interval="0.1"
+pfw["mpmEventsString"] = f"""
+    <InitializeStress
+        startTime="0.0"
+        endTime="0.1"
         targetRegion="all"
-        pressure=""" + '"' + str(confiningPressure) + '"' + """
+        pressure="{confiningPressure}"
         />
-    <ConfiningPressure 
-        time=""" + '"' + str(0.) + '"' + """
-        interval=""" + '"' + str(rampTime) + '"' + """
-        confiningPressureBoxMin="{"""+str(-0.4*domainX)+','+str(-0.4*domainY)+','+str(-2.0*domainZ)+"""}"
-        confiningPressureBoxMax="{"""+str(0.4*domainX)+','+str(0.4*domainY)+','+str(2.0*domainZ)+"""}"
-        startPressure=""" + '"' + str(confiningPressure) + '"' + """
-        endPressure=""" + '"' + str(confiningPressure) + '"' + """
+    <ConfiningPressure
+        startTime="0.0"
+        endTime="{rampTime}"
+        confiningPressureBoxMin="{{{-0.4*domainX},{-0.4*domainY},{-2.0*domainZ}}}"
+        confiningPressureBoxMax="{{{0.4*domainX},{0.4*domainY},{2.0*domainZ}}}"
+        startPressure="{confiningPressure}"
+        endPressure="{confiningPressure}"
         interpType="1"
         />
-    <BoreholePressure 
-        time=""" + '"' + str(0) + '"' + """
-        interval=""" + '"' + str(rampTime) + '"' + """
-        boreholeRadius=""" + '"' + str(0.65*boreholeDiameter) + '"' + """
-        startPressure=""" + '"' + str(confiningPressure) + '"' + """
-        endPressure=""" + '"' + str(boreholePressure) + '"' + """
+    <BoreholePressure
+        startTime="0.0"
+        endTime="{rampTime}"
+        boreholeRadius="{0.65*boreholeDiameter}"
+        startPressure="{confiningPressure}"
+        endPressure="{boreholePressure}"
         interpType="1"
         />
-</MPMEvents>
 """

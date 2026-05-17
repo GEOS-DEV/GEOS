@@ -21,6 +21,9 @@ refine=1
 
 ringInnerDiameter = (0.50)*25.4 # mm
 ringOuterDiameter = (0.50)*25.4 # mm
+# Sample dimensions used by the Voronoi material-direction cylinder below.
+sampleDiameter = ringOuterDiameter
+sampleLength = (0.30)*25.4 # mm
 
 grainSize = 0.2*sampleDiameter
 maxCompressiveStrain = 0.015
@@ -164,7 +167,7 @@ def make_objects():
         x1=[0.0,-0.5*sampleLength,0.5*pfw["zmax"]],
         x2=[0.0,0.5*sampleLength,0.5*pfw["zmax"]],
         r=sampleDiameter/2,
-        v=[0.,0.,0.],
+        vel=[0.,0.,0.],
         mat=0,
         group=0)
 

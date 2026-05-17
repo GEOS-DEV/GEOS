@@ -86,7 +86,7 @@ pfw["particleFileFields"] = ["Velocity",
 
 # Define all the geometric objects -------------------------------------------------------
 
-wall=geom.box('wall',[-sampleWidth/2, 0.0, pfw["zmin"]],[sampleWidth/2, sampleHeight, pfw["zmax"]],v=[0.0, 0.0, 0.0], mat=0, group=0, dim=2])
+wall=geom.box('wall',[-sampleWidth/2, 0.0, pfw["zmin"]],[sampleWidth/2, sampleHeight, pfw["zmax"]],vel=[0.0, 0.0, 0.0], mat=0, group=0, dim=2)
 pfw["objects"]=[wall]
 
 # Deformation ---------------------------------------------------------------------------------

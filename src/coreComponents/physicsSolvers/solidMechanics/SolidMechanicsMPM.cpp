@@ -2043,10 +2043,13 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   } );
 
   // Initialize neighbor lists
+  bool hasSinglePointBSplineParticles = false;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     OrderedVariableToManyParticleRelation & neighborList = subRegion.neighborList();
     neighborList.setParticleManager( particleManager );
+
+    hasSinglePointBSplineParticles |= subRegion.getParticleType() == ParticleType::SinglePointBSpline;
 
     ++m_numberOfSubRegions;
   } );
@@ -2055,6 +2058,16 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
   // Get nodal position
   arrayView1d< int const > const periodic = partition.getPeriodic();
+  if( hasSinglePointBSplineParticles )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      GEOS_ERROR_IF( periodic[i] && partition.getPartitions()[i] == 1,
+                     "SinglePointBSpline with periodicity currently requires either "
+                     "more than one MPI partition in each periodic direction or "
+                     "a local periodic B-spline stencil wrapping implementation." );
+    }
+  }
   int numNodes = nodeManager.size();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridPosition = nodeManager.referencePosition();
 
@@ -2194,6 +2207,16 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   for( int i=0; i<3; ++i )
   {
     m_nEl[i] = LvArray::math::round( m_partitionExtent[i] / m_hEl[i] );
+  }
+
+  if( hasSinglePointBSplineParticles )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
+      GEOS_ERROR_IF( m_nEl[i] < 3,
+                     "SinglePointBSpline uses a cubic 4-node stencil in each direction and requires "
+                     "at least three background-grid cells per local partition direction, including ghosts/buffers." );
+    }
   }
 
   // Create element map
@@ -3063,13 +3086,19 @@ void SolidMechanicsMPM::copyConstrainedFMPMBoundaryVelocity(
         if( dir1 < numDims )
         {
           destinationVelocity[g][fieldIndex][dir1] =
-            destinationVelocity[gFrom][fieldIndex][dir1];
+            constrainTransverseComponents
+            ? -destinationVelocity[gFrom][fieldIndex][dir1]
+              + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir1]
+            :  destinationVelocity[gFrom][fieldIndex][dir1];
         }
 
         if( dir2 < numDims )
         {
           destinationVelocity[g][fieldIndex][dir2] =
-            destinationVelocity[gFrom][fieldIndex][dir2];
+            constrainTransverseComponents
+            ? -destinationVelocity[gFrom][fieldIndex][dir2]
+              + 2.0 * destinationVelocity[gBoundary][fieldIndex][dir2]
+            :  destinationVelocity[gFrom][fieldIndex][dir2];
         }
       }
     }
@@ -3219,13 +3248,17 @@ void SolidMechanicsMPM::applyFMPMVelocityIncrementBoundaryConditions(
         if( dir1 < numDims )
         {
           velocityIncrement[g][fieldIndex][dir1] =
-            velocityIncrement[gFrom][fieldIndex][dir1];
+            constrainTransverseComponents
+            ? -velocityIncrement[gFrom][fieldIndex][dir1]
+            :  velocityIncrement[gFrom][fieldIndex][dir1];
         }
 
         if( dir2 < numDims )
         {
           velocityIncrement[g][fieldIndex][dir2] =
-            velocityIncrement[gFrom][fieldIndex][dir2];
+            constrainTransverseComponents
+            ? -velocityIncrement[gFrom][fieldIndex][dir2]
+            :  velocityIncrement[gFrom][fieldIndex][dir2];
         }
       }
     }
@@ -8660,6 +8693,23 @@ void SolidMechanicsMPM::populateMappingArraysForActiveParticles( ParticleManager
           } );
           break;
         }
+      case ParticleType::SinglePointBSpline:
+        {
+          forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+          {
+            localIndex const p = activeParticleIndices[pp];
+
+            computeSinglePointBSplineShapeFunctions( gridPosition,
+                                                     particlePosition[p],
+                                                     ijkMap,
+                                                     xLocalMin,
+                                                     hEl,
+                                                     mappedNodes[pp],
+                                                     shapeFunctionValues[pp],
+                                                     shapeFunctionGradientValues[pp] );
+          } );
+          break;
+        }
       case ParticleType::CPDI:
         {
           arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
@@ -8822,6 +8872,102 @@ void SolidMechanicsMPM::computeSinglePointShapeFunctions( arrayView2d< real64 co
     }
   }
 }
+
+GEOS_DEVICE
+/**
+ * @brief Computes cubic B-spline single-point shape functions.
+ *
+ * SinglePointBSpline uses a tensor-product cardinal cubic B-spline centered on
+ * the background grid/control nodes. For a particle in cell c in one direction,
+ * the nonzero 1D stencil is { c-1, c, c+1, c+2 }, so the 3D stencil has 64
+ * entries. Particle r-vectors are intentionally not used here; they are kept
+ * for particle-domain visualization/output and volume initialization only.
+ */
+GEOS_FORCE_INLINE
+void SolidMechanicsMPM::computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                                 arraySlice1d< real64 const > const particlePosition,
+                                                                 arrayView3d< int const > const ijkMap,
+                                                                 real64 const (&xLocalMin)[3],
+                                                                 real64 const (&hEl)[3],
+                                                                 arraySlice1d< int > const mappedNodes,
+                                                                 arraySlice1d< real64 > const shapeFunctionValues,
+                                                                 arraySlice2d< real64 > const shapeFunctionGradientValues )
+{
+  GEOS_UNUSED_VAR( gridPosition );
+
+  real64 weights[3][4] = {};
+  real64 gradWeights[3][4] = {};
+  int baseIJK[3] = {};
+
+  for( int d = 0; d < 3; ++d )
+  {
+    real64 const u = ( particlePosition[d] - xLocalMin[d] ) / hEl[d];
+    int const cell = LvArray::math::floor( u );
+    real64 const s = u - cell;
+    real64 const oneMinusS = 1.0 - s;
+    real64 const s2 = s * s;
+    real64 const s3 = s2 * s;
+    real64 const oneMinusS2 = oneMinusS * oneMinusS;
+    real64 const oneMinusS3 = oneMinusS2 * oneMinusS;
+    real64 const invH = 1.0 / hEl[d];
+
+    baseIJK[d] = cell - 1;
+
+    weights[d][0] = oneMinusS3 / 6.0;
+    weights[d][1] = ( 3.0 * s3 - 6.0 * s2 + 4.0 ) / 6.0;
+    weights[d][2] = ( -3.0 * s3 + 3.0 * s2 + 3.0 * s + 1.0 ) / 6.0;
+    weights[d][3] = s3 / 6.0;
+
+    gradWeights[d][0] = -0.5 * oneMinusS2 * invH;
+    gradWeights[d][1] = ( 1.5 * s2 - 2.0 * s ) * invH;
+    gradWeights[d][2] = ( -1.5 * s2 + s + 0.5 ) * invH;
+    gradWeights[d][3] = 0.5 * s2 * invH;
+  }
+
+  real64 sfSum = 0.0;
+  real64 sfGradSum[3] = {};
+  int node = 0;
+
+  for( int i = 0; i < 4; ++i )
+  {
+    for( int j = 0; j < 4; ++j )
+    {
+      for( int k = 0; k < 4; ++k )
+      {
+        mappedNodes[node] = ijkMap[baseIJK[0] + i]
+                                  [baseIJK[1] + j]
+                                  [baseIJK[2] + k];
+
+        real64 const shapeValue = weights[0][i] * weights[1][j] * weights[2][k];
+        real64 const grad0 = gradWeights[0][i] * weights[1][j] * weights[2][k];
+        real64 const grad1 = weights[0][i] * gradWeights[1][j] * weights[2][k];
+        real64 const grad2 = weights[0][i] * weights[1][j] * gradWeights[2][k];
+
+        shapeFunctionValues[node] = shapeValue;
+        shapeFunctionGradientValues[node][0] = grad0;
+        shapeFunctionGradientValues[node][1] = grad1;
+        shapeFunctionGradientValues[node][2] = grad2;
+
+        if( node < 63 )
+        {
+          sfSum += shapeValue;
+          sfGradSum[0] += grad0;
+          sfGradSum[1] += grad1;
+          sfGradSum[2] += grad2;
+        }
+
+        ++node;
+      }
+    }
+  }
+
+  // Deterministic closure correction for the full tensor-product stencil.
+  shapeFunctionValues[63] = 1.0 - sfSum;
+  shapeFunctionGradientValues[63][0] = -sfGradSum[0];
+  shapeFunctionGradientValues[63][1] = -sfGradSum[1];
+  shapeFunctionGradientValues[63][2] = -sfGradSum[2];
+}
+
 
 GEOS_DEVICE
 /**
@@ -9444,6 +9590,18 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
                                                 shapeFunctionGradientValues );
       break;
     }
+    case ParticleType::SinglePointBSpline:
+    {
+      computeSinglePointBSplineParticleShapeFunctions( gridPosition,
+                                                       particlePosition,
+                                                       ijkMap,
+                                                       xLocalMin,
+                                                       hEl,
+                                                       mappedNodes,
+                                                       shapeFunctionValues,
+                                                       shapeFunctionGradientValues );
+      break;
+    }
     case ParticleType::CPDI:
     {
       computeCPDIParticleShapeFunctions( gridPosition,
@@ -9519,6 +9677,97 @@ void SolidMechanicsMPM::computeSinglePointParticleShapeFunctions( arrayView2d< r
     }
   }
 }
+
+GEOS_DEVICE
+/**
+ * @brief Computes cubic B-spline single-point shape functions for one particle.
+ *
+ * This pointer-based variant is used by the on-the-fly device mapping path.
+ */
+GEOS_FORCE_INLINE
+void SolidMechanicsMPM::computeSinglePointBSplineParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                                         arraySlice1d< real64 const > const particlePosition,
+                                                                         arrayView3d< int const > const ijkMap,
+                                                                         real64 const (&xLocalMin)[3],
+                                                                         real64 const (&hEl)[3],
+                                                                         localIndex * const mappedNodes,
+                                                                         real64 * const shapeFunctionValues,
+                                                                         real64 shapeFunctionGradientValues[][3] )
+{
+  GEOS_UNUSED_VAR( gridPosition );
+
+  real64 weights[3][4] = {};
+  real64 gradWeights[3][4] = {};
+  int baseIJK[3] = {};
+
+  for( int d = 0; d < 3; ++d )
+  {
+    real64 const u = ( particlePosition[d] - xLocalMin[d] ) / hEl[d];
+    int const cell = LvArray::math::floor( u );
+    real64 const s = u - cell;
+    real64 const oneMinusS = 1.0 - s;
+    real64 const s2 = s * s;
+    real64 const s3 = s2 * s;
+    real64 const oneMinusS2 = oneMinusS * oneMinusS;
+    real64 const oneMinusS3 = oneMinusS2 * oneMinusS;
+    real64 const invH = 1.0 / hEl[d];
+
+    baseIJK[d] = cell - 1;
+
+    weights[d][0] = oneMinusS3 / 6.0;
+    weights[d][1] = ( 3.0 * s3 - 6.0 * s2 + 4.0 ) / 6.0;
+    weights[d][2] = ( -3.0 * s3 + 3.0 * s2 + 3.0 * s + 1.0 ) / 6.0;
+    weights[d][3] = s3 / 6.0;
+
+    gradWeights[d][0] = -0.5 * oneMinusS2 * invH;
+    gradWeights[d][1] = ( 1.5 * s2 - 2.0 * s ) * invH;
+    gradWeights[d][2] = ( -1.5 * s2 + s + 0.5 ) * invH;
+    gradWeights[d][3] = 0.5 * s2 * invH;
+  }
+
+  real64 sfSum = 0.0;
+  real64 sfGradSum[3] = {};
+  int node = 0;
+
+  for( int i = 0; i < 4; ++i )
+  {
+    for( int j = 0; j < 4; ++j )
+    {
+      for( int k = 0; k < 4; ++k )
+      {
+        mappedNodes[node] = ijkMap[baseIJK[0] + i]
+                                  [baseIJK[1] + j]
+                                  [baseIJK[2] + k];
+
+        real64 const shapeValue = weights[0][i] * weights[1][j] * weights[2][k];
+        real64 const grad0 = gradWeights[0][i] * weights[1][j] * weights[2][k];
+        real64 const grad1 = weights[0][i] * gradWeights[1][j] * weights[2][k];
+        real64 const grad2 = weights[0][i] * weights[1][j] * gradWeights[2][k];
+
+        shapeFunctionValues[node] = shapeValue;
+        shapeFunctionGradientValues[node][0] = grad0;
+        shapeFunctionGradientValues[node][1] = grad1;
+        shapeFunctionGradientValues[node][2] = grad2;
+
+        if( node < 63 )
+        {
+          sfSum += shapeValue;
+          sfGradSum[0] += grad0;
+          sfGradSum[1] += grad1;
+          sfGradSum[2] += grad2;
+        }
+
+        ++node;
+      }
+    }
+  }
+
+  shapeFunctionValues[63] = 1.0 - sfSum;
+  shapeFunctionGradientValues[63][0] = -sfGradSum[0];
+  shapeFunctionGradientValues[63][1] = -sfGradSum[1];
+  shapeFunctionGradientValues[63][2] = -sfGradSum[2];
+}
+
 
 GEOS_DEVICE
 /**
@@ -10148,8 +10397,6 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
                             {  1, 1, 1 },
                             { -1, 1, 1 } };
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
   localIndex const numNodes = nodeManager.size();
   // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
 
@@ -10172,11 +10419,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     localIndex const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
-    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
-
-    // GEOS_LOG_RANK( "subRegionIndex: " << subRegionIndex << ", " <<
-    //                "m_mappedNodes[subRegionIndex].size(): " << mappedNodes.size(0) << ", " << mappedNodes.size(1) );
-    arrayView1d< int const > const particleRank = subRegion.getParticleRank();
+    ParticleType const particleType = subRegion.getParticleType();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
 
@@ -10193,59 +10436,114 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
     localIndex const numParticlesInSubRegion = subRegion.size(); // Should include ghosted particles
     forAll< serialPolicy >( numParticlesInSubRegion, [=] GEOS_HOST ( localIndex const p )
       {
-        // If this particle is a master we can use the previously computed mapped nodes
-        if( particleRank[p] == rank )
-        {
-          // Copy list of mapped nodes into another temporary array
-          for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
-          {
-            uniqueNodesView[p][g] = mappedNodes[p][g];
+        // Compute mapped nodes on the fly for both owned and ghost particles.
+        // This avoids indexing the precomputed active-particle map with a raw
+        // subregion particle index and lets ghost-particle contact support use
+        // the same stencil width as the active MPM transfer.
+        localIndex mappedNodeIndex = 0;
 
-            // BUGFIX:  There seems to be some inconsistency in whether mapped nodes is of length
-            // active particle indices (e.g. mappedNodes[pp] throughout the code) or of the complete
-            // list of particles in subregion
-          }
-        }
-        else
+        switch( particleType )
         {
-          // Otherwise we will need to compute mapped nodes on the fly here for ghost particles
-          // We have to do this locally, since node indices are local to the partition and periordic boundaries
-          // could result in the wrong indices of the particle
-
-          localIndex cornerIndex = 0;
-          for( int corner=0; corner < 8; ++corner )
+          case ParticleType::SinglePoint:
           {
-            int cornerIJK[3] = {};
-            for( int i=0; i<3; ++i )
+            int centerIJK[3] = {};
+            for( int d = 0; d < 3; ++d )
             {
-              real64 cornerPositionComponent = particlePosition[p][i] +
-                                              signs[corner][0] * particleRVectors[p][0][i] +
-                                              signs[corner][1] * particleRVectors[p][1][i] +
-                                              signs[corner][2] * particleRVectors[p][2][i];
-
-              cornerIJK[i] = LvArray::math::floor( ( cornerPositionComponent - xLocalMin[i] ) / hEl[i] );
+              centerIJK[d] = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
             }
 
-            for(int k = 0; k < 2; ++k )
+            for( int i = 0; i < 2; ++i )
             {
-              for( int m = 0; m < 2; ++m )
+              for( int j = 0; j < 2; ++j )
               {
-                for( int n = 0; n < 2; ++n )
+                for( int k = 0; k < 2; ++k )
                 {
-                  if( cornerIJK[0] + k < 0 || cornerIJK[0] + k >= nEl[0] ||
-                      cornerIJK[1] + m < 0 || cornerIJK[1] + m >= nEl[1] ||
-                      cornerIJK[2] + n < 0 || cornerIJK[2] + n >= nEl[2] )
-                  {
-                    uniqueNodesView[p][cornerIndex] = INT_MAX;
-                  }
-                  else
-                  {
-                    uniqueNodesView[p][cornerIndex] = ijkMap[cornerIJK[0]+k][cornerIJK[1]+m][cornerIJK[2]+n];
-                  }
-                  ++cornerIndex;
+                  int const ix = centerIJK[0] + i;
+                  int const iy = centerIJK[1] + j;
+                  int const iz = centerIJK[2] + k;
+                  uniqueNodesView[p][mappedNodeIndex] =
+                    ( ix < 0 || ix > nEl[0] ||
+                      iy < 0 || iy > nEl[1] ||
+                      iz < 0 || iz > nEl[2] )
+                    ? INT_MAX
+                    : ijkMap[ix][iy][iz];
+                  ++mappedNodeIndex;
                 }
               }
             }
+            break;
+          }
+          case ParticleType::SinglePointBSpline:
+          {
+            int baseIJK[3] = {};
+            for( int d = 0; d < 3; ++d )
+            {
+              int const cell = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
+              baseIJK[d] = cell - 1;
+            }
+
+            for( int i = 0; i < 4; ++i )
+            {
+              for( int j = 0; j < 4; ++j )
+              {
+                for( int k = 0; k < 4; ++k )
+                {
+                  int const ix = baseIJK[0] + i;
+                  int const iy = baseIJK[1] + j;
+                  int const iz = baseIJK[2] + k;
+                  uniqueNodesView[p][mappedNodeIndex] =
+                    ( ix < 0 || ix > nEl[0] ||
+                      iy < 0 || iy > nEl[1] ||
+                      iz < 0 || iz > nEl[2] )
+                    ? INT_MAX
+                    : ijkMap[ix][iy][iz];
+                  ++mappedNodeIndex;
+                }
+              }
+            }
+            break;
+          }
+          case ParticleType::CPDI:
+          {
+            for( int corner=0; corner < 8; ++corner )
+            {
+              int cornerIJK[3] = {};
+              for( int d=0; d<3; ++d )
+              {
+                real64 const cornerPositionComponent = particlePosition[p][d] +
+                                                       signs[corner][0] * particleRVectors[p][0][d] +
+                                                       signs[corner][1] * particleRVectors[p][1][d] +
+                                                       signs[corner][2] * particleRVectors[p][2][d];
+
+                cornerIJK[d] = LvArray::math::floor( ( cornerPositionComponent - xLocalMin[d] ) / hEl[d] );
+              }
+
+              for(int i = 0; i < 2; ++i )
+              {
+                for( int j = 0; j < 2; ++j )
+                {
+                  for( int k = 0; k < 2; ++k )
+                  {
+                    int const ix = cornerIJK[0] + i;
+                    int const iy = cornerIJK[1] + j;
+                    int const iz = cornerIJK[2] + k;
+                    uniqueNodesView[p][mappedNodeIndex] =
+                      ( ix < 0 || ix > nEl[0] ||
+                        iy < 0 || iy > nEl[1] ||
+                        iz < 0 || iz > nEl[2] )
+                      ? INT_MAX
+                      : ijkMap[ix][iy][iz];
+                    ++mappedNodeIndex;
+                  }
+                }
+              }
+            }
+            break;
+          }
+          default:
+          {
+            GEOS_ERROR( "Particle type \"" << particleType << "\" is not yet supported for nodal neighbor list generation." );
+            break;
           }
         }
 
@@ -10322,7 +10620,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
         {
           localIndex nodeIndex = uniqueNodesView[p][g];
 
-          if( nodeIndex < 0 || nodeIndex > numNodes )
+          if( nodeIndex < 0 || nodeIndex >= numNodes )
           {
             continue;
           }
@@ -17427,7 +17725,13 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
 
             } );
 
-            // Perform field reflection on buffer nodes - accounts for moving boundary effects
+            // Perform field reflection on buffer nodes - accounts for moving boundary effects.
+            // For B-spline/control-node interpolation, prescribed tangential
+            // components also need a moving/odd extension; unconstrained
+            // tangential components remain even/free-slip.
+            bool const constrainTransverseComponents =
+              boundaryConditionTypes[face] == static_cast< int >( BoundaryConditionOption::Moving ) &&
+              enablePrescribedBoundaryTransverseVelocities[face] == 1;
             SortedArrayView< localIndex const > const bufferNodes = m_bufferNodes[face].toView();
             int const numBufferNodes = bufferNodes.size();
             // Possibly not a big enough loop to warrant parallelization
@@ -17454,20 +17758,30 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
               gridPreviousVelocity[dir1] = gridVelocity[g][fieldIndex][dir1];
               gridPreviousVelocity[dir2] = gridVelocity[g][fieldIndex][dir2];
 
-              // Calculate velocity, Negate component aligned with surface normal and correct for moving boundary
+              // Calculate velocity. Constrained components use an odd/moving extension
+              // about the boundary control value; free tangential components use
+              // an even extension.
               gridVelocity[g][fieldIndex][dir0] = -gridVelocity[gFrom][fieldIndex][dir0] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir0];
-              gridVelocity[g][fieldIndex][dir1] = gridVelocity[gFrom][fieldIndex][dir1];
-              gridVelocity[g][fieldIndex][dir2] = gridVelocity[gFrom][fieldIndex][dir2];
+              gridVelocity[g][fieldIndex][dir1] = constrainTransverseComponents
+                ? -gridVelocity[gFrom][fieldIndex][dir1] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir1]
+                :  gridVelocity[gFrom][fieldIndex][dir1];
+              gridVelocity[g][fieldIndex][dir2] = constrainTransverseComponents
+                ? -gridVelocity[gFrom][fieldIndex][dir2] + 2.0 * gridVelocity[gBoundary][fieldIndex][dir2]
+                :  gridVelocity[gFrom][fieldIndex][dir2];
 
               // Compute change in velocity for XPIC calculations
               gridDVelocity[g][fieldIndex][dir0] += gridVelocity[g][fieldIndex][dir0] - gridPreviousVelocity[dir0];
               gridDVelocity[g][fieldIndex][dir1] += gridVelocity[g][fieldIndex][dir1] - gridPreviousVelocity[dir1];
               gridDVelocity[g][fieldIndex][dir2] += gridVelocity[g][fieldIndex][dir2] - gridPreviousVelocity[dir2];
 
-              // Calculate acceleration, Negate component aligned with surface normal and correct for moving boundary
+              // Calculate acceleration with the same component-wise extension.
               gridAcceleration[g][fieldIndex][dir0] = -gridAcceleration[gFrom][fieldIndex][dir0] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir0];
-              gridAcceleration[g][fieldIndex][dir1] = gridAcceleration[gFrom][fieldIndex][dir1];
-              gridAcceleration[g][fieldIndex][dir2] = gridAcceleration[gFrom][fieldIndex][dir2];
+              gridAcceleration[g][fieldIndex][dir1] = constrainTransverseComponents
+                ? -gridAcceleration[gFrom][fieldIndex][dir1] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir1]
+                :  gridAcceleration[gFrom][fieldIndex][dir1];
+              gridAcceleration[g][fieldIndex][dir2] = constrainTransverseComponents
+                ? -gridAcceleration[gFrom][fieldIndex][dir2] + 2.0 * gridAcceleration[gBoundary][fieldIndex][dir2]
+                :  gridAcceleration[gFrom][fieldIndex][dir2];
             } );
           }
         }
@@ -21778,6 +22092,38 @@ void SolidMechanicsMPM::flagOutOfRangeParticles( ParticleManager & particleManag
                    ( m_boundaryConditionTypes[2*i + 1] != 0 && particlePosition[p][i] > globalMax[i] - tolerance[i] ) )
                    {
                     GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range Particle");
+                   }
+              break;
+            }
+          }
+        } );
+          break;
+        }
+      case ParticleType::SinglePointBSpline:
+        {
+          // Cubic B-spline particles need the one physical buffer/ghost layer
+          // for the basis support. Do not allow their centers to travel into
+          // that buffer at outflow boundaries, otherwise the 4-node 1D stencil
+          // would require nodes outside the generated grid.
+          real64 bsplineGlobalMin[3] = {};
+          real64 bsplineGlobalMax[3] = {};
+          LvArray::tensorOps::copy< 3 >( bsplineGlobalMin, m_xGlobalMin );
+          LvArray::tensorOps::copy< 3 >( bsplineGlobalMax, m_xGlobalMax );
+
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+        {
+          localIndex const p = activeParticleIndices[pp];
+          for( int i=0; i<3; ++i )
+          {
+            if( !periodic[i] && (
+              ( particlePosition[p][i] < bsplineGlobalMin[i] + tolerance[i] ) ||
+              ( bsplineGlobalMax[i] - tolerance[i] < particlePosition[p][i] ) ) )
+            {
+              particleDeleteFlag[p] = 1;
+              if ( ( m_boundaryConditionTypes[2*i] != 0 && particlePosition[p][i] < bsplineGlobalMin[i] + tolerance[i] ) ||
+                   ( m_boundaryConditionTypes[2*i + 1] != 0 && particlePosition[p][i] > bsplineGlobalMax[i] - tolerance[i] ) )
+                   {
+                    GEOS_LOG_RANK("Setting Particle Delete Flags for Out of Range SinglePointBSpline Particle");
                    }
               break;
             }

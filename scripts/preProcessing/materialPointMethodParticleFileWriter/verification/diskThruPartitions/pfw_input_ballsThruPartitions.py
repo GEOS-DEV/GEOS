@@ -41,7 +41,7 @@ pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS ------------------------------------------------------------------
 
-pfw["endTime"]=stopTime 0.01
+pfw["endTime"]=stopTime
 pfw["plotInterval"]=stopTime/1000.0001
 pfw["restartInterval"]=stopTime/4
 
@@ -70,7 +70,7 @@ pfw["materialPropertyString"]="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-ball1 = geom.sphere('ball1',[xmax/2,ymax/2,zmax/2],0.15,vel=[-60.0,-60.0,-60.0],mat=0,group=0)
-ball2 = geom.sphere('ball2',[-xmax/2,-ymax/2,-zmax/2],0.15,vel=[6.0,6.0,6.0],mat=1,group=1)
+ball1 = geom.sphere('ball1',[pfw["xmax"]/2,pfw["ymax"]/2,pfw["zmax"]/2],0.15,vel=[-60.0,-60.0,-60.0],mat=0,group=0)
+ball2 = geom.sphere('ball2',[-pfw["xmax"]/2,-pfw["ymax"]/2,-pfw["zmax"]/2],0.15,vel=[6.0,6.0,6.0],mat=1,group=1)
 pfw["objects"]=[ball1,ball2]
 

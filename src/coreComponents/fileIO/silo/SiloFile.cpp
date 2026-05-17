@@ -1509,6 +1509,7 @@ static stdVector< int > getSiloNodeOrdering( ParticleType const particleType )
   switch( particleType )
   {
     case ParticleType::SinglePoint:
+    case ParticleType::SinglePointBSpline:
     case ParticleType::CPDI:
     case ParticleType::CPDI2:
     {
@@ -1533,6 +1534,7 @@ static int toSiloShapeType( ParticleType const particleType )
   switch( particleType )
   {
     case ParticleType::SinglePoint:
+    case ParticleType::SinglePointBSpline:
     case ParticleType::CPDI:
     case ParticleType::CPDI2:
     {

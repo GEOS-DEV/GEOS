@@ -252,7 +252,7 @@ pfw["materialPropertyString"]="""
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 
-block = geom.box('block',[-0.5*sampleX,pfw["ymin"],pfw["zmin"]],[0.5*sampleX,pfw["ymax"],pfw["zmax"]],v=[0.0,0.0,0.0],mat=0,group=0)
+block = geom.box('block',[-0.5*sampleX,pfw["ymin"],pfw["zmin"]],[0.5*sampleX,pfw["ymax"],pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
 
 blockWDir = geom.materialDirectionWrapper(name='blockWDir',subObject=block,matDir=matDir)
 

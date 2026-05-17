@@ -402,17 +402,23 @@ def log2file(msg):
     current_time = now.strftime("%H:%M:%S")
 
     msg = current_time + " Rank " + str(g_rank) + ": " + msg + "\n"
-    mode = MPI.MODE_WRONLY | MPI.MODE_CREATE | MPI.MODE_APPEND
 
-    file_handle = MPI.File.Open(MPI.COMM_SELF, log_file + "_" + str(g_rank), mode)
-    file_handle.Set_atomicity(True)
+    # Prefer MPI-IO when available, but keep pfw importable in lightweight
+    # preflight environments that provide only COMM_WORLD.
+    try:
+      mode = MPI.MODE_WRONLY | MPI.MODE_CREATE | MPI.MODE_APPEND
+      file_handle = MPI.File.Open(MPI.COMM_SELF, log_file + "_" + str(g_rank), mode)
+      file_handle.Set_atomicity(True)
 
-    b = bytearray()
-    b.extend(map(ord, msg))
+      b = bytearray()
+      b.extend(map(ord, msg))
 
-    file_handle.Write(b)
-    file_handle.Sync()
-    file_handle.Close()
+      file_handle.Write(b)
+      file_handle.Sync()
+      file_handle.Close()
+    except Exception:
+      with open(log_file + "_" + str(g_rank), 'a') as f:
+        f.write(msg)
 
 
 def print2file(file_name, text):
@@ -4984,6 +4990,412 @@ class cone(Geometry):
   # def xMax(self):
   #   return max(self.x1[0], self.x2[0])+self.r
 
+
+#############################################
+class stl(Geometry):
+  """
+  Geometry object for a closed triangulated STL surface.
+
+  This object follows the same interface used by analytic geometry objects such
+  as sphere and cylinder:
+
+    * isInterior(pt, skinDepth) returns -1 outside the STL volume, 0 for
+      interior particles, and _defaultSurfaceFlag for interior particles within
+      skinDepth of the STL surface.
+    * getSurfaceNormal(pt) returns the outward unit normal of the nearest STL
+      triangle.  Pass flipNormal=True if the STL winding is inward.
+    * getSurfacePosition(pt) returns the vector from pt to the nearest point on
+      the STL surface.  This matches the relative-vector convention used by
+      cylinder.getSurfacePosition().
+
+  The inside/outside test assumes the STL is a reasonably closed manifold.  It
+  casts rays along rayAxis and uses a 2D binning acceleration structure over the
+  transverse coordinates.  Surface projection uses a cKDTree of triangle
+  centroids followed by exact closest-point checks on the nearest candidates.
+
+  Parameters
+  ----------
+  fileName / stlFile / filename : str
+      STL file path.  Binary and ASCII STL files are supported.  Relative paths
+      are interpreted relative to the current PFW run directory, where PFW also
+      copies files listed with #[pfw_dependency].
+  x0 : array-like length 3
+      Translation applied to STL coordinates after scaling.
+  scale : float or array-like length 3
+      Coordinate scale factor.  The MPM examples use mm, microseconds, and
+      milligrams, so STL files authored in mm usually use scale=1.0.
+  center : array-like length 3 or None
+      Optional target bounding-box center after scale/x0.
+  rayAxis : int
+      Ray-casting axis; 0 means +x rays through yz bins.
+  binCounts : int, tuple, or None
+      Number of bins in the two transverse ray-casting directions.  None chooses
+      a size based on triangle count.
+  kNearest : int
+      Number of centroid-nearest triangles to check for surface projection.
+  flipNormal : bool
+      Flip all STL triangle normals after loading.
+  """
+  def __init__(self,
+               name,
+               fileName=None,
+               stlFile=None,
+               filename=None,
+               x0=_defaultSurfacePosition,
+               scale=1.0,
+               center=None,
+               vel=_defaultVelocity,
+               mat=_defaultMat,
+               group=_defaultGroup,
+               particleType=_defaultParticleType,
+               surfaceFlag=_defaultSurfaceFlag,
+               flaggedSurfaces=True,
+               rayAxis=0,
+               binCounts=None,
+               kNearest=64,
+               flipNormal=False,
+               eps=1.0e-10):
+    super().__init__(name,
+                     vel=vel,
+                     mat=mat,
+                     group=group,
+                     particleType=particleType)
+
+    if fileName is None:
+      fileName = stlFile
+    if fileName is None:
+      fileName = filename
+    if fileName is None:
+      raise ValueError("stl geometry requires fileName, stlFile, or filename")
+
+    self.fileName = str(fileName)
+    self.surfaceFlag = surfaceFlag
+    self.flaggedSurfaces = flaggedSurfaces
+    self.rayAxis = int(rayAxis)
+    if self.rayAxis not in (0, 1, 2):
+      raise ValueError("rayAxis must be 0, 1, or 2")
+    self.projAxes = [axis for axis in (0, 1, 2) if axis != self.rayAxis]
+    self.kNearest = max(1, int(kNearest))
+    self.eps = float(eps)
+
+    triangles, normals = self._read_stl(self.fileName)
+
+    scale = np.asarray(scale, dtype=float)
+    if scale.shape == ():
+      scale = np.array([float(scale), float(scale), float(scale)])
+    if scale.shape != (3,):
+      raise ValueError("scale must be a scalar or length-3 array")
+
+    shift = np.asarray(x0, dtype=float)
+    if shift.shape != (3,):
+      raise ValueError("x0 must be a length-3 array")
+
+    triangles = triangles * scale.reshape((1, 1, 3)) + shift.reshape((1, 1, 3))
+    if center is not None:
+      center = np.asarray(center, dtype=float)
+      if center.shape != (3,):
+        raise ValueError("center must be None or a length-3 array")
+      bb_center = 0.5 * (np.min(triangles, axis=(0, 1)) + np.max(triangles, axis=(0, 1)))
+      triangles = triangles + (center - bb_center).reshape((1, 1, 3))
+
+    # Recompute normals after any anisotropic scale so surface normals are
+    # consistent with the transformed geometry.
+    normals = np.cross(triangles[:, 1, :] - triangles[:, 0, :],
+                       triangles[:, 2, :] - triangles[:, 0, :])
+    nmag = np.linalg.norm(normals, axis=1)
+    keep = nmag > self.eps
+    if not np.all(keep):
+      triangles = triangles[keep]
+      normals = normals[keep]
+      nmag = nmag[keep]
+    if len(triangles) == 0:
+      raise ValueError("STL mesh contains no non-degenerate triangles: " + self.fileName)
+    normals = normals / nmag[:, None]
+    if flipNormal:
+      normals = -normals
+
+    self.triangles = triangles
+    self.normals = normals
+    self.triMins = np.min(triangles, axis=1)
+    self.triMaxs = np.max(triangles, axis=1)
+    self.boundsMin = np.min(triangles, axis=(0, 1))
+    self.boundsMax = np.max(triangles, axis=(0, 1))
+    self.centroids = np.mean(triangles, axis=1)
+    self._surfaceCache = {}
+
+    self._build_ray_bins(binCounts)
+    self._centroidTree = scipy.spatial.cKDTree(self.centroids)
+
+  @staticmethod
+  def _read_stl(path):
+    import os
+    import struct
+
+    path = os.path.expandvars(os.path.expanduser(str(path)))
+    if not os.path.exists(path):
+      raise FileNotFoundError("STL file not found: " + str(path))
+
+    size = os.path.getsize(path)
+    with open(path, "rb") as f:
+      header = f.read(80)
+      count_bytes = f.read(4)
+      if len(count_bytes) == 4:
+        n_tri = struct.unpack("<I", count_bytes)[0]
+        expected = 84 + 50 * n_tri
+        if n_tri > 0 and expected == size:
+          raw = f.read(50 * n_tri)
+          dtype = np.dtype([
+              ("normal", "<f4", (3,)),
+              ("vertices", "<f4", (3, 3)),
+              ("attr", "<u2"),
+          ])
+          data = np.frombuffer(raw, dtype=dtype, count=n_tri)
+          return data["vertices"].astype(float), data["normal"].astype(float)
+
+    # Fall back to ASCII STL.  This is intentionally simple and permissive.
+    vertices = []
+    normals = []
+    current_normal = np.array([0.0, 0.0, 0.0])
+    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+      for line in f:
+        parts = line.strip().split()
+        if not parts:
+          continue
+        key = parts[0].lower()
+        if key == "facet" and len(parts) >= 5 and parts[1].lower() == "normal":
+          current_normal = np.array([float(parts[2]), float(parts[3]), float(parts[4])], dtype=float)
+        elif key == "vertex" and len(parts) >= 4:
+          vertices.append([float(parts[1]), float(parts[2]), float(parts[3])])
+          if len(vertices) % 3 == 0:
+            normals.append(current_normal.copy())
+
+    if len(vertices) % 3 != 0 or len(vertices) == 0:
+      raise ValueError("Could not parse STL file as binary or ASCII: " + str(path))
+    triangles = np.asarray(vertices, dtype=float).reshape((-1, 3, 3))
+    normals = np.asarray(normals, dtype=float)
+    return triangles, normals
+
+  def _build_ray_bins(self, binCounts):
+    tri_count = len(self.triangles)
+    if binCounts is None:
+      n = int(np.clip(np.sqrt(tri_count) / 3.0, 32, 192))
+      binCounts = (n, n)
+    elif isinstance(binCounts, int):
+      binCounts = (binCounts, binCounts)
+    else:
+      binCounts = tuple(binCounts)
+
+    if len(binCounts) != 2:
+      raise ValueError("binCounts must be None, an integer, or a length-2 tuple")
+
+    self.binCounts = (max(1, int(binCounts[0])), max(1, int(binCounts[1])))
+    self.projMin = self.boundsMin[self.projAxes].astype(float)
+    self.projMax = self.boundsMax[self.projAxes].astype(float)
+    span = self.projMax - self.projMin
+    span[span <= self.eps] = 1.0
+    self.projSpan = span
+
+    self._rayBins = [[[] for _ in range(self.binCounts[1])] for _ in range(self.binCounts[0])]
+
+    for idx in range(tri_count):
+      mn = self.triMins[idx, self.projAxes]
+      mx = self.triMaxs[idx, self.projAxes]
+      lo = np.floor((mn - self.projMin) / self.projSpan * np.asarray(self.binCounts)).astype(int)
+      hi = np.floor((mx - self.projMin) / self.projSpan * np.asarray(self.binCounts)).astype(int)
+      lo = np.maximum(lo, 0)
+      hi = np.minimum(hi, np.asarray(self.binCounts) - 1)
+      for i in range(lo[0], hi[0] + 1):
+        for j in range(lo[1], hi[1] + 1):
+          self._rayBins[i][j].append(idx)
+
+  def _surface_is_flagged(self):
+    if isinstance(self.flaggedSurfaces, (list, tuple, np.ndarray)):
+      return bool(self.flaggedSurfaces[0]) if len(self.flaggedSurfaces) else False
+    return bool(self.flaggedSurfaces)
+
+  def _ray_bin_indices(self, pt):
+    q = np.asarray(pt, dtype=float)[self.projAxes]
+    if np.any(q < self.projMin - self.eps) or np.any(q > self.projMax + self.eps):
+      return None
+    ij = np.floor((q - self.projMin) / self.projSpan * np.asarray(self.binCounts)).astype(int)
+    ij = np.maximum(ij, 0)
+    ij = np.minimum(ij, np.asarray(self.binCounts) - 1)
+    return int(ij[0]), int(ij[1])
+
+  def _ray_intersection_coordinates(self, pt):
+    bin_ij = self._ray_bin_indices(pt)
+    if bin_ij is None:
+      return []
+
+    p = np.asarray(pt, dtype=float)
+    q = p[self.projAxes]
+    a = self.rayAxis
+    b, c = self.projAxes
+    xs = []
+
+    for idx in self._rayBins[bin_ij[0]][bin_ij[1]]:
+      tri = self.triangles[idx]
+      # Fast transverse-bounding-box rejection.
+      if q[0] < self.triMins[idx, b] - self.eps or q[0] > self.triMaxs[idx, b] + self.eps:
+        continue
+      if q[1] < self.triMins[idx, c] - self.eps or q[1] > self.triMaxs[idx, c] + self.eps:
+        continue
+
+      v0 = tri[0, self.projAxes]
+      v1 = tri[1, self.projAxes]
+      v2 = tri[2, self.projAxes]
+      e1 = v1 - v0
+      e2 = v2 - v0
+      den = e1[0] * e2[1] - e1[1] * e2[0]
+      if abs(den) < self.eps:
+        continue
+      rhs = q - v0
+      u = (rhs[0] * e2[1] - rhs[1] * e2[0]) / den
+      v = (e1[0] * rhs[1] - e1[1] * rhs[0]) / den
+      w = 1.0 - u - v
+      if u >= -self.eps and v >= -self.eps and w >= -self.eps:
+        xint = w * tri[0, a] + u * tri[1, a] + v * tri[2, a]
+        if xint > p[a] + self.eps:
+          xs.append(float(xint))
+
+    if not xs:
+      return []
+    xs.sort()
+
+    # Shared triangle edges can produce duplicate intersections at the same
+    # coordinate.  Count each cluster once for robust odd-even parity.
+    unique = [xs[0]]
+    tol = 100.0 * self.eps * max(1.0, abs(xs[0]), np.linalg.norm(self.boundsMax - self.boundsMin))
+    for x in xs[1:]:
+      if abs(x - unique[-1]) > tol:
+        unique.append(x)
+    return unique
+
+  @staticmethod
+  def _closest_point_on_triangle(p, a, b, c):
+    # Christer Ericson, Real-Time Collision Detection, closest point on triangle.
+    ab = b - a
+    ac = c - a
+    ap = p - a
+    d1 = np.dot(ab, ap)
+    d2 = np.dot(ac, ap)
+    if d1 <= 0.0 and d2 <= 0.0:
+      return a
+
+    bp = p - b
+    d3 = np.dot(ab, bp)
+    d4 = np.dot(ac, bp)
+    if d3 >= 0.0 and d4 <= d3:
+      return b
+
+    vc = d1 * d4 - d3 * d2
+    if vc <= 0.0 and d1 >= 0.0 and d3 <= 0.0:
+      v = d1 / (d1 - d3)
+      return a + v * ab
+
+    cp = p - c
+    d5 = np.dot(ab, cp)
+    d6 = np.dot(ac, cp)
+    if d6 >= 0.0 and d5 <= d6:
+      return c
+
+    vb = d5 * d2 - d1 * d6
+    if vb <= 0.0 and d2 >= 0.0 and d6 <= 0.0:
+      w = d2 / (d2 - d6)
+      return a + w * ac
+
+    va = d3 * d6 - d5 * d4
+    if va <= 0.0 and (d4 - d3) >= 0.0 and (d5 - d6) >= 0.0:
+      w = (d4 - d3) / ((d4 - d3) + (d5 - d6))
+      return b + w * (c - b)
+
+    denom = 1.0 / (va + vb + vc)
+    v = vb * denom
+    w = vc * denom
+    return a + ab * v + ac * w
+
+  def _nearest_surface(self, pt):
+    p = np.asarray(pt, dtype=float)
+    key = tuple(np.round(p, 12))
+    cached = self._surfaceCache.get(key)
+    if cached is not None:
+      return cached
+
+    k = max(1, min(self.kNearest, len(self.triangles)))
+    _, idxs = self._centroidTree.query(p, k=k)
+    idxs = np.atleast_1d(idxs)
+
+    best_idx = int(idxs[0])
+    best_point = self.triangles[best_idx, 0, :]
+    best_dist2 = np.inf
+    for idx in idxs:
+      idx = int(idx)
+      tri = self.triangles[idx]
+      cp = self._closest_point_on_triangle(p, tri[0], tri[1], tri[2])
+      dist2 = float(np.dot(cp - p, cp - p))
+      if dist2 < best_dist2:
+        best_dist2 = dist2
+        best_point = cp
+        best_idx = idx
+
+    result = (best_point, self.normals[best_idx], best_dist2, best_idx)
+    # Keep the cache bounded; PFW often calls normal and position for the same
+    # surface-flagged particle back-to-back.
+    if len(self._surfaceCache) > 8192:
+      self._surfaceCache.clear()
+    self._surfaceCache[key] = result
+    return result
+
+  def isInterior(self, pt, skinDepth=0.0):
+    p = np.asarray(pt, dtype=float)
+    if np.any(p < self.boundsMin - self.eps) or np.any(p > self.boundsMax + self.eps):
+      return -1
+
+    intersections = self._ray_intersection_coordinates(p)
+    if (len(intersections) % 2) == 0:
+      return -1
+
+    if self._surface_is_flagged() and skinDepth is not None and skinDepth > 0.0:
+      _, _, dist2, _ = self._nearest_surface(p)
+      if dist2 <= skinDepth * skinDepth:
+        return self.surfaceFlag
+    return 0
+
+  def getSurfaceNormal(self, pt):
+    p = np.asarray(pt, dtype=float)
+    cp, n, _, _ = self._nearest_surface(p)
+    n = np.asarray(n, dtype=float)
+    nmag = np.linalg.norm(n)
+    if nmag < self.eps:
+      return _defaultSurfaceNormal
+    n = n / nmag
+    # STL normals should be outward.  If an interior near-surface point lies on
+    # the positive side of the nearest triangle normal, the local winding is
+    # inward or inconsistent, so flip the returned normal for this query.
+    if np.dot(n, p - cp) > 0.0:
+      n = -n
+    return n
+
+  def getSurfacePosition(self, pt):
+    p = np.asarray(pt, dtype=float)
+    cp, _, _, _ = self._nearest_surface(p)
+    return cp - p
+
+  def xMin(self):
+    return float(self.boundsMin[0])
+
+  def xMax(self):
+    return float(self.boundsMax[0])
+
+  def getSubregions(self):
+    return [(self.mat, self.particleType)]
+
+
+# Upper-case alias for users who prefer geometry class names to mirror the file
+# format name.  Existing PFW objects use lower-case class names, so geom.stl is
+# the canonical spelling used in the examples.
+STL = stl
+
 #############################################
 class cylinder(Geometry):
   """
@@ -6571,7 +6983,6 @@ class materialDirectionWrapper(BaseWrapper):
       self.matDir = np.vstack((u1, u2, u3))
     elif np.shape(matDir) == (3, 3):
       self.matDir = np.asarray(matDir)
-      log2file("Unsupported material direction size in this branch...")
     else:
       self.matDir = _defaultMatDir
       log2file("Unsupported material direction size...")

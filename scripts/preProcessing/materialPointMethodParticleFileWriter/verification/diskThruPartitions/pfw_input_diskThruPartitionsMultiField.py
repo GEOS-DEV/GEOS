@@ -61,8 +61,8 @@ restartInterval="0.0025"
 # specify an array with all objects to be included, order matters. for overlapping objects, the first one listed will be assigned at each point.
 # "fill" must be last on the list.
 
-disk1 = geom.cylinder('disk1',[xmax/2,ymax/2,zmin-lz],[xmax/2,ymax/2,zmax+lz],0.15,[-120.0,-120.0,0.0],0,0,0)
-disk2 = geom.cylinder('disk2',[-xmax/2,-ymax/2,zmin-lz],[-xmax/2,-ymax/2,zmax+lz],0.15,[12.0,12.0,0.0],1,1,0)
+disk1 = geom.cylinder('disk1',[xmax/2,ymax/2,zmin-lz],[xmax/2,ymax/2,zmax+lz],r=0.15,vel=[-120.0,-120.0,0.0],mat=0,group=0)
+disk2 = geom.cylinder('disk2',[-xmax/2,-ymax/2,zmin-lz],[-xmax/2,-ymax/2,zmax+lz],r=0.15,vel=[12.0,12.0,0.0],mat=1,group=1)
 
 objects=[disk1,disk2]
 
@@ -112,3 +112,48 @@ frictionCoefficient="0.25"
 
 boundaryConditionTypes="{ 0, 0, 0, 0, 0, 0 }"    
 """
+
+# New pfw dictionary interface -----------------------------------------------------------
+pfw = {
+    "runDebug": True,
+    "xpar": xpar,
+    "ypar": ypar,
+    "zpar": zpar,
+    "nI": nI,
+    "nJ": nJ,
+    "nK": nK,
+    "ppc": ppc,
+    "xmin": xmin,
+    "xmax": xmax,
+    "ymin": ymin,
+    "ymax": ymax,
+    "zmin": zmin,
+    "zmax": zmax,
+    "planeStrain": planeStrain,
+    "mBatch": True,
+    "mBank": mBank,
+    "mWallTime": mWallTime,
+    "mCores": mCores,
+    "mNodes": mNodes,
+    "mSubmitJobs": mSubmitJobs,
+    "endTime": float(endTime),
+    "plotInterval": float(plotInterval),
+    "restartInterval": float(restartInterval),
+    "objects": objects,
+    "materials": materials,
+    "materialPropertyString": materialPropertyString,
+    "timeIntegrationOption": "ExplicitDynamic",
+    "cflFactor": 0.5,
+    "initialDt": 1e-16,
+    "prescribedBcTable": 0,
+    "prescribedBoundaryFTable": 0,
+    "fTableInterpType": 0,
+    "solverProfiling": 1,
+    "neighborRadius": -1.01,
+    "needsNeighborList": 0,
+    "cpdiDomainScaling": 1,
+    "damageFieldPartitioning": 0,
+    "contactGapCorrection": 0,
+    "frictionCoefficient": 0.25,
+    "boundaryConditionTypes": [0, 0, 0, 0, 0, 0],
+}

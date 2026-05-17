@@ -37,6 +37,33 @@ parser.add_argument('input_file', help="PFW input file", type=str)
 args = parser.parse_args()
 
 
+def _normalize_mpm_events_string(value: object) -> str:
+  """Return MPM event children, not a nested <MPMEvents> container.
+
+  Current GEOS expects event children directly inside the solver's <MPMEvents>
+  block. Some older PFW inputs included the surrounding <MPMEvents>...</MPMEvents>
+  tags in pfw["mpmEventsString"]. Strip those container tags here so old inputs
+  do not generate invalid nested MPMEvents blocks.
+  """
+  text = "" if value is None else str(value).strip()
+  if not text:
+    return ""
+
+  lower = text.lower().lstrip()
+  if lower.startswith("<mpmevents"):
+    first_close = text.find(">")
+    if first_close >= 0:
+      text = text[first_close + 1:].strip()
+
+  lower = text.lower().rstrip()
+  closing = "</mpmevents>"
+  if lower.endswith(closing):
+    cut = lower.rfind(closing)
+    text = text[:cut].strip()
+
+  return text
+
+
 # ============================================================================================
 # MACHINE-SPECIFIC Calculations.
 # ============================================================================================
@@ -118,17 +145,24 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 username = getpass.getuser()
 userDefsFile = str('userDefs_'+str(username))
 
-try:
-  f = open(userDefsFile+".py")
-  # Do something with the file
-except IOError:
-  print("Please create a version of userDefs_OUN.py consistent with your user name and geos location")
-finally:
-  f.close()
+if not pathlib.Path(userDefsFile + ".py").is_file():
+  candidates = sorted(pathlib.Path(".").glob("userDefs_*.py"))
+  if len(candidates) == 1:
+    userDefsFile = candidates[0].stem
+  else:
+    names = ", ".join(str(p) for p in candidates) if candidates else "none found"
+    raise FileNotFoundError(
+      "Could not find " + userDefsFile + ".py in the current run directory. "
+      "Copy your userDefs_<user>.py into the run directory or run through the example runProblem wrapper. "
+      "Available userDefs files: " + names)
 
 userDefs = importlib.import_module(userDefsFile)
-geosPath = userDefs.geosPath
-pfwPath = userDefs.pfwPath # Copy all dependencies from the input file, which should be defined relative to pfwPath
+
+def _expand_user_path(value):
+  return os.path.abspath(os.path.expandvars(os.path.expanduser(str(value))))
+
+geosPath = _expand_user_path(userDefs.geosPath)
+pfwPath = _expand_user_path(userDefs.pfwPath) # Copy all dependencies from the input file, which should be defined relative to pfwPath
 
 
 # inputFile name (strip the extension just in case it was called that way)
@@ -147,7 +181,8 @@ with open(inputFile+".py","r") as fileText:
     for line in fileText: 
         strippedLine = line.replace(" ", "").replace("\n","")
         if strippedLine.startswith("#[pfw_dependency]"):
-            filePath = pfwPath+"/"+strippedLine[17:]
+            dependencyName = strippedLine[17:].lstrip("/")
+            filePath = _expand_user_path(os.path.join(pfwPath, dependencyName))
             dependencyPaths.append(filePath)
 print("Dependency file paths to be copied: ",dependencyPaths)
 dest = './' # could be './pfw_dependencies' if we wanted to keep them together.
@@ -384,7 +419,7 @@ def normalize_no_numpy_wrappers(obj: Any) -> Any:
 
     # NumPy ndarray
     if isinstance(obj, np.ndarray):
-        return _normalize_ndarray(obj)
+        return normalize_ndarray(obj)
 
     # NumPy scalar
     obj2 = to_python_scalar(obj)
@@ -459,8 +494,29 @@ for paramName, paramTuple in parameters.items():
   # Add global variable to be used by particle file writer
   globals()[paramName] = paramValue 
 
+
+# Keys below are used by wrappers, reports, or local workflow tooling.  They are
+# intentionally not SolidMechanics_MPM XML attributes.  particleFileWriter.py
+# writes unknown pfw keys as solver attributes so that new GEOS solver options
+# can be exercised without editing this table, but these workflow-only keys must
+# be filtered to avoid invalid XML such as geosPath="..." on the solver node.
+pfwMetadataKeys = {
+    "geosPath",
+    "pfwPath",
+    "dependencies",
+    "caseName",
+    "runDirectory",
+    "outputDirectory",
+    "outputDir",
+    "pythonCommand",
+    "defaultPython",
+    "defaultPythonCommand",
+}
+
 # Add all remaining variables to mpmSolverParameterString that aren't specified here, but don't add them as global variables for script
 for paramName, paramValue in pfw.items():
+  if paramName in pfwMetadataKeys:
+    continue
   if paramName not in parameters:
 
     maxDiff = 0.0
@@ -1209,6 +1265,7 @@ if rank == 0:
         particleBlocks="{{ {regionBlocksStr} }}"
         materialList="{{ {matsOrig[i]} }}"/>"""
 
+  mpmEventsString = _normalize_mpm_events_string(mpmEventsString)
   geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
   geosInputFile = open(geosInputFileName, 'w')
 

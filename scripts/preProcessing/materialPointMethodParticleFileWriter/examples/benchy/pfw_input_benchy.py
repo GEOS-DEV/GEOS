@@ -1,101 +1,230 @@
 # -*- coding: utf-8 -*-
-import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
-import numpy as np                   # math stuff
-from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+"""3DBenchy FMPM contact example.
 
-# START!
+Purpose
+-------
+This input demonstrates three PFW/GEOS-MPM features in a small, copyable
+example:
 
-# Domain ---------------------------------------------------------------------------------
-xpar=10  # grid partitions
-ypar=5
-zpar=8
+1. Importing a closed STL surface into PFW using ``geom.stl``.
+2. Generating explicit surface normals and surface-position vectors from the STL
+   surface so GEOS can use prescribed multi-field contact.
+3. Assigning two bodies to different ``ContactGroup`` values: a copper 3DBenchy
+   boat and a steel impactor ball.
 
-cpp=15
-nI=xpar*cpp  	# grid cells in the x-direction
-nJ=ypar*cpp  	# grid cells in the y-direction
-nK=zpar*cpp 	# grid cells in the z-direction
-ppc=2   		# particles per cell in each direction
+The file is intentionally a normal PFW input, not a test-suite driver.  Users
+should be able to copy it, change the STL, materials, grid, and loading, and run
+it with ``particleFileWriter.py`` or an example ``runProblem`` wrapper.
 
-domainLength = 60.001 # m
-domainWidth = 31.004 # m
-domainHeight = 48 # m
-
-# Currently there is a bug that will cause a crash if the problem is initialized with
-# an empty patch.  This option will create one particle of material 0 in each grid cell.
-# This currently does nothing!
-mpiParticles = False
-
-# Define all the geometric objects -------------------------------------------------------
-xmin =-29.176	# m
-xmax = 30.825	# m
-ymin =-15.502	# m
-ymax = 15.502	# m
-zmin = 0.0 	# m
-zmax = 48 	# m
-
-# Batch parameters for GEOS runs.  --------------------------------------------------------
-# An error will result if there are too many cores for
-# a low resolution simulation.  If there is insufficient run-time to obtain a signal
-# for a given run, that run will have its results ommited from the Hugoniot analysis.
-mBatch=False
-
-# read in the default bank:
-import sys
-import importlib
-import getpass
-username = getpass.getuser()
-userDefsFile = str('userDefs_'+str(username))
-userDefs = importlib.import_module(userDefsFile)
-mBank = userDefs.defaultBank
-
-mWallTime="00:05:00"
-mCores=xpar*ypar*zpar
-mNodes=int(np.ceil(float(mCores)/36.)) 
-mSubmitJobs=False
-
-# GEOSX MPM input parameters ---------------------------------------------------------------
-endTime="0.01"				# seconds
-writePlot="1"				# this does nothing for now
-writeRestart="1"			# this does nothing for now
-plotInterval="0.0001"
-restartInterval="0.0025"
-
-# specify an array with all objects to be included, order matters. for overlapping objects, the first one listed will be assigned at each point.
-# "fill" must be last on the list.
-
-ball = geom.sphere('ball',[-20,0.0,27],5,[100.0,0.0,0.0],0,1,0)
-
-objects=[ball]
-
-# Material Properties
-# Notes:
-# 1. It DOES NOT matter if the 'materials' array matches the order of 'materialPropertyString'.
-# 2. It's okay if there are more materials specified than used.
-# 3. The 'materials' array is a map from material name to material ID in the particle file.
-#    i.e. if the first material in 'materials' is 'sand', then 'sand' is material ID 0.
-#    This matters when using integers to flag objects with materials.
-materials = [ "aluminum" ]
-materialPropertyString="""
-<ElasticIsotropic
-	name="aluminum"
-	defaultDensity="2700"
-	defaultBulkModulus="70.0e8"
-	defaultShearModulus="24.0e8"/>
+Units
+-----
+The material database in ``pfw_materials.py`` uses the standard MPM validation
+unit system: mm, microseconds, milligrams, and Kelvin.  Density is mg/mm^3 and
+stress is GPa.  The 3DBenchy STL in this directory is already in millimeters, so
+``scale=1.0`` is used.
 """
 
-mpmSolverParameterString="""
-timeIntegrationOption="ExplicitDynamic"
-cflFactor="0.25"    
-initialDt="1e-16"
+# PFW copies files listed with #[pfw_dependency] from userDefs_$USER.pfwPath into
+# the run directory before importing this file.  The STL is then opened from the
+# run directory, which makes the calculation independent of the source checkout.
+#[pfw_dependency] pfw_materials.py
+#[pfw_dependency] examples/benchy/3DBenchy.stl
 
-prescribedBcTable="0"
-prescribedBoundaryFTable="0"
-fTableInterpType="0"    
+import numpy as np
 
-solverProfiling="0"         
+import pfw_geometryObjects as geom
+import pfw_materials as matdb
 
-contactGapCorrection="1"
-frictionCoefficient="0.25"
 
-boundaryConditionTypes="{ 1, 1, 1, 1, 1, 1 }"    
-"""
+# =============================================================================
+# Problem size and run duration
+# =============================================================================
+
+pfw = {}
+pfw["runDebug"] = True
+
+# This is a demonstration input rather than a production-resolution Benchy run.
+# Increase cpp and/or the partition counts for a better-resolved STL surface.
+stopTime = 1.0
+
+# Grid partitions.  The total MPI ranks requested by PFW are
+# xpar*ypar*zpar.  The values below use 24 ranks, which is convenient for Dane's
+# pdebug queue and keeps the STL import example quick enough for iteration.
+pfw["xpar"] = 4
+pfw["ypar"] = 2
+pfw["zpar"] = 3
+
+# Cells per partition in each direction.  Total cell counts are nI,nJ,nK below.
+cpp = 12
+pfw["nI"] = pfw["xpar"] * cpp
+pfw["nJ"] = pfw["ypar"] * cpp
+pfw["nK"] = pfw["zpar"] * cpp
+
+# Candidate particles per cell direction before material refinement.  PFW then
+# writes CPDI particles using the RVector field requested below.
+pfw["ppc"] = 2
+
+# The old Benchy input used the STL's natural extents
+# x=[-29.176,30.825], y=[-15.502,15.502], z=[0,48] mm.  This domain adds room
+# to the left for the incoming ball and a small free space around the boat.
+pfw["xmin"] = -50.0
+pfw["xmax"] =  40.0
+pfw["ymin"] = -25.0
+pfw["ymax"] =  25.0
+pfw["zmin"] =   0.0
+pfw["zmax"] =  60.0
+
+# This is a fully 3D problem.  The Brazilian disk examples use planeStrain=1;
+# Benchy keeps all three dimensions active.
+pfw["planeStrain"] = 0
+pfw["periodic"] = [False, False, False]
+
+# Sorting lets PFW skip objects whose x-bounds do not overlap the current x-slice.
+# This is useful here because the STL boat and ball occupy different x ranges.
+pfw["sortObjects"] = True
+
+
+# =============================================================================
+# Batch settings used by particleFileWriter.py
+# =============================================================================
+
+# mBatch=True writes a Slurm script.  mSubmitJobs=True submits it immediately.
+# Bank/account, GEOS executable, default run directory, and default Python command
+# are read from userDefs_$USER.py.
+pfw["mBatch"] = True
+pfw["mWallTime"] = "00:10:00"
+pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
+pfw["mSubmitJobs"] = True
+
+# Keep this example simple: no automatic restart machinery.
+pfw["autoRestart"] = False
+
+
+# =============================================================================
+# GEOS MPM solver controls
+# =============================================================================
+
+# Plot only the initial and final states for a compact demonstration output.  The
+# restart interval is beyond endTime, so no restart files are written.
+pfw["endTime"] = stopTime
+pfw["plotInterval"] = stopTime
+pfw["restartInterval"] = 2.0 * stopTime
+pfw["outputType"] = "silo"
+
+# Explicit dynamic MPM settings.
+pfw["timeIntegrationOption"] = "ExplicitDynamic"
+pfw["cflFactor"] = 0.25
+pfw["initialDt"] = 1e-16
+
+# FMPM transfer with CPDI particles.  updateOrder=2 is the typical second-order
+# setting used by the compact example problems.
+pfw["updateMethod"] = "FMPM"
+pfw["updateOrder"] = 2
+pfw["cpdiDomainScaling"] = 1
+
+# No damage-field partitioning/DFG for this example.  The goal is STL import and
+# multi-field contact, not ceramic damage evolution.
+pfw["damageFieldPartitioning"] = 0
+
+# Explicit contact settings.  SurfacePosition and SurfaceNormal are generated
+# below from geom.stl and geom.sphere.  ContactGroup separates the boat and
+# the ball into different material-point fields for prescribed multi-field
+# contact.  No neighbor-list file is needed for this example.
+pfw["needsNeighborList"] = 0
+pfw["contactGapCorrection"] = "Implicit"
+pfw["useSurfacePositionForContact"] = 1
+pfw["explicitSurfaceNormalInfluence"] = 1000.0
+pfw["frictionCoefficient"] = 0.25
+
+# Basic diagnostics and guardrails.
+pfw["solverProfiling"] = 1
+pfw["reactionHistory"] = 1
+pfw["boxAverageHistory"] = 1
+pfw["maxParticleVelocity"] = 1.0e4
+pfw["minParticleJacobian"] = 0.01
+pfw["maxParticleJacobian"] = 10.0
+
+# Particle fields written into the initial particle file.  The contact-specific
+# fields are ContactGroup, SurfaceFlag, SurfaceNormal, and SurfacePosition.
+# RVector stores the CPDI particle-domain vectors.
+pfw["particleFileFields"] = [
+    "Velocity",
+    "MaterialType",
+    "ContactGroup",
+    "SurfaceFlag",
+    "SurfaceNormal",
+    "SurfacePosition",
+    "RVector",
+]
+
+
+# =============================================================================
+# Materials
+# =============================================================================
+
+# Material IDs are assigned by list order.  The copper boat is material 0 and the
+# steel ball is material 1.  These dictionaries come directly from pfw_materials.
+pfw["materials"] = [matdb.copper["name"], matdb.steel["name"]]
+pfw["materialPropertyString"] = matdb.copper["materialString"] + "\n" + matdb.steel["materialString"]
+
+COPPER_BOAT = 0
+STEEL_BALL = 1
+
+
+# =============================================================================
+# Geometry
+# =============================================================================
+
+# The STL class reads a closed triangulated surface, builds a binned ray-casting
+# inside/outside test, and returns nearest-triangle surface normals/positions for
+# surface-flagged particles.  The Benchy STL is in millimeters and is already
+# positioned with the bottom at z=0, so no scale or translation is needed.
+boat = geom.stl(
+    "copper_3DBenchy",
+    fileName="3DBenchy.stl",
+    scale=1.0,
+    x0=[0.0, 0.0, 0.0],
+    vel=[0.0, 0.0, 0.0],
+    mat=COPPER_BOAT,
+    group=0,
+    particleType=2,       # CPDI particles
+    rayAxis=0,            # +x ray through yz bins for inside/outside tests
+    binCounts=(96, 96),   # Larger values reduce triangles checked per ray
+    kNearest=64,          # Triangles checked for nearest surface projection
+)
+
+# A steel ball starts to the left of the STL and moves in +x toward the boat.
+# It uses a different ContactGroup so GEOS can exercise multi-field contact.
+ball = geom.sphere(
+    "steel_ball",
+    [-42.0, 0.0, 26.0],
+    5.0,
+    vel=[200.0, 0.0, 0.0],
+    mat=STEEL_BALL,
+    group=1,
+    particleType=2,
+)
+
+# Object order matters for overlapping geometry: the first matching object wins.
+# The ball starts outside the boat, but listing it first makes the intended
+# material/contact group unambiguous if a user moves it into overlap for testing.
+pfw["objects"] = [ball, boat]
+
+
+# =============================================================================
+# Boundary conditions
+# =============================================================================
+
+# No prescribed external loading is applied to the grid boundaries in this small
+# example.  The ball motion is prescribed through its initial particle velocity.
+# Current GEOS expects fTableInterpType as one of Linear, Cosine, or Smoothstep;
+# Linear is used here even though no active prescribed f-table is used.
+pfw["prescribedBcTable"] = 0
+pfw["prescribedBoundaryFTable"] = 0
+pfw["fTableInterpType"] = "Linear"
+
+# Boundary-condition order is x-, x+, y-, y+, z-, z+.  Symmetry walls keep the
+# compact demonstration contained.  For an open impact calculation, replace some
+# faces with Outflow according to the MPM solver boundary-condition enum used in
+# other PFW examples.
+pfw["boundaryConditionTypes"] = [1, 1, 1, 1, 1, 1]

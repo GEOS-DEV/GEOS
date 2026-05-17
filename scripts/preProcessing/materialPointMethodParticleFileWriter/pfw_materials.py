@@ -2261,3 +2261,267 @@ engineeringCeramics = [
 
 engineeringMaterials = engineeringMetals + engineeringCeramics
 
+# -------------------------------------------------------------------------------------------------
+# EXAMPLE-SUITE MATERIAL DICTIONARY ENTRIES
+# -------------------------------------------------------------------------------------------------
+# These entries are written in the same explicit dictionary style as the other material entries in
+# this file.  They are used by the examples suite so pfw_input files can stay concise while still
+# referring to named, reusable material parameterizations.
+
+###################################################################################################
+# ELASTIC DEMO MATERIAL:
+# Small-unit-system ElasticIsotropic material for compact 2D demonstration problems such as
+# elasticDisk and collidingDisks.  Units follow the MPM example convention: mm, us, mg, and GPa.
+#
+###################################################################################################
+# ELASTIC DEMO MATERIAL:
+# Generic ElasticIsotropic material for simple example problems.  This entry intentionally specifies
+# exactly two independent elastic constants in the XML, defaultYoungModulus and defaultPoissonRatio,
+# because current GEOS requires one valid elastic-constant pair and rejects over/under-specified
+# ElasticIsotropic inputs.
+#
+elasticDemo = {}
+elasticDemo["name"] = "elasticDemo"
+elasticDemo["version"] = 2605170001
+elasticDemo["model"] = "ElasticIsotropic"
+elasticDemo["defaultDensity"] = 1.0
+elasticDemo["defaultYoungModulus"] = 1.0
+elasticDemo["defaultPoissonRatio"] = 0.25
+elasticDemo["defaultBulkModulus"] = elasticDemo["defaultYoungModulus"]/(3.0*(1.0 - 2.0*elasticDemo["defaultPoissonRatio"]))
+elasticDemo["defaultShearModulus"] = elasticDemo["defaultYoungModulus"]/(2.0*(1.0 + elasticDemo["defaultPoissonRatio"]))
+elasticDemo["waveSpeed"] = float(np.sqrt((elasticDemo["defaultBulkModulus"] + 4.0/3.0*elasticDemo["defaultShearModulus"])/elasticDemo["defaultDensity"]))
+elasticDemo["materialString"] = "<!--"+elasticDemo["name"]+" parameterization of "+elasticDemo["model"]+" model, version: "+str(elasticDemo["version"])+"""-->
+<"""+elasticDemo["model"]+"""
+name="""+'"'+elasticDemo["name"]+'"'+"""
+defaultDensity="""+'"'+str(elasticDemo["defaultDensity"])+'"'+"""
+defaultYoungModulus="""+'"'+str(elasticDemo["defaultYoungModulus"])+'"'+"""
+defaultPoissonRatio="""+'"'+str(elasticDemo["defaultPoissonRatio"])+'"'+"""
+/>
+"""
+# #################################################################################################
+
+# #################################################################################################
+
+###################################################################################################
+# ELASTIC ALUMINUM, SI-STYLE:
+# ElasticIsotropic aluminum-like material for examples that already use SI-style density and moduli
+# such as the bar and plate-impact examples.
+#
+###################################################################################################
+# ELASTIC ALUMINUM MATERIAL:
+# Reusable ElasticIsotropic aluminum-like material for example problems that only need an elastic
+# solid.  Units follow the other MPM material examples: density in mg/mm^3 and stiffness in GPa.
+# The XML again specifies exactly two independent constants, E and nu, to satisfy GEOS validation.
+#
+elasticAluminumSI = {}
+elasticAluminumSI["name"] = "elasticAluminumSI"
+elasticAluminumSI["version"] = 2605170002
+elasticAluminumSI["model"] = "ElasticIsotropic"
+elasticAluminumSI["defaultDensity"] = 2.70
+elasticAluminumSI["defaultYoungModulus"] = 69.0
+elasticAluminumSI["defaultPoissonRatio"] = 0.33
+elasticAluminumSI["defaultBulkModulus"] = elasticAluminumSI["defaultYoungModulus"]/(3.0*(1.0 - 2.0*elasticAluminumSI["defaultPoissonRatio"]))
+elasticAluminumSI["defaultShearModulus"] = elasticAluminumSI["defaultYoungModulus"]/(2.0*(1.0 + elasticAluminumSI["defaultPoissonRatio"]))
+elasticAluminumSI["waveSpeed"] = float(np.sqrt((elasticAluminumSI["defaultBulkModulus"] + 4.0/3.0*elasticAluminumSI["defaultShearModulus"])/elasticAluminumSI["defaultDensity"]))
+elasticAluminumSI["materialString"] = "<!--"+elasticAluminumSI["name"]+" parameterization of "+elasticAluminumSI["model"]+" model, version: "+str(elasticAluminumSI["version"])+"""-->
+<"""+elasticAluminumSI["model"]+"""
+name="""+'"'+elasticAluminumSI["name"]+'"'+"""
+defaultDensity="""+'"'+str(elasticAluminumSI["defaultDensity"])+'"'+"""
+defaultYoungModulus="""+'"'+str(elasticAluminumSI["defaultYoungModulus"])+'"'+"""
+defaultPoissonRatio="""+'"'+str(elasticAluminumSI["defaultPoissonRatio"])+'"'+"""
+/>
+"""
+# #################################################################################################
+
+# #################################################################################################
+
+###################################################################################################
+# GHAREB GEOMECHANICS MATERIAL:
+# Ghareb chalk parameterization for the borehole examples.  Units follow the existing MPM
+# borehole examples: mm, microseconds, mg, and GPa.  The entry is intentionally written in
+# the same explicit dictionary style as the other entries in this file.
+#
+# Notes on current GEOS inputs:
+# - The current Geomechanics model requires the hardening-direction parameters dstrendh,
+#   dfslopedh, dpeakI1dh, and dcrdh.  The historical examples predate those XML attributes.
+# - strainHardeningK and strainHardeningN still define the scalar hardening variable.
+#   Setting dstrendh = 1.0 preserves the older STREN_i + K*(1-exp(-N*gamma_p)) behavior.
+# - The remaining hardening-direction parameters are zero so the historical examples do not
+#   harden fSlope, peakI1, or cr unless a user edits this dictionary explicitly.
+# - p0 corresponds to the default borehole confining pressure scale used by the example
+#   input, max in compression around I1 = -3*p.
+#
+###################################################################################################
+# GHAREB GEOMECHANICS MATERIAL:
+# Ghareb chalk parameterization for the borehole examples.  Units follow the existing MPM borehole
+# examples: mm, microseconds, mg, and GPa.  This is written as a normal explicit material dictionary,
+# matching the style of the other entries in this file.
+#
+# Current GEOS Geomechanics validation checks require, among other things:
+#   b0 > 0, b0+b1 > 0, g0 > 0, p0 < 0, p1 > 0, p3 > 0,
+#   0 < cr < 1, fSlopeFailed <= fSlope, beta > 0,
+#   fluidBulkModulus = fluidInitialPressure = 0,
+#   enableCreep in {0,1}, and if creep is enabled then creepB > 0 and creepG > 0.
+# The historical Ghareb example enabled creep but did not provide creepG, so this entry explicitly
+# sets creepG = 1.0 to satisfy the current check while preserving the legacy creepB value.
+#
+ghareb = {}
+ghareb["name"] = "ghareb"
+ghareb["version"] = 2605170003
+ghareb["model"] = "Geomechanics"
+ghareb["defaultDensity"] = 1.57
+
+# Nonlinear pressure-dependent bulk modulus parameters.
+ghareb["b0"] = 1.67
+ghareb["b1"] = 30.0
+ghareb["b2"] = 0.3
+ghareb["b3"] = 1.42
+ghareb["b4"] = 0.015
+
+# Hardening-direction parameters required by current GEOS.
+ghareb["dstrendh"] = 1.0
+ghareb["dfslopedh"] = 0.0
+ghareb["dpeakI1dh"] = 0.0
+ghareb["dcrdh"] = 0.0
+
+# Pressure-dependent shear modulus / Poisson-ratio parameters.
+ghareb["g1"] = 0.1
+ghareb["g2"] = -0.0001
+ghareb["g0"] = 1.5*ghareb["b0"]*(1.0 - 2.0*(ghareb["g1"] + ghareb["g2"]))/(1.0 + (ghareb["g1"] + ghareb["g2"]))
+ghareb["g3"] = 0.3
+ghareb["g4"] = 0.0
+
+# Crush curve / cap parameters.
+ghareb["p0"] = -0.030001
+ghareb["p1"] = 0.75
+ghareb["p2"] = 0.0
+ghareb["p3"] = 0.255
+ghareb["p4"] = 0.0
+ghareb["cr"] = 0.2
+
+# Fluid effects are disabled by current GEOS Geomechanics.
+ghareb["fluidBulkModulus"] = 0.0
+ghareb["fluidInitialPressure"] = 0.0
+
+# Rate dependence terms are disabled in this example material.
+ghareb["t1RateDependence"] = 0.0
+ghareb["t2RateDependence"] = 0.0
+
+# Yield-surface parameters.  These satisfy the current nonlinear Drucker-Prager limit-surface check:
+# fSlope > ySlope > 0, stren > ySlope*peakI1, and peakI1 >= 0.
+ghareb["peakI1"] = 0.0322/2.0
+ghareb["fSlope"] = 0.18
+ghareb["fSlopeFailed"] = ghareb["fSlope"] - 0.05
+ghareb["stren"] = 0.50
+ghareb["ySlope"] = 0.002
+ghareb["beta"] = 1.4
+
+# Damage parameters.
+ghareb["fractureEnergyReleaseRate"] = 1.5e-8
+ghareb["fractureSofteningExponent"] = 0.75
+ghareb["fractureStress"] = 0.0184
+ghareb["damageEvolutionCriterion"] = 1
+ghareb["brittleDuctileTransition"] = 0.020
+
+# Thermal/activation-energy parameters.  Q is zero here, but initialTemperature is kept positive.
+ghareb["initialTemperature"] = 300.0
+ghareb["Q"] = 0.0
+
+# Buckling disabled, with valid placeholder parameters.
+ghareb["enableBuckling"] = 0
+ghareb["bucklingLength"] = 1.0
+ghareb["bucklingAmplitude"] = 0.0
+
+# Creep parameters from the historical Ghareb example plus the required positive creepG.
+ghareb["enableCreep"] = 1
+ghareb["creepC0"] = 10.0
+ghareb["creepC1"] = 1.229
+ghareb["creepC2"] = 7.45e-08
+ghareb["creepA"] = 0.2205
+ghareb["creepB"] = 0.000628
+ghareb["creepC"] = 0.308e-10
+ghareb["creepD"] = 2.307
+ghareb["creepE"] = 0.0
+ghareb["creepF"] = 0.564
+ghareb["creepG"] = 1.0
+
+# Deviatoric hardening law. dstrendh=1 above means this K value changes STREN directly.
+ghareb["strainHardeningN"] = 250.0
+ghareb["strainHardeningK"] = 0.017
+
+# Constitutive-update controls.  These are normally optional in GEOS, but are written explicitly so
+# the example remains robust if defaults change.
+ghareb["plasticStrainTolerance"] = 1.0e-10
+ghareb["stressReturnTolerance"] = 1.0e-6
+ghareb["maxAllowedSubcycles"] = 256
+ghareb["failedStepResponse"] = 2
+
+ghareb["waveSpeed"] = float(np.sqrt((ghareb["b0"] + 4.0/3.0*ghareb["g0"])/ghareb["defaultDensity"]))
+
+ghareb["materialString"] = "<!--"+ghareb["name"]+" parameterization of "+ghareb["model"]+" model, version: "+str(ghareb["version"])+"""-->
+<"""+ghareb["model"]+"""
+name="""+'"'+ghareb["name"]+'"'+"""
+defaultDensity="""+'"'+str(ghareb["defaultDensity"])+'"'+"""
+b0="""+'"'+str(ghareb["b0"])+'"'+"""
+b1="""+'"'+str(ghareb["b1"])+'"'+"""
+b2="""+'"'+str(ghareb["b2"])+'"'+"""
+b3="""+'"'+str(ghareb["b3"])+'"'+"""
+b4="""+'"'+str(ghareb["b4"])+'"'+"""
+dstrendh="""+'"'+str(ghareb["dstrendh"])+'"'+"""
+dfslopedh="""+'"'+str(ghareb["dfslopedh"])+'"'+"""
+dpeakI1dh="""+'"'+str(ghareb["dpeakI1dh"])+'"'+"""
+dcrdh="""+'"'+str(ghareb["dcrdh"])+'"'+"""
+g0="""+'"'+str(ghareb["g0"])+'"'+"""
+g1="""+'"'+str(ghareb["g1"])+'"'+"""
+g2="""+'"'+str(ghareb["g2"])+'"'+"""
+g3="""+'"'+str(ghareb["g3"])+'"'+"""
+g4="""+'"'+str(ghareb["g4"])+'"'+"""
+p0="""+'"'+str(ghareb["p0"])+'"'+"""
+p1="""+'"'+str(ghareb["p1"])+'"'+"""
+p2="""+'"'+str(ghareb["p2"])+'"'+"""
+p3="""+'"'+str(ghareb["p3"])+'"'+"""
+p4="""+'"'+str(ghareb["p4"])+'"'+"""
+cr="""+'"'+str(ghareb["cr"])+'"'+"""
+fluidBulkModulus="""+'"'+str(ghareb["fluidBulkModulus"])+'"'+"""
+fluidInitialPressure="""+'"'+str(ghareb["fluidInitialPressure"])+'"'+"""
+t1RateDependence="""+'"'+str(ghareb["t1RateDependence"])+'"'+"""
+t2RateDependence="""+'"'+str(ghareb["t2RateDependence"])+'"'+"""
+peakI1="""+'"'+str(ghareb["peakI1"])+'"'+"""
+fSlope="""+'"'+str(ghareb["fSlope"])+'"'+"""
+fSlopeFailed="""+'"'+str(ghareb["fSlopeFailed"])+'"'+"""
+stren="""+'"'+str(ghareb["stren"])+'"'+"""
+ySlope="""+'"'+str(ghareb["ySlope"])+'"'+"""
+beta="""+'"'+str(ghareb["beta"])+'"'+"""
+fractureEnergyReleaseRate="""+'"'+str(ghareb["fractureEnergyReleaseRate"])+'"'+"""
+fractureSofteningExponent="""+'"'+str(ghareb["fractureSofteningExponent"])+'"'+"""
+fractureStress="""+'"'+str(ghareb["fractureStress"])+'"'+"""
+initialTemperature="""+'"'+str(ghareb["initialTemperature"])+'"'+"""
+Q="""+'"'+str(ghareb["Q"])+'"'+"""
+brittleDuctileTransition="""+'"'+str(ghareb["brittleDuctileTransition"])+'"'+"""
+damageEvolutionCriterion="""+'"'+str(ghareb["damageEvolutionCriterion"])+'"'+"""
+enableBuckling="""+'"'+str(ghareb["enableBuckling"])+'"'+"""
+bucklingLength="""+'"'+str(ghareb["bucklingLength"])+'"'+"""
+bucklingAmplitude="""+'"'+str(ghareb["bucklingAmplitude"])+'"'+"""
+enableCreep="""+'"'+str(ghareb["enableCreep"])+'"'+"""
+creepC0="""+'"'+str(ghareb["creepC0"])+'"'+"""
+creepC1="""+'"'+str(ghareb["creepC1"])+'"'+"""
+creepC2="""+'"'+str(ghareb["creepC2"])+'"'+"""
+creepA="""+'"'+str(ghareb["creepA"])+'"'+"""
+creepB="""+'"'+str(ghareb["creepB"])+'"'+"""
+creepC="""+'"'+str(ghareb["creepC"])+'"'+"""
+creepD="""+'"'+str(ghareb["creepD"])+'"'+"""
+creepE="""+'"'+str(ghareb["creepE"])+'"'+"""
+creepF="""+'"'+str(ghareb["creepF"])+'"'+"""
+creepG="""+'"'+str(ghareb["creepG"])+'"'+"""
+strainHardeningN="""+'"'+str(ghareb["strainHardeningN"])+'"'+"""
+strainHardeningK="""+'"'+str(ghareb["strainHardeningK"])+'"'+"""
+plasticStrainTolerance="""+'"'+str(ghareb["plasticStrainTolerance"])+'"'+"""
+stressReturnTolerance="""+'"'+str(ghareb["stressReturnTolerance"])+'"'+"""
+maxAllowedSubcycles="""+'"'+str(ghareb["maxAllowedSubcycles"])+'"'+"""
+failedStepResponse="""+'"'+str(ghareb["failedStepResponse"])+'"'+"""
+/>
+"""
+# #################################################################################################
+
+# #################################################################################################
+

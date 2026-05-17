@@ -363,7 +363,29 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         }
         case ParticleType::SinglePointBSpline:
         {
-          GEOS_ERROR( "SinglePointBSpline particle type is not implemented!" );
+          // SinglePointBSpline uses particle centers for MPM interpolation.
+          // CPDI-style r-vectors are retained for particle-domain output and
+          // the existing particle-volume initialization convention.
+          double x1, y1, z1, x2, y2, z2, x3, y3, z3;
+          x1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
+          y1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXY )];
+          z1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXZ )];
+          x2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYX )];
+          y2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYY )];
+          z2 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorYZ )];
+          x3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZX )];
+          y3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZY )];
+          z3 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorZZ )];
+          particleRVectors[i][0][0] = x1;
+          particleRVectors[i][0][1] = y1;
+          particleRVectors[i][0][2] = z1;
+          particleRVectors[i][1][0] = x2;
+          particleRVectors[i][1][1] = y2;
+          particleRVectors[i][1][2] = z2;
+          particleRVectors[i][2][0] = x3;
+          particleRVectors[i][2][1] = y3;
+          particleRVectors[i][2][2] = z3;
+          particleVolume[i] = 8.0*LvArray::math::abs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
           break;
         }
         case ParticleType::CPDI:

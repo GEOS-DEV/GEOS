@@ -2,6 +2,9 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+# [pfw_dependency] pfw_materials.py
+import importlib
+matdb = importlib.import_module('pfw_materials')
 
 pfw = {} 
 pfw["runDebug"] = True
@@ -38,6 +41,8 @@ pfw["mSubmitJobs"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
+pfw["outputType"]="silo"
+
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
 pfw["endTime"]=stopTime            
@@ -55,11 +60,5 @@ pfw["initialDt"]=1e-16
 bar = geom.box('bar',[0.0,-domainWidth/2,-domainWidth/2],[domainLength,domainWidth/2,domainWidth/2],vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[bar]
 
-pfw["materials"] = [ "aluminum" ]
-pfw["materialPropertyString"]="""
-<ElasticIsotropic
-	name="aluminum"
-	defaultDensity="2700"
-	defaultBulkModulus="70.0e9"
-	defaultShearModulus="24.0e9"/>
-"""
+pfw["materials"] = [ matdb.elasticAluminumSI["name"] ]
+pfw["materialPropertyString"] = matdb.elasticAluminumSI["materialString"]

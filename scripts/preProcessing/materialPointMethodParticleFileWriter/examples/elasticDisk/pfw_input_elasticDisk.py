@@ -2,6 +2,9 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+# [pfw_dependency] pfw_materials.py
+import importlib
+matdb = importlib.import_module('pfw_materials')
 
 pfw = {} 
 pfw["runDebug"] = True
@@ -42,6 +45,8 @@ pfw["ymin"] = 0.0   # m
 pfw["ymax"] = domainHeight  # m
 pfw["zmin"] =-0.5*domainLength # mm
 pfw["zmax"] = 0.5*domainLength # mm
+
+pfw["outputType"]="silo"
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
@@ -100,10 +105,5 @@ pfw["mSubmitJobs"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
-pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
-<ElasticIsotropic
-    name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultYoungModulus=""" + '"' + str(E) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """/>"""
+pfw["materials"] = [ matdb.elasticDemo["name"] ]
+pfw["materialPropertyString"] = matdb.elasticDemo["materialString"]

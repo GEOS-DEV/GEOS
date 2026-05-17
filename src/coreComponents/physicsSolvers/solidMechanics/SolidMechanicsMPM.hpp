@@ -1075,6 +1075,17 @@ public:
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
+  void computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                arraySlice1d< real64 const > const particlePosition,
+                                                arrayView3d< int const > const ijkMap,
+                                                real64 const (&xLocalMin)[3],
+                                                real64 const (&hEl)[3],
+                                                arraySlice1d< int > const mappedNodes,
+                                                arraySlice1d< real64 > const shapeFunctionValues,
+                                                arraySlice2d< real64 > const shapeFunctionGradientValues );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
   void computeCPDIShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                   arraySlice1d< real64 const > const particlePosition,
                                   arraySlice2d< real64 const > const particleRVectors,
@@ -1108,6 +1119,17 @@ public:
                                                  localIndex * const mappedNodes,
                                                  real64 * const shapeFunctionValues,
                                                  real64 shapeFunctionGradientValues[][3] );
+
+  GEOS_FORCE_INLINE
+  GEOS_HOST_DEVICE
+  void computeSinglePointBSplineParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
+                                                        arraySlice1d< real64 const > const particlePosition,
+                                                        arrayView3d< int const > const ijkMap,
+                                                        real64 const (&xLocalMin)[3],
+                                                        real64 const (&hEl)[3],
+                                                        localIndex * const mappedNodes,
+                                                        real64 * const shapeFunctionValues,
+                                                        real64 shapeFunctionGradientValues[][3] );
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE

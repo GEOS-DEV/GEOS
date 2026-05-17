@@ -44,7 +44,7 @@ pfw["mSubmitJobs"]=True
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
-pfw["endTime"]=stopeTime
+pfw["endTime"]=stopTime
 pfw["plotInterval"]= stopTime/100
 pfw["restartInterval"]=stopTime*10
 
