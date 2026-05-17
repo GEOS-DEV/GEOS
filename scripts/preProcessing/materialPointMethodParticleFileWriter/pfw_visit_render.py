@@ -268,6 +268,101 @@ def compact_name(name):
     return re.sub(r"[^a-z0-9]+", "", str(name).lower())
 
 
+
+# -----------------------------------------------------------------------------
+# Derived scalar fields for example-suite visualization.
+# -----------------------------------------------------------------------------
+def _compact_name(text):
+    return re.sub(r"[^a-z0-9]+", "", str(text).lower())
+
+
+def _quote_visit_var(name):
+    return "<" + str(name) + ">"
+
+
+def _visit_square_sum_expression(components):
+    terms = ["({0})*({0})".format(_quote_visit_var(name)) for name in components]
+    return "sqrt(" + " + ".join(terms) + ")"
+
+
+def _derived_priority(name):
+    low = str(name).lower()
+    score = 0
+    if "particleregion" in low:
+        score -= 200
+    if "particledomains" in low:
+        score -= 100
+    if "particlefields" in low:
+        score -= 100
+    if "particle" in low:
+        score -= 25
+    if "ghareb" in low:
+        score -= 20
+    if "null_" in low or "/null" in low:
+        score += 10000
+    if "cellregion" in low:
+        score += 100
+    return (score, natural_key(name))
+
+
+def _find_best_scalar(scalars, suffixes=(), contains=()):
+    matches = []
+    compact_suffixes = [_compact_name(s) for s in suffixes]
+    compact_contains = [_compact_name(c) for c in contains]
+    for name in scalars:
+        cname = _compact_name(name)
+        if compact_suffixes and not any(cname.endswith(s) for s in compact_suffixes):
+            continue
+        if compact_contains and not all(c in cname for c in compact_contains):
+            continue
+        matches.append(name)
+    if not matches:
+        return None
+    return sorted(matches, key=_derived_priority)[0]
+
+
+def _define_scalar_expression(name, expression):
+    print("Defining expression {0} = {1}".format(name, expression))
+    call_visit("DefineScalarExpression", name, expression)
+    return name
+
+
+def _derive_pressure(scalars):
+    # Prefer particle stress components.  GEOS-MPM Silo output commonly contains
+    # either particleStress_0/1/2 or material-specific stress_0_0/0_1/... fields.
+    sxx = _find_best_scalar(scalars, suffixes=("particleStress_0", "stress_0_0", "stress_11"), contains=("stress",))
+    syy = _find_best_scalar(scalars, suffixes=("particleStress_1", "stress_0_1", "stress_22", "stress_1_1"), contains=("stress",))
+    szz = _find_best_scalar(scalars, suffixes=("particleStress_2", "stress_0_2", "stress_33", "stress_2_2"), contains=("stress",))
+    if not (sxx and syy and szz):
+        print("Could not derive pressure; missing stress components. sxx={0}, syy={1}, szz={2}".format(sxx, syy, szz))
+        return None
+    expression = "-(({0}) + ({1}) + ({2}))/3.0".format(_quote_visit_var(sxx), _quote_visit_var(syy), _quote_visit_var(szz))
+    return _define_scalar_expression("pressure", expression)
+
+
+def _derive_plastic_strain_magnitude(scalars):
+    components = []
+    # First try particlePlasticStrain_0...5, then material-specific plasticStrain_0_0...0_5.
+    for i in range(6):
+        comp = _find_best_scalar(scalars, suffixes=("particlePlasticStrain_{0}".format(i), "plasticStrain_0_{0}".format(i), "plasticStrain_{0}".format(i)), contains=("plasticStrain",))
+        if comp:
+            components.append(comp)
+    if not components:
+        print("Could not derive plasticStrainMagnitude; no plastic-strain components found")
+        return None
+    expression = _visit_square_sum_expression(components)
+    return _define_scalar_expression("plasticStrainMagnitude", expression)
+
+
+def prepare_derived_requested_variable(scalars, requested):
+    key = _compact_name(requested or "")
+    if key in ("pressure", "meanstress", "hydrostaticpressure"):
+        return _derive_pressure(scalars)
+    if key in ("plasticstrainmagnitude", "plasticstrain", "plasticmagnitude", "equivalentplasticstrain"):
+        return _derive_plastic_strain_magnitude(scalars)
+    return None
+
+
 def score_variable(name, requested):
     compact = compact_name(name)
     req = compact_name(requested) if requested else ""
@@ -718,7 +813,13 @@ def main(argv=None):
     except Exception:
         pass
 
-    candidates = ordered_scalar_candidates(scalars, args.variable)
+    derived_variable = prepare_derived_requested_variable(scalars, args.variable)
+    candidates = []
+    if derived_variable:
+        candidates.append(derived_variable)
+    for candidate in ordered_scalar_candidates(scalars, args.variable):
+        if candidate not in candidates:
+            candidates.append(candidate)
     print("Scalar candidate order: {0}".format(candidates[:12]))
 
     plotted_variable = None

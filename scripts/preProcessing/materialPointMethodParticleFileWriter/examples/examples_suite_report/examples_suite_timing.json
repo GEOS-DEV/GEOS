@@ -1,21 +1,21 @@
 {
   "cases": {
-    "borehole_Ghareb": {
+    "brazilianDisk_BSpline": {
       "jobs": {
-        "geos": "6044177",
-        "post": "6044178"
+        "geos": "6044292",
+        "post": "6044293"
       },
       "timing": {
         "geos": {
           "Account": "mahem",
           "AllocCPUS": "9",
-          "CPUTimeRAW": "27",
-          "Elapsed": "00:00:03",
-          "ElapsedRaw": "3",
+          "CPUTimeRAW": "1242",
+          "Elapsed": "00:02:18",
+          "ElapsedRaw": "138",
           "ExitCode": "0:0",
-          "JobID": "6044177",
-          "JobIDRaw": "6044177",
-          "JobName": "260517131426_runGEOS.sh",
+          "JobID": "6044292",
+          "JobIDRaw": "6044292",
+          "JobName": "260517144207_runGEOS.sh",
           "NNodes": "1",
           "Partition": "pdebug",
           "State": "COMPLETED",
@@ -24,59 +24,59 @@
         "post": {
           "Account": "mahem",
           "AllocCPUS": "1",
-          "CPUTimeRAW": "1",
-          "Elapsed": "00:00:01",
-          "ElapsedRaw": "1",
-          "ExitCode": "2:0",
-          "JobID": "6044178",
-          "JobIDRaw": "6044178",
-          "JobName": "post_borehole_Ghareb",
+          "CPUTimeRAW": "10",
+          "Elapsed": "00:00:10",
+          "ElapsedRaw": "10",
+          "ExitCode": "0:0",
+          "JobID": "6044293",
+          "JobIDRaw": "6044293",
+          "JobName": "post_brazilianDisk_BSpline",
           "NNodes": "1",
           "Partition": "pdebug",
-          "State": "FAILED",
+          "State": "COMPLETED",
           "TotalCPU": "00:00:00"
         }
       }
     }
   },
-  "generated_at": "2026-05-17T13:15:32",
+  "generated_at": "2026-05-17T14:44:38",
   "jobs": [
     {
-      "case": "borehole_Ghareb",
-      "geos": "6044177",
-      "post": "6044178"
+      "case": "brazilianDisk_BSpline",
+      "geos": "6044292",
+      "post": "6044293"
     }
   ],
   "note": "",
   "sacct_by_job_id": {
-    "6044177": {
+    "6044292": {
       "Account": "mahem",
       "AllocCPUS": "9",
-      "CPUTimeRAW": "27",
-      "Elapsed": "00:00:03",
-      "ElapsedRaw": "3",
+      "CPUTimeRAW": "1242",
+      "Elapsed": "00:02:18",
+      "ElapsedRaw": "138",
       "ExitCode": "0:0",
-      "JobID": "6044177",
-      "JobIDRaw": "6044177",
-      "JobName": "260517131426_runGEOS.sh",
+      "JobID": "6044292",
+      "JobIDRaw": "6044292",
+      "JobName": "260517144207_runGEOS.sh",
       "NNodes": "1",
       "Partition": "pdebug",
       "State": "COMPLETED",
       "TotalCPU": "00:00:00"
     },
-    "6044178": {
+    "6044293": {
       "Account": "mahem",
       "AllocCPUS": "1",
-      "CPUTimeRAW": "1",
-      "Elapsed": "00:00:01",
-      "ElapsedRaw": "1",
-      "ExitCode": "2:0",
-      "JobID": "6044178",
-      "JobIDRaw": "6044178",
-      "JobName": "post_borehole_Ghareb",
+      "CPUTimeRAW": "10",
+      "Elapsed": "00:00:10",
+      "ElapsedRaw": "10",
+      "ExitCode": "0:0",
+      "JobID": "6044293",
+      "JobIDRaw": "6044293",
+      "JobName": "post_brazilianDisk_BSpline",
       "NNodes": "1",
       "Partition": "pdebug",
-      "State": "FAILED",
+      "State": "COMPLETED",
       "TotalCPU": "00:00:00"
     }
   }

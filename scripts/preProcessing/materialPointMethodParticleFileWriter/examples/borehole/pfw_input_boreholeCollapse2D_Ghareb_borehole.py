@@ -15,7 +15,7 @@ pfw = {}
 pfw["outputType"]="silo" 
 pfw["runDebug"] = True
 
-stopTime = 1000.0
+stopTime = 100.0  # shortened example-suite runtime
 rampTime = 0.25*stopTime  # Time over which the borehole pressure is ramped down.
 
 physicalStopTime = 360*24*3600.e6 # actual end of 1-year test time, micro-seconds.
@@ -38,8 +38,8 @@ domainX = 1.*domainSize
 domainY = 1.*domainSize
 
 # Typically we run 12-16 in 3D, 30-60 in 2D (30,000 particles per partition)
-cppx=50   # cells per partition in each direction
-cppy=50
+cppx = 24  # cells per partition in x; reduced for quick examples
+cppy = 24  # cells per partition in y; reduced for quick examples
 cppz=3   # plane strain needs 3, 
 
 refine=3

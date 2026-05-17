@@ -21388,15 +21388,43 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
 
     if( constitutiveModel.hasWrapper( "materialDirection" ) )
     {
-      // CC: Todo add check for fiber vs plane update to material direction
-      arrayView3d< real64 > const constitutiveMaterialDirection = constitutiveModel.getReference< array3d< real64 > >( "materialDirection" );
+      // MPM stores particle material directions as a 3x3 orientation matrix per particle.
+      // Constitutive models are not uniform: Geomechanics and ElasticTransverseIsotropic
+      // register materialDirection as one 3-vector per particle (array2d), whereas models
+      // such as Graphite register the full 3x3 tensor (array3d). Copy the representation
+      // requested by the constitutive wrapper instead of assuming a rank-3 array.
+      WrapperBase const & materialDirectionWrapper = constitutiveModel.getWrapperBase( "materialDirection" );
+      int const materialDirectionRank = materialDirectionWrapper.numArrayDims();
       arrayView3d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
-      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+
+      if( materialDirectionRank == 2 )
       {
-        localIndex const p = activeParticleIndices[pp];
-        // Tensor equation: constitutiveMaterialDirection[p] = particleMaterialDirection[p].
-        LvArray::tensorOps::copy< 3, 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p] );
-      } );
+        arrayView2d< real64 > const constitutiveMaterialDirection =
+          constitutiveModel.getReference< array2d< real64 > >( "materialDirection" );
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+        {
+          localIndex const p = activeParticleIndices[pp];
+          // Vector-valued constitutive material directions use the first basis vector
+          // from the particle orientation matrix.
+          LvArray::tensorOps::copy< 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p][0] );
+        } );
+      }
+      else if( materialDirectionRank == 3 )
+      {
+        arrayView3d< real64 > const constitutiveMaterialDirection =
+          constitutiveModel.getReference< array3d< real64 > >( "materialDirection" );
+        forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+        {
+          localIndex const p = activeParticleIndices[pp];
+          // Tensor equation: constitutiveMaterialDirection[p] = particleMaterialDirection[p].
+          LvArray::tensorOps::copy< 3, 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p] );
+        } );
+      }
+      else
+      {
+        GEOS_ERROR( "Unsupported constitutive materialDirection rank " << materialDirectionRank
+                    << " for material " << solidMaterialName << "; expected array2d or array3d." );
+      }
     }
 
     if( constitutiveModel.hasWrapper( "deformationGradient" ) )

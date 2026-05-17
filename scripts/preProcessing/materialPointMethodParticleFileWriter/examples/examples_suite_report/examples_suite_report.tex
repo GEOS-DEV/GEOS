@@ -28,31 +28,32 @@ If output exists, \texttt{runProblem} prompts before overwriting. Use \texttt{--
 \toprule
 Example & Family & GEOS job & GEOS state & GEOS wall & GEOS CPU & Post wall & Post CPU \\
 \midrule
-borehole\_Ghareb & Borehole collapse & 6044177 & COMPLETED & 00:00:03 & 00:00:00 & 00:00:01 & 00:00:00 \\
+brazilianDisk\_BSpline & Brazilian disk & 6044292 & COMPLETED & 00:02:18 & 00:00:00 & 00:00:10 & 00:00:00 \\
 \bottomrule
 \end{tabular}
 \end{table}
 \clearpage
-\section*{borehole\_Ghareb}
-A plane-strain borehole collapse demonstration using the Ghareb geomechanics parameterization from pfw\_materials.py.  The pressure events initialize confinement and unload the borehole wall.
+\section*{brazilianDisk\_BSpline}
+Brazilian disk compression using the new SinglePointBSpline particle type.  The case keeps the FMPM update path and quartz damage material but uses particleType=1 so GEOS exercises ParticleType::SinglePointBSpline.
 \begin{figure}[H]
 \centering
-\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(15,10){\framebox(90,62){rock}}\put(60,41){\circle{16}}\put(52,39){hole}\put(80,41){\vector(-1,0){18}}\put(18,70){confining pressure}\put(45,18){borehole pressure}\end{picture}
-\caption{Schematic for borehole\_Ghareb.}
+\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(12,12){\framebox(96,58){}}\put(60,41){\circle{38}}\put(44,41){\vector(0,-1){18}}\put(76,41){\vector(0,1){18}}\put(25,73){moving y+}\put(25,3){moving y-}\put(6,31){\rotatebox{90}{periodic x}}\put(109,31){\rotatebox{-90}{periodic x}}\end{picture}
+\caption{Schematic for brazilianDisk\_BSpline.}
 \end{figure}
 \textbf{Code features exercised.}
 \begin{itemize}
-\item Geomechanics material model
-\item borehole pressure MPM event
-\item confining pressure event
-\item Voronoi-Weibull flaw field
-\item plane strain CPDI
+\item SinglePointBSpline particle type
+\item FMPM update
+\item quartz damage material
+\item moving y boundaries
+\item periodic x boundaries
+\item reaction history
 \end{itemize}
 \begin{figure}[H]
 \centering
-\fbox{\begin{minipage}[c][0.22\textheight][c]{0.31\textwidth}\centering missing\\borehole\_Ghareb\_initial\end{minipage}}
-\fbox{\begin{minipage}[c][0.22\textheight][c]{0.31\textwidth}\centering missing\\borehole\_Ghareb\_final\end{minipage}}
-\fbox{\begin{minipage}[c][0.22\textheight][c]{0.31\textwidth}\centering missing\\borehole\_Ghareb\_reactions.png\end{minipage}}
-\caption{Initial state, final state, and reaction history for borehole\_Ghareb.}
+\includegraphics[width=0.31\textwidth]{../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrengthScale.png}
+\includegraphics[width=0.31\textwidth]{../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png}
+\includegraphics[width=0.31\textwidth]{../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png}
+\caption{Initial state, final state, and reaction history for brazilianDisk\_BSpline.}
 \end{figure}
 \end{document}

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 13:15
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 14:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -225,47 +225,83 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 {/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdftex.map}
 ]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <10.95> on input line 53.
- [2
 
-] (./examples_suite_report.aux) ) 
+LaTeX Warning: \oval, \circle, or \line size unavailable on input line 40.
+
+
+Overfull \hbox (44.57512pt too wide) in paragraph at lines 37--42
+\OT1/cmr/m/n/10.95 date path and quartz dam-age ma-te-rial but uses par-ti-cle-
+Type=1 so GEOS ex-er-cises Par-ti-cle-Type::SinglePointBSpline. 
+ []
+
+<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrength
+Scale.png, id=12, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStr
+engthScale.png Graphic file (type png)
+<use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStre
+ngthScale.png>
+Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
+initial_particleStrengthScale.png  used on input line 54.
+(pdftex.def)             Requested size: 156.82466pt x 156.81105pt.
+<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png
+, id=13, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamag
+e.png Graphic file (type png)
+<use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage
+.png>
+Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
+final_particleDamage.png  used on input line 55.
+(pdftex.def)             Requested size: 156.82466pt x 156.81105pt.
+<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=14, 
+505.89pt x 325.215pt>
+File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png Gra
+phic file (type png)
+<use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png>
+Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
+reactions_y.png  used on input line 56.
+(pdftex.def)             Requested size: 156.82466pt x 100.8156pt.
+[2
+
+ <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrengt
+hScale.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_f
+inal_particleDamage.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilianD
+isk_BSpline_reactions_y.png>] (./examples_suite_report.aux) ) 
 Here is how much of TeX's memory you used:
- 2143 strings out of 478268
- 39331 string characters out of 5754030
+ 2163 strings out of 478268
+ 40948 string characters out of 5754030
  332345 words of memory out of 5000000
- 20360 multiletter control sequences out of 15000+600000
- 474632 words of font info for 46 fonts, out of 8000000 for 9000
+ 20375 multiletter control sequences out of 15000+600000
+ 474016 words of font info for 44 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,10n,62p,420b,208s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/tce/backend/installations/linux-rhel8-x8
+ 55i,10n,62p,420b,230s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/tce/backend/
+installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzz
+stanspbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/b
+ackend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7
+bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
+r/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvb
+moj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.p
+fb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-202203
+21-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/c
+mr10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
+20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmr12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/te
+xlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/a
+msfonts/cm/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.
+3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pu
+blic/amsfonts/cm/cmr8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
+c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
+e1/public/amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x8
 6_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fo
-nts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/backend/installations/linux-r
-hel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-
-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/tce/backend/installations/
-linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/tce/backend/install
-ations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspb
-coex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/tce/backend/i
-nstallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzs
-tanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/tce/bac
-kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
-fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/t
-ce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj
-4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></
-usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5d
-vbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10
-.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022
-0321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/la
-txfont/lcircle1.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
-.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pub
-lic/amsfonts/latxfont/line10.pfb></usr/tce/backend/installations/linux-rhel8-x8
-6_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fo
-nts/type1/public/cm-super/sfrm1095.pfb>
-Output written on examples_suite_report.pdf (2 pages, 114531 bytes).
+nts/type1/public/amsfonts/latxfont/lcircle1.pfb></usr/tce/backend/installations
+/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6i
+j/texmf-dist/fonts/type1/public/amsfonts/latxfont/line10.pfb></usr/tce/backend/
+installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzz
+stanspbcoex6ij/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on examples_suite_report.pdf (2 pages, 401098 bytes).
 PDF statistics:
- 62 PDF objects out of 1000 (max. 8388607)
- 37 compressed objects within 1 object stream
+ 67 PDF objects out of 1000 (max. 8388607)
+ 38 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 16 words of extra memory for PDF output out of 10000 (max. 10000000)
 

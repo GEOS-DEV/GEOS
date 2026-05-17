@@ -36,6 +36,8 @@ def parse_args():
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--initial-variable", default="Damage")
     p.add_argument("--final-variable", default="Damage")
+    p.add_argument("--initial-range-mode", choices=("unit", "auto"), default="auto")
+    p.add_argument("--final-range-mode", choices=("unit", "auto"), default="auto")
     p.add_argument("--view", default="xy")
     p.add_argument("--mesh", default="CellRegion1")
     p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
@@ -223,6 +225,8 @@ def submit_postprocess(args, run_dir: Path, output_dir: Path, bank: str, geos_jo
         "--output-prefix", args.output_prefix,
         "--initial-variable", args.initial_variable,
         "--final-variable", args.final_variable,
+        "--initial-range-mode", args.initial_range_mode,
+        "--final-range-mode", args.final_range_mode,
         "--view", args.view,
         "--mesh", args.mesh,
         "--force",

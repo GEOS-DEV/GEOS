@@ -55,29 +55,41 @@ e.sty
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/latexconfig/epstopdf-sys.
 cfg)) [1{/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2
 0220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdf
-tex.map}] [2] (./examples_suite_report.aux) ){/usr/tce/backend/installations/li
-nux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/t
-exmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/backend/installat
+tex.map}]
+
+LaTeX Warning: \oval, \circle, or \line size unavailable on input line 40.
+
+
+Overfull \hbox (44.57512pt too wide) in paragraph at lines 37--42
+\OT1/cmr/m/n/10.95 date path and quartz dam-age ma-te-rial but uses par-ti-cle-
+Type=1 so GEOS ex-er-cises Par-ti-cle-Type::SinglePointBSpline. 
+[2 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStren
+gthScale.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilianDisk_BSpline
+_final_particleDamage.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilia
+nDisk_BSpline_reactions_y.png>] (./examples_suite_report.aux) )
+(see the transcript file for additional information){/usr/tce/backend/installat
 ions/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbco
-ex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/tce/backend/in
+ex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/backend/in
 stallations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzst
-anspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/tce/bac
+anspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/tce/bac
 kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
-fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/t
-ce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj
-4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><
-/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5
-dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17
-.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022
-0321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm
-/cmr8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive
--20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfon
-ts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/
+fyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/
+tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
+j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+</usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr1
+2.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-202
+20321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/c
+m/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texli
+ve-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmr8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/
 texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public
-/amsfonts/latxfont/lcircle1.pfb></usr/tce/backend/installations/linux-rhel8-x86
-_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fon
-ts/type1/public/amsfonts/latxfont/line10.pfb></usr/tce/backend/installations/li
-nux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/t
-exmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on examples_suite_report.pdf (2 pages, 114531 bytes).
+/amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-
+10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1
+/public/amsfonts/latxfont/lcircle1.pfb></usr/tce/backend/installations/linux-rh
+el8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-d
+ist/fonts/type1/public/amsfonts/latxfont/line10.pfb></usr/tce/backend/installat
+ions/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbco
+ex6ij/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
+Output written on examples_suite_report.pdf (2 pages, 401098 bytes).
 Transcript written on examples_suite_report.log.

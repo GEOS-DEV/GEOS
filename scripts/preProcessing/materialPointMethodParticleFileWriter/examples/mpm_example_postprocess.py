@@ -24,6 +24,8 @@ def parse_args():
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--initial-variable", default="Damage")
     p.add_argument("--final-variable", default="Damage")
+    p.add_argument("--initial-range-mode", choices=("unit", "auto"), default="auto")
+    p.add_argument("--final-range-mode", choices=("unit", "auto"), default="auto")
     p.add_argument("--view", default="xy")
     p.add_argument("--mesh", default="CellRegion1")
     p.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
@@ -137,8 +139,8 @@ def run_visit(args, run_dir: Path, frame_dir: Path) -> None:
     frame_dir.mkdir(parents=True, exist_ok=True)
     log_file = run_dir / f"{args.output_prefix}_visit_render.log"
     commands = [
-        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "initial", "--view", args.view, "--variable", args.initial_variable, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
-        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "final", "--view", args.view, "--variable", args.final_variable, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
+        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "initial", "--view", args.view, "--variable", args.initial_variable, "--range-mode", args.initial_range_mode, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
+        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "final", "--view", args.view, "--variable", args.final_variable, "--range-mode", args.final_range_mode, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
     ]
     with log_file.open("w") as logf:
         for cmd in commands:
