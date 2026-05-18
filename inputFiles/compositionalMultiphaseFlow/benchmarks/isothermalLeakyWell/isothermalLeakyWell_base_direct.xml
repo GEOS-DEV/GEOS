@@ -176,8 +176,15 @@
     
     <!-- SPHINX_DIRICHLET_BC -->                  
     <FieldSpecification   
+      name="bcPressureAquiferBottom"
+      objectPath="ElementRegions/aquiferBottom"
+      setNames="{ east, west, south, north }"
+      fieldName="pressure"
+      functionName="pressureFunction"
+      scale="1"/>
+    <FieldSpecification   
       name="bcPressureAquifer"
-      regionNames="{ aquiferBottom, aquiferTop }"
+      objectPath="ElementRegions/aquiferTop"
       setNames="{ east, west, south, north }"
       fieldName="pressure"
       functionName="pressureFunction"

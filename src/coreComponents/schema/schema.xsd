@@ -1366,8 +1366,6 @@ When set to "error", output a throw.
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
@@ -1407,8 +1405,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
@@ -1443,8 +1439,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
@@ -1489,8 +1483,6 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--phaseContacts => Phase contacts' elevations [m]-->
 		<xsd:attribute name="phaseContacts" type="real64_array" default="{0}" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
@@ -1520,8 +1512,6 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
@@ -1565,8 +1555,6 @@ When set to "error", output a throw.
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Multiplier(s) of the functionName value. If no functionName is provided, this value is used directly.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--setNames => Names of sets that the boundary condition is applied to.
@@ -1599,8 +1587,6 @@ When set to "error", output a throw.
 		<xsd:attribute name="nodalScaleFlag" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--regionNames => Names of the regions where the field specification is applied.-->
-		<xsd:attribute name="regionNames" type="groupNameRef_array" default="{}" />
 		<!--scale => Apply scaling factor(s) for the value(s) of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64_array" default="{0}" />
 		<!--scaleSet => (no description available)-->

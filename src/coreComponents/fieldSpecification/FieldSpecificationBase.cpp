@@ -41,11 +41,6 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Path to the target field" );
 
-  registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Names of the regions where the field specification is applied." );
-
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -135,39 +130,25 @@ void FieldSpecificationBase::postInputInitialization()
                    InputError,
                    getDataContext() );
   }
-
-  if( !m_regionNames.empty() )
-  {
-    GEOS_THROW_IF( !m_objectPath.empty(),
-                   GEOS_FMT ( "'{}' must not be set when '{}' is set.",
-                              viewKeyStruct::objectPathString(),
-                              viewKeyStruct::regionNamesString() ),
-                   InputError,
-                   getDataContext() );
-  }
 }
 
 void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 {
-  string const path = m_regionNames.empty()
-                      ? m_objectPath
-                      : "ElementRegions/{" + stringutilities::join( m_regionNames, ' ' ) + "}";
   try
   {
-    m_meshObjectPaths = std::make_unique< MeshObjectPath >( path, meshBodies );
+    m_meshObjectPaths = std::make_unique< MeshObjectPath >( m_objectPath, meshBodies );
   }
   catch( std::exception const & e )
   {
     ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
-                 " is a wrong objectPath: " + path + "\n" )
+                 " is a wrong objectPath: " + m_objectPath + "\n" )
       .addContextInfo( getWrapperDataContext( viewKeyStruct::objectPathString() ).getContextInfo()
                          .setPriority( 2 ) );
     throw InputError( e, getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
-                      " is a wrong objectPath: " + path + "\n" );
+                      " is a wrong objectPath: " + m_objectPath + "\n" );
   }
 }
-
 
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
