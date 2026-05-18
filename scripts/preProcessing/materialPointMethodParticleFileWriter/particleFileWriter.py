@@ -218,11 +218,25 @@ machineList = {
   'tioga':64
 }
 
+# Number of GEOS MPI ranks to place on each node for generated job scripts.
+# CPU-only machines keep the legacy cores-per-node value.  On Tuolumne the
+# intended device launch is one MPI rank per MI300A APU/GPU.
+ranksPerNodeList = {
+  'tuolumne':4,
+  'dane':112,
+  'rzhound':56,
+  'tioga':64
+}
+
 node = platform.node()
+machine = 'unknown'
+coresPerNode = 1
+ranksPerNode = 1
 for key, value in machineList.items():
   if key in node:
     machine = key
     coresPerNode = value
+    ranksPerNode = ranksPerNodeList.get( key, value )
     # This could be unsafe if someone added a machines name we use elsewhere.
     # Currently we test if tuolumne=True for various MPI tasks.
     exec(key+'=True')
@@ -799,10 +813,10 @@ mPartition = mPartition if not runDebug else "pdebug"
 # an additional input.
 mCores = int(xpar*ypar*zpar)
 
-# We used to set this manually, but coresPerNode changes with each machine.
+# We used to set this manually, but ranksPerNode changes with each machine.
 # This will ensure consistency since we now have that value for each platform.
-mNodes= int(np.ceil(float(mCores)/float(coresPerNode))) 
-print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode)
+mNodes= int(np.ceil(float(mCores)/float(ranksPerNode)))
+print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode, ', ranksPerNode = ', ranksPerNode)
 
 if mBank == None:
   # Get default bank from userdefs
@@ -1587,10 +1601,10 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 export MPICH_GPU_SUPPORT_ENABLED=1
 export HSA_XNACK=1
 
-echo "Launching jsrun command..."
+echo "Launching flux run command..."
 export OMP_NUM_THREADS=1
-flux run --env=* -N{mNodes:d} -n{mCores:d} {geosPath} -i {geosInputFileName} -x {xpar:d} -y {ypar:d} -z {zpar:d} {restartStr}
-echo "srun command has completed, good bye."
+flux run --env=* --exclusive -N{mNodes:d} -n{mCores:d} {geosPath} -i {geosInputFileName} -x {xpar:d} -y {ypar:d} -z {zpar:d} {restartStr}
+echo "flux run command has completed, good bye."
 """
     fileName = timeStamp+"_runGEOS.sh"
     file = open(fileName, 'w')
@@ -1618,7 +1632,7 @@ echo "srun command has completed, good bye."
   if mSubmitJobs:
       print(f'submitting job: {fileName} using Popen')
       if flux:
-          output = subprocess.Popen(["flux batch", fileName], stdout=subprocess.PIPE).communicate()[0]
+          output = subprocess.Popen(["flux", "batch", fileName], stdout=subprocess.PIPE).communicate()[0]
       else:
           output = subprocess.Popen(["sbatch", fileName], stdout=subprocess.PIPE).communicate()[0]
 
@@ -1628,11 +1642,12 @@ echo "srun command has completed, good bye."
 
   if mSubmitJobs and autoRestart:
       if flux:
-          print('XXXX  autoRestart not supported with flux scheduler')
-      print('Auto restart enabled')
-      print(f'run_check output = {output.strip()}')
-      
-      slurmScript = f"""#!/bin/bash
+          print('XXXX  autoRestart not supported with flux scheduler; not submitting a Slurm run-check job.')
+      else:
+          print('Auto restart enabled')
+          print(f'run_check output = {output.strip()}')
+
+          slurmScript = f"""#!/bin/bash
 #SBATCH -t {runCheckTime}
 #SBATCH -N 1
 #SBATCH -p {mPartition}
@@ -1644,8 +1659,8 @@ python3 pfw_check.py {inputFile} {jobID}
 echo "pfw_check script has completed, good bye."
 """
 
-      fileName = f"{timeStamp}_runCheck.sh"
-      with open(fileName, 'w') as file:
-          file.write(slurmScript)
+          fileName = f"{timeStamp}_runCheck.sh"
+          with open(fileName, 'w') as file:
+              file.write(slurmScript)
 
-      subprocess.call(["sbatch", fileName], cwd=PWD)
+          subprocess.call(["sbatch", fileName], cwd=PWD)

@@ -115,7 +115,7 @@ pfw["objects"]=[boxWFlag1,boxWFlag2]
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
                [stopTime,     1.0 + 0.15/np.sqrt(2),  1.0 + 0.15/np.sqrt(2),  1.00]]

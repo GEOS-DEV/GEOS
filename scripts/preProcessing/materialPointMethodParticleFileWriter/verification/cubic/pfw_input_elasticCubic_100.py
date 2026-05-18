@@ -98,7 +98,7 @@ pfw["materialPropertyString"]="""
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[0, 0, 2, 2, 0, 0]   
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[
 [0,  1.0, 1.0,	1.0],

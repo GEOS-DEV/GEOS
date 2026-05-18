@@ -66,7 +66,7 @@ pfw["subdivideParticles"]=1
 
 #Need to use surface tractions to dilate a material (keeps grid size constant to subdivide particles)
 
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,	         1,	    1,	    1],
                [stopTime,	 1.25,	1.25,	1.25]]
