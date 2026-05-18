@@ -1,0 +1,794 @@
+#!/usr/bin/env bash
+# Configure a fresh GEOS-MPM checkout for LLNL Dane.
+#
+# This script creates local MPM convenience files, chooses reasonable Dane
+# defaults, configures the minimal-TPL MPM build, and builds the GEOS executable.
+
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: ./setupMPM_dane [options]
+
+Options:
+  --python PATH             Python executable used for PFW/config scripts.
+                            Default: PFW_PYTHON, PFW_PYTHON_COMMAND,
+                            /usr/tce/bin/python3, python3, then python.
+  --bank BANK               LC bank/account. Default: infer from mshare,
+                            preferring its default bank, then starred bank,
+                            then the user leaf bank with largest shares.
+  --repo-path PATH          User-facing repo path written to userDefs.py.
+                            Default: ~/geosx if it resolves to this checkout,
+                            otherwise the logical checkout path.
+  --run-root DIR            defaultRunDirectory root. Default: /p/lustre1/$USER/geosxRuns
+  --test-dir DIR            testRunDirectory. Default: /p/lustre1/$USER/geosxTests
+  --default-run-dir DIR     defaultRunDirectory. Default: RUN_ROOT
+  --build-root DIR          CMake build root. Default: repo root
+  --build-dir DIR           Explicit CMake build directory. Default: BUILD_ROOT/build-<host-config>-<type>
+  --install-root DIR        CMake install root. Default: /p/lustre1/$USER/geosxInstalls
+  --build-type TYPE         CMake build type. Default: Release
+  --host-config FILE        Host config. Default: Dane minimal-TPL MPM config
+  --jobs N                  Build parallelism. Default: GEOS_BUILD_JOBS or 8
+  --build-target TARGET     CMake build target. Default: geosx
+  --force                   Replace the symlink and overwrite generated user files.
+  --force-link              Replace an existing root particleFileWriter symlink.
+  --overwrite-userdefs      Replace particleFileWriter/userDefs_$USER.py.
+  --overwrite-runclean      Replace particleFileWriter/runClean_$USER.sh.
+  --skip-build, --no-build  Generate local files but do not configure or build.
+  --configure-only          Configure CMake but do not build.
+  --dry-run                 Print actions without changing files.
+  -h, --help                Show this help.
+USAGE
+}
+
+log() {
+  printf '[setupMPM_dane] %s\n' "$*"
+}
+
+fail() {
+  printf '[setupMPM_dane] ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+quote_cmd() {
+  printf '%q ' "$@"
+  printf '\n'
+}
+
+run_cmd() {
+  if [ "$DRY_RUN" -eq 1 ]; then
+    printf '[setupMPM_dane] would run: '
+    quote_cmd "$@"
+  else
+    "$@"
+  fi
+}
+
+abs_path() {
+  local path="$1"
+  if [ -d "$path" ]; then
+    (cd "$path" && pwd -P)
+  else
+    local dir base
+    dir=$(dirname "$path")
+    base=$(basename "$path")
+    if [ -d "$dir" ]; then
+      (cd "$dir" && printf '%s/%s\n' "$(pwd -P)" "$base")
+    else
+      case "$path" in
+        /*) printf '%s\n' "$path" ;;
+        *) printf '%s/%s\n' "$(pwd -P)" "$path" ;;
+      esac
+    fi
+  fi
+}
+
+logical_path() {
+  local path="$1"
+  if [ -d "$path" ]; then
+    (cd "$path" && pwd -L)
+  else
+    local dir base
+    dir=$(dirname "$path")
+    base=$(basename "$path")
+    if [ -d "$dir" ]; then
+      (cd "$dir" && printf '%s/%s\n' "$(pwd -L)" "$base")
+    else
+      case "$path" in
+        /*) printf '%s\n' "$path" ;;
+        *) printf '%s/%s\n' "$(pwd -L)" "$path" ;;
+      esac
+    fi
+  fi
+}
+
+trim_trailing_slashes() {
+  local path="$1"
+  while [ "${#path}" -gt 1 ] && [ "${path%/}" != "$path" ]; do
+    path=${path%/}
+  done
+  printf '%s\n' "$path"
+}
+
+ensure_trailing_slash() {
+  local path
+  path=$(trim_trailing_slashes "$1")
+  if [ "$path" = "/" ]; then
+    printf '/\n'
+  else
+    printf '%s/\n' "$path"
+  fi
+}
+
+shell_to_display_path() {
+  local path
+  path=$(trim_trailing_slashes "$1")
+  case "$path" in
+    "$HOME") printf '~\n' ;;
+    "$HOME"/*) printf '~/%s\n' "${path#"$HOME"/}" ;;
+    *) printf '%s\n' "$path" ;;
+  esac
+}
+
+resolve_existing_dir() {
+  local path="$1"
+  case "$path" in
+    '~') path="$HOME" ;;
+    '~/'*) path="$HOME/${path#~/}" ;;
+  esac
+  if [ -d "$path" ]; then
+    abs_path "$path"
+  else
+    return 1
+  fi
+}
+
+detect_python() {
+  local requested="${1:-}"
+  local candidates=()
+  if [ -n "$requested" ]; then
+    candidates+=("$requested")
+  fi
+  if [ -n "${PFW_PYTHON:-}" ]; then
+    candidates+=("$PFW_PYTHON")
+  fi
+  if [ -n "${PFW_PYTHON_COMMAND:-}" ]; then
+    candidates+=("$PFW_PYTHON_COMMAND")
+  fi
+  candidates+=("/usr/tce/bin/python3" "python3" "python")
+
+  local cmd
+  for cmd in "${candidates[@]}"; do
+    if [ -z "$cmd" ]; then
+      continue
+    fi
+    if [ -x "$cmd" ]; then
+      printf '%s\n' "$cmd"
+      return 0
+    fi
+    if command -v "$cmd" >/dev/null 2>&1; then
+      command -v "$cmd"
+      return 0
+    fi
+  done
+  fail "Could not find a usable Python executable. Re-run with --python /path/to/python3."
+}
+
+detect_pfw_relative_path() {
+  local candidates=(
+    "scripts/preProcessing/materialPointMethodParticleFileWriter"
+    "scripts/preProcessing/mpmParticleFileWriter"
+    "scripts/preprocessor/mpmParticleFileWriter"
+    "scripts/preprocessor/materialPointMethodParticleFileWriter"
+  )
+  local rel
+  for rel in "${candidates[@]}"; do
+    if [ -d "$REPO_ROOT_PHYSICAL/$rel" ]; then
+      printf '%s\n' "$rel"
+      return 0
+    fi
+  done
+  fail "Could not locate the MPM particle file writer directory."
+}
+
+detect_cmake() {
+  local cmake_path
+  cmake_path=$(awk '/# CMake executable path:/ {print $5; exit}' "$HOST_CONFIG" 2>/dev/null || true)
+  if [ -n "$cmake_path" ] && [ -x "$cmake_path" ]; then
+    printf '%s\n' "$cmake_path"
+    return 0
+  fi
+  if command -v cmake >/dev/null 2>&1; then
+    command -v cmake
+    return 0
+  fi
+  fail "Could not find cmake. Load the Dane build environment or update the host-config."
+}
+
+parse_mshare_bank() {
+  local input_text="${1:-}"
+  MPM_BANK_TEXT="$input_text" "$PYTHON_CMD" - "$LC_USER" <<'PY'
+import os
+import re
+import sys
+
+user = sys.argv[1].lower()
+text = os.environ.get('MPM_BANK_TEXT', '')
+ansi_re = re.compile(r"\x1b\[[0-9;]*m")
+num_re = re.compile(r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?")
+name_re = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]*\*?$")
+skip = {
+    "account", "accounts", "allocation", "allocations", "bank", "banks",
+    "class", "cluster", "default", "fairshare", "group", "name", "norm",
+    "normshares", "partition", "project", "projects", "qos", "rawshares",
+    "share", "shares", "total", "user", "users", user, "dane", "root",
+}
+
+# mshare commonly prints this line. It is the best default to use.
+for raw in text.splitlines():
+    line = ansi_re.sub("", raw).strip()
+    m = re.search(r"\bDefault\s+bank\s+is\s+([A-Za-z][A-Za-z0-9_.:-]*)\b", line, re.I)
+    if m:
+        print(m.group(1))
+        raise SystemExit
+
+rows = []
+starred = []
+for raw in text.splitlines():
+    clean = ansi_re.sub("", raw.rstrip("\n"))
+    if not clean.strip() or clean.lstrip().startswith("#"):
+        continue
+    tokens = clean.split()
+    if not tokens:
+        continue
+    first = tokens[0]
+    first_clean = first.strip(":")
+    lower_tokens = [t.strip(":").lower() for t in tokens]
+    if "shares" in lower_tokens and "name" in lower_tokens:
+        continue
+    if not name_re.match(first_clean):
+        continue
+    name = first_clean.rstrip("*")
+    low = name.lower()
+    if low in skip:
+        continue
+    share = None
+    for token in tokens[1:]:
+        value = token.strip("%,")
+        if num_re.fullmatch(value):
+            share = float(value)
+            break
+    if share is None:
+        continue
+    indent = len(clean) - len(clean.lstrip(" "))
+    row = {"indent": indent, "name": name, "share": share, "star": first_clean.endswith("*")}
+    rows.append(row)
+    if row["star"]:
+        starred.append(row)
+
+# In mshare's tree format, the chargeable leaf bank for a user is the nearest
+# non-user parent row above the user's row. Choose the largest share among those.
+direct_parents = []
+for i, row in enumerate(rows):
+    if row["name"].lower() != user:
+        continue
+    for parent in reversed(rows[:i]):
+        if parent["indent"] < row["indent"] and parent["name"].lower() != user:
+            direct_parents.append(parent)
+            break
+
+if starred:
+    # If mshare marks a bank with '*', respect that before applying a shares heuristic.
+    starred.sort(key=lambda r: (r["share"], r["name"]))
+    print(starred[-1]["name"])
+elif direct_parents:
+    direct_parents.sort(key=lambda r: (r["share"], r["name"]))
+    print(direct_parents[-1]["name"])
+elif rows:
+    # Last-resort heuristic for alternate mshare layouts.
+    rows = [r for r in rows if r["name"].lower() not in skip]
+    if rows:
+        rows.sort(key=lambda r: (r["share"], r["name"]))
+        print(rows[-1]["name"])
+PY
+}
+
+parse_bankinfo_bank() {
+  local input_text="${1:-}"
+  MPM_BANK_TEXT="$input_text" "$PYTHON_CMD" - "$LC_USER" <<'PY'
+import os
+import re
+import sys
+
+user = sys.argv[1].lower()
+text = os.environ.get('MPM_BANK_TEXT', '')
+name_re = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]*\*?$")
+skip = {"account", "accounts", "bank", "banks", "class", "cluster", "default", "name", "partition", "qos", "user", user}
+
+marked = []
+plain = []
+for raw in text.splitlines():
+    line = raw.strip()
+    if not line or line.startswith("#"):
+        continue
+    m = re.search(r"\bDefault\s+bank\s+is\s+([A-Za-z][A-Za-z0-9_.:-]*)\b", line, re.I)
+    if m:
+        print(m.group(1))
+        raise SystemExit
+    tokens = line.replace(",", " ").split()
+    lower_line = line.lower()
+    for token in tokens:
+        cleaned = token.strip("*:")
+        low = cleaned.lower()
+        if low in skip or not name_re.match(token.strip(":")):
+            continue
+        if "default" in lower_line or token.endswith("*"):
+            marked.append(cleaned)
+        else:
+            plain.append(cleaned)
+        break
+
+if marked:
+    print(marked[0])
+elif plain:
+    print(plain[0])
+PY
+}
+
+detect_bank() {
+  if [ -n "$REQUESTED_BANK" ]; then
+    printf '%s\n' "$REQUESTED_BANK"
+    return 0
+  fi
+
+  local output parsed
+  if command -v mshare >/dev/null 2>&1; then
+    output=$(mshare 2>/dev/null || mshare -u "$LC_USER" -p ALL 2>/dev/null || mshare -u "$LC_USER" 2>/dev/null || mshare "$LC_USER" 2>/dev/null || true)
+    parsed=$(parse_mshare_bank "$output" || true)
+    if [ -n "$parsed" ]; then
+      printf '%s\n' "$parsed"
+      return 0
+    fi
+  fi
+
+  if command -v bankinfo >/dev/null 2>&1; then
+    output=$(bankinfo -u "$LC_USER" 2>/dev/null || bankinfo 2>/dev/null || true)
+    parsed=$(parse_bankinfo_bank "$output" || true)
+    if [ -n "$parsed" ]; then
+      printf '%s\n' "$parsed"
+      return 0
+    fi
+  fi
+
+  printf '%s\n' "${GEOS_BANK:-}"
+}
+
+choose_repo_command_root() {
+  local candidate
+  if [ -n "$REQUESTED_REPO_PATH" ]; then
+    case "$REQUESTED_REPO_PATH" in
+      '~') candidate="$HOME" ;;
+      '~/'*) candidate="$HOME/${REQUESTED_REPO_PATH#~/}" ;;
+      *) candidate="$REQUESTED_REPO_PATH" ;;
+    esac
+    [ -d "$candidate" ] || fail "--repo-path does not exist as a directory: $REQUESTED_REPO_PATH"
+    [ "$(abs_path "$candidate")" = "$REPO_ROOT_PHYSICAL" ] || fail "--repo-path does not resolve to this checkout: $REQUESTED_REPO_PATH"
+    printf '%s\n' "$(trim_trailing_slashes "$candidate")"
+    return 0
+  fi
+
+  # LLNL users often keep the checkout as ~/geosx, which may be a symlink into /usr/WS1.
+  candidate="$HOME/geosx"
+  if [ -d "$candidate" ] && [ "$(abs_path "$candidate")" = "$REPO_ROOT_PHYSICAL" ]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
+  if [ -n "$REPO_ROOT_LOGICAL" ] && [ "$(abs_path "$REPO_ROOT_LOGICAL")" = "$REPO_ROOT_PHYSICAL" ]; then
+    printf '%s\n' "$(trim_trailing_slashes "$REPO_ROOT_LOGICAL")"
+    return 0
+  fi
+
+  printf '%s\n' "$REPO_ROOT_PHYSICAL"
+}
+
+create_pfw_link() {
+  if [ -L "$PFW_LINK" ]; then
+    local current current_abs target_abs
+    current=$(readlink "$PFW_LINK")
+    current_abs=$(abs_path "$REPO_ROOT_CMD/$current" 2>/dev/null || true)
+    target_abs=$(abs_path "$PFW_DIR")
+    if [ "$current" = "$PFW_REL" ] || [ "$current_abs" = "$target_abs" ]; then
+      log "particleFileWriter symlink already points to $PFW_REL"
+      return 0
+    fi
+    if [ "$FORCE_LINK" -eq 1 ]; then
+      run_cmd rm -f "$PFW_LINK"
+    else
+      fail "$PFW_LINK already points to $current. Use --force-link to replace it."
+    fi
+  elif [ -e "$PFW_LINK" ]; then
+    fail "$PFW_LINK exists and is not a symlink; refusing to replace it."
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "would create symlink $PFW_LINK -> $PFW_REL"
+  else
+    ln -s "$PFW_REL" "$PFW_LINK"
+    log "created symlink $PFW_LINK -> $PFW_REL"
+  fi
+}
+
+write_user_defs() {
+  if [ -e "$USER_DEFS_PATH" ] && [ "$OVERWRITE_USERDEFS" -ne 1 ]; then
+    log "leaving existing $USER_DEFS_PATH unchanged; use --overwrite-userdefs to replace it"
+    return 0
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "would write $USER_DEFS_PATH"
+    log "would set pfwPath = '$PFW_USER_PATH'"
+    log "would set geosPath = '$GEOS_USER_PATH'"
+    log "would set testRunDirectory = r\"$TEST_RUN_DIR\""
+    log "would set defaultRunDirectory = r\"$DEFAULT_RUN_DIR_USER\""
+    log "would set defaultBank = '$DEFAULT_BANK'"
+    return 0
+  fi
+
+  cat > "$USER_DEFS_PATH" <<EOF_USERDEFS
+# -*- coding: utf-8 -*-
+# Auto-generated by setupMPM_dane. Machine-local paths; do not commit.
+import platform
+
+node = platform.node()
+dane = 'dane' in node
+lassen = 'lassen' in node
+tuolumne = 'tuolumne' in node
+rzhound = 'rzhound' in node
+tioga = 'tioga' in node
+
+pfwPath = '$PFW_USER_PATH'
+geosPath = '$GEOS_USER_PATH'
+testRunDirectory = r"$TEST_RUN_DIR"
+defaultRunDirectory = r"$DEFAULT_RUN_DIR_USER"
+defaultBank = '$DEFAULT_BANK'
+defaultPythonCommand = r"$PYTHON_CMD"
+pythonCommand = defaultPythonCommand
+defaultPython = defaultPythonCommand  # backward-compatible alias
+EOF_USERDEFS
+  log "wrote $USER_DEFS_PATH"
+}
+
+write_runclean() {
+  if [ -e "$RUNCLEAN_PATH" ] && [ "$OVERWRITE_RUNCLEAN" -ne 1 ]; then
+    log "leaving existing $RUNCLEAN_PATH unchanged; use --overwrite-runclean to replace it"
+    return 0
+  fi
+
+  local account_line
+  if [ -n "$DEFAULT_BANK" ]; then
+    account_line="#SBATCH -A $DEFAULT_BANK"
+  else
+    account_line="#SBATCH -A CHANGE_ME"
+  fi
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "would write $RUNCLEAN_PATH"
+    return 0
+  fi
+
+  cat > "$RUNCLEAN_PATH" <<EOF_RUNCLEAN
+#!/bin/bash
+#SBATCH -t 00:30:00
+#SBATCH -N 1
+$account_line
+#SBATCH -p pdebug
+
+set -euo pipefail
+
+# Set fileNames to the suffixes of input files named pfw_input_<name>.py.
+# The default is a current smoke-test example; edit this list for local batches.
+fileNames=(
+  brazilianDisk
+)
+
+# Defaults generated by setupMPM_dane. Override these at launch with
+# FILE_LOCATION=..., RUN_LOCATION=..., PFW_PATH=..., PFW_PYTHON=..., or PFW_PYTHON_COMMAND=...
+particleFileWriterPath="@@DOLLAR@@{PFW_PATH:-$PFW_USER_PATH}"
+fileLocation="@@DOLLAR@@{FILE_LOCATION:-@@DOLLAR@@particleFileWriterPath/examples/brazilianDisk}"
+runLocation="@@DOLLAR@@{RUN_LOCATION:-$TEST_RUN_DIR}"
+pythonCommand="@@DOLLAR@@{PFW_PYTHON:-@@DOLLAR@@{PFW_PYTHON_COMMAND:-$PYTHON_CMD}}"
+userName="@@DOLLAR@@(whoami)"
+
+for fileName in "@@DOLLAR@@{fileNames[@]}"
+do
+  if [ -z "@@DOLLAR@@fileName" ] || [[ "@@DOLLAR@@fileName" == \<*\> ]]; then
+    continue
+  fi
+
+  if [ "@@DOLLAR@@#" -eq 0 ] || [ "@@DOLLAR@@1" -eq 1 ]; then
+    num_tasks="1"
+    echo "Running job on 1 process: @@DOLLAR@@fileName"
+  else
+    num_tasks="@@DOLLAR@@1"
+    echo "Running job on @@DOLLAR@@num_tasks processes: @@DOLLAR@@fileName"
+  fi
+
+  if [ -d "@@DOLLAR@@runLocation/@@DOLLAR@@fileName" ] && [ -z "@@DOLLAR@@{SLURM_JOBID:-}" ]; then
+    echo "Removing existing run directory @@DOLLAR@@runLocation/@@DOLLAR@@fileName"
+  fi
+  rm -rf "@@DOLLAR@@runLocation/@@DOLLAR@@fileName"
+  mkdir -p "@@DOLLAR@@runLocation/@@DOLLAR@@fileName"
+
+  cp "@@DOLLAR@@fileLocation/pfw_input_@@DOLLAR@@fileName.py" "@@DOLLAR@@runLocation/@@DOLLAR@@fileName/"
+  for pfwFile in particleFileWriter.py pfw_check.py pfw_geometryObjects.py pfw_materials.py pfw_analysis.py pfw_visit_render.py; do
+    if [ -f "@@DOLLAR@@particleFileWriterPath/@@DOLLAR@@pfwFile" ]; then
+      cp "@@DOLLAR@@particleFileWriterPath/@@DOLLAR@@pfwFile" "@@DOLLAR@@runLocation/@@DOLLAR@@fileName/"
+    fi
+  done
+  cp "@@DOLLAR@@particleFileWriterPath/userDefs_@@DOLLAR@@userName.py" "@@DOLLAR@@runLocation/@@DOLLAR@@fileName/"
+
+  cd "@@DOLLAR@@runLocation/@@DOLLAR@@fileName"
+  if [ "@@DOLLAR@@num_tasks" -eq 1 ]; then
+    "@@DOLLAR@@pythonCommand" particleFileWriter.py "pfw_input_@@DOLLAR@@fileName"
+  else
+    srun -n "@@DOLLAR@@num_tasks" "@@DOLLAR@@pythonCommand" particleFileWriter.py "pfw_input_@@DOLLAR@@fileName"
+  fi
+  echo
+done
+EOF_RUNCLEAN
+
+  # Replace placeholder @@DOLLAR@@ tokens with literal dollar signs. This keeps the
+  # generated script readable while allowing setup-time variables above to expand.
+  "$PYTHON_CMD" - "$RUNCLEAN_PATH" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+p.write_text(p.read_text().replace('@@DOLLAR@@', '$'))
+PY
+  chmod 755 "$RUNCLEAN_PATH"
+  log "wrote $RUNCLEAN_PATH"
+}
+
+configure_and_build() {
+  if [ "$SKIP_BUILD" -eq 1 ]; then
+    log "skipping CMake configure/build"
+    return 0
+  fi
+
+  [ -f "$CONFIG_SCRIPT" ] || fail "Missing config script: $CONFIG_SCRIPT"
+  [ -f "$HOST_CONFIG" ] || fail "Missing host config: $HOST_CONFIG"
+
+  run_cmd mkdir -p "$BUILD_ROOT" "$INSTALL_ROOT"
+  log "configuring GEOS with $HOST_CONFIG"
+  local config_cmd
+  config_cmd=("$PYTHON_CMD" "$CONFIG_SCRIPT" \
+    --hostconfig "$HOST_CONFIG" \
+    --buildtype "$BUILD_TYPE" \
+    --installrootdir "$INSTALL_ROOT")
+  if [ -n "$BUILD_DIR_OVERRIDE" ]; then
+    config_cmd+=(--buildpath "$BUILD_DIR")
+  else
+    config_cmd+=(--buildrootdir "$BUILD_ROOT")
+  fi
+  run_cmd "${config_cmd[@]}"
+
+  if [ "$CONFIGURE_ONLY" -eq 1 ]; then
+    log "configure-only requested; not building"
+    return 0
+  fi
+
+  local cmake_cmd
+  cmake_cmd=$(detect_cmake)
+  log "building target $BUILD_TARGET in $BUILD_DIR"
+  run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$BUILD_TARGET" -j "$JOBS"
+
+  if [ "$DRY_RUN" -eq 0 ]; then
+    if [ -x "$GEOS_EXECUTABLE" ]; then
+      log "GEOS executable: $GEOS_EXECUTABLE"
+    else
+      log "expected GEOS executable was not found yet: $GEOS_EXECUTABLE"
+    fi
+  fi
+}
+
+REQUESTED_PYTHON=""
+REQUESTED_BANK=""
+REQUESTED_REPO_PATH=""
+LC_USER="${USER:-$(id -un)}"
+RUN_ROOT="/p/lustre1/$LC_USER/geosxRuns"
+TEST_RUN_DIR_OVERRIDE=""
+DEFAULT_RUN_DIR_OVERRIDE=""
+BUILD_ROOT_OVERRIDE=""
+BUILD_DIR_OVERRIDE=""
+INSTALL_ROOT="/p/lustre1/$LC_USER/geosxInstalls"
+BUILD_TYPE="Release"
+JOBS="${GEOS_BUILD_JOBS:-8}"
+BUILD_TARGET="geosx"
+HOST_CONFIG=""
+FORCE_LINK=0
+OVERWRITE_USERDEFS=0
+OVERWRITE_RUNCLEAN=0
+SKIP_BUILD=0
+CONFIGURE_ONLY=0
+DRY_RUN=0
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python|--python-command)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      REQUESTED_PYTHON="$2"
+      shift 2
+      ;;
+    --bank)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      REQUESTED_BANK="$2"
+      shift 2
+      ;;
+    --repo-path)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      REQUESTED_REPO_PATH="$2"
+      shift 2
+      ;;
+    --run-root)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      RUN_ROOT="$2"
+      shift 2
+      ;;
+    --test-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      TEST_RUN_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --default-run-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      DEFAULT_RUN_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --build-root)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      BUILD_ROOT_OVERRIDE="$2"
+      shift 2
+      ;;
+    --install-root)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      INSTALL_ROOT="$2"
+      shift 2
+      ;;
+    --build-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      BUILD_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
+    --build-type)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      BUILD_TYPE="$2"
+      shift 2
+      ;;
+    --jobs)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      JOBS="$2"
+      shift 2
+      ;;
+    --host-config)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      HOST_CONFIG="$2"
+      shift 2
+      ;;
+    --build-target)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      BUILD_TARGET="$2"
+      shift 2
+      ;;
+    --force)
+      FORCE_LINK=1
+      OVERWRITE_USERDEFS=1
+      OVERWRITE_RUNCLEAN=1
+      shift
+      ;;
+    --force-link)
+      FORCE_LINK=1
+      shift
+      ;;
+    --overwrite-userdefs)
+      OVERWRITE_USERDEFS=1
+      shift
+      ;;
+    --overwrite-runclean)
+      OVERWRITE_RUNCLEAN=1
+      shift
+      ;;
+    --skip-build|--no-build)
+      SKIP_BUILD=1
+      shift
+      ;;
+    --configure-only)
+      CONFIGURE_ONLY=1
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "Unknown option: $1"
+      ;;
+  esac
+done
+
+SCRIPT_DIR=$(dirname -- "${BASH_SOURCE[0]}")
+REPO_ROOT_PHYSICAL=$(cd -- "$SCRIPT_DIR" && pwd -P)
+REPO_ROOT_LOGICAL=$(cd -- "$SCRIPT_DIR" && pwd -L)
+REPO_ROOT_CMD=$(choose_repo_command_root)
+REPO_ROOT_USER=$(shell_to_display_path "$REPO_ROOT_CMD")
+
+PYTHON_CMD=$(detect_python "$REQUESTED_PYTHON")
+PFW_REL=$(detect_pfw_relative_path)
+PFW_DIR="$REPO_ROOT_PHYSICAL/$PFW_REL"
+PFW_LINK="$REPO_ROOT_CMD/particleFileWriter"
+PFW_USER_PATH="$REPO_ROOT_USER/$PFW_REL"
+CONFIG_SCRIPT="$REPO_ROOT_PHYSICAL/scripts/config-build.py"
+if [ -z "$HOST_CONFIG" ]; then
+  HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl.cmake"
+else
+  HOST_CONFIG=$(abs_path "$HOST_CONFIG")
+fi
+
+DEFAULT_BANK=$(detect_bank)
+if [ -z "$DEFAULT_BANK" ]; then
+  log "could not infer an LC bank from mshare; userDefs defaultBank will be blank"
+else
+  log "using default bank/account: $DEFAULT_BANK"
+fi
+
+RUN_ROOT=$(trim_trailing_slashes "$(abs_path "$RUN_ROOT")")
+INSTALL_ROOT=$(trim_trailing_slashes "$(abs_path "$INSTALL_ROOT")")
+if [ -n "$TEST_RUN_DIR_OVERRIDE" ]; then
+  TEST_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$TEST_RUN_DIR_OVERRIDE")")
+else
+  TEST_RUN_DIR="/p/lustre1/$LC_USER/geosxTests"
+fi
+if [ -n "$DEFAULT_RUN_DIR_OVERRIDE" ]; then
+  DEFAULT_RUN_DIR=$(trim_trailing_slashes "$(abs_path "$DEFAULT_RUN_DIR_OVERRIDE")")
+else
+  DEFAULT_RUN_DIR="$RUN_ROOT"
+fi
+DEFAULT_RUN_DIR_USER=$(ensure_trailing_slash "$DEFAULT_RUN_DIR")
+HOST_BASE=$(basename "$HOST_CONFIG" .cmake)
+BUILD_TYPE_LOWER=$(printf '%s' "$BUILD_TYPE" | tr '[:upper:]' '[:lower:]')
+if [ -n "$BUILD_ROOT_OVERRIDE" ]; then
+  BUILD_ROOT=$(trim_trailing_slashes "$(abs_path "$BUILD_ROOT_OVERRIDE")")
+else
+  BUILD_ROOT="$REPO_ROOT_CMD"
+fi
+if [ -n "$BUILD_DIR_OVERRIDE" ]; then
+  BUILD_DIR=$(trim_trailing_slashes "$(abs_path "$BUILD_DIR_OVERRIDE")")
+else
+  BUILD_DIR="$BUILD_ROOT/build-$HOST_BASE-$BUILD_TYPE_LOWER"
+fi
+GEOS_EXECUTABLE="$BUILD_DIR/bin/geosx"
+BUILD_DIR_USER="$(shell_to_display_path "$BUILD_DIR")"
+GEOS_USER_PATH="$BUILD_DIR_USER/bin/geosx"
+USER_DEFS_PATH="$PFW_DIR/userDefs_$LC_USER.py"
+RUNCLEAN_PATH="$PFW_DIR/runClean_$LC_USER.sh"
+
+log "repository root: $REPO_ROOT_USER"
+log "particle file writer: $PFW_REL"
+log "python executable: $PYTHON_CMD"
+log "run root: $RUN_ROOT"
+log "test run dir: $TEST_RUN_DIR"
+log "default run dir: $DEFAULT_RUN_DIR_USER"
+log "build root: $(shell_to_display_path "$BUILD_ROOT")"
+log "build dir: $BUILD_DIR_USER"
+
+create_pfw_link
+run_cmd mkdir -p "$TEST_RUN_DIR" "$DEFAULT_RUN_DIR" "$BUILD_ROOT" "$INSTALL_ROOT"
+write_user_defs
+write_runclean
+configure_and_build
+
+log "setup complete"
