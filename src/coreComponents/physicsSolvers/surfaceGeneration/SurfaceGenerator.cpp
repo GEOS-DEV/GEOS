@@ -29,6 +29,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
+#include "constitutive/diffusion/DiffusionBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -582,6 +583,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       // if a thermal conductivity model exists we need to set the intial value to something meaningful
       SinglePhaseThermalConductivityBase & thermalCondModel = getConstitutiveModel< SinglePhaseThermalConductivityBase >( fractureSubRegion, thermalCondModelName );
       thermalCondModel.initializeState();
+    }
+
+    string const diffusionModelName = getConstitutiveName< DiffusionBase >( fractureSubRegion );
+    if( !diffusionModelName.empty() )
+    {
+      DiffusionBase & diffusionModel = getConstitutiveModel< DiffusionBase >( fractureSubRegion, diffusionModelName );
+      arrayView1d< real64 const > const temperature = fractureSubRegion.template getField< flow::temperature >();
+      diffusionModel.initializeTemperatureState( temperature );
     }
   } );
 
@@ -4775,6 +4784,8 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
 {
   GEOS_MARK_FUNCTION;
 
+  real64 constexpr timeTolerance = 1.0e-14;
+
   real64 maxRuptureRate = 0;
   FaceElementSubRegion & subRegion = faceElementRegion.getSubRegion< FaceElementSubRegion >( 0 );
 
@@ -4791,13 +4802,15 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
     for( localIndex kfe0=0; kfe0<fractureConnectorEdgesToFaceElements.sizeOfArray( kfc ); ++kfe0 )
     {
       localIndex const faceElem0 = fractureConnectorEdgesToFaceElements( kfc, kfe0 );
+      real64 const ruptureTime0 = ruptureTime( faceElem0 );
       for( localIndex kfe1=kfe0+1; kfe1<fractureConnectorEdgesToFaceElements.sizeOfArray( kfc ); ++kfe1 )
       {
         localIndex const faceElem1 = fractureConnectorEdgesToFaceElements( kfc, kfe1 );
         if( !( m_faceElemsRupturedThisSolve.count( faceElem0 ) && m_faceElemsRupturedThisSolve.count( faceElem1 ) ) )
         {
-          real64 const deltaRuptureTime = fabs( ruptureTime( faceElem0 ) - ruptureTime( faceElem1 ));
-          if( deltaRuptureTime > 1.0e-14 * (ruptureTime( faceElem0 ) + ruptureTime( faceElem1 )) )
+          real64 const ruptureTime1 = ruptureTime( faceElem1 );
+          real64 const deltaRuptureTime = LvArray::math::abs( ruptureTime0 - ruptureTime1 );
+          if( deltaRuptureTime > timeTolerance )
           {
             real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elemCenter[ faceElem0 ] );
             LvArray::tensorOps::subtract< 3 >( distance, elemCenter[ faceElem1 ] );
