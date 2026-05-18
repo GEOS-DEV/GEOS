@@ -10378,20 +10378,17 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
   // WARNING!!! This will most likely have a race condition running on GPU
   // TODO: Fix it in the future!
 
-  int nEl[3] = {};
-  // Tensor equation: nEl = m_nEl.
+  // Copy to solver member variables to local variables
+  localIndex nEl[3] = {};
   LvArray::tensorOps::copy< 3 >( nEl, m_nEl );
   real64 hEl[3] = {};
-  // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
   real64 xLocalMin[3] = {};
-  // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
   real64 xLocalMax[3] = {};
-  // Tensor equation: xLocalMax = m_xLocalMax.
   LvArray::tensorOps::copy< 3 >( xLocalMax, m_xLocalMax );
   arrayView3d< localIndex const > const ijkMap = m_ijkMap;
-  int const signs[8][3] = { { -1, -1, -1 },
+  integer const signs[8][3] = { { -1, -1, -1 },
                             {  1, -1, -1 },
                             {  1, 1, -1 },
                             { -1, 1, -1 },
@@ -10399,6 +10396,7 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
                             {  1, -1, 1 },
                             {  1, 1, 1 },
                             { -1, 1, 1 } };
+  localIndex const localIndexMax = std::numeric_limits< localIndex >::max();
 
   localIndex const numNodes = nodeManager.size();
   // arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
@@ -10406,16 +10404,16 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
   // GEOS_LOG_RANK("Num nodes: " << numNodes);
 
   // Initialize node neighbor count
-  array1d< localIndex > nodeFieldCount( numNodes );
+  array1d< localIndex > nodeParticleNeighborCount( numNodes );
   for( localIndex b = 0; b < numNodes; ++b )
   {
-    nodeFieldCount[b] = 0;
+    nodeParticleNeighborCount[b] = 0;
   }
-  arrayView1d< localIndex > const nodeFieldCountView = nodeFieldCount;
+  arrayView1d< localIndex > const nodeParticleNeighborCountView = nodeParticleNeighborCount;
 
   // Store these for use across both lambdas for subRegions below
   stdVector< array2d< localIndex > > uniqueNodes( m_numberOfSubRegions );
-  stdVector< array1d< int > > numUniqueNodes( m_numberOfSubRegions );
+  stdVector< array1d< localIndex > > numUniqueNodes( m_numberOfSubRegions );
 
   // Count number of particles mapped to each node
   localIndex subRegionIndex = 0;
@@ -10429,9 +10427,9 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
     uniqueNodes[subRegionIndex].resize( subRegion.size(), 8 * numberOfVerticesPerParticle );
     numUniqueNodes[subRegionIndex].resize( subRegion.size() );
 
-    arrayView1d< int > const numUniqueNodesView = numUniqueNodes[subRegionIndex].toView();
+    arrayView1d< localIndex > const numUniqueNodesView = numUniqueNodes[subRegionIndex].toView();
     arrayView2d< localIndex > const uniqueNodesView = uniqueNodes[subRegionIndex].toView();
-    for( int i = 0; i < subRegion.size(); ++i)
+    for( localIndex i = 0; i < subRegion.size(); ++i)
     {
       numUniqueNodesView[i] = 0;
     }
@@ -10449,26 +10447,26 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
         {
           case ParticleType::SinglePoint:
           {
-            int centerIJK[3] = {};
-            for( int d = 0; d < 3; ++d )
+            localIndex centerIJK[3] = {};
+            for( localIndex d = 0; d < 3; ++d )
             {
               centerIJK[d] = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
             }
 
-            for( int i = 0; i < 2; ++i )
+            for( localIndex i = 0; i < 2; ++i )
             {
-              for( int j = 0; j < 2; ++j )
+              for( localIndex j = 0; j < 2; ++j )
               {
-                for( int k = 0; k < 2; ++k )
+                for( localIndex k = 0; k < 2; ++k )
                 {
-                  int const ix = centerIJK[0] + i;
-                  int const iy = centerIJK[1] + j;
-                  int const iz = centerIJK[2] + k;
+                  localIndex const ix = centerIJK[0] + i;
+                  localIndex const iy = centerIJK[1] + j;
+                  localIndex const iz = centerIJK[2] + k;
                   uniqueNodesView[p][mappedNodeIndex] =
                     ( ix < 0 || ix > nEl[0] ||
                       iy < 0 || iy > nEl[1] ||
                       iz < 0 || iz > nEl[2] )
-                    ? INT_MAX
+                    ? localIndexMax
                     : ijkMap[ix][iy][iz];
                   ++mappedNodeIndex;
                 }
@@ -10478,27 +10476,27 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
           }
           case ParticleType::SinglePointBSpline:
           {
-            int baseIJK[3] = {};
-            for( int d = 0; d < 3; ++d )
+            localIndex baseIJK[3] = {};
+            for( localIndex d = 0; d < 3; ++d )
             {
-              int const cell = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
+              localIndex const cell = LvArray::math::floor( ( particlePosition[p][d] - xLocalMin[d] ) / hEl[d] );
               baseIJK[d] = cell - 1;
             }
 
-            for( int i = 0; i < 4; ++i )
+            for( localIndex i = 0; i < 4; ++i )
             {
-              for( int j = 0; j < 4; ++j )
+              for( localIndex j = 0; j < 4; ++j )
               {
-                for( int k = 0; k < 4; ++k )
+                for( localIndex k = 0; k < 4; ++k )
                 {
-                  int const ix = baseIJK[0] + i;
-                  int const iy = baseIJK[1] + j;
-                  int const iz = baseIJK[2] + k;
+                  localIndex const ix = baseIJK[0] + i;
+                  localIndex const iy = baseIJK[1] + j;
+                  localIndex const iz = baseIJK[2] + k;
                   uniqueNodesView[p][mappedNodeIndex] =
                     ( ix < 0 || ix > nEl[0] ||
                       iy < 0 || iy > nEl[1] ||
                       iz < 0 || iz > nEl[2] )
-                    ? INT_MAX
+                    ? localIndexMax
                     : ijkMap[ix][iy][iz];
                   ++mappedNodeIndex;
                 }
@@ -10508,10 +10506,10 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
           }
           case ParticleType::CPDI:
           {
-            for( int corner=0; corner < 8; ++corner )
+            for( localIndex corner=0; corner < 8; ++corner )
             {
-              int cornerIJK[3] = {};
-              for( int d=0; d<3; ++d )
+              localIndex cornerIJK[3] = {};
+              for( localIndex d=0; d<3; ++d )
               {
                 real64 const cornerPositionComponent = particlePosition[p][d] +
                                                        signs[corner][0] * particleRVectors[p][0][d] +
@@ -10521,20 +10519,20 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
                 cornerIJK[d] = LvArray::math::floor( ( cornerPositionComponent - xLocalMin[d] ) / hEl[d] );
               }
 
-              for(int i = 0; i < 2; ++i )
+              for(localIndex i = 0; i < 2; ++i )
               {
-                for( int j = 0; j < 2; ++j )
+                for( localIndex j = 0; j < 2; ++j )
                 {
-                  for( int k = 0; k < 2; ++k )
+                  for( localIndex k = 0; k < 2; ++k )
                   {
-                    int const ix = cornerIJK[0] + i;
-                    int const iy = cornerIJK[1] + j;
-                    int const iz = cornerIJK[2] + k;
+                    localIndex const ix = cornerIJK[0] + i;
+                    localIndex const iy = cornerIJK[1] + j;
+                    localIndex const iz = cornerIJK[2] + k;
                     uniqueNodesView[p][mappedNodeIndex] =
                       ( ix < 0 || ix > nEl[0] ||
                         iy < 0 || iy > nEl[1] ||
                         iz < 0 || iz > nEl[2] )
-                      ? INT_MAX
+                      ? localIndexMax
                       : ijkMap[ix][iy][iz];
                     ++mappedNodeIndex;
                   }
@@ -10554,31 +10552,31 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
         numUniqueNodesView[p] = LvArray::sortedArrayManipulation::makeSortedUnique( uniqueNodesView[p].begin(),
                                                                                     uniqueNodesView[p].end() );
         // Increment the count of each node that the particle maps to
-        for( int g = 0; g < numUniqueNodesView[p]; ++g )
+        for( localIndex g = 0; g < numUniqueNodesView[p]; ++g )
         {
           localIndex nodeIndex = uniqueNodesView[p][g];
 
           // If the node is not on this partition (e.g. occurs with ghosted nodes, just ignore it)
-          if ( nodeIndex < 0 || nodeIndex >= numNodes ) // BUGFIX: change this from nodeIndex > numNodes
+          if ( nodeIndex >= numNodes ) // BUGFIX: change this from nodeIndex > numNodes
           {
             // GEOS_LOG_RANK( "nodeIndex " << nodeIndex << " is a ghost node for particle with rank " << particleRank[p] << "(" << rank << ")" );
             continue;
           }
 
-          ++nodeFieldCountView[nodeIndex];
+          ++nodeParticleNeighborCountView[nodeIndex];
         }
       } );
     ++subRegionIndex;
   } );
 
   m_nodalNeighborList.freeOnDevice(); // just being careful
-  m_nodalNeighborList.resizeFromCapacities( nodeFieldCount );
+  m_nodalNeighborList.resizeFromCapacities( nodeParticleNeighborCount );
 
   // Determine the node with the most
   arrayView1d< localIndex > const numNeighborsAll = m_nodalNeighborList.m_numParticles.toView();
 
   // Probably doesn't warrant parallelism, but if so will need RAJA reduction
-  for( int g = 0; g < numNodes; ++g )
+  for( localIndex g = 0; g < numNodes; ++g )
   {
     m_maxNodalNeighbors = LvArray::math::max( m_maxNodalNeighbors, numNeighborsAll[g] );
   }
@@ -10613,13 +10611,13 @@ void SolidMechanicsMPM::generateNodalNeighborList( ParticleManager & particleMan
     localIndex regionIndexOfSubRegion = region.getIndexInParent();
     localIndex subRegionIndexInRegion = subRegion.getIndexInParent();
 
-    arrayView1d< int > const numUniqueNodesView = numUniqueNodes[subRegionIndex].toView();
+    arrayView1d< localIndex > const numUniqueNodesView = numUniqueNodes[subRegionIndex].toView();
     arrayView2d< localIndex > const uniqueNodesView = uniqueNodes[subRegionIndex].toView();
 
     localIndex const numParticlesInSubRegion = subRegion.size(); // Should include ghosted particles
     forAll< serialPolicy >( numParticlesInSubRegion, [=] GEOS_HOST_DEVICE ( localIndex const p )
       {
-        for( int g = 0; g < numUniqueNodesView[p]; ++g )
+        for( localIndex g = 0; g < numUniqueNodesView[p]; ++g )
         {
           localIndex nodeIndex = uniqueNodesView[p][g];
 
