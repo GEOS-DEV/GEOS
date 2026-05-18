@@ -61,7 +61,10 @@ set(ENABLE_HIP ON CACHE BOOL "")
 
 set(CMAKE_HIP_STANDARD "17" CACHE STRING "")
 
-set(CMAKE_HIP_COMPILER "/opt/rocm-6.4.2/bin/hipcc" CACHE PATH "")
+# CMake native HIP support rejects the hipcc wrapper as CMAKE_HIP_COMPILER.
+# Use ROCm Clang directly and provide the ROCm root for HIP package discovery.
+set(CMAKE_HIP_COMPILER "/opt/rocm-6.4.2/llvm/bin/amdclang++" CACHE PATH "")
+set(CMAKE_HIP_COMPILER_ROCM_ROOT "/opt/rocm-6.4.2" CACHE PATH "")
 
 set(CMAKE_HIP_ARCHITECTURES "gfx942" CACHE STRING "")
 

@@ -229,11 +229,13 @@ ranksPerNodeList = {
 }
 
 node = platform.node()
+nodeLower = node.lower()
 machine = 'unknown'
 coresPerNode = 1
 ranksPerNode = 1
 for key, value in machineList.items():
-  if key in node:
+  keyMatchesNode = key in nodeLower or ( key == 'tuolumne' and nodeLower.startswith( 'tuo' ) )
+  if keyMatchesNode:
     machine = key
     coresPerNode = value
     ranksPerNode = ranksPerNodeList.get( key, value )
