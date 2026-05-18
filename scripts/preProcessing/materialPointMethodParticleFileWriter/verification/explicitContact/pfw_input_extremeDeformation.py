@@ -41,11 +41,10 @@ pfw["zmax"] = 0.5*domainLength # mm
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 
 pfw["mBatch"]=True
-pfw["mBank"]="MAHEM"
 pfw["mWallTime"]="03:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=True
 pfw["lastRestartBufferInSeconds"] = 600
 

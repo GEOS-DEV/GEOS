@@ -42,7 +42,7 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="12:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
@@ -93,9 +93,9 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 # MPM EVENTS -------------------------------------------------------------------------------
 
 pfw["mpmEventsString"]="""
-<MPMEvents>
-	<Anneal 
-	time=""" + '"' + str(stopTime/2) + '"' + """
+<Anneal 
+	time=
+""" + '"' + str(stopTime/2) + '"' + """
 	interval=""" + '"' + str(stopTime/2) + '"' + """
 	source="all" />
 </MPMEvents>

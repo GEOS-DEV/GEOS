@@ -46,13 +46,11 @@ pfw["zmin"] =-0.5*domainLength # mm
 pfw["zmax"] = 0.5*domainLength # mm
 
 # BATCH PARAMETERS  --------------------------------------------------------
-
-pfw["mBank"]="MAHEM"
 pfw["mBatch"]=True
 pfw["mWallTime"]="06:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/56.))
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 
 # MATERIAL PROPERTIES ----------------------------------------------------------------
@@ -150,7 +148,8 @@ pfw["materialPropertyString"]="""
 # pfw["mpmEventsString"]="""
 # <MPMEvents>
 #     <Anneal 
-#         time=""" + '"' + str(loadTime) + '"' + """
+#         time=
+""" + '"' + str(loadTime) + '"' + """
 #         interval=""" + '"' + str(0.1) + '"' + """
 #         targetRegion="all"/>
 #     <PolymerHeal
@@ -174,9 +173,9 @@ stopTime = testTime + 5.0
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-<MPMEvents>
-    <Anneal 
-        time=""" + '"' + str(unloadTime) + '"' + """
+<Anneal 
+        time=
+""" + '"' + str(unloadTime) + '"' + """
         interval=""" + '"' + str(annealTimeInterval) + '"' + """
         targetRegion="all"/>
     <PolymerHeal

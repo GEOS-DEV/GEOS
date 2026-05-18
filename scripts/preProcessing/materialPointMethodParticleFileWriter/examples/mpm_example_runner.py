@@ -46,7 +46,7 @@ def parse_args():
     p.add_argument("--no-visit", action="store_true")
     p.add_argument("--post-walltime", default="00:05:00")
     p.add_argument("--post-partition", default="pdebug")
-    p.add_argument("--walltime", default="00:10:00", help="GEOS walltime override appended to the staged input")
+    p.add_argument("--walltime", default=None, help="Optional GEOS walltime override; by default use pfw_input mWallTime")
     p.add_argument("--no-submit", action="store_true", help="run PFW without submitting GEOS")
     return p.parse_args()
 
@@ -123,6 +123,9 @@ def copy_pfw_files(pfw_root: Path, run_dir: Path, source_dir: Path, input_file: 
             if src.is_file():
                 shutil.copy2(src, run_dir / src.name)
                 copied.add(src.name)
+    examples_postprocess = pfw_root / "examples" / "mpm_example_postprocess.py"
+    if examples_postprocess.is_file():
+        shutil.copy2(examples_postprocess, run_dir / examples_postprocess.name)
     for src in source_dir.glob("*.py"):
         if src.is_file() and src.name != input_file:
             shutil.copy2(src, run_dir / src.name)
@@ -153,7 +156,7 @@ def copy_pfw_files(pfw_root: Path, run_dir: Path, source_dir: Path, input_file: 
 
 
 def append_runtime_overrides(input_path: Path, case: str, bank: str, geos_path: str, walltime: str, submit: bool) -> None:
-    stem = input_path.stem
+    walltime_line = f'pfw["mWallTime"] = {walltime!r}\n' if walltime else ""
     block = f"""
 
 # -----------------------------------------------------------------------------
@@ -162,8 +165,7 @@ def append_runtime_overrides(input_path: Path, case: str, bank: str, geos_path: 
 # -----------------------------------------------------------------------------
 pfw["mBatch"] = True
 pfw["mBank"] = {bank!r}
-pfw["mWallTime"] = {walltime!r}
-pfw["mSubmitJobs"] = {bool(submit)!r}
+{walltime_line}pfw["mSubmitJobs"] = {bool(submit)!r}
 pfw["autoRestart"] = False
 pfw["outputType"] = "silo"
 try:
@@ -181,6 +183,15 @@ elif _interp == 2 or _interp == "2":
     pfw["fTableInterpType"] = "Smoothstep"
 elif _interp not in ("Linear", "Cosine", "Smoothstep"):
     pfw["fTableInterpType"] = "Linear"
+_contact_gap = pfw.get("contactGapCorrection", None)
+if _contact_gap == 0 or _contact_gap == "0":
+    pfw["contactGapCorrection"] = "Simple"
+elif _contact_gap == 1 or _contact_gap == "1":
+    pfw["contactGapCorrection"] = "Implicit"
+elif _contact_gap == 2 or _contact_gap == "2":
+    pfw["contactGapCorrection"] = "Softened"
+elif isinstance(_contact_gap, str) and _contact_gap.lower() in ("simple", "implicit", "softened"):
+    pfw["contactGapCorrection"] = _contact_gap[:1].upper() + _contact_gap[1:].lower()
 """
     text = input_path.read_text()
     if "Runtime overrides appended by examples/mpm_example_runner.py" not in text:

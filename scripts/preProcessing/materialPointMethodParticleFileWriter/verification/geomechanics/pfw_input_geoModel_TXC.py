@@ -2,6 +2,7 @@
 import pfw_geometryObjects as geom   # this contains all the geometry object functions for pfw
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
+import pfw_materials as matdb
 
 # This is currently just a smoke test to see if the geomechanics model is implemented
 # successfully and runs. 
@@ -11,17 +12,14 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # lateral boundaries.
 # TODO: add some actual verification, so make sure the response is correct.
 
-
 pfw = {}
 pfw["runDebug"] = False
 stopTime = 1000.0
 
-
-
 # confiningPressure = 0.00203   # confining pressure GPa
 # maxCompressiveStrain = 0.0704 # F-table (strain) control end point (GPa)
 
-confiningPressure = 0.0032  # confining pressure GPa (make sure this p < -p0/3)
+pressure = 0.0032  # confining pressure GPa (make sure this p < -p0/3)
 maxCompressiveStrain = 0.035
 
 # PID Control Parameters
@@ -34,20 +32,20 @@ kd = 0.005
 
 # DOMAIN ---------------------------------------------------------------------------------
 
-sampleWidth = 1.0  # mm
-sampleHeight = 1.0 # mm
-sampleLength = 1.0 # mm
+sampleX = 1.0  # mm
+sampleY = 1.0 # mm
+sampleZ = 1.0 # mm
 
-domainWidth = sampleWidth  # This would be increased for unconfined compression.
-domainHeight = sampleHeight
-domainLength = sampleLength
+domainX = sampleX  # This would be increased for unconfined compression.
+domainY = sampleY
+domainZ = sampleZ
 
 pfw["xmin"] = 0.0             # mm
-pfw["xmax"] = domainWidth    # mm
+pfw["xmax"] = domainX    # mm
 pfw["ymin"] = 0.0 # mm
-pfw["ymax"] = domainHeight # mm
+pfw["ymax"] = domainY # mm
 pfw["zmin"] = 0.0 # mm
-pfw["zmax"] = domainLength # mm
+pfw["zmax"] = domainZ # mm
 
 refine=1  # partitions in each direction
 cpp=3     # cells per partition in each direction
@@ -65,7 +63,7 @@ pfw["ppc"]=2               # particles per cell in each direction
 
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:05:00"
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
@@ -188,55 +186,8 @@ fractureStress = 0.0173 #0.012            # this is the value of rootJ2 (not von
 fractureSofteningExponent = 0.95 # 0.4   # controls how quickly the strength drops to residual value as damage -> 1
 damageEvolutionCriterion = 1      # 0: dilational, 1: brittleDuctileTransition
 
-pfw["materials"] = [ "ghareb" ]
-pfw["materialPropertyString"]="""
-<Geomechanics
-   name="ghareb"
-   defaultDensity="""+'"'+str(density)+'"'+"""
-   b0="""+'"'+str(b0)+'"'+"""
-   b1="""+'"'+str(b1)+'"'+"""
-   b2="""+'"'+str(b2)+'"'+"""
-   b3="""+'"'+str(b3)+'"'+"""
-   b4="""+'"'+str(b4)+'"'+"""
-   g0="""+'"'+str(g0)+'"'+"""
-   g1="""+'"'+str(g1)+'"'+"""
-   g2="""+'"'+str(g2)+'"'+"""
-   g3="""+'"'+str(g3)+'"'+"""
-   g4="""+'"'+str(g4)+'"'+"""
-   p0="""+'"'+str(p0)+'"'+"""
-   p1="""+'"'+str(p1)+'"'+"""
-   p2="""+'"'+str(p2)+'"'+"""
-   p3="""+'"'+str(p3)+'"'+"""
-   p4="""+'"'+str(p4)+'"'+"""
-   cr="""+'"'+str(CR)+'"'+"""
-   fluidBulkModulus="""+'"'+str(Kf)+'"'+"""
-   fluidInitialPressure="""+'"'+str(pfi)+'"'+"""
-   t1RateDependence="""+'"'+str(t1RateDependence)+'"'+"""
-   t2RateDependence="""+'"'+str(t2RateDependence)+'"'+"""
-   peakI1="""+'"'+str(PEAKI1)+'"'+"""
-   fSlope="""+'"'+str(FSLOPE)+'"'+"""
-   fSlopeFailed="""+'"'+str(FSLOPEFAILED)+'"'+"""
-   stren="""+'"'+str(STREN)+'"'+"""
-   ySlope="""+'"'+str(YSLOPE)+'"'+"""
-   beta="""+'"'+str(BETA_nonassociativity)+'"'+"""
-   enableCreep="""+'"'+str(enableCreep)+'"'+"""
-   creepC0="""+'"'+str(creepc0)+'"'+"""
-   creepC1="""+'"'+str(creepc1)+'"'+"""
-   creepC2="""+'"'+str(creepc2)+'"'+"""
-   creepA="""+'"'+str(creepA)+'"'+"""
-   creepB="""+'"'+str(creepB)+'"'+"""
-   creepC="""+'"'+str(creepC)+'"'+"""
-   creepD="""+'"'+str(creepD)+'"'+"""
-   creepE="""+'"'+str(creepE)+'"'+"""
-   creepF="""+'"'+str(creepF)+'"'+"""
-   strainHardeningN="""+'"'+str(strainHardeningn)+'"'+"""
-   strainHardeningK="""+'"'+str(strainHardeningK)+'"'+"""
-   fractureEnergyReleaseRate="""+'"'+str(fractureEnergyReleaseRate)+'"'+"""
-   fractureSofteningExponent="""+'"'+str(fractureSofteningExponent)+'"'+"""
-   fractureStress="""+'"'+str(fractureStress)+'"'+"""
-   damageEvolutionCriterion="""+'"'+str(damageEvolutionCriterion)+'"'+"""
-   />
-"""
+pfw["materials"] = [matdb.ghareb["name"]]
+pfw["materialPropertyString"] = matdb.ghareb["materialString"]
 
 # GEOMETRY OBJECTS -------------------------------------------------------
 # single block filling domain for single-element test.
@@ -244,38 +195,35 @@ pfw["materialPropertyString"]="""
 block = geom.box('block',[pfw["xmin"],pfw["ymin"],pfw["zmin"]],[pfw["xmax"],pfw["ymax"],pfw["zmax"]],vel=[0.0,0.0,0.0],mat=0,group=0)
 pfw["objects"]=[block]
 
-# DEFORMATION -----------------------------------------------------------------------------
-
-# We initialize the domain with p=confiningPressure, if p > -p0/3 this will fail.
-# we then apply a stress boundary condition on x,y faces to be in equilibrium, and do a 
-# strain-controlled motion in z.
-
-# Ftable only controls z-direction
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
+# DEFORMATION ---------------------------------------------------------------------------------
+# We want to initialize a pressure, then have moving periodic BC with stress control to maintain
+# this confining stress during compaction, while allowing prescribed compression in the z-direction
+# periodic = [False, False, False]
+pfw["boundaryConditionTypes"]= [ 2, 2, 2, 2, 2, 2 ]
 pfw["fTableInterpType"]='Cosine'
-pfw["prescribedBoundaryFTable"] = 1
-pfw["fTable"]=[
-    [0,	          1.000,	    1.,	1.],
-    [stopTime,	    1.0,1.0, np.exp(-maxCompressiveStrain) ]
-    ]
+pfw["prescribedBoundaryFTable"]=1
 
-# stress table controls x- and y- directions.
-pfw["stressControl"]=[ 1, 1, 0]
-pfw["stressTableInterpType"] = 'Cosine'
-pfw["stressControlKp"] = kp
-pfw["stressControlKi"] = ki
-pfw["stressControlKd"] = kd
-pfw["stressTable"]=[[0.0,      	   -confiningPressure, -confiningPressure, -confiningPressure],
-					[stopTime,     -confiningPressure, -confiningPressure, -confiningPressure]]
+pfw["fTable"]=[[0.0, 1., 1., 1.],
+               [stopTime, 1., 1., float(np.exp(-maxCompressiveStrain))]
+               ]
 
-# This should initialize stress in equilibrium with boundary conditions:
+# MPM EVENTS -------------------------------------------------------------------------------
+# Initialize with confining pressure
+pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-<MPMEvents>
     <InitializeStress 
-        time="0.0"
-        interval="0.1"
+        startTime="0.0"
+        endTime="0.001"
         targetRegion="all"
-        pressure=""" + '"' + str(confiningPressure) + '"' + """
-        />
-</MPMEvents>
+        pressure=""" + '"' + str(pressure) + '"' + """
+    />
+     <ConfiningPressure 
+        startTime=""" + '"' + str(0.) + '"' + """
+        endTime=""" + '"' + str(stopTime) + '"' + """
+        confiningPressureBoxMin="{"""+str(-0.01*domainX)+','+str(-0.01*domainY)+','+str(-2.0*domainZ)+"""}"
+        confiningPressureBoxMax="{"""+str(0.01*domainX)+','+str(0.01*domainY)+','+str(2.0*domainZ)+"""}"
+        startPressure=""" + '"' + str(pressure) + '"' + """
+        endPressure=""" + '"' + str(pressure) + '"' + """
+        interpType="1"
+    />
 """

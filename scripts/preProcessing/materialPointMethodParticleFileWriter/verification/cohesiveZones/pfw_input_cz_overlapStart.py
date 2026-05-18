@@ -119,8 +119,6 @@ pfw["fTable"]=[[0.0,        1.00,  1.00,  1.00],
                [stopTime,   1.00,  1.10, 1.00]]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-
-pfw["mBank"]="imcomp"
 pfw["mBatch"]=True
 pfw["mWallTime"]="03:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
@@ -155,7 +153,8 @@ pfw["materialPropertyString"]="""
 pfw["mpmEventsString"]="""
 <CohesiveZone
     name="cz1" 
-    startTime=""" + '"' + str(stopTime/4) + '"' + """
+    startTime=
+""" + '"' + str(stopTime/4) + '"' + """
     endTime=""" + '"' + str(stopTime) + '"' + """
     constitutiveModel="cz1"
     computeNormalsAndPositions=""" + '"' + str(0) + '"' + """

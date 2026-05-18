@@ -3,6 +3,7 @@ import pfw_geometryObjects as geom   # this contains all the geometry object fun
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
 import re
+import pfw_materials as matdb
 
 # Hydrostatic compression test for comparison to HPO3 creep test on Ghareb chalk.
 
@@ -47,7 +48,7 @@ pfw["ppc"]=1               # particles per cell in each direction
 
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:05:00"
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
@@ -169,55 +170,8 @@ pfi = 0.0  # initial fluid pressure (GPa)
 # was ported from Uintah.
 t1RateDependence=0.0
 t2RateDependence=0.0
-pfw["materials"] = [ "ghareb" ]
-pfw["materialPropertyString"]="""
-<Geomechanics
-   name="ghareb"
-   defaultDensity="""+'"'+str(density)+'"'+"""
-   b0="""+'"'+str(b0)+'"'+"""
-   b1="""+'"'+str(b1)+'"'+"""
-   b2="""+'"'+str(b2)+'"'+"""
-   b3="""+'"'+str(b3)+'"'+"""
-   b4="""+'"'+str(b4)+'"'+"""
-   g0="""+'"'+str(g0)+'"'+"""
-   g1="""+'"'+str(g1)+'"'+"""
-   g2="""+'"'+str(g2)+'"'+"""
-   g3="""+'"'+str(g3)+'"'+"""
-   g4="""+'"'+str(g4)+'"'+"""
-   p0="""+'"'+str(p0)+'"'+"""
-   p1="""+'"'+str(p1)+'"'+"""
-   p2="""+'"'+str(p2)+'"'+"""
-   p3="""+'"'+str(p3)+'"'+"""
-   p4="""+'"'+str(p4)+'"'+"""
-   cr="""+'"'+str(CR)+'"'+"""
-   fluidBulkModulus="""+'"'+str(Kf)+'"'+"""
-   fluidInitialPressure="""+'"'+str(pfi)+'"'+"""
-   t1RateDependence="""+'"'+str(t1RateDependence)+'"'+"""
-   t2RateDependence="""+'"'+str(t2RateDependence)+'"'+"""
-   peakI1="""+'"'+str(PEAKI1)+'"'+"""
-   fSlope="""+'"'+str(FSLOPE)+'"'+"""
-   fSlopeFailed="""+'"'+str(FSLOPEFAILED)+'"'+"""
-   stren="""+'"'+str(STREN)+'"'+"""
-   ySlope="""+'"'+str(YSLOPE)+'"'+"""
-   beta="""+'"'+str(BETA_nonassociativity)+'"'+"""
-   enableCreep="""+'"'+str(enableCreep)+'"'+"""
-   creepC0="""+'"'+str(creepc0)+'"'+"""
-   creepC1="""+'"'+str(creepc1)+'"'+"""
-   creepC2="""+'"'+str(creepc2)+'"'+"""
-   creepA="""+'"'+str(creepA)+'"'+"""
-   creepB="""+'"'+str(creepB)+'"'+"""
-   creepC="""+'"'+str(creepC)+'"'+"""
-   creepD="""+'"'+str(creepD)+'"'+"""
-   creepE="""+'"'+str(creepE)+'"'+"""
-   creepF="""+'"'+str(creepF)+'"'+"""
-   strainHardeningN="""+'"'+str(strainHardeningn)+'"'+"""
-   strainHardeningK="""+'"'+str(strainHardeningK)+'"'+"""
-   fractureEnergyReleaseRate="""+'"'+str(fractureEnergyReleaseRate)+'"'+"""
-   fractureSofteningExponent="""+'"'+str(fractureSofteningExponent)+'"'+"""
-   fractureStress="""+'"'+str(fractureStress)+'"'+"""
-   damageEvolutionCriterion="""+'"'+str(damageEvolutionCriterion)+'"'+"""
-   />
-"""
+pfw["materials"] = [matdb.ghareb["name"]]
+pfw["materialPropertyString"] = matdb.ghareb["materialString"]
 
 
 # # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -295,7 +249,7 @@ pfw["materialPropertyString"]="""
 # constrainedModulus = bulk + 4./3.*shear
 # Gf = KIc/constrainedModulus
 
-# pfw["materials"] = [ "ghareb" ]
+# pfw["materials"] = [matdb.ghareb["name"]]
 # pfw["materialPropertyString"]="""
 # <Geomechanics
 #    name="ghareb"

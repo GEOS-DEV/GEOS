@@ -26,14 +26,14 @@ pdcBackRakeAngle = (15*3.14159/180.) # rad
 pdcLength = 10 # mm
 pdcDepth = 2 # mm
 pdcGap = 1 # mm gap between domain boundary.
-pdcVelocity = 0.01 # mm/us = km/s
+pdcVelocity = 0.1 # mm/us = km/s
 
 sampleX = 40 # mm, cutting translation direction
 sampleY = 20 # mm, sample surface normal direction
 sampleZ = 10 # mm, half depth, with sym at z=0
 
 # sample will cut domain width 2x, with 2x depth of cut per pass.
-stopTime = 2.0*sampleX/pdcVelocity
+stopTime = 1.0*sampleX/pdcVelocity
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ damagedMaterialFrictionSlope = 0.5773502691896258
 
 # Domain ---------------------------------------------------------------------------------
 
-refine = 2
+refine = 1
 cpp = 12
 pfw["xpar"] = 4*refine  # grid partitions
 pfw["ypar"] = 3*refine
@@ -71,7 +71,7 @@ pfw["zmin"] = 0.0
 pfw["zmax"] = domainZ
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-pfw["mWallTime"] = "12:00:00"
+pfw["mWallTime"] = "0:10:00"
 pfw["mCores"] = pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mSubmitJobs"] = True
 

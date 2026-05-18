@@ -106,13 +106,11 @@ pfw["stressTable"]=[[0.0, -fluidPressure, -fluidPressure, -fluidPressure],
                     [stopTime, -fluidPressure, -fluidPressure, -fluidPressure]]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-
-pfw["mBank"]="MAHEM"
 pfw["mBatch"]=True
 pfw["mWallTime"]="06:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.))
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False #True
 pfw["lastRestartBufferInSeconds"] = 600
 

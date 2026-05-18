@@ -49,7 +49,7 @@ pfw["timeIntegrationOption"]="ExplicitDynamic"
 pfw["cflFactor"]=0.25    
 pfw["initialDt"]=1e-16
 
-pfw["contactGapCorrection"]=1
+pfw["contactGapCorrection"] = "Implicit"
 pfw["frictionCoefficient"]=0.0 
 
 # MATERIAL PROPERTIES ---------------------------------------------------------

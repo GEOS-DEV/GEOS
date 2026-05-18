@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 14:44
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 23:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -11,8 +11,8 @@ L3 programming layer <2022-02-24>
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
 
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/base/size11.clo
-File: size11.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count185
 \c@section=\count186
@@ -112,42 +112,67 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@thisrulewidth=\dimen161
 )
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/graphics/rotating.sty
-Package: rotating 2016/08/11 v2.16d rotated objects in LaTeX
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/tools/longtable.sty
+Package: longtable 2021-09-01 v4.17 Multi-page Table package (DPC)
+\LTleft=\skip49
+\LTright=\skip50
+\LTpre=\skip51
+\LTpost=\skip52
+\LTchunksize=\count267
+\LTcapwidth=\dimen162
+\LT@head=\box52
+\LT@firsthead=\box53
+\LT@foot=\box54
+\LT@lastfoot=\box55
+\LT@gbox=\box56
+\LT@cols=\count268
+\LT@rows=\count269
+\c@LT@tables=\count270
+\c@LT@chunks=\count271
+\LT@p@ftn=\toks20
+)
+(/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2021/10/31 v2.13 LaTeX color extensions (UK)
 
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/base/ifthen.sty
-Package: ifthen 2020/11/24 v1.1c Standard LaTeX ifthen package (DPC)
+5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
-\c@r@tfl@t=\count267
-\rotFPtop=\skip49
-\rotFPbot=\skip50
-\rot@float@box=\box52
-\rot@mess@toks=\toks20
+Package xcolor Info: Driver file: pdftex.def on input line 227.
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1352.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1356.
+Package xcolor Info: Model `RGB' extended on input line 1368.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1370.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1371.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1372.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1373.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1374.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1375.
 )
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/latex/l3backend/l3backend-pdfte
 x.def
 File: l3backend-pdftex.def 2022-02-07 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count268
-\l__pdf_internal_box=\box53
+\l__color_backend_stack_int=\count272
+\l__pdf_internal_box=\box57
 ) (./examples_suite_report.aux)
 \openout1 = `examples_suite_report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 10.
+LaTeX Font Info:    ... okay on input line 10.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -157,23 +182,23 @@ LaTeX Font Info:    ... okay on input line 9.
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: 
-* h-part:(L,W,R)=(54.2025pt, 505.89pt, 54.2025pt)
-* v-part:(T,H,B)=(54.2025pt, 686.56499pt, 54.2025pt)
+* h-part:(L,W,R)=(46.97505pt, 520.3449pt, 46.97505pt)
+* v-part:(T,H,B)=(46.97505pt, 701.01988pt, 46.97505pt)
 * \paperwidth=614.295pt
 * \paperheight=794.96999pt
-* \textwidth=505.89pt
-* \textheight=686.56499pt
-* \oddsidemargin=-18.06749pt
-* \evensidemargin=-18.06749pt
-* \topmargin=-55.06749pt
+* \textwidth=520.3449pt
+* \textheight=701.01988pt
+* \oddsidemargin=-25.29494pt
+* \evensidemargin=-25.29494pt
+* \topmargin=-62.29494pt
 * \headheight=12.0pt
 * \headsep=25.0pt
-* \topskip=11.0pt
+* \topskip=10.0pt
 * \footskip=30.0pt
-* \marginparwidth=59.0pt
-* \marginparsep=10.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
 * \columnsep=10.0pt
-* \skip\footins=10.0pt plus 4.0pt minus 2.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
 * \hoffset=0.0pt
 * \voffset=0.0pt
 * \mag=1000
@@ -187,16 +212,16 @@ LaTeX Font Info:    ... okay on input line 9.
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count269
-\scratchdimen=\dimen162
-\scratchbox=\box54
-\nofMPsegments=\count270
-\nofMParguments=\count271
+\scratchcounter=\count273
+\scratchdimen=\dimen163
+\scratchbox=\box58
+\nofMPsegments=\count274
+\nofMParguments=\count275
 \everyMPshowfont=\toks21
-\MPscratchCnt=\count272
-\MPscratchDim=\dimen163
-\MPnumerator=\count273
-\makeMPintoPDFobject=\count274
+\MPscratchCnt=\count276
+\MPscratchDim=\dimen164
+\MPnumerator=\count277
+\makeMPintoPDFobject=\count278
 \everyMPtoPDFconversion=\toks22
 )
 (/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
@@ -213,95 +238,346 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 13.
+(Font)              <12> on input line 14.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 13.
+(Font)              <8> on input line 14.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 13.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 27.
- [1
+(Font)              <6> on input line 14.
+
+Overfull \hbox (37.17082pt too wide) in alignment at lines 25--29
+ [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (1.13641pt too wide) in paragraph at lines 31--31
+[]|\OT1/cmr/m/n/10 brazilianDisk[]BSpline| 
+ []
+
+
+Overfull \hbox (37.17082pt too wide) in alignment at lines 29--41
+ [] [] [] [] [] [] [] 
+ []
+
+[1
 
 {/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdftex.map}
-]
+] [2]
+<schematics/brazilianDisk_FMPM_schematic.png, id=15, 264.187pt x 196.3335pt>
+File: schematics/brazilianDisk_FMPM_schematic.png Graphic file (type png)
+<use schematics/brazilianDisk_FMPM_schematic.png>
+Package pdftex.def Info: schematics/brazilianDisk_FMPM_schematic.png  used on i
+nput line 65.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+<../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthScale.
+png, id=17, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthS
+cale.png Graphic file (type png)
+<use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthSc
+ale.png>
+Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initia
+l_particleStrengthScale.png  used on input line 79.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png, id=1
+8, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png 
+Graphic file (type png)
+<use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png>
+Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_
+particleDamage.png  used on input line 80.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png, id=19, 505.89
+pt x 325.215pt>
+File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png Graphic f
+ile (type png)
+<use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>
+Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reacti
+ons_y.png  used on input line 81.
+(pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
 
-LaTeX Warning: \oval, \circle, or \line size unavailable on input line 40.
+Overfull \hbox (10.2155pt too wide) in paragraph at lines 84--85
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]FMPM[]final[
+]particleDamage.png, brazil-ian-Disk[]FMPM[]initial[]particleStrengthScale.png,
 
-
-Overfull \hbox (44.57512pt too wide) in paragraph at lines 37--42
-\OT1/cmr/m/n/10.95 date path and quartz dam-age ma-te-rial but uses par-ti-cle-
-Type=1 so GEOS ex-er-cises Par-ti-cle-Type::SinglePointBSpline. 
  []
 
+[3
+
+ <./schematics/brazilianDisk_FMPM_schematic.png> <../brazilianDisk_FMPM/output/
+brazilianDisk_FMPM_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
+isk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png (PNG copy)> <../bra
+zilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>]
+<schematics/brazilianDisk_BSpline_schematic.png, id=26, 264.187pt x 196.3335pt>
+
+File: schematics/brazilianDisk_BSpline_schematic.png Graphic file (type png)
+<use schematics/brazilianDisk_BSpline_schematic.png>
+Package pdftex.def Info: schematics/brazilianDisk_BSpline_schematic.png  used o
+n input line 91.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrength
-Scale.png, id=12, 1606.0pt x 1606.0pt>
+Scale.png, id=27, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStr
 engthScale.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStre
 ngthScale.png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-initial_particleStrengthScale.png  used on input line 54.
-(pdftex.def)             Requested size: 156.82466pt x 156.81105pt.
+initial_particleStrengthScale.png  used on input line 105.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png
-, id=13, 1606.0pt x 1606.0pt>
+, id=28, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamag
 e.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage
 .png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-final_particleDamage.png  used on input line 55.
-(pdftex.def)             Requested size: 156.82466pt x 156.81105pt.
-<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=14, 
+final_particleDamage.png  used on input line 106.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=29, 
 505.89pt x 325.215pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png Gra
 phic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-reactions_y.png  used on input line 56.
-(pdftex.def)             Requested size: 156.82466pt x 100.8156pt.
-[2
+reactions_y.png  used on input line 107.
+(pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
 
- <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrengt
-hScale.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_f
-inal_particleDamage.png (PNG copy)> <../brazilianDisk_BSpline/output/brazilianD
-isk_BSpline_reactions_y.png>] (./examples_suite_report.aux) ) 
+Overfull \hbox (14.38219pt too wide) in paragraph at lines 110--111
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]BSpline[]fin
+al[]particleDamage.png, brazil-ian-Disk[]BSpline[]initial[]particleStrengthScal
+e.png,
+ []
+
+[4
+
+ <./schematics/brazilianDisk_BSpline_schematic.png> <../brazilianDisk_BSpline/o
+utput/brazilianDisk_BSpline_initial_particleStrengthScale.png (PNG copy)> <../b
+razilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png (PNG
+ copy)> <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png>
+]
+<schematics/brazilianDisk_FLIP_schematic.png, id=35, 264.187pt x 196.3335pt>
+File: schematics/brazilianDisk_FLIP_schematic.png Graphic file (type png)
+<use schematics/brazilianDisk_FLIP_schematic.png>
+Package pdftex.def Info: schematics/brazilianDisk_FLIP_schematic.png  used on i
+nput line 117.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthScale.
+png, id=36, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthS
+cale.png Graphic file (type png)
+<use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthSc
+ale.png>
+Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initia
+l_particleStrengthScale.png  used on input line 130.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png, id=3
+7, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png 
+Graphic file (type png)
+<use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png>
+Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_
+particleDamage.png  used on input line 131.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png, id=38, 505.89
+pt x 325.215pt>
+File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png Graphic f
+ile (type png)
+<use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>
+Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reacti
+ons_y.png  used on input line 132.
+(pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
+ [5
+
+ <./schematics/brazilianDisk_FLIP_schematic.png> <../brazilianDisk_FLIP/output/
+brazilianDisk_FLIP_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
+isk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png (PNG copy)> <../bra
+zilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>]
+<schematics/brazilianDisk_PIC_schematic.png, id=44, 264.187pt x 196.3335pt>
+File: schematics/brazilianDisk_PIC_schematic.png Graphic file (type png)
+<use schematics/brazilianDisk_PIC_schematic.png>
+Package pdftex.def Info: schematics/brazilianDisk_PIC_schematic.png  used on in
+put line 142.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+<../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScale.pn
+g, id=45, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthSca
+le.png Graphic file (type png)
+<use ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScal
+e.png>
+Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_
+particleStrengthScale.png  used on input line 155.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png, id=46,
+ 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png Gr
+aphic file (type png)
+<use ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png>
+Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_pa
+rticleDamage.png  used on input line 156.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png, id=47, 505.89pt
+ x 325.215pt>
+File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png Graphic fil
+e (type png)
+<use ../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png>
+Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_reaction
+s_y.png  used on input line 157.
+(pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
+
+Overfull \hbox (12.40988pt too wide) in paragraph at lines 160--161
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]PIC[]final[]
+particleDamage.png, brazil-ian-Disk[]PIC[]initial[]particleStrengthScale.png, b
+razil-
+ []
+
+[6
+
+ <./schematics/brazilianDisk_PIC_schematic.png> <../brazilianDisk_PIC/output/br
+azilianDisk_PIC_initial_particleStrengthScale.png (PNG copy)> <../brazilianDisk
+_PIC/output/brazilianDisk_PIC_final_particleDamage.png (PNG copy)> <../brazilia
+nDisk_PIC/output/brazilianDisk_PIC_reactions_y.png>]
+<schematics/brazilianDisk_XPIC_schematic.png, id=53, 264.187pt x 196.3335pt>
+File: schematics/brazilianDisk_XPIC_schematic.png Graphic file (type png)
+<use schematics/brazilianDisk_XPIC_schematic.png>
+Package pdftex.def Info: schematics/brazilianDisk_XPIC_schematic.png  used on i
+nput line 167.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthScale.
+png, id=54, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthS
+cale.png Graphic file (type png)
+<use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthSc
+ale.png>
+Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initia
+l_particleStrengthScale.png  used on input line 180.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png, id=5
+5, 1606.0pt x 1606.0pt>
+File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png 
+Graphic file (type png)
+<use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png>
+Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_
+particleDamage.png  used on input line 181.
+(pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
+<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png, id=56, 505.89
+pt x 325.215pt>
+File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png Graphic f
+ile (type png)
+<use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png>
+Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reacti
+ons_y.png  used on input line 182.
+(pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
+ [7
+
+ <./schematics/brazilianDisk_XPIC_schematic.png> <../brazilianDisk_XPIC/output/
+brazilianDisk_XPIC_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
+isk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png (PNG copy)> <../bra
+zilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png>]
+<schematics/benchy_schematic.png, id=63, 264.187pt x 196.3335pt>
+File: schematics/benchy_schematic.png Graphic file (type png)
+<use schematics/benchy_schematic.png>
+Package pdftex.def Info: schematics/benchy_schematic.png  used on input line 19
+2.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+<../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.png, 
+id=64, 1606.0pt x 1606.0pt>
+File: ../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.
+png Graphic file (type png)
+<use ../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.p
+ng>
+Package pdftex.def Info: ../benchy/output/benchy_FMPM_initial_boatGhostRank_bal
+lVelocityMagnitude.png  used on input line 205.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+<../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocityMagn
+itude.png, id=65, 1606.0pt x 1606.0pt>
+File: ../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocit
+yMagnitude.png Graphic file (type png)
+<use ../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocity
+Magnitude.png>
+Package pdftex.def Info: ../benchy/output/benchy_FMPM_final_boatPlasticStrainMa
+gnitude_ballVelocityMagnitude.png  used on input line 206.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+
+Overfull \hbox (188.62433pt too wide) in paragraph at lines 209--210
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 benchy[]FMPM[]final[]boatPlas
+ticStrainMagnitude[]ballVelocityMagnitude.png, benchy[]FMPM[]initial[]boatGhost
+Rank[]ballVelocityMagnitude.png 
+ []
+
+[8
+
+ <./schematics/benchy_schematic.png> <../benchy/output/benchy_FMPM_initial_boat
+GhostRank_ballVelocityMagnitude.png (PNG copy)> <../benchy/output/benchy_FMPM_f
+inal_boatPlasticStrainMagnitude_ballVelocityMagnitude.png (PNG copy)>]
+[9]
+<schematics/borehole_Ghareb_schematic.png, id=73, 264.187pt x 196.3335pt>
+File: schematics/borehole_Ghareb_schematic.png Graphic file (type png)
+<use schematics/borehole_Ghareb_schematic.png>
+Package pdftex.def Info: schematics/borehole_Ghareb_schematic.png  used on inpu
+t line 216.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 230.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 230.
+ [10
+
+ <./schematics/borehole_Ghareb_schematic.png>]
+<schematics/collidingDisks_schematic.png, id=78, 264.187pt x 196.3335pt>
+File: schematics/collidingDisks_schematic.png Graphic file (type png)
+<use schematics/collidingDisks_schematic.png>
+Package pdftex.def Info: schematics/collidingDisks_schematic.png  used on input
+ line 241.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+ [11
+
+ <./schematics/collidingDisks_schematic.png>]
+<schematics/elasticDisk_schematic.png, id=83, 264.187pt x 196.3335pt>
+File: schematics/elasticDisk_schematic.png Graphic file (type png)
+<use schematics/elasticDisk_schematic.png>
+Package pdftex.def Info: schematics/elasticDisk_schematic.png  used on input li
+ne 264.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+ [12
+
+ <./schematics/elasticDisk_schematic.png>]
+<schematics/pdc_schematic.png, id=88, 264.187pt x 196.3335pt>
+File: schematics/pdc_schematic.png Graphic file (type png)
+<use schematics/pdc_schematic.png>
+Package pdftex.def Info: schematics/pdc_schematic.png  used on input line 287.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+ [13
+
+ <./schematics/pdc_schematic.png>] (./examples_suite_report.aux) ) 
 Here is how much of TeX's memory you used:
- 2163 strings out of 478268
- 40948 string characters out of 5754030
- 332345 words of memory out of 5000000
- 20375 multiletter control sequences out of 15000+600000
- 474016 words of font info for 44 fonts, out of 8000000 for 9000
+ 2783 strings out of 478268
+ 56551 string characters out of 5754030
+ 359922 words of memory out of 5000000
+ 20961 multiletter control sequences out of 15000+600000
+ 474017 words of font info for 44 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,10n,62p,420b,230s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/tce/backend/
-installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzz
-stanspbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/b
-ackend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7
-bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
-r/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvb
-moj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.p
-fb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-202203
-21-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/c
-mr10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-
-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfont
-s/cm/cmr12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/te
-xlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/a
-msfonts/cm/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.
-3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmr8.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
+ 55i,8n,62p,419b,231s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/tce/bac
+kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
+fyzzzstanspbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/
+tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
+j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
+></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321
+-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmb
+x12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2
+0220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts
+/cm/cmr10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/tex
+live-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmr12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
+.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
 c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
 e1/public/amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x8
 6_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fo
-nts/type1/public/amsfonts/latxfont/lcircle1.pfb></usr/tce/backend/installations
-/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6i
-j/texmf-dist/fonts/type1/public/amsfonts/latxfont/line10.pfb></usr/tce/backend/
-installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzz
-stanspbcoex6ij/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb>
-Output written on examples_suite_report.pdf (2 pages, 401098 bytes).
+nts/type1/public/cm-super/sfrm1000.pfb>
+Output written on examples_suite_report.pdf (13 pages, 2607644 bytes).
 PDF statistics:
- 67 PDF objects out of 1000 (max. 8388607)
- 38 compressed objects within 1 object stream
+ 126 PDF objects out of 1000 (max. 8388607)
+ 54 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 136 words of extra memory for PDF output out of 10000 (max. 10000000)
 

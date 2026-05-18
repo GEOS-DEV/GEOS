@@ -41,7 +41,7 @@ pfw["ppc"]=2               # particles per cell in each direction
 
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:10:00"
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 

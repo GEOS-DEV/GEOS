@@ -137,7 +137,7 @@ surfaceDetection="0"
 damageFieldPartitioning="1"
 treatFullyDamagedAsSingleField="1"
 separabilityMinDamage="0.5"
-contactGapCorrection="1"
+contactGapCorrection="Implicit"
 frictionCoefficient="0.0"
 
 boundaryConditionTypes="{ 0, 0, 2, 2, 2, 2 }"    
@@ -188,7 +188,7 @@ pfw = {
     "damageFieldPartitioning": 1,
     "treatFullyDamagedAsSingleField": 1,
     "separabilityMinDamage": 0.5,
-    "contactGapCorrection": 1,
+    "contactGapCorrection": "Implicit",
     "frictionCoefficient": 0.0,
     "boundaryConditionTypes": [0, 0, 2, 2, 2, 2],
 }

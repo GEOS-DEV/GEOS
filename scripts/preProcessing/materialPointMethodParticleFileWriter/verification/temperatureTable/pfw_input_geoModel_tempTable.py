@@ -44,7 +44,7 @@ pfw["ppc"]=2               # particles per cell in each direction
 
 pfw["mBatch"]=True
 pfw["mWallTime"]="00:2:00"
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 pfw["endTime"]=stopTime
@@ -186,9 +186,9 @@ pfw["temperatureTableInterpType"] = 'Linear'
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-<MPMEvents>
-    <TemperatureProfile
-        time=""" + '"' + str(0.0) + '"' + """
+<TemperatureProfile
+        time=
+""" + '"' + str(0.0) + '"' + """
         interval=""" + '"' + str(stopTime) + '"' + """
         />
 </MPMEvents>

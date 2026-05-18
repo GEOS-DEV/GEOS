@@ -6817,7 +6817,7 @@ class BaseWrapper:
 
   def getSurfaceNormal(self, pt):
     if hasattr(self, "surfaceNormal"):
-        return self.surfaceNormal(self, pt) if callable(self.surfaceNormal) else self.surfacenormal
+        return self.surfaceNormal(self, pt) if callable(self.surfaceNormal) else self.surfaceNormal
 
     if hasattr(self.subObject, 'getSurfaceNormal'):
         return self.subObject.getSurfaceNormal(pt)

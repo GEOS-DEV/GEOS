@@ -2525,3 +2525,63 @@ failedStepResponse="""+'"'+str(ghareb["failedStepResponse"])+'"'+"""
 
 # #################################################################################################
 
+
+###################################################################################################
+# VERIFICATION ELASTIC MATERIAL:
+# Simple dimensionless ElasticIsotropic entry for verification smoke/analytic cases.  The dictionary
+# owns all parameters and materialString is consumed directly by PFW inputs, matching the style of
+# other material database entries.
+verificationElastic = {}
+verificationElastic["name"] = "verificationElastic"
+verificationElastic["version"] = 2605180001
+verificationElastic["model"] = "ElasticIsotropic"
+verificationElastic["defaultDensity"] = 1.0
+verificationElastic["defaultYoungModulus"] = 1.0
+verificationElastic["defaultPoissonRatio"] = 0.25
+verificationElastic["defaultBulkModulus"] = verificationElastic["defaultYoungModulus"]/(3.0*(1.0 - 2.0*verificationElastic["defaultPoissonRatio"]))
+verificationElastic["defaultShearModulus"] = verificationElastic["defaultYoungModulus"]/(2.0*(1.0 + verificationElastic["defaultPoissonRatio"]))
+verificationElastic["waveSpeed"] = float(np.sqrt((verificationElastic["defaultBulkModulus"] + 4.0/3.0*verificationElastic["defaultShearModulus"])/verificationElastic["defaultDensity"]))
+verificationElastic["materialString"] = (
+    "<!--"+verificationElastic["name"]+" parameterization of "+verificationElastic["model"]+" model, version: "+str(verificationElastic["version"])+"-->\n"
+    "<"+verificationElastic["model"]+"\n"
+    "name=\""+verificationElastic["name"]+"\"\n"
+    "defaultDensity=\""+str(verificationElastic["defaultDensity"])+"\"\n"
+    "defaultYoungModulus=\""+str(verificationElastic["defaultYoungModulus"])+"\"\n"
+    "defaultPoissonRatio=\""+str(verificationElastic["defaultPoissonRatio"])+"\"\n"
+    "/>\n"
+)
+# #################################################################################################
+
+###################################################################################################
+# VERIFICATION QUARTZ DAMAGE MATERIAL:
+# Deterministic quartz-like damage material for verification cases that should not rely on stochastic
+# Weibull fields unless the input explicitly creates them.
+verificationQuartz = {}
+verificationQuartz["name"] = "verificationQuartz"
+verificationQuartz["version"] = 2605180002
+verificationQuartz["model"] = "Quartz"
+verificationQuartz["defaultDensity"] = 2.65
+verificationQuartz["defaultBulkModulus"] = 37.0
+verificationQuartz["defaultShearModulus"] = 44.0
+verificationQuartz["defaultTensileStrength"] = 0.030
+verificationQuartz["defaultCompressiveStrength"] = 0.300
+verificationQuartz["defaultShearStrength"] = 0.050
+verificationQuartz["fractureEnergy"] = 1.0e-5
+verificationQuartz["weibullReferenceVolume"] = 1.0
+verificationQuartz["weibullModulus"] = 0.0
+verificationQuartz["waveSpeed"] = float(np.sqrt((verificationQuartz["defaultBulkModulus"] + 4.0/3.0*verificationQuartz["defaultShearModulus"])/verificationQuartz["defaultDensity"]))
+verificationQuartz["materialString"] = (
+    "<!--"+verificationQuartz["name"]+" parameterization of "+verificationQuartz["model"]+" model, version: "+str(verificationQuartz["version"])+"-->\n"
+    "<"+verificationQuartz["model"]+"\n"
+    "name=\""+verificationQuartz["name"]+"\"\n"
+    "defaultDensity=\""+str(verificationQuartz["defaultDensity"])+"\"\n"
+    "defaultBulkModulus=\""+str(verificationQuartz["defaultBulkModulus"])+"\"\n"
+    "defaultShearModulus=\""+str(verificationQuartz["defaultShearModulus"])+"\"\n"
+    "defaultTensileStrength=\""+str(verificationQuartz["defaultTensileStrength"])+"\"\n"
+    "defaultCompressiveStrength=\""+str(verificationQuartz["defaultCompressiveStrength"])+"\"\n"
+    "defaultShearStrength=\""+str(verificationQuartz["defaultShearStrength"])+"\"\n"
+    "fractureEnergy=\""+str(verificationQuartz["fractureEnergy"])+"\"\n"
+    "/>\n"
+)
+# #################################################################################################
+

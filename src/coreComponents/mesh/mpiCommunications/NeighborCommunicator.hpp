@@ -17,6 +17,7 @@
 #define GEOS_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "common/MpiWrapper.hpp"
+#include "mesh/mpiCommunications/CommunicationDirection.hpp"
 #include "mesh/FieldIdentifiers.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -236,7 +237,8 @@ public:
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool onDevice,
-                              parallelDeviceEvents & events );
+                              parallelDeviceEvents & events,
+                              CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   int packCommSizeForSync( string_array const & fieldNames,
                            ObjectManagerBase const & manager,
@@ -248,7 +250,8 @@ public:
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
-                           parallelDeviceEvents & events );
+                           parallelDeviceEvents & events,
+                           CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   void unpackBufferForSync( ObjectManagerBase & manager,
                             int const commID,
@@ -260,7 +263,8 @@ public:
                             int const commID,
                             bool onDevice,
                             parallelDeviceEvents & events,
-                            MPI_Op op=MPI_REPLACE );
+                            MPI_Op op=MPI_REPLACE,
+                            CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   int neighborRank() const { return m_neighborRank; }
 

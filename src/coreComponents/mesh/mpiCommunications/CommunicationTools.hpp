@@ -21,6 +21,7 @@
 #define GEOS_MESH_MPICOMMUNICATIONS_COMMUNICATIONTOOLS_HPP_
 
 #include "CommID.hpp"
+#include "CommunicationDirection.hpp"
 
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -110,7 +111,8 @@ public:
                                      MeshLevel & mesh,
                                      stdVector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
-                                     bool onDevice );
+                                     bool onDevice,
+                                     CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   void synchronizePackSendRecv( string_array const & fieldNames,
                                 ObjectManagerBase & manager,
@@ -122,7 +124,8 @@ public:
                                 MeshLevel & mesh,
                                 stdVector< NeighborCommunicator > & neighbors,
                                 MPI_iCommData & icomm,
-                                bool onDevice );
+                                bool onDevice,
+                                CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   void asyncPack( string_array const & fieldNames,
                   ObjectManagerBase & manager,
@@ -136,7 +139,8 @@ public:
                   stdVector< NeighborCommunicator > & neighbors,
                   MPI_iCommData & icomm,
                   bool onDevice,
-                  parallelDeviceEvents & events );
+                  parallelDeviceEvents & events,
+                  CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   void asyncSendRecv( stdVector< NeighborCommunicator > & neighbors,
                       MPI_iCommData & icomm,
@@ -164,7 +168,8 @@ public:
                     MPI_iCommData & icomm,
                     bool onDevice,
                     parallelDeviceEvents & events,
-                    MPI_Op op=MPI_REPLACE );
+                    MPI_Op op=MPI_REPLACE,
+                    CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   void finalizeUnpack( ObjectManagerBase & manager,
                        stdVector< NeighborCommunicator > & neighbors,
@@ -177,7 +182,8 @@ public:
                        MPI_iCommData & icomm,
                        bool onDevice,
                        parallelDeviceEvents & events,
-                       MPI_Op op=MPI_REPLACE );
+                       MPI_Op op=MPI_REPLACE,
+                       CommunicationDirection direction=CommunicationDirection::OwnerToGhost );
 
   static void checkSendRecv( ObjectManagerBase const & objectManager,
                              stdVector< NeighborCommunicator > & neighbors );

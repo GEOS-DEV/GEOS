@@ -75,13 +75,11 @@ pfw["materialPropertyString"]="""
 """
 
 # BATCH PARAMETERS  --------------------------------------------------------
-
-pfw["mBank"]="MAHEM"
 pfw["mBatch"]=True
 pfw["mWallTime"]="06:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=True
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
@@ -174,7 +172,8 @@ pfw["fTable"]=[[0,            1.0,  1.0,    1.0],
 pfw["mpmEventsString"]="""
 <CohesiveZone 
     name="cz1" 
-    startTime=""" + '"' + str(0.0) + '"' + """
+    startTime=
+""" + '"' + str(0.0) + '"' + """
     constitutiveModel="cz1"
     czVolumeNormalization="1"/>
 """

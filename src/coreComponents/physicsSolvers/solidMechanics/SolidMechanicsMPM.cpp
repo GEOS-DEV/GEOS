@@ -11540,39 +11540,36 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
   fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
   stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
 
-  // (2) Swap send and receive indices so we can sum from ghost to master
-  for( size_t n=0; n<neighbors.size(); ++n )
-  {
-    int const neighborRank = neighbors[n].neighborRank();
-    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
-    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
-    array1d< localIndex > temp = nodeGhostsToSend;
-    nodeGhostsToSend = nodeGhostsToReceive;
-    nodeGhostsToReceive = temp;
-  }
-
-  // (3) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, iComm, true );
+  // (2) Accumulate ghost values into owning nodes without mutating the stored sync lists.
+  //     This is equivalent to temporarily swapping ghostsToSend/ghostsToReceive:
+  //       pack ghostsToReceive, unpack into ghostsToSend.
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
+                                                                  mesh,
+                                                                  neighbors,
+                                                                  iComm,
+                                                                  true,
+                                                                  CommunicationDirection::GhostToOwner );
   parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
+                                               mesh,
+                                               neighbors,
+                                               iComm,
+                                               true,
+                                               packEvents,
+                                               CommunicationDirection::GhostToOwner );
   waitAllDeviceEvents( packEvents );
   CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, true, packEvents );
   parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, iComm, true, unpackEvents, op ); // needs an extra argument to
-                                                                                                      // indicate unpack
-                                                                                                      // operation
-  // (4) Swap send and receive indices back so we can sync from master to ghost
-  for( size_t n=0; n<neighbors.size(); ++n )
-  {
-    int const neighborRank = neighbors[n].neighborRank();
-    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
-    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
-    array1d< localIndex > temp = nodeGhostsToSend;
-    nodeGhostsToSend = nodeGhostsToReceive;
-    nodeGhostsToReceive = temp;
-  }
+  CommunicationTools::getInstance().finalizeUnpack( mesh,
+                                                    neighbors,
+                                                    iComm,
+                                                    true,
+                                                    unpackEvents,
+                                                    op,
+                                                    CommunicationDirection::GhostToOwner );
 
-  // (5) Perform sync
+  // (3) Synchronize owning-node values back to ghosts using the normal GEOS direction:
+  //       pack ghostsToSend, unpack into ghostsToReceive.
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, iComm, true );
   parallelDeviceEvents packEvents2;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, iComm, true, packEvents2 );

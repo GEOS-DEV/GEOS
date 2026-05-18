@@ -62,7 +62,7 @@ pfw["neighborRadius"]=-1.01
 pfw["needsNeighborList"]=1
 pfw["cpdiDomainScaling"]=1
 pfw["damageFieldPartitioning"]=1
-pfw["contactGapCorrection"]=1
+pfw["contactGapCorrection"] = "Implicit"
 pfw["frictionCoefficient"]=0.25
 
 pfw["prescribedBoundaryFTable"]=0

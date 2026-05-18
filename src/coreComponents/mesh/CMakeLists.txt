@@ -103,6 +103,7 @@ set( mesh_headers
      generators/Region.hpp
      generators/WellGeneratorBase.hpp
      mpiCommunications/CommID.hpp
+     mpiCommunications/CommunicationDirection.hpp
      mpiCommunications/CommunicationTools.hpp
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp

@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import os
 import re
 import shutil
@@ -24,8 +23,6 @@ def parse_args():
     p.add_argument("--output-prefix", required=True)
     p.add_argument("--initial-variable", default="Damage")
     p.add_argument("--final-variable", default="Damage")
-    p.add_argument("--initial-range-mode", choices=("unit", "auto"), default="auto")
-    p.add_argument("--final-range-mode", choices=("unit", "auto"), default="auto")
     p.add_argument("--view", default="xy")
     p.add_argument("--mesh", default="CellRegion1")
     p.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
@@ -38,11 +35,11 @@ def parse_args():
 
 
 def log(args, msg):
-    print(f"[{args.case_name} post] {msg}")
+    print(f"[{args.case_name} post] {msg}", flush=True)
 
 
 def warn(args, msg):
-    print(f"[{args.case_name} post] WARNING: {msg}", file=sys.stderr)
+    print(f"[{args.case_name} post] WARNING: {msg}", file=sys.stderr, flush=True)
 
 
 def expand(path):
@@ -51,7 +48,7 @@ def expand(path):
 
 def plot_database_exists(run_dir: Path) -> bool:
     silo = run_dir / "siloFiles"
-    return silo.is_dir() and any(silo.glob("mpm_cpdi_*"))
+    return silo.is_dir() and (any(silo.glob("mpm_cpdi_*")) or any(silo.glob("mpm_*")))
 
 
 def slurm_file_for(run_dir: Path, job_id: str) -> Path | None:
@@ -70,19 +67,19 @@ def check_geos_completed(args, run_dir: Path) -> bool:
         return True
     log_path = run_dir / f"{args.output_prefix}_geos_slurm_check.log"
     slurm = slurm_file_for(run_dir, args.job_id)
-    lines = []
+    records = []
     if slurm and slurm.is_file():
         log(args, "checking GEOS slurm output: " + str(slurm))
         data = slurm.read_text(errors="replace")
-        tail = data[-20000:]
-        lines.append("slurm=" + str(slurm))
-        failure = re.search(r"(CANCELLED|TIME LIMIT|OUT_OF_MEMORY|NODE_FAIL|Segmentation fault|Traceback|EXCEPTION|Error -|MPI_Abort)", tail, re.I)
-        success = re.search(r"(Job complete|GEOSX executed successfully|problem run complete|Total elapsed time)", tail, re.I)
-        lines.append("success_marker=" + str(bool(success)))
-        lines.append("failure_marker=" + (failure.group(0) if failure else ""))
-        log_path.write_text("\n".join(lines) + "\n")
+        tail = data[-30000:]
+        records.append("slurm=" + str(slurm))
+        failure = re.search(r"(CANCELLED|TIME LIMIT|OUT_OF_MEMORY|NODE_FAIL|Segmentation fault|Traceback|EXCEPTION|MPI_Abort)", tail, re.I)
+        success = re.search(r"(Job complete|GEOSX executed successfully|problem run complete|Total elapsed time|run complete)", tail, re.I)
+        records.append("success_marker=" + str(bool(success)))
+        records.append("failure_marker=" + (failure.group(0) if failure else ""))
+        log_path.write_text("\n".join(records) + "\n")
         if failure and not success:
-            warn(args, "failure marker found in GEOS slurm output; post-processing will be skipped")
+            warn(args, "failure marker found in GEOS slurm output; post-processing will copy existing products only")
             return False
         if success:
             return True
@@ -94,7 +91,6 @@ def check_geos_completed(args, run_dir: Path) -> bool:
         if plot_database_exists(run_dir):
             warn(args, "Silo plot database exists; continuing")
             return True
-
     if shutil.which("sacct") and args.job_id:
         proc = subprocess.run(["sacct", "-j", args.job_id, "-X", "-n", "-P", "-o", "JobID,State,ExitCode"], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
         line = next((l for l in proc.stdout.splitlines() if l.strip()), "")
@@ -105,7 +101,10 @@ def check_geos_completed(args, run_dir: Path) -> bool:
             with log_path.open("a") as f:
                 f.write(f"sacct_state={state}\nsacct_exit={exit_code}\n")
             log(args, f"sacct state={state} exit={exit_code}")
-            return state == "COMPLETED" and exit_code == "0:0"
+            if state == "COMPLETED" and exit_code == "0:0":
+                return True
+            if state in {"RUNNING", "PENDING", "CONFIGURING", "COMPLETING"}:
+                return False
     return plot_database_exists(run_dir)
 
 
@@ -125,32 +124,64 @@ def detect_visit(requested: str) -> str | None:
     return None
 
 
-def run_visit(args, run_dir: Path, frame_dir: Path) -> None:
-    if args.no_visit or args.skip_render or args.copy_only:
-        return
-    script = run_dir / "pfw_visit_render.py"
-    if not script.is_file():
-        warn(args, "pfw_visit_render.py not found in run directory; skipping VisIt")
-        return
-    visit = detect_visit(args.visit_cmd)
-    if not visit:
-        warn(args, "VisIt command not found; skipping render")
-        return
-    frame_dir.mkdir(parents=True, exist_ok=True)
-    log_file = run_dir / f"{args.output_prefix}_visit_render.log"
-    commands = [
-        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "initial", "--view", args.view, "--variable", args.initial_variable, "--range-mode", args.initial_range_mode, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
-        [visit, "-nowin", "-cli", "-s", str(script), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "final", "--view", args.view, "--variable", args.final_variable, "--range-mode", args.final_range_mode, "--mesh", args.mesh, "--colortable", "hot_desaturated", "--list-databases"],
-    ]
-    with log_file.open("w") as logf:
-        for cmd in commands:
-            log(args, "running VisIt: " + " ".join(cmd))
+def run_visit_command(args, run_dir: Path, frame_dir: Path, states: str, variable: str, range_mode: str, logf) -> None:
+    custom = run_dir / f"visitRender_{args.output_prefix}.py"
+    if custom.is_file():
+        visit = detect_visit(args.visit_cmd)
+        if not visit:
+            warn(args, "VisIt command not found; skipping render")
+            return
+        frame_dir.mkdir(parents=True, exist_ok=True)
+        log_file = run_dir / f"{args.output_prefix}_visit_render.log"
+        cmd = [visit, "-nowin", "-cli", "-s", str(custom), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "initial,final", "--mesh", args.mesh, "--list-databases"]
+        log(args, "running VisIt: " + " ".join(cmd))
+        with log_file.open("w") as logf:
             logf.write("Running: " + " ".join(cmd) + "\n")
             proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             logf.write(proc.stdout)
             print(proc.stdout, end="")
             if proc.returncode != 0:
                 warn(args, f"VisIt command exited with {proc.returncode}; continuing to copy any generated PNGs")
+        return
+    script = run_dir / "pfw_visit_render.py"
+    visit = detect_visit(args.visit_cmd)
+    if not script.is_file():
+        warn(args, "pfw_visit_render.py not found in run directory; skipping VisIt")
+        return
+    if not visit:
+        warn(args, "VisIt command not found; skipping render")
+        return
+    cmd = [
+        visit, "-nowin", "-cli", "-s", str(script),
+        "--run-dir", str(run_dir),
+        "--output-dir", str(frame_dir),
+        "--case-name", args.output_prefix,
+        "--states", states,
+        "--view", args.view,
+        "--variable", variable,
+        "--mesh", args.mesh,
+        "--colortable", "hot_desaturated",
+        "--range-mode", range_mode,
+        "--list-databases",
+    ]
+    log(args, "running VisIt: " + " ".join(cmd))
+    logf.write("Running: " + " ".join(cmd) + "\n")
+    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    logf.write(proc.stdout)
+    print(proc.stdout, end="")
+    if proc.returncode != 0:
+        warn(args, f"VisIt command exited with {proc.returncode}; continuing to copy any generated PNGs")
+
+
+def run_visit(args, run_dir: Path, frame_dir: Path) -> None:
+    if args.no_visit or args.skip_render or args.copy_only:
+        return
+    frame_dir.mkdir(parents=True, exist_ok=True)
+    log_file = run_dir / f"{args.output_prefix}_visit_render.log"
+    with log_file.open("w") as logf:
+        run_visit_command(args, run_dir, frame_dir, "initial", args.initial_variable, "auto", logf)
+        final_range = "unit" if "damage" in args.final_variable.lower() else "auto"
+        run_visit_command(args, run_dir, frame_dir, "final", args.final_variable, final_range, logf)
 
 
 def parse_float(value: str):
@@ -184,7 +215,6 @@ def plot_reactions(args, run_dir: Path) -> Path | None:
             numeric.append(vals)
     if not numeric:
         return None
-    # Choose a time column, then reaction-like y columns if possible; otherwise plot all numeric outputs.
     time_idx = 0
     for i, h in enumerate(header):
         if h.lower() in {"time", "t"} or "time" in h.lower():
@@ -195,7 +225,7 @@ def plot_reactions(args, run_dir: Path) -> Path | None:
         low = h.lower()
         if i == time_idx:
             continue
-        if ("reaction" in low or "force" in low or "ry" in low or "_y" in low or low.endswith("y")):
+        if "reaction" in low or "force" in low or "ry" in low or "_y" in low or low.endswith("y"):
             candidates.append(i)
     if not candidates:
         candidates = [i for i in range(len(header)) if i != time_idx][:6]
@@ -225,13 +255,15 @@ def plot_reactions(args, run_dir: Path) -> Path | None:
 def copy_products(args, run_dir: Path, output_dir: Path, frame_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     copied = []
-    patterns = [f"{args.output_prefix}*.png", f"{args.output_prefix}*.csv", f"{args.output_prefix}*.log", f"{args.output_prefix}*.json"]
+    seen_sources = set()
+    patterns = [f"{args.output_prefix}*.png", f"{args.output_prefix}*.csv", f"{args.output_prefix}*.log", f"{args.output_prefix}*.json", "*.png", "*.log"]
     for base in [frame_dir, run_dir]:
         if not base.exists():
             continue
         for pattern in patterns:
             for src in sorted(base.glob(pattern)):
-                if src.is_file():
+                if src.is_file() and src.resolve() not in seen_sources:
+                    seen_sources.add(src.resolve())
                     dst = output_dir / src.name
                     shutil.copy2(src, dst)
                     copied.append(dst.name)
@@ -259,13 +291,14 @@ def main():
     log(args, "visit frames directory: " + str(frame_dir))
     ok = check_geos_completed(args, run_dir)
     if not ok:
-        warn(args, "GEOS completion check failed; copying existing products only")
+        warn(args, "GEOS completion check failed or job is not complete; copying existing products only")
         args.copy_only = True
     if not args.copy_only:
         plot_reactions(args, run_dir)
         run_visit(args, run_dir, frame_dir)
     copy_products(args, run_dir, output_dir, frame_dir)
     payload = {"case": args.case_name, "generated_at": datetime.now().isoformat(timespec="seconds"), "job_id": args.job_id, "run_dir": str(run_dir), "output_dir": str(output_dir)}
+    output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / f"{args.output_prefix}_postprocess.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 

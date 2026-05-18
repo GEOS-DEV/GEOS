@@ -1,10 +1,75 @@
 {
-  "generated_at": "2026-05-17T14:42:08",
   "cases": [
     {
+      "case": "brazilianDisk_FMPM",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/output/brazilianDisk_FMPM_runProblem.log"
+    },
+    {
       "case": "brazilianDisk_BSpline",
-      "geos": "6044292",
-      "post": "6044293"
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/output/brazilianDisk_BSpline_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_FLIP",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/output/brazilianDisk_FLIP_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_PIC",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/output/brazilianDisk_PIC_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_XPIC",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/output/brazilianDisk_XPIC_runProblem.log"
+    },
+    {
+      "case": "benchy",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/output/benchy_FMPM_runProblem.log"
+    },
+    {
+      "case": "borehole_Ghareb",
+      "dispatch_returncode": 0,
+      "geos": "6046259",
+      "post": "6046260",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/output/borehole_Ghareb_runProblem.log"
+    },
+    {
+      "case": "collidingDisks",
+      "dispatch_returncode": 0,
+      "geos": "6046261",
+      "post": "6046262",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/output/collidingDisks_runProblem.log"
+    },
+    {
+      "case": "elasticDisk",
+      "dispatch_returncode": 0,
+      "geos": "6046263",
+      "post": "6046264",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/output/elasticDisk_runProblem.log"
+    },
+    {
+      "case": "pdc",
+      "dispatch_returncode": 0,
+      "geos": "6046265",
+      "post": "6046266",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output/pdc_runProblem.log"
     }
-  ]
+  ],
+  "generated_at": "2026-05-17T21:34:39"
 }

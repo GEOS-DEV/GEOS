@@ -52,10 +52,9 @@ pfw["zmax"] = 0.5*domainZ # mm
 
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True
-pfw["mBank"]="imcomp" #"MAHEM"
 pfw["mWallTime"]="02:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
@@ -108,11 +107,10 @@ def getVelocity(self,pt):
     r = np.linalg.norm( xr )  # r coordinate of test point
     if ( r > 1.e-12):
       er = xr/r
-      v = initialRadialVelocity*er
+      vel= initialRadialVelocity*er
     else:
-      v = np.array([0.,0.,0.])
-    return v
-
+      vel= np.array([0.,0.,0.])
+    return vel
 def make_objects():
     ring = geom.cylinder('ring',
         x1=[0.0,0.0,-0.5*DZ],

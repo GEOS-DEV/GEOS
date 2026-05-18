@@ -59,10 +59,9 @@ sampleZ = domainZ - 2.*DZ
 
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True
-pfw["mBank"]="imcomp" #"MAHEM"
 pfw["mWallTime"]="02:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
@@ -110,9 +109,8 @@ pfw["particleFileFields"] = ["Velocity",
 # Linear varying velocity for cylinder:
 def getVelocity(self,pt):
     x = np.array(pt)
-    v = [initialVelocityGradient*x[0],0.,0.]
-    return v
-
+    vel= [initialVelocityGradient*x[0],0.,0.]
+    return vel
 def make_objects():
   bar = geom.box('box', 
                  x0 = [ -0.5*sampleX, -0.5*sampleY, -0.5*sampleX ],

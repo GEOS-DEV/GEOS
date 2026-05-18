@@ -122,8 +122,6 @@ pfw["fTable"]=[[0.0,        1.00,  1.00,  1.00],
                [stopTime, 1.00,  0.7,  1.00]]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-
-pfw["mBank"]="imcomp"
 pfw["mBatch"]=True
 pfw["mWallTime"]="03:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]

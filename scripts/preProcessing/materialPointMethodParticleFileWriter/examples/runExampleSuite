@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Run/report the GEOS-MPM examples suite.
+"""Run and report the GEOS-MPM examples suite.
 
-This generated suite runner keeps going when an individual runProblem fails and
-includes per-case logs/errors in the final LaTeX/PDF report.
+The suite driver is intentionally robust: it keeps dispatching remaining examples
+after a case fails, it records runProblem logs, it waits for submitted post jobs
+unless --no-wait is supplied, and it builds a PDF report even when some cases are
+incomplete, cancelled, or missing visualization products.
 """
-
 from __future__ import annotations
 
 import argparse
@@ -19,13 +20,25 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+TERMINAL_STATES = {
+    "COMPLETED", "FAILED", "CANCELLED", "CANCELLED+", "TIMEOUT", "NODE_FAIL",
+    "OUT_OF_MEMORY", "PREEMPTED", "BOOT_FAIL", "DEADLINE", "REVOKED", "SPECIAL_EXIT",
+}
+BAD_STATES = {"FAILED", "CANCELLED", "CANCELLED+", "TIMEOUT", "NODE_FAIL", "OUT_OF_MEMORY", "BOOT_FAIL", "DEADLINE", "REVOKED"}
+
 EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'dir': 'brazilianDisk_FMPM',
   'prefix': 'brazilianDisk_FMPM',
   'family': 'Brazilian disk',
   'label': 'FMPM',
-  'description': 'Plane-strain Brazilian disk compression with quartz damage, Weibull strength scaling, and CPDI particles.',
-  'features': ['FMPM update', 'quartz damage material', 'moving y boundaries', 'periodic x boundaries', 'reaction history'],
+  'description': 'Plane-strain Brazilian disk compression with quartz damage, Weibull strength scaling, and CPDI '
+                 'particles.',
+  'features': ['FMPM update',
+               'CPDI particles',
+               'quartz damage material',
+               'moving y boundaries',
+               'periodic x boundaries',
+               'reaction history'],
   'initial': 'brazilianDisk_FMPM_initial_particleStrengthScale.png',
   'final': 'brazilianDisk_FMPM_final_particleDamage.png',
   'reaction': 'brazilianDisk_FMPM_reactions_y.png',
@@ -35,8 +48,8 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'prefix': 'brazilianDisk_BSpline',
   'family': 'Brazilian disk',
   'label': 'SinglePointBSpline',
-  'description': 'Brazilian disk compression using the new SinglePointBSpline particle type.  The case keeps the FMPM update path and '
-                 'quartz damage material but uses particleType=1 so GEOS exercises ParticleType::SinglePointBSpline.',
+  'description': 'Brazilian disk compression using the SinglePointBSpline particle type. The case keeps the FMPM '
+                 'transfer path and quartz damage material while exercising the new particle interpolation option.',
   'features': ['SinglePointBSpline particle type',
                'FMPM update',
                'quartz damage material',
@@ -53,7 +66,11 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'family': 'Brazilian disk',
   'label': 'FLIP',
   'description': 'Brazilian disk variant using FLIP grid-to-particle velocity transfer.',
-  'features': ['FLIP update', 'quartz damage material', 'reaction history'],
+  'features': ['FLIP update',
+               'quartz damage material',
+               'moving y boundaries',
+               'periodic x boundaries',
+               'reaction history'],
   'initial': 'brazilianDisk_FLIP_initial_particleStrengthScale.png',
   'final': 'brazilianDisk_FLIP_final_particleDamage.png',
   'reaction': 'brazilianDisk_FLIP_reactions_y.png',
@@ -64,7 +81,11 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'family': 'Brazilian disk',
   'label': 'PIC',
   'description': 'Brazilian disk variant using PIC velocity transfer.',
-  'features': ['PIC update', 'quartz damage material', 'reaction history'],
+  'features': ['PIC update',
+               'quartz damage material',
+               'moving y boundaries',
+               'periodic x boundaries',
+               'reaction history'],
   'initial': 'brazilianDisk_PIC_initial_particleStrengthScale.png',
   'final': 'brazilianDisk_PIC_final_particleDamage.png',
   'reaction': 'brazilianDisk_PIC_reactions_y.png',
@@ -75,7 +96,11 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'family': 'Brazilian disk',
   'label': 'XPIC',
   'description': 'Brazilian disk variant using XPIC velocity transfer.',
-  'features': ['XPIC update', 'quartz damage material', 'reaction history'],
+  'features': ['XPIC update',
+               'quartz damage material',
+               'moving y boundaries',
+               'periodic x boundaries',
+               'reaction history'],
   'initial': 'brazilianDisk_XPIC_initial_particleStrengthScale.png',
   'final': 'brazilianDisk_XPIC_final_particleDamage.png',
   'reaction': 'brazilianDisk_XPIC_reactions_y.png',
@@ -87,112 +112,82 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'label': 'Benchy FMPM',
   'description': 'STL import and prescribed multi-field contact between a copper 3DBenchy boat and a steel ball.',
   'features': ['STL geometry import',
-               'copper and steel material helpers',
+               'copper boat and steel ball',
                'separate particle regions/contact groups',
+               'prescribed multi-field contact',
                'multi-region VisIt rendering'],
   'initial': 'benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.png',
   'final': 'benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocityMagnitude.png',
   'reaction': '',
-  'args': []},
- {'id': 'bar',
-  'dir': 'bar',
-  'prefix': 'bar',
-  'family': 'Elastic bar',
-  'label': 'Elastic bar smoke problem',
-  'description': 'A small elastic bar represented by box geometry.  This is a lightweight smoke test for basic PFW staging, particle '
-                 'generation, GEOS submission, and VisIt rendering.',
-  'features': ['ElasticIsotropic material', 'box geometry', 'explicit dynamic MPM', 'Silo output'],
-  'initial': 'bar_initial_',
-  'final': 'bar_final_',
-  'reaction': 'bar_reactions.png',
   'args': []},
  {'id': 'borehole_Ghareb',
   'dir': 'borehole',
   'prefix': 'borehole_Ghareb',
   'family': 'Borehole collapse',
   'label': 'Ghareb geomechanics borehole pressure drawdown',
-  'description': 'A plane-strain borehole collapse demonstration using the Ghareb geomechanics parameterization from pfw_materials.py.  '
-                 'The rendered initial state shows hydrostatic/mean pressure and the final state shows plastic-strain magnitude.',
+  'description': 'A plane-strain borehole collapse demonstration using the Ghareb geomechanics parameterization from '
+                 'pfw_materials.py. The rendered initial state shows hydrostatic/mean pressure and the final state '
+                 'shows plastic-strain magnitude.',
   'features': ['Geomechanics material model',
-               'borehole pressure MPM event',
-               'confining pressure event',
+               'InitializeStress MPM event',
+               'confining-pressure event',
+               'borehole-pressure event',
                'Voronoi-Weibull flaw field',
-               'plane strain CPDI'],
-  'initial': 'borehole_Ghareb_initial_pressure.png',
-  'final': 'borehole_Ghareb_final_plasticStrainMagnitude.png',
-  'reaction': 'borehole_Ghareb_reactions.png',
+               'plane-strain CPDI'],
+  'initial': 'pressure',
+  'final': 'plasticStrainMagnitude',
+  'reaction': '',
   'args': ['--case', 'borehole_Ghareb']},
  {'id': 'collidingDisks',
   'dir': 'collidingDisks',
   'prefix': 'collidingDisks',
   'family': 'Colliding disks',
-  'label': 'Two elastic disks colliding with XPIC update',
-  'description': 'Two disk-shaped particle bodies move toward one another in plane strain.  The case exercises moving material points, '
-                 'contact-like interactions, and the XPIC update path.',
-  'features': ['cylinder disk geometry', 'XPIC update', 'multi-object particle initialization', 'reaction and box-average output'],
-  'initial': 'collidingDisks_initial_',
-  'final': 'collidingDisks_final_',
-  'reaction': 'collidingDisks_reactions.png',
+  'label': 'Two disks colliding with XPIC update',
+  'description': 'Two disk-shaped particle bodies move toward one another in plane strain. The case exercises moving '
+                 'material points, contact-like interactions, and the XPIC update path.',
+  'features': ['cylinder disk geometry',
+               'XPIC update',
+               'multi-object particle initialization',
+               'box-average or reaction-style output when enabled'],
+  'initial': 'initial',
+  'final': 'final',
+  'reaction': '',
   'args': []},
  {'id': 'elasticDisk',
   'dir': 'elasticDisk',
   'prefix': 'elasticDisk',
   'family': 'Elastic disk',
   'label': 'Compressed elastic disk',
-  'description': 'An elastic disk compressed by prescribed boundary motion.  It is a compact example of F-table interpolation, reaction '
-                 'history, and elastic response.',
-  'features': ['ElasticIsotropic material helper', 'cosine F-table boundary motion', 'reaction-history output', 'plane strain CPDI'],
-  'initial': 'elasticDisk_initial_',
-  'final': 'elasticDisk_final_',
-  'reaction': 'elasticDisk_reactions.png',
-  'args': []},
- {'id': 'expandingRing',
-  'dir': 'expandingRing',
-  'prefix': 'expandingRing',
-  'family': 'Expanding ring',
-  'label': 'Damageable expanding ring',
-  'description': 'A ring expands dynamically from an imposed initial velocity.  The example exercises annular geometry, damage fields, and '
-                 'surface detection during dynamic fragmentation.',
-  'features': ['annular/cylinder geometry', 'initial radial velocity', 'damage and surface fields', 'FMPM/DFG-style fields'],
-  'initial': 'expandingRing_initial_',
-  'final': 'expandingRing_final_',
-  'reaction': 'expandingRing_reactions.png',
+  'description': 'An elastic disk compressed by prescribed boundary motion. It is a compact example of F-table '
+                 'interpolation, reaction history, and elastic response.',
+  'features': ['ElasticIsotropic material',
+               'cosine F-table boundary motion',
+               'reaction-history output when enabled',
+               'plane-strain CPDI'],
+  'initial': 'initial',
+  'final': 'final',
+  'reaction': '',
   'args': []},
  {'id': 'pdc',
   'dir': 'pdc',
   'prefix': 'pdc',
   'family': 'PDC cutter',
   'label': 'PDC cutter interaction with substrate',
-  'description': 'A small PDC cutter example with a cutter interacting with a substrate.  It demonstrates prescribed transverse boundary '
-                 'velocities, periodic boundaries, and cutter/substrate contact fields.',
+  'description': 'A small PDC cutter example with a cutter interacting with a substrate. The final visualization uses '
+                 'the stored three-dimensional VisIt GUI view and overlays the background grid with '
+                 'plastic-strain-magnitude pseudocolors for both particle regions.',
   'features': ['periodic x boundary',
                'prescribed transverse boundary velocity',
                'PDC cutter/substrate geometry',
                'implicit contact gap correction',
-               'damage material'],
-  'initial': 'pdc_initial_',
-  'final': 'pdc_final_',
-  'reaction': 'pdc_reactions.png',
-  'args': ['--case', 'pdc']},
- {'id': 'plateImpact',
-  'dir': 'plateImpact',
-  'prefix': 'plateImpact',
-  'family': 'Plate impact',
-  'label': 'Symmetric plate impact with central hole',
-  'description': 'Two elastic plates move toward one another with a central hole removed.  The case exercises boolean geometry operations '
-                 'and impact-style initial velocities.',
-  'features': ['box and cylinder difference geometry',
-               'opposing initial velocities',
-               'ElasticIsotropic material helper',
-               'plane strain CPDI'],
-  'initial': 'plateImpact_initial_',
-  'final': 'plateImpact_final_',
-  'reaction': 'plateImpact_reactions.png',
-  'args': []}]
-
+               'two-particle-region plastic strain visualization',
+               'stored 3D VisIt view'],
+  'initial': 'pdc_initial_particleMaterialType_regions.png',
+  'final': 'pdc_final_particlePlasticStrainMagnitude_regions.png',
+  'reaction': '',
+  'args': ['--case', 'pdc']}]
 CASE_BY_ID = {c["id"]: c for c in EXAMPLES}
-if "benchy" in CASE_BY_ID:
-    CASE_BY_ID["benchy_FMPM"] = CASE_BY_ID["benchy"]
+CASE_BY_ID["benchy_FMPM"] = CASE_BY_ID["benchy"]
 
 SACCT_FORMATS = [
     ["JobIDRaw", "JobID", "JobName%40", "State", "ExitCode", "Elapsed", "ElapsedRaw", "TotalCPU", "CPUTimeRAW", "AllocCPUS", "NNodes", "Account", "Partition"],
@@ -205,469 +200,637 @@ def parse_args():
     p.add_argument("command", nargs="?", default="all", choices=("run", "report", "all"))
     p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
     p.add_argument("--case", action="append", choices=sorted(CASE_BY_ID), help="Run/report one selected case; may be repeated")
-    p.add_argument("--force", "-y", action="store_true", help="Do not prompt; pass --force to child runProblem scripts")
-    p.add_argument("--no-wait", action="store_true")
+    p.add_argument("--force", "-y", action="store_true")
+    p.add_argument("--no-wait", action="store_true", help="Submit jobs and return without waiting/reporting completion")
     p.add_argument("--no-visit", action="store_true")
+    p.add_argument("--stop-on-error", action="store_true", help="Stop dispatching after the first runProblem failure")
+    p.add_argument("--dispatch-timeout", type=float, default=0.0, help="Optional runProblem timeout in seconds")
     p.add_argument("--post-walltime", default="00:05:00")
+    p.add_argument("--walltime", default=None, help="Optional GEOS walltime override; by default use each pfw_input mWallTime")
     p.add_argument("--post-partition", default="pdebug")
     p.add_argument("--report-dir", default="examples_suite_report")
-    p.add_argument("--timing-retries", type=int, default=5)
-    p.add_argument("--timing-sleep", type=float, default=6.0)
-    p.add_argument("--dispatch-timeout", type=float, default=0.0,
-                   help="Seconds before aborting a stuck child runProblem dispatch; 0 disables the timeout")
-    p.add_argument("--stop-on-error", action="store_true",
-                   help="Restore fail-fast behavior instead of recording a failure and continuing")
+    p.add_argument("--timing-retries", type=int, default=8)
+    p.add_argument("--timing-sleep", type=float, default=8.0)
+    p.add_argument("--wait-timeout", type=float, default=0.0, help="Optional wait timeout for Slurm jobs in seconds; 0 waits until terminal")
+    p.add_argument("--skip-backfill", action="store_true", help="Do not copy existing PNG/log outputs from run directories during report generation")
     return p.parse_args()
 
 
-def active_examples():
-    retired = {"borehole_Damage_Ghareb", "pdc_r4"}
-    return [c for c in EXAMPLES if c.get("id") not in retired]
-
-
 def selected(args):
-    if args.case:
-        return [CASE_BY_ID[c] for c in args.case if CASE_BY_ID[c].get("id") not in {"borehole_Damage_Ghareb", "pdc_r4"}]
     root = Path(__file__).resolve().parent
-    return [c for c in active_examples() if (root / c["dir"]).is_dir()]
+    if args.case:
+        # Preserve order and de-duplicate aliases.
+        out = []
+        seen = set()
+        for name in args.case:
+            case = CASE_BY_ID[name]
+            if case["id"] not in seen:
+                out.append(case)
+                seen.add(case["id"])
+        return out
+    return [c for c in EXAMPLES if (root / c["dir"]).is_dir()]
 
 
 def output_dir(root, case):
     return root / case["dir"] / "output"
 
 
-def log_path(root, case):
-    return output_dir(root, case) / f"{case['prefix']}_runProblem.log"
-
-
-def run_cmd(cmd, cwd, timeout=0.0):
-    """Run one child command, stream its output live, and capture it for logs.
-
-    stdin is /dev/null so a hidden child prompt cannot hang the suite.  Use
-    --force at the suite level for noninteractive reruns.
-    """
+def stream_run_cmd(cmd, cwd, log_path, timeout=0.0):
     print("+ " + " ".join(str(c) for c in cmd), flush=True)
-    output = []
-    timeout = float(timeout or 0.0)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     start = time.time()
-    proc = subprocess.Popen(
-        cmd,
-        cwd=cwd,
-        text=True,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        bufsize=1,
-    )
-    try:
+    with log_path.open("w", encoding="utf-8", errors="replace") as log:
+        log.write("+ " + " ".join(str(c) for c in cmd) + "\n")
+        proc = subprocess.Popen(
+            cmd,
+            cwd=cwd,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
+            bufsize=1,
+        )
         assert proc.stdout is not None
-        while True:
-            line = proc.stdout.readline()
-            if line:
-                output.append(line)
-                print(line, end="", flush=True)
-            elif proc.poll() is not None:
-                break
-            else:
-                if timeout > 0.0 and (time.time() - start) > timeout:
-                    msg = f"ERROR: child command exceeded dispatch timeout of {timeout:g} s; terminating.\n"
-                    print(msg, end="", flush=True)
-                    output.append(msg)
-                    proc.terminate()
-                    try:
-                        proc.wait(timeout=10)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                        proc.wait()
-                    return 124, "".join(output)
-                time.sleep(0.1)
-        code = proc.wait()
-        return code, "".join(output)
-    except KeyboardInterrupt:
+        timed_out = False
         try:
-            proc.terminate()
+            while True:
+                line = proc.stdout.readline()
+                if line:
+                    print(line, end="", flush=True)
+                    log.write(line)
+                    log.flush()
+                elif proc.poll() is not None:
+                    break
+                if timeout and (time.time() - start) > timeout:
+                    timed_out = True
+                    proc.kill()
+                    break
+                if not line:
+                    time.sleep(0.05)
+            for line in proc.stdout:
+                print(line, end="", flush=True)
+                log.write(line)
         finally:
-            raise
+            code = proc.wait()
+        if timed_out:
+            log.write(f"\nERROR: dispatch timeout after {timeout} seconds\n")
+            return 124
+        return code
 
 
-def confirm_suite_rerun(args):
-    if args.command not in ("run", "all"):
-        return
-    if args.force:
-        return
-    cases = selected(args)
-    case_names = ", ".join(str(c.get("id", "<unknown>")) for c in cases)
-    msg = (
-        "runExampleSuite will dispatch runProblem for: " + case_names + "\n"
-        "For suite runs, child prompts are disabled to avoid hidden hangs.\n"
-        "Continuing will pass --force to each selected runProblem, allowing it to overwrite\n"
-        "case-specific generated files in the Lustre run directory and example output directory.\n"
-        "Parent directories such as testRunDirectory and defaultRunDirectory are not removed."
-    )
-    if not sys.stdin.isatty():
-        raise SystemExit(msg + "\nERROR: noninteractive suite run requires --force")
-    print(msg)
-    answer = input("Continue and rerun selected examples? [y/N] ").strip().lower()
-    if answer not in ("y", "yes"):
-        raise SystemExit("suite run cancelled")
-    args.force = True
+def extract_job_ids_from_text(text):
+    ids = re.findall(r"Submitted job with ID\s*=\s*([0-9]+)", text)
+    ids += re.findall(r"GEOS job id:\s*([0-9]+)", text)
+    post = re.findall(r"post-process job id:\s*([0-9]+)", text)
+    post += re.findall(r"Submitted batch job\s+([0-9]+)", text)
+    geos = ids[-1] if ids else ""
+    # The last Submitted batch job line may be the post job, but PFW may also print one
+    # for the GEOS submit. Prefer the explicit post-process marker when present.
+    post_job = post[-1] if post else ""
+    return geos, post_job
 
 
-def write_case_records(root, case, rec):
-    odir = output_dir(root, case)
-    odir.mkdir(parents=True, exist_ok=True)
-    (odir / f"{case['prefix']}_jobs.json").write_text(json.dumps({"case": case["id"], "jobs": rec}, indent=2, sort_keys=True) + "\n")
-    if rec.get("log"):
-        (odir / f"{case['prefix']}_runProblem.log").write_text(rec["log"])
+def read_json(path):
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return None
 
 
 def dispatch(root, args):
     jobs = []
-    for case in selected(args):
+    failures = []
+    cases = selected(args)
+    if not args.force and args.command in ("run", "all"):
+        if not sys.stdin.isatty():
+            raise SystemExit("ERROR: noninteractive suite runs require --force")
+        print("The suite may overwrite case-specific generated output for selected examples.")
+        answer = input("Continue and rerun selected examples? [y/N] ").strip().lower()
+        if answer not in {"y", "yes"}:
+            raise SystemExit("suite rerun cancelled")
+        args.force = True
+    for case in cases:
         cdir = root / case["dir"]
         odir = output_dir(root, case)
         odir.mkdir(parents=True, exist_ok=True)
-        rec = {
-            "case": case["id"],
-            "prefix": case["prefix"],
-            "dir": case["dir"],
-            "geos": "",
-            "post": "",
-            "returncode": None,
-            "status": "not_run",
-            "error": "",
-            "log_file": str(log_path(root, case).relative_to(root)),
-        }
-        if not (cdir / "runProblem").exists():
-            rec.update({"returncode": 127, "status": "missing_runProblem", "error": f"no runProblem in {cdir}"})
-            rec["log"] = "ERROR: " + rec["error"] + "\n"
-            print(f"WARNING: skipping {case['id']}; {rec['error']}")
-            write_case_records(root, case, rec)
-            jobs.append(rec)
-            if args.stop_on_error:
-                raise SystemExit(rec["error"])
-            continue
-
+        log_path = odir / f"{case['prefix']}_runProblem.log"
         cmd = ["./runProblem", "--python", args.python_cmd, "--post-walltime", args.post_walltime, "--post-partition", args.post_partition]
-        cmd += case.get("args", [])
-        # The suite prompt/--force has already decided overwrite policy.  Always
-        # pass --force to children during suite dispatch to avoid hidden prompts.
-        if args.force:
-            cmd.append("--force")
+        if args.walltime:
+            cmd += ["--walltime", args.walltime]
         if args.no_visit:
             cmd.append("--no-visit")
-        code, out = run_cmd(cmd, cdir, args.dispatch_timeout)
-        geos = re.findall(r"GEOS job id:\s*([0-9]+)", out)
-        post = re.findall(r"post-process job id:\s*([0-9]+)", out)
-        rec.update({
-            "geos": geos[-1] if geos else "",
-            "post": post[-1] if post else "",
-            "returncode": code,
-            "status": "submitted" if code == 0 else "dispatch_failed",
-            "error": "" if code == 0 else f"runProblem failed with exit code {code}",
-            "log": out,
-        })
-        write_case_records(root, case, rec)
+        if args.force:
+            cmd.append("--force")
+        cmd += list(case.get("args", []))
+        code = stream_run_cmd(cmd, cdir, log_path, args.dispatch_timeout)
+        log_text = log_path.read_text(errors="replace") if log_path.is_file() else ""
+        geos, post = extract_job_ids_from_text(log_text)
+        # Prefer the explicit jobs json written by the case wrapper if present.
+        for jobs_file in sorted(odir.glob(case["prefix"] + "*_jobs.json")):
+            data = read_json(jobs_file)
+            if isinstance(data, dict):
+                geos = data.get("jobs", {}).get("geos", geos) or geos
+                post = data.get("jobs", {}).get("post", post) or post
+        rec = {"case": case["id"], "geos": geos, "post": post, "dispatch_returncode": code, "runProblem_log": str(log_path)}
         jobs.append(rec)
         if code != 0:
-            print(f"WARNING: {case['id']} failed with {code}; continuing with remaining examples", flush=True)
+            failures.append(rec)
+            print(f"{case['id']} failed with {code}; continuing", file=sys.stderr, flush=True)
             if args.stop_on_error:
-                raise SystemExit(f"{case['id']} failed with {code}")
-
-    rdir = root / args.report_dir
-    rdir.mkdir(exist_ok=True)
-    suite_jobs = {
-        "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "cases": [{k: v for k, v in rec.items() if k != "log"} for rec in jobs],
-    }
-    (rdir / "examples_suite_jobs.json").write_text(json.dumps(suite_jobs, indent=2, sort_keys=True) + "\n")
+                break
+    write_jobs(root, args, jobs)
     return jobs
 
 
-def wait_jobs(jobs):
-    ids = [j.get("post", "") for j in jobs if j.get("post")]
-    if not ids or shutil.which("squeue") is None:
-        return
-    joined = ",".join(ids)
-    print("Waiting for postprocess jobs: " + joined)
-    while True:
-        proc = subprocess.run(["squeue", "-h", "-j", joined], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        if proc.returncode != 0 or not proc.stdout.strip():
-            break
-        print("still queued/running: " + " ".join(line.split()[0] for line in proc.stdout.splitlines() if line.strip()))
-        time.sleep(30)
-
-
-def read_json(path, default):
-    try:
-        return json.loads(path.read_text())
-    except Exception:
-        return default
+def write_jobs(root, args, jobs):
+    rdir = root / args.report_dir
+    rdir.mkdir(exist_ok=True)
+    payload = {"generated_at": datetime.now().isoformat(timespec="seconds"), "cases": jobs}
+    (rdir / "examples_suite_jobs.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
 
 
 def load_jobs(root, args):
-    data = read_json(root / args.report_dir / "examples_suite_jobs.json", {})
-    records = data.get("cases", []) if isinstance(data, dict) else []
-    by_case = {r.get("case"): r for r in records if isinstance(r, dict)}
+    rdir = root / args.report_dir
+    path = rdir / "examples_suite_jobs.json"
+    jobs = []
+    if path.is_file():
+        data = read_json(path)
+        if isinstance(data, dict):
+            jobs = list(data.get("cases", []))
+    # Merge in case-local jobs json. This is especially useful after --no-wait or
+    # interrupted suite runs.
+    by_case = {j.get("case"): dict(j) for j in jobs if j.get("case")}
     for case in selected(args):
-        j = read_json(output_dir(root, case) / f"{case['prefix']}_jobs.json", {})
-        if isinstance(j, dict) and j.get("jobs"):
-            rec = j["jobs"]
-            by_case.setdefault(case["id"], rec)
-    return [by_case[c["id"]] for c in selected(args) if c["id"] in by_case]
+        odir = output_dir(root, case)
+        for jf in sorted(odir.glob(case["prefix"] + "*_jobs.json")):
+            data = read_json(jf)
+            if not isinstance(data, dict):
+                continue
+            rec = by_case.setdefault(case["id"], {"case": case["id"]})
+            rec.setdefault("geos", data.get("jobs", {}).get("geos", ""))
+            rec.setdefault("post", data.get("jobs", {}).get("post", ""))
+            if data.get("run_dir"):
+                rec["run_dir"] = data.get("run_dir")
+            if data.get("output_dir"):
+                rec["output_dir"] = data.get("output_dir")
+    return list(by_case.values())
 
 
-def sacct_rows(job_ids):
-    if not job_ids or shutil.which("sacct") is None:
-        return {}, "sacct unavailable or no job ids"
-    joined = ",".join(job_ids)
-    for fields in SACCT_FORMATS:
-        proc = subprocess.run(["sacct", "-j", joined, "-X", "-n", "-P", "-o", ",".join(fields)], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        if proc.returncode != 0:
-            continue
-        clean = [f.split("%", 1)[0] for f in fields]
-        rows = {}
-        for line in proc.stdout.splitlines():
-            parts = line.split("|")
-            row = dict(zip(clean, parts + [""] * (len(clean)-len(parts))))
-            jid = (row.get("JobIDRaw") or row.get("JobID") or "").split(".",1)[0].split("_",1)[0]
-            if jid in job_ids and jid not in rows:
-                rows[jid] = row
-        if rows:
-            return rows, ""
-    return {}, "sacct returned no rows"
-
-
-def query_timing(root, args, jobs):
+def job_ids(jobs):
     ids = []
     for j in jobs:
         for key in ("geos", "post"):
-            jid = str(j.get(key, ""))
-            if jid and jid not in ids:
-                ids.append(jid)
-    rows, note = {}, ""
-    if ids:
-        for attempt in range(max(1, args.timing_retries)):
-            rows, note = sacct_rows(ids)
-            if rows or attempt == args.timing_retries - 1:
-                break
+            value = str(j.get(key, "")).strip()
+            if value and value not in ids:
+                ids.append(value)
+    return ids
+
+
+def squeue_states(ids):
+    if not ids or not shutil.which("squeue"):
+        return {}
+    proc = subprocess.run(["squeue", "-h", "-j", ",".join(ids), "-o", "%A|%T|%M|%R"], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    out = {}
+    for line in proc.stdout.splitlines():
+        parts = line.split("|", 3)
+        if len(parts) >= 2:
+            out[parts[0]] = {"State": parts[1], "Elapsed": parts[2] if len(parts) > 2 else "", "Reason": parts[3] if len(parts) > 3 else ""}
+    return out
+
+
+def wait_jobs(jobs, timeout=0.0):
+    ids = job_ids(jobs)
+    if not ids or not shutil.which("squeue"):
+        return
+    start = time.time()
+    while True:
+        states = squeue_states(ids)
+        remaining = [jid for jid in ids if jid in states]
+        if not remaining:
+            return
+        summary = ", ".join(f"{jid}:{states[jid].get('State','')}" for jid in remaining[:8])
+        print("waiting for Slurm jobs: " + summary, flush=True)
+        if timeout and (time.time() - start) > timeout:
+            print("WARNING: wait timeout reached; report will mark unfinished jobs as incomplete", file=sys.stderr)
+            return
+        time.sleep(30.0)
+
+
+def run_sacct(ids):
+    if not ids or not shutil.which("sacct"):
+        return {}
+    for fields in SACCT_FORMATS:
+        cmd = ["sacct", "-n", "-P", "-X", "-j", ",".join(ids), "-o", ",".join(fields)]
+        proc = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        if proc.returncode != 0 or not proc.stdout.strip():
+            continue
+        result = {}
+        normalized = [f.split("%", 1)[0] for f in fields]
+        for line in proc.stdout.splitlines():
+            parts = line.rstrip("\n").split("|")
+            if not parts or not parts[0].strip():
+                continue
+            row = {}
+            for key, value in zip(normalized, parts):
+                row[key] = value.strip()
+            jid = row.get("JobIDRaw") or row.get("JobID") or parts[0].strip()
+            jid = jid.split(".", 1)[0]
+            result[jid] = row
+        if result:
+            return result
+    return {}
+
+
+def query_timing(root, args, jobs):
+    ids = job_ids(jobs)
+    sacct = {}
+    for attempt in range(max(args.timing_retries, 1)):
+        sacct = run_sacct(ids)
+        if all(jid in sacct for jid in ids if jid):
+            break
+        if attempt < args.timing_retries - 1:
             time.sleep(args.timing_sleep)
-    else:
-        note = "no job ids to query"
-    payload = {"generated_at": datetime.now().isoformat(timespec="seconds"), "note": note, "jobs": jobs, "sacct_by_job_id": rows, "cases": {}}
-    for rec in jobs:
-        payload["cases"][rec["case"]] = {
-            "status": rec.get("status", ""),
-            "returncode": rec.get("returncode"),
-            "error": rec.get("error", ""),
-            "log_file": rec.get("log_file", ""),
-            "jobs": {"geos": rec.get("geos", ""), "post": rec.get("post", "")},
-            "timing": {"geos": rows.get(rec.get("geos", ""), {}), "post": rows.get(rec.get("post", ""), {})},
+    sq = squeue_states(ids)
+    payload = {"generated_at": datetime.now().isoformat(timespec="seconds"), "jobs": jobs, "sacct_by_job_id": sacct, "squeue_by_job_id": sq, "cases": {}}
+    for j in jobs:
+        cid = j.get("case", "")
+        geos = str(j.get("geos", ""))
+        post = str(j.get("post", ""))
+        payload["cases"][cid] = {
+            "jobs": {"geos": geos, "post": post},
+            "dispatch_returncode": j.get("dispatch_returncode", 0),
+            "runProblem_log": j.get("runProblem_log", ""),
+            "run_dir": j.get("run_dir", ""),
+            "output_dir": j.get("output_dir", ""),
+            "timing": {"geos": sacct.get(geos, sq.get(geos, {})), "post": sacct.get(post, sq.get(post, {}))},
         }
     rdir = root / args.report_dir
     rdir.mkdir(exist_ok=True)
     (rdir / "examples_suite_timing.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
     with (rdir / "examples_suite_timing.csv").open("w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["case", "status", "phase", "job_id", "state", "exit", "elapsed", "total_cpu", "cpu_time_raw", "alloc_cpus", "error"])
+        writer.writerow(["case", "phase", "job_id", "state", "exit", "elapsed", "total_cpu", "cpu_time_raw", "alloc_cpus"])
         for case_id, rec in payload["cases"].items():
             for phase in ("geos", "post"):
                 row = rec["timing"].get(phase, {})
-                writer.writerow([case_id, rec.get("status", ""), phase, rec["jobs"].get(phase, ""), row.get("State", ""), row.get("ExitCode", ""), row.get("Elapsed", ""), row.get("TotalCPU", ""), row.get("CPUTimeRAW", ""), row.get("AllocCPUS", ""), rec.get("error", "")])
+                writer.writerow([case_id, phase, rec["jobs"].get(phase, ""), row.get("State", ""), row.get("ExitCode", ""), row.get("Elapsed", ""), row.get("TotalCPU", ""), row.get("CPUTimeRAW", ""), row.get("AllocCPUS", "")])
     return payload
 
 
 def latex_escape(s):
-    return str(s).replace("\\", r"\textbackslash{} ").replace("&", r"\&").replace("%", r"\%").replace("$", r"\$").replace("#", r"\#").replace("_", r"\_").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}")
+    s = str(s)
+    return (s.replace("\\", r"\textbackslash{} ").replace("&", r"\&").replace("%", r"\%").replace("$", r"\$")
+             .replace("#", r"\#").replace("_", r"\_").replace("{", r"\{").replace("}", r"\}").replace("~", r"\textasciitilde{}"))
 
 
-def include_graphics(path, report_dir, width="0.31\\textwidth"):
-    path = Path(path)
-    if path.is_file():
-        rel = os.path.relpath(path, report_dir)
-        return r"\includegraphics[width=" + width + "]{" + rel.replace("\\", "/") + "}"
-    return r"\fbox{\begin{minipage}[c][0.22\textheight][c]{" + width + r"}\centering missing\\" + latex_escape(path.name) + r"\end{minipage}}"
+def load_case_jobs(root, case):
+    odir = output_dir(root, case)
+    rec = {}
+    for jf in sorted(odir.glob(case["prefix"] + "*_jobs.json")):
+        data = read_json(jf)
+        if isinstance(data, dict):
+            rec.update(data)
+    return rec
 
 
-def find_prefixed_png(odir: Path, prefix: str, token: str):
+def backfill_outputs(root, case):
+    odir = output_dir(root, case)
+    odir.mkdir(parents=True, exist_ok=True)
+    data = load_case_jobs(root, case)
+    run_dir_text = data.get("run_dir", "") if isinstance(data, dict) else ""
+    if not run_dir_text:
+        return []
+    run_dir = Path(os.path.expanduser(os.path.expandvars(run_dir_text)))
+    copied = []
+    for base in [run_dir / "visit_frames", run_dir]:
+        if not base.is_dir():
+            continue
+        for pattern in [case["prefix"] + "*.png", case["prefix"] + "*.csv", case["prefix"] + "*.log", case["prefix"] + "*.json"]:
+            for src in sorted(base.glob(pattern)):
+                if src.is_file():
+                    dst = odir / src.name
+                    if not dst.is_file() or src.stat().st_mtime > dst.stat().st_mtime:
+                        shutil.copy2(src, dst)
+                    copied.append(dst.name)
+        for src_name in ["reactionHistory.csv", "boxAverageHistory.csv"]:
+            src = base / src_name
+            if src.is_file():
+                shutil.copy2(src, odir / src_name)
+                copied.append(src_name)
+    return sorted(set(copied))
+
+
+def pngs_for_case(root, case):
+    odir = output_dir(root, case)
+    return sorted([p for p in odir.glob(case["prefix"] + "*.png") if p.is_file()])
+
+
+def find_image(root, case, token):
+    odir = output_dir(root, case)
+    if not token:
+        return None
     exact = odir / token
     if exact.is_file():
         return exact
-    matches = sorted(odir.glob(prefix + "*" + token + "*.png")) if not token.endswith(".png") else []
-    if not matches:
-        low = token.lower().replace(".png", "")
-        matches = [p for p in sorted(odir.glob(prefix + "*.png")) if low in p.name.lower()]
-    return matches[0] if matches else odir / (prefix + "_" + token)
+    prefix = case["prefix"]
+    low_tokens = [t for t in re.split(r"[^a-z0-9]+", str(token).lower().replace(".png", "")) if t]
+    all_pngs = pngs_for_case(root, case)
+    for path in all_pngs:
+        low = path.name.lower()
+        if all(t in low for t in low_tokens):
+            return path
+    # relaxed matching for generic tokens like initial/final/pressure.
+    if low_tokens:
+        for path in all_pngs:
+            low = path.name.lower()
+            if any(t in low for t in low_tokens):
+                return path
+    return None
 
 
-def schematic(case):
-    family = case["family"].lower()
-    if "brazilian" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(12,12){\framebox(96,58){}}\put(60,41){\circle{38}}\put(44,41){\vector(0,-1){18}}\put(76,41){\vector(0,1){18}}\put(25,73){moving y+}\put(25,3){moving y-}\put(6,31){\rotatebox{90}{periodic x}}\put(109,31){\rotatebox{-90}{periodic x}}\end{picture}"
-    if "benchy" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(8,10){\framebox(112,60){background grid}}\put(34,30){\line(1,0){42}}\put(28,40){\line(1,0){54}}\put(38,50){\line(1,0){34}}\put(40,42){STL boat}\put(98,40){\circle{12}}\put(88,40){\vector(-1,0){20}}\put(91,52){ball}\end{picture}"
-    if "borehole" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(15,10){\framebox(90,62){rock}}\put(60,41){\circle{16}}\put(52,39){hole}\put(80,41){\vector(-1,0){18}}\put(18,70){confining pressure}\put(45,18){borehole pressure}\end{picture}"
-    if "pdc" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(10,12){\framebox(100,35){substrate}}\put(66,47){\line(1,1){14}}\put(80,61){\line(1,-1){20}}\put(100,41){\line(-1,-1){34}}\put(72,62){PDC cutter}\put(54,55){\vector(0,-1){18}}\end{picture}"
-    if "ring" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(60,41){\circle{46}}\put(60,41){\circle{24}}\put(60,64){\vector(0,1){12}}\put(83,41){\vector(1,0){12}}\put(60,18){\vector(0,-1){12}}\put(37,41){\vector(-1,0){12}}\put(40,38){expanding ring}\end{picture}"
-    if "plate" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(130,82)\put(15,25){\framebox(45,30){left plate}}\put(70,25){\framebox(45,30){right plate}}\put(65,40){\circle{12}}\put(30,65){\vector(1,0){22}}\put(100,65){\vector(-1,0){22}}\end{picture}"
-    if "disk" in family:
-        return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(34,30){\circle{25}}\put(82,52){\circle{25}}\put(34,30){\vector(1,1){18}}\put(82,52){\vector(-1,-1){18}}\end{picture}"
-    return r"\setlength{\unitlength}{0.0045\textwidth}\begin{picture}(120,82)\put(12,12){\framebox(96,58){background grid}}\put(22,40){\vector(1,0){32}}\put(60,41){particles}\end{picture}"
+def find_reaction(root, case):
+    token = case.get("reaction", "")
+    if token:
+        path = find_image(root, case, token)
+        if path:
+            return path
+    odir = output_dir(root, case)
+    matches = list(odir.glob(case["prefix"] + "*reaction*.png")) + list(odir.glob(case["prefix"] + "*reactions*.png"))
+    return sorted(matches)[0] if matches else None
 
 
-def timing_case(timing, case_id):
-    return timing.get("cases", {}).get(case_id, {}) if isinstance(timing, dict) else {}
+def include_graphics(path, report_dir, width="0.31\\textwidth", missing_label="missing"):
+    if path and Path(path).is_file():
+        rel = os.path.relpath(path, report_dir)
+        return r"\includegraphics[width=" + width + "]{" + rel.replace("\\", "/") + "}"
+    return r"\fbox{\begin{minipage}[c][0.16\textheight][c]{" + width + r"}\centering " + latex_escape(missing_label) + r"\end{minipage}}"
 
 
-def timing_cell(timing, case_id, phase, key):
-    return timing_case(timing, case_id).get("timing", {}).get(phase, {}).get(key, "")
+def state_of(timing, case_id, phase):
+    return timing.get("cases", {}).get(case_id, {}).get("timing", {}).get(phase, {}).get("State", "") if isinstance(timing, dict) else ""
+
+
+def cell(timing, case_id, phase, key):
+    return timing.get("cases", {}).get(case_id, {}).get("timing", {}).get(phase, {}).get(key, "") if isinstance(timing, dict) else ""
 
 
 def job_id(timing, case_id, phase):
-    return timing_case(timing, case_id).get("jobs", {}).get(phase, "")
+    return timing.get("cases", {}).get(case_id, {}).get("jobs", {}).get(phase, "") if isinstance(timing, dict) else ""
 
 
-def case_status(timing, case_id):
-    return timing_case(timing, case_id).get("status", "not_run")
+def dispatch_code(timing, case_id):
+    return timing.get("cases", {}).get(case_id, {}).get("dispatch_returncode", 0) if isinstance(timing, dict) else 0
 
 
-def timing_table(timing, cases):
-    lines = [r"\begin{table}[H]", r"\centering", r"\scriptsize", r"\begin{tabular}{lllrrrrrr}", r"\toprule", r"Example & Status & Family & GEOS job & GEOS state & GEOS wall & GEOS CPU & Post wall & Post CPU \\", r"\midrule"]
+def case_status(root, case, timing):
+    cid = case["id"]
+    code = dispatch_code(timing, cid)
+    geos_state = state_of(timing, cid, "geos")
+    post_state = state_of(timing, cid, "post")
+    initial = find_image(root, case, case.get("initial", ""))
+    final = find_image(root, case, case.get("final", ""))
+    reaction_required = bool(case.get("reaction"))
+    reaction = find_reaction(root, case) if reaction_required else None
+    images_ok = bool(initial and final and ((not reaction_required) or reaction))
+    if code not in (0, "", None):
+        return "dispatch failed"
+    # Prefer the actual artifacts when regenerating a report from existing output
+    # folders. This prevents an old report-only run with no jobs json from labeling
+    # successfully copied figures as not run.
+    if images_ok:
+        if not job_id(timing, cid, "geos") and not geos_state:
+            return "figures available"
+        return "complete"
+    if geos_state in BAD_STATES:
+        return "GEOS " + geos_state
+    if post_state in BAD_STATES:
+        return "post " + post_state
+    if geos_state and geos_state not in TERMINAL_STATES:
+        return "GEOS " + geos_state
+    if post_state and post_state not in TERMINAL_STATES:
+        return "post " + post_state
+    if not geos_state and job_id(timing, cid, "geos"):
+        return "GEOS unknown"
+    if not post_state and job_id(timing, cid, "post"):
+        return "post unknown"
+    if geos_state == "COMPLETED":
+        return "missing figures"
+    if not job_id(timing, cid, "geos"):
+        return "not run"
+    return "incomplete"
+
+
+def important_log_excerpt(root, case, max_lines=24):
+    odir = output_dir(root, case)
+    data = load_case_jobs(root, case)
+    run_dir = Path(os.path.expanduser(os.path.expandvars(str(data.get("run_dir", ""))))) if isinstance(data, dict) and data.get("run_dir") else None
+    candidates = []
+    candidates += sorted(odir.glob(case["prefix"] + "*.log"))
+    candidates += sorted(odir.glob(case["prefix"] + "*.txt"))
+    if run_dir and run_dir.is_dir():
+        candidates += sorted(run_dir.glob(case["prefix"] + "*.log"))
+        candidates += sorted(run_dir.glob("slurm-*.out"))[-4:]
+    interesting = []
+    patterns = re.compile(r"(ERROR|Error|EXCEPTION|Traceback|FAILED|CANCELLED|TIMEOUT|TIME LIMIT|NODE_FAIL|OUT_OF_MEMORY|VisIt|warning|no PNG|missing|skipping)", re.I)
+    for path in candidates:
+        try:
+            lines = path.read_text(errors="replace").splitlines()
+        except Exception:
+            continue
+        hits = [line for line in lines if patterns.search(line)]
+        if hits:
+            interesting.append("# " + path.name)
+            interesting.extend(hits[-max_lines:])
+        elif path.name.endswith("_runProblem.log"):
+            interesting.append("# " + path.name)
+            interesting.extend(lines[-min(max_lines, len(lines)):])
+        if len(interesting) > max_lines:
+            break
+    if not interesting:
+        return []
+    return interesting[-max_lines:]
+
+
+def timing_table(root, timing, cases):
+    lines = [r"\begin{longtable}{p{0.18\textwidth}p{0.16\textwidth}p{0.13\textwidth}p{0.12\textwidth}p{0.1\textwidth}p{0.12\textwidth}p{0.1\textwidth}}", r"\toprule", "Example & Status & GEOS state & GEOS wall & GEOS CPU & Post state & Post wall " + r"\\", r"\midrule", r"\endhead"]
     for c in cases:
         cid = c["id"]
-        values = [cid, case_status(timing,cid), c["family"], job_id(timing,cid,"geos"), timing_cell(timing,cid,"geos","State"), timing_cell(timing,cid,"geos","Elapsed"), timing_cell(timing,cid,"geos","TotalCPU") or timing_cell(timing,cid,"geos","CPUTimeRAW"), timing_cell(timing,cid,"post","Elapsed"), timing_cell(timing,cid,"post","TotalCPU") or timing_cell(timing,cid,"post","CPUTimeRAW")]
-        lines.append(" & ".join(latex_escape(x) for x in values) + r" \\")
-    lines += [r"\bottomrule", r"\end{tabular}", r"\end{table}"]
+        cpu = cell(timing,cid,"geos","TotalCPU") or cell(timing,cid,"geos","CPUTimeRAW")
+        lines.append(" & ".join(latex_escape(x) for x in [cid, case_status(root, c, timing), state_of(timing,cid,"geos"), cell(timing,cid,"geos","Elapsed"), cpu, state_of(timing,cid,"post"), cell(timing,cid,"post","Elapsed")]) + r" \\")
+    lines += [r"\bottomrule", r"\end{longtable}"]
     return "\n".join(lines)
 
 
-def important_log_excerpt(text, max_lines=60):
-    if not text:
-        return ""
-    lines = text.splitlines()
-    important = []
-    patterns = ("ERROR", "Error", "error", "EXCEPTION", "Traceback", "failed", "Unknown case", "XML parsing", "AttributeError", "NameError")
-    for i, line in enumerate(lines):
-        if any(p in line for p in patterns):
-            start = max(0, i - 4)
-            end = min(len(lines), i + 10)
-            important.extend(lines[start:end])
-            important.append("...")
-    if not important:
-        important = lines[-max_lines:]
-    # Deduplicate while preserving order and cap length.
-    out = []
-    last = None
-    for line in important:
-        if line == last:
+def try_make_schematics(root, cases, report_dir):
+    out = {}
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from matplotlib.patches import Circle, Rectangle, FancyArrowPatch, Polygon
+    except Exception:
+        return out
+    sdir = report_dir / "schematics"
+    sdir.mkdir(parents=True, exist_ok=True)
+    for case in cases:
+        fig, ax = plt.subplots(figsize=(5.8, 3.4))
+        ax.set_aspect("equal", adjustable="box")
+        ax.axis("off")
+        fam = case["family"].lower()
+        cid = case["id"].lower()
+        def arrow(a, b):
+            ax.add_patch(FancyArrowPatch(a, b, arrowstyle="->", mutation_scale=12, linewidth=1.2))
+        if "brazilian" in fam:
+            ax.add_patch(Rectangle((-1.25, -0.65), 2.5, 1.3, fill=False, linewidth=1.2))
+            ax.add_patch(Circle((0, 0), 0.42, fill=False, linewidth=1.3))
+            arrow((-0.55, 0.1), (-0.55, -0.42)); arrow((0.55, -0.1), (0.55, 0.42))
+            ax.text(0, 0.78, "moving y+", ha="center"); ax.text(0, -0.92, "moving y-", ha="center")
+            ax.text(-1.42, 0, "periodic x", rotation=90, va="center"); ax.text(1.42, 0, "periodic x", rotation=-90, va="center")
+            ax.text(0, -0.02, "disk", ha="center", va="center", fontsize=9)
+        elif "benchy" in fam:
+            ax.add_patch(Rectangle((-1.45, -0.8), 2.9, 1.6, fill=False, linewidth=1.2))
+            ax.add_patch(Polygon([(-0.9,-0.15), (-0.25,-0.15), (-0.12,0.05), (-0.72,0.12)], fill=False, linewidth=1.2))
+            ax.add_patch(Circle((0.85, 0.0), 0.22, fill=False, linewidth=1.2))
+            arrow((1.25, 0.0), (1.02, 0.0))
+            ax.text(-0.55, -0.33, "STL boat\nCu", ha="center"); ax.text(0.85, 0.35, "steel ball", ha="center")
+            ax.text(0, -1.0, "background grid / two contact groups", ha="center")
+        elif "borehole" in fam:
+            ax.add_patch(Rectangle((-1.35, -0.85), 2.7, 1.7, fill=False, linewidth=1.2))
+            ax.add_patch(Circle((0, 0), 0.24, fill=False, linewidth=1.3))
+            arrow((1.0, 0), (0.32, 0)); arrow((-1.0, 0), (-0.32, 0)); arrow((0, 0.72), (0, 0.32)); arrow((0, -0.72), (0, -0.32))
+            ax.text(0, 0, "hole", ha="center", va="center", fontsize=8)
+            ax.text(0, 1.0, "confining pressure", ha="center")
+            ax.text(0, -1.05, "borehole pressure event", ha="center")
+        elif "pdc" in fam:
+            ax.add_patch(Rectangle((-1.45, -0.65), 2.4, 0.8, fill=False, linewidth=1.2))
+            ax.text(-0.3, -0.28, "substrate", ha="center")
+            ax.add_patch(Polygon([(0.35, 0.18), (1.0, 0.75), (1.25, 0.1), (0.62, -0.1)], fill=False, linewidth=1.2))
+            ax.text(1.05, 0.82, "PDC cutter", ha="center")
+            arrow((0.8, 0.9), (0.55, 0.35)); arrow((0.0, -0.95), (0.4, -0.55))
+            ax.text(-1.1, 0.4, "periodic x", ha="center")
+        elif "ring" in fam:
+            ax.add_patch(Circle((0, 0), 0.75, fill=False, linewidth=1.3)); ax.add_patch(Circle((0, 0), 0.35, fill=False, linewidth=1.3))
+            for a,b in [((0,0.75),(0,1.1)), ((0.75,0),(1.1,0)), ((0,-0.75),(0,-1.1)), ((-0.75,0),(-1.1,0))]: arrow(a,b)
+            ax.text(0, 0, "expanding\nring", ha="center", va="center")
+        elif "plate" in fam:
+            ax.add_patch(Rectangle((-1.25, -0.35), 0.9, 0.7, fill=False, linewidth=1.2)); ax.add_patch(Rectangle((0.35, -0.35), 0.9, 0.7, fill=False, linewidth=1.2))
+            ax.add_patch(Circle((0, 0), 0.18, fill=False, linewidth=1.2))
+            arrow((-1.55, 0), (-1.25, 0)); arrow((1.55, 0), (1.25, 0))
+            ax.text(-0.8, -0.55, "left plate", ha="center"); ax.text(0.8, -0.55, "right plate", ha="center")
+        elif "disk" in fam:
+            ax.add_patch(Circle((-0.55, 0.0), 0.42, fill=False, linewidth=1.2)); ax.add_patch(Circle((0.55, 0.0), 0.42, fill=False, linewidth=1.2))
+            arrow((-1.15, 0), (-0.9, 0)); arrow((1.15, 0), (0.9, 0))
+            ax.text(0, -0.75, "two moving disks", ha="center")
+        else:
+            ax.add_patch(Rectangle((-1.35, -0.6), 2.7, 1.2, fill=False, linewidth=1.2))
+            ax.add_patch(Rectangle((-0.75, -0.18), 1.5, 0.36, fill=False, linewidth=1.2))
+            arrow((-1.0, 0.35), (-0.55, 0.35))
+            ax.text(0, 0, "particles", ha="center", va="center")
+        ax.set_xlim(-1.7, 1.7); ax.set_ylim(-1.25, 1.25)
+        path = sdir / (case["id"] + "_schematic.png")
+        fig.savefig(path, dpi=180, bbox_inches="tight", pad_inches=0.05)
+        plt.close(fig)
+        out[case["id"]] = path
+    return out
+
+
+def failure_summary(root, cases, timing):
+    lines = []
+    for c in cases:
+        status = case_status(root, c, timing)
+        if status in {"complete", "figures available"}:
             continue
-        out.append(line)
-        last = line
-    if len(out) > max_lines:
-        out = out[:max_lines//2] + ["..."] + out[-max_lines//2:]
-    return "\n".join(out)
-
-
-def log_excerpt_for_case(root, case, timing):
-    rec = timing_case(timing, case["id"])
-    rel = rec.get("log_file", "")
-    candidates = []
-    if rel:
-        candidates.append(root / rel)
-    candidates.append(output_dir(root, case) / f"{case['prefix']}_runProblem.log")
-    for path in candidates:
-        if path.is_file():
-            return important_log_excerpt(path.read_text(errors="replace"))
-    err = rec.get("error", "")
-    return err
-
-
-def add_failure_summary(lines, root, cases, timing):
-    failed = [c for c in cases if case_status(timing, c["id"]) not in ("", "submitted", "not_run")]
-    if not failed:
-        return
-    lines += [r"\section*{Dispatch failures}", r"The suite continued after the following case-level failures.  The log excerpts below are copied from the per-case \texttt{output/*runProblem.log} files."]
-    for c in failed:
-        lines += [r"\subsection*{" + latex_escape(c["id"]) + r"}"]
-        err = timing_case(timing, c["id"]).get("error", "")
-        if err:
-            lines.append(r"\textbf{Error:} " + latex_escape(err))
-        excerpt = log_excerpt_for_case(root, c, timing)
+        lines.append(r"\subsection*{" + latex_escape(c["id"]) + r" -- " + latex_escape(status) + r"}")
+        lines.append(r"\textbf{GEOS job/state:} " + latex_escape(job_id(timing,c['id'],'geos')) + " / " + latex_escape(state_of(timing,c['id'],'geos')) + r"\\")
+        lines.append(r"\textbf{Post job/state:} " + latex_escape(job_id(timing,c['id'],'post')) + " / " + latex_escape(state_of(timing,c['id'],'post')))
+        excerpt = important_log_excerpt(root, c)
         if excerpt:
-            lines += [r"\begin{verbatim}", excerpt, r"\end{verbatim}"]
+            lines.append(r"\begin{verbatim}")
+            lines.extend(excerpt[:30])
+            lines.append(r"\end{verbatim}")
+        else:
+            lines.append("No diagnostic log excerpt was found. The case may not have started or may still be queued/running.")
+    return lines
 
 
 def generate_report(root, args, timing):
     rdir = root / args.report_dir
     rdir.mkdir(exist_ok=True)
     cases = selected(args)
+    if not args.skip_backfill:
+        for c in cases:
+            backfill_outputs(root, c)
+    schematics = try_make_schematics(root, cases, rdir)
     lines = [
-        r"\documentclass[11pt]{article}",
-        r"\usepackage[margin=0.75in]{geometry}",
+        r"\documentclass[10pt]{article}",
+        r"\usepackage[margin=0.65in]{geometry}",
         r"\usepackage{graphicx}",
         r"\usepackage{float}",
         r"\usepackage{booktabs}",
-        r"\usepackage{rotating}",
         r"\usepackage{longtable}",
+        r"\usepackage{xcolor}",
         r"\setlength{\parindent}{0pt}",
-        r"\setlength{\parskip}{0.5em}",
+        r"\setlength{\parskip}{0.35em}",
         r"\begin{document}",
         r"\title{GEOS-MPM Examples Suite Report}",
         r"\author{Generated by examples/runExampleSuite}",
         r"\date{\today}",
         r"\maketitle",
         r"\section*{Running and rerunning}",
-        r"Each example directory contains a copyable \texttt{pfw\_input\_*.py} and a \texttt{runProblem} wrapper.  The wrapper stages an isolated case directory under \texttt{testRunDirectory}, copies the needed PFW files, runs the particle-file writer, submits GEOS, submits dependent post-processing, and copies figures/logs back to the example \texttt{output/} directory.",
+        r"Each example directory contains a copyable \texttt{pfw\_input\_*.py} and a \texttt{runProblem} wrapper. The wrapper stages an isolated case directory under \texttt{testRunDirectory}, copies the needed PFW files, runs the particle-file writer, submits GEOS, submits dependent post-processing, and copies figures/logs back to the example \texttt{output/} directory.",
         r"\begin{verbatim}",
         r"cd scripts/preProcessing/materialPointMethodParticleFileWriter/examples",
         r"./runExampleSuite all --python /usr/tce/bin/python3 --force",
         r"./runExampleSuite all --case borehole_Ghareb --python /usr/tce/bin/python3 --force",
         r"./runExampleSuite report --python /usr/tce/bin/python3",
         r"\end{verbatim}",
-        r"If output exists, \texttt{runProblem} prompts before overwriting. Use \texttt{--force} for noninteractive reruns.  The suite records case-level failures and continues with the remaining cases unless \texttt{--stop-on-error} is supplied.",
-        r"\section*{Timing and dispatch summary}",
-        timing_table(timing, cases),
+        r"If output exists, \texttt{runProblem} prompts before overwriting. Use \texttt{--force} for noninteractive reruns. The suite records case-level failures, continues with remaining cases by default, and reports incomplete or interrupted Slurm jobs explicitly.",
+        r"\section*{Timing and completion summary}",
+        timing_table(root, timing, cases),
     ]
-    add_failure_summary(lines, root, cases, timing)
+    fs = failure_summary(root, cases, timing)
+    if fs:
+        lines += [r"\section*{Incomplete, failed, or missing-output cases}"] + fs
     for c in cases:
         odir = output_dir(root, c)
         prefix = c["prefix"]
-        if c.get("initial", "").endswith("_"):
-            initial = find_prefixed_png(odir, prefix, "initial")
-            final = find_prefixed_png(odir, prefix, "final")
+        initial = find_image(root, c, c.get("initial", ""))
+        final = find_image(root, c, c.get("final", ""))
+        reaction = find_reaction(root, c) if c.get("reaction") else None
+        status = case_status(root, c, timing)
+        lines += [r"\clearpage", r"\section*{" + latex_escape(c["id"]) + r"}", latex_escape(c["description"]), r"\textbf{Status:} " + latex_escape(status)]
+        schematic_path = schematics.get(c["id"])
+        lines += [r"\begin{figure}[H]", r"\centering"]
+        if schematic_path and schematic_path.is_file():
+            lines.append(include_graphics(schematic_path, rdir, "0.58\\textwidth", "schematic unavailable"))
         else:
-            initial = odir / c.get("initial", "")
-            final = odir / c.get("final", "")
-        reaction = odir / c.get("reaction", "") if c.get("reaction") else None
-        if reaction and not reaction.is_file():
-            matches = list(odir.glob(prefix + "*reaction*.png")) + list(odir.glob(prefix + "*reactions*.png"))
-            reaction = matches[0] if matches else reaction
-        lines += [r"\clearpage", r"\section*{" + latex_escape(c["id"]) + r"}"]
-        status = case_status(timing, c["id"])
-        if status not in ("", "submitted", "not_run"):
-            lines.append(r"\textbf{Dispatch status:} " + latex_escape(status))
-            err = timing_case(timing, c["id"]).get("error", "")
-            if err:
-                lines.append(r"\textbf{Error:} " + latex_escape(err))
-        lines += [latex_escape(c.get("description", "")), r"\begin{figure}[H]", r"\centering", schematic(c), r"\caption{Schematic for " + latex_escape(c["id"]) + r".}", r"\end{figure}", r"\textbf{Code features exercised.}", r"\begin{itemize}"]
+            lines.append(r"\fbox{\begin{minipage}[c][0.20\textheight][c]{0.58\textwidth}\centering schematic unavailable\end{minipage}}")
+        lines += [r"\caption{Schematic for " + latex_escape(c["id"]) + r".}", r"\end{figure}", r"\textbf{Code features exercised.}", r"\begin{itemize}"]
         for feat in c.get("features", []):
             lines.append(r"\item " + latex_escape(feat))
         lines += [r"\end{itemize}", r"\begin{figure}[H]", r"\centering"]
-        if reaction:
-            lines.append(include_graphics(initial, rdir, "0.31\\textwidth") + "\n" + include_graphics(final, rdir, "0.31\\textwidth") + "\n" + include_graphics(reaction, rdir, "0.31\\textwidth"))
-            lines.append(r"\caption{Initial state, final state, and reaction history for " + latex_escape(c["id"]) + r".}")
+        missing = []
+        if not initial: missing.append("initial image")
+        if not final: missing.append("final image")
+        if c.get("reaction") and not reaction: missing.append("reaction plot")
+        if c.get("reaction"):
+            lines.append(include_graphics(initial, rdir, "0.31\\textwidth", "initial image unavailable") + "\n" + include_graphics(final, rdir, "0.31\\textwidth", "final image unavailable") + "\n" + include_graphics(reaction, rdir, "0.31\\textwidth", "reaction plot unavailable"))
+            cap = "Initial state, final state, and reaction history for " + c["id"]
         else:
-            lines.append(include_graphics(initial, rdir, "0.45\\textwidth") + "\n" + include_graphics(final, rdir, "0.45\\textwidth"))
-            lines.append(r"\caption{Initial and final state for " + latex_escape(c["id"]) + r".}")
+            lines.append(include_graphics(initial, rdir, "0.45\\textwidth", "initial image unavailable") + "\n" + include_graphics(final, rdir, "0.45\\textwidth", "final image unavailable"))
+            cap = "Initial and final state for " + c["id"]
+        lines.append(r"\caption{" + latex_escape(cap) + r".}")
         lines += [r"\end{figure}"]
-        if status not in ("", "submitted", "not_run"):
-            excerpt = log_excerpt_for_case(root, c, timing)
+        if missing:
+            lines.append(r"\textbf{Missing expected products:} " + latex_escape(", ".join(missing)) + ".")
+            excerpt = important_log_excerpt(root, c, max_lines=12)
             if excerpt:
-                lines += [r"\subsection*{Failure log excerpt}", r"\begin{verbatim}", excerpt, r"\end{verbatim}"]
+                lines.append(r"\begin{verbatim}")
+                lines.extend(excerpt[-12:])
+                lines.append(r"\end{verbatim}")
+        elif pngs_for_case(root, c):
+            names = ", ".join(p.name for p in pngs_for_case(root, c)[:6])
+            lines.append(r"\textbf{Output figures:} " + latex_escape(names))
     lines.append(r"\end{document}")
     tex = rdir / "examples_suite_report.tex"
     tex.write_text("\n".join(lines) + "\n")
@@ -679,23 +842,45 @@ def generate_report(root, args, timing):
             (rdir / "pdflatex.log").write_text(proc.stdout)
             if proc.returncode != 0:
                 print(proc.stdout[-4000:])
-                print("WARNING: pdflatex failed; LaTeX report was still written to " + str(tex))
-                return
+                raise SystemExit("pdflatex failed; see " + str(rdir / "pdflatex.log"))
         print("wrote " + str(rdir / "examples_suite_report.pdf"))
     else:
         print("pdflatex not found; generated LaTeX only")
 
 
+
+def print_postprocess_recovery_hint(root, cases):
+    missing = []
+    for c in cases:
+        odir = output_dir(root, c)
+        if not odir.is_dir():
+            missing.append(c["id"])
+            continue
+        pngs = list(odir.glob(c["prefix"] + "*.png"))
+        if not pngs:
+            missing.append(c["id"])
+    if missing:
+        print("\nCases still missing copied PNG products: " + ", ".join(missing))
+        print("If their GEOS jobs completed before this updater, rerun those cases with --force, or rerun their post-processing jobs after the fixed staging is in place.")
+
 def main():
     args = parse_args()
     root = Path(__file__).resolve().parent
-    confirm_suite_rerun(args)
     jobs = []
     timing = None
     if args.command in ("run", "all"):
         jobs = dispatch(root, args)
         if not args.no_wait:
-            wait_jobs(jobs)
+            wait_jobs(jobs, timeout=args.wait_timeout)
+            # Reload jobs because wrappers may have written richer jobs json.
+            merged = load_jobs(root, args)
+            if merged:
+                by_case = {j.get("case"): j for j in jobs}
+                for j in merged:
+                    by_case.setdefault(j.get("case"), {}).update({k:v for k,v in j.items() if v})
+                jobs = list(by_case.values())
+            timing = query_timing(root, args, jobs)
+        else:
             timing = query_timing(root, args, jobs)
     if args.command in ("report", "all"):
         if timing is None:

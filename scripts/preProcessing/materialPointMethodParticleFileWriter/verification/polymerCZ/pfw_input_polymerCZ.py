@@ -124,13 +124,11 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
                [stopTime,     1.00,  2.00,  1.00]]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-
-pfw["mBank"]="imcomp"
 pfw["mBatch"]=True
 pfw["mWallTime"]="03:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.))
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 # pfw["autoRestart"]=True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
@@ -144,9 +142,9 @@ pfw["materialPropertyString"]="""
     defaultShearModulus=""" + '"' + str(G) + '"' + """/>"""
 
 pfw["mpmEventsString"]="""
-<MPMEvents>
-    <CohesiveZoneReference 
-    time=""" + '"' + str(0.0) + '"' + """
+<CohesiveZoneReference 
+    time=
+""" + '"' + str(0.0) + '"' + """
     interval=""" + '"' + str(stopTime) + '"' + """/>
 </MPMEvents>
 """

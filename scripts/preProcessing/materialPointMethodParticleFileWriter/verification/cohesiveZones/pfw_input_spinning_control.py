@@ -109,8 +109,6 @@ pfw["boundaryConditionTypes"]=[ 0, 0, 0, 0, 1, 1 ]
 pfw["prescribedBoundaryFTable"]=0
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
-
-pfw["mBank"]="MAHEM"
 pfw["mBatch"]=True
 pfw["mWallTime"]="03:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]

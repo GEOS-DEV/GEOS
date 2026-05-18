@@ -1,21 +1,151 @@
 {
   "cases": {
-    "brazilianDisk_BSpline": {
+    "benchy": {
+      "dispatch_returncode": 0,
       "jobs": {
-        "geos": "6044292",
-        "post": "6044293"
+        "geos": "",
+        "post": ""
       },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/output/benchy_FMPM_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "borehole_Ghareb": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6046259",
+        "post": "6046260"
+      },
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/output",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/output/borehole_Ghareb_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/borehole_Ghareb",
       "timing": {
         "geos": {
           "Account": "mahem",
-          "AllocCPUS": "9",
-          "CPUTimeRAW": "1242",
-          "Elapsed": "00:02:18",
-          "ElapsedRaw": "138",
+          "AllocCPUS": "112",
+          "CPUTimeRAW": "2576",
+          "Elapsed": "00:00:23",
+          "ElapsedRaw": "23",
           "ExitCode": "0:0",
-          "JobID": "6044292",
-          "JobIDRaw": "6044292",
-          "JobName": "260517144207_runGEOS.sh",
+          "JobID": "6046259",
+          "JobIDRaw": "6046259",
+          "JobName": "260517213424_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pbatch",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "2",
+          "Elapsed": "00:00:02",
+          "ElapsedRaw": "2",
+          "ExitCode": "2:0",
+          "JobID": "6046260",
+          "JobIDRaw": "6046260",
+          "JobName": "post_borehole_Ghareb",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "FAILED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
+    "brazilianDisk_BSpline": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "",
+        "post": ""
+      },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/output/brazilianDisk_BSpline_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "brazilianDisk_FLIP": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "",
+        "post": ""
+      },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/output/brazilianDisk_FLIP_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "brazilianDisk_FMPM": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "",
+        "post": ""
+      },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/output/brazilianDisk_FMPM_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "brazilianDisk_PIC": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "",
+        "post": ""
+      },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/output/brazilianDisk_PIC_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "brazilianDisk_XPIC": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "",
+        "post": ""
+      },
+      "output_dir": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/output/brazilianDisk_XPIC_runProblem.log",
+      "run_dir": "",
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    },
+    "collidingDisks": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6046261",
+        "post": "6046262"
+      },
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/output",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/output/collidingDisks_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/collidingDisks",
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "4",
+          "CPUTimeRAW": "24",
+          "Elapsed": "00:00:06",
+          "ElapsedRaw": "6",
+          "ExitCode": "0:0",
+          "JobID": "6046261",
+          "JobIDRaw": "6046261",
+          "JobName": "260517213427_runGEOS.sh",
           "NNodes": "1",
           "Partition": "pdebug",
           "State": "COMPLETED",
@@ -24,60 +154,307 @@
         "post": {
           "Account": "mahem",
           "AllocCPUS": "1",
-          "CPUTimeRAW": "10",
-          "Elapsed": "00:00:10",
-          "ElapsedRaw": "10",
+          "CPUTimeRAW": "2",
+          "Elapsed": "00:00:02",
+          "ElapsedRaw": "2",
+          "ExitCode": "2:0",
+          "JobID": "6046262",
+          "JobIDRaw": "6046262",
+          "JobName": "post_collidingDisks",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "FAILED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
+    "elasticDisk": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6046263",
+        "post": "6046264"
+      },
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/output",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/output/elasticDisk_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/elasticDisk",
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "16",
+          "CPUTimeRAW": "784",
+          "Elapsed": "00:00:49",
+          "ElapsedRaw": "49",
           "ExitCode": "0:0",
-          "JobID": "6044293",
-          "JobIDRaw": "6044293",
-          "JobName": "post_brazilianDisk_BSpline",
+          "JobID": "6046263",
+          "JobIDRaw": "6046263",
+          "JobName": "260517213430_runGEOS.sh",
           "NNodes": "1",
           "Partition": "pdebug",
           "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "0",
+          "Elapsed": "00:00:00",
+          "ElapsedRaw": "0",
+          "ExitCode": "2:0",
+          "JobID": "6046264",
+          "JobIDRaw": "6046264",
+          "JobName": "post_elasticDisk",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "FAILED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
+    "pdc": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6046265",
+        "post": "6046266"
+      },
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output/pdc_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/pdc",
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "112",
+          "CPUTimeRAW": "66640",
+          "Elapsed": "00:09:55",
+          "ElapsedRaw": "595",
+          "ExitCode": "0:0",
+          "JobID": "6046265",
+          "JobIDRaw": "6046265",
+          "JobName": "260517213432_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pbatch",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "1",
+          "Elapsed": "00:00:01",
+          "ElapsedRaw": "1",
+          "ExitCode": "2:0",
+          "JobID": "6046266",
+          "JobIDRaw": "6046266",
+          "JobName": "post_pdc",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "FAILED",
           "TotalCPU": "00:00:00"
         }
       }
     }
   },
-  "generated_at": "2026-05-17T14:44:38",
+  "generated_at": "2026-05-17T23:42:49",
   "jobs": [
     {
+      "case": "brazilianDisk_FMPM",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FMPM/output/brazilianDisk_FMPM_runProblem.log"
+    },
+    {
       "case": "brazilianDisk_BSpline",
-      "geos": "6044292",
-      "post": "6044293"
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_BSpline/output/brazilianDisk_BSpline_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_FLIP",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_FLIP/output/brazilianDisk_FLIP_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_PIC",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_PIC/output/brazilianDisk_PIC_runProblem.log"
+    },
+    {
+      "case": "brazilianDisk_XPIC",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/brazilianDisk_XPIC/output/brazilianDisk_XPIC_runProblem.log"
+    },
+    {
+      "case": "benchy",
+      "dispatch_returncode": 0,
+      "geos": "",
+      "post": "",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/benchy/output/benchy_FMPM_runProblem.log"
+    },
+    {
+      "case": "borehole_Ghareb",
+      "dispatch_returncode": 0,
+      "geos": "6046259",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/output",
+      "post": "6046260",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/borehole/output/borehole_Ghareb_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/borehole_Ghareb"
+    },
+    {
+      "case": "collidingDisks",
+      "dispatch_returncode": 0,
+      "geos": "6046261",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/output",
+      "post": "6046262",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/collidingDisks/output/collidingDisks_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/collidingDisks"
+    },
+    {
+      "case": "elasticDisk",
+      "dispatch_returncode": 0,
+      "geos": "6046263",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/output",
+      "post": "6046264",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/elasticDisk/output/elasticDisk_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/elasticDisk"
+    },
+    {
+      "case": "pdc",
+      "dispatch_returncode": 0,
+      "geos": "6046265",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output",
+      "post": "6046266",
+      "runProblem_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output/pdc_runProblem.log",
+      "run_dir": "/p/lustre1/homel1/geosxTests/pdc"
     }
   ],
-  "note": "",
   "sacct_by_job_id": {
-    "6044292": {
+    "6046259": {
       "Account": "mahem",
-      "AllocCPUS": "9",
-      "CPUTimeRAW": "1242",
-      "Elapsed": "00:02:18",
-      "ElapsedRaw": "138",
+      "AllocCPUS": "112",
+      "CPUTimeRAW": "2576",
+      "Elapsed": "00:00:23",
+      "ElapsedRaw": "23",
       "ExitCode": "0:0",
-      "JobID": "6044292",
-      "JobIDRaw": "6044292",
-      "JobName": "260517144207_runGEOS.sh",
+      "JobID": "6046259",
+      "JobIDRaw": "6046259",
+      "JobName": "260517213424_runGEOS.sh",
+      "NNodes": "1",
+      "Partition": "pbatch",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046260": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "2",
+      "Elapsed": "00:00:02",
+      "ElapsedRaw": "2",
+      "ExitCode": "2:0",
+      "JobID": "6046260",
+      "JobIDRaw": "6046260",
+      "JobName": "post_borehole_Ghareb",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "FAILED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046261": {
+      "Account": "mahem",
+      "AllocCPUS": "4",
+      "CPUTimeRAW": "24",
+      "Elapsed": "00:00:06",
+      "ElapsedRaw": "6",
+      "ExitCode": "0:0",
+      "JobID": "6046261",
+      "JobIDRaw": "6046261",
+      "JobName": "260517213427_runGEOS.sh",
       "NNodes": "1",
       "Partition": "pdebug",
       "State": "COMPLETED",
       "TotalCPU": "00:00:00"
     },
-    "6044293": {
+    "6046262": {
       "Account": "mahem",
       "AllocCPUS": "1",
-      "CPUTimeRAW": "10",
-      "Elapsed": "00:00:10",
-      "ElapsedRaw": "10",
+      "CPUTimeRAW": "2",
+      "Elapsed": "00:00:02",
+      "ElapsedRaw": "2",
+      "ExitCode": "2:0",
+      "JobID": "6046262",
+      "JobIDRaw": "6046262",
+      "JobName": "post_collidingDisks",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "FAILED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046263": {
+      "Account": "mahem",
+      "AllocCPUS": "16",
+      "CPUTimeRAW": "784",
+      "Elapsed": "00:00:49",
+      "ElapsedRaw": "49",
       "ExitCode": "0:0",
-      "JobID": "6044293",
-      "JobIDRaw": "6044293",
-      "JobName": "post_brazilianDisk_BSpline",
+      "JobID": "6046263",
+      "JobIDRaw": "6046263",
+      "JobName": "260517213430_runGEOS.sh",
       "NNodes": "1",
       "Partition": "pdebug",
       "State": "COMPLETED",
       "TotalCPU": "00:00:00"
+    },
+    "6046264": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "0",
+      "Elapsed": "00:00:00",
+      "ElapsedRaw": "0",
+      "ExitCode": "2:0",
+      "JobID": "6046264",
+      "JobIDRaw": "6046264",
+      "JobName": "post_elasticDisk",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "FAILED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046265": {
+      "Account": "mahem",
+      "AllocCPUS": "112",
+      "CPUTimeRAW": "66640",
+      "Elapsed": "00:09:55",
+      "ElapsedRaw": "595",
+      "ExitCode": "0:0",
+      "JobID": "6046265",
+      "JobIDRaw": "6046265",
+      "JobName": "260517213432_runGEOS.sh",
+      "NNodes": "1",
+      "Partition": "pbatch",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046266": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "1",
+      "Elapsed": "00:00:01",
+      "ElapsedRaw": "1",
+      "ExitCode": "2:0",
+      "JobID": "6046266",
+      "JobIDRaw": "6046266",
+      "JobName": "post_pdc",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "FAILED",
+      "TotalCPU": "00:00:00"
     }
-  }
+  },
+  "squeue_by_job_id": {}
 }

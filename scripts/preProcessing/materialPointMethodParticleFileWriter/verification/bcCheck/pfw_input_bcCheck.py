@@ -8,7 +8,7 @@ pfw["runDebug"] = True
 
 # DOMAIN ---------------------------------------------------------------------------------
 
-pfw["planeSrain"]=1
+pfw["planeStrain"]=1
 
 refine=2
 cpp=18
@@ -39,7 +39,7 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="12:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ pfw["initialDt"]=1e-16
 
 pfw["solverProfiling"]=0        
 
-pfw["contactGapCorrection"]=1
+pfw["contactGapCorrection"] = "Implicit"
 pfw["frictionCoefficient"]=0.25
 
 pfw["prescribedBcTable"]=0

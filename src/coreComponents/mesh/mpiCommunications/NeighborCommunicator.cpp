@@ -507,7 +507,8 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
                                                MeshLevel const & mesh,
                                                int const commID,
                                                bool onDevice,
-                                               parallelDeviceEvents & events )
+                                               parallelDeviceEvents & events,
+                                               CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
@@ -516,9 +517,18 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
   FaceManager const & faceManager = mesh.getFaceManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const nodePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? nodeManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  arrayView1d< localIndex const > const edgePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? edgeManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  arrayView1d< localIndex const > const facePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? faceManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 
   int bufferSize = 0;
 
@@ -529,24 +539,28 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
     {
       case FieldLocation::Node:
       {
-        bufferSize += nodeManager.packSize( iter.second, nodeGhostsToSend, 0, onDevice, events );
+        bufferSize += nodeManager.packSize( iter.second, nodePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        bufferSize += edgeManager.packSize( iter.second, edgeGhostsToSend, 0, onDevice, events );
+        bufferSize += edgeManager.packSize( iter.second, edgePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        bufferSize += faceManager.packSize( iter.second, faceGhostsToSend, 0, onDevice, events );
+        bufferSize += faceManager.packSize( iter.second, facePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
         {
-          bufferSize += subRegion.packSize( iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          arrayView1d< localIndex const > const elemPackList =
+            direction == CommunicationDirection::OwnerToGhost
+            ? subRegion.getNeighborData( m_neighborRank ).ghostsToSend()
+            : subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
+          bufferSize += subRegion.packSize( iter.second, elemPackList, 0, onDevice, events );
         } );
         break;
       }
@@ -577,7 +591,8 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
                                                   MeshLevel const & mesh,
                                                   int const commID,
                                                   bool onDevice,
-                                                  parallelDeviceEvents & events )
+                                                  parallelDeviceEvents & events,
+                                                  CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
@@ -586,9 +601,18 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
   FaceManager const & faceManager = mesh.getFaceManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
-  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const nodePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? nodeManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  arrayView1d< localIndex const > const edgePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? edgeManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  arrayView1d< localIndex const > const facePackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? faceManager.getNeighborData( m_neighborRank ).ghostsToSend()
+    : faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
 
   buffer_type & sendBuff = sendBuffer( commID );
   localIndex const bufferSize =  LvArray::integerConversion< localIndex >( sendBuff.size() );
@@ -603,24 +627,28 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
     {
       case FieldLocation::Node:
       {
-        packedSize += nodeManager.pack( sendBufferPtr, iter.second, nodeGhostsToSend, 0, onDevice, events );
+        packedSize += nodeManager.pack( sendBufferPtr, iter.second, nodePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        packedSize += edgeManager.pack( sendBufferPtr, iter.second, edgeGhostsToSend, 0, onDevice, events );
+        packedSize += edgeManager.pack( sendBufferPtr, iter.second, edgePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        packedSize += faceManager.pack( sendBufferPtr, iter.second, faceGhostsToSend, 0, onDevice, events );
+        packedSize += faceManager.pack( sendBufferPtr, iter.second, facePackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
         {
-          packedSize += subRegion.pack( sendBufferPtr, iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          arrayView1d< localIndex const > const elemPackList =
+            direction == CommunicationDirection::OwnerToGhost
+            ? subRegion.getNeighborData( m_neighborRank ).ghostsToSend()
+            : subRegion.getNeighborData( m_neighborRank ).ghostsToReceive();
+          packedSize += subRegion.pack( sendBufferPtr, iter.second, elemPackList, 0, onDevice, events );
         } );
         break;
       }
@@ -649,7 +677,8 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
                                                 int const commID,
                                                 bool onDevice,
                                                 parallelDeviceEvents & events,
-                                                MPI_Op op )
+                                                MPI_Op op,
+                                                CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
@@ -661,9 +690,18 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
-  array1d< localIndex > & faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  array1d< localIndex > & nodeUnpackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive()
+    : nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  array1d< localIndex > & edgeUnpackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive()
+    : edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  array1d< localIndex > & faceUnpackList =
+    direction == CommunicationDirection::OwnerToGhost
+    ? faceManager.getNeighborData( m_neighborRank ).ghostsToReceive()
+    : faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
 
   int unpackedSize = 0;
 
@@ -674,24 +712,28 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
     {
       case FieldLocation::Node:
       {
-        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events, op );
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeUnpackList, 0, onDevice, events, op );
         break;
       }
       case FieldLocation::Edge:
       {
-        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice, events );
+        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeUnpackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice, events );
+        unpackedSize += faceManager.unpack( receiveBufferPtr, faceUnpackList, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
         {
-          unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
+          array1d< localIndex > & elemUnpackList =
+            direction == CommunicationDirection::OwnerToGhost
+            ? subRegion.getNeighborData( m_neighborRank ).ghostsToReceive()
+            : subRegion.getNeighborData( m_neighborRank ).ghostsToSend();
+          unpackedSize += subRegion.unpack( receiveBufferPtr, elemUnpackList, 0, onDevice, events );
         } );
         break;
       }

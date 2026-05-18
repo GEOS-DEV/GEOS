@@ -30,6 +30,7 @@ import getpass
 import platform
 import difflib
 import argparse
+import re
 from typing import Any
 
 parser = argparse.ArgumentParser(description='Particle File Writer for GEOS-MPM')
@@ -37,13 +38,83 @@ parser.add_argument('input_file', help="PFW input file", type=str)
 args = parser.parse_args()
 
 
-def _normalize_mpm_events_string(value: object) -> str:
-  """Return MPM event children, not a nested <MPMEvents> container.
 
-  Current GEOS expects event children directly inside the solver's <MPMEvents>
-  block. Some older PFW inputs included the surrounding <MPMEvents>...</MPMEvents>
-  tags in pfw["mpmEventsString"]. Strip those container tags here so old inputs
-  do not generate invalid nested MPMEvents blocks.
+def _upgrade_mpm_event_attributes(text: str) -> str:
+  """Modernize legacy event attributes in PFW-supplied XML snippets.
+
+  Older MPM inputs used time/interval on event nodes. Current GEOS MPM events
+  require startTime/endTime. If the old form is found, map time -> startTime and
+  interval -> endTime. This preserves the common legacy meaning used by the old
+  PFW examples, where interval stored the end of the ramp/window.
+  """
+  if not text:
+    return text
+
+  def repl_tag(match):
+    tag = match.group(0)
+    if "startTime" not in tag:
+      m = re.search(r'\btime\s*=\s*(["\'])(.*?)\1', tag)
+      if m:
+        tag = tag[:m.start()] + f'startTime={m.group(1)}{m.group(2)}{m.group(1)}' + tag[m.end():]
+    if "endTime" not in tag:
+      m = re.search(r'\binterval\s*=\s*(["\'])(.*?)\1', tag)
+      if m:
+        tag = tag[:m.start()] + f'endTime={m.group(1)}{m.group(2)}{m.group(1)}' + tag[m.end():]
+    return tag
+
+  event_names = "Anneal|TemperatureProfile|InitializeStress|ConfiningPressure|BoreholePressure|BodyForceUpdate|MaterialSwap|FrictionCoefficientSwap|Heal|PolymerHeal|CrystalHeal|MachineSample|ResetDeformationGradient|TransformParticles|DeformationUpdate|CohesiveZone"
+  text = re.sub(r'<(?:' + event_names + r')\b[^>]*?/?>', repl_tag, text)
+
+  def add_region_names(match):
+    tag = match.group(0)
+    if "regionNames" not in tag:
+      tag = tag[:-2] + ' regionNames="{ ParticleRegion1 }"/>' if tag.endswith("/>") else tag[:-1] + ' regionNames="{ ParticleRegion1 }">'
+    return tag
+  text = re.sub(r'<CohesiveZone\b[^>]*?/?>', add_region_names, text)
+  return text
+
+
+def _xml_attr(attrs: str, name: str) -> str | None:
+  m = re.search(r'\b' + re.escape(name) + r'\s*=\s*"([^"]*)"', attrs)
+  return m.group(1) if m else None
+
+
+def _remove_xml_attr(attrs: str, name: str) -> str:
+  return re.sub(r'\s*\b' + re.escape(name) + r'\s*=\s*"[^"]*"', '', attrs)
+
+
+def _add_missing_xml_attr(attrs: str, name: str, value: object) -> str:
+  if re.search(r'\b' + re.escape(name) + r'\s*=', attrs):
+    return attrs
+  return attrs.rstrip() + f' {name}="{value}"'
+
+
+def _float_expr(value: str | None, default: str = "0.0") -> str:
+  if value is None or str(value).strip() == "":
+    return default
+  text = str(value).strip().strip('{} ')
+  try:
+    return repr(float(text))
+  except Exception:
+    return text
+
+
+def _sum_float_expr(a: str | None, b: str | None) -> str:
+  try:
+    return repr(float(str(a).strip().strip('{} ')) + float(str(b).strip().strip('{} ')))
+  except Exception:
+    return _float_expr(b, _float_expr(a, "0.0"))
+
+
+def _normalize_mpm_events_string(value: object, default_end_time: object = "1.0") -> str:
+  """Normalize legacy PFW event snippets for current GEOS MPMEvents.
+
+  Older PFW inputs commonly supplied a nested <MPMEvents>...</MPMEvents>
+  wrapper, used event attributes named time/interval instead of startTime/endTime,
+  used the old CohesiveZoneReference tag, or omitted regionNames on CohesiveZone
+  events.  Current GEOS expects only event child nodes inside the solver's
+  MPMEvents block, explicit startTime/endTime attributes, and explicit regionNames
+  for CohesiveZone events.
   """
   text = "" if value is None else str(value).strip()
   if not text:
@@ -54,14 +125,84 @@ def _normalize_mpm_events_string(value: object) -> str:
     first_close = text.find(">")
     if first_close >= 0:
       text = text[first_close + 1:].strip()
-
   lower = text.lower().rstrip()
   closing = "</mpmevents>"
   if lower.endswith(closing):
     cut = lower.rfind(closing)
     text = text[:cut].strip()
 
+  text = re.sub(r"<\s*CohesiveZoneReference\b", "<CohesiveZone", text)
+  text = re.sub(r"</\s*CohesiveZoneReference\s*>", "</CohesiveZone>", text)
+
+  event_names = (
+    "Anneal", "BodyForceUpdate", "BoreholePressure", "CohesiveZone",
+    "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
+    "FrictionCoefficientSwap", "Heal", "InitializeStress",
+    "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
+    "PolymerHeal", "ResetDeformationGradient", "TemperatureProfile",
+    "TransformParticles",
+  )
+  event_pattern = re.compile(r"<(?P<tag>" + "|".join(event_names) + r")\b(?P<attrs>[^>]*)>", re.S)
+
+  def _attr(attrs: str, name: str):
+    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
+    return m.group(2) if m else None
+
+  def _strip_attr(attrs: str, name: str) -> str:
+    return re.sub(r"\s+" + re.escape(name) + r"\s*=\s*([\"']).*?\1", "", attrs, flags=re.S)
+
+  def _fix(match):
+    tag = match.group("tag")
+    attrs = match.group("attrs")
+    self_close = attrs.rstrip().endswith("/")
+    if self_close:
+      attrs = attrs.rstrip()[:-1]
+    old_time = _attr(attrs, "time")
+    old_interval = _attr(attrs, "interval")
+    attrs = _strip_attr(attrs, "time")
+    attrs = _strip_attr(attrs, "interval")
+    if _attr(attrs, "startTime") is None:
+      attrs += f' startTime="{old_time if old_time is not None else "0.0"}"'
+    if _attr(attrs, "endTime") is None:
+      attrs += f' endTime="{old_interval if old_interval is not None else default_end_time}"'
+    if tag == "CohesiveZone" and _attr(attrs, "regionNames") is None:
+      attrs += ' regionNames="{ ParticleRegion1 }"'
+    return f"<{tag}{attrs}{' /' if self_close else ''}>"
+
+  text = event_pattern.sub(_fix, text)
   return text
+
+
+def _normalize_geomechanics_material_string(value: object) -> str:
+  """Add current required Geomechanics attributes to legacy inline material XML."""
+  text = "" if value is None else str(value)
+  if "<Geomechanics" not in text:
+    return text
+
+  geom_pat = re.compile(r"<Geomechanics\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
+
+  def _attr(attrs: str, name: str):
+    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
+    return m.group(2) if m else None
+
+  def _append(attrs: str, name: str, value: str) -> str:
+    if _attr(attrs, name) is None:
+      attrs += f'\n   {name}="{value}"'
+    return attrs
+
+  def _fix(match):
+    attrs = match.group("attrs")
+    end = match.group("end")
+    fslope = _attr(attrs, "fSlope") or "0.0"
+    attrs = _append(attrs, "dstrendh", "1.0")
+    attrs = _append(attrs, "dfslopedh", "0.0")
+    attrs = _append(attrs, "dpeakI1dh", "0.0")
+    attrs = _append(attrs, "dcrdh", "0.0")
+    attrs = _append(attrs, "fSlopeFailed", fslope)
+    attrs = _append(attrs, "creepG", "1.0")
+    return f"<Geomechanics{attrs}{end}"
+
+  return geom_pat.sub(_fix, text)
 
 
 # ============================================================================================
@@ -430,6 +571,43 @@ def normalize_no_numpy_wrappers(obj: Any) -> Any:
     return obj
 
 
+
+
+def normalize_geos_enum_inputs(pfw_dict: dict) -> None:
+    """Normalize legacy integer enum values to current GEOS string enums."""
+
+    def normalize_one(key: str, mapping: dict, valid: tuple[str, ...]) -> None:
+        if key not in pfw_dict or pfw_dict[key] is None:
+            return
+        value = pfw_dict[key]
+        raw = str(value).strip() if isinstance(value, str) else value
+        if raw in mapping:
+            pfw_dict[key] = mapping[raw]
+            print(f"Normalized legacy {key}={value!r} to {pfw_dict[key]!r}")
+            return
+        if isinstance(raw, str):
+            by_lower = {v.lower(): v for v in valid}
+            lowered = raw.lower()
+            if lowered in by_lower:
+                pfw_dict[key] = by_lower[lowered]
+                return
+        if pfw_dict[key] not in valid:
+            raise ValueError(
+                f"pfw[{key!r}]={value!r} is not valid for current GEOS; "
+                f"expected one of {valid}"
+            )
+
+    normalize_one(
+        "contactGapCorrection",
+        {0: "Simple", "0": "Simple", 1: "Implicit", "1": "Implicit", 2: "Softened", "2": "Softened"},
+        ("Simple", "Implicit", "Softened"),
+    )
+    normalize_one(
+        "fTableInterpType",
+        {0: "Linear", "0": "Linear", 1: "Cosine", "1": "Cosine", 2: "Smoothstep", "2": "Smoothstep"},
+        ("Linear", "Cosine", "Smoothstep"),
+    )
+
 def find_numpy_wrappers(obj: Any, path: str = "pfw") -> list[str]:
     """
     Scan for NumPy scalars/arrays that are likely to stringify with dtype wrappers
@@ -474,12 +652,20 @@ for h in find_numpy_wrappers(pfw):
     print(" -", h)
 
 pfw = normalize_no_numpy_wrappers(pfw)
+normalize_geos_enum_inputs(pfw)
 
 print("\nAfter editing the following wrappers remain. ")
 for h in find_numpy_wrappers(pfw):
     print(" -", h)
 
 print("\nHopefully that looks ok.")
+
+# Normalize legacy PFW input keys that should not become solver XML attributes.
+if "planeSrain" in pfw:
+  if "planeStrain" not in pfw:
+    pfw["planeStrain"] = pfw["planeSrain"]
+  pfw.pop("planeSrain", None)
+pfw.pop("useConstantTimeStep", None)
 
 tabIndent = 3*"  "  
 parameterStrings = []
@@ -1265,7 +1451,10 @@ if rank == 0:
         particleBlocks="{{ {regionBlocksStr} }}"
         materialList="{{ {matsOrig[i]} }}"/>"""
 
-  mpmEventsString = _normalize_mpm_events_string(mpmEventsString)
+
+  # Normalize legacy inline XML snippets after defaults have been resolved.
+  materialPropertyString = _normalize_geomechanics_material_string(materialPropertyString)
+  mpmEventsString = _normalize_mpm_events_string(mpmEventsString, default_end_time=endTime)
   geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
   geosInputFile = open(geosInputFileName, 'w')
 
@@ -1361,6 +1550,7 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
 
 </Problem>"""
 
+  geosInputFileString = _normalize_generated_geos_xml(geosInputFileString)
   geosInputFile.write(geosInputFileString)
   geosInputFile.close()
 

@@ -107,7 +107,7 @@ cpdiDomainScaling="1"
 
 damageFieldPartitioning="1"
 
-contactGapCorrection="1"
+contactGapCorrection="Implicit"
 frictionCoefficient="0.25"
 
 boundaryConditionTypes="{ 0, 0, 0, 0, 0, 0 }"    
@@ -153,7 +153,7 @@ pfw = {
     "needsNeighborList": 1,
     "cpdiDomainScaling": 1,
     "damageFieldPartitioning": 1,
-    "contactGapCorrection": 1,
+    "contactGapCorrection": "Implicit",
     "frictionCoefficient": 0.25,
     "boundaryConditionTypes": [0, 0, 0, 0, 0, 0],
 }

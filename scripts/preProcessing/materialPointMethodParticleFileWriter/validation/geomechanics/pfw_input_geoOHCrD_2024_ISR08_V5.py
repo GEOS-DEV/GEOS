@@ -3,6 +3,7 @@ import pfw_geometryObjects as geom   # this contains all the geometry object fun
 import numpy as np                   # math stuff
 from sklearn.neighbors import KDTree          # nearest neighbor search with KDTree
 import re
+import pfw_materials as matdb
 ############################################################
 #       this cript is associated with HP2/IS2 data      
 ############################################################
@@ -71,7 +72,7 @@ pfw["mWallTime"]="00:20:00"
 #in the 2023 code, mWall time is 00:10:00
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------
 #this section updated on 10/15/24
@@ -195,7 +196,7 @@ pfw["initialTemperature"]=initialTemperature
 
 Q = 2200. #activation energy in J/mol
 
-pfw["materials"] = [ "ghareb" ]
+pfw["materials"] = [matdb.ghareb["name"]]
 pfw["materialPropertyString"]="""
 <ElasticIsotropic
 	name="aluminum"
@@ -324,9 +325,9 @@ pfw["temperatureTableInterpType"] = 'Linear'
 
 pfw["useEvents"]=1
 pfw["mpmEventsString"]="""
-<MPMEvents>
-    <TemperatureProfile
-        time=""" + '"' + str(0.0) + '"' + """
+<TemperatureProfile
+        time=
+""" + '"' + str(0.0) + '"' + """
         interval=""" + '"' + str(stopTime) + '"' + """
         />
 </MPMEvents>

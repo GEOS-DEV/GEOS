@@ -970,7 +970,8 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
                                                        MeshLevel & mesh,
                                                        stdVector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
-                                                       bool onDevice )
+                                                       bool onDevice,
+                                                       CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
   icomm.setFieldsToBeSync( fieldsToBeSync );
@@ -980,7 +981,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & 
   for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
   {
     NeighborCommunicator & neighbor = neighbors[neighborIndex];
-    int const bufferSize = neighbor.packCommSizeForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events );
+    int const bufferSize = neighbor.packCommSizeForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events, direction );
 
     neighbor.mpiISendReceiveBufferSizes( icomm.commID(),
                                          icomm.mpiSendBufferSizeRequest( neighborIndex ),
@@ -1011,12 +1012,13 @@ void CommunicationTools::asyncPack( FieldIdentifiers const & fieldsToBeSync,
                                     stdVector< NeighborCommunicator > & neighbors,
                                     MPI_iCommData & icomm,
                                     bool onDevice,
-                                    parallelDeviceEvents & events )
+                                    parallelDeviceEvents & events,
+                                    CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
   for( NeighborCommunicator & neighbor : neighbors )
   {
-    neighbor.packCommBufferForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events );
+    neighbor.packCommBufferForSync( fieldsToBeSync, mesh, icomm.commID(), onDevice, events, direction );
   }
 }
 
@@ -1068,11 +1070,12 @@ void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & field
                                                   MeshLevel & mesh,
                                                   stdVector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
-                                                  bool onDevice )
+                                                  bool onDevice,
+                                                  CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
   parallelDeviceEvents events;
-  asyncPack( fieldsToBeSync, mesh, neighbors, icomm, onDevice, events );
+  asyncPack( fieldsToBeSync, mesh, neighbors, icomm, onDevice, events, direction );
   asyncSendRecv( neighbors, icomm, onDevice, events );
 }
 
@@ -1122,7 +1125,8 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       MPI_iCommData & icomm,
                                       bool onDevice,
                                       parallelDeviceEvents & events,
-                                      MPI_Op op )
+                                      MPI_Op op,
+                                      CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1138,7 +1142,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
     NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
-    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), onDevice, events, op );
+    neighbor.unpackBufferForSync( icomm.getFieldsToBeSync(), mesh, icomm.commID(), onDevice, events, op, direction );
   }
 
   // we don't want to check if the request has completed,
@@ -1188,12 +1192,13 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          MPI_iCommData & icomm,
                                          bool onDevice,
                                          parallelDeviceEvents & events,
-                                         MPI_Op op )
+                                         MPI_Op op,
+                                         CommunicationDirection direction )
 {
   GEOS_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op ) );
+  GEOS_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op, direction ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );

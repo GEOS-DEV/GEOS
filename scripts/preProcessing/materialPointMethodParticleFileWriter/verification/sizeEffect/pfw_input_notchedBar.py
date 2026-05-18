@@ -76,10 +76,9 @@ DX = domainX/pfw["nI"]
 
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True
-pfw["mBank"]="imcomp"
 pfw["mWallTime"]="02:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------

@@ -50,10 +50,9 @@ pfw["zmax"] = 0.5*domainZ # mm
 
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True    # run in background vs. in salloc interactive
-pfw["mBank"]= "mahem"
 pfw["mWallTime"]="01:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 pfw["autoRestart"]=False
 
 # END BATCH PARAMETERS ---------------------------------------------------------------
@@ -156,6 +155,7 @@ pfw["mpmEventsString"]="""
 <InitializeStress 
     startTime="0.0"
     targetRegion="all"
-    pressure=""" + '"' + str(initialPressure) + '"' + """
+    pressure=
+""" + '"' + str(initialPressure) + '"' + """
 />
 """

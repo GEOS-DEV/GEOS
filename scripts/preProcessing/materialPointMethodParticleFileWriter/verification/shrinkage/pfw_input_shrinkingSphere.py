@@ -48,7 +48,7 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="12:00:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
 pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
-pfw["mSubmitJobs"]=True
+pfw["mSubmitJobs"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
@@ -115,9 +115,9 @@ pfw["materialPropertyString"] ="""
 """
 
 pfw["mpmEventsString"]="""
-<MPMEvents>
-	<TemperatureProfile
-	time=""" + '"' + str(0.0) + '"' + """
+<TemperatureProfile
+	time=
+""" + '"' + str(0.0) + '"' + """
 	interval=""" + '"' + str(stopTime) + '"' + """
 	temperatureTable=""" + '"' + """{{0.0, """ + str(pfw["initialTemperature"]) + '}, {'  + str(stopTime) + """, 1273.0}}""" + '"' + """/>
 </MPMEvents>+
