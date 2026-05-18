@@ -300,7 +300,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_setDomainTemperature(),
   m_setDomainTemperatureRate(),
   m_shockHeating( 0 ),
-  m_smallMass( DBL_MAX ),
+  m_smallMass( -1.0 ),
   m_solverProfiling( 0 ),
   m_stressControl(),
   m_stressControlITerm(),
@@ -966,7 +966,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDescription( "Flag to enable shock heating" );
 
   registerWrapper( "smallMass", &m_smallMass ).
-    setInputFlag( InputFlags::FALSE ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_smallMass ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The small mass threshold for ignoring extremely low-mass nodes." );
@@ -6211,7 +6211,10 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
   } );
 
   // Set small mass threshold
-  m_smallMass = fmin( MpiWrapper::min( minMassLocal.get() ) * 1.0e-16, m_smallMass );
+  if( m_smallMass < 0.0 )
+  {
+    m_smallMass = MpiWrapper::min( minMassLocal.get() ) * 1.0e-16;
+  }
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
