@@ -622,7 +622,7 @@ public:
                                            real64 const & smallMass,
                                            int const & useSurfacePositionForContact,
                                            int const & useCohesiveTangentialForces,
-                                           int & separable,
+                                           bool & separable,
                                            real64 const & dt,
                                            real64 const & frictionCoefficient,
                                            real64 ( &nAB )[3],
@@ -656,7 +656,7 @@ public:
                                          real64 const & smallMass,
                                          int const & useSurfacePositionForContact,
                                          int const & useCohesiveTangentialForces,
-                                         int & separable,
+                                         bool & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
                                          real64 ( &nAB )[3],
@@ -1030,7 +1030,7 @@ public:
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  int evaluateSeparabilityCriterion( int const & planeStrain,
+  bool evaluateSeparabilityCriterion( int const & planeStrain,
                                      int const & numContactGroups,
                                      int const & treatFullyDamagedAsSingleField,
                                      real64 const & separabilityMinDamage,

@@ -15647,7 +15647,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
         if( active )
         {
           // Evaluate the separability criterion for the contact pair.
-          int separable = 0;
+          bool separable = 0;
           int useCohesiveTangentialForces = 0;
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
@@ -15661,7 +15661,7 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
               return;
             }
 
-            separable = 1;
+            separable = true;
             frictionCoefficient = 0.0;
             useCohesiveTangentialForces = 1;
           }
@@ -16011,7 +16011,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
         if( active )
         {
           // Evaluate the separability criterion for the contact pair.
-          int separable = 0;
+          bool separable = 0;
           int useCohesiveTangentialForces = 0;
           // int zeroTangentialForces 0; // When using contact compressive forces to prevent interpenetration, ignore
           // tangential forces //
@@ -16025,7 +16025,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
               return;
             }
 
-            separable = 1;
+            separable = true;
             frictionCoefficient = 0.0;
             useCohesiveTangentialForces = 1;
           }
@@ -16262,7 +16262,7 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
-int SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
+bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
                                                       int const & numContactGroups,
                                                       int const & treatFullyDamagedAsSingleField,
                                                       real64 const & separabilityMinDamage,
@@ -16283,7 +16283,7 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
 // between fully damaged materials. There is a potential issue that approaching damaged bodies
 // would get contact gaps locked in.
 {
-  int separable = 0;
+  bool separable = 0;
 
   // At least one field is fully damaged and both fields have the minimum separable level of damage.
   // The "a%b" is the "mod(a,b)" command, and indicates whether materials are from same contact group.
@@ -16313,11 +16313,11 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
       // separable = ( fmin( damageA, damageB ) < 0.9999 ) ? 1 : 0; // Might not need this check with additional
       // comparision of damage
       // gradient in if above
-      separable = 0;
+      separable = false;
     }
     else
     {
-      separable = 1;
+      separable = true;
     }
   }
 
@@ -16341,7 +16341,7 @@ int SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
 
     if( productOfSquares < ( thinFeatureDFGThreshold * neighborRadius ) * ( thinFeatureDFGThreshold * neighborRadius ) )
     {
-      separable = 0;
+      separable = false;
     }
   }
 
@@ -16370,7 +16370,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrection
                                                             real64 const & smallMass,
                                                             int const & useSurfacePositionForContact,
                                                             int const & useCohesiveTangentialForces,
-                                                            int & separable,
+                                                            bool & separable,
                                                             real64 const & dt,
                                                             real64 const & frictionCoefficient,
                                                             real64 (& nAB)[3],
@@ -16411,7 +16411,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrection
   real64 jtan2 = mA * ( (vAB[0] - vA[0]) * s2AB[0] + (vAB[1] - vA[1]) * s2AB[1] + (vAB[2] - vA[2]) * s2AB[2] );
   real64 djA[3] = {};
 
-  if( separable == 0 )
+  if( !separable )
   {
     djA[0] = jnor * nAB[0] + jtan1 * s1AB[0] + jtan2 * s2AB[0];
     djA[1] = jnor * nAB[1] + jtan1 * s1AB[1] + jtan2 * s2AB[1];
@@ -16575,7 +16575,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOp
                                                           real64 const & smallMass,
                                                           int const & useSurfacePositionForContact,
                                                           int const & useCohesiveTangentialForces,
-                                                          int & separable,
+                                                          bool & separable,
                                                           real64 const & dt,
                                                           real64 const & frictionCoefficient,
                                                           real64 (& nAB)[3], // Shared normal both fields
@@ -16643,7 +16643,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOp
   // separable |= LvArray::tensorOps::AiBi< 3 >(dC, nAB) > 0;
 
   // Check for separability, and enforce either slip, or no-slip contact, accordingly
-  if( separable == 0 )
+  if( !separable )
   {
     // Surfaces are bonded, treat as single velocity field by applying normal force to prevent
     // interpenetration, and tangential force to prevent slip.
