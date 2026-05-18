@@ -783,7 +783,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           PorousSolid< ElasticIsotropic, ConstantPermeability >,
+                           PorousSolidBase,
                            CellElementSubRegion >( mesh,
                                                    poromechanicsRegionNames,
                                                    getDiscretizationName(),
