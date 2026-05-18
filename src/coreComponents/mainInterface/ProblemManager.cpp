@@ -159,7 +159,7 @@ void logHypredriveInputs( PhysicsSolverManager & physicsSolverManager,
 #endif
 
 ProblemManager::ProblemManager( conduit::Node & root ):
-  Group( keys::ProblemManager, root ),
+  ProblemManagerBase( keys::ProblemManager, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -1278,6 +1278,31 @@ DomainPartition & ProblemManager::getDomainPartition()
 DomainPartition const & ProblemManager::getDomainPartition() const
 {
   return getGroup< DomainPartition >( groupKeys.domain );
+}
+
+NumericalMethodsManager & ProblemManager::getNumericalMethodsManager()
+{
+  return getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
+}
+
+MeshManager & ProblemManager::getMeshManager()
+{
+  return getGroup< MeshManager >( groupKeys.meshManager );
+}
+
+OutputManager & ProblemManager::getOutputManager()
+{
+  return getGroup< OutputManager >( groupKeys.outputManager );
+}
+
+GeometricObjectManager & ProblemManager::getGeometricObjectManager()
+{
+  return getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+}
+
+ConstitutiveManager & ProblemManager::getConstitutiveManager()
+{
+  return getDomainPartition().getConstitutiveManager();
 }
 
 void ProblemManager::applyInitialConditions()

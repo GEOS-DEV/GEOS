@@ -21,7 +21,7 @@
 #ifndef GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 #define GEOS_MAININTERFACE_PROBLEMMANAGER_HPP_
 
-#include "dataRepository/Group.hpp"
+#include "dataRepository/ProblemManagerBase.hpp"
 
 namespace geos
 {
@@ -31,6 +31,9 @@ class DomainPartition;
 class GeometricObjectManager;
 class FiniteElementDiscretization;
 class MeshLevel;
+class MeshManager;
+class NumericalMethodsManager;
+class OutputManager;
 namespace constitutive
 {
 class ConstitutiveManager;
@@ -47,7 +50,7 @@ class ParticleBlockManagerABC;
  * @class ProblemManager
  * @brief This is the class handling the operation flow of the problem being ran in GEOS
  */
-class ProblemManager : public dataRepository::Group
+class ProblemManager : public dataRepository::ProblemManagerBase
 {
 public:
 
@@ -176,40 +179,40 @@ public:
    * @brief Returns a pointer to the DomainPartition
    * @return Pointer to the DomainPartition
    */
-  DomainPartition & getDomainPartition();
+  DomainPartition & getDomainPartition() override;
 
   /**
    * @brief Returns a pointer to the DomainPartition
    * @return Const pointer to the DomainPartition
    */
-  DomainPartition const & getDomainPartition() const;
+  DomainPartition const & getDomainPartition() const override;
 
   /**
    * @brief Returns the problem name
    * @return The problem name
    */
-  string const & getProblemName() const
+  string const & getProblemName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.problemName ); }
 
   /**
    * @brief Returns the input file name
    * @return The input file name
    */
-  string const & getInputFileName() const
+  string const & getInputFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.inputFileName ); }
 
   /**
    * @brief Returns the restart file name
    * @return The restart file name
    */
-  string const & getRestartFileName() const
+  string const & getRestartFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.restartFileName ); }
 
   /**
    * @brief Returns the schema file name
    * @return The schema file name
    */
-  string const & getSchemaFileName() const
+  string const & getSchemaFileName() const override
   { return getGroup< Group >( groupKeys.commandLine ).getReference< string >( viewKeys.schemaFileName ); }
 
   /// Command line input viewKeys
@@ -258,7 +261,7 @@ public:
    * @brief Returns the PhysicsSolverManager
    * @return Reference to the PhysicsSolverManager
    */
-  PhysicsSolverManager & getPhysicsSolverManager()
+  PhysicsSolverManager & getPhysicsSolverManager() override
   {
     return *m_physicsSolverManager;
   }
@@ -276,7 +279,7 @@ public:
    * @brief Returns the FunctionManager.
    * @return The FunctionManager.
    */
-  FunctionManager & getFunctionManager()
+  FunctionManager & getFunctionManager() override
   {
     GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
@@ -286,7 +289,7 @@ public:
    * @brief Returns the const FunctionManager.
    * @return The const FunctionManager.
    */
-  FunctionManager const & getFunctionManager() const
+  FunctionManager const & getFunctionManager() const override
   {
     GEOS_ERROR_IF( m_functionManager == nullptr, "Not initialized." );
     return *m_functionManager;
@@ -296,7 +299,7 @@ public:
    * @brief Returns the FieldSpecificationManager.
    * @return The FieldSpecificationManager.
    */
-  FieldSpecificationManager & getFieldSpecificationManager()
+  FieldSpecificationManager & getFieldSpecificationManager() override
   {
     GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
@@ -306,7 +309,7 @@ public:
    * @brief Returns the const FunctionManager.
    * @return The const FunctionManager.
    */
-  FieldSpecificationManager const & getFieldSpecificationManager() const
+  FieldSpecificationManager const & getFieldSpecificationManager() const override
   {
     GEOS_ERROR_IF( m_fieldSpecificationManager == nullptr, "Not initialized." );
     return *m_fieldSpecificationManager;
@@ -316,15 +319,46 @@ public:
    * @brief Returns the EventManager.
    * @return The EventManager.
    */
-  EventManager & getEventManager()
-  {return *m_eventManager;}
+  EventManager & getEventManager() override
+  { return *m_eventManager; }
 
   /**
    * @brief Returns the TasksManager.
    * @return The TasksManager.
    */
-  TasksManager & getTasksManager()
-  {return *m_tasksManager;}
+  TasksManager & getTasksManager() override
+  { return *m_tasksManager; }
+
+  /**
+   * @brief Returns the NumericalMethodsManager.
+   * @return The NumericalMethodsManager.
+   */
+  NumericalMethodsManager & getNumericalMethodsManager() override;
+
+  /**
+   * @brief Returns the MeshManager.
+   * @return The MeshManager.
+   */
+  MeshManager & getMeshManager() override;
+
+  /**
+   * @brief Returns the OutputManager.
+   * @return The OutputManager.
+   */
+  OutputManager & getOutputManager() override;
+
+  /**
+   * @brief Returns the GeometricObjectManager.
+   * @return The GeometricObjectManager.
+   */
+  GeometricObjectManager & getGeometricObjectManager() override;
+
+  /**
+   * @brief Returns the ConstitutiveManager.
+   * @return The ConstitutiveManager.
+   */
+  constitutive::ConstitutiveManager & getConstitutiveManager() override;
+
 
 protected:
   /**

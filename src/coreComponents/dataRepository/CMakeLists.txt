@@ -38,6 +38,7 @@ set( dataRepository_headers
      LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
+     ProblemManagerBase.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
      Utilities.hpp
