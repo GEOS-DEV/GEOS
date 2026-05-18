@@ -9432,7 +9432,17 @@ class intersection(SetOperation):
 #############################################
 class difference(SetOperation):
   """
-  Geometry object for creating a difference of two objects
+  Geometry object for the set difference A - B.
+
+  The retained material points are those that are inside object A and outside
+  object B.  The SetOperation base stores the operands as subObjA/subObjB; this
+  class therefore intentionally uses those names rather than the legacy
+  self.A/self.B attributes.
+
+  Surface information is approximated from the closest retained boundary.  On
+  the outer boundary of A, normals/positions come from A.  On the cut boundary
+  produced by subtracting B, the surface position comes from B and the normal is
+  reversed because the outward normal of A - B points into the removed region.
   """
   def __init__(self,
                name,
@@ -9442,21 +9452,75 @@ class difference(SetOperation):
                           name,
                           A,
                           B)
+    self.intA = -1
+    self.intB = -1
 
-  def isInterior(self,pt, skinDepth):
-    if( self.A.isInterior(pt,skinDepth) ^ self.B.isInterior(pt,skinDepth) ):
-      # Does not currently support surface flagging, normals or positions
-      return 0
-    
-    return-1
+  def isInterior(self, pt, skinDepth):
+    self.intA = self.subObjA.isInterior(pt, skinDepth)
+    self.intB = self.subObjB.isInterior(pt, skinDepth)
+
+    # True set difference: keep A only where B is absent.  The legacy XOR logic
+    # incorrectly retained points that were inside B but outside A.
+    if self.intA < 0:
+      return -1
+
+    if self.intB >= 0:
+      return -1
+
+    # Preserve surface flags from A and also flag points close to the cut
+    # surface of B when the sub-object can provide a surface-position vector.
+    try:
+      sB = self.subObjB.getSurfacePosition(pt)
+      if np.linalg.norm(sB) <= skinDepth:
+        return _defaultSurfaceFlag
+    except Exception:
+      pass
+
+    if self.intA > 0:
+      return self.intA
+
+    return 0
+
+  def _surfacePositionFromA(self, pt):
+    try:
+      return self.subObjA.getSurfacePosition(pt)
+    except Exception:
+      return _defaultSurfacePosition
+
+  def _surfacePositionFromB(self, pt):
+    try:
+      return self.subObjB.getSurfacePosition(pt)
+    except Exception:
+      return _defaultSurfacePosition
+
+  def _closestSurfaceIsB(self, pt):
+    sA = self._surfacePositionFromA(pt)
+    sB = self._surfacePositionFromB(pt)
+    return np.dot(sB, sB) < np.dot(sA, sA)
+
+  def getSurfaceNormal(self, pt):
+    if self._closestSurfaceIsB(pt):
+      try:
+        return -self.subObjB.getSurfaceNormal(pt)
+      except Exception:
+        return _defaultSurfaceNormal
+
+    try:
+      return self.subObjA.getSurfaceNormal(pt)
+    except Exception:
+      return _defaultSurfaceNormal
+
+  def getSurfacePosition(self, pt):
+    if self._closestSurfaceIsB(pt):
+      return self._surfacePositionFromB(pt)
+
+    return self._surfacePositionFromA(pt)
 
   def xMin(self):
-    return self.A.xMin()
+    return self.subObjA.xMin()
 
   def xMax(self):
-    return self.A.xMax()
-
-
+    return self.subObjA.xMax()
 # ===========================================
 # END SET OPERATIONS
 # ===========================================
