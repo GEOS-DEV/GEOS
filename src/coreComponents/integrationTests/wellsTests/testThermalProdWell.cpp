@@ -111,7 +111,7 @@ char const * xmlInput =
         control="BHP"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15">
-                <ProductionPhaseVolumeRateConstraint
+        <ProductionPhaseVolumeRateConstraint
           name="maxwatprod"
           phaseName="water"
           phaseRate="0.001"/>
