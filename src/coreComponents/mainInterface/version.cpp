@@ -17,6 +17,12 @@
 #include "common/logger/Logger.hpp"
 #include "mainInterface/GeosxVersion.hpp"
 
+#if defined( GEOS_USE_HIP ) && defined( __has_include )
+#if __has_include(<hip/hip_version.h>)
+#include <hip/hip_version.h>
+#endif
+#endif
+
 namespace geos
 {
 
@@ -59,10 +65,27 @@ static std::string getGpuCompilerIdString()
   std::ostringstream oss;
 
 #if defined( GEOS_USE_CUDA )
-  oss << "  - CUDA compiler version: " << CUDA_VERSION/10/100 << "." << CUDA_VERSION/10%100;
+#if defined( CUDA_VERSION )
+  oss << "  - CUDA compiler version: " << CUDA_VERSION / 10 / 100 << "." << CUDA_VERSION / 10 % 100;
+#else
+  oss << "  - CUDA compiler version: unknown";
 #endif
+#endif
+
 #if defined( GEOS_USE_HIP )
-  oss << "  - ROCm compiler version: " << ROCM_VERSION/100/100 << "." << ROCM_VERSION/100%100;
+  oss << "  - ROCm compiler version: ";
+#if defined( ROCM_VERSION )
+  oss << ROCM_VERSION / 100 / 100 << "." << ROCM_VERSION / 100 % 100;
+#elif defined( HIP_VERSION_MAJOR ) && defined( HIP_VERSION_MINOR )
+  oss << HIP_VERSION_MAJOR << "." << HIP_VERSION_MINOR;
+#if defined( HIP_VERSION_PATCH )
+  oss << "." << HIP_VERSION_PATCH;
+#endif
+#elif defined( __clang__ )
+  oss << "unknown (clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__ << ")";
+#else
+  oss << "unknown";
+#endif
 #endif
   return oss.str();
 }

@@ -730,6 +730,7 @@ public:
                              arrayView1d< real64 const > const & Vp,    // List of neighbor particle volumes.
                              arrayView1d< real64 const > const & fp );  // scalar field values (e.g. damage) at neighbor particles
 
+  template< typename DAMAGE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 computeKernelFieldDevice( arraySlice1d< real64 const > const x,  // query point
@@ -741,7 +742,7 @@ public:
                                    arraySlice1d< localIndex const > const particleIndices,
                                    ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                    ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                   const std::function< real64( localIndex, localIndex, localIndex ) > damage );
+                                   DAMAGE const & damage );
 
   GEOS_HOST
   GEOS_FORCE_INLINE
@@ -753,6 +754,7 @@ public:
                                                                                      // particles
                                    arraySlice1d< real64 > const result );
 
+  template< typename DAMAGE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void computeKernelFieldGradientDevice( arraySlice1d< real64 const > const x, // query point
@@ -764,7 +766,7 @@ public:
                                          arraySlice1d< localIndex const > const particleIndices,
                                          ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                          ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                         const std::function< real64( localIndex, localIndex, localIndex ) > damage,
+                                         DAMAGE const & damage,
                                          real64 ( &result )[3] );
 
   GEOS_HOST_DEVICE
@@ -916,13 +918,17 @@ public:
 
   void computeGridSurfacePositionFromVolume( NodeManager & nodeManager );
 
+  static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeVolumeFromSurfacePosition( real64 const (&n)[3],
                                            real64 const offset,
                                            real64 const (&hEl) [3] );
 
+  static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeMaximumSurfacePositionOffset( real64 ( &n )[3],
                                               real64 const (&hEl)[3] );
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void logisticRegression( int const & planeStrain,
                            integer const & numContactGroups,
                            integer const & damageFieldPartitioning,
@@ -939,7 +945,7 @@ public:
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradient,
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormal,
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
-                           arraySlice1d< real64 const > const gridPosition,
+                           arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
                            arraySlice1d< real64 const > const gridDamageGradient,
                            real64 ( &normal0 )[3],
                            real64 ( &normal )[3],

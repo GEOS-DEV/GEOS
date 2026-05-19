@@ -95,8 +95,9 @@ array2d< int > generateCombinations( array1d< array1d< int > > sets )
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
-GEOS_HOST_DEVICE
 template< typename T >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void swap( T & a, T & b )
 {
   T temp = a;
@@ -4079,6 +4080,8 @@ void SolidMechanicsMPM::logMomentumSum( std::string label,  // For tagging code 
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::kernelDevice( real64 const & r, // distance from particle to query point.
                                         real64 const & neighborRadius,
                                         int const & planeStrain )
@@ -4125,6 +4128,8 @@ void SolidMechanicsMPM::kernelGradient( arraySlice1d< real64 const > const & x, 
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::kernelGradientDevice( arraySlice1d< real64 const > const & x,   // query point
                                               real64 const (&xp)[3],  //arraySlice1d< real64 const > const & xp,  // particle location
                                               real64 const & r,                         // distance from particle to query point.
@@ -4208,6 +4213,9 @@ real64 SolidMechanicsMPM::computeKernelField( arraySlice1d< real64 const > const
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+template< typename DAMAGE >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::computeKernelFieldDevice( arraySlice1d< real64 const > const x,  // query point
                                                     real64 const & neighborRadius,
                                                     int const & planeStrain,
@@ -4217,7 +4225,7 @@ real64 SolidMechanicsMPM::computeKernelFieldDevice( arraySlice1d< real64 const >
                                                     arraySlice1d< localIndex const > const particleIndices,
                                                     ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                                     ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                                    const std::function< real64( localIndex, localIndex, localIndex ) > damage )
+                                                    DAMAGE const & damage )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
   // The lists xp, fp, and the length np could refer to all the particles in the patch,
@@ -4346,6 +4354,9 @@ void SolidMechanicsMPM::computeKernelFieldGradient( arraySlice1d< real64 const >
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+template< typename DAMAGE >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computeKernelFieldGradientDevice( arraySlice1d< real64 const > const x, // query point
                                                           real64 const & neighborRadius,
                                                           int const & planeStrain,
@@ -4355,7 +4366,7 @@ void SolidMechanicsMPM::computeKernelFieldGradientDevice( arraySlice1d< real64 c
                                                           arraySlice1d< localIndex const > const particleIndices,
                                                           ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                                          const std::function< real64( localIndex, localIndex, localIndex ) > damage,
+                                                          DAMAGE const & damage,
                                                           real64 (& result)[3] )
 {
   // Compute the kernel scalar field at a point, for a given list of neighbor particles.
@@ -4438,6 +4449,8 @@ void SolidMechanicsMPM::computeKernelFieldGradientDevice( arraySlice1d< real64 c
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computeKernelFieldDivergenceDevice( arraySlice1d< real64 const > const x, // query point
                                                             real64 const & neighborRadius,
                                                             int const & planeStrain,
@@ -4604,6 +4617,8 @@ void SolidMechanicsMPM::computeKernelVectorGradient( arraySlice1d< real64 const 
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computeKernelVectorGradientDevice( arraySlice1d< real64 const > const x,       // query point
                                                            real64 const & neighborRadius,
                                                            int const & planeStrain,
@@ -5003,6 +5018,8 @@ void SolidMechanicsMPM::projectToPlane( real64 const (&vector)[3],
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
                                                             arraySlice2d< real64 const > const rVectors )
 {
@@ -5272,6 +5289,8 @@ void SolidMechanicsMPM::computeGridSurfacePositionFromVolume( NodeManager & node
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::computeVolumeFromSurfacePosition( real64 const (&n)[3],
                                                             real64 const offset,
                                                             real64 const (&hEl) [3] )
@@ -5308,6 +5327,8 @@ real64 SolidMechanicsMPM::computeVolumeFromSurfacePosition( real64 const (&n)[3]
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::computeMaximumSurfacePositionOffset( real64 (& n)[3],
                                                                real64 const (&hEl)[3] )
 {
@@ -5329,9 +5350,12 @@ real64 SolidMechanicsMPM::computeMaximumSurfacePositionOffset( real64 (& n)[3],
     }
   }
 
+  #if !defined(GEOS_USE_DEVICE)
+  // MPM_SURFACE_HELPERS_V14_LOG_GUARD: helper is device-callable; keep host logging out of GPU builds.
   GEOS_LOG_RANK( "n: {" << n[0] << ", " << n[1] << ", " << n[2] << "}, " <<
                  "hEl: {" << hEl[0] << ", " << hEl[1] << ", " << hEl[2] << "}, " <<
                  "tMax: {" << tMax[0] << ", " << tMax[1] << ", " << tMax[2] << "}" );
+  #endif
 
   return LvArray::math::min( LvArray::math::min( tMax[0], tMax[1] ), tMax[2] );;
 }
@@ -5341,6 +5365,8 @@ real64 SolidMechanicsMPM::computeMaximumSurfacePositionOffset( real64 (& n)[3],
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
                                             integer const & numContactGroups,
                                             integer const & damageFieldPartitioning,
@@ -5357,14 +5383,14 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
                                             ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradient,
                                             ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormal,
                                             ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
-                                            arraySlice1d< real64 const > const gridPosition,
+                                            arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
                                             arraySlice1d< real64 const > const gridDamageGradient,
                                             real64 (& normal0)[3],
                                             real64 (& normal)[3],
                                             real64 (& surfacePosition)[3] )
 {
   // Diagonal penalty matrix from paper
-  real64 const lambda = 1e-7 * LvArray::math::square( ( m_hEl[0] + m_hEl[1] + m_hEl[2] ) / 3 ); // Paper doesn't say what equivalent grid
+  real64 const lambda = 1e-7 * LvArray::math::square( ( hEl[0] + hEl[1] + hEl[2] ) / 3 ); // Paper doesn't say what equivalent grid
                                                                                                 // size to use (min,
                                                                                                 // max, or average)
   real64 const w_p = 1; // Particle weight, was 1 in paper
@@ -5514,7 +5540,9 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
     }
     else
     {
-      GEOS_LOG_RANK( "New normal had zero magnitude!" );
+  #if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
+    GEOS_LOG_RANK( "New normal had zero magnitude!" );
+#endif
       // Tensor equations:
       //   surfacePosition = s_old.
       //   normal = n_old.
@@ -5623,7 +5651,9 @@ void SolidMechanicsMPM::logisticRegression( int const & planeStrain,
 
   if( !converged && !errored )
   {
+#if !defined(GEOS_USE_HIP) && !defined(__HIP__) && !defined(__HIPCC__) && !defined(__HIP_DEVICE_COMPILE__)
     GEOS_LOG_RANK( "Logistic regression did not converge! Using last iteration value." );
+#endif
   }
 }
 
@@ -5902,6 +5932,8 @@ void SolidMechanicsMPM::interpolateValueInRange( real64 const & x,
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::Mod( real64 num, real64 denom )
 {
   if( isZero( denom ))
@@ -5916,6 +5948,8 @@ real64 SolidMechanicsMPM::Mod( real64 num, real64 denom )
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int SolidMechanicsMPM::combinations( int n, int k )
 {
   return factorial( n )/( factorial( k ) * factorial( n - k ) );
@@ -5926,6 +5960,8 @@ int SolidMechanicsMPM::combinations( int n, int k )
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 int SolidMechanicsMPM::factorial( int n )
 {
   int val = 1;
@@ -10738,6 +10774,8 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 bool SolidMechanicsMPM::markSurfaceAsDamage( int const & surfaceFlag )
 {
   return surfaceFlag == 1 || surfaceFlag == 2 || surfaceFlag == 3 || surfaceFlag == 4;
@@ -11319,6 +11357,8 @@ void SolidMechanicsMPM::computeParticleFieldMappings( ParticleManager & particle
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 localIndex SolidMechanicsMPM::partitionField( int numContactGroups,
                                               int damageFieldPartitioning,
                                               localIndex particleGroup,
@@ -12402,6 +12442,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::bruteForceNodalAreaIntegration( real64 const (&hEl)[3],
                                                           integer const & numSurfaceIntegrationPoints,
                                                           real64 const & L, // cell diagonal
@@ -12786,6 +12828,8 @@ bool intersectRayParallelepiped( real64 (& origin)[3],
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::meshNodalAreaIntegration( real64 const (&hEl)[3],
                                                     integer const & numSurfaceIntegrationPoints, // Corresponds to integration order
                                                     localIndex const & numNeighbors,
@@ -13088,6 +13132,8 @@ real64 cross( arraySlice1d< real64 const > const O,
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64 SolidMechanicsMPM::convexHullAreaIntegration( real64 const (& hEl)[3],
                                                      real64 const (& nodePosition)[3],
                                                      integer const & maxNodalNeighbors,
@@ -16269,6 +16315,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
                                                       int const & numContactGroups,
                                                       int const & treatFullyDamagedAsSingleField,
@@ -16370,6 +16418,8 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
  * The caller decides whether J is converted to a force or used directly as the
  * Net-method cumulative material-contact momentum.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
                                                             OverlapCorrectionOption const & overlapCorrection,
                                                             real64 const (&hEl)[3],
@@ -16575,6 +16625,8 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrection
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
                                                           OverlapCorrectionOption const & overlapCorrection,
                                                           real64 const (&hEl)[3],
@@ -16863,6 +16915,8 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOp
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computeOrthonormalBasis( const real64 * e1, // input "normal" unit vector.
                                                  real64 * e2,       // output "tangential" unit vector.
                                                  real64 * e3 )      // output "tangential" unit vector.
