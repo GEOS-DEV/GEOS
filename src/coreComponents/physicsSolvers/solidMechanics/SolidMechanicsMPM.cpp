@@ -11680,29 +11680,16 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
   fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
   stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
 
-  // Put synchronized grid fields and node sync index lists in the memory space
-  // required by the communication pack/unpack path below. MPM uses onDevice=true
-  // so MPI_SUM/MPI_MAX reductions are applied by the device unpack implementation.
-  // Moving these fields to host here can hand host pointers to HIP kernels.
-#ifdef GEOS_USE_DEVICE
-  for( auto const & name : fieldNames )
-  {
-    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( parallelDeviceMemorySpace, true );
-  }
-  for( NeighborCommunicator const & neighbor : neighbors )
-  {
-    int const neighborRank = neighbor.neighborRank();
-    nodeManager.getNeighborData( neighborRank ).ghostsToSend().move( parallelDeviceMemorySpace, true );
-    nodeManager.getNeighborData( neighborRank ).ghostsToReceive().move( parallelDeviceMemorySpace, true );
-  }
-#else
+  bool const syncGridOnDevice = false; // Tuolumne/HIP correctness fallback v34
+
+  // Tuolumne/HIP correctness fallback v34: run MPM grid sync on host.
+  // The device pack/unpack path currently crashes for multi-rank MPM grid sync.
+  // Host reductions are enabled below via BufferOps/Wrapper changes in this script.
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
     wrapper.move( LvArray::MemorySpace::host, true );
   }
-#endif
 
   // (2) Accumulate ghost values into owning nodes without mutating the stored sync lists.
   //     This is equivalent to temporarily swapping ghostsToSend/ghostsToReceive:
@@ -11711,47 +11698,37 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
                                                                   mesh,
                                                                   neighbors,
                                                                   iComm,
-                                                                  true,
+                                                                  syncGridOnDevice,
                                                                   CommunicationDirection::GhostToOwner );
   parallelDeviceEvents packEvents;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
                                                mesh,
                                                neighbors,
                                                iComm,
-                                               true,
+                                               syncGridOnDevice,
                                                packEvents,
                                                CommunicationDirection::GhostToOwner );
   waitAllDeviceEvents( packEvents );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, syncGridOnDevice, packEvents );
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
                                                     neighbors,
                                                     iComm,
-                                                    true,
+                                                    syncGridOnDevice,
                                                     unpackEvents,
                                                     op,
                                                     CommunicationDirection::GhostToOwner );
 
   // (3) Synchronize owning-node values back to ghosts using the normal GEOS direction:
   //       pack ghostsToSend, unpack into ghostsToReceive.
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, iComm, true );
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, iComm, syncGridOnDevice );
   parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, iComm, syncGridOnDevice, packEvents2 );
   waitAllDeviceEvents( packEvents2 );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, syncGridOnDevice, packEvents2 );
   parallelDeviceEvents unpackEvents2;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, iComm, true, unpackEvents2 );
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, iComm, syncGridOnDevice, unpackEvents2 );
 
-#ifdef GEOS_USE_DEVICE
-  // The current MPM step still has host serialPolicy consumers after grid sync.
-  // Keep this correctness-first host move until the surrounding phases are made
-  // consistently device-resident.
-  for( auto const & name : fieldNames )
-  {
-    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
-    wrapper.move( LvArray::MemorySpace::host, true );
-  }
-#endif
 }
 
 /**

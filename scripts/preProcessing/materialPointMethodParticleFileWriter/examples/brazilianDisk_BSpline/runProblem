@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+# Run the brazilianDisk_BSpline GEOS-MPM Brazilian disk example.
+set -euo pipefail
+
+CASE_NAME="brazilianDisk_BSpline"
+INPUT_FILE="pfw_input_brazilianDisk_BSpline.py"
+INPUT_STEM="pfw_input_brazilianDisk_BSpline"
+POST_SCRIPT="postProcess_brazilianDisk_BSpline"
+PLOT_SCRIPT="plotReactions_brazilianDisk_BSpline.py"
+POST_PARTITION="pdebug"
+POST_WALLTIME="00:05:00"
+PYTHON_CMD=""
+RUN_VISIT=1
+RUN_POSTPROCESS=1
+PREPARE_ONLY=0
+FORCE_OVERWRITE=0
+
+usage() {
+  cat <<USAGE
+Usage: ./runProblem [options]
+
+Options:
+  --python CMD          Python executable for PFW/post-processing. Default uses PFW_PYTHON, PFW_PYTHON_COMMAND, /usr/tce/bin/python3, python3, python.
+  --post-partition P    Post-process Slurm partition. Default: pdebug.
+  --post-walltime TIME  Post-process job wall time. Default: 00:05:00.
+  --no-visit            Skip VisIt rendering in the dependent post-process job.
+  --no-postprocess      Submit only the GEOS job.
+  --prepare-only        Copy files into the run directory but do not run PFW.
+  -y, --yes, --force    Overwrite existing generated output without prompting.
+  -h, --help            Show this help.
+USAGE
+}
+
+log() { printf '[%s] %s\n' "$CASE_NAME" "$*"; }
+fail() { printf '[%s] ERROR: %s\n' "$CASE_NAME" "$*" >&2; exit 1; }
+
+expand_path() {
+  local path="$1"
+  case "$path" in
+    '~') printf '%s\n' "$HOME" ;;
+    '~/'*) printf '%s/%s\n' "$HOME" "${path#~/}" ;;
+    *) printf '%s\n' "$path" ;;
+  esac
+}
+
+abs_path() {
+  local path dir base
+  path=$(expand_path "$1")
+  if [ -d "$path" ]; then
+    (cd "$path" && pwd -P)
+  else
+    dir=$(dirname "$path")
+    base=$(basename "$path")
+    if [ -d "$dir" ]; then
+      (cd "$dir" && printf '%s/%s\n' "$(pwd -P)" "$base")
+    else
+      case "$path" in /*) printf '%s\n' "$path" ;; *) printf '%s/%s\n' "$(pwd -P)" "$path" ;; esac
+    fi
+  fi
+}
+
+choose_python() {
+  local candidates=()
+  [ -n "$PYTHON_CMD" ] && candidates+=("$PYTHON_CMD")
+  [ -n "${PFW_PYTHON:-}" ] && candidates+=("$PFW_PYTHON")
+  [ -n "${PFW_PYTHON_COMMAND:-}" ] && candidates+=("$PFW_PYTHON_COMMAND")
+  candidates+=("/usr/tce/bin/python3" "python3" "python")
+  local cmd
+  for cmd in "${candidates[@]}"; do
+    [ -z "$cmd" ] && continue
+    if [ -x "$cmd" ]; then printf '%s\n' "$cmd"; return 0; fi
+    if command -v "$cmd" >/dev/null 2>&1; then command -v "$cmd"; return 0; fi
+  done
+  fail "Could not find a Python command. Use --python /usr/tce/bin/python3."
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python) [ "$#" -ge 2 ] || fail "$1 requires a value"; PYTHON_CMD="$2"; shift 2 ;;
+    --post-partition) [ "$#" -ge 2 ] || fail "$1 requires a value"; POST_PARTITION="$2"; shift 2 ;;
+    --post-walltime) [ "$#" -ge 2 ] || fail "$1 requires a value"; POST_WALLTIME="$2"; shift 2 ;;
+    --no-visit) RUN_VISIT=0; shift ;;
+    --no-postprocess) RUN_POSTPROCESS=0; shift ;;
+    --prepare-only) PREPARE_ONLY=1; shift ;;
+    --force|--yes|-y) FORCE_OVERWRITE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) fail "Unknown option: $1" ;;
+  esac
+done
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+OUTPUT_DIR="$SCRIPT_DIR/output"
+PYTHON_CMD=$(choose_python)
+USERDEFS_SRC="$PFW_ROOT/userDefs_${USER}.py"
+[ -f "$USERDEFS_SRC" ] || fail "missing $USERDEFS_SRC; run ./setupMPM_dane first"
+
+USERDEFS_ENV=$("$PYTHON_CMD" - "$USERDEFS_SRC" <<'PYEOF'
+from pathlib import Path
+import importlib.util
+import os
+import shlex
+import sys
+path = Path(sys.argv[1]).expanduser()
+spec = importlib.util.spec_from_file_location("userDefs_local", path)
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+def get(name, default=""):
+    return getattr(mod, name, default)
+values = {
+    "GEOS_PATH": get("geosPath", ""),
+    "PFW_PATH_FROM_USERDEFS": get("pfwPath", ""),
+    "TEST_RUN_DIRECTORY": get("testRunDirectory", f"/p/lustre1/{os.environ.get('USER','user')}/geosxTests"),
+    "DEFAULT_RUN_DIRECTORY": get("defaultRunDirectory", f"/p/lustre1/{os.environ.get('USER','user')}/geosxRuns/"),
+    "DEFAULT_BANK": get("defaultBank", ""),
+}
+for key, value in values.items():
+    print(f"{key}={shlex.quote(str(value))}")
+PYEOF
+)
+eval "$USERDEFS_ENV"
+
+TEST_RUN_DIRECTORY=$(expand_path "$TEST_RUN_DIRECTORY")
+DEFAULT_RUN_DIRECTORY=$(expand_path "$DEFAULT_RUN_DIRECTORY")
+RUN_DIR=$(abs_path "$TEST_RUN_DIRECTORY/$CASE_NAME")
+OUTPUT_DIR=$(abs_path "$OUTPUT_DIR")
+
+log "PFW root: $PFW_ROOT"
+log "userDefs: $USERDEFS_SRC"
+log "python: $PYTHON_CMD"
+log "GEOS executable from userDefs: $GEOS_PATH"
+log "pfwPath from userDefs: $PFW_PATH_FROM_USERDEFS"
+log "run directory: $RUN_DIR"
+log "example output directory: $OUTPUT_DIR"
+log "default bank/account: ${DEFAULT_BANK:-<none>}"
+
+output_dir_has_products() {
+  local dir="$1" found
+  [ -d "$dir" ] || return 1
+  found=$(find "$dir" -mindepth 1 -maxdepth 1 ! -name '.gitignore' ! -name '.gitkeep' ! -name 'README' ! -name 'README.md' -print -quit 2>/dev/null || true)
+  [ -n "$found" ]
+}
+
+run_dir_has_products() {
+  local dir="$1" found
+  [ -d "$dir" ] || return 1
+  [ -d "$dir/siloFiles" ] && return 0
+  [ -d "$dir/visit_frames" ] && return 0
+  found=$(find "$dir" -mindepth 1 -maxdepth 1 \( -name 'slurm-*.out' -o -name '*.root' -o -name '*.hdf5' -o -name '*.silo' -o -name 'reactionHistory.csv' -o -name 'boxAverageHistory.csv' -o -name '*_particleFileWriter.log' -o -name '*_visit_render.log' \) -print -quit 2>/dev/null || true)
+  [ -n "$found" ]
+}
+
+clear_output_dir_products() {
+  local dir="$1"
+  [ -d "$dir" ] || return 0
+  find "$dir" -mindepth 1 -maxdepth 1 ! -name '.gitignore' ! -name '.gitkeep' ! -name 'README' ! -name 'README.md' -exec rm -rf -- {} +
+}
+
+clear_run_dir_products() {
+  local dir="$1"
+  [ -d "$dir" ] || return 0
+  find "$dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+}
+
+confirm_overwrite() {
+  local found=0
+  if output_dir_has_products "$OUTPUT_DIR"; then log "existing example output products found in: $OUTPUT_DIR"; found=1; fi
+  if run_dir_has_products "$RUN_DIR"; then log "existing generated run products found in: $RUN_DIR"; found=1; fi
+  [ "$found" -eq 0 ] && return 0
+  if [ "$FORCE_OVERWRITE" -ne 1 ]; then
+    if [ ! -t 0 ]; then fail "existing output products would be overwritten; rerun interactively or use --force"; fi
+    local reply
+    read -r -p "Overwrite previous ${CASE_NAME} generated output and rerun? [y/N] " reply
+    case "$reply" in [yY]|[yY][eE][sS]) ;; *) log "not overwriting previous output; exiting"; exit 0 ;; esac
+  else
+    log "--force supplied; overwriting previous ${CASE_NAME} generated output"
+  fi
+  clear_output_dir_products "$OUTPUT_DIR"
+  clear_run_dir_products "$RUN_DIR"
+}
+
+mkdir -p "$TEST_RUN_DIRECTORY" "$DEFAULT_RUN_DIRECTORY" "$RUN_DIR" "$OUTPUT_DIR"
+confirm_overwrite
+mkdir -p "$RUN_DIR" "$OUTPUT_DIR"
+
+log "copying input and PFW files to run directory"
+find "$PFW_ROOT" -maxdepth 1 -type f \( -name 'particleFileWriter.py' -o -name 'pfw_*.py' \) -exec cp -f -- {} "$RUN_DIR/" \;
+cp -f -- "$SCRIPT_DIR/$INPUT_FILE" "$RUN_DIR/"
+cp -f -- "$SCRIPT_DIR/$POST_SCRIPT" "$RUN_DIR/"
+cp -f -- "$SCRIPT_DIR/$PLOT_SCRIPT" "$RUN_DIR/"
+cp -f -- "$USERDEFS_SRC" "$RUN_DIR/userDefs_${USER}.py"
+cat >> "$RUN_DIR/userDefs_${USER}.py" <<EOF
+
+# Local overrides inserted by ${CASE_NAME}/runProblem so this copied PFW run is self-contained.
+pfwPath = r"$RUN_DIR"
+EOF
+chmod +x "$RUN_DIR/$POST_SCRIPT" "$RUN_DIR/$PLOT_SCRIPT" || true
+
+if [ "$PREPARE_ONLY" -eq 1 ]; then
+  log "prepare-only requested; files copied to $RUN_DIR"
+  exit 0
+fi
+
+log "running particleFileWriter in $RUN_DIR"
+PFW_LOG="$RUN_DIR/${CASE_NAME}_particleFileWriter.log"
+(
+  cd "$RUN_DIR"
+  "$PYTHON_CMD" particleFileWriter.py "$INPUT_STEM"
+) 2>&1 | tee "$PFW_LOG"
+
+GEOS_JOB_ID=$(grep -Eo 'Submitted job with ID = *[0-9]+' "$PFW_LOG" | tail -1 | grep -Eo '[0-9]+' || true)
+if [ -z "$GEOS_JOB_ID" ]; then
+  GEOS_JOB_ID=$(grep -Eo 'Submitted batch job *[0-9]+' "$PFW_LOG" | tail -1 | grep -Eo '[0-9]+' || true)
+fi
+[ -n "$GEOS_JOB_ID" ] || fail "could not determine GEOS job id from $PFW_LOG"
+log "GEOS job id: $GEOS_JOB_ID"
+
+if [ "$RUN_POSTPROCESS" -eq 0 ]; then
+  log "--no-postprocess supplied; not submitting dependent post-process job"
+  exit 0
+fi
+
+POST_BATCH="$RUN_DIR/${CASE_NAME}_postProcess_after_${GEOS_JOB_ID}.sh"
+POST_NO_VISIT=""
+[ "$RUN_VISIT" -eq 0 ] && POST_NO_VISIT="--no-visit"
+{
+  echo '#!/usr/bin/env bash'
+  echo "#SBATCH -J post_${CASE_NAME}"
+  [ -n "${DEFAULT_BANK:-}" ] && echo "#SBATCH -A ${DEFAULT_BANK}"
+  echo "#SBATCH -p ${POST_PARTITION}"
+  echo "#SBATCH -N 1"
+  echo "#SBATCH -n 1"
+  echo "#SBATCH -t ${POST_WALLTIME}"
+  echo "#SBATCH --dependency=afterany:${GEOS_JOB_ID}"
+  echo "#SBATCH --export=ALL"
+  echo 'set -euo pipefail'
+  printf 'cd %q\n' "$RUN_DIR"
+  printf './%q --run-dir %q --output-dir %q --job-id %q --case-name %q --force %s\n' "$POST_SCRIPT" "$RUN_DIR" "$OUTPUT_DIR" "$GEOS_JOB_ID" "$CASE_NAME" "$POST_NO_VISIT"
+} > "$POST_BATCH"
+chmod +x "$POST_BATCH"
+
+log "submitting dependent post-process job"
+POST_SUBMIT_OUTPUT=$(sbatch "$POST_BATCH")
+printf '%s\n' "$POST_SUBMIT_OUTPUT"
+POST_JOB_ID=$(printf '%s\n' "$POST_SUBMIT_OUTPUT" | grep -Eo '[0-9]+' | tail -1 || true)
+[ -n "$POST_JOB_ID" ] && log "post-process job id: $POST_JOB_ID"
