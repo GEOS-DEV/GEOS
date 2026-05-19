@@ -5,6 +5,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4008 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4008-16688-17c55fe.tar.gz>
+Fix Fracture/3D cell co-location in parallel mesh redistribution
+
 PR #4055 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4055-16683-0251bb6.tar.gz>
 Trim some fluid model tests
 
