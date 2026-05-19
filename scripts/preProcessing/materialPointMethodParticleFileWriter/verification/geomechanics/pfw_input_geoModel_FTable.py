@@ -82,7 +82,7 @@ pfw["objects"]=[block]
 
 # DEFORMATION -----------------------------------------------------------------------------
 
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,             1.000, 1.000, 1.000],
                [.1*stopTime, 0.995, 0.995, 0.995],

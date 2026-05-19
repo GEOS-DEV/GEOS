@@ -84,7 +84,7 @@ pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
 
 
 
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,	 1,	    1,	1],
                [.4*stopTime, 1.,	 0.8,	1],

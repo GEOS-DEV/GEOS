@@ -82,7 +82,7 @@ pfw["maxParticleVelocity"]=10.0
 pfw["minParticleJacobian"]=0.01
 pfw["maxParticleJacobian"]=10.0
 
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
@@ -118,7 +118,7 @@ pfw["objects"]=[box1,box2]
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
                [stopTime,     1.00,  0.75,  1.00]]

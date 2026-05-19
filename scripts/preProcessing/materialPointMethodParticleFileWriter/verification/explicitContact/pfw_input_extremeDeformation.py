@@ -79,7 +79,7 @@ pfw["maxParticleJacobian"]=10.0
 pfw["updateMethod"]="FMPM"
 pfw["updateOrder"]=2
 
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]=1
 pfw["explicitSurfaceNormalInfluence"]=1000
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
@@ -102,7 +102,7 @@ pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
 
 pfw["prescribedBoundaryFTable"]=1
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["fTable"]=[[0,            1.0,  1.0,    1.0],  
                [stopTime,     1.0,  0.4,    1.0]]
 

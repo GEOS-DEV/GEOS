@@ -91,7 +91,7 @@ pfw["prescribedBoundaryTransverseVelocities"]=[[0.0, 0.0],
                                                [0.0, 0.0]]
                                                
 
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]=1
 pfw["explicitSurfaceNormalInfluence"]=1000
 
@@ -126,7 +126,7 @@ pfw["objects"]=[boxWFlag1, boxWFlag2]
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 0, 0, 1, 1 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
                [stopTime,     1.25,  1.00,  1.00]]

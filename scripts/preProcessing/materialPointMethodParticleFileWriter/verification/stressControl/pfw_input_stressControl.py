@@ -93,7 +93,7 @@ pfw["objects"]=[block]
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
 
-pfw["fTableInterpType"]='Cosine'
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedFTable"]=0
 pfw["prescribedBoundaryFTable"]=0
 

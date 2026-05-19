@@ -200,7 +200,7 @@ pfw["objects"]=[block]
 # this confining stress during compaction, while allowing prescribed compression in the z-direction
 # periodic = [False, False, False]
 pfw["boundaryConditionTypes"]= [ 2, 2, 2, 2, 2, 2 ]
-pfw["fTableInterpType"]='Cosine'
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 
 pfw["fTable"]=[[0.0, 1., 1., 1.],

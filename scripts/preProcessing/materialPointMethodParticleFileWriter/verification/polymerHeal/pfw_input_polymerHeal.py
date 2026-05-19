@@ -193,7 +193,7 @@ pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1]
 
 pfw["prescribedFTable"]=0
 pfw["prescribedBoundaryFTable"]=1
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["fTable"]=[[0.0,         1.00,  1.00,      1.00],
                [loadTime,    1.00,  1.00+0.5,  1.00],
                [unloadTime,  1.00,  1.00-0.1,  1.00],
@@ -235,7 +235,7 @@ pfw["FSubcycles"]=10
 pfw["updateMethod"]="XPIC"
 pfw["updateOrder"]=2
 
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 pfw["useSurfacePositionForContact"]= 0
 pfw["explicitSurfaceNormalInfluence"]= 0
 

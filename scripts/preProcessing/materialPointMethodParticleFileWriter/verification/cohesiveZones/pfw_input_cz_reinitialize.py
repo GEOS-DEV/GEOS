@@ -81,7 +81,7 @@ pfw["maxParticleVelocity"]=10.0
 pfw["minParticleJacobian"]=0.01
 pfw["maxParticleJacobian"]=10.0
 
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 pfw["explicitSurfaceNormalInfluence"]= 1000
 pfw["useSurfacePositionForContact"]= 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
@@ -116,7 +116,7 @@ pfw["objects"]=[boxWFlag1,boxWFlag2]
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 1, 1 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,        1.00,  1.00,  1.00],
                [stopTime/4, 1.00,  1.15,  1.00],

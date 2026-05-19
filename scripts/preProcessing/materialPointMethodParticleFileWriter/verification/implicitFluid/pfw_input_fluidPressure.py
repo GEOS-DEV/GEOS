@@ -101,7 +101,7 @@ pfw["stressControl"]=[1,1,0]
 pfw["stressControlKp"] = 1.0
 pfw["stressControlKi"] = 0.0
 pfw["stressControlKd"] = 0.0
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["stressTable"]=[[0.0, -fluidPressure, -fluidPressure, -fluidPressure],
                     [stopTime, -fluidPressure, -fluidPressure, -fluidPressure]]
 

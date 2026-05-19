@@ -140,7 +140,7 @@ pfw["materialPropertyString"]=aluminum["materialString"]
 # DEFORMATION ---------------------------------------------------------------------------------
 pfw["periodic"] = [True, False, False]
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedFTable"]=0
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0, 1.00, 1.00, 1.00],
