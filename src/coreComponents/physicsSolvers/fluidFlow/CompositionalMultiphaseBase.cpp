@@ -30,6 +30,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -1867,7 +1868,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
       // Step 3.1: get the values of the source boundary condition that need to be added to the rhs
-      // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
+      // We don't use FieldSpecificationImpl::applyConditionToSystem here because we want to account for the row permutation used in the
       // compositional solvers
 
       array1d< globalIndex > dofArray( targetSet.size() );
@@ -1878,17 +1879,18 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1973,7 +1975,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&]( FieldSpecificationBase const &,
+                                             [&]( FieldSpecification const &,
                                                   string const & setName,
                                                   SortedArrayView< localIndex const > const &,
                                                   ElementSubRegionBase & subRegion,
@@ -1999,7 +2001,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       fsManager.apply< ElementSubRegionBase >( time,
                                                mesh,
                                                flow::temperature::key(),
-                                               [&]( FieldSpecificationBase const &,
+                                               [&]( FieldSpecification const &,
                                                     string const & setName,
                                                     SortedArrayView< localIndex const > const &,
                                                     ElementSubRegionBase & subRegion,
@@ -2024,7 +2026,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
     fsManager.apply< ElementSubRegionBase >( time,
                                              mesh,
                                              flow::globalCompFraction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const & setName,
                                                    SortedArrayView< localIndex const > const &,
                                                    ElementSubRegionBase & subRegion,
@@ -2152,7 +2154,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -2283,7 +2285,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                flow::temperature::key(),
-                                               [&] ( FieldSpecificationBase const &,
+                                               [&] ( FieldSpecification const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
