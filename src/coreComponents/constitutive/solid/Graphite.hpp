@@ -1111,9 +1111,6 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                       plasticStrainIncrement[4] * 0.5, 
                                                       plasticStrainIncrement[5] * 0.5 };
       LvArray::tensorOps::Ri_eq_symAijBj< 3 >(dEpsilonIJnJ, plasticStrainIncrementForTensorOp, unrotatedMaterialDirection);
-      dEpsilonIJnJ[3] *= 2.0;
-      dEpsilonIJnJ[4] *= 2.0;
-      dEpsilonIJnJ[5] *= 2.0;
 
       real64 plasticNormalStrainIncrement = LvArray::tensorOps::AiBi< 3 >(unrotatedMaterialDirection, dEpsilonIJnJ );
       real64 avePlaneNormalStress = 0.5*( planeNormalStress + oldPlaneNormalStress );

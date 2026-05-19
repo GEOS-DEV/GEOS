@@ -352,7 +352,7 @@ public:
     }
     else
     {
-      unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+      unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices, op );
     }
 
     return unpackedSize;

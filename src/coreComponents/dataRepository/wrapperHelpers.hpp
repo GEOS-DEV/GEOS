@@ -850,6 +850,19 @@ UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx )
 { return bufferOps::UnpackByIndex( buffer, var, idx ); }
 
 template< typename T, typename IDX >
+inline std::enable_if_t< bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * & buffer, T & var, IDX & idx, MPI_Op op )
+{ return bufferOps::UnpackByIndex( buffer, var, idx, op ); }
+
+template< typename T, typename IDX >
+inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
+UnpackByIndex( buffer_unit_type const * &, T &, IDX &, MPI_Op )
+{
+  GEOS_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") by index. Operation not supported." );
+  return 0;
+}
+
+template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_packable_by_index< T >, localIndex >
 UnpackByIndex( buffer_unit_type const * &, T &, IDX & )
 {

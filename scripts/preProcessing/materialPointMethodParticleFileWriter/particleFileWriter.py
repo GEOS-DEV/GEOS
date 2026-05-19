@@ -249,6 +249,184 @@ def _format_solver_child_xml_block(tag_name, value, indent="\t\t\t"):
   return "\n" + indent + f"<{tag_name}>\n" + child_indent + ("\n" + child_indent).join(body.splitlines()) + "\n" + indent + f"</{tag_name}>\n"
 
 
+def _normalize_generated_geos_xml(text: str) -> str:
+  """Final compatibility pass over the generated GEOS XML string.
+
+  This is deliberately conservative: it only modernizes legacy PFW output patterns
+  that are known to be invalid in current GEOS-MPM, and it avoids changing source
+  inputs.  The goal is to let old verification inputs stage/run while the source
+  examples are cleaned up case by case.
+  """
+  if not text:
+    return text
+
+  # Common legacy typo that used to be accepted by old examples but is now an
+  # unused SolidMechanics_MPM attribute.
+  text = text.replace("planeStrain", "planeStrain")
+
+  def _get_attr(attrs: str, name: str):
+    m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
+    return m.group(2) if m else None
+
+  def _set_attr(attrs: str, name: str, value: str) -> str:
+    if _get_attr(attrs, name) is None:
+      return attrs.rstrip() + f' {name}="{value}"'
+    return re.sub(r"\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", f'{name}="{value}"', attrs, flags=re.S)
+
+  def _remove_attr(attrs: str, name: str) -> str:
+    return re.sub(r"\s*\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", "", attrs, flags=re.S)
+
+  def _split_braced(value: str | None) -> list[str]:
+    if value is None:
+      return []
+    s = value.strip().strip("{}").strip()
+    if not s:
+      return []
+    return [x.strip() for x in s.split(",") if x.strip()]
+
+  def _braced(values) -> str:
+    vals = [str(v).strip() for v in values if str(v).strip()]
+    return "{ " + ", ".join(vals) + " }"
+
+  enum_ftable = {"0": "Linear", "1": "Cosine", "2": "Smoothstep"}
+  enum_gap = {"0": "Simple", "1": "Implicit", "2": "Softened"}
+
+  # Remove workflow/obsolete attributes and update integer enums on the solver.
+  solver_pat = re.compile(r"<SolidMechanics_MPM\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
+
+  def _fix_solver(match):
+    attrs = match.group("attrs")
+    end = match.group("end")
+    for bad in (
+      "geosPath", "pfwPath", "dependencies", "caseName", "runDirectory",
+      "outputDirectory", "outputDir", "pythonCommand", "defaultPython",
+      "defaultPythonCommand", "useConstantTimeStep", "constantTimeStepValue",
+    ):
+      attrs = _remove_attr(attrs, bad)
+    val = _get_attr(attrs, "fTableInterpType")
+    if val in enum_ftable:
+      attrs = _set_attr(attrs, "fTableInterpType", enum_ftable[val])
+    val = _get_attr(attrs, "contactGapCorrection")
+    if val in enum_gap:
+      attrs = _set_attr(attrs, "contactGapCorrection", enum_gap[val])
+    return f"<SolidMechanics_MPM{attrs}{end}"
+
+  text = solver_pat.sub(_fix_solver, text)
+
+  # Determine a default cohesive constitutive model from the Constitutive block.
+  cz_model_names = re.findall(
+    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
+    text,
+    flags=re.S,
+  )
+  first_cz_model = cz_model_names[0][1] if cz_model_names else "cz1"
+
+  # Normalize Geomechanics inline material strings.  This catches stale copied
+  # inputs that did not yet use matdb.ghareb.
+  try:
+    text = _normalize_geomechanics_material_string(text)
+  except NameError:
+    pass
+
+  # Convert nested/legacy event tags inside the generated XML.
+  text = re.sub(r"<\s*CohesiveZoneReference\b", "<CohesiveZone", text)
+  text = re.sub(r"</\s*CohesiveZoneReference\s*>", "</CohesiveZone>", text)
+
+  event_names = (
+    "Anneal", "BodyForceUpdate", "BoreholePressure", "CohesiveZone",
+    "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
+    "FrictionCoefficientSwap", "Heal", "InitializeStress",
+    "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
+    "PolymerHeal", "ResetDeformationGradient", "TemperatureProfile",
+    "TransformParticles",
+  )
+  event_pat = re.compile(r"<(?P<tag>" + "|".join(event_names) + r")\b(?P<attrs>[^>]*)>", re.S)
+
+  def _fix_event(match):
+    tag = match.group("tag")
+    attrs = match.group("attrs")
+    self_close = attrs.rstrip().endswith("/")
+    if self_close:
+      attrs = attrs.rstrip()[:-1]
+
+    old_time = _get_attr(attrs, "time")
+    old_interval = _get_attr(attrs, "interval")
+    attrs = _remove_attr(attrs, "time")
+    attrs = _remove_attr(attrs, "interval")
+    if _get_attr(attrs, "startTime") is None:
+      attrs = _set_attr(attrs, "startTime", old_time if old_time is not None else "0.0")
+    if _get_attr(attrs, "endTime") is None:
+      attrs = _set_attr(attrs, "endTime", old_interval if old_interval is not None else "1.0e99")
+
+    if tag in {"Anneal", "InitializeStress", "Heal", "PolymerHeal", "CrystalHeal"}:
+      if _get_attr(attrs, "targetRegion") is None:
+        attrs = _set_attr(attrs, "targetRegion", "all")
+
+    if tag == "CohesiveZone":
+      singular = _get_attr(attrs, "constitutiveModel")
+      if singular is not None:
+        attrs = _remove_attr(attrs, "constitutiveModel")
+      models = _split_braced(_get_attr(attrs, "constitutiveModels"))
+      regions = _split_braced(_get_attr(attrs, "regionNames"))
+      tags = _split_braced(_get_attr(attrs, "czTags"))
+      if not models:
+        models = [singular or first_cz_model]
+        attrs = _set_attr(attrs, "constitutiveModels", _braced(models))
+      if not regions:
+        # Historical inputs usually used a single CZ material named cz1 and the
+        # event name also cz1.  Using the model names as the CZ region names is
+        # the closest current-schema equivalent and preserves multi-cz inputs.
+        regions = models
+        attrs = _set_attr(attrs, "regionNames", _braced(regions))
+      if not tags or len(tags) != len(models):
+        tags = list(range(len(models)))
+        attrs = _set_attr(attrs, "czTags", _braced(tags))
+    return f"<{tag}{attrs}{' /' if self_close else ''}>"
+
+  text = event_pat.sub(_fix_event, text)
+
+  # ParticleMesh/ParticleRegion cleanup.  Empty particle block entries can be
+  # produced when legacy inputs list materials that have no particles.
+  removed_regions: set[str] = set()
+
+  def _fix_particle_region(match):
+    tag = match.group(0)
+    name = _get_attr(tag, "name")
+    blocks = _split_braced(_get_attr(tag, "particleBlocks"))
+    if name and not blocks:
+      removed_regions.add(name)
+      return ""
+    if blocks:
+      tag = re.sub(r"particleBlocks\s*=\s*([\"']).*?\1", f'particleBlocks="{_braced(blocks)}"', tag, flags=re.S)
+    return tag
+
+  text = re.sub(r"\s*<ParticleRegion\b[^>]*/>", _fix_particle_region, text, flags=re.S)
+
+  def _fix_particle_mesh(match):
+    tag = match.group(0)
+    blocks = _split_braced(_get_attr(tag, "particleBlockNames"))
+    ptypes = _split_braced(_get_attr(tag, "particleTypes"))
+    if blocks:
+      tag = re.sub(r"particleBlockNames\s*=\s*([\"']).*?\1", f'particleBlockNames="{_braced(blocks)}"', tag, flags=re.S)
+    if ptypes:
+      if len(ptypes) > len(blocks):
+        ptypes = ptypes[:len(blocks)]
+      tag = re.sub(r"particleTypes\s*=\s*([\"']).*?\1", f'particleTypes="{_braced(ptypes)}"', tag, flags=re.S)
+    return tag
+
+  text = re.sub(r"<ParticleMesh\b[^>]*/>", _fix_particle_mesh, text, flags=re.S)
+
+  if removed_regions:
+    def _fix_target_regions(match):
+      value = match.group(1)
+      targets = _split_braced(value)
+      targets = [t for t in targets if t.split("/")[-1] not in removed_regions]
+      return 'targetRegions="' + _braced(targets) + '"'
+    text = re.sub(r'targetRegions\s*=\s*"(\{.*?\})"', _fix_target_regions, text, flags=re.S)
+
+  return text
+
+
 # ============================================================================================
 # END FUNCTION DEFINITIONS
 # ============================================================================================
@@ -368,11 +546,11 @@ with open(inputFile+".py","r") as fileText:
             dependencyName = strippedLine[17:].lstrip("/")
             filePath = _expand_user_path(os.path.join(pfwPath, dependencyName))
             dependencyPaths.append(filePath)
-print("Dependency file paths to be copied: ",dependencyPaths)
 dest = './' # could be './pfw_dependencies' if we wanted to keep them together.
 
 # Copy the files from the dependency list to the run directory
 if rank == 0:
+  print("Dependency file paths to be copied: ",dependencyPaths)
   from pathlib import Path
   if not os.path.exists(f'{dest}'):
       os.makedirs(f'{dest}')
@@ -399,6 +577,10 @@ if rank == 0:
         if dst.exists() and dst.stat().st_size > 0:
           break
         time.sleep(0.05)
+
+# Wait for all dependcies to be copied
+if not flux:
+  comm.Barrier()
 
 # ===========================================
 # READ INPUT FILE AND IMPORT PFW DICTIONARY
@@ -691,24 +873,28 @@ def find_numpy_wrappers(obj: Any, path: str = "pfw") -> list[str]:
 
     return hits
 
-print("The pfw dictionary defined in this input file has NumPy dtype wrappers that will be removed")
-for h in find_numpy_wrappers(pfw):
-    print(" -", h)
+numpy_wrappers = find_numpy_wrappers(pfw)
+has_numpy_wrappers = len(numpy_wrappers) > 0
+if rank == 0 and has_numpy_wrappers:
+  print("The pfw dictionary defined in this input file has NumPy dtype wrappers that will be removed")
+  for h in numpy_wrappers:
+      print(" -", h)
 
 pfw = normalize_no_numpy_wrappers(pfw)
 normalize_geos_enum_inputs(pfw)
 
-print("\nAfter editing the following wrappers remain. ")
-for h in find_numpy_wrappers(pfw):
-    print(" -", h)
+if rank == 0 and has_numpy_wrappers:
+  print("\nAfter editing the following wrappers remain. ")
+  for h in find_numpy_wrappers(pfw):
+      print(" -", h)
 
-print("\nHopefully that looks ok.")
+  print("\nHopefully that looks ok.")
 
 # Normalize legacy PFW input keys that should not become solver XML attributes.
-if "planeSrain" in pfw:
+if "planeStrain" in pfw:
   if "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw["planeSrain"]
-  pfw.pop("planeSrain", None)
+    pfw["planeStrain"] = pfw["planeStrain"]
+  pfw.pop("planeStrain", None)
 pfw.pop("useConstantTimeStep", None)
 
 tabIndent = 3*"  "  
@@ -768,7 +954,8 @@ if "dependencies" not in pfw:
   pfw["dependencies"] = []
 for filePath in dependencyPaths:
   pfw["dependencies"].append(os.path.basename(filePath))
-print("Dependency files: ",pfw["dependencies"] )
+if rank == 0:
+  print("Dependency files: ",pfw["dependencies"] )
 
 # Check if particleFields contains all necessary particle fields based on specified pfw parameters
 if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in pfw or ('mpmEventsString' in pfw and 'CohesiveZoneReference' in pfw["mpmEventsString"]):
@@ -852,7 +1039,8 @@ mCores = int(xpar*ypar*zpar)
 # We used to set this manually, but ranksPerNode changes with each machine.
 # This will ensure consistency since we now have that value for each platform.
 mNodes= int(np.ceil(float(mCores)/float(ranksPerNode)))
-print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode, ', ranksPerNode = ', ranksPerNode)
+if rank == 0:
+  print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode, ', ranksPerNode = ', ranksPerNode)
 
 if mBank == None:
   # Get default bank from userdefs
@@ -872,7 +1060,8 @@ maxRestartTime = mWallTimeMinutes*60 - min(mWallTimeMinutes, lastRestartBufferIn
 
 coreHours = float(int(mCores))*(float(int(wH))+float(int(wM))/60.+float(int(wS))/3600.)
 cpuTimeCost = (23295./2000000.)*coreHours
-print('Approximate LC bank time cost for this simulation is $',cpuTimeCost,'.')
+if rank == 0:
+  print('Approximate LC bank time cost for this simulation is $',cpuTimeCost,'.')
 
 # Material array
 if materials == None:
@@ -899,7 +1088,8 @@ for s in subregions_all:
 numSubRegions = 0
 for s in particleTypesPerMat:
   numSubRegions += len(s)
-print("Num subregions:", numSubRegions)
+if rank == 0:
+  print("Num subregions:", numSubRegions)
 
 particleRefinement = particleRefinement if particleRefinement != None else [ 1 for i in range(numMats) ]  # Create list of size materials all ones
 
@@ -969,7 +1159,7 @@ domainVolume = ( pfw["xmax"] - pfw["xmin"] )*( pfw["ymax"] - pfw["ymin"] )*( pfw
 
 generateParticleFile = generateParticleFile if not runContinuation else False
 if generateParticleFile:
-  print('Writing particle file...')
+  print('Writing particle file' + ("" if num_ranks == 1 else f" on rank {rank}" ) + '...')
 
   # Delimiter for particle file
   delim = '\t'
@@ -1093,7 +1283,7 @@ if generateParticleFile:
               #    4: Damaged Cohesive 
               #  };
 
-              surfaceFlag = voxelFlag #object.isSurface( pt, surfaceDepth ) 
+              surfaceFlag = voxelFlag
 
               surfacePosition = np.array([0.0, 0.0, 0.0])
               if "SurfacePosition" in particleFileFields and surfaceFlag != 0:
@@ -1450,7 +1640,6 @@ else:
 #         particleTypesPerMat[m].add(d)
 #       # print("Rank", r, "received data: ", data)
 
-print('rank = ',rank)
 if rank == 0:
   print('Writing input file...')
 

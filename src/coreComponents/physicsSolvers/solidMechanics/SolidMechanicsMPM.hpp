@@ -352,7 +352,7 @@ public:
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   localIndex partitionField( int numContactGroups,
                              int damageFieldPartitioning,
@@ -613,10 +613,13 @@ public:
    * This helper mirrors computePairwiseNodalContactForce, but returns contact impulse directly so FMPM Net
    * contact can accumulate and compare total momentum corrections between FMPM orders.
    */
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
                                            OverlapCorrectionOption const & overlapCorrection,
+                                           real64 const overlapThreshold1,
+                                           real64 const overlapThreshold2,
+                                           real64 const maxParticleVelocitySquared,
                                            real64 const (&hEl) [3],
                                            int const & planeStrain,
                                            real64 const & smallMass,
@@ -647,10 +650,13 @@ public:
                                            arraySlice1d< real64 > const jA,
                                            arraySlice1d< real64 > const jB );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
                                          OverlapCorrectionOption const & overlapCorrection,
+                                         real64 const overlapThreshold1,
+                                         real64 const overlapThreshold2,
+                                         real64 const maxParticleVelocitySquared,
                                          real64 const (&hEl) [3],
                                          int const & planeStrain,
                                          real64 const & smallMass,
@@ -679,7 +685,7 @@ public:
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computeOrthonormalBasis( const real64 * e1,  // input "normal" unit vector.
                                 real64 * e2,        // output "tangential" unit vector.
@@ -730,6 +736,7 @@ public:
                              arrayView1d< real64 const > const & Vp,    // List of neighbor particle volumes.
                              arrayView1d< real64 const > const & fp );  // scalar field values (e.g. damage) at neighbor particles
 
+  template< typename DAMAGE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 computeKernelFieldDevice( arraySlice1d< real64 const > const x,  // query point
@@ -741,7 +748,7 @@ public:
                                    arraySlice1d< localIndex const > const particleIndices,
                                    ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                    ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                   const std::function< real64( localIndex, localIndex, localIndex ) > damage );
+                                   DAMAGE const & damage );
 
   GEOS_HOST
   GEOS_FORCE_INLINE
@@ -753,6 +760,7 @@ public:
                                                                                      // particles
                                    arraySlice1d< real64 > const result );
 
+  template< typename DAMAGE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void computeKernelFieldGradientDevice( arraySlice1d< real64 const > const x, // query point
@@ -764,7 +772,7 @@ public:
                                          arraySlice1d< localIndex const > const particleIndices,
                                          ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
                                          ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
-                                         const std::function< real64( localIndex, localIndex, localIndex ) > damage,
+                                         DAMAGE const & damage,
                                          real64 ( &result )[3] );
 
   GEOS_HOST_DEVICE
@@ -916,13 +924,17 @@ public:
 
   void computeGridSurfacePositionFromVolume( NodeManager & nodeManager );
 
+  static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeVolumeFromSurfacePosition( real64 const (&n)[3],
                                            real64 const offset,
                                            real64 const (&hEl) [3] );
 
+  static GEOS_HOST_DEVICE GEOS_FORCE_INLINE
   real64 computeMaximumSurfacePositionOffset( real64 ( &n )[3],
                                               real64 const (&hEl)[3] );
 
+  static GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void logisticRegression( int const & planeStrain,
                            integer const & numContactGroups,
                            integer const & damageFieldPartitioning,
@@ -939,7 +951,7 @@ public:
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradient,
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormal,
                            ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
-                           arraySlice1d< real64 const > const gridPosition,
+                           arraySlice1d< real64 const, nodes::REFERENCE_POSITION_USD - 1 > const gridPosition,
                            arraySlice1d< real64 const > const gridDamageGradient,
                            real64 ( &normal0 )[3],
                            real64 ( &normal )[3],
@@ -1028,7 +1040,7 @@ public:
 
   void computeSphF( ParticleManager & particleManager );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   bool evaluateSeparabilityCriterion( int const & planeStrain,
                                      int const & numContactGroups,
@@ -1036,6 +1048,8 @@ public:
                                      real64 const & separabilityMinDamage,
                                      real64 const & thinFeatureDFGThreshold,
                                      real64 const & neighborRadius,
+                                     real64 const & surfaceQualityThreshold,
+                                     real64 const (&hEl)[3],
                                      localIndex const & A,
                                      localIndex const & B,
                                      real64 const & damageA,

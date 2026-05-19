@@ -185,7 +185,7 @@
       LvArray::system::callErrorHandler(); \
     } \
   } while( false )
-#elif __CUDA_ARCH__
+#elif defined(__CUDA_ARCH__)
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -199,6 +199,20 @@
                                                                                                           "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif defined(__HIP_DEVICE_COMPILE__)
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      constexpr char const * formatString = "***** ERROR\n" \
+                                            "***** LOCATION" LOCATION "\n" \
+                                                                      "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                          "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( "%s", formatString ); \
+      __builtin_trap(); \
     } \
   } while( false )
 #endif
@@ -267,7 +281,7 @@
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
     } \
   } while( false )
-#elif __CUDA_ARCH__
+#elif defined(__CUDA_ARCH__)
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -281,6 +295,20 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif defined(__HIP_DEVICE_COMPILE__)
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( MSG ) "\n\n"; \
+      printf( "%s", formatString ); \
+      __builtin_trap(); \
     } \
   } while( false )
 #endif
@@ -344,7 +372,7 @@
       } \
     } \
   } while( false )
-#elif __CUDA_ARCH__
+#elif defined(__CUDA_ARCH__)
 #define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -358,6 +386,20 @@
                                                                                                        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
       printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
+    } \
+  } while( false )
+#elif defined(__HIP_DEVICE_COMPILE__)
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** WARNING\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( "%s", formatString ); \
+      __builtin_trap(); \
     } \
   } while( false )
 #endif

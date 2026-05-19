@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+PFW_ROOT="$(cd "$SCRIPT_DIR" && while [ ! -f particleFileWriter.py ] && [ "$PWD" != "/" ]; do cd ..; done; pwd -P)"
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
+CASE=""
+ARGS=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python) PYTHON_CMD="$2"; ARGS+=("$1" "$2"); shift 2 ;;
+    --case) CASE="$2"; shift 2 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+mapfile -t INPUTS < <(find "$SCRIPT_DIR" -maxdepth 1 -name 'pfw_input_*.py' -type f | sort)
+if [ "${#INPUTS[@]}" -eq 0 ]; then
+  echo "No pfw_input_*.py files in $SCRIPT_DIR" >&2
+  exit 1
+fi
+choose_input=""
+if [ -n "$CASE" ]; then
+  for f in "${INPUTS[@]}"; do
+    stem="$(basename "$f" .py)"
+    short="${stem#pfw_input_}"
+    # Accept full suite id suffix, short input stem, or filename.
+    if [ "$CASE" = "$short" ] || [ "$CASE" = "$stem" ] || [ "$CASE" = "$(basename "$f")" ] || [[ "$CASE" == *"__${short}" ]]; then
+      choose_input="$f"
+      break
+    fi
+  done
+  if [ -z "$choose_input" ]; then
+    echo "Unknown case '$CASE'. Valid inputs: ${INPUTS[*]##*/}" >&2
+    exit 2
+  fi
+elif [ "${#INPUTS[@]}" -eq 1 ]; then
+  choose_input="${INPUTS[0]}"
+else
+  echo "Multiple inputs in $SCRIPT_DIR; pass --case. Valid inputs: ${INPUTS[*]##*/}" >&2
+  exit 2
+fi
+rel_dir="${SCRIPT_DIR#$PFW_ROOT/verification/}"
+family="${rel_dir//\//_}"
+short="$(basename "$choose_input" .py)"
+short="${short#pfw_input_}"
+case_id="${family}__${short}"
+exec "$PYTHON_CMD" "$PFW_ROOT/mpm_vv_case_runner.py" --suite verification --case-id "$case_id" --input "$(basename "$choose_input")" --source-dir "$SCRIPT_DIR" --output-prefix "$case_id" --python "$PYTHON_CMD" "${ARGS[@]}"

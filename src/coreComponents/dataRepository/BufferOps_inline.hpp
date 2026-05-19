@@ -596,6 +596,136 @@ UnpackArray( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
+
+//------------------------------------------------------------------------------
+// UnpackByIndex(buffer,var,indices,op)
+//------------------------------------------------------------------------------
+// Host-side unpack with MPI_REPLACE/MPI_SUM/MPI_MAX semantics.  The normal host
+// UnpackByIndex path always replaces values; MPM grid sync needs reductions for
+// ghost-to-owner accumulation.  This host implementation is a correctness-first
+// fallback for Tuolumne/HIP until the device communication path is made robust.
+template< typename T >
+inline localIndex UnpackReduceValueByMpiOp( buffer_unit_type const * & buffer,
+                                            T & value,
+                                            MPI_Op op )
+{
+  T incoming;
+  localIndex const sizeOfUnpackedChars = Unpack( buffer, incoming );
+
+  if( op == MPI_REPLACE )
+  {
+    value = incoming;
+  }
+  else if constexpr( std::is_arithmetic< T >::value )
+  {
+    if( op == MPI_SUM )
+    {
+      value += incoming;
+    }
+    else if( op == MPI_MAX )
+    {
+      if( incoming > value )
+      {
+        value = incoming;
+      }
+    }
+    else
+    {
+      GEOS_ERROR( "Unsupported host unpack reduction operation." );
+    }
+  }
+  else
+  {
+    GEOS_ERROR( "Host unpack reductions are only supported for arithmetic values." );
+  }
+
+  return sizeOfUnpackedChars;
+}
+
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               stdVector< T > & var,
+               T_indices const & indices,
+               MPI_Op op )
+{
+  if( op == MPI_REPLACE )
+  {
+    return UnpackByIndex( buffer, var, indices );
+  }
+
+  localIndex sizeOfUnpackedChars = 0;
+  localIndex numUnpackedIndices;
+  sizeOfUnpackedChars += Unpack( buffer, numUnpackedIndices );
+  GEOS_ERROR_IF( numUnpackedIndices != indices.size(), "number of unpacked indices does not equal expected number" );
+
+  for( localIndex a = 0; a < indices.size(); ++a )
+  {
+    sizeOfUnpackedChars += UnpackReduceValueByMpiOp( buffer, var[ indices[ a ] ], op );
+  }
+  return sizeOfUnpackedChars;
+}
+
+template< typename T, int NDIM, int USD, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               ArrayView< T, NDIM, USD > const & var,
+               const T_indices & indices,
+               MPI_Op op )
+{
+  if( op == MPI_REPLACE )
+  {
+    return UnpackByIndex( buffer, var, indices );
+  }
+
+  localIndex strides[NDIM];
+  localIndex sizeOfUnpackedChars = UnpackPointer( buffer, strides, NDIM );
+  GEOS_UNUSED_VAR( strides );
+
+  for( localIndex a=0; a<indices.size(); ++a )
+  {
+    LvArray::forValuesInSlice( var[ indices[ a ] ],
+                               [&sizeOfUnpackedChars, &buffer, op] ( T & value )
+    {
+      sizeOfUnpackedChars += UnpackReduceValueByMpiOp( buffer, value, op );
+    } );
+  }
+  return sizeOfUnpackedChars;
+}
+
+template< typename T, typename T_indices >
+localIndex
+UnpackByIndex( buffer_unit_type const * & buffer,
+               ArrayOfArrays< T > & var,
+               T_indices const & indices,
+               MPI_Op op )
+{
+  GEOS_ERROR_IF( op != MPI_REPLACE, "Host reductions are not supported for ArrayOfArrays unpack." );
+  return UnpackByIndex( buffer, var, indices );
+}
+
+template< typename MAP_TYPE, typename T_INDICES >
+typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
+UnpackByIndex( buffer_unit_type const * & buffer,
+               MAP_TYPE & map,
+               T_INDICES const & indices,
+               MPI_Op op )
+{
+  GEOS_ERROR_IF( op != MPI_REPLACE, "Host reductions are not supported for map unpack." );
+  return UnpackByIndex( buffer, map, indices );
+}
+
+template< typename T, typename T_INDICES >
+typename std::enable_if< !is_packable_by_index< T > && !is_map_packable_by_index< T >, localIndex >::type
+UnpackByIndex( buffer_unit_type const * & buffer,
+               T & var,
+               T_INDICES const & indices,
+               MPI_Op op )
+{
+  GEOS_ERROR_IF( op != MPI_REPLACE, "Host reductions are not supported for this unpack type." );
+  return UnpackByIndex( buffer, var, indices );
+}
+
 //------------------------------------------------------------------------------
 // UnpackByIndex(buffer,var,indices)
 //------------------------------------------------------------------------------

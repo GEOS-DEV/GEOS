@@ -146,6 +146,8 @@ private:
 };
 
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & timeIncrement,
@@ -198,6 +200,8 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & timeIncrement,
@@ -215,6 +219,8 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
 
 
 // TODO: Is there a way to not have to re-write the constitutive model twice for regular and StressOnly?
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
@@ -258,6 +264,8 @@ void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 }
 
 
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
