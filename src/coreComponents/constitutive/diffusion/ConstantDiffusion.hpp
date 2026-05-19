@@ -22,7 +22,6 @@
 
 #include "constitutive/diffusion/DiffusionBase.hpp"
 
-
 namespace geos
 {
 namespace constitutive
