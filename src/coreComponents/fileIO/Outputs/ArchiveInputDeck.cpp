@@ -176,8 +176,8 @@ xmlWrapper::xmlDocument flattenXMLs( string_array const & fileNames )
 void copySchemaToArchive( string const & archiveDir )
 {
   std::filesystem::path const candidates[] = {
-    GEOS_SCHEMA_SOURCE_PATH
-    GEOS_SCHEMA_INSTALL_PATH,
+    GEOS_SCHEMA_SOURCE_PATH,
+    GEOS_SCHEMA_INSTALL_PATH
   };
 
   std::error_code ec;
