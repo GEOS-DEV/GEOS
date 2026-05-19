@@ -752,7 +752,8 @@ if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in 
     print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface positions were not included in particleFileFields. Surface positions are added automatically.')
 
 # Remove new line from last parameter to be added (for xml formatting)
-parameterStrings[-1] = parameterStrings[-1].replace('\n','')
+if parameterStrings:
+  parameterStrings[-1] = parameterStrings[-1].replace('\n','')
 mpmSolverParameterString = ''.join(parameterStrings)
 
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
