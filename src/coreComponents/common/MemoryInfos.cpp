@@ -16,6 +16,10 @@
 #include "MemoryInfos.hpp"
 
 #include "MpiWrapper.hpp"
+
+#if defined( GEOS_USE_HIP )
+#include <hip/hip_runtime.h>
+#endif
 #if defined( GEOS_USE_CALIPER )and defined( GEOS_USE_ADIAK )
 #include <adiak.hpp>
 #endif
@@ -50,6 +54,17 @@ MemoryInfos::MemoryInfos( umpire::MemoryResourceTraits::resource_type resourceTy
     case umpire::MemoryResourceTraits::resource_type::um:
       #if defined( GEOS_USE_CUDA )
       cudaMemGetInfo( &m_availableMemory, &m_totalMemory );
+      #elif defined( GEOS_USE_HIP )
+      {
+        hipError_t const status = hipMemGetInfo( &m_availableMemory, &m_totalMemory );
+        if( status != hipSuccess )
+        {
+          GEOS_WARNING( "HIP device memory lookup failed: " << hipGetErrorString( status ) );
+          m_availableMemory = 0;
+          m_totalMemory = 0;
+          m_physicalMemoryHandled = 0;
+        }
+      }
       #else
       GEOS_WARNING( "Unknown device physical memory size getter for this compiler." );
       m_physicalMemoryHandled = 0;
