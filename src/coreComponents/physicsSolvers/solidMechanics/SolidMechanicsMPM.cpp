@@ -19396,30 +19396,34 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
 
 #ifdef GEOS_USE_DEVICE
-  // Tuolumne/HIP XPIC device-residency fix v32:
-  // XPIC launches HIP kernels in this routine. Make every persistent grid field
-  // used by those kernels resident on the device before taking/capturing views.
-  auto const moveXPICNodeFieldToDevice = [&]( char const * const fieldName )
+  // Tuolumne/HIP XPIC host fallback v35:
+  // Run XPIC on the host for now. The surrounding solver still uses device
+  // kernels, but XPIC's scratch arrays and recursive sync path are not yet
+  // fully device-resident. This is a correctness fallback, not a performance fix.
+  auto const moveXPICNodeFieldToHost = [&]( char const * const fieldName )
   {
-    nodeManager.getWrapperBase( fieldName ).move( parallelDeviceMemorySpace, true );
+    nodeManager.getWrapperBase( fieldName ).move( LvArray::MemorySpace::host, true );
   };
 
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridMassString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridAccelerationString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridVelocityString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridDVPlusString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridVPlusString() );
-  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridDamageGradientString() );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridMassString() );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridAccelerationString() );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridVelocityString() );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridDVPlusString() );
+  moveXPICNodeFieldToHost( viewKeyStruct::gridVPlusString() );
+  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( LvArray::MemorySpace::host, true );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     subRegion.forWrappers( []( WrapperBase & wrapper )
     {
-      wrapper.move( parallelDeviceMemorySpace, true );
+      wrapper.move( LvArray::MemorySpace::host, true );
     } );
   } );
 #endif
+
+
+
 
   /*
    * ---------------------------------------------------------------------------
@@ -19558,13 +19562,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   }
 
 
-#ifdef GEOS_USE_DEVICE
-  // Tuolumne/HIP XPIC scratch initial device move v32.
-  // These scratch arrays are read/written inside HIP kernels below.
-  dVMinus.move( parallelDeviceMemorySpace, true );
-  vMinus.move( parallelDeviceMemorySpace, true );
-  vStar.move( parallelDeviceMemorySpace, true );
-#endif
+
 
   // ---------------------------------------------------------------------------
   // XPIC order iterations.
@@ -19593,31 +19591,12 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     }
 
 
-#ifdef GEOS_USE_DEVICE
-    // Tuolumne/HIP XPIC per-order device move v32.
-    // Host loops above update scratch/grid accumulators; move them back before
-    // the gather/scatter HIP kernel for this order.
-    moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
-    moveXPICNodeFieldToDevice( viewKeyStruct::gridMassString() );
-    moveXPICNodeFieldToDevice( viewKeyStruct::gridDVPlusString() );
-    moveXPICNodeFieldToDevice( viewKeyStruct::gridVPlusString() );
-    nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
-    dVMinus.move( parallelDeviceMemorySpace, true );
-    vMinus.move( parallelDeviceMemorySpace, true );
-    vStar.move( parallelDeviceMemorySpace, true );
-#endif
+
 
     localIndex subRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-#ifdef GEOS_USE_DEVICE
-      // Tuolumne/HIP XPIC subregion wrapper device move v32.
-      // Make subregion arrays resident before taking the views captured below.
-      subRegion.forWrappers( []( WrapperBase & wrapper )
-      {
-        wrapper.move( parallelDeviceMemorySpace, true );
-      } );
-#endif
+
 
       // -----------------------------------------------------------------------
       // Particle fields.
@@ -19667,7 +19646,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
 #endif
 
-      forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+      forAll< serialPolicy >( activeParticleIndices.size(),
         [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p =
@@ -19791,6 +19770,16 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
             for( localIndex i = 0; i < numDims; ++i )
             {
+#ifdef GEOS_USE_DEVICE
+              // XPIC host fallback v35 direct accumulation. The XPIC loop is
+              // serialPolicy in HIP builds, so atomics are unnecessary and would
+              // otherwise instantiate a device atomic in host fallback code.
+              gridDVPlus[mappedNode][fieldIndex][i] +=
+                dVelocityScale * dVMinusAtParticle[i];
+
+              gridVPlus[mappedNode][fieldIndex][i] +=
+                velocityScale * vMinusAtParticle[i];
+#else
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridDVPlus[mappedNode][fieldIndex][i],
                                dVelocityScale * dVMinusAtParticle[i] );
@@ -19798,6 +19787,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridVPlus[mappedNode][fieldIndex][i],
                                velocityScale * vMinusAtParticle[i] );
+#endif
             }
           }
         }
@@ -19845,23 +19835,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   // ---------------------------------------------------------------------------
 
 
-#ifdef GEOS_USE_DEVICE
-  // Tuolumne/HIP XPIC final-update device move v32.
-  // The final XPIC kernel reads vStar and grid fields and writes particle state.
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridAccelerationString() );
-  moveXPICNodeFieldToDevice( viewKeyStruct::gridVelocityString() );
-  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
-  vStar.move( parallelDeviceMemorySpace, true );
 
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    subRegion.forWrappers( []( WrapperBase & wrapper )
-    {
-      wrapper.move( parallelDeviceMemorySpace, true );
-    } );
-  } );
-#endif
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -19911,7 +19885,7 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
 #endif
 
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+    forAll< serialPolicy >( activeParticleIndices.size(),
       [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p =
@@ -20061,6 +20035,18 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 
     ++subRegionIndex;
   } );
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP XPIC host fallback v35: return particle data to device.
+  // The following explicit-step phases still use HIP kernels.
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( parallelDeviceMemorySpace, true );
+    } );
+  } );
+#endif
+
 }
 
 
