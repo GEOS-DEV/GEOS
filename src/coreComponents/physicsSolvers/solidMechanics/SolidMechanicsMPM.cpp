@@ -11575,17 +11575,34 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
   MPI_iCommData iComm;
   iComm.resize( domain.getNeighbors().size() );
 
-  // (0) Bring grid fields to host
+  // (1) Initialize
+  FieldIdentifiers fieldsToBeSynced;
+  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
+  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+
+  // Put synchronized grid fields and node sync index lists in the memory space
+  // required by the communication pack/unpack path below. MPM uses onDevice=true
+  // so MPI_SUM/MPI_MAX reductions are applied by the device unpack implementation.
+  // Moving these fields to host here can hand host pointers to HIP kernels.
+#ifdef GEOS_USE_DEVICE
+  for( auto const & name : fieldNames )
+  {
+    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+    wrapper.move( parallelDeviceMemorySpace, true );
+  }
+  for( NeighborCommunicator const & neighbor : neighbors )
+  {
+    int const neighborRank = neighbor.neighborRank();
+    nodeManager.getNeighborData( neighborRank ).ghostsToSend().move( parallelDeviceMemorySpace, true );
+    nodeManager.getNeighborData( neighborRank ).ghostsToReceive().move( parallelDeviceMemorySpace, true );
+  }
+#else
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
     wrapper.move( LvArray::MemorySpace::host, true );
   }
-
-  // (1) Initialize
-  FieldIdentifiers fieldsToBeSynced;
-  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
-  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+#endif
 
   // (2) Accumulate ghost values into owning nodes without mutating the stored sync lists.
   //     This is equivalent to temporarily swapping ghostsToSend/ghostsToReceive:
@@ -11624,6 +11641,17 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
   CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, true, packEvents2 );
   parallelDeviceEvents unpackEvents2;
   CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, iComm, true, unpackEvents2 );
+
+#ifdef GEOS_USE_DEVICE
+  // The current MPM step still has host serialPolicy consumers after grid sync.
+  // Keep this correctness-first host move until the surrounding phases are made
+  // consistently device-resident.
+  for( auto const & name : fieldNames )
+  {
+    WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+    wrapper.move( LvArray::MemorySpace::host, true );
+  }
+#endif
 }
 
 /**
@@ -15621,6 +15649,10 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
+  real64 const overlapThreshold1 = m_overlapThreshold1;
+  real64 const overlapThreshold2 = m_overlapThreshold2;
+  real64 const maxParticleVelocitySquared = m_maxParticleVelocitySquared;
+  real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   for( int i = 0; i < numContactGroups; ++i )
@@ -15731,6 +15763,8 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
                                                        separabilityMinDamage,
                                                        thinFeatureDFGThreshold,
                                                        neighborRadius,
+                                                       surfaceQualityThreshold,
+                                                       hEl,
                                                        A,
                                                        B,
                                                        gridDamage[g][A],
@@ -15910,6 +15944,9 @@ void SolidMechanicsMPM::computeContactForces( real64 const dt,
 
           computePairwiseNodalContactForce( contactGapCorrection,
                                             overlapCorrection,
+                                            overlapThreshold1,
+                                            overlapThreshold2,
+                                            maxParticleVelocitySquared,
                                             hEl,
                                             planeStrain,
                                             smallMass,
@@ -15986,6 +16023,10 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
   real64 const neighborRadius = m_neighborRadius;
   real64 const separabilityMinDamage = m_separabilityMinDamage;
   real64 const thinFeatureDFGThreshold = m_thinFeatureDFGThreshold;
+  real64 const overlapThreshold1 = m_overlapThreshold1;
+  real64 const overlapThreshold2 = m_overlapThreshold2;
+  real64 const maxParticleVelocitySquared = m_maxParticleVelocitySquared;
+  real64 const surfaceQualityThreshold = m_surfaceQualityThreshold;
 
   array2d< real64 > frictionCoefficientTableCopy( numContactGroups, numContactGroups );
   for( int i = 0; i < numContactGroups; ++i )
@@ -16095,6 +16136,8 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
                                                        separabilityMinDamage,
                                                        thinFeatureDFGThreshold,
                                                        neighborRadius,
+                                                       surfaceQualityThreshold,
+                                                       hEl,
                                                        A,
                                                        B,
                                                        gridDamage[g][A],
@@ -16274,6 +16317,9 @@ void SolidMechanicsMPM::computeFMPMNetContactMomentumTarget( real64 const dt,
 
           computePairwiseNodalContactImpulse( contactGapCorrection,
                                               overlapCorrection,
+                                            overlapThreshold1,
+                                            overlapThreshold2,
+                                            maxParticleVelocitySquared,
                                               hEl,
                                               planeStrain,
                                               smallMass,
@@ -16323,6 +16369,8 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
                                                       real64 const & separabilityMinDamage,
                                                       real64 const & thinFeatureDFGThreshold,
                                                       real64 const & neighborRadius,
+                                                      real64 const & surfaceQualityThreshold,
+                                                      real64 const (&hEl)[3],
                                                       localIndex const & A,
                                                       localIndex const & B,
                                                       real64 const & damageA,
@@ -16343,7 +16391,7 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
   // At least one field is fully damaged and both fields have the minimum separable level of damage.
   // The "a%b" is the "mod(a,b)" command, and indicates whether materials are from same contact group.
   if( ( ( ( maxDamageA >= 0.9999 || maxDamageB >= 0.9999 ) && ( damageA >= separabilityMinDamage && damageB >= separabilityMinDamage ) ) &&
-        ( surfaceQuality > m_surfaceQualityThreshold ) ) ||
+        ( surfaceQuality > surfaceQualityThreshold ) ) ||
       ( A % numContactGroups != B % numContactGroups ) )
   {
     // damage gradient magnitude is nominally 1/h_el, where there is a sharp crack.  If the damage gradient
@@ -16351,12 +16399,12 @@ bool SolidMechanicsMPM::evaluateSeparabilityCriterion( int const & planeStrain,
     real64 xi = 1e-3;
     if( planeStrain == 1 )
     {
-      xi /= m_hEl[0] * m_hEl[0] + m_hEl[1] * m_hEl[1];
+      xi /= hEl[0] * hEl[0] + hEl[1] * hEl[1];
     }
     else
     {
       // Tensor equation: m_hEl: l2NormSquared(m_hEl).
-      xi /= LvArray::tensorOps::l2NormSquared< 3 >( m_hEl );
+      xi /= LvArray::tensorOps::l2NormSquared< 3 >( hEl );
     }
 
     // We artificially map damage for surface particles with explicit normals and positions as one to gridMaxDamage and
@@ -16422,6 +16470,9 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
                                                             OverlapCorrectionOption const & overlapCorrection,
+                                                            real64 const overlapThreshold1,
+                                                            real64 const overlapThreshold2,
+                                                            real64 const maxParticleVelocitySquared,
                                                             real64 const (&hEl)[3],
                                                             int const & planeStrain,
                                                             real64 const & smallMass,
@@ -16576,15 +16627,15 @@ void SolidMechanicsMPM::computePairwiseNodalContactImpulse( ContactGapCorrection
     real64 cellArea = cellVolume / cellLength;
     real64 overlapLength = planeStrain ? ( 2.*VA + 2.*VB - cellVolume ) / cellArea : ( VA + VB - cellVolume ) / cellArea;
 
-    if( ( overlapLength > ( m_overlapThreshold1 - 1.0 ) * cellLength ) &&
-        ( overlapLength < ( m_overlapThreshold2 - 1.0 ) * cellLength ) )
+    if( ( overlapLength > ( overlapThreshold1 - 1.0 ) * cellLength ) &&
+        ( overlapLength < ( overlapThreshold2 - 1.0 ) * cellLength ) )
     {
       real64 overlap = planeStrain ? ( VA + VB ) / (0.5*cellVolume) : ( VA + VB ) / cellVolume;
       real64 correctionScale = LvArray::math::min(
         1.0,
-        LvArray::math::max( 0.0, ( overlap - m_overlapThreshold1 ) / ( m_overlapThreshold2 - m_overlapThreshold1 ) ) );
+        LvArray::math::max( 0.0, ( overlap - overlapThreshold1 ) / ( overlapThreshold2 - overlapThreshold1 ) ) );
 
-      real64 maxVelocity = sqrt( m_maxParticleVelocitySquared );
+      real64 maxVelocity = sqrt( maxParticleVelocitySquared );
       real64 maxGapImpulseMagnitude = 0.05*LvArray::math::min( mA, mB ) * maxVelocity;
       jgap = correctionScale*LvArray::math::max(
         -maxGapImpulseMagnitude,
@@ -16629,6 +16680,9 @@ GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
                                                           OverlapCorrectionOption const & overlapCorrection,
+                                                          real64 const overlapThreshold1,
+                                                          real64 const overlapThreshold2,
+                                                          real64 const maxParticleVelocitySquared,
                                                           real64 const (&hEl)[3],
                                                           int const & planeStrain,
                                                           real64 const & smallMass,
@@ -16848,11 +16902,11 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOp
     // and one may have a small mass, so we want to limit our max force based on the max velocity.
     // If overlap is too severe, we disable this feature, because the gradient will not be effective at
     // identifying surfaces that can be used to correct overlap.
-    if( ( overlapLength > ( m_overlapThreshold1 - 1.0 ) * cellLength ) && ( overlapLength < ( m_overlapThreshold2 - 1.0 ) * cellLength)  )
+    if( ( overlapLength > ( overlapThreshold1 - 1.0 ) * cellLength ) && ( overlapLength < ( overlapThreshold2 - 1.0 ) * cellLength)  )
     {
       // Scale back contact force so it is only applied fully if overlap reaches threshold2
       real64 overlap = planeStrain ? ( VA + VB ) / (0.5*cellVolume) : ( VA + VB ) / cellVolume;
-      real64 correctionScale = LvArray::math::min( 1.0 , LvArray::math::max (0.0 , ( overlap - m_overlapThreshold1 ) / ( m_overlapThreshold2 - m_overlapThreshold1 ) ) );
+      real64 correctionScale = LvArray::math::min( 1.0 , LvArray::math::max (0.0 , ( overlap - overlapThreshold1 ) / ( overlapThreshold2 - overlapThreshold1 ) ) );
 
       // x_A''(t) = -f/m_A,        x_B''(t) = f/m_B
       // x_A'(t) = -(f/m_A)*dt,    x_B'(t) = (f/mB)*dt
@@ -16864,7 +16918,7 @@ void SolidMechanicsMPM::computePairwiseNodalContactForce( ContactGapCorrectionOp
 
       // Limit max force based on CFL condition:  (fmax/min(mA,mB))*dt = cfl*wavespeed.
 
-      real64 maxVelocity = sqrt(m_maxParticleVelocitySquared);  // From CFL limit and particle deletion limit.
+      real64 maxVelocity = sqrt(maxParticleVelocitySquared);  // From CFL limit and particle deletion limit.
       real64 maxGapForceMagnitude = 0.05*LvArray::math::min( mA , mB ) * maxVelocity / dt;
 
       // Force to correct overlap in 1 step, with limiter and scaling function

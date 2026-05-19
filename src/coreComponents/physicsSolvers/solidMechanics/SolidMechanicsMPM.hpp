@@ -352,7 +352,7 @@ public:
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   localIndex partitionField( int numContactGroups,
                              int damageFieldPartitioning,
@@ -613,10 +613,13 @@ public:
    * This helper mirrors computePairwiseNodalContactForce, but returns contact impulse directly so FMPM Net
    * contact can accumulate and compare total momentum corrections between FMPM orders.
    */
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
                                            OverlapCorrectionOption const & overlapCorrection,
+                                           real64 const overlapThreshold1,
+                                           real64 const overlapThreshold2,
+                                           real64 const maxParticleVelocitySquared,
                                            real64 const (&hEl) [3],
                                            int const & planeStrain,
                                            real64 const & smallMass,
@@ -647,10 +650,13 @@ public:
                                            arraySlice1d< real64 > const jA,
                                            arraySlice1d< real64 > const jB );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
                                          OverlapCorrectionOption const & overlapCorrection,
+                                         real64 const overlapThreshold1,
+                                         real64 const overlapThreshold2,
+                                         real64 const maxParticleVelocitySquared,
                                          real64 const (&hEl) [3],
                                          int const & planeStrain,
                                          real64 const & smallMass,
@@ -679,7 +685,7 @@ public:
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   void computeOrthonormalBasis( const real64 * e1,  // input "normal" unit vector.
                                 real64 * e2,        // output "tangential" unit vector.
@@ -927,7 +933,7 @@ public:
   real64 computeMaximumSurfacePositionOffset( real64 ( &n )[3],
                                               real64 const (&hEl)[3] );
 
-  GEOS_HOST_DEVICE
+  static GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void logisticRegression( int const & planeStrain,
                            integer const & numContactGroups,
@@ -1034,7 +1040,7 @@ public:
 
   void computeSphF( ParticleManager & particleManager );
 
-  GEOS_FORCE_INLINE
+  static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   bool evaluateSeparabilityCriterion( int const & planeStrain,
                                      int const & numContactGroups,
@@ -1042,6 +1048,8 @@ public:
                                      real64 const & separabilityMinDamage,
                                      real64 const & thinFeatureDFGThreshold,
                                      real64 const & neighborRadius,
+                                     real64 const & surfaceQualityThreshold,
+                                     real64 const (&hEl)[3],
                                      localIndex const & A,
                                      localIndex const & B,
                                      real64 const & damageA,
