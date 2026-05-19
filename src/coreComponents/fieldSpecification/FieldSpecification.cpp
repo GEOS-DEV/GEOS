@@ -13,17 +13,13 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "FieldSpecificationBase.hpp"
-
-#include "common/format/StringUtilities.hpp"
-#include "common/logger/Logger.hpp"
-#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
 using namespace dataRepository;
 
-FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * parent ):
+FieldSpecification::FieldSpecification( string const & name, Group * parent ):
   Group( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -97,18 +93,18 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
 }
 
 
-FieldSpecificationBase::~FieldSpecificationBase()
+FieldSpecification::~FieldSpecification()
 {}
 
-FieldSpecificationBase::CatalogInterface::CatalogType &
-FieldSpecificationBase::getCatalog()
+FieldSpecification::CatalogInterface::CatalogType &
+FieldSpecification::getCatalog()
 {
-  static FieldSpecificationBase::CatalogInterface::CatalogType catalog;
+  static FieldSpecification::CatalogInterface::CatalogType catalog;
   return catalog;
 }
 
 
-void FieldSpecificationBase::postInputInitialization()
+void FieldSpecification::postInputInitialization()
 {
   GEOS_THROW_IF( !m_functionName.empty() &&
                  m_functionName.size() != 1 &&
@@ -132,7 +128,7 @@ void FieldSpecificationBase::postInputInitialization()
   }
 }
 
-void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
+void FieldSpecification::setMeshObjectPath( Group const & meshBodies )
 {
   try
   {
@@ -151,6 +147,7 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
 }
 
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, FieldSpecificationBase, string const &, Group * const )
+
+REGISTER_CATALOG_ENTRY( FieldSpecification, FieldSpecification, string const &, Group * const )
 
 }

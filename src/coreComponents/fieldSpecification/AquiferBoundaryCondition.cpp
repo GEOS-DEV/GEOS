@@ -19,13 +19,15 @@
 
 #include "AquiferBoundaryCondition.hpp"
 
+#include "functions/FunctionManager.hpp"
+
 namespace geos
 {
 
 using namespace dataRepository;
 
 AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group * parent )
-  : FieldSpecificationBase( name, parent ),
+  : FieldSpecification( name, parent ),
   m_waterPhaseIndex( -1 ),
   m_cumulativeFlux( 0.0 )
 {
@@ -99,22 +101,22 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
   registerWrapper( viewKeyStruct::cumulativeFluxString(), &m_cumulativeFlux ).
     setInputFlag( InputFlags::FALSE );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
 
-  getWrapper< string >( FieldSpecificationBase::viewKeyStruct::objectPathString() ).
+  getWrapper< string >( FieldSpecification::viewKeyStruct::objectPathString() ).
     setInputFlag( InputFlags::FALSE );
   setObjectPath( "faceManager" );
 
-  getWrapper< int >( FieldSpecificationBase::viewKeyStruct::componentString() ).
+  getWrapper< int >( FieldSpecification::viewKeyStruct::componentString() ).
     setInputFlag( InputFlags::FALSE );
 
 }
 
 void AquiferBoundaryCondition::postInputInitialization()
 {
-  FieldSpecificationBase::postInputInitialization();
+  FieldSpecification::postInputInitialization();
 
   GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
                         "The aquifer permeability cannot be equal to zero or negative",
@@ -302,7 +304,7 @@ AquiferBoundaryCondition::KernelWrapper AquiferBoundaryCondition::createKernelWr
                                                   pressureInfluenceFunction.createKernelWrapper() );
 }
 
-REGISTER_CATALOG_ENTRY( FieldSpecificationBase, AquiferBoundaryCondition, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( FieldSpecification, AquiferBoundaryCondition, string const &, Group * const )
 
 
 } /* namespace geos */

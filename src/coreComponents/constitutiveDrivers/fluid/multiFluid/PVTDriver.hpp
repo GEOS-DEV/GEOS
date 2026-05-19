@@ -47,6 +47,8 @@ public:
 
   void postInputInitialization() override;
 
+  using ConstitutiveDriver::execute;
+
   bool execute() override;
 
   void getColumnNames( string_array & columnNames ) const override;

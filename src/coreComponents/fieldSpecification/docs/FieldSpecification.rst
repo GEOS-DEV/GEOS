@@ -6,8 +6,6 @@ Initial and Boundary Conditions
 .. toctree::
    :maxdepth: 1
 
-   FieldSpecificationBase
-
    EquilibriumInitialCondition
 
    AquiferBoundaryCondition

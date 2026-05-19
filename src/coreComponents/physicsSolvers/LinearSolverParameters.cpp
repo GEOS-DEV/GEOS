@@ -912,7 +912,7 @@ void LinearSolverParametersInput::print() const
   tableData.addRow( "Preconditioner type", m_parameters.preconditionerType );
   if( !m_parameters.hypredriveInputFile.empty() )
   {
-    tableData.addRow( "hypredrive input file", m_parameters.hypredriveInputFile );
+    tableData.addRow( "hypredrive input file", string_view( m_parameters.hypredriveInputFile ) );
   }
   tableData.addRow( "Stop if error", m_parameters.stopIfError );
   if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
