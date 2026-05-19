@@ -96,6 +96,11 @@ struct ConstraintHelper
                                 wellElemGravCoef,
                                 &dControlEqn,
                                 &iwelemRef,
+                                localRhs,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
+                                localMatrix,
                                 &refGravCoef] ( localIndex const )
     {
       real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
@@ -108,14 +113,15 @@ struct ConstraintHelper
       {
         dControlEqn[COFFSET_WJ::dT] =  dTotalMassDens[iwelemRef][Deriv::dT] * diffGravCoef;
       }
+      // add solver matrices
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
     } );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
+
   }
 
 
@@ -183,6 +189,11 @@ struct ConstraintHelper
                                 dCompFrac_dCompDens,
                                 &dControlEqn,
                                 &useSurfaceConditions,
+                                localRhs,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
+                                localMatrix,
                                 &iwelemRef] ( localIndex const )
     {
       // skip the rest of this function if phase ip is absent
@@ -214,16 +225,16 @@ struct ConstraintHelper
           dControlEqn[COFFSET_WJ::dC+ic] *= currentTotalRate;
         }
         applyChainRuleInPlace( NC, dCompFrac_dCompDens[iwelemRef], &dControlEqn[COFFSET_WJ::dC], work.data() );
-
+        // add solver matrices
+        localRhs[eqnRowIndex] += controlEqn;
+        localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                  dofColIndices,
+                                                                  dControlEqn,
+                                                                  COFFSET_WJ::nDer );
       }
     } );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
+
   }
 
   template< template< typename U > class T, typename U=LiquidRateConstraint >
@@ -295,6 +306,11 @@ struct ConstraintHelper
                                 dCompFrac_dCompDens,
                                 &dControlEqn,
                                 &useSurfaceConditions,
+                                localRhs,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
+                                localMatrix,
                                 &iwelemRef] ( localIndex const )
     {
 
@@ -334,14 +350,15 @@ struct ConstraintHelper
         }
       }
       applyChainRuleInPlace( NC, dCompFrac_dCompDens[iwelemRef], &dControlEqn[COFFSET_WJ::dC], work.data() );
+      // add solver matrices
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
     } );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
+
   }
   template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
@@ -401,6 +418,11 @@ struct ConstraintHelper
                                 dCompFrac_dCompDens,
                                 &dControlEqn,
                                 &useSurfaceConditions,
+                                localRhs,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
+                                localMatrix,
                                 &iwelemRef] ( localIndex const )
     {
       stackArray1d< real64, NC > work( NC );
@@ -433,15 +455,13 @@ struct ConstraintHelper
       {
         dControlEqn[COFFSET_WJ::dC+ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
       }
-
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
     } );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
   }
   template< template< typename U > class T, typename U=MassRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
@@ -505,6 +525,11 @@ struct ConstraintHelper
                                 dCompFrac_dCompDens,
                                 &dControlEqn,
                                 &useSurfaceConditions,
+                                localRhs,
+                                controlEqn,
+                                eqnRowIndex,
+                                dofColIndices,
+                                localMatrix,
                                 &iwelemRef] ( localIndex const )
     {
       stackArray1d< real64, NC > work( NC );
@@ -538,14 +563,15 @@ struct ConstraintHelper
         dControlEqn[COFFSET_WJ::dC+ic] = massDensity* currentTotalRate * dTotalDensInv_dCompDens[ic];
       }
 
+      // add solver matrices
+      localRhs[eqnRowIndex] += controlEqn;
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
+                                                                dofColIndices,
+                                                                dControlEqn,
+                                                                COFFSET_WJ::nDer );
+
     } );
 
-    // add solver matrices
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              dofColIndices,
-                                                              dControlEqn,
-                                                              COFFSET_WJ::nDer );
   }
 };
 
