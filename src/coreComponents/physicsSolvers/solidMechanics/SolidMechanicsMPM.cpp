@@ -19,6 +19,10 @@
 
 #include "SolidMechanicsMPM.hpp"
 
+#if defined( GEOS_USE_HIP )
+#include <hip/hip_runtime.h>
+#endif
+
 #include "codingUtilities/Utilities.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "common/TimingMacros.hpp"
@@ -2443,6 +2447,26 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
+#if defined( GEOS_USE_HIP )
+  // Tuolumne MPM HIP phase checkpoint v31.
+  // Temporary diagnostic: force HIP to report the phase that owns an
+  // asynchronous GPU fault. Remove after runtime debugging.
+  auto tuolumneMpmHipCheckpoint = [] ( char const * const label )
+  {
+    hipError_t const pending = hipGetLastError();
+    GEOS_LOG_RANK_0( "[Tuolumne MPM HIP checkpoint v31] " << label
+                     << "; pending=" << hipGetErrorString( pending ) );
+    hipError_t const syncStatus = hipDeviceSynchronize();
+    if( syncStatus != hipSuccess )
+    {
+      GEOS_ERROR( "[Tuolumne MPM HIP checkpoint v31] HIP synchronization failed at "
+                  << label << ": " << hipGetErrorString( syncStatus ) );
+    }
+  };
+#else
+  auto tuolumneMpmHipCheckpoint = [] ( char const * const ) {};
+#endif
+
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 01. Resolve step managers.
@@ -2453,6 +2477,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "01. Resolve step managers" );
   ExplicitStepManagers managers = getExplicitStepManagers( domain );
+  tuolumneMpmHipCheckpoint( "after phase: 01. Resolve step managers" );
   SpatialPartition & partition = managers.partition;
   arrayView1d< int const > const periodic = managers.periodic;
   ParticleManager & particleManager = managers.particleManager;
@@ -2472,6 +2497,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                        nodeManager,
                                        particleManager,
                                        partition );
+  tuolumneMpmHipCheckpoint( "after phase: 02. Initialize and reset step state" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2489,6 +2515,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                           particleManager,
                                           partition,
                                           periodic );
+  tuolumneMpmHipCheckpoint( "after phase: 03. Prepare particle topology" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2503,6 +2530,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                    time_n,
                                                    cycleNumber,
                                                    particleManager );
+  tuolumneMpmHipCheckpoint( "after phase: 04. Build neighborhood and contact/surface state" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2515,6 +2543,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   logAndProfile( "05. Populate particle-grid mapping", particleManager, nodeManager );
   populateParticleGridMappingForExplicitStep( particleManager,
                                               nodeManager );
+  tuolumneMpmHipCheckpoint( "after phase: 05. Populate particle-grid mapping" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2529,6 +2558,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                particleManager,
                                                nodeManager,
                                                mesh );
+  tuolumneMpmHipCheckpoint( "after phase: 06. Update damage and surface fields" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2544,6 +2574,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                       particleManager,
                                       nodeManager,
                                       mesh );
+  tuolumneMpmHipCheckpoint( "after phase: 07. Update cohesive-zone state" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2556,6 +2587,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   computeParticleLoadsAndBackgroundFieldsForExplicitStep( time_n,
                                                           particleManager,
                                                           nodeManager );
+  tuolumneMpmHipCheckpoint( "after phase: 08. Compute particle loads and background fields" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2570,6 +2602,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         cycleNumber,
                                         particleManager,
                                         nodeManager );
+  tuolumneMpmHipCheckpoint( "after phase: 09. Map particle state to the grid" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2582,6 +2615,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   syncGridFieldsForExplicitStep( domain,
                                  nodeManager,
                                  mesh );
+  tuolumneMpmHipCheckpoint( "after phase: 10. Synchronize grid fields across MPI ranks" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2592,6 +2626,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "11. Enforce grid symmetry and normalize grid fields", particleManager, nodeManager );
   enforceGridFieldSymmetryAndNormalize( nodeManager );
+  tuolumneMpmHipCheckpoint( "after phase: 11. Enforce grid symmetry and normalize grid fields" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2604,6 +2639,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
+  tuolumneMpmHipCheckpoint( "after phase: 12. Update grid dynamics and contact" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2620,6 +2656,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                                   particleManager,
                                                                   nodeManager,
                                                                   partition );
+  tuolumneMpmHipCheckpoint( "after phase: 13. Apply prescribed deformation and boundary conditions" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2630,6 +2667,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "14. Map grid state back to particles", particleManager, nodeManager );
   gridToParticle( dt, particleManager, nodeManager, domain, mesh );
+  tuolumneMpmHipCheckpoint( "after phase: 14. Map grid state back to particles" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2644,6 +2682,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                            time_n,
                                            particleManager,
                                            partition );
+  tuolumneMpmHipCheckpoint( "after phase: 15. Update particle kinematics" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2656,6 +2695,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   logAndProfile( "16. Update constitutive and thermal state", particleManager, nodeManager );
   updateConstitutiveAndThermalStateForExplicitStep( dt,
                                                     particleManager );
+  tuolumneMpmHipCheckpoint( "after phase: 16. Update constitutive and thermal state" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2668,6 +2708,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   real64 const dtReturn = writeOutputsAndComputeStableTimeStepForExplicitStep( time_n,
                                                                                dt,
                                                                                particleManager );
+  tuolumneMpmHipCheckpoint( "after phase: 17. Write optional outputs and compute the next stable time step" );
 
   /*
    * ------------------------------------------------------------------------------------------------------------
@@ -2684,6 +2725,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                               nodeManager,
                                               partition,
                                               periodic );
+  tuolumneMpmHipCheckpoint( "after phase: 18. Resize grid and clean particle state" );
 
   logAndProfile( "End explicit step", particleManager, nodeManager );
   if( m_solverProfiling == 1 )
@@ -2691,6 +2733,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     printProfilingResults();
   }
 
+  tuolumneMpmHipCheckpoint( "before explicitStep return" );
   return dtReturn;
 }
 
@@ -6387,6 +6430,63 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
    */
 
   int const numVelocityFields = m_numVelocityFields;
+
+
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP: allocate grid-clear fields in device memory before taking views.
+  // initializeGridFields launches a parallelDevicePolicy kernel that writes these
+  // fields. If the wrappers are still host-resident, HIP can fault on the first
+  // cycle while writing through captured views.
+  {
+    stdVector< std::string > const gridClearFieldNames =
+    {
+      viewKeyStruct::gridCohesiveNodeString(),
+      viewKeyStruct::gridMaxMappedParticleIDString(),
+      viewKeyStruct::gridSurfaceMassString(),
+      viewKeyStruct::gridCohesiveFieldFlagString(),
+      viewKeyStruct::gridBackgroundStressString(),
+      viewKeyStruct::gridDamageString(),
+      viewKeyStruct::gridDamageGradientString(),
+      viewKeyStruct::gridExplicitSurfaceNormalString(),
+      viewKeyStruct::gridFieldGradientAlignmentString(),
+      viewKeyStruct::gridMassString(),
+      viewKeyStruct::gridMassWeightedDamageString(),
+      viewKeyStruct::gridMaterialVolumeString(),
+      viewKeyStruct::gridMaxDamageString(),
+      viewKeyStruct::gridPrincipalExplicitSurfaceNormalString(),
+      viewKeyStruct::gridSurfaceAreaString(),
+      viewKeyStruct::gridSurfaceFieldMassString(),
+      viewKeyStruct::gridSurfaceNormalWeightNormalizationString(),
+      viewKeyStruct::gridSurfaceNormalWeightsString(),
+      viewKeyStruct::gridAccelerationString(),
+      viewKeyStruct::gridBasedSurfaceNormalString(),
+      viewKeyStruct::gridBasedSurfacePositionString(),
+      viewKeyStruct::gridCenterOfMassString(),
+      viewKeyStruct::gridCenterOfVolumeString(),
+      viewKeyStruct::gridCohesiveAreaString(),
+      viewKeyStruct::gridCohesiveForceString(),
+      viewKeyStruct::gridContactForceString(),
+      viewKeyStruct::gridDisplacementString(),
+      viewKeyStruct::gridDVelocityString(),
+      viewKeyStruct::gridExternalForceString(),
+      viewKeyStruct::gridInternalForceString(),
+      viewKeyStruct::gridMomentumString(),
+      viewKeyStruct::gridNormalStressString(),
+      viewKeyStruct::gridParticleMappedSurfaceNormalString(),
+      viewKeyStruct::gridSurfaceNormalString(),
+      viewKeyStruct::gridSurfacePositionString(),
+      viewKeyStruct::gridSurfaceTensionForceString(),
+      viewKeyStruct::gridUncontactedVelocityString(),
+      viewKeyStruct::gridVelocityString()
+    };
+
+    for( auto const & name : gridClearFieldNames )
+    {
+      WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+      wrapper.move( parallelDeviceMemorySpace, true );
+    }
+  }
+#endif
 
   arrayView1d< int > const gridCohesiveNode =
     nodeManager.getReference< array1d< int > >(
@@ -19317,6 +19417,33 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
+
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP XPIC device-residency fix v32:
+  // XPIC launches HIP kernels in this routine. Make every persistent grid field
+  // used by those kernels resident on the device before taking/capturing views.
+  auto const moveXPICNodeFieldToDevice = [&]( char const * const fieldName )
+  {
+    nodeManager.getWrapperBase( fieldName ).move( parallelDeviceMemorySpace, true );
+  };
+
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridMassString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridAccelerationString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridVelocityString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridDVPlusString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridVPlusString() );
+  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( parallelDeviceMemorySpace, true );
+    } );
+  } );
+#endif
+
   /*
    * ---------------------------------------------------------------------------
    * XPIC particle update overview
@@ -19453,6 +19580,15 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
     }
   }
 
+
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP XPIC scratch initial device move v32.
+  // These scratch arrays are read/written inside HIP kernels below.
+  dVMinus.move( parallelDeviceMemorySpace, true );
+  vMinus.move( parallelDeviceMemorySpace, true );
+  vStar.move( parallelDeviceMemorySpace, true );
+#endif
+
   // ---------------------------------------------------------------------------
   // XPIC order iterations.
   // ---------------------------------------------------------------------------
@@ -19479,9 +19615,33 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
       }
     }
 
+
+#ifdef GEOS_USE_DEVICE
+    // Tuolumne/HIP XPIC per-order device move v32.
+    // Host loops above update scratch/grid accumulators; move them back before
+    // the gather/scatter HIP kernel for this order.
+    moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
+    moveXPICNodeFieldToDevice( viewKeyStruct::gridMassString() );
+    moveXPICNodeFieldToDevice( viewKeyStruct::gridDVPlusString() );
+    moveXPICNodeFieldToDevice( viewKeyStruct::gridVPlusString() );
+    nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
+    dVMinus.move( parallelDeviceMemorySpace, true );
+    vMinus.move( parallelDeviceMemorySpace, true );
+    vStar.move( parallelDeviceMemorySpace, true );
+#endif
+
     localIndex subRegionIndex = 0;
     particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
+#ifdef GEOS_USE_DEVICE
+      // Tuolumne/HIP XPIC subregion wrapper device move v32.
+      // Make subregion arrays resident before taking the views captured below.
+      subRegion.forWrappers( []( WrapperBase & wrapper )
+      {
+        wrapper.move( parallelDeviceMemorySpace, true );
+      } );
+#endif
+
       // -----------------------------------------------------------------------
       // Particle fields.
       // -----------------------------------------------------------------------
@@ -19706,6 +19866,25 @@ void SolidMechanicsMPM::performXPICUpdate( real64 dt,
   // ---------------------------------------------------------------------------
   // Final XPIC particle update.
   // ---------------------------------------------------------------------------
+
+
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP XPIC final-update device move v32.
+  // The final XPIC kernel reads vStar and grid fields and writes particle state.
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridDamageGradientString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridAccelerationString() );
+  moveXPICNodeFieldToDevice( viewKeyStruct::gridVelocityString() );
+  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( parallelDeviceMemorySpace, true );
+  vStar.move( parallelDeviceMemorySpace, true );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( parallelDeviceMemorySpace, true );
+    } );
+  } );
+#endif
 
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
