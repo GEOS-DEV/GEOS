@@ -24,7 +24,6 @@
 #include "common/format/StringUtilities.hpp"
 #include "common/MpiWrapper.hpp"
 #include "dataRepository/KeyNames.hpp"
-#include "common/Path.hpp"
 
 namespace geos
 {
@@ -267,91 +266,6 @@ string buildMultipleInputXML( string_array const & inputFileList,
   MpiWrapper::barrier();
 
   return inputFileName;
-}
-
-void collectIncluded( string const & filePath,
-                      std::set< string > & collection )
-{
-  xmlDocument doc;
-  xmlResult result = doc.loadFile( filePath );
-  GEOS_THROW_IF( !result,
-                 GEOS_FMT( "Could not load XML file '{}': {}", filePath, result.description() ),
-                 InputError );
-  xmlNode rootNode = doc.getFirstChild();
-
-  string const currentDir = splitPath( filePath ).first;
-
-  for( auto & includedNode : rootNode.children( includedListTag ) )
-  {
-    for( auto & fileNode : includedNode.children( includedFileTag ) )
-    {
-      string const fileName = fileNode.attribute( "name" ).value();
-
-      GEOS_THROW_IF( fileName.empty(),
-                     GEOS_FMT( "An included file entry in '{}' has an empty or missing 'name' attribute.", filePath ),
-                     InputError );
-
-      string absolutePath = isAbsolutePath( fileName )
-                            ? getAbsolutePath( fileName )
-                            : getAbsolutePath( joinPath( currentDir, fileName ) );
-      collection.insert( absolutePath );
-    }
-  }
-}
-
-std::set< string > collectIncluded( string const & filePath )
-{
-  std::set< string > collection;
-  collectIncluded( filePath, collection );
-  return collection;
-}
-
-void collectIncludedRecursive( string const & filePath,
-                               std::set< string > & collection )
-{
-  // We want absolute paths
-  string const absFilePath = getAbsolutePath( filePath );
-
-  if( collection.count( absFilePath ) > 0 )
-  {
-    return;
-  }
-  collection.insert( absFilePath );
-
-  xmlDocument doc;
-  xmlResult result = doc.loadFile( absFilePath );
-  GEOS_THROW_IF( !result,
-                 GEOS_FMT( "Could not load XML file '{}': {}", filePath, result.description() ),
-                 InputError );
-  xmlNode rootNode = doc.getFirstChild();
-
-  string const currentDir = splitPath( filePath ).first;
-
-  for( auto & includedNode : rootNode.children( includedListTag ) )
-  {
-    for( auto & fileNode : includedNode.children( includedFileTag ) )
-    {
-      string const includedFilePath = fileNode.attribute( "name" ).value();
-
-      if( includedFilePath.empty() )
-      {
-        continue;
-      }
-
-      string includedAbsPath = isAbsolutePath( includedFilePath )
-                             ? getAbsolutePath( includedFilePath )
-                             : getAbsolutePath( joinPath( currentDir, includedFilePath ) );
-      collectIncludedRecursive( includedAbsPath,
-                                collection );
-    }
-  }
-}
-
-std::set< string > collectIncludedRecursive( string const & filePath )
-{
-  std::set< string > collection;
-  collectIncludedRecursive( filePath, collection );
-  return collection;
 }
 
 bool isFileMetadataAttribute( string const & name )
