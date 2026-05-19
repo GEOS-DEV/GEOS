@@ -73,6 +73,9 @@ pfw["zmax"] = 0.5*domainZ # mm
 
 DX = domainX/pfw["nI"]
 
+# Global roller/notch gap used by getDamage and make_objects.
+gap = 0.5*(domainY-sampleY)
+
 
 # BATCH PARAMETERS --------------------------------------------------------
 pfw["mBatch"]=True
@@ -144,7 +147,6 @@ def make_objects():
     randomMatDir = False
     )
 
-  gap = 0.5*(domainY-sampleY)
   
   leftRoller = geom.cylinder("left",
                             x1=[ -1.25*D, pfw["ymin"], pfw["zmin"] ],
@@ -205,7 +207,7 @@ pfw["materialPropertyString"]="""
 
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 0, 0 ]
 
-pfw["fTableInterpType"]="Smoothstep"
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,        1.00, 1.00, 1.00],
 		       [stopTime, 1.00, 0.95, 1.00]]

@@ -125,7 +125,7 @@ volStrain2 = -p02/bulk
 J02 = np.exp(volStrain2)
 volStretch2 = J02**(1/3)
 
-pfw["fTableInterpType"]="Linear"
+pfw["fTableInterpType"] = "Linear"
 pfw["prescribedBoundaryFTable"]=1
 
 print("J0 = ",J0,", vol. strain = ",volStrain,", shearStrain=",shearStrain)

@@ -82,7 +82,7 @@ pfw["useInteralForceAsFaceReaction"]=1
 
 # DEFORMATION -----------------------------------------------------------------------------
 
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,	 1,	    1,	1],
                [10,	 1.001,	1,	1],

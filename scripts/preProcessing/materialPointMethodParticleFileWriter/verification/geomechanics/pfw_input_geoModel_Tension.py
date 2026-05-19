@@ -105,7 +105,7 @@ pfw["objects"]=[block]
 # DEFORMATION -----------------------------------------------------------------------------
 # Ftable only controls z-direction
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
-pfw["fTableInterpType"]='Cosine'
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"] = 1
 pfw["fTable"]=[
     [0,	          1.000,	    1.,	1.],

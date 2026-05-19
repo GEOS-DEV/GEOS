@@ -115,7 +115,7 @@ for b in range(numBoxes):
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
                [stopTime,     1.00,  1.30,  1.00]]

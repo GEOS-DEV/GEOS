@@ -87,7 +87,7 @@ pfw["objects"]=[block]
 
 # DEFORMATION -----------------------------------------------------------------------------
 
-pfw["fTableInterpType"]='Smoothstep'
+pfw["fTableInterpType"] = "Smoothstep"
 pfw["prescribedBoundaryFTable"]=1
 
 # copy strain data from hydrostatic test for ghareb

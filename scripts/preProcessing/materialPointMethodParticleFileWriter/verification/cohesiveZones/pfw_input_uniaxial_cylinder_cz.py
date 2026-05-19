@@ -106,7 +106,7 @@ pfw["reactionWriteInterval"]=stopTime/2000
 pfw["boxAverageWriteInterval"]=stopTime/2000
 
 pfw["frictionCoefficient"]=0.01
-pfw["contactGapCorrection"]="Implicit"
+pfw["contactGapCorrection"] = "Implicit"
 pfw["explicitSurfaceNormalInfluence"]= 1000.0
 pfw["useSurfacePositionForContact"]= 1
 pfw["disableSurfaceNormalsAndPositionsOnCPDIScaling"]=1
@@ -164,7 +164,7 @@ def make_objects():
 pfw["prescribedBcTable"]=0
 pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 0, 0 ]
 
-pfw["fTableInterpType"]="Cosine"
+pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
 pfw["fTable"]=[[0,            1.0,  1.0,    1.0],  
                [stopTime,     1.0,  0.9,    1.0]]

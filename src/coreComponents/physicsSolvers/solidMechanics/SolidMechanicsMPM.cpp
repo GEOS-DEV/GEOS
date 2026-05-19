@@ -58,7 +58,6 @@ using namespace constitutive;
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
-GEOS_HOST_DEVICE
 array2d< int > generateCombinations( array1d< array1d< int > > sets )
 {
   int numSets = sets.size();
@@ -8828,6 +8827,8 @@ void SolidMechanicsMPM::populateMappingArraysForActiveParticles( ParticleManager
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeSinglePointShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                           arraySlice1d< real64 const > const particlePosition,
                                                           arrayView3d< int const > const ijkMap,
@@ -8876,7 +8877,6 @@ void SolidMechanicsMPM::computeSinglePointShapeFunctions( arrayView2d< real64 co
   }
 }
 
-GEOS_DEVICE
 /**
  * @brief Computes cubic B-spline single-point shape functions.
  *
@@ -8887,6 +8887,7 @@ GEOS_DEVICE
  * for particle-domain visualization/output and volume initialization only.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeSinglePointBSplineShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                                  arraySlice1d< real64 const > const particlePosition,
                                                                  arrayView3d< int const > const ijkMap,
@@ -8972,13 +8973,13 @@ void SolidMechanicsMPM::computeSinglePointBSplineShapeFunctions( arrayView2d< re
 }
 
 
-GEOS_DEVICE
 /**
  * @brief Computes cpdi shape functions.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeCPDIShapeFunctions(
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
   arraySlice1d< real64 const > const particlePosition,
@@ -9203,13 +9204,13 @@ void SolidMechanicsMPM::computeCPDIShapeFunctions(
 }
 
 #ifdef USEOLDSHAPEFUNCTIONFUNCTIONS
-GEOS_DEVICE
 /**
  * @brief Computes cpdi shape functions slower.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeCPDIShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                    arraySlice1d< real64 const > const particlePosition,
                                                    arraySlice2d< real64 const > const particleRVectors,
@@ -9567,6 +9568,8 @@ void SolidMechanicsMPM::computeCPDIShapeFunctionsSlower( arrayView2d< real64 con
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
+GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( arrayView3d< localIndex const > const ijkMap,
                                                           real64 const (&xLocalMin)[3],
                                                           real64 const (&hEl)[3],
@@ -9620,19 +9623,23 @@ void SolidMechanicsMPM::mapNodesAndComputeShapeFunctionsForSingleParticle( array
     }
     default:
     {
+#if defined(GEOS_DEVICE_COMPILE)
+      GEOS_UNUSED_VAR( particleType );
+#else
       GEOS_ERROR( "Particle type \"" << particleType << "\" is not yet supported." );
+#endif
       break;
     }
   }
 }
 
-GEOS_DEVICE
 /**
  * @brief Computes single point particle shape functions.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeSinglePointParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                                   arraySlice1d< real64 const > const particlePosition,
                                                                   arrayView3d< int const > const ijkMap,
@@ -9681,13 +9688,13 @@ void SolidMechanicsMPM::computeSinglePointParticleShapeFunctions( arrayView2d< r
   }
 }
 
-GEOS_DEVICE
 /**
  * @brief Computes cubic B-spline single-point shape functions for one particle.
  *
  * This pointer-based variant is used by the on-the-fly device mapping path.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeSinglePointBSplineParticleShapeFunctions( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                                          arraySlice1d< real64 const > const particlePosition,
                                                                          arrayView3d< int const > const ijkMap,
@@ -9772,13 +9779,13 @@ void SolidMechanicsMPM::computeSinglePointBSplineParticleShapeFunctions( arrayVi
 }
 
 
-GEOS_DEVICE
 /**
  * @brief Computes cpdi particle shape functions.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeCPDIParticleShapeFunctions(
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
   arraySlice1d< real64 const > const particlePosition,
@@ -10004,13 +10011,13 @@ void SolidMechanicsMPM::computeCPDIParticleShapeFunctions(
 }
 
 #ifdef USEOLDSHAPEFUNCTIONFUNCTIONS
-GEOS_DEVICE
 /**
  * @brief Computes cpdi particle shape functions slower.
  *
  * Executable statements are unchanged; comments document intent where practical.
  */
 GEOS_FORCE_INLINE
+GEOS_HOST_DEVICE
 void SolidMechanicsMPM::computeCPDIParticleShapeFunctionsSlower( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition,
                                                            arraySlice1d< real64 const > const particlePosition,
                                                            arraySlice2d< real64 const > const particleRVectors,
@@ -20606,7 +20613,11 @@ void SolidMechanicsMPM::applySuperimposedVelocityGradient( const real64 dt,
     arrayView3d< real64 > const particleVelocityGradient = subRegion.getField< fields::mpm::particleVelocityGradient >();
 
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_DEVICE ( localIndex const pp )
+#if defined(GEOS_USE_DEVICE)
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#else
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+#endif
     {
       localIndex const p = activeParticleIndices[pp];
 
@@ -21009,7 +21020,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesVelocityOverflowed( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesOverMaxVelocity( 0 );
 
-  bool zeroMagnitudeMaterialDirection = false; // Flag to output warning if material direction is numerically incorrect
+  RAJA::ReduceMax< parallelDeviceReduce, int > zeroMagnitudeMaterialDirection( 0 ); // Flag to output warning if material direction is numerically incorrect
 
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
@@ -21045,9 +21056,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
 
-    // BUGFIX: Flag is captured by reference in device parallel loop.  That is not GPU-safe and is also a race. Use a
-    // RAJA reduction or integer atomic flag.
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=, &zeroMagnitudeMaterialDirection] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
       // Tensor equation: detF = det(particleDeformationGradient[p]).
@@ -21143,7 +21152,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             }
             else
             {
-              zeroMagnitudeMaterialDirection = true;
+              zeroMagnitudeMaterialDirection.max( 1 );
             }
           }
           // Tensor equation: particleMaterialDirection[p] = materialBasis.
@@ -21240,7 +21249,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
             else
             { // We should initialize material direction so unused directions are grid aligned unit vectors,
               // in which case only errors in kinematic update would result in 0-magnitude material directions:
-              zeroMagnitudeMaterialDirection = true;
+              zeroMagnitudeMaterialDirection.max( 1 );
             }
           }
           // Tensor equation: particleMaterialDirection[p] = materialBasis.
@@ -21275,7 +21284,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   int numParticlesVelocityOverflowedGlobal = MpiWrapper::sum( numParticlesVelocityOverflowed.get() );
   int numParticlesOverMaxVelocityGlobal = MpiWrapper::sum( numParticlesOverMaxVelocity.get() );
 
-  GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection, "At least one particle material direction had zero magnitude during kinematic update!" );
+  GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection.get() != 0,
+                    "At least one particle material direction had zero magnitude during kinematic update!" );
 
   GEOS_LOG_RANK_0_IF( numParticlesConstitutiveUpdateFailedGlobal > 0,
                       "Flagged " << numParticlesConstitutiveUpdateFailedGlobal
