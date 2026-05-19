@@ -38,6 +38,10 @@ parser.add_argument('input_file', help="PFW input file", type=str)
 args = parser.parse_args()
 
 
+# ============================================================================================
+# BEGIN FUNCTION DEFINITIONS
+# ============================================================================================
+
 
 def _upgrade_mpm_event_attributes(text: str) -> str:
   """Modernize legacy event attributes in PFW-supplied XML snippets.
@@ -205,6 +209,51 @@ def _normalize_geomechanics_material_string(value: object) -> str:
   return geom_pat.sub(_fix, text)
 
 
+#This code calculates the similarity between two strings using the ndiff method from the difflib library. 
+def compute_similarity(input_string, reference_string):
+#The ndiff method returns a list of strings representing the differences between the two input strings.
+    diff = difflib.ndiff(input_string, reference_string)
+    diff_count = 0
+    for line in diff:
+      # a "-", indicating that it is a deleted character from the input string.
+        if line.startswith("-"):
+            diff_count += 1
+# calculates the similarity by subtracting the ratio of the number of deleted characters to the length of the input string from 1
+    return 1 - (diff_count / len(input_string))
+
+
+def _format_solver_child_xml_block(tag_name, value, indent="\t\t\t"):
+  """Format a user-provided XML child block under SolidMechanics_MPM.
+
+  The value may be a string containing XML lines or a list/tuple of XML snippets.
+  Empty values produce an empty string.
+  """
+  if value is None or value == [] or value == "":
+    return ""
+  if isinstance(value, (list, tuple)):
+    body = "\n".join(str(v).strip() for v in value if str(v).strip())
+  else:
+    body = str(value).strip()
+  if not body:
+    return ""
+
+  # Accept either raw child entries or an already-wrapped block, e.g.
+  # <CohesiveZoneRegions> ... </CohesiveZoneRegions>.
+  body = re.sub(r"^\s*<" + re.escape(tag_name) + r"\b[^>]*>\s*", "", body, flags=re.S)
+  body = re.sub(r"\s*</" + re.escape(tag_name) + r">\s*$", "", body, flags=re.S)
+  body = body.strip()
+  if not body:
+    return ""
+
+  child_indent = indent + "\t"
+  return "\n" + indent + f"<{tag_name}>\n" + child_indent + ("\n" + child_indent).join(body.splitlines()) + "\n" + indent + f"</{tag_name}>\n"
+
+
+# ============================================================================================
+# END FUNCTION DEFINITIONS
+# ============================================================================================
+
+
 # ============================================================================================
 # MACHINE-SPECIFIC Calculations.
 # ============================================================================================
@@ -248,28 +297,6 @@ else:
   rank = comm.Get_rank()  # gets rank of current process 
   num_ranks = comm.Get_size() # total number of processes
 
-
-# ============================================================================================
-# BEGIN FUNCTION DEFINITIONS
-# ============================================================================================
-
-
-#This code calculates the similarity between two strings using the ndiff method from the difflib library. 
-def compute_similarity(input_string, reference_string):
-#The ndiff method returns a list of strings representing the differences between the two input strings.
-    diff = difflib.ndiff(input_string, reference_string)
-    diff_count = 0
-    for line in diff:
-      # a "-", indicating that it is a deleted character from the input string.
-        if line.startswith("-"):
-            diff_count += 1
-# calculates the similarity by subtracting the ratio of the number of deleted characters to the length of the input string from 1
-    return 1 - (diff_count / len(input_string))
-
-
-# ============================================================================================
-# END FUNCTION DEFINITIONS
-# ============================================================================================
 
 # There are places where we compare numpy array to string, currently works, might not in the future
 # fix it, but for now so we don't spam the log file:
@@ -486,6 +513,7 @@ parameters = { 'runDebug' : ( False, False ),
                'maxCohesiveNormalDisplacement' : ( 0.01, True ),
                'maxCohesiveTangentialDisplacement' : ( 0.01, True ),
                'prescribedBoundaryTransverseVelocities' : ( [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], True ),
+               'cohesiveZoneRegions' : ( [], False ),
                'particleFileFields' : (["Velocity",  # +3
                                         "MaterialType", # +1
                                         "ContactGroup", # +1
@@ -739,6 +767,11 @@ if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in 
 parameterStrings[-1] = parameterStrings[-1].replace('\n','')
 mpmSolverParameterString = ''.join(parameterStrings)
 
+cohesiveZoneRegionString = _format_solver_child_xml_block(
+  "CohesiveZoneRegions",
+  cohesiveZoneRegions
+)
+
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
 
@@ -828,7 +861,7 @@ print('Approximate LC bank time cost for this simulation is $',cpuTimeCost,'.')
 if materials == None:
   # Throw error
   print( "A materials array must be specified in the input file!" )
-  comm.abort()
+  comm.Abort()
 
 matsOrig = materials
 numMats = len(matsOrig)
@@ -1043,9 +1076,7 @@ if generateParticleFile:
               #    4: Damaged Cohesive 
               #  };
 
-              if "SurfaceFlag" in particleFileFields:
-                # Surface flags need to be 2 for polymer model to not crash
-                surfaceFlag = voxelFlag #object.isSurface( pt, surfaceDepth ) 
+              surfaceFlag = voxelFlag #object.isSurface( pt, surfaceDepth ) 
 
               surfacePosition = np.array([0.0, 0.0, 0.0])
               if "SurfacePosition" in particleFileFields and surfaceFlag != 0:
@@ -1106,7 +1137,7 @@ if generateParticleFile:
                       strengthScale = 1.0
               
               czTag = 0
-              if "CZTag" in particleFileFields and surfaceFlag == 3:
+              if "CZTag" in particleFileFields:
                 if hasattr(object,'getCZTag'):
                     czTag = object.getCZTag( pt )
                 else:
@@ -1501,7 +1532,7 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
       name="mpmsolve"
       discretization="FE1"
       targetRegions="{{ backgroundGrid/CellRegion1, {targetRegionsString} }}"
-{mpmSolverParameterString}>""" + ( f"""
+{mpmSolverParameterString}>""" + cohesiveZoneRegionString + ( f"""
       <MPMEvents>
       {mpmEventsString}
       </MPMEvents>""" if mpmEventsString else "" ) + f"""
