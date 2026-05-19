@@ -4802,14 +4802,12 @@ SurfaceGenerator::calculateRuptureRate( SurfaceElementRegion & faceElementRegion
     for( localIndex kfe0=0; kfe0<fractureConnectorEdgesToFaceElements.sizeOfArray( kfc ); ++kfe0 )
     {
       localIndex const faceElem0 = fractureConnectorEdgesToFaceElements( kfc, kfe0 );
-      real64 const ruptureTime0 = ruptureTime( faceElem0 );
       for( localIndex kfe1=kfe0+1; kfe1<fractureConnectorEdgesToFaceElements.sizeOfArray( kfc ); ++kfe1 )
       {
         localIndex const faceElem1 = fractureConnectorEdgesToFaceElements( kfc, kfe1 );
         if( !( m_faceElemsRupturedThisSolve.count( faceElem0 ) && m_faceElemsRupturedThisSolve.count( faceElem1 ) ) )
         {
-          real64 const ruptureTime1 = ruptureTime( faceElem1 );
-          real64 const deltaRuptureTime = LvArray::math::abs( ruptureTime0 - ruptureTime1 );
+          real64 const deltaRuptureTime = LvArray::math::abs( ruptureTime( faceElem0 ) - ruptureTime( faceElem1 ) );
           if( deltaRuptureTime > timeTolerance )
           {
             real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elemCenter[ faceElem0 ] );
