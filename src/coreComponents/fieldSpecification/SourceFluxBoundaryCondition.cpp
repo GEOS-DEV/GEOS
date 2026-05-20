@@ -39,7 +39,7 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
                               FieldSpecification::viewKeyStruct::scaleString() ) );
 
   getWrapper< array1d< real64 > >( FieldSpecification::viewKeyStruct::scaleString() ).
-    setDescription( GEOS_FMT( "Multiplier(s) of the {0} value. If no {0} is provided, this value is used directly.",
+    setDescription( GEOS_FMT( "Multiplier(s) of the {0} value(s). If no {0} is provided, value(s) are used directly.",
                               FieldSpecification::viewKeyStruct::functionNameString() ) );
 }
 
