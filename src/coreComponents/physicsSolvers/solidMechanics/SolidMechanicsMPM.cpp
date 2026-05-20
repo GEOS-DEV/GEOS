@@ -20139,6 +20139,37 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP FMPM host fallback v76:
+  // FMPM uses local scratch LvArray arrays and repeated grid-particle-grid
+  // correction loops. Until the full FMPM scratch/state path is made device
+  // resident, run this update on host inside the HIP build. This is a
+  // correctness fallback, not a performance implementation.
+  auto const moveFMPMNodeFieldToHost = [&]( char const * const fieldName )
+  {
+    if( nodeManager.hasWrapper( fieldName ) )
+    {
+      nodeManager.getWrapperBase( fieldName ).move( LvArray::MemorySpace::host, true );
+    }
+  };
+
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridDamageGradientString() );
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridMassString() );
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridUncontactedVelocityString() );
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridVelocityString() );
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridVPlusString() );
+  moveFMPMNodeFieldToHost( viewKeyStruct::gridContactForceString() );
+  nodeManager.getWrapperBase( NodeManager::viewKeyStruct::referencePositionString() ).move( LvArray::MemorySpace::host, true );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( LvArray::MemorySpace::host, true );
+    } );
+  } );
+#endif
+
   /*
    * ---------------------------------------------------------------------------
    * FMPM particle update overview
@@ -20406,7 +20437,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
 #endif
 
-      forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+      forAll< serialPolicy >( activeParticleIndices.size(),
         [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p =
@@ -20461,12 +20492,14 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
             shapeFunctionValuesForParticle[g];
 
           localIndex const fieldIndex =
+            damageFieldPartitioning == 1 ?
             partitionField( numContactGroups,
                             damageFieldPartitioning,
                             particleGroup[p],
                             particleDamageGradient[p],
                             particleSurfaceNormal[p],
-                            gridDamageGradient[mappedNode] );
+                            gridDamageGradient[mappedNode] ) :
+            particleGroup[p];
 #else
           localIndex const mappedNode =
             effectiveMappedNodes[pp][g];
@@ -20504,12 +20537,14 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
             shapeFunctionValuesForParticle[g];
 
           localIndex const fieldIndex =
+            damageFieldPartitioning == 1 ?
             partitionField( numContactGroups,
                             damageFieldPartitioning,
                             particleGroup[p],
                             particleDamageGradient[p],
                             particleSurfaceNormal[p],
-                            gridDamageGradient[mappedNode] );
+                            gridDamageGradient[mappedNode] ) :
+            particleGroup[p];
 #else
           localIndex const mappedNode =
             effectiveMappedNodes[pp][g];
@@ -20528,9 +20563,16 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
             for( localIndex i = 0; i < numVectorComponents; ++i )
             {
+              #ifdef GEOS_USE_DEVICE
+              // FMPM host fallback v76: the loop is serialPolicy, so use a
+              // direct host accumulation rather than a device atomic policy.
+              gridVPlus[mappedNode][fieldIndex][i] +=
+                massShapeOverGridMass * vPrevAtParticle[i];
+#else
               RAJA::atomicAdd( parallelDeviceAtomic{},
                                &gridVPlus[mappedNode][fieldIndex][i],
                                massShapeOverGridMass * vPrevAtParticle[i] );
+#endif
             }
           }
         }
@@ -20720,7 +20762,7 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
 #endif
 
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(),
+    forAll< serialPolicy >( activeParticleIndices.size(),
       [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p =
@@ -20787,12 +20829,14 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
           shapeFunctionGradientValuesForParticle[g][2];
 
         localIndex const fieldIndex =
+          damageFieldPartitioning == 1 ?
           partitionField( numContactGroups,
                           damageFieldPartitioning,
                           particleGroup[p],
                           particleDamageGradient[p],
                           particleSurfaceNormal[p],
-                          gridDamageGradient[mappedNode] );
+                          gridDamageGradient[mappedNode] ) :
+          particleGroup[p];
 #else
         localIndex const mappedNode =
           effectiveMappedNodes[pp][g];
@@ -20851,6 +20895,18 @@ void SolidMechanicsMPM::performFMPMUpdate( real64 dt,
 
     ++subRegionIndex;
   } );
+#ifdef GEOS_USE_DEVICE
+  // Tuolumne/HIP FMPM host fallback v76: return particle data to device.
+  // Later explicit-step phases still use HIP kernels.
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    subRegion.forWrappers( []( WrapperBase & wrapper )
+    {
+      wrapper.move( parallelDeviceMemorySpace, true );
+    } );
+  } );
+#endif
+
 }
 
 /**
