@@ -182,8 +182,8 @@
       fieldName="pressure"
       functionName="pressureFunction"
       scale="1"/>
-    <FieldSpecification   
-      name="bcPressureAquifer"
+    <FieldSpecification
+      name="bcPressureAquiferTop"
       objectPath="ElementRegions/aquiferTop"
       setNames="{ east, west, south, north }"
       fieldName="pressure"
