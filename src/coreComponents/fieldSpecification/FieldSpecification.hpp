@@ -153,7 +153,6 @@ public:
    */
   string const & getFunctionName() const
   {
-    // TODO warn when m_functionName.size() > 1 ?
     static string const emptyName;
     return m_functionName.empty() ? emptyName : m_functionName.front();
   }
