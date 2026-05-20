@@ -1360,7 +1360,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1377,7 +1377,7 @@ A set can be be defined by a 'Geometry' component, or correspond to imported set
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_FieldSpecificationBase_SetErrorMode">
+	<xsd:simpleType name="geos_FieldSpecification_SetErrorMode">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|silent|error|warning" />
 		</xsd:restriction>
@@ -1399,7 +1399,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1435,7 +1435,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1480,7 +1480,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
@@ -1515,7 +1515,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--objectPath => Path to the target field-->
@@ -1560,7 +1560,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1590,7 +1590,7 @@ When set to "silent", no output.
 When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
-		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecification_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -2095,6 +2095,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="mainBlockName" type="groupNameRef" default="main" />
 		<!--nodesetNames => Names of the VTK nodesets to import-->
 		<xsd:attribute name="nodesetNames" type="groupNameRef_array" default="{}" />
+		<!--partitionFractureWeight => Additional weight to fracture-connected super-cells during partitioning-->
+		<xsd:attribute name="partitionFractureWeight" type="integer" default="0" />
 		<!--partitionMethod => Method (library) used to partition the mesh-->
 		<xsd:attribute name="partitionMethod" type="geos_vtk_PartitionMethod" default="parmetis" />
 		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
@@ -2225,7 +2227,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--directRowPerm => How to permute the rows. Available options are: ``none``, ``mc64``-->
 		<xsd:attribute name="directRowPerm" type="geos_LinearSolverParameters_Direct_RowPerm" default="mc64" />
 		<!--hypredriveInputFile => Optional authoritative hypredrive YAML file. When provided, hypredrive consumes this file as-is for solver/preconditioner options.-->
-		<xsd:attribute name="hypredriveInputFile" type="string" default="" />
+		<xsd:attribute name="hypredriveInputFile" type="path" default="" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
 		<!--iluThreshold => ILU(T) threshold factor-->
@@ -6441,8 +6443,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PVTDriverType">
-		<!--baseline => Baseline file-->
-		<xsd:attribute name="baseline" type="path" default="none" />
 		<!--feedComposition => Feed composition array [mol fraction]-->
 		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
 		<!--fluid => Fluid to test-->
@@ -6453,7 +6453,7 @@ Information output from lower logLevels is added with the desired log level
  - Enable log output-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
+		<xsd:attribute name="output" type="string" default="" />
 		<!--outputCompressibility => Flag to indicate that the total compressibility should be output-->
 		<xsd:attribute name="outputCompressibility" type="integer" default="0" />
 		<!--outputMassDensity => Flag to indicate that the mass density of each phase should be output-->
@@ -6464,7 +6464,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="precision" type="integer" default="4" />
 		<!--pressureControl => Function controlling pressure time history-->
 		<xsd:attribute name="pressureControl" type="groupNameRef" use="required" />
-		<!--steps => Number of load steps to take-->
+		<!--steps => Number of steps to take-->
 		<xsd:attribute name="steps" type="integer" use="required" />
 		<!--temperatureControl => Function controlling temperature time history-->
 		<xsd:attribute name="temperatureControl" type="groupNameRef" use="required" />
@@ -8614,6 +8614,8 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
+		<!--temperatureViscosityCoefficient => Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K-->
+		<xsd:attribute name="temperatureViscosityCoefficient" type="real64" default="0" />
 		<!--thermalExpansionCoeff => Fluid thermal expansion coefficient. Unit: 1/K-->
 		<xsd:attribute name="thermalExpansionCoeff" type="real64" default="0" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
@@ -8772,6 +8774,8 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
 		<!--specificHeatCapacity => Fluid heat capacity. Unit: J/kg/K-->
 		<xsd:attribute name="specificHeatCapacity" type="real64" default="0" />
+		<!--temperatureViscosityCoefficient => Fluid viscosity thermal expansion coefficient at the reference temperature. Unit: 1/K-->
+		<xsd:attribute name="temperatureViscosityCoefficient" type="real64" default="0" />
 		<!--thermalExpansionCoeff => Fluid thermal expansion coefficient. Unit: 1/K-->
 		<xsd:attribute name="thermalExpansionCoeff" type="real64" default="0" />
 		<!--viscosibility => Fluid viscosity exponential coefficient-->
