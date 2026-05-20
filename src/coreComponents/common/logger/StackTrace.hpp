@@ -54,12 +54,6 @@ public:
 
 #ifdef GEOS_USE_CPPTRACE
   /**
-   * @brief Access the configured cpptrace formatter.
-   * @return The formatter instance.
-   */
-  static cpptrace::formatter const & formatter();
-
-  /**
    * @brief Format a cpptrace stacktrace using the configured formatter.
    * @param stacktrace The cpptrace stack trace to format.
    * @return Formatted stack trace string.

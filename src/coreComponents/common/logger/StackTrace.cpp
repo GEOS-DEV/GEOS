@@ -34,7 +34,7 @@ namespace geos
 std::string StackTrace::stackTrace()
 {
 #ifdef GEOS_USE_CPPTRACE
-  return formatter().format( cpptrace::generate_trace( /* skip = */ 1 ) );
+  return formatStackTrace( cpptrace::generate_trace( /* skip = */ 1 ) );
 #else
   return LvArray::system::stackTrace( true );
 #endif
@@ -46,7 +46,11 @@ std::string StackTrace::signalSafeStackTrace()
 }
 
 #ifdef GEOS_USE_CPPTRACE
-cpptrace::formatter const & StackTrace::formatter()
+/**
+ * @brief Access the configured cpptrace formatter.
+ * @return The formatter instance.
+ */
+static cpptrace::formatter const & formatter()
 {
   static cpptrace::formatter const fmt = cpptrace::formatter{}
     .header( "" )
