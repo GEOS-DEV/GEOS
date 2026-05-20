@@ -342,7 +342,7 @@ public:
 
   /**
    * @brief Set the diagnostic messages information level. The higher, the more verbose and
-   *        developper-oriented the messages will be.
+   *        developer-oriented the messages will be.
    * @param level the desired information level. If level is not an DiagnosticInfoLevel enum label,
    *              the behaviour of DiagnosticInfoLevel::Basic.
    */

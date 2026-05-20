@@ -350,7 +350,7 @@ We can do a quick check that the geosx executable is working properly by calling
 
   ./bin/geosx --help
 
-This should print out the available command line arguments with their description:
+This should print out the available command line arguments with their descriptions:
 
 .. code-block:: sh
 
