@@ -41,19 +41,6 @@ enum class ConstraintTypeId : integer
   UNINITIALIZED,   /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
 };
 
-/*
-   class WellContraint : public dataRepository::Group
-   {
-   public:
-
-   virtual bool estimateWellSolution()=0;
-   virtual void assembleConstraintEquation()=0;
-   virtual void getBHP()=0;
-   virtual void getPhaseRate(integer phase)=0;
-   }
- */
-
-
 /**
  * @class WellContraint
  * @brief This class describes a constraint used to control a well.
@@ -183,13 +170,15 @@ public:
     /// String key for the well constraint value
     static constexpr char const * constraintValueString() { return "value"; }
 
-
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellConstraint;
 
   // Quantities computed from well constraint solve with this boundary condition
-  // This needs to be somewhere else tjb
+  // Until we have a more general interface for constraints to return these quantities,
+  // we will store them in the constraint object itself.
+  // This is not ideal but it is a temporary solution to avoid having to solve the constraint multiple times in the well solver and in the
+  // test.
   void setBHP( real64 bhp ){ m_BHP=bhp;};
   void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates ) { m_phaseVolumeRates = phaseVolumeRates; };
   void setTotalVolumeRate( real64 totalVolumeRate ){ m_totalVolumeRate = totalVolumeRate; };
