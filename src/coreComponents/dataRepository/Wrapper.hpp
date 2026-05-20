@@ -724,35 +724,38 @@ public:
 
   /**
    * @brief Set both bounds for this attribute's value.
-   * @param minValue the minimum allowed value (inclusive)
-   * @param maxValue the maximum allowed value (inclusive)
+   * @param min the minimum allowed value (inclusive)
+   * @param max the maximum allowed value (inclusive)
    * @param mode the enforcement mode
    * @return pointer to Wrapper<T>
    *
-   * @note @p minValue and @p maxValue are std::optional(s).
+   * @note @p min and @p max are std::optional(s).
    *       Set them to std::nullopt to disable a limit.
    *
    * @code
    * registerWrapper( viewKeysStruct::fooString(), &m_foo )
+   *   .setLimits( 0.0, 1.0 )  // sets a minimum value of 0.0 and a maximum value of 1.0
    *   .setLimits( 0.0, std::nullopt )  // sets a minimum value of 0.0 and no maximum value
+   *   .setLimits( inclusive( 0.0 ), std::nullopt )  // sets an inclusive (default) minimum value
+   *   .setLimits( exclusive( 0.0 ), std::nullopt )  // sets an exclusive maximum value
    * @endcode
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< T > minValue,
-             std::optional< T > maxValue,
+  setLimits( std::optional< Bound< T > > min,
+             std::optional< Bound< T > > max,
              LimitsMode mode = LimitsMode::Warning )
   {
-    m_limits.minValue = minValue;
-    m_limits.maxValue = maxValue;
+    m_limits.min = min;
+    m_limits.max = max;
     m_limitsMode = mode;
     return *this;
   }
 
   template< typename U=T >
   std::enable_if_t< !is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< T >,
-             std::optional< T >,
+  setLimits( std::optional< Bound< T > >,
+             std::optional< Bound< T > >,
              LimitsMode mode = LimitsMode::Warning )
   {
     static_assert( is_limitable_v< U >,
@@ -766,10 +769,10 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< T > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< T > > const & >
   getMinValue() const
   {
-    return m_limits.minValue;
+    return m_limits.min;
   }
 
   /**
@@ -778,10 +781,10 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< T > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< T > > const & >
   getMaxValue() const
   {
-    return m_limits.maxValue;
+    return m_limits.max;
   }
 
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
@@ -1161,15 +1164,15 @@ private:
   std::enable_if_t< is_limitable_v< U >, void >
   validateLimits()
   {
-    if( (!m_limits.minValue.has_value() && !m_limits.maxValue.has_value()) ||
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
         m_limitsMode == LimitsMode::Indicative )
     {
       return;
     }
 
     T const & value = reference();
-    bool const belowMin = m_limits.minValue.has_value() && ( value < *m_limits.minValue );
-    bool const aboveMax = m_limits.maxValue.has_value() && ( value > *m_limits.maxValue );
+    bool const belowMin = m_limits.min.has_value() ? isValueBelowMin( value, *m_limits.min ) : false;
+    bool const aboveMax = m_limits.max.has_value() ? isValueAboveMax( value, *m_limits.max ) : false;
     if( !belowMin && !aboveMax )
     {
       return;

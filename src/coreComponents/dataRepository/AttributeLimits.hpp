@@ -68,11 +68,57 @@ template< typename T >
 inline constexpr bool is_limitable_v = is_limitable< T >::value;
 
 /**
+ * @struct Bound
+ * @brief Structure containing informations about an attribute limit.
+ */
+template< typename T >
+struct Bound
+{
+  T value;
+  bool isInclusive = true;
+
+  /**
+   * @brief Bound constructor to write a limit without the "Bound{ ... }" syntax
+   * @param value The limit value to set
+   * @param isInclusive Wether the limit should be inclusive or not
+   *
+   * @code
+   *   .setLimits( 0.0, 1.0 )  // where setLimits takes `Bound` parameters, those parameters can
+   *                           // be written only with the value. The isInclusive property will
+   *                           // default to true.
+   * @endcode
+   */
+  Bound( T v, bool inclusive = true )
+    : value( v ), isInclusive( inclusive )
+  {}
+};
+
+/**
+ * @brief Creates an inclusive limit of @p value
+ * @param value The inclusive limit value to set
+ */
+template< typename T >
+Bound< T > inclusive( T value )
+{
+  return Bound< T >{ value, /*isInclusive*/ true };
+}
+
+/**
+ * @brief Creates an exclusive limit of @p value
+ * @param value The inclusive limit value to set
+ */
+template< typename T >
+Bound< T > exclusive( T value )
+{
+  return Bound< T >{ value, /*isInclusive*/ false };
+}
+
+/**
  * @struct Limits
  * @brief Storage for the optional min/max bounds of a wrapped value.
  *
  * Specialized so that the members (std::optional< T >) are only instanciated
- * for limitable types. Preventing instantiation non-limitable types, especially
+ * for limitable types. Preventing instantiation of non-limitable types, especially
  * abstract types that can't be instantiated with std::optional< absT >.
  */
 template< typename T, bool = is_limitable_v< T > >
@@ -82,9 +128,40 @@ struct Limits
 template< typename T >
 struct Limits< T, true >
 {
-  std::optional< T > minValue;
-  std::optional< T > maxValue;
+  std::optional< Bound< T > > min;
+  std::optional< Bound< T > > max;
 };
+
+
+// Helper methods
+
+/**
+ * @brief Compare the given value with the min limit, taking account for the inclusive xor exclusive
+ *        property of the limit.
+ * @param value The value to compare to the limit
+ * @param minLimit The min limit containing the inclusive
+ * @return True if the value is below the min limit, false otherwise
+ */
+template< typename T >
+static bool isValueBelowMin( T const & value, Bound< T > const & minLimit )
+{
+  return minLimit.isInclusive ? ( value <  minLimit.value )
+                              : ( value <= minLimit.value );
+}
+
+/**
+ * @brief Compare the given value with the max limit, taking account for the inclusive xor exclusive
+ *        property of the limit.
+ * @param value The value to compare to the limit
+ * @param maxLimit The max limit containing the inclusive
+ * @return True if the value is above the max limit, false otherwise
+ */
+template< typename T >
+static bool isValueAboveMax( T const & value, Bound< T > const & maxLimit )
+{
+  return maxLimit.isInclusive ? ( value >  maxLimit.value )
+                              : ( value >= maxLimit.value );
+}
 
 } /* namespace dataRepository */
 
