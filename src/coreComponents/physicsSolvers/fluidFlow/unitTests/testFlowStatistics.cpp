@@ -19,6 +19,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+#include "common/MpiWrapper.hpp"
 
 #include <gtest/gtest.h>
 
@@ -154,14 +155,17 @@ public:
 
   void writeTableFiles( stdMap< string, string > const & files )
   {
-    for( auto const & [fileName, content] : files )
+    if( MpiWrapper::commRank() == 0 )
     {
-      std::ofstream os( fileName );
-      ASSERT_TRUE( os.is_open() );
-      os << content;
-      os.close();
+      for( auto const & [fileName, content] : files )
+      {
+        std::ofstream os( fileName );
+        ASSERT_TRUE( os.is_open() );
+        os << content;
+        os.close();
 
-      m_tableFileNames.push_back( fileName );
+        m_tableFileNames.push_back( fileName );
+      }
     }
   }
 

@@ -1877,6 +1877,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       localIndex const rankOffset = dofManager.rankOffset();
 
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > elementCount( 0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
       FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
@@ -1913,7 +1914,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
                                                            dofNumber,
                                                            rhsContributionArrayView,
                                                            localRhs,
-                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
+                                                           massProd,
+                                                           elementCount] GEOS_HOST_DEVICE ( localIndex const a )
       {
         // we need to filter out ghosts here, because targetSet may contain them
         localIndex const ei = targetSet[a];
@@ -1924,6 +1926,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
         real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;   // scale the contribution by the sizeScalingFactor here!
         massProd += rhsValue;
+        elementCount += 1;
         if( useTotalMassEquation > 0 )
         {
           // for all "fluid components", we add the value to the total mass balance equation
@@ -1948,7 +1951,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
         // set the new sub-region statistics for this timestep
         array1d< real64 > massProdArr{ m_numComponents };
         massProdArr[fluidComponentId] = massProd.get();
-        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), targetSet.size() );
+        wrapper.gatherTimeStepStats( time, dt, massProdArr.toViewConst(), elementCount.get() );
       } );
     } );
   } );
