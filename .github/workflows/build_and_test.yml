@@ -16,10 +16,18 @@ on:
       CMAKE_BUILD_TYPE:
         required: true
         type: string
+      CMAKE_CUDA_ARCHITECTURES:
+        required: false
+        type: string
+        default: ''
       CODE_COVERAGE:
         required: false
         type: boolean
         default: false
+      CTEST_PARALLEL_LEVEL:
+        required: false
+        type: string
+        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -184,7 +192,7 @@ jobs:
         ls -la ./
 
     - name: Checkout Repository
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         submodules: true
         lfs: ${{ inputs.BUILD_TYPE == 'integrated_tests' }}
@@ -204,6 +212,7 @@ jobs:
         LEGACY_SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
         LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
         LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+        LEGACY_GOOGLE_CLOUD_GCP: ${{ secrets.GOOGLE_CLOUD_GCP }}
       run: |
         set -euo pipefail
 
@@ -250,7 +259,9 @@ jobs:
             selected_sccache_config_toml="${DIRECT_SCCACHE_CONFIG_TOML:-}"
             selected_sccache_env_vars_json="${direct_sccache_env_vars_json}"
             selected_sccache_files_json="${direct_sccache_files_json}"
-          elif [[ -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
+          fi
+
+          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" && -n "${SCCACHE_PROFILES_JSON:-}" && -n "${sccache_profile}" ]]; then
             sccache_profiles_json="$(validate_optional_json_object "SCCACHE_PROFILES_JSON" "${SCCACHE_PROFILES_JSON}")"
 
             selected_profile_json="$(jq -c --arg profile "${sccache_profile}" '.[$profile] // empty' <<< "${sccache_profiles_json}")"
@@ -260,23 +271,42 @@ jobs:
               selected_sccache_env_vars_json="$(jq -c '.env_vars // {}' <<< "${selected_profile_json}")"
               selected_sccache_files_json="$(jq -c '.files // {}' <<< "${selected_profile_json}")"
             fi
-          elif [[ "${sccache_profile}" == "cloudflare" ]]; then
-            if [[ -n "${LEGACY_SCCACHE_BUCKET:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" && -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" ]]; then
-              selected_sccache_env_vars_json="$(jq -cn \
-                --arg bucket "${LEGACY_SCCACHE_BUCKET}" \
-                --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
-                --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
-                --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
-                '{
-                  SCCACHE_BUCKET: $bucket,
-                  AWS_ACCESS_KEY_ID: $access_key_id,
-                  AWS_SECRET_ACCESS_KEY: $secret_access_key,
-                  SCCACHE_ENDPOINT: $endpoint,
-                  SCCACHE_S3_USE_SSL: "true",
-                  SCCACHE_REGION: "auto"
-                }'
-              )"
-            fi
+          fi
+
+          if [[ -z "${selected_sccache_config_toml:-}" && -z "${selected_sccache_env_vars_json:-}" && -z "${selected_sccache_files_json:-}" ]]; then
+            # Temporary compatibility for orgs that still use pre-profile
+            # sccache secrets. Prefer SCCACHE_PROFILES_JSON for new setup.
+            case "${sccache_profile}" in
+              cloudflare)
+                if [[ -n "${LEGACY_SCCACHE_BUCKET:-}" && -n "${LEGACY_SCCACHE_ENDPOINT:-}" && -n "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID:-}" && -n "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY:-}" ]]; then
+                  selected_sccache_env_vars_json="$(jq -cn \
+                    --arg bucket "${LEGACY_SCCACHE_BUCKET}" \
+                    --arg access_key_id "${LEGACY_CLOUDFLARE_R2_ACCESS_KEY_ID}" \
+                    --arg secret_access_key "${LEGACY_CLOUDFLARE_R2_SECRET_ACCESS_KEY}" \
+                    --arg endpoint "${LEGACY_SCCACHE_ENDPOINT}" \
+                    '{
+                      SCCACHE_BUCKET: $bucket,
+                      AWS_ACCESS_KEY_ID: $access_key_id,
+                      AWS_SECRET_ACCESS_KEY: $secret_access_key,
+                      SCCACHE_ENDPOINT: $endpoint,
+                      SCCACHE_S3_USE_SSL: "true",
+                      SCCACHE_REGION: "auto"
+                    }'
+                  )"
+                fi
+                ;;
+              gcp)
+                if [[ -n "${LEGACY_GOOGLE_CLOUD_GCP:-}" ]]; then
+                  selected_sccache_config_toml="$(printf '%s\n' \
+                    '[cache.gcs]' \
+                    'rw_mode = "READ_WRITE"' \
+                    'cred_path = "/tmp/geos/.sccache-runtime/gcp-service-account.json"' \
+                    'bucket = "geos-dev"' \
+                    'key_prefix = "sccache"')"
+                  selected_sccache_files_json="$(jq -cn --arg credentials "${LEGACY_GOOGLE_CLOUD_GCP}" '{"gcp-service-account.json": $credentials}')"
+                fi
+                ;;
+            esac
           fi
 
           if [[ "${selected_sccache_env_vars_json:-}" == "{}" ]]; then
@@ -604,6 +634,9 @@ jobs:
         if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
           script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
         fi
+        if [ ! -z "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}" ]; then
+          script_args+=(--cmake-cuda-architectures "${{ inputs.CMAKE_CUDA_ARCHITECTURES }}")
+        fi
 
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
         # are passed as scripts parameters. Specific care must be taken to be sure
@@ -647,6 +680,10 @@ jobs:
         fi
         docker_args+=(--name ${CONTAINER_NAME})
 
+
+        if [[ -n "${{ inputs.CTEST_PARALLEL_LEVEL }}" ]]; then
+          script_args+=(--ctest-parallel-level "${{ inputs.CTEST_PARALLEL_LEVEL }}")
+        fi
 
         if ${{ inputs.CODE_COVERAGE }} == 'true'; then
           script_args+=(--code-coverage)
@@ -806,7 +843,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v5.4.2
+      uses: codecov/codecov-action@v6.0.0
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true
@@ -818,6 +855,17 @@ jobs:
         REQUESTS_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
         CURL_CA_BUNDLE: /etc/pki/tls/certs/ca-bundle.crt
 
+    - name: Show sccache stats
+      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
+      run: |
+        sccache_runtime_dir="${{ steps.sccache_config.outputs.sccache_runtime_dir }}"
+        sccache_stats_file="${GITHUB_WORKSPACE}/${sccache_runtime_dir}/stats.txt"
+        if [[ -n "${sccache_runtime_dir}" && -f "${sccache_stats_file}" ]]; then
+          cat "${sccache_stats_file}"
+        else
+          echo "No in-container sccache stats file was captured."
+        fi
+
     - name: 'Cleanup build folder'
       if: always()
       run: |
@@ -826,16 +874,3 @@ jobs:
           -v "${GITHUB_WORKSPACE}:/tmp/geos" \
           alpine:3.20 \
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
-
-    - name: Show sccache stats
-      if: ${{ always() && steps.sccache_config.outputs.use_sccache == 'true' }}
-      run: |
-        sccache_env_file="${{ steps.sccache_config.outputs.sccache_env_file }}"
-        if [[ -n "${sccache_env_file}" && -f "${GITHUB_WORKSPACE}/${sccache_env_file}" ]]; then
-          while IFS='=' read -r key value || [[ -n "${key}" ]]; do
-            [[ -z "${key}" ]] && continue
-            export "${key}=${value}"
-          done < "${GITHUB_WORKSPACE}/${sccache_env_file}"
-        fi
-
-        command -v sccache >/dev/null && sccache --show-stats || true
