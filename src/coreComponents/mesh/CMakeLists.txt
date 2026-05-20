@@ -216,6 +216,7 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKMeshScattering.hpp
          generators/VTKWellGenerator.hpp
+         generators/VTKSuperCellPartitioning.hpp
          generators/VTKUtilities.hpp
          )
     set( mesh_sources ${mesh_sources}
@@ -226,6 +227,7 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKMeshScattering.cpp
          generators/VTKWellGenerator.cpp
+         generators/VTKSuperCellPartitioning.cpp
          generators/VTKUtilities.cpp
          )
     list( APPEND tplDependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
