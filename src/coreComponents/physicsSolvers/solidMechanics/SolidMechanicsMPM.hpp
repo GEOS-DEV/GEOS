@@ -309,6 +309,8 @@ public:
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
+    // v42: per-step active grid-field mask, computed once from post-P2G mass and synchronized.
+    static constexpr char const * gridActiveString() { return "gridActive"; }
     static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
     static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
     static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
@@ -380,6 +382,17 @@ public:
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
                        MPI_Op op );
+
+  /**
+   * @brief Computes a per-step active grid-field mask from synchronized grid mass.
+   *
+   * This avoids repeated mass-threshold decisions after P2G. The mask is
+   * synchronized with MPI_MAX so all partitions make the same active/inactive
+   * decision for shared grid nodes during the rest of the step.
+   */
+  void computeActiveGridFieldsForExplicitStep( DomainPartition & domain,
+                                               NodeManager & nodeManager,
+                                               MeshLevel & mesh );
 
   void singleFaceVectorFieldSymmetryBC( const int face,
                                         arrayView3d< real64 > const & vectorMultiField,

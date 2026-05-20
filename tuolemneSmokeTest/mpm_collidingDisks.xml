@@ -47,7 +47,7 @@ srun -n 4 /g/g19/homel1/geosx/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal
       discretization="FE1"
       targetRegions="{ backgroundGrid/CellRegion1, particles/ParticleRegion1 }"
       timeIntegrationOption="ExplicitDynamic"
-      updateMethod="XPIC"
+      updateMethod="PIC"
       updateOrder="2"
       cflFactor="0.25"
       initialDt="1e-16"
@@ -64,7 +64,8 @@ srun -n 4 /g/g19/homel1/geosx/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal
       frictionCoefficient="0.25"
       minParticleJacobian="0.01"
       maxParticleJacobian="10.0"
-      maxParticleVelocity="10.0">
+      maxParticleVelocity="10.0"
+      smallMass="1.0e-16">
     </SolidMechanics_MPM>
   </Solvers>
 
@@ -91,7 +92,7 @@ defaultPoissonRatio="0.25"
       target="/Solvers/mpmsolve"/>
     <PeriodicEvent
       name="outputs"
-      timeFrequency="2.0"
+      timeFrequency="0.1"
       target="/Outputs/siloOutput"/>
     <PeriodicEvent
       name="restart"

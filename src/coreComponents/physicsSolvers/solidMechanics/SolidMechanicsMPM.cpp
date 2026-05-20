@@ -47,6 +47,14 @@
 #include "physicsSolvers/solidMechanics/LogLevelsInfo.hpp"
 
 #include <chrono>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <fstream>
+#include <cstdlib>
+#include <cctype>
+#include <algorithm>
 #include <random>
 #include <thread>
 
@@ -55,6 +63,295 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+
+// BEGIN GEOS_MPM_NODE_DEBUG_V39
+namespace
+{
+
+bool mpmNodeDebugEnabled()
+{
+  char const * value = std::getenv( "GEOS_MPM_NODE_DEBUG" );
+  return value != nullptr && std::string( value ) != "0" && std::string( value ) != "false";
+}
+
+int mpmNodeDebugEnvInt( char const * name, int const defaultValue )
+{
+  char const * value = std::getenv( name );
+  return value == nullptr ? defaultValue : std::atoi( value );
+}
+
+bool mpmNodeDebugEnvReal( char const * name, real64 & value )
+{
+  char const * raw = std::getenv( name );
+  if( raw == nullptr || raw[0] == '\0' )
+  {
+    return false;
+  }
+  char * end = nullptr;
+  double const parsed = std::strtod( raw, &end );
+  if( end == raw )
+  {
+    return false;
+  }
+  value = parsed;
+  return true;
+}
+
+std::string mpmNodeDebugDir()
+{
+  char const * value = std::getenv( "GEOS_MPM_NODE_DEBUG_DIR" );
+  return ( value == nullptr || value[0] == '\0' ) ? std::string( "." ) : std::string( value );
+}
+
+bool mpmNodeDebugTokenSelected( char const * envName, char const * token, bool const defaultValue )
+{
+  char const * raw = std::getenv( envName );
+  if( raw == nullptr || raw[0] == '\0' )
+  {
+    return defaultValue;
+  }
+
+  std::string const wanted( token );
+  std::string list( raw );
+  std::replace( list.begin(), list.end(), ';', ',' );
+  std::stringstream ss( list );
+  std::string item;
+  while( std::getline( ss, item, ',' ) )
+  {
+    item.erase( item.begin(), std::find_if( item.begin(), item.end(), []( unsigned char c ){ return !std::isspace( c ); } ) );
+    item.erase( std::find_if( item.rbegin(), item.rend(), []( unsigned char c ){ return !std::isspace( c ); } ).base(), item.end() );
+    if( item == "all" || item == wanted )
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::string mpmNodeDebugSafePhase( char const * phase )
+{
+  std::string out( phase );
+  for( char & c : out )
+  {
+    if( !( std::isalnum( static_cast< unsigned char >( c ) ) || c == '_' || c == '-' ) )
+    {
+      c = '_';
+    }
+  }
+  return out;
+}
+
+bool mpmNodeDebugCoordSelected( real64 const x, real64 const y, real64 const z )
+{
+  real64 bound = 0.0;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_XMIN", bound ) && x < bound ) return false;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_XMAX", bound ) && x > bound ) return false;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_YMIN", bound ) && y < bound ) return false;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_YMAX", bound ) && y > bound ) return false;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_ZMIN", bound ) && z < bound ) return false;
+  if( mpmNodeDebugEnvReal( "GEOS_MPM_NODE_DEBUG_ZMAX", bound ) && z > bound ) return false;
+  return true;
+}
+
+void mpmNodeDebugMoveWrapperToHostIfPresent( NodeManager & nodeManager, char const * name )
+{
+  if( nodeManager.hasWrapper( name ) )
+  {
+    nodeManager.getWrapperBase( name ).move( LvArray::MemorySpace::host, true );
+  }
+}
+
+template< typename VIEW >
+void mpmNodeDebugDump2dField( std::ofstream & os,
+                              NodeManager & nodeManager,
+                              char const * fieldName,
+                              VIEW const & field,
+                              localIndex const nodeIndex,
+                              globalIndex const globalNode,
+                              integer const ghostRank,
+                              real64 const x,
+                              real64 const y,
+                              real64 const z )
+{
+  GEOS_UNUSED_VAR( nodeManager );
+  for( localIndex a = 0; a < field.size( 1 ); ++a )
+  {
+    os << globalNode << ',' << nodeIndex << ',' << ghostRank << ','
+       << std::setprecision( 17 ) << x << ',' << y << ',' << z << ','
+       << fieldName << ',' << a << ",-1," << std::setprecision( 17 ) << field[nodeIndex][a] << '\n';
+  }
+}
+
+template< typename VIEW >
+void mpmNodeDebugDump3dField( std::ofstream & os,
+                              NodeManager & nodeManager,
+                              char const * fieldName,
+                              VIEW const & field,
+                              localIndex const nodeIndex,
+                              globalIndex const globalNode,
+                              integer const ghostRank,
+                              real64 const x,
+                              real64 const y,
+                              real64 const z )
+{
+  GEOS_UNUSED_VAR( nodeManager );
+  for( localIndex a = 0; a < field.size( 1 ); ++a )
+  {
+    for( localIndex b = 0; b < field.size( 2 ); ++b )
+    {
+      os << globalNode << ',' << nodeIndex << ',' << ghostRank << ','
+         << std::setprecision( 17 ) << x << ',' << y << ',' << z << ','
+         << fieldName << ',' << a << ',' << b << ',' << std::setprecision( 17 ) << field[nodeIndex][a][b] << '\n';
+    }
+  }
+}
+
+void mpmNodeDebugDumpNodalState( NodeManager & nodeManager,
+                                 int const cycleNumber,
+                                 char const * phase )
+{
+  if( !mpmNodeDebugEnabled() )
+  {
+    return;
+  }
+
+  int const maxCycle = mpmNodeDebugEnvInt( "GEOS_MPM_NODE_DEBUG_MAX_CYCLE", 5 );
+  int const every = std::max( 1, mpmNodeDebugEnvInt( "GEOS_MPM_NODE_DEBUG_EVERY", 1 ) );
+  if( cycleNumber > maxCycle || cycleNumber % every != 0 )
+  {
+    return;
+  }
+  if( !mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_PHASES", phase, true ) )
+  {
+    return;
+  }
+
+  // Debug dumps intentionally force host visibility. This is diagnostic only.
+  mpmNodeDebugMoveWrapperToHostIfPresent( nodeManager, "localToGlobalMap" );
+  mpmNodeDebugMoveWrapperToHostIfPresent( nodeManager, "ghostRank" );
+  mpmNodeDebugMoveWrapperToHostIfPresent( nodeManager, "ReferencePosition" );
+
+  char const * fields2d[] = { "gridMass", "gridMaterialVolume", "gridDamage", "gridMaxDamage" };
+  char const * fields3d[] = { "gridMomentum", "gridVelocity", "gridAcceleration", "gridDVelocity",
+                              "gridInternalForce", "gridExternalForce", "gridCenterOfMass",
+                              "gridVPlus", "gridDVPlus", "gridUncontactedVelocity" };
+  for( char const * fieldName : fields2d )
+  {
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", fieldName, true ) )
+    {
+      mpmNodeDebugMoveWrapperToHostIfPresent( nodeManager, fieldName );
+    }
+  }
+  for( char const * fieldName : fields3d )
+  {
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", fieldName, true ) )
+    {
+      mpmNodeDebugMoveWrapperToHostIfPresent( nodeManager, fieldName );
+    }
+  }
+
+  arrayView1d< globalIndex const > const localToGlobal = nodeManager.localToGlobalMap();
+  arrayView1d< integer const > const ghostRank = nodeManager.ghostRank();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition = nodeManager.referencePosition();
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  std::ostringstream fileName;
+  fileName << mpmNodeDebugDir() << "/mpm_nodes_rank" << std::setw( 4 ) << std::setfill( '0' ) << rank
+           << "_cycle" << std::setw( 6 ) << std::setfill( '0' ) << cycleNumber
+           << '_' << mpmNodeDebugSafePhase( phase ) << ".csv";
+
+  std::ofstream os( fileName.str() );
+  if( !os )
+  {
+    GEOS_LOG_RANK( "MPM nodal debug could not open " << fileName.str() );
+    return;
+  }
+
+  os << "globalNode,localNode,ghostRank,x,y,z,field,fieldIndex,component,value\n";
+  os << std::scientific;
+
+  int const maxNodes = mpmNodeDebugEnvInt( "GEOS_MPM_NODE_DEBUG_MAX_NODES", -1 );
+  int writtenNodes = 0;
+  for( localIndex nodeIndex = 0; nodeIndex < nodeManager.size(); ++nodeIndex )
+  {
+    real64 const x = referencePosition[nodeIndex][0];
+    real64 const y = referencePosition[nodeIndex][1];
+    real64 const z = referencePosition[nodeIndex][2];
+    if( !mpmNodeDebugCoordSelected( x, y, z ) )
+    {
+      continue;
+    }
+    if( maxNodes >= 0 && writtenNodes >= maxNodes )
+    {
+      break;
+    }
+    ++writtenNodes;
+
+    globalIndex const globalNode = localToGlobal[nodeIndex];
+    integer const nodeGhostRank = ghostRank[nodeIndex];
+
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridMass", true ) && nodeManager.hasWrapper( "gridMass" ) )
+    {
+      mpmNodeDebugDump2dField( os, nodeManager, "gridMass", nodeManager.getReference< array2d< real64 > >( "gridMass" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridMaterialVolume", true ) && nodeManager.hasWrapper( "gridMaterialVolume" ) )
+    {
+      mpmNodeDebugDump2dField( os, nodeManager, "gridMaterialVolume", nodeManager.getReference< array2d< real64 > >( "gridMaterialVolume" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridDamage", true ) && nodeManager.hasWrapper( "gridDamage" ) )
+    {
+      mpmNodeDebugDump2dField( os, nodeManager, "gridDamage", nodeManager.getReference< array2d< real64 > >( "gridDamage" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridMaxDamage", true ) && nodeManager.hasWrapper( "gridMaxDamage" ) )
+    {
+      mpmNodeDebugDump2dField( os, nodeManager, "gridMaxDamage", nodeManager.getReference< array2d< real64 > >( "gridMaxDamage" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridMomentum", true ) && nodeManager.hasWrapper( "gridMomentum" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridMomentum", nodeManager.getReference< array3d< real64 > >( "gridMomentum" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridVelocity", true ) && nodeManager.hasWrapper( "gridVelocity" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridVelocity", nodeManager.getReference< array3d< real64 > >( "gridVelocity" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridAcceleration", true ) && nodeManager.hasWrapper( "gridAcceleration" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridAcceleration", nodeManager.getReference< array3d< real64 > >( "gridAcceleration" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridDVelocity", true ) && nodeManager.hasWrapper( "gridDVelocity" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridDVelocity", nodeManager.getReference< array3d< real64 > >( "gridDVelocity" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridInternalForce", true ) && nodeManager.hasWrapper( "gridInternalForce" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridInternalForce", nodeManager.getReference< array3d< real64 > >( "gridInternalForce" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridExternalForce", true ) && nodeManager.hasWrapper( "gridExternalForce" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridExternalForce", nodeManager.getReference< array3d< real64 > >( "gridExternalForce" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridCenterOfMass", true ) && nodeManager.hasWrapper( "gridCenterOfMass" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridCenterOfMass", nodeManager.getReference< array3d< real64 > >( "gridCenterOfMass" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridVPlus", true ) && nodeManager.hasWrapper( "gridVPlus" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridVPlus", nodeManager.getReference< array3d< real64 > >( "gridVPlus" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridDVPlus", true ) && nodeManager.hasWrapper( "gridDVPlus" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridDVPlus", nodeManager.getReference< array3d< real64 > >( "gridDVPlus" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+    if( mpmNodeDebugTokenSelected( "GEOS_MPM_NODE_DEBUG_FIELDS", "gridUncontactedVelocity", true ) && nodeManager.hasWrapper( "gridUncontactedVelocity" ) )
+    {
+      mpmNodeDebugDump3dField( os, nodeManager, "gridUncontactedVelocity", nodeManager.getReference< array3d< real64 > >( "gridUncontactedVelocity" ), nodeIndex, globalNode, nodeGhostRank, x, y, z );
+    }
+  }
+}
+
+} // namespace
+// END GEOS_MPM_NODE_DEBUG_V39
 
 // Flattened combinations function to avoid performance hit from recursive calls
 /**
@@ -968,12 +1265,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setDefaultValue( m_shockHeating ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable shock heating" );
-
   registerWrapper( "smallMass", &m_smallMass ).
-    setInputFlag( InputFlags::FALSE ).
+    setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_smallMass ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "The small mass threshold for ignoring extremely low-mass nodes." );
+    setDescription( "Optional small mass threshold for ignoring extremely low-mass nodes. "
+                    "If omitted, an automatic threshold is computed from the global minimum particle mass." );
 
   registerWrapper( "solverProfiling", &m_solverProfiling ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1758,6 +2055,11 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the mass on the nodes." );
 
+      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridActiveString() ).
+        setPlotLevel( gridFieldPlotLevel ).
+        setRegisteringObjects( this->getName() ).
+        setDescription( "A per-step active grid-field mask computed from synchronized nodal mass." );
+
       nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() ).
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
@@ -2385,6 +2687,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfVolumeString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridParticleMappedSurfaceNormalString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() ).resize( numNodes, m_numVelocityFields );
+  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaxDamageString() ).resize( numNodes, m_numVelocityFields );
@@ -2497,6 +2800,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                        nodeManager,
                                        particleManager,
                                        partition );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "02_after_initialize" );
   tuolumneMpmHipCheckpoint( "after phase: 02. Initialize and reset step state" );
 
   /*
@@ -2543,6 +2847,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   logAndProfile( "05. Populate particle-grid mapping", particleManager, nodeManager );
   populateParticleGridMappingForExplicitStep( particleManager,
                                               nodeManager );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "05_after_mapping_arrays" );
   tuolumneMpmHipCheckpoint( "after phase: 05. Populate particle-grid mapping" );
 
   /*
@@ -2602,6 +2907,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         cycleNumber,
                                         particleManager,
                                         nodeManager );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "09_after_p2g" );
   tuolumneMpmHipCheckpoint( "after phase: 09. Map particle state to the grid" );
 
   /*
@@ -2615,6 +2921,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   syncGridFieldsForExplicitStep( domain,
                                  nodeManager,
                                  mesh );
+
+  computeActiveGridFieldsForExplicitStep( domain,
+                                          nodeManager,
+                                          mesh );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "10_after_grid_sync" );
   tuolumneMpmHipCheckpoint( "after phase: 10. Synchronize grid fields across MPI ranks" );
 
   /*
@@ -2626,6 +2937,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    */
   logAndProfile( "11. Enforce grid symmetry and normalize grid fields", particleManager, nodeManager );
   enforceGridFieldSymmetryAndNormalize( nodeManager );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "11_after_normalize" );
   tuolumneMpmHipCheckpoint( "after phase: 11. Enforce grid symmetry and normalize grid fields" );
 
   /*
@@ -2639,6 +2951,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   updateGridDynamicsAndContactForExplicitStep( dt,
                                                particleManager,
                                                nodeManager );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "12_after_grid_dynamics" );
   tuolumneMpmHipCheckpoint( "after phase: 12. Update grid dynamics and contact" );
 
   /*
@@ -2656,8 +2969,46 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                                                   particleManager,
                                                                   nodeManager,
                                                                   partition );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "13_after_bc" );
   tuolumneMpmHipCheckpoint( "after phase: 13. Apply prescribed deformation and boundary conditions" );
 
+
+
+  // Tuolumne/HIP stale-grid diagnostic v38:
+  // Refresh derived owner grid state to ghosts before G2P.  Phase 10 syncs raw
+  // P2G accumulators, but phase 12/13 derive and modify nodal kinematics that
+  // PIC/XPIC reads from ghost nodes.  Use host owner-to-ghost replacement here
+  // because the current Tuolumne MPM grid-sync fallback is host-based.
+  {
+    stdVector< std::string > const fieldsToRefresh = {
+      viewKeyStruct::gridMassString(),
+      viewKeyStruct::gridMaterialVolumeString(),
+      viewKeyStruct::gridDamageString(),
+      viewKeyStruct::gridMaxDamageString(),
+      viewKeyStruct::gridDamageGradientString(),
+      viewKeyStruct::gridMomentumString(),
+      viewKeyStruct::gridVelocityString(),
+      viewKeyStruct::gridAccelerationString(),
+      viewKeyStruct::gridDVelocityString(),
+      viewKeyStruct::gridInternalForceString(),
+      viewKeyStruct::gridExternalForceString(),
+      viewKeyStruct::gridCenterOfMassString(),
+      viewKeyStruct::gridCenterOfVolumeString()
+    };
+
+    for( std::string const & name : fieldsToRefresh )
+    {
+      WrapperBase & wrapper = nodeManager.getWrapperBase( name );
+      wrapper.move( LvArray::MemorySpace::host, true );
+    }
+
+    FieldIdentifiers refreshFieldIds;
+    refreshFieldIds.addFields( FieldLocation::Node, fieldsToRefresh );
+    CommunicationTools::getInstance().synchronizeFields( refreshFieldIds,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         false );
+  }
   /*
    * ------------------------------------------------------------------------------------------------------------
    * 14. Map grid state back to particles.
@@ -2666,7 +3017,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    * ------------------------------------------------------------------------------------------------------------
    */
   logAndProfile( "14. Map grid state back to particles", particleManager, nodeManager );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "13b_before_g2p" );
   gridToParticle( dt, particleManager, nodeManager, domain, mesh );
+  mpmNodeDebugDumpNodalState( nodeManager, cycleNumber, "14_after_g2p" );
   tuolumneMpmHipCheckpoint( "after phase: 14. Map grid state back to particles" );
 
   /*
@@ -3712,6 +4065,7 @@ void SolidMechanicsMPM::syncGridFieldsForExplicitStep( DomainPartition & domain,
                                            viewKeyStruct::gridMaterialVolumeString(),
                                            viewKeyStruct::gridMomentumString(),
                                            viewKeyStruct::gridCenterOfMassString(),
+                                           viewKeyStruct::gridCenterOfVolumeString(),
                                            viewKeyStruct::gridInternalForceString(),
                                            viewKeyStruct::gridExternalForceString() };
   if( m_hasContact == 1 )
@@ -3724,6 +4078,48 @@ void SolidMechanicsMPM::syncGridFieldsForExplicitStep( DomainPartition & domain,
   stdVector< std::string > fieldNames2 = { viewKeyStruct::gridMaxDamageString() };
   syncGridFields( fieldNames2, domain, nodeManager, mesh, MPI_MAX );
 }
+
+/**
+ * @brief Computes and synchronizes the active grid-field mask for the rest of the explicit step.
+ *
+ * v42: compute active grid-field mask once per step. This makes all later
+ * mass-threshold decisions use the same synchronized 0/1 value instead of
+ * repeatedly testing gridMass against smallMass in different loops.
+ */
+void SolidMechanicsMPM::computeActiveGridFieldsForExplicitStep( DomainPartition & domain,
+                                                               NodeManager & nodeManager,
+                                                               MeshLevel & mesh )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 const smallMass = m_smallMass;
+  localIndex const numVelocityFields = m_numVelocityFields;
+
+  // This diagnostic/correctness path is intentionally host-resident because
+  // the current Tuolumne grid-sync fallback is host-based. The field is a
+  // normal node wrapper and can be moved by later kernels if needed.
+  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridActiveString() ).move( LvArray::MemorySpace::host, true );
+
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 > const gridActive =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
+
+  forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST ( localIndex const g )
+  {
+    for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
+    {
+      gridActive[g][fieldIndex] = gridMass[g][fieldIndex] > smallMass ? 1.0 : 0.0;
+    }
+  } );
+
+  // Keep the active decision consistent across owner/ghost copies. MPI_MAX is
+  // conservative: if any shared copy classifies a grid field as active, all
+  // copies use the active branch for the rest of the step.
+  syncGridFields( { viewKeyStruct::gridActiveString() }, domain, nodeManager, mesh, MPI_MAX );
+}
+
 
 /**
  * @brief Enforces symmetry on mapped grid fields and normalizes surface-normal/position data.
@@ -6287,9 +6683,22 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       // LvArray::tensorOps::fill< 6 >( particlePlasticStrain[p], 0.0 );
     } );
   } );
+  // Set the small mass threshold. The constructor initializes m_smallMass to DBL_MAX,
+  // which is the sentinel meaning that the user did not provide smallMass in the XML.
+  // If the user provides smallMass, keep that value exactly. This is useful for
+  // avoiding decomposition-dependent activation of roundoff-mass grid nodes.
+  real64 const automaticSmallMass = MpiWrapper::min( minMassLocal.get() ) * 1.0e-16;
+  bool const useAutomaticSmallMass = ( m_smallMass > 0.5 * DBL_MAX );
+  if( useAutomaticSmallMass )
+  {
+    m_smallMass = automaticSmallMass;
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_smallMass <= 0.0,
+                   "smallMass must be positive when provided as an input." );
+  }
 
-  // Set small mass threshold
-  m_smallMass = fmin( MpiWrapper::min( minMassLocal.get() ) * 1.0e-16, m_smallMass );
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -6450,6 +6859,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridExplicitSurfaceNormalString(),
       viewKeyStruct::gridFieldGradientAlignmentString(),
       viewKeyStruct::gridMassString(),
+      viewKeyStruct::gridActiveString(),
       viewKeyStruct::gridMassWeightedDamageString(),
       viewKeyStruct::gridMaterialVolumeString(),
       viewKeyStruct::gridMaxDamageString(),
@@ -6527,6 +6937,10 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView2d< real64 > const gridMass =
     nodeManager.getReference< array2d< real64 > >(
       viewKeyStruct::gridMassString() );
+
+  arrayView2d< real64 > const gridActive =
+    nodeManager.getReference< array2d< real64 > >(
+      viewKeyStruct::gridActiveString() );
 
   arrayView2d< real64 > const gridMassWeightedDamage =
     nodeManager.getReference< array2d< real64 > >(
@@ -6683,6 +7097,7 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridCohesiveFieldFlag[g][fieldIndex] = 0;
 
       gridMass[g][fieldIndex] = 0.0;
+      gridActive[g][fieldIndex] = 0.0;
       gridMaterialVolume[g][fieldIndex] = 0.0;
       gridDamage[g][fieldIndex] = 0.0;
       gridMaxDamage[g][fieldIndex] = 0.0;
@@ -11672,64 +12087,113 @@ void SolidMechanicsMPM::syncGridFields( stdVector< std::string > const & fieldNa
 {
   GEOS_MARK_FUNCTION;
 
-  MPI_iCommData iComm;
-  iComm.resize( domain.getNeighbors().size() );
+  // Tuolumne/HIP physical-swap host grid sync fallback v37.
+  //
+  // This restores the original MPM reverse-sync semantics by physically
+  // swapping the node send/receive lists for the ghost-to-owner reduction
+  // phase.  This avoids relying on CommunicationDirection::GhostToOwner while
+  // we diagnose partition-boundary artifacts.  Host pack/unpack is retained as
+  // the correctness-first Tuolumne fallback for MPI_SUM/MPI_MAX reductions.
+  bool const syncGridOnDevice = false;
 
-  // (1) Initialize
-  FieldIdentifiers fieldsToBeSynced;
-  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
-  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
-
-  bool const syncGridOnDevice = false; // Tuolumne/HIP correctness fallback v34
-
-  // Tuolumne/HIP correctness fallback v34: run MPM grid sync on host.
-  // The device pack/unpack path currently crashes for multi-rank MPM grid sync.
-  // Host reductions are enabled below via BufferOps/Wrapper changes in this script.
+  // Bring grid fields to host before host pack/unpack.  P2G may have written
+  // these fields in device kernels earlier in the step.
   for( auto const & name : fieldNames )
   {
     WrapperBase & wrapper = nodeManager.getWrapperBase( name );
     wrapper.move( LvArray::MemorySpace::host, true );
   }
 
-  // (2) Accumulate ghost values into owning nodes without mutating the stored sync lists.
-  //     This is equivalent to temporarily swapping ghostsToSend/ghostsToReceive:
-  //       pack ghostsToReceive, unpack into ghostsToSend.
+  FieldIdentifiers fieldsToBeSynced;
+  fieldsToBeSynced.addFields( FieldLocation::Node, fieldNames );
+
+  stdVector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+  MPI_iCommData iComm;
+  iComm.resize( neighbors.size() );
+
+  auto swapNodeSyncLists = [&]()
+  {
+    for( NeighborCommunicator const & neighbor : neighbors )
+    {
+      int const neighborRank = neighbor.neighborRank();
+
+      array1d< localIndex > & nodeGhostsToReceive =
+        nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
+
+      array1d< localIndex > & nodeGhostsToSend =
+        nodeManager.getNeighborData( neighborRank ).ghostsToSend();
+
+      array1d< localIndex > temp = nodeGhostsToSend;
+      nodeGhostsToSend = nodeGhostsToReceive;
+      nodeGhostsToReceive = temp;
+    }
+  };
+
+  // Phase 1: ghost contributions -> owning/master nodes, with reduction op.
+  // The temporary physical swap makes the ordinary GEOS owner-to-ghost sync
+  // pack ghostsToReceive and unpack into ghostsToSend.
+  swapNodeSyncLists();
+
   CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
                                                                   mesh,
                                                                   neighbors,
                                                                   iComm,
-                                                                  syncGridOnDevice,
-                                                                  CommunicationDirection::GhostToOwner );
+                                                                  syncGridOnDevice );
+
   parallelDeviceEvents packEvents;
   CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
                                                mesh,
                                                neighbors,
                                                iComm,
                                                syncGridOnDevice,
-                                               packEvents,
-                                               CommunicationDirection::GhostToOwner );
+                                               packEvents );
+
   waitAllDeviceEvents( packEvents );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, syncGridOnDevice, packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors,
+                                                   iComm,
+                                                   syncGridOnDevice,
+                                                   packEvents );
+
   parallelDeviceEvents unpackEvents;
   CommunicationTools::getInstance().finalizeUnpack( mesh,
                                                     neighbors,
                                                     iComm,
                                                     syncGridOnDevice,
                                                     unpackEvents,
-                                                    op,
-                                                    CommunicationDirection::GhostToOwner );
+                                                    op );
 
-  // (3) Synchronize owning-node values back to ghosts using the normal GEOS direction:
-  //       pack ghostsToSend, unpack into ghostsToReceive.
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced, mesh, neighbors, iComm, syncGridOnDevice );
+  // Restore the canonical GEOS node sync lists.
+  swapNodeSyncLists();
+
+  // Phase 2: owning/master nodes -> ghosts, ordinary replacement sync.
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSynced,
+                                                                  mesh,
+                                                                  neighbors,
+                                                                  iComm,
+                                                                  syncGridOnDevice );
+
   parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced, mesh, neighbors, iComm, syncGridOnDevice, packEvents2 );
-  waitAllDeviceEvents( packEvents2 );
-  CommunicationTools::getInstance().asyncSendRecv( neighbors, iComm, syncGridOnDevice, packEvents2 );
-  parallelDeviceEvents unpackEvents2;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, iComm, syncGridOnDevice, unpackEvents2 );
+  CommunicationTools::getInstance().asyncPack( fieldsToBeSynced,
+                                               mesh,
+                                               neighbors,
+                                               iComm,
+                                               syncGridOnDevice,
+                                               packEvents2 );
 
+  waitAllDeviceEvents( packEvents2 );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors,
+                                                   iComm,
+                                                   syncGridOnDevice,
+                                                   packEvents2 );
+
+  parallelDeviceEvents unpackEvents2;
+  CommunicationTools::getInstance().finalizeUnpack( mesh,
+                                                    neighbors,
+                                                    iComm,
+                                                    syncGridOnDevice,
+                                                    unpackEvents2 );
 }
+
 
 /**
  * @brief Projects particle surface normals to grid.
@@ -15528,12 +15992,12 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
   GEOS_MARK_FUNCTION;
 
   localIndex const numDims = m_numDims;
-  real64 const smallMass = m_smallMass;
   localIndex numVelocityFields = m_numVelocityFields;
 
   // Grid fields
   arrayView2d< real64 > const & gridDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridDamageString() );
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const & gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
   arrayView2d< real64 const > const gridMaterialVolume = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
   arrayView3d< real64 > const & gridCenterOfMass = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() );
@@ -15553,7 +16017,7 @@ void SolidMechanicsMPM::gridTrialUpdate( real64 dt,
     // Loop over velocity fields
     for( localIndex fieldIndex=0; fieldIndex< numVelocityFields; ++fieldIndex )
     {
-      if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
+      if( gridActive[g][fieldIndex] > 0.5 ) // active grid-field mask
       {
         gridDamage[g][fieldIndex] /= gridMass[g][fieldIndex];
         for( localIndex i=0; i < numDims; ++i )
@@ -15606,6 +16070,7 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
 
   // Grid fields
   arrayView2d< real64 const > const & gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const & gridActive = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridActiveString() );
   arrayView3d< real64 > const & gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
   arrayView3d< real64 > const & gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
   arrayView3d< real64 > const & gridDVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVelocityString() );
@@ -15618,14 +16083,13 @@ void SolidMechanicsMPM::enforceContact( real64 dt,
                         nodeManager );
 
   // Update grid momenta and velocities based on contact forces
-  real64 const smallMass = m_smallMass;
   localIndex const numDims = m_numDims;
   localIndex const numVelocityFields = m_numVelocityFields;
   forAll< serialPolicy >( nodeManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const g )
   {
     for( localIndex fieldIndex=0; fieldIndex < numVelocityFields; ++fieldIndex )
     {
-      if( gridMass[g][fieldIndex] > smallMass ) // small mass threshold
+      if( gridActive[g][fieldIndex] > 0.5 ) // active grid-field mask
       {
         for( localIndex i=0; i < numDims; ++i )
         {
@@ -19237,38 +19701,37 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
     int const numContactGroups = m_numContactGroups;
     ParticleType const particleType = subRegion.getParticleType();
 
-    #ifndef GEOS_USE_DEVICE
-      arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
-      arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
-      arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
-      GEOS_UNUSED_VAR( particleType );
-      GEOS_UNUSED_VAR( particleRVectors );
-      GEOS_UNUSED_VAR( gridPosition );
-      GEOS_UNUSED_VAR( ijkMap );
-    #endif
+        // Tuolumne diagnostic v44: PIC uses precomputed mapping arrays.
+#ifdef GEOS_USE_DEVICE
+    m_mappedNodes[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_shapeFunctionValues[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_shapeFunctionGradientValues[subRegionIndex].move( parallelDeviceMemorySpace, true );
+    m_mappedFields[subRegionIndex].move( parallelDeviceMemorySpace, true );
+#endif
+    arrayView2d< localIndex const > const mappedNodes = m_mappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const shapeFunctionValues = m_shapeFunctionValues[subRegionIndex];
+    arrayView3d< real64 const > const shapeFunctionGradientValues = m_shapeFunctionGradientValues[subRegionIndex];
+    arrayView2d< integer const > const mappedFields = m_mappedFields[subRegionIndex];
+
+    GEOS_UNUSED_VAR( particleType );
+    GEOS_UNUSED_VAR( particleRVectors );
+    GEOS_UNUSED_VAR( gridPosition );
+    GEOS_UNUSED_VAR( ijkMap );
+    GEOS_UNUSED_VAR( xLocalMin );
+    GEOS_UNUSED_VAR( hEl );
+    GEOS_UNUSED_VAR( numContactGroups );
+    GEOS_UNUSED_VAR( damageFieldPartitioning );
+    GEOS_UNUSED_VAR( gridDamageGradient );
+    GEOS_UNUSED_VAR( particleGroup );
+    GEOS_UNUSED_VAR( particleDamageGradient );
+    GEOS_UNUSED_VAR( particleSurfaceNormal );
+
 
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
-
-      #ifdef GEOS_USE_DEVICE
-        // On-the-fly grid shape function computations
-        localIndex mappedNodes[64] = {};
-        real64 shapeFunctionValues[64] = {};
-        real64 shapeFunctionGradientValues[64][3] = {};
-        mapNodesAndComputeShapeFunctionsForSingleParticle( ijkMap,
-                                          xLocalMin,
-                                          hEl,
-                                          particleType,
-                                          particlePosition[p],
-                                          particleRVectors[p],
-                                          gridPosition,
-                                          mappedNodes,
-                                          shapeFunctionValues,
-                                          shapeFunctionGradientValues );
-      #endif
-
-      // Zero this out before additive sum
+      // Tuolumne diagnostic v44: using precomputed mapping arrays; no on-the-fly mapping here.
+// Zero this out before additive sum
       // Tensor equations:
       //   particleVelocityGradient[p] = 0.0 component-wise.
       //   particleVelocity[p] = 0.0 component-wise.
@@ -19278,28 +19741,13 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
 
       for( int g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
       {
-        #ifdef GEOS_USE_DEVICE
-          localIndex const mappedNode = mappedNodes[g];
-          real64 const shapeFunctionValue = shapeFunctionValues[g];
-          real64 shapeFunctionGradientValue[3] = {};
-          // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[g].
-          LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[g] );
-        #else
-          localIndex const mappedNode = mappedNodes[pp][g];
-          real64 const shapeFunctionValue = shapeFunctionValues[pp][g];
-          real64 shapeFunctionGradientValue[3] = {};
-          // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[pp][g].
-          LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
-        #endif
-
-        localIndex const fieldIndex = partitionField( numContactGroups,
-                                                      damageFieldPartitioning,
-                                                      particleGroup[p],
-                                                      particleDamageGradient[p],
-                                                      particleSurfaceNormal[p],
-                                                      gridDamageGradient[mappedNode] );
-
-        for( localIndex i = 0; i < numDims; ++i )
+        localIndex const mappedNode = mappedNodes[pp][g];
+        real64 const shapeFunctionValue = shapeFunctionValues[pp][g];
+        real64 shapeFunctionGradientValue[3] = {};
+        // Tensor equation: shapeFunctionGradientValue = shapeFunctionGradientValues[pp][g].
+        LvArray::tensorOps::copy< 3 >( shapeFunctionGradientValue, shapeFunctionGradientValues[pp][g] );
+        localIndex const fieldIndex = mappedFields[pp][g];
+for( localIndex i = 0; i < numDims; ++i )
         {
           // particlePosition[p][i] += ( gridVelocity[mappedNode][fieldIndex][i] - 0.5 *
           // gridAcceleration[mappedNode][fieldIndex][i] * dt )
