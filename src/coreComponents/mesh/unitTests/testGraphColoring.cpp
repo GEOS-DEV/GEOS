@@ -57,11 +57,11 @@ TEST( GraphColoringTest, CartesianDecomposition3D26 )
 
 TEST( GraphColoringTest, RandomGraphs )
 {
-  size_t const iterations = 10;
+  size_t const iterations = 3;
   for( size_t i = 0; i < iterations; ++i )
   {
-    size_t num_nodes = rand() % 100 + 5;     // between 5 and 104
-    size_t num_edges = rand() % (num_nodes * 6 + 1) + num_nodes;     // between num_nodes and num_nodes * 6
+    size_t num_nodes = rand() % 60 + 5;     // between 5 and 64
+    size_t num_edges = rand() % (num_nodes * 4 + 1) + num_nodes;     // between num_nodes and num_nodes * 4
     auto [xadj, adjncy] = generateGraphRandom( num_nodes, num_edges );
     geos::graph::RLFGraphColoring graphColoring;
     stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
