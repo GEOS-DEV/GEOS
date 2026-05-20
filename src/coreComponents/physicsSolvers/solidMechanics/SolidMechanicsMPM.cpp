@@ -14809,11 +14809,14 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
 
-  // Damage-gradient threshold used by the alignment metric.
-  // The original code compared norms against 0.0001 / hEl[0].
-  // Here we use squared norms where possible to avoid unnecessary sqrt calls.
+  // Damage-gradient alignment is only meaningful when damage-field
+  // partitioning is enabled. In no-damage runs, avoid reading unused
+  // particle/grid damage-gradient fields or doing threshold divisions; those
+  // fields may be uninitialized in diagnostic/minimal MPM inputs.
+  int const useDamageGradientAlignment = damageFieldPartitioning == 1 ? 1 : 0;
+
   real64 const damageGradientThreshold =
-    0.0001 / hEl[0];
+    useDamageGradientAlignment == 1 ? 0.0001 / hEl[0] : 0.0;
 
   real64 const damageGradientThresholdSquared =
     damageGradientThreshold * damageGradientThreshold;
@@ -15156,19 +15159,23 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
       bool const hasSurfaceNormal =
         surfaceNormalNormSquared > 1e-32;
 
-      real64 const pdg0 =
-        particleDamageGradient[p][0];
+      real64 pdg0 = 0.0;
+      real64 pdg1 = 0.0;
+      real64 pdg2 = 0.0;
+      real64 particleDamageGradientNormSquared = 0.0;
 
-      real64 const pdg1 =
-        particleDamageGradient[p][1];
+      if( useDamageGradientAlignment == 1 )
+      {
+        pdg0 = particleDamageGradient[p][0];
+        pdg1 = particleDamageGradient[p][1];
+        pdg2 = particleDamageGradient[p][2];
 
-      real64 const pdg2 =
-        particleDamageGradient[p][2];
-
-      real64 const particleDamageGradientNormSquared =
-        pdg0 * pdg0 + pdg1 * pdg1 + pdg2 * pdg2;
+        particleDamageGradientNormSquared =
+          pdg0 * pdg0 + pdg1 * pdg1 + pdg2 * pdg2;
+      }
 
       bool const hasParticleDamageGradient =
+        useDamageGradientAlignment == 1 &&
         particleDamageGradientNormSquared > damageGradientThresholdSquared;
 
       real64 const invParticleDamageGradientNorm =
@@ -19665,6 +19672,16 @@ void SolidMechanicsMPM::performPICUpdate( real64 dt,
   real64 hEl[3] = {};
   // Tensor equation: hEl = m_hEl.
   LvArray::tensorOps::copy< 3 >( hEl, m_hEl );
+
+  // Tuolumne/HIP v55: do not read SolidMechanicsMPM data members through
+  // `this` inside the PIC G2P device kernel. In particular, the velocity-
+  // gradient overlap-correction branch must use captured scalar values.
+  OverlapCorrectionOption const overlapCorrection = m_overlapCorrection;
+  integer const planeStrain = m_planeStrain;
+  real64 const overlapThreshold1 = m_overlapThreshold1;
+  real64 const gridCellVolume = hEl[0] * hEl[1] * hEl[2];
+  real64 const gridNodeSupportVolume = planeStrain == 1 ? 0.5 * gridCellVolume : gridCellVolume;
+
   real64 xLocalMin[3] = {};
   // Tensor equation: xLocalMin = m_xLocalMin.
   LvArray::tensorOps::copy< 3 >( xLocalMin, m_xLocalMin );
@@ -19780,7 +19797,7 @@ for( localIndex i = 0; i < numDims; ++i )
                                                                                                                                                                     // check
           particleVelocity[p][i] += gridVelocity[mappedNode][fieldIndex][i] * shapeFunctionValue;
 
-          if( m_overlapCorrection == OverlapCorrectionOption::Volume )
+          if( overlapCorrection == OverlapCorrectionOption::Volume )
           { // If mapped volume exceeds grid volume, there is possible overlap.  In that case, modify the velocity
             // gradient of any fully-damaged cells to reduce volume. Only do this if the material is in compression.
 
@@ -19795,15 +19812,14 @@ for( localIndex i = 0; i < numDims; ++i )
             // For plane strain, the support volume is half the grid cell volume:
 
             real64 nodalMaterialVolume = 0.0;
-            for (int index=0; index<m_numContactGroups; index++)
+            for( int index = 0; index < numContactGroups; ++index )
             {
                 nodalMaterialVolume += gridMaterialVolume[mappedNode][index];
             }
 
-            real64 supportVolume = m_planeStrain == 1 ? 0.5*m_hEl[0]*m_hEl[1]*m_hEl[2] : m_hEl[0]*m_hEl[1]*m_hEl[2];
-            real64 gridNodeOverlap = nodalMaterialVolume / supportVolume;
+            real64 const gridNodeOverlap = nodalMaterialVolume / gridNodeSupportVolume;
 
-            if ( (gridNodeOverlap > m_overlapThreshold1) ) //&& ( particleDamage[p] > 0.99999 ) )
+            if( gridNodeOverlap > overlapThreshold1 ) //&& ( particleDamage[p] > 0.99999 ) )
             {
               // Set compressive strain rate modification to correct overlap in 100 steps:
               particleVelocityGradient[p][i][i] -= ( 0.01 / 3. )*( gridNodeOverlap - 1.0 )  / dt;
