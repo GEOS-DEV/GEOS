@@ -522,11 +522,10 @@ FieldSpecificationImpl::
       real64_array result( static_cast< localIndex >( targetSet.size() ) );
       function.evaluate( dataGroup, time, targetSet, result );
       arrayView1d< real64 const > const & resultView = result.toViewConst();
-      real64 const localScale = scale;
       forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const a = targetSet[ i ];
-        FIELD_OP::SpecifyFieldValue( field, a, component, localScale * resultView[i] );
+        FIELD_OP::SpecifyFieldValue( field, a, component, scale * resultView[i] );
       } );
     }
   } );
