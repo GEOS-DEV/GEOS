@@ -22,8 +22,7 @@
 
 #include "common/GeosxConfig.hpp" // For the following guards
 #ifdef GEOS_USE_CPPTRACE
-#include <cpptrace/cpptrace.hpp>
-#include <cpptrace/formatting.hpp>
+#include <cpptrace/forward.hpp>
 #endif
 
 #include <string>
