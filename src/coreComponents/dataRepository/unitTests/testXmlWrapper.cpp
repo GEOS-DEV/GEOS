@@ -15,9 +15,9 @@
 
 #include <gtest/gtest.h>
 
+#include "dataRepository/xmlWrapper.hpp"
 #include "codingUtilities/RTTypes.hpp"
 #include "common/format/EnumStrings.hpp"
-#include "dataRepository/xmlWrapper.hpp"
 
 using namespace geos;
 
