@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
 #define GEOS_FIELDSPECIFICATION_PERFECTLYMATCHEDLAYER_HPP_
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -30,12 +30,12 @@ namespace geos
  * @class PerfectlyMatchedLayer
  * A class to manage Perfectly Matched Layer for wave propagation solvers
  */
-class PerfectlyMatchedLayer : public FieldSpecificationBase
+class PerfectlyMatchedLayer : public FieldSpecification
 {
 public:
   /**
    * @brief constructor
-   * @param name the name of the FieldSpecificationBase in the data repository
+   * @param name the name of the FieldSpecification in the data repository
    * @param parent the parent group of this group.
    */
   PerfectlyMatchedLayer( string const & name, dataRepository::Group * const parent );
@@ -101,7 +101,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
     /// @return String key for the mininum (x,y,z) coordinates of inner PML boundaries
     static constexpr char const * xMinString() { return "xMin"; }
