@@ -443,7 +443,7 @@ private:
   /// Avoid concurrent access between threads for yaml outputs
   std::mutex m_errorHandlerYamlMutex;
   /// Indicated if the source file information output is enabled for a given message type
-  stdArray< bool, size_t( MsgType::Count ) > m_msgTypeSourceInfoEnabled { false };
+  stdArray< bool, size_t( MsgType::Count ) > m_msgTypeSourceInfoEnabled {};
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML stream
