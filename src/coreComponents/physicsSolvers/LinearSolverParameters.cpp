@@ -18,8 +18,12 @@
  */
 
 #include "LinearSolverParameters.hpp"
+#include "common/GeosxConfig.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#ifdef GEOS_USE_HYPREDRV
+#include "linearAlgebra/interfaces/hypre/hypredrive.hpp"
+#endif
 
 namespace geos
 {
@@ -601,6 +605,10 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "Preconditioner type. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "``, ``" ) + "``" );
 
+  registerWrapper( viewKeyStruct::hypredriveInputFileString(), &m_parameters.hypredriveInputFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Optional authoritative hypredrive YAML file. When provided, hypredrive consumes this file as-is for solver/preconditioner options." );
+
   registerWrapper( viewKeyStruct::stopIfErrorString(), &m_parameters.stopIfError ).
     setApplyDefaultValue( m_parameters.stopIfError ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -813,6 +821,12 @@ void LinearSolverParametersInput::postInputInitialization()
 {
   m_parameters.logLevel = getLogLevel();
 
+#ifndef GEOS_USE_HYPREDRV
+  GEOS_ERROR_IF( !m_parameters.hypredriveInputFile.empty(),
+                 "The hypredriveInputFile option requires GEOS to be built with HYPREDRV support.",
+                 getWrapperDataContext( viewKeyStruct::hypredriveInputFileString() ) );
+#endif
+
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
@@ -867,7 +881,12 @@ void LinearSolverParametersInput::postInputInitialization()
 
   // TODO input validation for other AMG parameters ?
 
-  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) )
+  bool deferPrint = false;
+#ifdef GEOS_USE_HYPREDRV
+  deferPrint = hypre::hypredrive::shouldUse( m_parameters );
+#endif
+
+  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) && !deferPrint )
     print();
 }
 
@@ -878,12 +897,23 @@ Group * LinearSolverParametersInput::createChild( string const & childKey,
   return nullptr;
 }
 
-void LinearSolverParametersInput::print()
+void LinearSolverParametersInput::print() const
 {
+#ifdef GEOS_USE_HYPREDRV
+  if( hypre::hypredrive::shouldUse( m_parameters ) )
+  {
+    return;
+  }
+#endif
+
   TableData tableData;
   tableData.addRow( "Log level", getLogLevel());
   tableData.addRow( "Linear solver type", m_parameters.solverType );
   tableData.addRow( "Preconditioner type", m_parameters.preconditionerType );
+  if( !m_parameters.hypredriveInputFile.empty() )
+  {
+    tableData.addRow( "hypredrive input file", string_view( m_parameters.hypredriveInputFile ) );
+  }
   tableData.addRow( "Stop if error", m_parameters.stopIfError );
   if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
   {

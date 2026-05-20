@@ -6,8 +6,8 @@
         <DataArray type="Int64" IdType="1" Name="vtkOriginalPointIds" format="binary" RangeMin="0" RangeMax="158">
           AQAAAACAAAD4BAAAFgEAAA==eJwtxdciEAAAAEAh2crIKiORUlFRKpSZLZrSsFpWSFEkSkZaqIT4Vg/uXi4gYM8+BzrIwd7vEB9wqMMc7ghHOsrRjvFBH3Ks4xzvBB92opOc7BSn+oiPOs3pznCmjznLx53tHJ9wrk/6lPN82md81vku8Dmf9wUXusgXfcnFvuwrvuoSl7rM13zd5a5wpatc7RrfcK3rXO8GN7rJzW7xTbe6zbd823d81/d83+1+4A4/9CM/9hN3usvd7nGvn/qZn/uFX7rP/R7woIf8ysMe8ahfe8xv/NbjnvA7v/ekp/zB0/7oGc/6kz97zl887wUveslfvexv/u4f/ulfXvGq1/zbf/zX6/7nDW96y/+97R3vAtC3MRI=
         </DataArray>
-        <DataArray type="Int64" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAAD4BAAAIAAAAA==eJxjZIAARhw0pQCXudSiRzqgdfiOhvsoGI4AAHq4ACA=
+        <DataArray type="UInt8" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAACfAAAAGgAAAA==eJxjZGRkZIACRiTAQAAwogJCyskFAA9XACA=
         </DataArray>
       </PointData>
       <CellData Scalars="CellEntityIds">

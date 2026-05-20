@@ -35,6 +35,7 @@ namespace geos
 {
 namespace vtk
 {
+class CollocatedNodes;
 
 /**
  * @brief Choice of advanced mesh partitioner
@@ -152,6 +153,7 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] comm the MPI communicator
  * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
+ * @param[in] partitionFractureWeight additional weight to fracture-connected super-cells during partitioning
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
  * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
@@ -164,6 +166,7 @@ redistributeMeshes( integer const logLevel,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
+                    int const partitionFractureWeight,
                     int const useGlobalIds,
                     string const & structuredIndexAttributeName,
                     int const numPartZ );
@@ -242,6 +245,22 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
  */
 void importRegularField( vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
+
+/**
+ * @brief Find 3D cells whose faces exactly match a fracture element.
+ *
+ * A 3D cell matches if it has a face that shares all nodes with the fracture element,
+ * accounting for collocated nodes at split interfaces.
+ *
+ * @param fractureNodeIds Local node IDs of the fracture element
+ * @param collocatedNodes Mapping from local node ID to all collocated global IDs
+ * @param nodesToCells Reverse map from global node ID to cells containing that node
+ * @return Global IDs of matching 3D cells (typically 0-2 neighbors for fractures)
+ */
+stdVector< vtkIdType > findMatchingCellsForFractureElement(
+  vtkIdList * fractureNodeIds,
+  CollocatedNodes const & collocatedNodes,
+  stdMap< vtkIdType, std::set< vtkIdType > > const & nodesToCells );
 
 
 } // namespace vtk
