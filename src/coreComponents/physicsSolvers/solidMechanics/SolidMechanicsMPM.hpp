@@ -309,7 +309,7 @@ public:
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
-    // v42: per-step active grid-field mask, computed once from post-P2G mass and synchronized.
+    // Per-step active grid-field mask, computed once from post-P2G mass and synchronized.
     static constexpr char const * gridActiveString() { return "gridActive"; }
     static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
     static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
@@ -486,16 +486,13 @@ public:
                                                 SpatialPartition & partition );
 
   void updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
-                                                         ParticleManager & particleManager,
-                                                         NodeManager & nodeManager,
-                                                         localIndex const cycleNumber );
+                                                         ParticleManager & particleManager );
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
                                                               real64 const dt,
                                                               ParticleManager & particleManager );
 
   void resizeGridAndCleanParticlesForExplicitStep( real64 const dt,
-                                                   int const cycleNumber,
                                                    DomainPartition & domain,
                                                    ParticleManager & particleManager,
                                                    NodeManager & nodeManager,
