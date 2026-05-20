@@ -24,7 +24,6 @@ Contains:
 # Specify solver headers
 #
 set( physicsSolversBase_headers
-     FieldApplicator.hpp
      FieldStatisticsBase.hpp
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
@@ -37,7 +36,6 @@ set( physicsSolversBase_headers
 # Specify solver sources
 #
 set( physicsSolversBase_sources
-     FieldApplicator.cpp
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverBase.cpp

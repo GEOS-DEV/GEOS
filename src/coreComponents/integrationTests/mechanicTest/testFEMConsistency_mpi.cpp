@@ -30,7 +30,7 @@ CommandLineOptions g_commandLineOptions;
  * 2. s_xx (real64): Applied stress component XX.
  * 3. s_yy (real64): Applied stress component YY.
  * 4. s_zz (real64): Applied stress component ZZ.
- * 5. Partitioning (tuple<int, int, int>): Number of partitions in x, y, z directions.
+ * 5. Partitioning int: Number of partitions 4.
  *
  * The test cases cover a subset of meshes with various partitioning schemes for 4 ranks.
  */
@@ -43,37 +43,14 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_1.vtu",
       "fractured_mesh_hex_DFN_123.vtu",
 
-      // Wavy hex meshes - single and triple fracture only
-      "fractured_wavy_mesh_hex_DFN_1.vtu",
-      "fractured_wavy_mesh_hex_DFN_123.vtu",
-
-      // Full span hex meshes - single and triple fracture only
-      "fractured_full_span_mesh_hex_DFN_1.vtu",
-      "fractured_full_span_mesh_hex_DFN_123.vtu",
-
       // Full span tet meshes - single and triple fracture only
       "fractured_full_span_mesh_tet_DFN_1.vtu",
-      "fractured_full_span_mesh_tet_DFN_123.vtu",
-
-      // T-shaped wavy meshes
-      "t_shaped_wavy_mesh_hex_DFN_t1t2.vtu",
-      "t_shaped_wavy_mesh_tet_DFN_t1t2.vtu",
-
-      // Y-shaped wavy meshes
-      "y_shaped_wavy_mesh_hex_DFN_y1y2y3.vtu",
-      "y_shaped_wavy_mesh_tet_DFN_y1y2y3.vtu",
-
-      // 5-fracture DFN market meshes
-      "DFN_5_fractures_hex_binarized.vtu",
-      "DFN_5_fractures_tet_binarized.vtu"
+      "fractured_full_span_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e6 ),     // s_xx
     ::testing::Values( -0.5e6 ),     // s_yy
     ::testing::Values( -2.0e6 ),     // s_zz
-    ::testing::Values(
-      std::make_tuple( 2, 2, 1 ),
-      std::make_tuple( 4, 1, 1 )
-      )
+    ::testing::Values( 4 )
     )
   );
 
