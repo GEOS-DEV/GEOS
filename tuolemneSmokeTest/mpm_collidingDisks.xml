@@ -47,7 +47,7 @@ srun -n 4 /g/g19/homel1/geosx/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal
       discretization="FE1"
       targetRegions="{ backgroundGrid/CellRegion1, particles/ParticleRegion1 }"
       timeIntegrationOption="ExplicitDynamic"
-      updateMethod="PIC"
+      updateMethod="FMPM"
       updateOrder="2"
       cflFactor="0.25"
       initialDt="1e-16"
