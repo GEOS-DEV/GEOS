@@ -486,13 +486,16 @@ public:
                                                 SpatialPartition & partition );
 
   void updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
-                                                         ParticleManager & particleManager );
+                                                         ParticleManager & particleManager,
+                                                         NodeManager & nodeManager,
+                                                         localIndex const cycleNumber );
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
                                                               real64 const dt,
                                                               ParticleManager & particleManager );
 
   void resizeGridAndCleanParticlesForExplicitStep( real64 const dt,
+                                                   int const cycleNumber,
                                                    DomainPartition & domain,
                                                    ParticleManager & particleManager,
                                                    NodeManager & nodeManager,
