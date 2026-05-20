@@ -213,8 +213,10 @@ generateKernels( TEMPLATE "CompositionalMultiphaseFVMKernel_thermal.cpp.template
 list(APPEND fluidFlowSolvers_headers ${headerFiles})
 list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
-
+geos_decorate_link_dependencies( LIST decoratedDependencies
+                                 DEPENDENCIES ${dependencyList} )
 
 
 blt_add_library( NAME       fluidFlowSolvers

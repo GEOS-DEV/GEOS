@@ -284,17 +284,22 @@ integer computeEulerCharacteristic( NodeManager const & nodeManager,
       ++ownedV;
   }
 
+  // --- Strict Edge Ownership ---
   localIndex ownedE = 0;
   for( EdgeKey const & e : allEdges )
   {
-    if( nodeIsOwned( e.first ) )   // e.first is the min global ID (sorted)
+    // e.first is the minimum global node ID for the edge because makeEdge() sorted the pair
+    if( nodeIsOwned( e.first ) )
+    {
       ++ownedE;
+    }
   }
 
   localIndex ownedF = 0;
   for( FaceKey const & f : allFaces )
   {
-    if( nodeIsOwned( f[0] ) )      // f[0] is the min global ID (sorted)
+    // f ([0] is the minimum global node ID for the face because makeFace() sorts the node list
+    if( nodeIsOwned( f[0] ) )
       ++ownedF;
   }
 
