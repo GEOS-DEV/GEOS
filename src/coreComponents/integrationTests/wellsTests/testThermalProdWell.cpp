@@ -111,7 +111,7 @@ char const * xmlInput =
         control="BHP"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15">
-                <ProductionPhaseVolumeRateConstraint
+        <ProductionPhaseVolumeRateConstraint
           name="maxwatprod"
           phaseName="water"
           phaseRate="0.001"/>
@@ -608,7 +608,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           {
             solver.resetStateToBeginningOfStep( domain );
 
-            real64 const dRho = perturbParameter * wellElemTotalDensity;
+            real64 const dRho = perturbParameter *  (wellElemTotalDensity+perturbParameter);;
             wellElemCompDens.move( hostMemorySpace, true );
             wellElemCompDens[iwelem][jc] += dRho;
 

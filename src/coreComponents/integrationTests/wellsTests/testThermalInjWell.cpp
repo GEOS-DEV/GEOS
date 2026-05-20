@@ -608,7 +608,7 @@ void testWellNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compos
           {
             solver.resetStateToBeginningOfStep( domain );
 
-            real64 const dRho = perturbParameter * wellElemTotalDensity;
+            real64 const dRho = perturbParameter * (wellElemTotalDensity+ perturbParameter);
             wellElemCompDens.move( hostMemorySpace, true );
             wellElemCompDens[iwelem][jc] += dRho;
 
