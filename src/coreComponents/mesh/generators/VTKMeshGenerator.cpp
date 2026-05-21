@@ -88,8 +88,8 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setDescription( "Method for initial mesh scatter from rank 0 to all ranks: "
                     "contiguous (cell ID ranges, no geometry), "
                     "cartesian (regular grid using -x/-y/-z partitions), "
-                    "kdtree (VTK built-in kd-tree, default), "
-                    "rcb (recursive coordinate bisection)" );
+                    "rcb (recursive coordinate bisection), "
+                    "kdtree (VTK built-in kd-tree, default; automatically falls back to rcb when fractures are present)" );
 
   registerWrapper( viewKeyStruct::partitionFractureWeightString(), &m_partitionFractureWeight ).
     setInputFlag( InputFlags::OPTIONAL ).

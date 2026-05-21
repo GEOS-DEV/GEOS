@@ -22,6 +22,7 @@
 
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 
 namespace geos
 {
@@ -44,6 +45,41 @@ ENUM_STRINGS( ScatterMethod,
               "cartesian",
               "rcb",
               "kdtree" );
+
+/**
+ * @brief Compute the per-cell destination rank on rank 0 for a given scatter method.
+ *
+ * This is the assignment step of @ref scatterMesh, exposed so other code (e.g. the
+ * super-cell aware scatter) can build its own assignment on top of the same algorithms.
+ *
+ * @param[in] method                the partitioning strategy. @p kdtree is not supported here
+ *                                  (it does not produce a separable per-cell assignment).
+ * @param[in] mesh                  the input mesh (must contain all cells on rank 0).
+ * @param[in] cartesianPartitions   {nx, ny, nz}, only used for @p cartesian.
+ * @param[in] numRanks              total number of MPI ranks.
+ * @return rank-0 only: @c cellRanks[i] is the destination rank for cell @p i; empty on other ranks.
+ */
+stdVector< integer >
+computeCellRanks( ScatterMethod method,
+                  vtkDataSet & mesh,
+                  arrayView1d< integer const > cartesianPartitions,
+                  integer numRanks );
+
+/**
+ * @brief Ship cells from rank 0 to the ranks specified by @p assignment via a binary-tree exchange.
+ *
+ * This is the shipping step of @ref scatterMesh, exposed so other code can drive it with a
+ * custom @p assignment (e.g. atom-aware partitioning that keeps fracture-connected cells together).
+ *
+ * @param[in] inputMesh   rank 0: source mesh with all cells. Other ranks: ignored (may be empty).
+ * @param[in] assignment  rank 0 only: @c assignment[i] is the destination rank for cell @p i.
+ * @param[in] comm        the MPI communicator.
+ * @return the local subset of the mesh assigned to this rank.
+ */
+vtkSmartPointer< vtkUnstructuredGrid >
+scatterByRankAssignment( vtkUnstructuredGrid * inputMesh,
+                         stdVector< integer > assignment,
+                         MPI_Comm comm );
 
 /**
  * @brief Scatter a mesh held entirely on rank 0 to all MPI ranks.

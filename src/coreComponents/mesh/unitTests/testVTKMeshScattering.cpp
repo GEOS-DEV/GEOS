@@ -21,6 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/VTKMeshScattering.hpp"
+#include "mesh/generators/VTKSuperCellPartitioning.hpp"
 
 #include <vtkCellData.h>
 #include <vtkIdTypeArray.h>
@@ -279,6 +280,74 @@ TEST_F( VTKMeshScatteringTest, EmptyMesh )
   ASSERT_NE( result, nullptr );
   EXPECT_EQ( result->GetNumberOfCells(), 0 );
 }
+
+
+/// Super-cell atomicity: every super-cell must end up on a single rank, regardless of method.
+/// Tags pairs of adjacent cells with the same SuperCellId, so the 64-cell grid becomes
+/// 32 atoms of 2 cells each. After redistribution, each SuperCellId must be owned by exactly
+/// one rank.
+TEST_F( VTKMeshScatteringTest, SuperCellAtomicity )
+{
+  static constexpr vtkIdType cellsPerSuperCell = 2;
+  static constexpr vtkIdType numSuperCells = totalCells / cellsPerSuperCell;
+
+  if( rank == 0 )
+  {
+    vtkNew< vtkIdTypeArray > scIds;
+    scIds->SetName( "SuperCellId" );
+    scIds->SetNumberOfTuples( totalCells );
+    for( vtkIdType c = 0; c < totalCells; ++c )
+    {
+      scIds->SetValue( c, c / cellsPerSuperCell );
+    }
+    mesh->GetCellData()->AddArray( scIds );
+  }
+
+  stdVector< ScatterMethod > const methods = {
+    ScatterMethod::contiguous,
+    ScatterMethod::cartesian,
+    ScatterMethod::rcb
+  };
+
+  for( auto method : methods )
+  {
+    vtkSmartPointer< vtkDataSet > result =
+      redistributeBySuperCellBlocks( mesh, comm, method, parts.toViewConst() );
+    ASSERT_NE( result, nullptr );
+
+    // Cell conservation
+    vtkIdType const localCells = result->GetNumberOfCells();
+    vtkIdType const globalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, comm );
+    EXPECT_EQ( globalCells, totalCells )
+      << "Cell conservation failed for method " << toString( method );
+
+    // Per-rank ownership: ownership[s] = 1 if this rank holds any cell of SuperCellId s.
+    array1d< integer > ownership( numSuperCells );
+    vtkIdTypeArray * scArr =
+      vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "SuperCellId" ) );
+    ASSERT_NE( scArr, nullptr )
+      << "SuperCellId array lost during redistribution for method " << toString( method );
+
+    for( vtkIdType c = 0; c < localCells; ++c )
+    {
+      vtkIdType const s = scArr->GetValue( c );
+      ASSERT_GE( s, 0 );
+      ASSERT_LT( s, numSuperCells );
+      ownership[s] = 1;
+    }
+
+    array1d< integer > totalOwners( numSuperCells );
+    MpiWrapper::allReduce( ownership, totalOwners, MpiWrapper::Reduction::Sum, comm );
+
+    for( vtkIdType s = 0; s < numSuperCells; ++s )
+    {
+      EXPECT_EQ( totalOwners[s], 1 )
+        << "Super-cell " << s << " ended up on " << totalOwners[s]
+        << " ranks (expected exactly 1) for method " << toString( method );
+    }
+  }
+}
+
 
 
 int main( int argc, char * * argv )

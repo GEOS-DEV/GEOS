@@ -638,60 +638,6 @@ redistributeBySuperCellGraph(
 {
   GEOS_MARK_FUNCTION;
 
-  int const numRanks = MpiWrapper::commSize( comm );
-  array1d< int64_t > newPartitions = partitionByCellGraph( input, method, comm, numRanks, 3, numRefinements );
-
-  // Extract the partition information related to the fracture mesh.
-  stdMap< string, array1d< pmet_idx_t > > newFracturePartitions;
-  vtkIdType fracOffset = input.getMainMesh()->GetNumberOfCells();
-  vtkIdType localNumFracCells = 0;
-  for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
-  {
-    localIndex const numFracCells = fracture->GetNumberOfCells();
-    localNumFracCells += (rank == numRanks - 1) ? fracture->GetNumberOfCells() : 0;
-    array1d< pmet_idx_t > tmp( numFracCells );
-    std::copy( newPartitions.begin() + fracOffset, newPartitions.begin() + fracOffset + numFracCells, tmp.begin() );
-    newFracturePartitions.insert( { fractureName, tmp } );
-    fracOffset += numFracCells;
-  }
-  // Now do the same for the 3d mesh, simply by trimming the fracture information.
-  newPartitions.resize( newPartitions.size() - localNumFracCells );
-
-  // Now, perform the final steps: first, a new split following the new partitions.
-  // Then those newly split meshes will be redistributed across the ranks.
-
-  // First for the main 3d mesh...
-  vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.getMainMesh(), numRanks, newPartitions.toViewConst() );
-  vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
-  // ... and then for the fractures.
-  stdMap< string, vtkSmartPointer< vtkDataSet > > finalFractures;
-  for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
-  {
-    vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
-    vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOS );
-    finalFractures.insert( {fractureName, finalFracMesh} );
-  }
-
-  return AllMeshes( finalMesh, finalFractures );
-}
-
-
-/**
- * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
- *
- * @param[in] mesh a vtk grid
- * @return the vtk grid redistributed
- */
-vtkSmartPointer< vtkDataSet >
-redistributeBySuperCellGraph(
-  vtkSmartPointer< vtkDataSet > mesh,
-  PartitionMethod const method,
-  MPI_Comm comm,
-  int const numRefinementIterations,
-  int const fractureWeight )
-{
-  GEOS_MARK_FUNCTION;
-
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
 
@@ -2091,12 +2037,11 @@ redistributeMeshes( integer const logLevel,
   {
     if( hasSuperCells )
     {
-      redistributed3D = redistributeBySuperCellBlocks( cells3D, comm );
+      redistributed3D = redistributeBySuperCellBlocks( cells3D, comm, scatterMethod, partitions );
     }
     else
     {
-      GEOS_LOG_RANK_0( "Initial redistribution using KD-tree..." );
-      redistributed3D = redistributeByKdTree( *cells3D );
+      redistributed3D = scatterMesh( scatterMethod, *cells3D, partitions, comm );
 
       if( MpiWrapper::min( redistributed3D->GetNumberOfCells(), comm ) == 0 )
       {
