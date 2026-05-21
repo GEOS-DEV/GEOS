@@ -588,21 +588,24 @@ computeCellRanksRCB( vtkDataSet & mesh, integer size )
   return ranks;
 }
 
-
+} // anonymous namespace
 
 // ============================================================================
+// Public API
+// ============================================================================
+
+// ----------------------------------------------------------------------------
 // Binary-tree scatter
 //
 // Only rank 0 holds mesh data and the assignment vector initially.
 // At each level, the "root" of each active subrange extracts the upper
 // half, packs it into a raw buffer, sends it to the midpoint rank, and
 // keeps only the lower half.
-// ============================================================================
-
+// ----------------------------------------------------------------------------
 vtkSmartPointer< vtkUnstructuredGrid >
-binaryTreeScatter( vtkUnstructuredGrid * inputMesh,
-                   stdVector< integer > assignment,
-                   MPI_Comm comm )
+scatterByRankAssignment( vtkUnstructuredGrid * inputMesh,
+                         stdVector< integer > assignment,
+                         MPI_Comm comm )
 {
   integer const rank = MpiWrapper::commRank( comm );
   integer const size = MpiWrapper::commSize( comm );
@@ -695,12 +698,47 @@ binaryTreeScatter( vtkUnstructuredGrid * inputMesh,
   return workingMesh;
 }
 
-} // anonymous namespace
+// ----------------------------------------------------------------------------
+// Per-cell rank assignment dispatcher (rank 0 only)
+// ----------------------------------------------------------------------------
+stdVector< integer >
+computeCellRanks( ScatterMethod method,
+                  vtkDataSet & mesh,
+                  arrayView1d< integer const > cartesianPartitions,
+                  integer numRanks )
+{
+  GEOS_ERROR_IF( method == ScatterMethod::kdtree,
+                 "computeCellRanks: kdtree method does not produce a per-cell rank assignment; "
+                 "use scatterMesh() for kdtree." );
 
+  vtkIdType const numCells = mesh.GetNumberOfCells();
+  stdVector< integer > cellRanks;
+  switch( method )
+  {
+    case ScatterMethod::contiguous:
+      cellRanks = computeCellRanksContiguous( numCells, numRanks );
+      break;
+    case ScatterMethod::cartesian:
+    {
+      GEOS_ERROR_IF( cartesianPartitions.size() < 3,
+                     "Cartesian method requires 3 partition values (nx, ny, nz)" );
+      integer const nx = cartesianPartitions[0], ny = cartesianPartitions[1], nz = cartesianPartitions[2];
+      GEOS_ERROR_IF( nx * ny * nz != numRanks,
+                     GEOS_FMT( "partition grid {}x{}x{} = {} does not match MPI size {}",
+                               nx, ny, nz, nx * ny * nz, numRanks ) );
+      cellRanks = computeCellRanksCartesian( mesh, nx, ny, nz );
+      break;
+    }
+    case ScatterMethod::rcb:
+      cellRanks = computeCellRanksRCB( mesh, numRanks );
+      break;
+    default:
+      GEOS_ERROR( GEOS_FMT( "Unknown scatter method: {}", static_cast< integer >( method ) ) );
+      break;
+  }
+  return cellRanks;
+}
 
-// ============================================================================
-// Public API
-// ============================================================================
 
 vtkSmartPointer< vtkDataSet >
 scatterMesh( ScatterMethod method,
@@ -773,32 +811,9 @@ scatterMesh( ScatterMethod method,
 
   // Compute cell to rank assignment (rank 0 only)
   stdVector< integer > cellRanks;
-
   if( rank == 0 )
   {
-    switch( method )
-    {
-      case ScatterMethod::contiguous:
-        cellRanks = computeCellRanksContiguous( totalCells, size );
-        break;
-      case ScatterMethod::cartesian:
-      {
-        GEOS_ERROR_IF( cartesianPartitions.size() < 3,
-                       "Cartesian method requires 3 partition values (nx, ny, nz)" );
-        integer const nx = cartesianPartitions[0], ny = cartesianPartitions[1], nz = cartesianPartitions[2];
-        GEOS_ERROR_IF( nx * ny * nz != size,
-                       GEOS_FMT( "partition grid {}x{}x{} = {} does not match MPI size {}",
-                                 nx, ny, nz, nx * ny * nz, size ) );
-        cellRanks = computeCellRanksCartesian( mesh, nx, ny, nz );
-        break;
-      }
-      case ScatterMethod::rcb:
-        cellRanks = computeCellRanksRCB( mesh, size );
-        break;
-      default:
-        GEOS_ERROR( GEOS_FMT( "Unknown scatter method: {}", static_cast< integer >( method ) ) );
-        break;
-    }
+    cellRanks = computeCellRanks( method, mesh, cartesianPartitions, size );
   }
 
   // Scatter via binary tree
@@ -806,11 +821,11 @@ scatterMesh( ScatterMethod method,
   GEOS_ERROR_IF( rank == 0 && inputGrid == nullptr,
                  "input must be a vtkUnstructuredGrid" );
 
-  // Non-rank-0 passes a dummy; binaryTreeScatter only uses rank 0's mesh.
+  // Non-rank-0 passes a dummy; scatterByRankAssignment only uses rank 0's mesh.
   vtkNew< vtkUnstructuredGrid > dummyGrid;
   vtkUnstructuredGrid * gridPtr = ( rank == 0 ) ? inputGrid : dummyGrid.GetPointer();
 
-  vtkSmartPointer< vtkUnstructuredGrid > result = binaryTreeScatter( gridPtr, std::move( cellRanks ), comm );
+  vtkSmartPointer< vtkUnstructuredGrid > result = scatterByRankAssignment( gridPtr, std::move( cellRanks ), comm );
 
   // Validate cell conservation
   vtkIdType const localAfter = result->GetNumberOfCells();
