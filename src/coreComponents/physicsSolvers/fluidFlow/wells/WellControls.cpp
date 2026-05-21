@@ -160,6 +160,24 @@ WellControls::WellControls( string const & name, Group * const parent )
 WellControls::~WellControls()
 {}
 
+Group * WellControls::createChild( string const & childKey, string const & childName )
+{
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  std::unique_ptr< WellConstraintBase > constraint =
+    WellConstraintBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
+  return &registerGroup< WellConstraintBase >( childName, std::move( constraint ) );
+}
+
+void WellControls::expandObjectCatalogs()
+{
+  // During schema generation, register one of each type derived from WellConstraintBase here
+  for( auto & catalogIter : WellConstraintBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
+  // tjbcreateChild( WellNewtonSolver::catalogName(), WellNewtonSolver::catalogName() );
+}
+
 namespace
 {
 

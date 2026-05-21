@@ -133,6 +133,17 @@ public:
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "well"; }
 
+  /**
+   * @brief Create a new constraint object as a child of this group.
+   * @param childKey the catalog key of the new constraint object to create
+   * @param childName the name of the new constraint object in the repository
+   * @return the group child
+   */
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
+
+  /// Expand catalog for schema generation
+  virtual void expandObjectCatalogs() override;
+
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion );
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const = 0;
   /**
