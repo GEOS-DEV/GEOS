@@ -405,7 +405,7 @@ void FieldSpecificationImpl::forEachComponent( FieldSpecification const & fs, LA
     for( localIndex comp = 0; comp < numComponents; ++comp )
     {
       // allow for a single functionName to be applied to every component
-      localIndex const fnIdx = ( fs.getFunctionName().size() == 1 ) ? localIndex( 0 ) : comp;
+      localIndex const fnIdx = ( fs.getFunctionNames().size() == 1 ) ? localIndex( 0 ) : comp;
       string const & functionName = fs.getFunctionNames().empty() ? string{}
                                                                   : fs.getFunctionNames()[ fnIdx ];
 
