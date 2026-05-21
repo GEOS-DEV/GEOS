@@ -543,7 +543,7 @@ real64 WellControls::getInjectionTemperature() const
   real64 injectionTemperature = 0.0;
   forRateConstraints( [&] ( auto const & constraint )
   {
-    if constexpr ( isInjectionRateConstraint< decltype(constraint) >::value )
+    if constexpr ( isInjectionRateConstraint< std::decay_t< decltype(constraint) > >::value )
     {
       if( constraint.isConstraintActive())
       {
@@ -560,7 +560,7 @@ arrayView1d< real64 const > WellControls::getInjectionStream() const
   arrayView1d< real64 const > injectionStream;
   forRateConstraints( [&] ( auto const & constraint )
   {
-    if constexpr ( isInjectionRateConstraint< decltype(constraint) >::value )
+    if constexpr ( isInjectionRateConstraint< std::decay_t< decltype(constraint) > >::value )
     {
       if( constraint.isConstraintActive())
       {
