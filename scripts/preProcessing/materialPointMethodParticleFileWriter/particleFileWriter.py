@@ -612,7 +612,7 @@ PWD = os.getcwd()
 # Value contains ( default value, flag to include in xml mpm solver parameter string if not specified or not )
 parameters = { 'runDebug' : ( False, False ),
                'runCheckTime' : ( "00:02:00", False ),
-               'outputType' : ("vtk", False),
+               'outputType' : ("silo", False),
                'generateParticleFile': ( True, False ),
                'runContinuation': (False, False ),
                'restartJobDir': ('.', False),
