@@ -24,7 +24,6 @@
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 #include "WellConstraintsBase.hpp"
-
 namespace geos
 {
 
@@ -109,7 +108,8 @@ public:
     static constexpr char const * targetBHPString() { return "targetBHP"; }
     /// String key for the well reference elevation (for BHP control)
     static constexpr char const * refElevString() { return "referenceElevation"; }
-  };
+  }
+  viewKeysWellBHPConstraint;
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
