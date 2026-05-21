@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # Configure a fresh GEOS-MPM checkout for LLNL Dane or Tuolumne.
 #
-# This script creates local MPM convenience files, writes machine-aware Dane and
-# Tuolumne userDefs/runClean helpers, then configures and builds the GEOS
-# executable for the machine on which setup is run unless --setup-machine is
-# supplied. Dane uses the CPU minimal-TPL host-config. Tuolumne uses the
-# ROCm/MI300A minimal-TPL host-config.
+# This unified setup script creates local MPM convenience files, updates only the
+# active machine dictionary entries in userDefs_$USER.py, loads the build modules for the
+# selected machine when possible, then configures and builds GEOS with the
+# machine-specific MPM minimal-TPL host-config.  The machine is inferred from the
+# hostname unless --setup-machine, --dane, --tuolumne, or GEOS_MPM_SETUP_MACHINE
+# is supplied.
 
 set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: ./setupMPM_tuolumne [options]
+Usage: ./setupMPM [options]
 
 Options:
   --setup-machine MACHINE   Machine to configure/build for: dane or tuolumne.
@@ -37,22 +38,20 @@ Options:
                             Default: BUILD_ROOT/build-<host-config>-<type>.
   --geos-path PATH          Explicit active-machine geosx path written to userDefs.py.
                             Default: BUILD_DIR/bin/geosx.
-  --tuolumne-build-dir DIR  Tuolumne CMake build directory written to userDefs.py.
-                            Default: repo/build-tuolumne-...-mpm-minimal-tpl-release.
-  --tuolumne-geos-path PATH Explicit Tuolumne geosx path written to userDefs.py.
-                            Default: TUOLUMNE_BUILD_DIR/bin/geosx.
-  --tuolumne-run-root DIR   Tuolumne defaultRunDirectory root. Default: /p/lustre5/$USER/geosxRuns
-  --tuolumne-test-dir DIR   Tuolumne testRunDirectory. Default: /p/lustre5/$USER/geosxTests
+  --tuolumne-build-dir DIR  Alias for --build-dir when --setup-machine tuolumne is active.
+  --tuolumne-geos-path PATH Explicit Tuolumne geosx path; alias for --geos-path
+                            when --setup-machine tuolumne is active.
+  --tuolumne-run-root DIR   Alias for --run-root when --setup-machine tuolumne is active.
+  --tuolumne-test-dir DIR   Alias for --test-dir when --setup-machine tuolumne is active.
   --tuolumne-default-run-dir DIR
-                            Tuolumne defaultRunDirectory. Default: TUOLUMNE_RUN_ROOT
-  --dane-build-dir DIR      Dane CMake build directory written to userDefs.py.
-                            Default: repo/build-dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl-release
-  --dane-geos-path PATH     Explicit Dane geosx path written to userDefs.py.
-                            Default: DANE_BUILD_DIR/bin/geosx.
-  --dane-run-root DIR       Dane defaultRunDirectory root. Default: /p/lustre1/$USER/geosxRuns
-  --dane-test-dir DIR       Dane testRunDirectory. Default: /p/lustre1/$USER/geosxTests
+                            Alias for --default-run-dir when --setup-machine tuolumne is active.
+  --dane-build-dir DIR      Alias for --build-dir when --setup-machine dane is active.
+  --dane-geos-path PATH     Explicit Dane geosx path; alias for --geos-path
+                            when --setup-machine dane is active.
+  --dane-run-root DIR       Alias for --run-root when --setup-machine dane is active.
+  --dane-test-dir DIR       Alias for --test-dir when --setup-machine dane is active.
   --dane-default-run-dir DIR
-                            Dane defaultRunDirectory. Default: DANE_RUN_ROOT
+                            Alias for --default-run-dir when --setup-machine dane is active.
   --dane-partition NAME     Dane Slurm partition for runClean_$USER.sh. Default: pdebug
   --slurm-time TIME         Dane Slurm walltime for runClean_$USER.sh. Default: 00:30:00
   --install-root DIR        Active-machine CMake install root.
@@ -71,11 +70,12 @@ Options:
   --log-file FILE           Write full setup/configure/build output to FILE.
                             Default: BUILD_DIR/setupMPM_<machine>_<timestamp>.log
   --no-log                  Do not create a setup/build log file.
-  --skip-modules            Do not attempt to load Tuolumne ROCm/CMake/Ninja modules.
+  --skip-modules            Do not attempt to load machine build modules.
   --module-purge            Run module purge before loading Tuolumne modules.
   --force                   Replace the symlink and overwrite generated user files.
   --force-link              Replace an existing root particleFileWriter symlink.
-  --overwrite-userdefs      Replace particleFileWriter/userDefs_$USER.py.
+  --overwrite-userdefs      Replace a non-generated particleFileWriter/userDefs_$USER.py.
+                            Generated files preserve inactive machine entries.
   --overwrite-runclean      Replace particleFileWriter/runClean_$USER.sh.
   --skip-build, --no-build  Generate local files but do not configure or build.
   --configure-only          Configure CMake but do not build.
@@ -85,11 +85,11 @@ USAGE
 }
 
 log() {
-  printf '[setupMPM_tuolumne] %s\n' "$*"
+  printf '[setupMPM] %s\n' "$*"
 }
 
 fail() {
-  printf '[setupMPM_tuolumne] ERROR: %s\n' "$*" >&2
+  printf '[setupMPM] ERROR: %s\n' "$*" >&2
   exit 1
 }
 
@@ -112,7 +112,7 @@ start_logging() {
 
   exec > >(tee -a "$LOG_FILE") 2>&1
 
-  trap 'status=$?; if [ "$status" -eq 0 ]; then printf "[setupMPM_tuolumne] log file: %s\n" "$LOG_FILE"; else printf "[setupMPM_tuolumne] setup failed with exit code %s\n[setupMPM_tuolumne] log file: %s\n" "$status" "$LOG_FILE" >&2; fi; exit "$status"' EXIT
+  trap 'status=$?; if [ "$status" -eq 0 ]; then printf "[setupMPM] log file: %s\n" "$LOG_FILE"; else printf "[setupMPM] setup failed with exit code %s\n[setupMPM] log file: %s\n" "$status" "$LOG_FILE" >&2; fi; exit "$status"' EXIT
 
   log "logging to: $LOG_FILE"
   log "hostname: $(hostname 2>/dev/null || true)"
@@ -127,10 +127,10 @@ quote_cmd() {
 
 run_cmd() {
   if [ "$DRY_RUN" -eq 1 ]; then
-    printf '[setupMPM_tuolumne] would run: '
+    printf '[setupMPM] would run: '
     quote_cmd "$@"
   else
-    printf '[setupMPM_tuolumne] running: '
+    printf '[setupMPM] running: '
     quote_cmd "$@"
     "$@"
   fi
@@ -518,92 +518,259 @@ create_pfw_link() {
   fi
 }
 
-write_user_defs() {
-  if [ -e "$USER_DEFS_PATH" ] && [ "$OVERWRITE_USERDEFS" -ne 1 ]; then
-    log "leaving existing $USER_DEFS_PATH unchanged; use --overwrite-userdefs to replace it"
-    return 0
-  fi
-
-  if [ "$DRY_RUN" -eq 1 ]; then
-    log "would write $USER_DEFS_PATH"
-    log "would set pfwPath = '$PFW_USER_PATH'"
-    log "would set Dane geosPath = '$DANE_GEOS_USER_PATH'"
-    log "would set Tuolumne geosPath = '$TUOLUMNE_GEOS_USER_PATH'"
-    log "would set Dane testRunDirectory = r\"$DANE_TEST_RUN_DIR\""
-    log "would set Tuolumne testRunDirectory = r\"$TUOLUMNE_TEST_RUN_DIR\""
-    log "would set defaultBank = '$DEFAULT_BANK'"
-    return 0
-  fi
-
-  cat > "$USER_DEFS_PATH" <<EOF_USERDEFS
-# -*- coding: utf-8 -*-
-# Auto-generated by setupMPM_tuolumne. Machine-local paths; do not commit.
-import os
-import platform
-
-_node = platform.node().lower()
-node = platform.node()
-dane = 'dane' in _node
-lassen = 'lassen' in _node
-tuolumne = ('tuolumne' in _node) or _node.startswith('tuo')
-rzhound = 'rzhound' in _node
-tioga = 'tioga' in _node
-
-# Paths used to copy dependencies. Shared by Dane and Tuolumne.
-pfwPath = '$PFW_USER_PATH'
-
-# Optional escape hatch for login nodes or unusual node names:
-#   export GEOS_MPM_MACHINE=dane
-#   export GEOS_MPM_MACHINE=tuolumne
-_machine = os.environ.get('GEOS_MPM_MACHINE', '').strip().lower()
-if not _machine:
-  if dane:
-    _machine = 'dane'
-  elif tuolumne:
-    _machine = 'tuolumne'
-
-if _machine == 'dane':
-  geosPath = '$DANE_GEOS_USER_PATH'
-  testRunDirectory = r"$DANE_TEST_RUN_DIR"
-  defaultRunDirectory = r"$DANE_DEFAULT_RUN_DIR_USER"
-  defaultBank = '$DEFAULT_BANK'
-  defaultPythonCommand = r"$PYTHON_CMD"
-  pythonCommand = defaultPythonCommand
-  defaultPython = defaultPythonCommand  # backward-compatible alias
-
-  # Dane/Slurm convenience defaults. Existing PFW inputs can ignore these.
-  defaultScheduler = 'slurm'
-  defaultSlurmPartition = '$DANE_PARTITION'
-  defaultFluxQueue = '$DANE_PARTITION'
-  defaultDeviceRanksPerNode = 112
-  defaultMpiRanksPerNode = 112
-
-elif _machine == 'tuolumne':
-  geosPath = '$TUOLUMNE_GEOS_USER_PATH'
-  testRunDirectory = r"$TUOLUMNE_TEST_RUN_DIR"
-  defaultRunDirectory = r"$TUOLUMNE_DEFAULT_RUN_DIR_USER"
-  defaultBank = '$DEFAULT_BANK'
-  defaultPythonCommand = r"$PYTHON_CMD"
-  pythonCommand = defaultPythonCommand
-  defaultPython = defaultPythonCommand  # backward-compatible alias
-
-  # Tuolumne/Flux convenience defaults. Existing PFW inputs can ignore these.
-  defaultScheduler = 'flux'
-  defaultFluxQueue = '$DEFAULT_QUEUE'
-  defaultSlurmPartition = '$DANE_PARTITION'
-  defaultDeviceRanksPerNode = 4
-  defaultMpiRanksPerNode = 4
-
-else:
-  raise RuntimeError(
-    "Could not identify Dane or Tuolumne from host '%s'. "
-    "Set GEOS_MPM_MACHINE=dane or GEOS_MPM_MACHINE=tuolumne."
-    % node
-  )
-EOF_USERDEFS
-  log "wrote $USER_DEFS_PATH"
+is_setupmpm_userdefs() {
+  [ -f "$USER_DEFS_PATH" ] && grep -q "Auto-generated by setupMPM" "$USER_DEFS_PATH"
 }
 
+write_user_defs() {
+  if [ -e "$USER_DEFS_PATH" ] && ! is_setupmpm_userdefs && [ "$OVERWRITE_USERDEFS" -ne 1 ]; then
+    log "leaving existing $USER_DEFS_PATH unchanged because it was not generated by setupMPM; use --overwrite-userdefs to replace it"
+    return 0
+  fi
+
+  local active_scheduler active_slurm_partition active_flux_queue active_device_ranks active_mpi_ranks active_bank
+  active_bank="$DEFAULT_BANK"
+  if [ -z "$active_bank" ]; then
+    active_bank="CHANGEME"
+  fi
+
+  case "$SETUP_MACHINE" in
+    dane)
+      active_scheduler="slurm"
+      active_slurm_partition="$DANE_PARTITION"
+      active_flux_queue="$DANE_PARTITION"
+      active_device_ranks="112"
+      active_mpi_ranks="112"
+      ;;
+    tuolumne)
+      active_scheduler="flux"
+      active_slurm_partition="$DANE_PARTITION"
+      active_flux_queue="$DEFAULT_QUEUE"
+      active_device_ranks="4"
+      active_mpi_ranks="4"
+      ;;
+  esac
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log "would write/update $USER_DEFS_PATH"
+    log "would update only the '$SETUP_MACHINE' entries in the userDefs dictionaries"
+    log "would set _pfwPath[\"$SETUP_MACHINE\"] = '$PFW_USER_PATH'"
+    log "would set _geosPath[\"$SETUP_MACHINE\"] = '$ACTIVE_GEOS_USER_PATH'"
+    log "would set _testRunDirectory[\"$SETUP_MACHINE\"] = r\"$TEST_RUN_DIR\""
+    log "would set _defaultRunDirectory[\"$SETUP_MACHINE\"] = r\"$DEFAULT_RUN_DIR_USER\""
+    log "would set _defaultBank[\"$SETUP_MACHINE\"] = '$active_bank'"
+    return 0
+  fi
+
+  GEOS_MPM_USERDEFS_MACHINE="$SETUP_MACHINE" \
+  GEOS_MPM_USERDEFS_PFW_PATH="$PFW_USER_PATH" \
+  GEOS_MPM_USERDEFS_GEOS_PATH="$ACTIVE_GEOS_USER_PATH" \
+  GEOS_MPM_USERDEFS_TEST_RUN_DIRECTORY="$TEST_RUN_DIR" \
+  GEOS_MPM_USERDEFS_DEFAULT_RUN_DIRECTORY="$DEFAULT_RUN_DIR_USER" \
+  GEOS_MPM_USERDEFS_DEFAULT_BANK="$active_bank" \
+  GEOS_MPM_USERDEFS_PYTHON_COMMAND="$PYTHON_CMD" \
+  GEOS_MPM_USERDEFS_SCHEDULER="$active_scheduler" \
+  GEOS_MPM_USERDEFS_SLURM_PARTITION="$active_slurm_partition" \
+  GEOS_MPM_USERDEFS_FLUX_QUEUE="$active_flux_queue" \
+  GEOS_MPM_USERDEFS_DEVICE_RANKS_PER_NODE="$active_device_ranks" \
+  GEOS_MPM_USERDEFS_MPI_RANKS_PER_NODE="$active_mpi_ranks" \
+  "$PYTHON_CMD" - "$USER_DEFS_PATH" <<'PY_USERDEFS'
+import ast
+import os
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+machines = ("dane", "tuolumne")
+CHANGEME = "CHANGEME"
+
+fields = [
+    ("_pfwPath", "pfwPath"),
+    ("_geosPath", "geosPath"),
+    ("_testRunDirectory", "testRunDirectory"),
+    ("_defaultRunDirectory", "defaultRunDirectory"),
+    ("_defaultBank", "defaultBank"),
+    ("_defaultPythonCommand", "defaultPythonCommand"),
+    ("_defaultScheduler", "defaultScheduler"),
+    ("_defaultSlurmPartition", "defaultSlurmPartition"),
+    ("_defaultFluxQueue", "defaultFluxQueue"),
+    ("_defaultDeviceRanksPerNode", "defaultDeviceRanksPerNode"),
+    ("_defaultMpiRanksPerNode", "defaultMpiRanksPerNode"),
+]
+field_names = {name for name, _ in fields}
+values = {name: {machine: CHANGEME for machine in machines} for name, _ in fields}
+
+
+def literal_value(node):
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Name) and node.id == "_CHANGEME":
+        return CHANGEME
+    return None
+
+
+def load_existing():
+    if not path.exists():
+        return
+    text = path.read_text()
+    if "Auto-generated by setupMPM" not in text:
+        return
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return
+
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            # Preserve dictionary literals such as _geosPath = {'dane': '...', ...}.
+            if isinstance(target, ast.Name) and target.id in field_names and isinstance(node.value, ast.Dict):
+                for key_node, value_node in zip(node.value.keys, node.value.values):
+                    key = literal_value(key_node)
+                    value = literal_value(value_node)
+                    if key in machines and value is not None:
+                        values[target.id][key] = value
+                continue
+
+            # Preserve assignment lines such as _geosPath["dane"] = '...'.
+            if not isinstance(target, ast.Subscript):
+                continue
+            if not isinstance(target.value, ast.Name) or target.value.id not in field_names:
+                continue
+            key_node = target.slice
+            # Python < 3.9 wrapped slices in ast.Index.
+            if hasattr(ast, "Index") and isinstance(key_node, ast.Index):
+                key_node = key_node.value
+            key = literal_value(key_node)
+            value = literal_value(node.value)
+            if key in machines and value is not None:
+                values[target.value.id][key] = value
+
+
+def env(name, default=CHANGEME):
+    value = os.environ.get(name, default)
+    return value if value not in (None, "") else default
+
+
+def env_int(name):
+    value = env(name)
+    if value == CHANGEME:
+        return CHANGEME
+    return int(value)
+
+
+load_existing()
+active_machine = env("GEOS_MPM_USERDEFS_MACHINE")
+if active_machine not in machines:
+    raise SystemExit(f"unsupported setup machine for userDefs: {active_machine}")
+
+values["_pfwPath"][active_machine] = env("GEOS_MPM_USERDEFS_PFW_PATH")
+values["_geosPath"][active_machine] = env("GEOS_MPM_USERDEFS_GEOS_PATH")
+values["_testRunDirectory"][active_machine] = env("GEOS_MPM_USERDEFS_TEST_RUN_DIRECTORY")
+values["_defaultRunDirectory"][active_machine] = env("GEOS_MPM_USERDEFS_DEFAULT_RUN_DIRECTORY")
+values["_defaultBank"][active_machine] = env("GEOS_MPM_USERDEFS_DEFAULT_BANK")
+values["_defaultPythonCommand"][active_machine] = env("GEOS_MPM_USERDEFS_PYTHON_COMMAND")
+values["_defaultScheduler"][active_machine] = env("GEOS_MPM_USERDEFS_SCHEDULER")
+values["_defaultSlurmPartition"][active_machine] = env("GEOS_MPM_USERDEFS_SLURM_PARTITION")
+values["_defaultFluxQueue"][active_machine] = env("GEOS_MPM_USERDEFS_FLUX_QUEUE")
+values["_defaultDeviceRanksPerNode"][active_machine] = env_int("GEOS_MPM_USERDEFS_DEVICE_RANKS_PER_NODE")
+values["_defaultMpiRanksPerNode"][active_machine] = env_int("GEOS_MPM_USERDEFS_MPI_RANKS_PER_NODE")
+
+
+def py_value(value):
+    if value == CHANGEME:
+        return "_CHANGEME"
+    if isinstance(value, int):
+        return str(value)
+    return repr(str(value))
+
+
+lines = [
+    "# -*- coding: utf-8 -*-",
+    "# Auto-generated by setupMPM. Machine-local paths; do not commit.",
+    "# A setup run updates only the dictionary entries for the machine it is run for.",
+    "# Values left as CHANGEME have not been configured on that machine yet.",
+    "import os",
+    "import platform",
+    "",
+    "_CHANGEME = 'CHANGEME'",
+    "_machines = ('dane', 'tuolumne')",
+    "",
+    "_node = platform.node().lower()",
+    "node = platform.node()",
+    "dane = 'dane' in _node",
+    "lassen = 'lassen' in _node",
+    "tuolumne = ('tuolumne' in _node) or _node.startswith('tuo')",
+    "rzhound = 'rzhound' in _node",
+    "tioga = 'tioga' in _node",
+    "",
+    "# Optional escape hatch for login nodes or unusual node names:",
+    "#   export GEOS_MPM_MACHINE=dane",
+    "#   export GEOS_MPM_MACHINE=tuolumne",
+    "_machine = os.environ.get('GEOS_MPM_MACHINE', '').strip().lower()",
+    "if not _machine:",
+    "  if dane:",
+    "    _machine = 'dane'",
+    "  elif tuolumne:",
+    "    _machine = 'tuolumne'",
+    "",
+    "if _machine not in _machines:",
+    "  raise RuntimeError(",
+    "    \"Could not identify Dane or Tuolumne from host '%s'. \"",
+    "    \"Set GEOS_MPM_MACHINE=dane or GEOS_MPM_MACHINE=tuolumne.\"",
+    "    % node",
+    "  )",
+    "",
+]
+
+for dictionary_name, public_name in fields:
+    lines.append(f"{dictionary_name} = {{machine: _CHANGEME for machine in _machines}}")
+lines.append("")
+lines.append("# Machine-local setup values. Entries that are still _CHANGEME are intentionally unset.")
+for dictionary_name, public_name in fields:
+    for machine in machines:
+        lines.append(f'{dictionary_name}["{machine}"] = {py_value(values[dictionary_name][machine])}')
+    lines.append("")
+
+lines.extend([
+    "# Public names consumed by the particle-file-writer scripts.",
+    "pfwPath=_pfwPath[_machine]",
+    "geosPath=_geosPath[_machine]",
+    "testRunDirectory=_testRunDirectory[_machine]",
+    "defaultRunDirectory=_defaultRunDirectory[_machine]",
+    "defaultBank=_defaultBank[_machine]",
+    "defaultPythonCommand=_defaultPythonCommand[_machine]",
+    "pythonCommand=defaultPythonCommand",
+    "defaultPython=defaultPythonCommand  # backward-compatible alias",
+    "",
+    "# Convenience defaults. Existing PFW inputs can ignore these.",
+    "defaultScheduler=_defaultScheduler[_machine]",
+    "defaultSlurmPartition=_defaultSlurmPartition[_machine]",
+    "defaultFluxQueue=_defaultFluxQueue[_machine]",
+    "defaultDeviceRanksPerNode=_defaultDeviceRanksPerNode[_machine]",
+    "defaultMpiRanksPerNode=_defaultMpiRanksPerNode[_machine]",
+    "",
+    "_required = {",
+    "  'pfwPath': pfwPath,",
+    "  'geosPath': geosPath,",
+    "  'testRunDirectory': testRunDirectory,",
+    "  'defaultRunDirectory': defaultRunDirectory,",
+    "}",
+    "_missing = [name for name, value in _required.items() if value == _CHANGEME]",
+    "if _missing:",
+    "  raise RuntimeError(",
+    "    \"The following userDefs values are still CHANGEME for %s: %s. \"",
+    "    \"Run setupMPM on that machine or edit this file.\"",
+    "    % (_machine, ', '.join(_missing))",
+    "  )",
+    "",
+])
+
+path.write_text("\n".join(lines))
+PY_USERDEFS
+  log "wrote/updated $USER_DEFS_PATH for $SETUP_MACHINE"
+}
 write_runclean() {
   if [ -e "$RUNCLEAN_PATH" ] && [ "$OVERWRITE_RUNCLEAN" -ne 1 ]; then
     log "leaving existing $RUNCLEAN_PATH unchanged; use --overwrite-runclean to replace it"
@@ -696,7 +863,7 @@ fileNames=(
   brazilianDisk
 )
 
-# Defaults generated by setupMPM_tuolumne. Override these at launch with
+# Defaults generated by setupMPM. Override these at launch with
 # FILE_LOCATION=..., RUN_LOCATION=..., PFW_PATH=..., PFW_PYTHON=..., or PFW_PYTHON_COMMAND=...
 particleFileWriterPath="@@DOLLAR@@{PFW_PATH:-$PFW_USER_PATH}"
 fileLocation="@@DOLLAR@@{FILE_LOCATION:-@@DOLLAR@@particleFileWriterPath/examples/brazilianDisk}"
@@ -767,14 +934,30 @@ PY
   log "wrote $RUNCLEAN_PATH"
 }
 
-load_tuolumne_modules() {
+load_module_any() {
+  local label="$1"
+  shift
+
+  local module_name
+  for module_name in "$@"; do
+    if run_cmd module load "$module_name"; then
+      log "loaded $label module: $module_name"
+      return 0
+    fi
+  done
+
+  log "could not load $label module from candidates: $*; continuing with current environment"
+  return 0
+}
+
+prepare_module_command() {
   if [ "$LOAD_MODULES" -ne 1 ]; then
-    return 0
+    return 1
   fi
 
   if ! command -v module >/dev/null 2>&1; then
     log "module command not found; continuing with current environment"
-    return 0
+    return 1
   fi
 
   if [ "$MODULE_PURGE" -eq 1 ]; then
@@ -782,12 +965,27 @@ load_tuolumne_modules() {
     run_cmd module purge
   fi
 
-  log "loading Tuolumne build modules if available"
-  run_cmd module load rocm/6.4.2 || log "module load rocm/6.4.2 failed; continuing"
-  run_cmd module load cmake/3.29.2 || log "module load cmake/3.29.2 failed; continuing"
-  run_cmd module load ninja/1.10.2 || log "module load ninja/1.10.2 failed; continuing"
+  return 0
 }
 
+load_dane_modules() {
+  prepare_module_command || return 0
+
+  log "loading Dane build modules if available"
+  load_module_any "Dane GCC" gcc/12.1.1-magic gcc/12.1.1
+  load_module_any "Dane MVAPICH2" mvapich2/2.3.7-gcc-12.1.1-magic mvapich2/2.3.7
+  load_module_any "CMake" cmake/3.26.3 cmake/3.29.2
+  load_module_any "Ninja" ninja/1.10.2 ninja
+}
+
+load_tuolumne_modules() {
+  prepare_module_command || return 0
+
+  log "loading Tuolumne build modules if available"
+  load_module_any "Tuolumne ROCm" rocm/6.4.2
+  load_module_any "CMake" cmake/3.29.2 cmake/3.26.3
+  load_module_any "Ninja" ninja/1.10.2 ninja
+}
 create_minimal_tpl_view() {
   if [ "$CREATE_TPL_VIEW" -ne 1 ]; then
     return 0
@@ -833,6 +1031,8 @@ prepare_tuolumne_environment() {
 }
 
 prepare_dane_environment() {
+  load_dane_modules
+
   # Do not let a previous Tuolumne/ROCm environment leak into a Dane CPU configure.
   unset HIPCXX HIPCC HIP_PATH HIP_PLATFORM ROCM_PATH
   unset MPICH_GPU_SUPPORT_ENABLED HSA_XNACK
@@ -1178,6 +1378,22 @@ PFW_LINK="$REPO_ROOT_CMD/particleFileWriter"
 PFW_USER_PATH="$REPO_ROOT_USER/$PFW_REL"
 CONFIG_SCRIPT="$REPO_ROOT_PHYSICAL/scripts/config-build.py"
 SETUP_MACHINE=$(detect_setup_machine "$REQUESTED_SETUP_MACHINE")
+case "$SETUP_MACHINE" in
+  dane)
+    [ -z "$RUN_ROOT_OVERRIDE" ] && RUN_ROOT_OVERRIDE="$DANE_RUN_ROOT_OVERRIDE"
+    [ -z "$TEST_RUN_DIR_OVERRIDE" ] && TEST_RUN_DIR_OVERRIDE="$DANE_TEST_RUN_DIR_OVERRIDE"
+    [ -z "$DEFAULT_RUN_DIR_OVERRIDE" ] && DEFAULT_RUN_DIR_OVERRIDE="$DANE_DEFAULT_RUN_DIR_OVERRIDE"
+    [ -z "$BUILD_DIR_OVERRIDE" ] && BUILD_DIR_OVERRIDE="$DANE_BUILD_DIR_OVERRIDE"
+    [ -z "$GEOS_PATH_OVERRIDE" ] && GEOS_PATH_OVERRIDE="$DANE_GEOS_PATH_OVERRIDE"
+    ;;
+  tuolumne)
+    [ -z "$RUN_ROOT_OVERRIDE" ] && RUN_ROOT_OVERRIDE="$TUOLUMNE_RUN_ROOT_OVERRIDE"
+    [ -z "$TEST_RUN_DIR_OVERRIDE" ] && TEST_RUN_DIR_OVERRIDE="$TUOLUMNE_TEST_RUN_DIR_OVERRIDE"
+    [ -z "$DEFAULT_RUN_DIR_OVERRIDE" ] && DEFAULT_RUN_DIR_OVERRIDE="$TUOLUMNE_DEFAULT_RUN_DIR_OVERRIDE"
+    [ -z "$BUILD_DIR_OVERRIDE" ] && BUILD_DIR_OVERRIDE="$TUOLUMNE_BUILD_DIR_OVERRIDE"
+    [ -z "$GEOS_PATH_OVERRIDE" ] && GEOS_PATH_OVERRIDE="$TUOLUMNE_GEOS_PATH_OVERRIDE"
+    ;;
+esac
 DANE_HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/dane-toss_4_x86_64_ib-gcc@12.1.1-mpm-minimal-tpl.cmake"
 TUOLUMNE_HOST_CONFIG="$REPO_ROOT_PHYSICAL/host-configs/LLNL/tuolumne-toss_4_x86_64_ib_cray-llvm-amdgpu@6.4.2-rocm@6.4.2-mpm-minimal-tpl.cmake"
 if [ -z "$HOST_CONFIG" ]; then
@@ -1357,16 +1573,8 @@ log "active default run dir: $DEFAULT_RUN_DIR_USER"
 log "active build root: $(shell_to_display_path "$BUILD_ROOT")"
 log "active build dir: $BUILD_DIR_USER"
 log "active geosx path: $ACTIVE_GEOS_USER_PATH"
-log "Tuolumne run root: $TUOLUMNE_RUN_ROOT"
-log "Tuolumne test run dir: $TUOLUMNE_TEST_RUN_DIR"
-log "Tuolumne default run dir: $TUOLUMNE_DEFAULT_RUN_DIR_USER"
-log "Tuolumne build dir in userDefs: $TUOLUMNE_BUILD_DIR_USER"
-log "Tuolumne geosx path in userDefs: $TUOLUMNE_GEOS_USER_PATH"
-log "Dane run root: $DANE_RUN_ROOT"
-log "Dane test run dir: $DANE_TEST_RUN_DIR"
-log "Dane default run dir: $DANE_DEFAULT_RUN_DIR_USER"
-log "Dane build dir in userDefs: $DANE_BUILD_DIR_USER"
-log "Dane geosx path in userDefs: $DANE_GEOS_USER_PATH"
+log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
+log "inactive userDefs entries are preserved, or left as CHANGEME when unset"
 if [ -n "$TPL_DIR" ]; then
   log "TPL dir: $TPL_DIR"
 fi

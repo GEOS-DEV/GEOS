@@ -1,0 +1,75 @@
+{
+  "cases": {
+    "geomechanics__geoModel_FTable": {
+      "jobs": {
+        "case": "geomechanics__geoModel_FTable",
+        "case_meta": {
+          "description": "This verification case exercises f-table interpolation.  The staged run uses the PFW input mesh, material-point seeding, material database entries, event definitions, and output requests.  Diagnostic figures show the initial particle configuration, terminal state, and the history quantities used for verification or validation comparisons.",
+          "dir": "geomechanics",
+          "family": "F-table interpolation",
+          "features": [
+            "XPIC/PIC-family transfer",
+            "reaction-history output",
+            "box-average history",
+            "Geomechanics constitutive model",
+            "ElasticIsotropic material"
+          ],
+          "final_variable": "PlasticStrainMagnitude",
+          "id": "geomechanics__geoModel_FTable",
+          "initial_variable": "Pressure",
+          "input": "pfw_input_geoModel_FTable.py",
+          "label": "geomechanics / geoModel FTable",
+          "mesh": "CellRegion1",
+          "prefix": "geomechanics__geoModel_FTable",
+          "suite": "verification",
+          "view": "xy"
+        },
+        "code": 1,
+        "geos": "",
+        "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/output/geomechanics__geoModel_FTable",
+        "post": "",
+        "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FTable_runProblem.log",
+        "status": "failed"
+      },
+      "timing": {
+        "geos": {},
+        "post": {}
+      }
+    }
+  },
+  "generated_at": "2026-05-18T09:58:32",
+  "jobs": [
+    {
+      "case": "geomechanics__geoModel_FTable",
+      "case_meta": {
+        "description": "This verification case exercises f-table interpolation.  The staged run uses the PFW input mesh, material-point seeding, material database entries, event definitions, and output requests.  Diagnostic figures show the initial particle configuration, terminal state, and the history quantities used for verification or validation comparisons.",
+        "dir": "geomechanics",
+        "family": "F-table interpolation",
+        "features": [
+          "XPIC/PIC-family transfer",
+          "reaction-history output",
+          "box-average history",
+          "Geomechanics constitutive model",
+          "ElasticIsotropic material"
+        ],
+        "final_variable": "PlasticStrainMagnitude",
+        "id": "geomechanics__geoModel_FTable",
+        "initial_variable": "Pressure",
+        "input": "pfw_input_geoModel_FTable.py",
+        "label": "geomechanics / geoModel FTable",
+        "mesh": "CellRegion1",
+        "prefix": "geomechanics__geoModel_FTable",
+        "suite": "verification",
+        "view": "xy"
+      },
+      "code": 1,
+      "geos": "",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/output/geomechanics__geoModel_FTable",
+      "post": "",
+      "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FTable_runProblem.log",
+      "status": "failed"
+    }
+  ],
+  "note": "sacct unavailable or no job ids",
+  "sacct_by_job_id": {}
+}
