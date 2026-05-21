@@ -21,7 +21,8 @@ uberenv_libs
 spack-*.txt
 /src/docs/sphinx/datastructure
 *~
-__pycache__
+__pycache__/
+*.py[cod]
 
 # ignore all folders except the template one
 /src/externalComponents/*
@@ -59,6 +60,9 @@ __pycache__
 /scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_dispatch_records.json
 /scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_selected_cases.txt
 
+
+# GEOS-MPM setup logs
+/setupMPM-logs/
 
 # GEOS-MPM local user setup files
 /mpm

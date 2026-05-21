@@ -59,16 +59,15 @@ Options:
                             /p/lustre5/$USER/geosxInstalls on Tuolumne.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
-  --tpl-dir DIR             Minimal TPL install/view root. If provided, exported as
+  --tpl-dir DIR             Existing minimal TPL install/view root. If provided, exported as
                             GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure.
-  --create-tpl-view         Create the minimal TPL view at --tpl-dir before configure.
-                            Default TPL dir: /p/lustre5/$USER/geos-tpls/tuolumne-mpm-minimal-rocm-6.4.2
   --queue QUEUE             Tuolumne Flux queue written to runClean_$USER.sh. Default: pdebug
   --flux-time TIME          Tuolumne Flux walltime written to runClean_$USER.sh. Default: 30m
   --jobs N                  Build parallelism. Default: GEOS_BUILD_JOBS or 32
   --build-target TARGET     CMake build target. Default: geosx
   --log-file FILE           Write full setup/configure/build output to FILE.
-                            Default: BUILD_DIR/setupMPM_<machine>_<timestamp>.log
+  --log-dir DIR             Directory for the default log file.
+                            Default: BUILD_ROOT/setupMPM-logs
   --no-log                  Do not create a setup/build log file.
   --skip-modules            Do not attempt to load machine build modules.
   --module-purge            Run module purge before loading Tuolumne modules.
@@ -99,9 +98,14 @@ start_logging() {
   fi
 
   if [ -z "$LOG_FILE" ]; then
-    local stamp
+    local stamp log_dir
     stamp=$(date '+%Y%m%d-%H%M%S')
-    LOG_FILE="$BUILD_DIR/setupMPM_${SETUP_MACHINE}_${stamp}.log"
+    if [ -n "$LOG_DIR" ]; then
+      log_dir=$(trim_trailing_slashes "$(abs_path "$LOG_DIR")")
+    else
+      log_dir="$BUILD_ROOT/setupMPM-logs"
+    fi
+    LOG_FILE="$log_dir/setupMPM_${SETUP_MACHINE}_${stamp}.log"
   else
     LOG_FILE=$(abs_path "$LOG_FILE")
   fi
@@ -491,11 +495,47 @@ choose_repo_command_root() {
   printf '%s\n' "$REPO_ROOT_PHYSICAL"
 }
 
+link_target_abs() {
+  local link_dir target
+  link_dir="$1"
+  target="$2"
+  case "$target" in
+    /*) abs_path "$target" ;;
+    *) abs_path "$link_dir/$target" ;;
+  esac
+}
+
+remove_legacy_pfw_link() {
+  local legacy_link legacy_target legacy_abs target_abs
+  legacy_link="$REPO_ROOT_CMD/particleFileWriter"
+
+  if [ ! -L "$legacy_link" ]; then
+    return 0
+  fi
+
+  legacy_target=$(readlink "$legacy_link")
+  legacy_abs=$(link_target_abs "$REPO_ROOT_CMD" "$legacy_target" 2>/dev/null || true)
+  target_abs=$(abs_path "$PFW_DIR")
+
+  if [ "$legacy_target" = "$PFW_REL" ] || [ "$legacy_abs" = "$target_abs" ]; then
+    if [ "$DRY_RUN" -eq 1 ]; then
+      log "would remove legacy particleFileWriter symlink; use mpm instead"
+    else
+      rm -f "$legacy_link"
+      log "removed legacy particleFileWriter symlink; use mpm instead"
+    fi
+  else
+    log "leaving legacy particleFileWriter symlink because it points to $legacy_target"
+  fi
+}
+
 create_pfw_link() {
+  remove_legacy_pfw_link
+
   if [ -L "$PFW_LINK" ]; then
     local current current_abs target_abs
     current=$(readlink "$PFW_LINK")
-    current_abs=$(abs_path "$REPO_ROOT_CMD/$current" 2>/dev/null || true)
+    current_abs=$(link_target_abs "$REPO_ROOT_CMD" "$current" 2>/dev/null || true)
     target_abs=$(abs_path "$PFW_DIR")
     if [ "$current" = "$PFW_REL" ] || [ "$current_abs" = "$target_abs" ]; then
       log "mpm symlink already points to $PFW_REL"
@@ -973,7 +1013,7 @@ load_dane_modules() {
 
   log "loading Dane build modules if available"
   load_module_any "Dane GCC" gcc/12.1.1-magic gcc/12.1.1
-  load_module_any "Dane MVAPICH2" mvapich2/2.3.7-gcc-12.1.1-magic mvapich2/2.3.7
+  load_module_any "Dane MVAPICH2" mvapich2/2.3.7 mvapich2/2.3.7-gcc-12.1.1-magic
   load_module_any "CMake" cmake/3.26.3 cmake/3.29.2
   load_module_any "Ninja" ninja/1.10.2 ninja
 }
@@ -986,31 +1026,6 @@ load_tuolumne_modules() {
   load_module_any "CMake" cmake/3.29.2 cmake/3.26.3
   load_module_any "Ninja" ninja/1.10.2 ninja
 }
-create_minimal_tpl_view() {
-  if [ "$CREATE_TPL_VIEW" -ne 1 ]; then
-    return 0
-  fi
-
-  if [ -z "$TPL_DIR" ]; then
-    TPL_DIR="$DEFAULT_TPL_DIR"
-  fi
-
-  local upper_helper lower_helper
-  upper_helper="$REPO_ROOT_PHYSICAL/scripts/LLNL/create_geos_mpm_tuolumne_minimal_tpl_view.sh"
-  lower_helper="$REPO_ROOT_PHYSICAL/scripts/llnl/build_tuolumne_mpm_minimal_tpls.sh"
-
-  run_cmd mkdir -p "$(dirname "$TPL_DIR")"
-  if [ -x "$upper_helper" ]; then
-    log "creating minimal TPL view at $TPL_DIR"
-    run_cmd "$upper_helper" --prefix "$TPL_DIR"
-  elif [ -x "$lower_helper" ]; then
-    log "building minimal TPL install at $TPL_DIR"
-    run_cmd "$lower_helper" --tpl-root "$TPL_DIR" -j "$JOBS"
-  else
-    fail "--create-tpl-view was requested, but no Tuolumne minimal TPL helper script was found. Expected $upper_helper or $lower_helper."
-  fi
-}
-
 prepare_tuolumne_environment() {
   load_tuolumne_modules
 
@@ -1023,7 +1038,7 @@ prepare_tuolumne_environment() {
   export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 
   if [ -n "$TPL_DIR" ]; then
-    [ -d "$TPL_DIR" ] || fail "TPL directory does not exist: $TPL_DIR. Use --create-tpl-view or pass a valid --tpl-dir."
+    [ -d "$TPL_DIR" ] || fail "TPL directory does not exist: $TPL_DIR. Pass an existing directory with --tpl-dir."
     export GEOS_TPL_DIR="$TPL_DIR"
     export GEOS_MPM_TPL_DIR="$TPL_DIR"
     log "using minimal TPL dir: $TPL_DIR"
@@ -1041,13 +1056,9 @@ prepare_dane_environment() {
 prepare_build_environment() {
   case "$SETUP_MACHINE" in
     tuolumne)
-      create_minimal_tpl_view
       prepare_tuolumne_environment
       ;;
     dane)
-      if [ "$CREATE_TPL_VIEW" -eq 1 ]; then
-        fail "--create-tpl-view is only valid for the Tuolumne build. Use --setup-machine tuolumne, or remove --create-tpl-view."
-      fi
       if [ -n "$TPL_DIR" ]; then
         log "ignoring --tpl-dir for Dane CPU setup"
       fi
@@ -1130,8 +1141,6 @@ JOBS="${GEOS_BUILD_JOBS:-32}"
 BUILD_TARGET="geosx"
 HOST_CONFIG=""
 TPL_DIR=""
-DEFAULT_TPL_DIR="/p/lustre5/$LC_USER/geos-tpls/tuolumne-mpm-minimal-rocm-6.4.2"
-CREATE_TPL_VIEW=0
 DEFAULT_QUEUE="pdebug"
 LOAD_MODULES=1
 MODULE_PURGE=0
@@ -1142,6 +1151,7 @@ SKIP_BUILD=0
 CONFIGURE_ONLY=0
 DRY_RUN=0
 LOG_FILE=""
+LOG_DIR=""
 NO_LOG=0
 
 while [ "$#" -gt 0 ]; do
@@ -1289,10 +1299,6 @@ while [ "$#" -gt 0 ]; do
       TPL_DIR="$2"
       shift 2
       ;;
-    --create-tpl-view)
-      CREATE_TPL_VIEW=1
-      shift
-      ;;
     --queue)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       DEFAULT_QUEUE="$2"
@@ -1311,6 +1317,11 @@ while [ "$#" -gt 0 ]; do
     --log-file)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       LOG_FILE="$2"
+      shift 2
+      ;;
+    --log-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      LOG_DIR="$2"
       shift 2
       ;;
     --no-log)
@@ -1407,8 +1418,6 @@ fi
 
 if [ -n "$TPL_DIR" ]; then
   TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
-elif [ "$CREATE_TPL_VIEW" -eq 1 ]; then
-  TPL_DIR=$(trim_trailing_slashes "$(abs_path "$DEFAULT_TPL_DIR")")
 fi
 
 DEFAULT_BANK=$(detect_bank)
