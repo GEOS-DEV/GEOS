@@ -61,7 +61,7 @@ __pycache__
 
 
 # GEOS-MPM local user setup files
-/particleFileWriter
+/mpm
 /scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_*.py
 !/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_username.py
 /scripts/preProcessing/materialPointMethodParticleFileWriter/runClean_*.sh

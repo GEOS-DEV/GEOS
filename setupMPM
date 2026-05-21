@@ -73,10 +73,10 @@ Options:
   --skip-modules            Do not attempt to load machine build modules.
   --module-purge            Run module purge before loading Tuolumne modules.
   --force                   Replace the symlink and overwrite generated user files.
-  --force-link              Replace an existing root particleFileWriter symlink.
-  --overwrite-userdefs      Replace a non-generated particleFileWriter/userDefs_$USER.py.
+  --force-link              Replace an existing root mpm symlink.
+  --overwrite-userdefs      Replace a non-generated mpm/userDefs_$USER.py.
                             Generated files preserve inactive machine entries.
-  --overwrite-runclean      Replace particleFileWriter/runClean_$USER.sh.
+  --overwrite-runclean      Replace mpm/runClean_$USER.sh.
   --skip-build, --no-build  Generate local files but do not configure or build.
   --configure-only          Configure CMake but do not build.
   --dry-run                 Print actions without changing files.
@@ -498,7 +498,7 @@ create_pfw_link() {
     current_abs=$(abs_path "$REPO_ROOT_CMD/$current" 2>/dev/null || true)
     target_abs=$(abs_path "$PFW_DIR")
     if [ "$current" = "$PFW_REL" ] || [ "$current_abs" = "$target_abs" ]; then
-      log "particleFileWriter symlink already points to $PFW_REL"
+      log "mpm symlink already points to $PFW_REL"
       return 0
     fi
     if [ "$FORCE_LINK" -eq 1 ]; then
@@ -1374,7 +1374,7 @@ REPO_ROOT_USER=$(trim_trailing_slashes "$REPO_ROOT_CMD")
 PYTHON_CMD=$(detect_python "$REQUESTED_PYTHON")
 PFW_REL=$(detect_pfw_relative_path)
 PFW_DIR="$REPO_ROOT_PHYSICAL/$PFW_REL"
-PFW_LINK="$REPO_ROOT_CMD/particleFileWriter"
+PFW_LINK="$REPO_ROOT_CMD/mpm"
 PFW_USER_PATH="$REPO_ROOT_USER/$PFW_REL"
 CONFIG_SCRIPT="$REPO_ROOT_PHYSICAL/scripts/config-build.py"
 SETUP_MACHINE=$(detect_setup_machine "$REQUESTED_SETUP_MACHINE")
