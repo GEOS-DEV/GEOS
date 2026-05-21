@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  18 MAY 2026 20:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  21 MAY 2026 08:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -694,71 +694,118 @@ Underfull \hbox (badness 10000) in paragraph at lines 209--211
 [8
 
  <./schematics/geomechanics__geoModel_FTable_schematic.png>]
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_initial_pressure.png, id=207, 1606.0pt x 1606.0pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_initial_pressure.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_initial_pressure.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_initial_pressure.png  used on input line 213.
-(pdftex.def)             Requested size: 165.78593pt x 165.78008pt.
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_final_plasticStrainMagnitude.png, id=208, 1606.0pt x 1606.0pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_final_plasticStrainMagnitude.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_final_plasticStrainMagnitude.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_final_plasticStrainMagnitude.png  used on input li
-ne 214.
-(pdftex.def)             Requested size: 165.78593pt x 165.78008pt.
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_reaction.png, id=209, 520.344pt x 303.534pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_reaction.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_reaction.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_reaction.png  used on input line 215.
-(pdftex.def)             Requested size: 165.78593pt x 96.70676pt.
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_box_damage.png, id=210, 520.344pt x 303.534pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_box_damage.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_box_damage.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_box_damage.png  used on input line 216.
-(pdftex.def)             Requested size: 165.78593pt x 96.70676pt.
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_box_energy.png, id=211, 520.344pt x 303.534pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_box_energy.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_box_energy.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_box_energy.png  used on input line 217.
-(pdftex.def)             Requested size: 165.78593pt x 96.70676pt.
-<../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FT
-able_box_stress.png, id=212, 520.344pt x 303.534pt>
-File: ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMod
-el_FTable_box_stress.png Graphic file (type png)
-<use ../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_box_stress.png>
-Package pdftex.def Info: ../geomechanics/output/geomechanics__geoModel_FTable/g
-eomechanics__geoModel_FTable_box_stress.png  used on input line 218.
-(pdftex.def)             Requested size: 165.78593pt x 96.70676pt.
- [9 <../geomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoMode
-l_FTable_initial_pressure.png (PNG copy)> <../geomechanics/output/geomechanics_
-_geoModel_FTable/geomechanics__geoModel_FTable_final_plasticStrainMagnitude.png
- (PNG copy)> <../geomechanics/output/geomechanics__geoModel_FTable/geomechanics
-__geoModel_FTable_reaction.png> <../geomechanics/output/geomechanics__geoModel_
-FTable/geomechanics__geoModel_FTable_box_damage.png> <../geomechanics/output/ge
-omechanics__geoModel_FTable/geomechanics__geoModel_FTable_box_energy.png> <../g
-eomechanics/output/geomechanics__geoModel_FTable/geomechanics__geoModel_FTable_
-box_stress.png>]
-<schematics/implicitFluid__fluidPressure_schematic.png, id=226, 346.896pt x 173
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_initial\_pressure.png' not found on input line 
+213.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_initial_pressure.png' not found: using dr
+aft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.213 ..._geoModel\_FTable\_initial\_pressure.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_final\_plasticStrainMagnitude.png' not found on
+ input line 214.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_final_plasticStrainMagnitude.png' not fou
+nd: using draft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.214 ...Table\_final\_plasticStrainMagnitude.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_reaction.png' not found on input line 215.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_reaction.png' not found: using draft sett
+ing.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.215 ...hanics\_\_geoModel\_FTable\_reaction.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_box\_damage.png' not found on input line 216.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_box_damage.png' not found: using draft se
+tting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.216 ...ics\_\_geoModel\_FTable\_box\_damage.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_box\_energy.png' not found on input line 217.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_box_energy.png' not found: using draft se
+tting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.217 ...ics\_\_geoModel\_FTable\_box\_energy.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+LaTeX Warning: File `../geomechanics/output/geomechanics\_\_geoModel\_FTable/ge
+omechanics\_\_geoModel\_FTable\_box\_stress.png' not found on input line 218.
+
+
+! Package pdftex.def Error: File `../geomechanics/output/geomechanics__geoModel
+_FTable/geomechanics__geoModel_FTable_box_stress.png' not found: using draft se
+tting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.218 ...ics\_\_geoModel\_FTable\_box\_stress.png}
+                                                  
+Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+[9] [10]
+<schematics/implicitFluid__fluidPressure_schematic.png, id=220, 346.896pt x 173
 .448pt>
 File: schematics/implicitFluid__fluidPressure_schematic.png Graphic file (type 
 png)
@@ -796,7 +843,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 247--249
 
  []
 
-[10
+[11
 
  <./schematics/implicitFluid__fluidPressure_schematic.png>]
 (./verification_suite_report.aux)
@@ -805,10 +852,10 @@ ed.
 (rerunfilecheck)             Checksum: 7C3A863FBFDB7410F5F0030455226BDD;2714.
  ) 
 Here is how much of TeX's memory you used:
- 11221 strings out of 478268
- 189561 string characters out of 5754030
+ 11384 strings out of 478268
+ 206018 string characters out of 5754030
  740435 words of memory out of 5000000
- 29173 multiletter control sequences out of 15000+600000
+ 29317 multiletter control sequences out of 15000+600000
  474651 words of font info for 47 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  60i,9n,63p,413b,1055s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -837,10 +884,10 @@ nd/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfy
 zzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt9.pfb></usr/tce
 /backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
 r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on verification_suite_report.pdf (10 pages, 546993 bytes).
+Output written on verification_suite_report.pdf (11 pages, 226837 bytes).
 PDF statistics:
- 319 PDF objects out of 1000 (max. 8388607)
- 262 compressed objects within 3 object streams
- 119 named destinations out of 1000 (max. 500000)
- 168 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 313 PDF objects out of 1000 (max. 8388607)
+ 265 compressed objects within 3 object streams
+ 120 named destinations out of 1000 (max. 500000)
+ 138 words of extra memory for PDF output out of 10000 (max. 10000000)
 

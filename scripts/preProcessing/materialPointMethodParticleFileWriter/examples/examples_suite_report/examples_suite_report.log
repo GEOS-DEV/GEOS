@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 23:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  21 MAY 2026 08:38
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -263,12 +263,12 @@ Overfull \hbox (37.17082pt too wide) in alignment at lines 29--41
 {/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdftex.map}
 ] [2]
-<schematics/brazilianDisk_FMPM_schematic.png, id=15, 264.187pt x 196.3335pt>
+<schematics/brazilianDisk_FMPM_schematic.png, id=15, 370.0224pt x 317.7471pt>
 File: schematics/brazilianDisk_FMPM_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_FMPM_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_FMPM_schematic.png  used on i
 nput line 65.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 259.17734pt.
 <../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthScale.
 png, id=17, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthS
@@ -306,16 +306,16 @@ Overfull \hbox (10.2155pt too wide) in paragraph at lines 84--85
  <./schematics/brazilianDisk_FMPM_schematic.png> <../brazilianDisk_FMPM/output/
 brazilianDisk_FMPM_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
 isk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png (PNG copy)> <../bra
-zilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>]
-<schematics/brazilianDisk_BSpline_schematic.png, id=26, 264.187pt x 196.3335pt>
-
+zilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>] [4]
+<schematics/brazilianDisk_BSpline_schematic.png, id=29, 370.0224pt x 317.7471pt
+>
 File: schematics/brazilianDisk_BSpline_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_BSpline_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_BSpline_schematic.png  used o
 n input line 91.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 259.17734pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrength
-Scale.png, id=27, 1606.0pt x 1606.0pt>
+Scale.png, id=30, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStr
 engthScale.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStre
@@ -324,7 +324,7 @@ Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
 initial_particleStrengthScale.png  used on input line 105.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png
-, id=28, 1606.0pt x 1606.0pt>
+, id=31, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamag
 e.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage
@@ -332,7 +332,7 @@ e.png Graphic file (type png)
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
 final_particleDamage.png  used on input line 106.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=29, 
+<../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=32, 
 505.89pt x 325.215pt>
 File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png Gra
 phic file (type png)
@@ -347,21 +347,21 @@ al[]particleDamage.png, brazil-ian-Disk[]BSpline[]initial[]particleStrengthScal
 e.png,
  []
 
-[4
+[5
 
  <./schematics/brazilianDisk_BSpline_schematic.png> <../brazilianDisk_BSpline/o
 utput/brazilianDisk_BSpline_initial_particleStrengthScale.png (PNG copy)> <../b
 razilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png (PNG
  copy)> <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png>
-]
-<schematics/brazilianDisk_FLIP_schematic.png, id=35, 264.187pt x 196.3335pt>
+] [6]
+<schematics/brazilianDisk_FLIP_schematic.png, id=41, 370.0224pt x 317.7471pt>
 File: schematics/brazilianDisk_FLIP_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_FLIP_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_FLIP_schematic.png  used on i
 nput line 117.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 259.17734pt.
 <../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthScale.
-png, id=36, 1606.0pt x 1606.0pt>
+png, id=42, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthS
 cale.png Graphic file (type png)
 <use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthSc
@@ -369,15 +369,15 @@ ale.png>
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initia
 l_particleStrengthScale.png  used on input line 130.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png, id=3
-7, 1606.0pt x 1606.0pt>
+<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png, id=4
+3, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png 
 Graphic file (type png)
 <use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_
 particleDamage.png  used on input line 131.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png, id=38, 505.89
+<../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png, id=44, 505.89
 pt x 325.215pt>
 File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png Graphic f
 ile (type png)
@@ -385,20 +385,20 @@ ile (type png)
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reacti
 ons_y.png  used on input line 132.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
- [5
+ [7
 
  <./schematics/brazilianDisk_FLIP_schematic.png> <../brazilianDisk_FLIP/output/
 brazilianDisk_FLIP_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
 isk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png (PNG copy)> <../bra
 zilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>]
-<schematics/brazilianDisk_PIC_schematic.png, id=44, 264.187pt x 196.3335pt>
+<schematics/brazilianDisk_PIC_schematic.png, id=51, 370.0224pt x 317.7471pt>
 File: schematics/brazilianDisk_PIC_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_PIC_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_PIC_schematic.png  used on in
 put line 142.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 259.17734pt.
 <../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScale.pn
-g, id=45, 1606.0pt x 1606.0pt>
+g, id=52, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthSca
 le.png Graphic file (type png)
 <use ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScal
@@ -406,7 +406,7 @@ e.png>
 Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_
 particleStrengthScale.png  used on input line 155.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png, id=46,
+<../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png, id=53,
  1606.0pt x 1606.0pt>
 File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png Gr
 aphic file (type png)
@@ -414,7 +414,7 @@ aphic file (type png)
 Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_pa
 rticleDamage.png  used on input line 156.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png, id=47, 505.89pt
+<../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png, id=54, 505.89pt
  x 325.215pt>
 File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png Graphic fil
 e (type png)
@@ -429,20 +429,20 @@ particleDamage.png, brazil-ian-Disk[]PIC[]initial[]particleStrengthScale.png, b
 razil-
  []
 
-[6
+[8
 
  <./schematics/brazilianDisk_PIC_schematic.png> <../brazilianDisk_PIC/output/br
 azilianDisk_PIC_initial_particleStrengthScale.png (PNG copy)> <../brazilianDisk
 _PIC/output/brazilianDisk_PIC_final_particleDamage.png (PNG copy)> <../brazilia
 nDisk_PIC/output/brazilianDisk_PIC_reactions_y.png>]
-<schematics/brazilianDisk_XPIC_schematic.png, id=53, 264.187pt x 196.3335pt>
+<schematics/brazilianDisk_XPIC_schematic.png, id=60, 370.0224pt x 317.7471pt>
 File: schematics/brazilianDisk_XPIC_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_XPIC_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_XPIC_schematic.png  used on i
 nput line 167.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 259.17734pt.
 <../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthScale.
-png, id=54, 1606.0pt x 1606.0pt>
+png, id=61, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthS
 cale.png Graphic file (type png)
 <use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthSc
@@ -450,15 +450,15 @@ ale.png>
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initia
 l_particleStrengthScale.png  used on input line 180.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png, id=5
-5, 1606.0pt x 1606.0pt>
+<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png, id=6
+2, 1606.0pt x 1606.0pt>
 File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png 
 Graphic file (type png)
 <use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_
 particleDamage.png  used on input line 181.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
-<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png, id=56, 505.89
+<../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png, id=63, 505.89
 pt x 325.215pt>
 File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png Graphic f
 ile (type png)
@@ -466,20 +466,20 @@ ile (type png)
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reacti
 ons_y.png  used on input line 182.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
- [7
+ [9
 
  <./schematics/brazilianDisk_XPIC_schematic.png> <../brazilianDisk_XPIC/output/
 brazilianDisk_XPIC_initial_particleStrengthScale.png (PNG copy)> <../brazilianD
 isk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png (PNG copy)> <../bra
 zilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png>]
-<schematics/benchy_schematic.png, id=63, 264.187pt x 196.3335pt>
+<schematics/benchy_schematic.png, id=69, 410.0118pt x 280.1667pt>
 File: schematics/benchy_schematic.png Graphic file (type png)
 <use schematics/benchy_schematic.png>
 Package pdftex.def Info: schematics/benchy_schematic.png  used on input line 19
 2.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 206.22998pt.
 <../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.png, 
-id=64, 1606.0pt x 1606.0pt>
+id=70, 1606.0pt x 1606.0pt>
 File: ../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.
 png Graphic file (type png)
 <use ../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.p
@@ -488,7 +488,7 @@ Package pdftex.def Info: ../benchy/output/benchy_FMPM_initial_boatGhostRank_bal
 lVelocityMagnitude.png  used on input line 205.
 (pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
 <../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocityMagn
-itude.png, id=65, 1606.0pt x 1606.0pt>
+itude.png, id=71, 1606.0pt x 1606.0pt>
 File: ../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocit
 yMagnitude.png Graphic file (type png)
 <use ../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocity
@@ -503,49 +503,50 @@ ticStrainMagnitude[]ballVelocityMagnitude.png, benchy[]FMPM[]initial[]boatGhost
 Rank[]ballVelocityMagnitude.png 
  []
 
-[8
+[10
 
  <./schematics/benchy_schematic.png> <../benchy/output/benchy_FMPM_initial_boat
 GhostRank_ballVelocityMagnitude.png (PNG copy)> <../benchy/output/benchy_FMPM_f
 inal_boatPlasticStrainMagnitude_ballVelocityMagnitude.png (PNG copy)>]
-[9]
-<schematics/borehole_Ghareb_schematic.png, id=73, 264.187pt x 196.3335pt>
+[11]
+<schematics/borehole_Ghareb_schematic.png, id=79, 312.2064pt x 317.7471pt>
 File: schematics/borehole_Ghareb_schematic.png Graphic file (type png)
 <use schematics/borehole_Ghareb_schematic.png>
 Package pdftex.def Info: schematics/borehole_Ghareb_schematic.png  used on inpu
 t line 216.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+(pdftex.def)             Requested size: 301.80098pt x 307.17189pt.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <7> on input line 230.
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <5> on input line 230.
- [10
+ [12
 
- <./schematics/borehole_Ghareb_schematic.png>]
-<schematics/collidingDisks_schematic.png, id=78, 264.187pt x 196.3335pt>
+ <./schematics/borehole_Ghareb_schematic.png>] [13]
+<schematics/collidingDisks_schematic.png, id=88, 386.6445pt x 290.0436pt>
 File: schematics/collidingDisks_schematic.png Graphic file (type png)
 <use schematics/collidingDisks_schematic.png>
 Package pdftex.def Info: schematics/collidingDisks_schematic.png  used on input
  line 241.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [11
+(pdftex.def)             Requested size: 301.80098pt x 226.40569pt.
+ [14
 
  <./schematics/collidingDisks_schematic.png>]
-<schematics/elasticDisk_schematic.png, id=83, 264.187pt x 196.3335pt>
+<schematics/elasticDisk_schematic.png, id=93, 386.6445pt x 290.0436pt>
 File: schematics/elasticDisk_schematic.png Graphic file (type png)
 <use schematics/elasticDisk_schematic.png>
 Package pdftex.def Info: schematics/elasticDisk_schematic.png  used on input li
 ne 264.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [12
+(pdftex.def)             Requested size: 301.80098pt x 226.40569pt.
+ [15
 
  <./schematics/elasticDisk_schematic.png>]
-<schematics/pdc_schematic.png, id=88, 264.187pt x 196.3335pt>
+<schematics/pdc_schematic.png, id=98, 375.3222pt x 317.7471pt>
 File: schematics/pdc_schematic.png Graphic file (type png)
 <use schematics/pdc_schematic.png>
 Package pdftex.def Info: schematics/pdc_schematic.png  used on input line 287.
-(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [13
+(pdftex.def)             Requested size: 301.80098pt x 255.50708pt.
+
+[16
 
  <./schematics/pdc_schematic.png>] (./examples_suite_report.aux) ) 
 Here is how much of TeX's memory you used:
@@ -574,10 +575,10 @@ c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
 e1/public/amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x8
 6_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fo
 nts/type1/public/cm-super/sfrm1000.pfb>
-Output written on examples_suite_report.pdf (13 pages, 2607644 bytes).
+Output written on examples_suite_report.pdf (16 pages, 4067269 bytes).
 PDF statistics:
- 126 PDF objects out of 1000 (max. 8388607)
- 54 compressed objects within 1 object stream
+ 135 PDF objects out of 1000 (max. 8388607)
+ 60 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  136 words of extra memory for PDF output out of 10000 (max. 10000000)
 
