@@ -366,10 +366,23 @@ void WellControls::postInputInitialization()
                              m_statusTable->getName() ),
                    InputError, getDataContext() );
   }
-
 }
+
 void WellControls::postRestartInitialization( )
 {}
+
+WellConstraintBase const * WellControls::getRateConstraint() const
+{
+  WellConstraintBase const * rateConstraint = nullptr;
+  forRateConstraints( [&]( auto const & constraint )
+  {
+    if( rateConstraint == nullptr )
+    {
+      rateConstraint = &constraint;
+    }
+  } );
+  return rateConstraint;
+}
 
 void WellControls::logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting ) const
 {
