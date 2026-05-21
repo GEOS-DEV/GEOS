@@ -26,13 +26,6 @@
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
-//#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-//#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
@@ -161,11 +154,11 @@ public:
 
   virtual bool isCompositional() const = 0;
   /**
-   *   * @brief Initialize well for the beginning of a simulation or restart
-   *   @param domain the domain
-   *   @param mesh the mesh level
-   *   @param subRegion the well subRegion
-   *  @param time_n the current time
+   * @brief Initialize well for the beginning of a simulation or restart
+   * @param domain the domain
+   * @param mesh the mesh level
+   * @param subRegion the well subRegion
+   * @param time_n the current time
    */
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
   /**
@@ -376,115 +369,7 @@ public:
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) = 0;
-#if 0
-  /**@}*/
-  /**
-   * @brief Apply a given functor to a container if the container can be
-   *        cast to one of the specified types.
-   * @tparam CASTTYPE      the first type that will be used in the attempted casting of container
-   * @tparam CASTTYPES     a variadic list of types that will be used in the attempted casting of container
-   * @tparam CONTAINERTYPE the type of container
-   * @tparam LAMBDA        the type of lambda function to call in the function
-   * @param[in] container  a pointer to the container which will be passed to the lambda function
-   * @param[in] lambda     the lambda function to call in the function
-   * @return               a boolean to indicate whether the lambda was successfully applied to the container.
-   */
-  template< typename T0, typename T1, typename ... CASTTYPES, typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE container, LAMBDA && lambda )
-  {
-    using Pointee = std::remove_pointer_t< std::remove_reference_t< CONTAINERTYPE > >;
-    using T = std::conditional_t< std::is_const< Pointee >::value, T0 const, T0 >;
-    T * const castedContainer = dynamic_cast< T * >( container );
 
-    if( castedContainer != nullptr )
-    {
-      lambda( *castedContainer );
-      return true;
-    }
-
-    return applyLambdaToContainer< T1, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
-  }
-
-  // Base case: no more types to try
-  template< typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE /*container*/, LAMBDA && /*lambda*/ )
-  {
-    return false;
-  }
-
-  // Single-type overload: try only T0 and stop
-  template< typename T0, typename CONTAINERTYPE, typename LAMBDA >
-  static bool applyLambdaToContainer( CONTAINERTYPE container, LAMBDA && lambda )
-  {
-    using Pointee = std::remove_pointer_t< std::remove_reference_t< CONTAINERTYPE > >;
-    using T = std::conditional_t< std::is_const< Pointee >::value, T0 const, T0 >;
-    T * const castedContainer = dynamic_cast< T * >( container );
-
-    if( castedContainer != nullptr )
-    {
-      lambda( *castedContainer );
-      return true;
-    }
-
-    return false;
-  }
-
-
-  /**
-   * @copydoc forInjectionConstraints(LAMBDA &&)
-   */
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forInjectionConstraints( LAMBDA && lambda ) const
-  {
-    for( auto const * constraintIter : m_injectionRateConstraintList )
-    {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto const & castedSubGroup )
-      {
-        lambda( castedSubGroup );
-      } );
-    }
-  }
-
-  // non-const overload
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forInjectionConstraints( LAMBDA && lambda )
-  {
-    for( auto * constraintIter : m_injectionRateConstraintList )
-    {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto & castedSubGroup )
-      {
-        lambda( castedSubGroup );
-      } );
-    }
-  }
-  /**
-   * @copydoc forProductionConstraints(LAMBDA &&)
-   */
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forProductionConstraints( LAMBDA && lambda ) const
-  {
-    for( auto const * constraintIter : m_productionRateConstraintList )
-    {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto const & castedSubGroup )
-      {
-        lambda( castedSubGroup );
-      } );
-    }
-  }
-
-  // non-const overload
-  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
-  void forProductionConstraints( LAMBDA && lambda )
-  {
-    for( auto * constraintIter : m_productionRateConstraintList )
-    {
-      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto & castedSubGroup )
-      {
-        lambda( castedSubGroup );
-      } );
-    }
-  }
-#endif
   /**
    * @name Getters / Setters
    */
@@ -570,7 +455,6 @@ public:
    */
   real64 getTargetBHP( real64 const & targetTime ) const;
 
-
   /**
    * @brief Const accessor for the temperature of the injection stream
    * @return the temperature of the injection stream
@@ -594,7 +478,6 @@ public:
    * @return  vertical location of constraint
    */
   real64 getReferenceElevation() const;
-
 
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
@@ -669,7 +552,6 @@ public:
    */
   bool getWellState() const;
 
-
   /**
    * @brief Set the current consrtaint
    * @param[in] currentConstraint pointer to constraint
@@ -679,18 +561,8 @@ public:
    * @brief Get the current consrtaint
    * @return pointer to constraint
    */
-  WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
-  WellConstraintBase const *  getCurrentConstraint() const { return m_currentConstraint; }
-
-  /**
-   * @brief Get the BHP constraint.
-   * @details Returns the first BHP constraint attached to the well controls. This will be the minimum BHP
-   * constraint for a producer well and the maximum BHP constraint for an injector well. If there is no BHP
-   * constraint assigned to the well controls this will return a null value.
-   * @return The constraint object of one exists nullptr otherwise
-   */
-  //WellConstraintBase const * getBHPConstraint() const;
-  //WellConstraintBase * getBHPConstraint();
+  WellConstraintBase * getCurrentConstraint() { return m_currentConstraint; }
+  WellConstraintBase const * getCurrentConstraint() const { return m_currentConstraint; }
 
   /**
    * @brief Get the rate constraint.
@@ -701,7 +573,6 @@ public:
    * @return The constraint object of one exists nullptr otherwise
    */
   WellConstraintBase const * getRateConstraint() const;
-  //WellConstraintBase * getRateConstraint();
 
   /**
    * @brief Getter for the flag to enable crossflow
@@ -731,7 +602,6 @@ public:
    */
   void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
   { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
-
 
   /**
    * @brief setter for multi fluid separator
@@ -872,26 +742,6 @@ public:
    */
   struct groupKeyStruct
   {
-#if 0
-    /// string key for the minimum BHP presssure for a producer
-    static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
-    /// string key for the maximum BHP presssure for a injection
-    static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
-    /// string key for the maximum phase rate for a producer
-    static constexpr char const * productionPhaseVolumeRateConstraintString() { return "ProductionPhaseVolumeRateConstraint"; }
-    /// string key for the maximum phase rate for a injection
-    static constexpr char const * injectionPhaseVolumeRateConstraint() { return "InjectionPhaseVolumeRateConstraint"; }
-    /// string key for the maximum volume rate for a producer
-    static constexpr char const * productionVolumeRateConstraint() { return "ProductionVolumeRateConstraint"; }
-    /// string key for the maximum volume rate for a injector
-    static constexpr char const * injectionVolumeRateConstraint() { return "InjectionVolumeRateConstraint"; }
-    /// string key for the maximum mass rate for a producer
-    static constexpr char const * productionMassRateConstraint() { return "ProductionMassRateConstraint"; }
-    /// string key for the maximum mass rate for a injector
-    static constexpr char const * injectionMassRateConstraint() { return "InjectionMassRateConstraint"; }
-    /// string key for the liquid rate for a producer
-    static constexpr char const * productionLiquidRateConstraint() { return "ProductionLiquidRateConstraint"; }
-#endif
     /// string key for the well Newton solver
     static constexpr char const * wellNewtonSolverString() { return "WellNewtonSolver"; }
   };
@@ -913,24 +763,6 @@ public:
    * @param[in] constraintName name to assign to the constraint
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
-
-#if 0
-  /**
-   * @brief Getters for constraints
-   */
-  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return nullptr; };
-  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return nullptr; };
-  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return nullptr; };
-  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return nullptr; };
-
-  /**
-   * @brief Getters for constraint lists
-   */
-  std::vector< WellConstraintBase * >  getProdRateConstraints() { return {}; };
-  std::vector< WellConstraintBase * >  getProdRateConstraints() const { return {}; };
-  std::vector< WellConstraintBase * >  getInjRateConstraints() { return {}; }
-  std::vector< WellConstraintBase * >  getInjRateConstraints() const { return {}; }
-#endif
 
   /**
    * @brief Set thermal effects enable
@@ -966,7 +798,33 @@ public:
 protected:
   virtual void postRestartInitialization( )override;
 
-  void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false );
+  /**
+   * @brief Iterates over rate constraints and applies a lambda function.
+   * @details This constant member function checks whether the well is a producer or an injector.
+   * It then dispatches the provided lambda to the underlying rate-specific constraint subgroups
+   * (PhaseVolumeRateConstraint, VolumeRateConstraint, MassRateConstraint) while explicitly
+   * excluding BHP constraints.
+   * @param lambda The callable object to apply to each rate constraint subgroup.
+   */
+  template< typename LAMBDA >
+  void forRateConstraints( LAMBDA && lambda ) const;
+  template< typename LAMBDA >
+  void forRateConstraints( LAMBDA && lambda );
+
+  /**
+   * @brief Iterates over all constraints, including BHP, and applies a lambda function.
+   * @details This constant member function evaluates if the well is a producer or an injector.
+   * It then applies the provided lambda to all constraint subgroups, which includes both the rate
+   * constraints and the appropriate Bottom Hole Pressure constraint (MinimumBHPConstraint for
+   * producers and MaximumBHPConstraint for injectors).
+   * @param lambda The callable object to apply to each constraint subgroup.
+   */
+  template< typename LAMBDA >
+  void forAllConstraints( LAMBDA && lambda ) const;
+  template< typename LAMBDA >
+  void forAllConstraints( LAMBDA && lambda );
+
+  void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false ) const;
 
 private:
   /// List of names of regions the solver will be applied to
@@ -1046,16 +904,7 @@ protected:
   real64 m_initialPressureCoefficient;
 
   // Current constrint
-  WellConstraintBase * m_currentConstraint;
-#if 0
-  // Minimum and maximum BHP and WHP constraints
-  BHPConstraint< BHPConstraintTypeId::MIN > *  m_minBHPConstraint;
-  BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraint;
-
-  // Lists of rate constraints
-  std::vector< WellConstraintBase * > m_productionRateConstraintList;
-  std::vector< WellConstraintBase * > m_injectionRateConstraintList;
-#endif
+  WellConstraintBase * m_currentConstraint{};
 
   /// Well status
   WellControls::Status m_wellStatus;
