@@ -167,6 +167,7 @@ public:
         m_tableFileNames.push_back( fileName );
       }
     }
+    MpiWrapper::barrier();
   }
 
   void TearDown() override
