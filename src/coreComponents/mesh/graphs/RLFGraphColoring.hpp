@@ -63,14 +63,14 @@ public:
    * @param adjncy Adjacency list.
    * @return A vector of assigned colors.
    */
-  stdVector< int > colorGraph( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy ) override;
+  stdVector< int > colorGraph( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy ) override;
 
   /**
    * @brief Colors a graph assuming one node per rank.
    * @param localAdjncy Local adjacency list.
    * @return Color of the node.
    */
-  int colorGraph( const stdVector< camp::idx_t > & localAdjncy ) override;
+  int colorGraph( const stdVector< size_t > & localAdjncy ) override;
 
   /**
    * @brief Returns the number of distinct colors used.
@@ -86,7 +86,7 @@ public:
    * @param colors Vector of assigned colors.
    * @return True if coloring is valid, false otherwise.
    */
-  bool isColoringValid( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, const stdVector< int > & colors ) const;
+  bool isColoringValid( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy, const stdVector< int > & colors ) const;
 
 
 private:
@@ -96,7 +96,7 @@ private:
  * @param adjncy The adjacency list containing the neighbors of each node.
  * @return A vector where the index represents the node and the value represents the assigned color.
  */
-  stdVector< int > RecursiveLargestFirstColoring( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy );
+  stdVector< int > RecursiveLargestFirstColoring( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy );
 };
 
 } // namespace graph

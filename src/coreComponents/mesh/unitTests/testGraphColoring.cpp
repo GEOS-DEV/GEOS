@@ -14,7 +14,7 @@
  */
 
 /**
- * @file testColoring.cpp
+ * @file testGraphColoring.cpp
  */
 
 #include "../graphs/GraphTools.hpp"
@@ -31,24 +31,23 @@ TEST( GraphColoringTest, CountPositiveDistinctColors )
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors ), 6 );
 }
 
-// TODO This TEST is temporarily removed
-// The error is located in getGraphNodeDegree() with an array out of bound
-// TEST( GraphColoringTest, CartesianDecomposition3D6 )
-// {
-//   idx_t const nx = 3, ny = 4, nz = 3;
-//   auto [xadj, adjncy] = generateGraphCartPartitionning3D6( nx, ny, nz );
-//   geos::graph::RLFGraphColoring graphColoring;
-//   stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
 
-//   EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
-//   EXPECT_EQ( graphColoring.getNumberOfColors( colors ), 2 );
-// }
+TEST( GraphColoringTest, CartesianDecomposition3D6 )
+{
+  size_t const nx = 3, ny = 4, nz = 3;
+  auto [xadj, adjncy] = generateGraphCartPartitioning3D6( nx, ny, nz );
+  geos::graph::RLFGraphColoring graphColoring;
+  stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
+
+  EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
+  EXPECT_EQ( graphColoring.getNumberOfColors( colors ), 2 );
+}
 
 
 TEST( GraphColoringTest, CartesianDecomposition3D26 )
 {
-  idx_t const nx = 3, ny = 4, nz = 3;
-  auto [xadj, adjncy] = generateGraphCartPartitionning3D26( nx, ny, nz );
+  size_t const nx = 3, ny = 4, nz = 3;
+  auto [xadj, adjncy] = generateGraphCartPartitioning3D26( nx, ny, nz );
   geos::graph::RLFGraphColoring graphColoring;
   stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
   EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
@@ -56,27 +55,26 @@ TEST( GraphColoringTest, CartesianDecomposition3D26 )
 }
 
 
-// TODO This TEST is temporarily disabled
-// The error is located in getGraphNodeDegree() with an array out of bound
-// TEST( GraphColoringTest, RandomGraphs )
-// {
-//   size_t const iterations = 10;
-//   for( size_t i = 0; i < iterations; ++i )
-//   {
-//     size_t num_nodes = rand() % 100 + 5;     // between 5 and 104
-//     size_t num_edges = rand() % (num_nodes * 6 + 1) + num_nodes;     // between num_nodes and num_nodes * 6
-//     auto [xadj, adjncy] = generateGraphRandom( num_nodes, num_edges );
-//     geos::graph::RLFGraphColoring graphColoring;
-//     stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
-//     EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
-//   }
-// }
+TEST( GraphColoringTest, RandomGraphs )
+{
+  size_t const iterations = 3;
+  for( size_t i = 0; i < iterations; ++i )
+  {
+    size_t num_nodes = rand() % 60 + 5;     // between 5 and 64
+    size_t num_edges = rand() % (num_nodes * 4 + 1) + num_nodes;     // between num_nodes and num_nodes * 4
+    auto [xadj, adjncy] = generateGraphRandom( num_nodes, num_edges );
+    geos::graph::RLFGraphColoring graphColoring;
+    stdVector< int > colors = graphColoring.colorGraph( xadj, adjncy );
+    EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
+  }
+}
+
 
 TEST( GraphColoringTest, InvalidColoring )
 {
   // Create a simple graph with 4 nodes and 3 edges
-  stdVector< idx_t > xadj = {0, 1, 2, 3, 3};
-  stdVector< idx_t > adjncy = {1, 0, 2, 1};
+  stdVector< size_t > xadj = {0, 1, 2, 3, 3};
+  stdVector< size_t > adjncy = {1, 0, 2, 1};
 
   // Intentionally create an invalid coloring where two adjacent nodes have the same color
   stdVector< int > colors = {0, 0, 1, 1};

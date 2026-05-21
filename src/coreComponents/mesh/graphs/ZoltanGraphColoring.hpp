@@ -76,7 +76,7 @@ public:
  * @param color Color of the node.
  * @return True if the coloring is valid, false otherwise.
  */
-  bool isColoringValid( const stdVector< camp::idx_t > & adjncy, const int color ) const;
+  bool isColoringValid( const stdVector< size_t > & adjncy, const int color ) const;
 
   /**
    * @brief Colors a graph.
@@ -84,14 +84,14 @@ public:
    * @param adjncy Adjacency list.
    * @return A vector of assigned colors.
    */
-  stdVector< int > colorGraph( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy ) override;
+  stdVector< int > colorGraph( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy ) override;
 
   /**
    * @brief Simplified coloring assuming one node per rank.
    * @param adjncy Local adjacency list.
    * @return Number of colors used.
    */
-  int colorGraph( const stdVector< camp::idx_t > & adjncy ) override;
+  int colorGraph( const stdVector< size_t > & adjncy ) override;
 
 
 private:

@@ -27,16 +27,15 @@ namespace geos
 namespace graph
 {
 
-bool GraphColoringBase::isColoringValid( const stdVector< camp::idx_t > & xadj,
-                                         const stdVector< camp::idx_t > & adjncy,
+bool GraphColoringBase::isColoringValid( const stdVector< size_t > & xadj,
+                                         const stdVector< size_t > & adjncy,
                                          const stdVector< int > & coloring )
 {
   for( size_t node = 0; node < coloring.size(); ++node )
   {
     int node_color = coloring[node];
-    std::unordered_set< camp::idx_t > neighbors = getGraphNodeNeighbors( node, xadj, adjncy );
-
-    for( camp::idx_t neighbor : neighbors )
+    std::unordered_set< size_t > neighbors = getGraphNodeNeighbors( node, xadj, adjncy );
+    for( size_t neighbor : neighbors )
     {
       if( coloring[neighbor] == node_color )
       {
@@ -63,7 +62,7 @@ size_t GraphColoringBase::getNumberOfColors( const stdVector< int > & colors )
 
 
 // Assume only one node per rank.
-bool GraphColoringBase::isColoringValid( const stdVector< camp::idx_t > & adjncy,
+bool GraphColoringBase::isColoringValid( const stdVector< size_t > & adjncy,
                                          const int color,
                                          MPI_Comm comm )
 {

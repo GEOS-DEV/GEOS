@@ -36,16 +36,16 @@ RLFGraphColoringMPI::~RLFGraphColoringMPI()
 {}
 
 
-int RLFGraphColoringMPI::colorGraph( const stdVector< camp::idx_t > & localAdjncy )
+int RLFGraphColoringMPI::colorGraph( const stdVector< size_t > & localAdjncy )
 {
-  stdVector< camp::idx_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  stdVector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
   stdVector< int > localColors = RLFGraphColoringMPI::colorGraph( localXadj, localAdjncy );
   return localColors[0];
 }
 
 
-stdVector< int > RLFGraphColoringMPI::colorGraph( const stdVector< camp::idx_t > & localXadj,
-                                                  const stdVector< camp::idx_t > & localAdjncy )
+stdVector< int > RLFGraphColoringMPI::colorGraph( const stdVector< size_t > & localXadj,
+                                                  const stdVector< size_t > & localAdjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
   int const size = MpiWrapper::commSize( m_comm );
@@ -62,25 +62,25 @@ stdVector< int > RLFGraphColoringMPI::colorGraph( const stdVector< camp::idx_t >
     // RLFGraphColoring treats the graph as undirected, so an asymmetric input
     // can yield a coloring that is valid from one direction but not the other.
     // Symmetrizing here ensures the coloring is globally valid.
-    int const numNodes = static_cast< int >( xadj.size() ) - 1;
+    size_t const numNodes = xadj.size() - 1;
     // Build adjacency sets for each node, then add reverse edges.
-    stdVector< std::set< camp::idx_t > > adjSets( numNodes );
-    for( int i = 0; i < numNodes; ++i )
+    stdVector< std::set< size_t > > adjSets( numNodes );
+    for( size_t i = 0; i < numNodes; ++i )
     {
-      for( camp::idx_t j = xadj[i]; j < xadj[i + 1]; ++j )
+      for( size_t j = xadj[i]; j < xadj[i + 1]; ++j )
       {
-        camp::idx_t const neighbor = adjncy[j];
+        size_t const neighbor = adjncy[j];
         adjSets[i].insert( neighbor );
-        adjSets[neighbor].insert( static_cast< camp::idx_t >( i ) ); // reverse edge
+        adjSets[neighbor].insert( i ); // reverse edge
       }
     }
     // Rebuild xadj and adjncy from the symmetrized sets.
-    stdVector< camp::idx_t > symXadj( numNodes + 1, 0 );
-    stdVector< camp::idx_t > symAdjncy;
-    for( int i = 0; i < numNodes; ++i )
+    stdVector< size_t > symXadj( numNodes + 1, 0 );
+    stdVector< size_t > symAdjncy;
+    for( size_t i = 0; i < numNodes; ++i )
     {
-      symXadj[i + 1] = symXadj[i] + static_cast< camp::idx_t >( adjSets[i].size() );
-      for( camp::idx_t nb : adjSets[i] )
+      symXadj[i + 1] = symXadj[i] + adjSets[i].size();
+      for( size_t nb : adjSets[i] )
       {
         symAdjncy.push_back( nb );
       }
@@ -133,7 +133,7 @@ size_t RLFGraphColoringMPI::getNumberOfColors( const stdVector< int > & colors )
 }
 
 
-bool RLFGraphColoringMPI::isColoringValid( const stdVector< camp::idx_t > & adjncy, const int color ) const
+bool RLFGraphColoringMPI::isColoringValid( const stdVector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }

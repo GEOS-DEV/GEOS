@@ -16,7 +16,6 @@
 #include "SpatialPartition.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
-#include "common/DataTypes.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #ifdef GEOS_USE_TRILINOS
 #include "mesh/graphs/ZoltanGraphColoring.hpp"
@@ -94,31 +93,15 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  if( m_metisNeighborList.empty() )
-  {
-    // Internal cartesian partitioner (for internal mesh)
-    int color=0;
-    if( isOdd( m_coords[0] ) )
-    {
-      color += 1;
-    }
+  return getColor( {} );
+}
 
-    if( isOdd( m_coords[1] ) )
-    {
-      color += 2;
-    }
+int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
+{
+  // Determine neighbor source
+  bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
 
-    if( isOdd( m_coords[2] ) )
-    {
-      color += 4;
-    }
-
-    // With this algorithm, numbering may have gaps.
-    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
-    m_numColors = MpiWrapper::max( color )+1;
-    return color;
-  }
-  else
+  if( useGraphColoring )
   {
     // External partitioner such as ParMetis or PTScotch (for VTK external mesh).
     //
@@ -140,19 +123,19 @@ int SpatialPartition::getColor()
 
     // Step 1: allgather the sizes of every rank's neighbor list.
     int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
-    stdVector< integer > allNeighborCounts( commSize );
+    std::vector< int > allNeighborCounts( commSize );
     MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
 
     // Step 2: allgatherv the neighbor lists themselves.
-    stdVector< int > displacements( commSize, 0 );
+    std::vector< int > displacements( commSize, 0 );
     for( int i = 1; i < commSize; ++i )
     {
       displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
     }
     int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
 
-    stdVector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
-    stdVector< int > allNeighbors( totalNeighbors );
+    std::vector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    std::vector< int > allNeighbors( totalNeighbors );
     MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
                             allNeighbors.data(), allNeighborCounts.data(),
                             displacements.data(), MPI_COMM_GEOS );
@@ -178,14 +161,14 @@ int SpatialPartition::getColor()
       }
     }
 
-    stdVector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+    stdVector< size_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
 
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
     geos::graph::RLFGraphColoringMPI coloring;
 #endif
-    int color = coloring.colorGraph( adjncy );
+    int const color = coloring.colorGraph( adjncy );
 
     if( !coloring.isColoringValid( adjncy, color ))
     {
@@ -200,7 +183,18 @@ int SpatialPartition::getColor()
       GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
     }
     m_numColors = coloring.getNumberOfColors( color );
+    return color;
+  }
+  else
+  {
+    // Cartesian partitioner coloring
+    int const color = (isOdd( m_coords[0] ) ? 1 : 0) |
+                      (isOdd( m_coords[1] ) ? 2 : 0) |
+                      (isOdd( m_coords[2] ) ? 4 : 0);
 
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
+    m_numColors = MpiWrapper::max( color ) + 1;
     return color;
   }
 }
