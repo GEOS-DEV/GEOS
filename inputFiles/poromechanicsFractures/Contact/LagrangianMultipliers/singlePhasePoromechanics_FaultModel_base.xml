@@ -190,32 +190,32 @@
       name="sigma_xx" 
       interpolation="linear"
       inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_xx.csv" 
+      coordinateFiles="{../../DATATABLES/x.csv, ../../DATATABLES/y.csv, ../../DATATABLES/z.csv}" 
+      voxelFile="../../DATATABLES/effectiveSigma_xx.csv" 
     />
 
     <TableFunction 
       name="sigma_yy" 
       interpolation="linear"
       inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_yy.csv" 
+      coordinateFiles="{../../DATATABLES/x.csv, ../../DATATABLES/y.csv, ../../DATATABLES/z.csv}" 
+      voxelFile="../../DATATABLES/effectiveSigma_yy.csv" 
     />
 
     <TableFunction 
       name="sigma_zz" 
       interpolation="linear"
       inputVarNames="{elementCenter}" 
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}" 
-      voxelFile="DATATABLES/effectiveSigma_zz.csv" 
+      coordinateFiles="{../../DATATABLES/x.csv, ../../DATATABLES/y.csv, ../../DATATABLES/z.csv}" 
+      voxelFile="../../DATATABLES/effectiveSigma_zz.csv" 
     />
 
     <TableFunction
       name="init_pressure"
       interpolation="linear"
       inputVarNames="{elementCenter}"
-      coordinateFiles="{DATATABLES/x.csv, DATATABLES/y.csv, DATATABLES/z.csv}"
-      voxelFile="DATATABLES/porePressure.csv"
+      coordinateFiles="{../../DATATABLES/x.csv, ../../DATATABLES/y.csv, ../../DATATABLES/z.csv}"
+      voxelFile="../../DATATABLES/porePressure.csv"
     />
 
     <TableFunction
