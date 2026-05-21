@@ -17,8 +17,17 @@
  * @file WellControls.cpp
  */
 
-#include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
+
+#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+
+#include "LogLevelsInfo.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -41,7 +50,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_keepVariablesConstantDuringInitStep( false ),
-  //m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), "_rates" ) ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), parent->getName() + "_rates" ) ),
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ),
@@ -58,7 +66,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
   /// Nonlinear solver parameters
-  m_wellNewtonSolver( viewKeyStruct::wellNewtonSolverString(), this ),
+  m_wellNewtonSolver( groupKeyStruct::wellNewtonSolverString(), this ),
   m_estimatorDoFManager( name ),
   m_dofManagerInitialized( false )
 {
@@ -143,8 +151,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
 
-
-  registerGroup( viewKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
+  registerGroup( groupKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
 
   addLogLevel< logInfo::WellControl >();
 }
@@ -152,78 +159,6 @@ WellControls::WellControls( string const & name, Group * const parent )
 
 WellControls::~WellControls()
 {}
-
-Group * WellControls::createChild( string const & childKey, string const & childName )
-{
-
-  Group * child = nullptr;
-  if( childKey == viewKeyStruct::minimumBHPConstraintString() )
-  {
-    BHPConstraint< BHPConstraintTypeId::MIN > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MIN > >( childName );
-    m_minBHPConstraint =   &bhpConstraint;
-    child = &bhpConstraint;
-  }
-  else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
-  {
-    BHPConstraint< BHPConstraintTypeId::MAX > & bhpConstraint = registerGroup< BHPConstraint< BHPConstraintTypeId::MAX > >( childName );
-    m_maxBHPConstraint =  &bhpConstraint;
-    child = &bhpConstraint;
-  }
-  else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
-  {
-    ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
-    m_productionRateConstraintList.emplace_back( &phaseConstraint );
-    child = &phaseConstraint;
-  }
-  else if( childKey == viewKeyStruct::injectionPhaseVolumeRateConstraint() )
-  {
-    InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
-    m_injectionRateConstraintList.emplace_back( &phaseConstraint );
-    child = &phaseConstraint;
-  }
-  else if( childKey == viewKeyStruct::productionVolumeRateConstraint() )
-  {
-    ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
-    m_productionRateConstraintList.emplace_back( &volConstraint );
-    child = &volConstraint;
-  }
-  else if( childKey == viewKeyStruct::injectionVolumeRateConstraint() )
-  {
-    InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
-    m_injectionRateConstraintList.emplace_back( &volConstraint );
-    child = &volConstraint;
-  }
-  else if( childKey == viewKeyStruct::productionMassRateConstraint() )
-  {
-    ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
-    m_productionRateConstraintList.emplace_back( &massConstraint );
-    child = &massConstraint;
-
-  }
-  else if( childKey == viewKeyStruct::injectionMassRateConstraint() )
-  {
-    InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
-    m_injectionRateConstraintList.emplace_back( &massConstraint );
-    child = &massConstraint;
-  }
-  else if( childKey == viewKeyStruct::productionLiquidRateConstraint() )
-  {
-    ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
-    m_productionRateConstraintList.emplace_back( &liquidConstraint );
-    child = &liquidConstraint;
-  }
-  return child;
-}
-
-void WellControls::expandObjectCatalogs()
-{
-  // During schema generation, register one of each type derived from ConstitutiveBase here
-  for( auto & catalogIter: WellConstraintBase::getCatalog())
-  {
-    createChild( catalogIter.first, catalogIter.first );
-  }
-  // tjbcreateChild( WellNewtonSolver::catalogName(), WellNewtonSolver::catalogName() );
-}
 
 namespace
 {
@@ -247,6 +182,7 @@ TableFunction * createWellTable( string const & tableName,
 }
 
 }
+
 void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
   std::string const & regionName = subRegion.getName();
@@ -276,6 +212,7 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
     }
   }
 }
+
 void WellControls::postInputInitialization()
 {
   Group::postInputInitialization();
@@ -348,45 +285,89 @@ void WellControls::postInputInitialization()
 }
 void WellControls::postRestartInitialization( )
 {}
+
+void WellControls::logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting )
+{
+  bool const needsLog = (constraint != nullptr) && (getLogLevel() > 4) && region.isLocallyOwned();
+  if( isLimiting )
+  {
+    GEOS_LOG_RANK_IF ( needsLog,
+                       GEOS_FMT( " Well {}: Limiting Constraint {} - BHP {}, Volume rates {}, Total rate {}, Mass rate {}",
+                                 region.getName(), constraint->getName(), constraint->bottomHolePressure(),
+                                 constraint->phaseVolumeRates(), constraint->totalVolumeRate(), constraint->massRate()) );
+  }
+  else
+  {
+    GEOS_LOG_RANK_IF ( needsLog,
+                       GEOS_FMT( " Well {}: Constraint {} - active {}, value {}",
+                                 region.getName(), constraint->getName(), constraint->isConstraintActive(),
+                                 constraint->getConstraintValue( time ) ) );
+  }
+}
+
+//template< typename T >
+//using isConstraint = std::disjunction<
+//                     std::is_same< T, MinimumBHPConstraint >,
+//std::is_same< T, MaximumBHPConstraint >,
+//std::is_same< T, ProductionConstraint< PhaseVolumeRateConstraint > >,
+//std::is_same<T, ProductionConstraint< VolumeRateConstraint >,
+//std::is_same< T, ProductionConstraint< MassRateConstraint > >,
+//std::is_same< T, InjectionConstraint< PhaseVolumeRateConstraint > >,
+//std::is_same< T, InjectionConstraint< VolumeRateConstraint >,
+//              std::is_same< T, InjectionConstraint< MassRateConstraint > >
+//              >
+//template< typename ConstraintType >
+//ConstraintType const * WellControls::getFirstConstraintOfType() const
+//{
+//  static_assert( isConstraint< ConstraintType >::value, "ConstraintType must be a constraint type" );
+//  return nullptr;
+//}
+
 void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
   m_wellStatus = status;
   if( m_wellStatus == WellControls::Status::OPEN )
   {
-    if( isProducer())
-    {
-      std::vector< WellConstraintBase * >  const constraints =  getProdRateConstraints();
-      for( auto const & constraint : constraints )
-      {
-        if( isZero( constraint->getConstraintValue( currentTime ) ) )
-        {
-          m_wellStatus =  WellControls::Status::CLOSED;
-          m_currentConstraint=nullptr;
-          break;
-        }
-      }
-    }
-    else
-    {
-      std::vector< WellConstraintBase * >  const constraints =  getInjRateConstraints();
-      for( auto const & constraint : constraints )
-      {
-        if( isZero( constraint->getConstraintValue( currentTime ) ) )
-        {
-          m_wellStatus =  WellControls::Status::CLOSED;
-          m_currentConstraint=nullptr;
-          break;
-        }
-      }
-    }
+    bool hasZeroRate = false;
 
     if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
     {
-      m_wellStatus =  WellControls::Status::CLOSED;
-      m_currentConstraint=nullptr;
+      hasZeroRate = true;
+    }
+
+    if( !hasZeroRate && isProducer())
+    {
+      forSubGroups< ProductionConstraint< PhaseVolumeRateConstraint >,
+                    ProductionConstraint< VolumeRateConstraint >,
+                    ProductionConstraint< MassRateConstraint > >( [&] ( auto const & constraint )
+      {
+        if( isZero( constraint.getConstraintValue( currentTime ) ) )
+        {
+          hasZeroRate = true;
+        }
+      } );
+    }
+    else if( !hasZeroRate )
+    {
+      forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >,
+                    InjectionConstraint< VolumeRateConstraint >,
+                    InjectionConstraint< MassRateConstraint > >( [&] ( auto const & constraint )
+      {
+        if( isZero( constraint.getConstraintValue( currentTime ) ) )
+        {
+          hasZeroRate = true;
+        }
+      } );
+    }
+
+    if( hasZeroRate )
+    {
+      m_wellStatus = WellControls::Status::CLOSED;
+      m_currentConstraint = nullptr;
     }
   }
 }
+
 real64 WellControls::setNextDt( real64 const & currentTime,
                                 real64 const & currentDt,
                                 WellElementSubRegion & subRegion )
@@ -413,6 +394,7 @@ real64 WellControls::setNextDt( real64 const & currentTime,
     GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on tables coordinates = {}", getName(), nextDt ));
   return nextDt;
 }
+
 bool WellControls::isWellOpen() const
 {
   return getWellStatus() == WellControls::Status::OPEN;
@@ -432,25 +414,26 @@ void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nex
 {
   if( isProducer() )
   {
-    if( getMinBHPConstraint() != nullptr )
+    forSubGroups< MinimumBHPConstraint,
+                  ProductionConstraint< PhaseVolumeRateConstraint >,
+                  ProductionConstraint< VolumeRateConstraint >,
+                  ProductionConstraint< MassRateConstraint > >( [&] ( auto const & constraint )
     {
-      getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
-    }
-    for( auto const & constraint : m_productionRateConstraintList )
-    {
-      constraint->setNextDtFromTables( currentTime, nextDt );
-    }
+      constraint.setNextDtFromTables( currentTime, nextDt );
+    } );
   }
   else
   {
-    getMaxBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
-    for( auto const & constraint : m_injectionRateConstraintList )
+    forSubGroups< MaximumBHPConstraint,
+                  InjectionConstraint< PhaseVolumeRateConstraint >,
+                  InjectionConstraint< VolumeRateConstraint >,
+                  InjectionConstraint< MassRateConstraint > >( [&] ( auto const & constraint )
     {
-      constraint->setNextDtFromTables( currentTime, nextDt );
-    }
+      constraint.setNextDtFromTables( currentTime, nextDt );
+    } );
   }
 
-  WellControls::setNextDtFromTable( m_statusTable, currentTime, nextDt );
+  setNextDtFromTable( m_statusTable, currentTime, nextDt );
 }
 
 void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
@@ -469,18 +452,30 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
 
 real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 {
+  WellConstraintBase const * bhpConstraint = nullptr;
   if( isProducer())
   {
-    return m_minBHPConstraint->getConstraintValue( targetTime );
+    forSubGroups< MinimumBHPConstraint >( [&] ( auto const & constraint )
+    {
+      bhpConstraint = &constraint;
+    } );
   }
-  return m_maxBHPConstraint->getConstraintValue( targetTime );
+  else
+  {
+    forSubGroups< MaximumBHPConstraint >( [&] ( auto const & constraint )
+    {
+      bhpConstraint = &constraint;
+    } );
+  }
+  return bhpConstraint->getConstraintValue( targetTime );
 }
-
 
 real64 WellControls::getInjectionTemperature() const
 {
   real64 injectionTemperature = 0.0;
-  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+  forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >,
+                InjectionConstraint< VolumeRateConstraint >,
+                InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive())
     {
@@ -491,11 +486,12 @@ real64 WellControls::getInjectionTemperature() const
   return injectionTemperature;
 }
 
-
 arrayView1d< real64 const > WellControls::getInjectionStream() const
 {
   arrayView1d< real64 const > injectionStream;
-  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+  forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >,
+                InjectionConstraint< VolumeRateConstraint >,
+                InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive() )
     {
@@ -513,7 +509,7 @@ integer WellControls::getConstraintPhaseIndex() const
 
   if( isProducer() )
   {
-    forProductionConstraints< ProductionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    forSubGroups< ProductionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
     {
       if( constraint.isConstraintActive() )
       {
@@ -523,7 +519,7 @@ integer WellControls::getConstraintPhaseIndex() const
   }
   else
   {
-    forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
     {
       if( constraint.isConstraintActive() )
       {
@@ -537,11 +533,22 @@ integer WellControls::getConstraintPhaseIndex() const
 
 real64 WellControls::getReferenceElevation() const
 {
+  real64 referenceElevation = 0.0;
   if( isProducer () )
   {
-    return getMinBHPConstraint()->getReferenceElevation();
+    forSubGroups< MinimumBHPConstraint >( [&] ( auto & constraint )
+    {
+      referenceElevation = constraint.getReferenceElevation();
+    } );
   }
-  return getMaxBHPConstraint()->getReferenceElevation();
+  else
+  {
+    forSubGroups< MaximumBHPConstraint >( [&] ( auto & constraint )
+    {
+      referenceElevation = constraint.getReferenceElevation();
+    } );
+  }
+  return referenceElevation;
 }
 
 void WellControls::implicitStepSetup( real64 const & time_n,
@@ -554,6 +561,7 @@ void WellControls::implicitStepSetup( real64 const & time_n,
   // Set perforation status
   setPerforationStatus( time_n, subRegion );
 }
+
 void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -718,8 +726,6 @@ void WellControls::selectWellConstraint( real64 const & time_n,
     MpiWrapper::broadcast( wellControl, owner );
     setControl( wellControl );
   }
-
-
 }
 
 bool WellControls::evaluateConstraints( real64 const & time_n,
@@ -727,30 +733,35 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
 {
 
   // create list of all constraints to process
-  std::vector< WellConstraintBase * > constraintList;
+  stdVector< WellConstraintBase * > constraintList;
   if( isProducer() )
   {
-    constraintList = getProdRateConstraints();
-    // Solve minimum bhp constraint first
-    constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+    forSubGroups< MinimumBHPConstraint,
+                  ProductionConstraint< PhaseVolumeRateConstraint >,
+                  ProductionConstraint< VolumeRateConstraint >,
+                  ProductionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+    {
+      constraintList.emplace_back( &constraint );
+    } );
   }
   else
   {
-    constraintList = getInjRateConstraints();
-    // Solve maximum bhp constraint first;
-    constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+    forSubGroups< MaximumBHPConstraint,
+                  InjectionConstraint< PhaseVolumeRateConstraint >,
+                  InjectionConstraint< VolumeRateConstraint >,
+                  InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+    {
+      constraintList.emplace_back( &constraint );
+    } );
   }
   // Get current constraint
-  WellConstraintBase *  limitingConstraint = nullptr;
+  WellConstraintBase * limitingConstraint = nullptr;
   for( auto & constraint : constraintList )
   {
     if( constraint->getName() == getCurrentConstraint()->getName())
     {
-      limitingConstraint =  constraint;
-      GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                         " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
-                         limitingConstraint->phaseVolumeRates() << " " <<
-                         limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+      limitingConstraint = constraint;
+      logConstraint( limitingConstraint, subRegion, time_n, true );
     }
   }
   constraintList.erase( std::find( constraintList.begin(), constraintList.end(), limitingConstraint ) );
@@ -771,10 +782,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       }
     }
   }
-  GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                     " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
-                     limitingConstraint->phaseVolumeRates() << " " <<
-                     limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+  logConstraint( limitingConstraint, subRegion, time_n, true );
 
   return true;
 }
@@ -789,16 +797,19 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                                         WellElementSubRegion & subRegion,
                                         DofManager const & dofManager )
 {
-
-
   // create list of all constraints to solve
   // note that initializeWells sets the initial constraint
   // tjb reactive control schema to allow use to set if needed
-  std::vector< WellConstraintBase * >  constraintList;
-  WellConstraintBase *  limitingConstraint = getCurrentConstraint();
+  stdVector< WellConstraintBase * > constraintList;
+  WellConstraintBase * limitingConstraint = getCurrentConstraint();
   if( isProducer() )
   {
-    constraintList = getProdRateConstraints();
+    forSubGroups< ProductionConstraint< PhaseVolumeRateConstraint >,
+                  ProductionConstraint< VolumeRateConstraint >,
+                  ProductionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+    {
+      constraintList.emplace_back( &constraint );
+    } );
     if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
     {
       {   // remove from list and add BHP constraint
@@ -807,38 +818,33 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
         {
           constraintList.erase( it );
         }
-        if( getMinBHPConstraint()->isConstraintActive() )
+        forSubGroups< MinimumBHPConstraint >( [&] ( auto & constraint )
         {
-          constraintList.push_back( getMinBHPConstraint() );
-        }
+          constraintList.emplace_back( &constraint );
+        } );
         constraintList.insert( constraintList.begin(), limitingConstraint );
       }
     }
     // Solve minimum bhp constraint first
-    if( false && getMinBHPConstraint()->isConstraintActive() )
-    {
-      // this is related to WHP option which introduces a new BHP constraint
-      limitingConstraint = getMinBHPConstraint();
-    }
-    else if( limitingConstraint == nullptr )
+    if( limitingConstraint == nullptr )
     {
       limitingConstraint = constraintList[0];
     }
   }
   else
   {
-    constraintList = getInjRateConstraints();
-    // remove the limiting constraint from the list if present
+    forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >,
+                  InjectionConstraint< VolumeRateConstraint >,
+                  InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
     {
-      if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
-      {   // remove from list and add BHP constraint
-          //auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
-          //if( it != constraintList.end() )
-          //{
-          //  constraintList.erase( it );
-          //}
-        constraintList.push_back( getMaxBHPConstraint() );
-      }
+      constraintList.emplace_back( &constraint );
+    } );
+    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
+    {
+      forSubGroups< MaximumBHPConstraint >( [&] ( auto & constraint )
+      {
+        constraintList.emplace_back( &constraint );
+      } );
     }
   }
   if( isoThermalEstimatorEnabled() )
@@ -870,7 +876,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
     GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                        " Well " << subRegion.getName() << " Constraint " << constraint->getName() << " active " << constraint->isConstraintActive() <<
                        " value " << constraint->getConstraintValue( time_n ) );
-    if( constraint->isConstraintActive()  &&  constraint->checkViolation( *limitingConstraint, time_n ))
+    if( constraint->isConstraintActive() && constraint->checkViolation( *limitingConstraint, time_n ))
     {
       limitingConstraint=constraint;
       setControl( static_cast< WellControls::Control >(constraint->getControl()) );                       // tjb old

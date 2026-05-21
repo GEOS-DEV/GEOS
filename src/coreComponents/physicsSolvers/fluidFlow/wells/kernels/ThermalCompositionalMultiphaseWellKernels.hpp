@@ -181,33 +181,34 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
     m_phaseVolFraction_n( subRegion.getField< fields::well::phaseVolumeFraction_n >()),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() )
   {
+    auto const * rateConstraint = wellControls.getRateConstraint();
     if( m_isProducer )
     {
       // tjb This needs to be fixed  should use current constraint rate for normalization
-      if( wellControls.getMinBHPConstraint()->isConstraintActive() )
-      {
-        m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-      }
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
         m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-        m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
+        if( rateConstraint != nullptr )
+        {
+          m_constraintValue = rateConstraint->getConstraintValue( time );
+        }
       }
     }
     else
     {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
       m_targetPhaseIndex = -1;
-      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
-
+      if( rateConstraint != nullptr )
+      {
+        m_constraintValue = rateConstraint->getConstraintValue( time );
+      }
     }
-
   }
 
 

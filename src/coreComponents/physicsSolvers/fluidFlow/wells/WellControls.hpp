@@ -17,22 +17,22 @@
  * @file WellControls.hpp
  */
 
-
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
+
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
-#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+//#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
@@ -48,12 +48,13 @@ static constexpr auto wellControls = "WellControls";
 }
 
 class ElementsReporterBuffer;
+class WellConstraintBase;
 
 /**
  * @class WellControls
  * @brief This class describes the controls used to operate a well.
  */
-class WellControls :  public dataRepository::Group //public PhysicsSolverBase
+class WellControls :  public dataRepository::Group
 {
 public:
 
@@ -138,16 +139,6 @@ public:
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "well"; }
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
-  /// Expand catalog for schema generation
-
-  virtual void expandObjectCatalogs() override;
 
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion );
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const = 0;
@@ -385,6 +376,7 @@ public:
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) = 0;
+#if 0
   /**@}*/
   /**
    * @brief Apply a given functor to a container if the container can be
@@ -492,6 +484,7 @@ public:
       } );
     }
   }
+#endif
   /**
    * @name Getters / Setters
    */
@@ -689,6 +682,26 @@ public:
   WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
   WellConstraintBase const *  getCurrentConstraint() const { return m_currentConstraint; }
 
+  /**
+   * @brief Get the BHP constraint.
+   * @details Returns the first BHP constraint attached to the well controls. This will be the minimum BHP
+   * constraint for a producer well and the maximum BHP constraint for an injector well. If there is no BHP
+   * constraint assigned to the well controls this will return a null value.
+   * @return The constraint object of one exists nullptr otherwise
+   */
+  //WellConstraintBase const * getBHPConstraint() const;
+  //WellConstraintBase * getBHPConstraint();
+
+  /**
+   * @brief Get the rate constraint.
+   * @details Returns the first rate constraint attached to the well controls. This will be a prodcution rate
+   * constraint for a producer well and an injection rate constraint for an injector well. This will return the
+   * first constraint assigned regardless of type (phase volume, liquid volume or mass). If there is no rate
+   * constraint assigned to the well controls this will return a null value.
+   * @return The constraint object of one exists nullptr otherwise
+   */
+  WellConstraintBase const * getRateConstraint() const;
+  //WellConstraintBase * getRateConstraint();
 
   /**
    * @brief Getter for the flag to enable crossflow
@@ -773,11 +786,7 @@ public:
    * @return a Status
    */
   WellControls::Status getWellStatus () const { return m_wellStatus; }
-
-
-
   ///@}
-
 
   virtual string wellElementDofName() const = 0;
 
@@ -799,6 +808,7 @@ public:
   virtual localIndex numFluidComponents() const = 0;
 
   virtual localIndex numFluidPhases() const = 0;
+
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -810,7 +820,7 @@ public:
     ///   String key for the write CSV flag
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
-/// @return string for the   targetRegions wrapper
+    /// String for the targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
     /// String key for the well reference elevation (for BHP control)
@@ -839,6 +849,30 @@ public:
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
 
+    /// string key for the esitmate well solution flag
+    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
+    /// string key for the enable iso thermal estimator flag
+    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
+
+    // control data (not registered on the mesh)
+    static constexpr char const * massDensityString() { return "massDensity";}
+
+    static constexpr char const * currentBHPString() { return "currentBHP"; }
+
+    static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
+    static constexpr char const * currentVolRateString() { return "currentVolRate"; }
+
+    static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
+
+    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
+  };
+
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct groupKeyStruct
+  {
+#if 0
     /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
@@ -857,30 +891,11 @@ public:
     static constexpr char const * injectionMassRateConstraint() { return "InjectionMassRateConstraint"; }
     /// string key for the liquid rate for a producer
     static constexpr char const * productionLiquidRateConstraint() { return "ProductionLiquidRateConstraint"; }
-    /// string key for the minimum BHP presssure for a producer
+#endif
+    /// string key for the well Newton solver
     static constexpr char const * wellNewtonSolverString() { return "WellNewtonSolver"; }
+  };
 
-    /// string key for the esitmate well solution flag
-    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
-    /// string key for the enable iso thermal estimator flag
-    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
-
-    // control data (not registered on the mesh)
-
-    static constexpr char const * massDensityString() { return "massDensity";}
-
-    static constexpr char const * currentBHPString() { return "currentBHP"; }
-
-    static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
-    static constexpr char const * currentVolRateString() { return "currentVolRate"; }
-
-    static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
-
-    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
-
-  }
-  /// ViewKey struct for the WellControls class
-  viewKeysWellControls;
   void setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion );
   void setGravCoef( WellElementSubRegion & subRegion, R1Tensor const & gravVector );
   /**
@@ -899,22 +914,23 @@ public:
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
 
-
+#if 0
   /**
    * @brief Getters for constraints
    */
-  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return m_minBHPConstraint; };
-  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return m_minBHPConstraint; };
-  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return m_maxBHPConstraint; };
-  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() { return nullptr; };
+  BHPConstraint< BHPConstraintTypeId::MIN > * getMinBHPConstraint() const { return nullptr; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() { return nullptr; };
+  BHPConstraint< BHPConstraintTypeId::MAX > * getMaxBHPConstraint() const { return nullptr; };
 
   /**
    * @brief Getters for constraint lists
    */
-  std::vector< WellConstraintBase * >  getProdRateConstraints() { return m_productionRateConstraintList; };
-  std::vector< WellConstraintBase * >  getProdRateConstraints() const { return m_productionRateConstraintList; };
-  std::vector< WellConstraintBase * >  getInjRateConstraints() { return m_injectionRateConstraintList; }
-  std::vector< WellConstraintBase * >  getInjRateConstraints() const { return m_injectionRateConstraintList; }
+  std::vector< WellConstraintBase * >  getProdRateConstraints() { return {}; };
+  std::vector< WellConstraintBase * >  getProdRateConstraints() const { return {}; };
+  std::vector< WellConstraintBase * >  getInjRateConstraints() { return {}; }
+  std::vector< WellConstraintBase * >  getInjRateConstraints() const { return {}; }
+#endif
 
   /**
    * @brief Set thermal effects enable
@@ -948,8 +964,10 @@ public:
                              DofManager const & dofManager );
 
 protected:
-
   virtual void postRestartInitialization( )override;
+
+  void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false );
+
 private:
   /// List of names of regions the solver will be applied to
   string_array m_targetRegionNames;
@@ -987,6 +1005,7 @@ protected:
 
   // flag to enable time step selection base on rates/bhp tables coordinates
   integer m_timeStepFromTables;
+
   /// Reference elevation
   real64 m_refElevation;
 
@@ -1028,7 +1047,7 @@ protected:
 
   // Current constrint
   WellConstraintBase * m_currentConstraint;
-
+#if 0
   // Minimum and maximum BHP and WHP constraints
   BHPConstraint< BHPConstraintTypeId::MIN > *  m_minBHPConstraint;
   BHPConstraint< BHPConstraintTypeId::MAX > * m_maxBHPConstraint;
@@ -1036,6 +1055,7 @@ protected:
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;
   std::vector< WellConstraintBase * > m_injectionRateConstraintList;
+#endif
 
   /// Well status
   WellControls::Status m_wellStatus;

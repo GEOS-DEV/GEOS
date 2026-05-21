@@ -523,21 +523,11 @@ public:
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
     m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() ),
-
     m_internalEnergy_n( fluid.internalEnergy_n() )
-  {
-    if( wellControls.isProducer() )
-    {
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-    }
-    else
-    {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-    }
-  }
-
+  {}
 
   GEOS_HOST_DEVICE
   void computeMassEnergyNormalizers( localIndex const iwelem,

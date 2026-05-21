@@ -123,7 +123,7 @@ void WellConstraintBase::postInputInitialization()
 
 }
 
-void WellConstraintBase::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+void WellConstraintBase::setNextDtFromTables( real64 const currentTime, real64 & nextDt ) const
 {
   setNextDtFromTable( m_constraintScheduleTable, currentTime, nextDt );
 }

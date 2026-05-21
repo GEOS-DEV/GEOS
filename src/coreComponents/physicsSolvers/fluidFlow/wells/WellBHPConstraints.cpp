@@ -84,14 +84,13 @@ bool BHPConstraint< T >::checkViolation( WellConstraintBase const & currentConst
   }
 }
 
-
 template class BHPConstraint< BHPConstraintTypeId::MIN >;
 template class BHPConstraint< BHPConstraintTypeId::MAX >;
+
 namespace
 {
-typedef BHPConstraint< BHPConstraintTypeId::MIN > MinimumBHPConstraint;
-typedef BHPConstraint< BHPConstraintTypeId::MAX > MaximumBHPConstraint;
 REGISTER_CATALOG_ENTRY( WellConstraintBase, MinimumBHPConstraint, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( WellConstraintBase, MaximumBHPConstraint, string const &, Group * const )
 }
+
 } //namespace geos

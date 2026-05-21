@@ -38,6 +38,15 @@
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+
+#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/ThermalCompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/kernels/PerforationFluxKernels.hpp"
@@ -191,7 +200,6 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
   }
 
   subRegion.registerField< well::gravityCoefficient >( getName() );
-
 
   subRegion.registerField< well::globalCompDensity >( getName() ).
     reference().resizeDimension< 1 >( m_numComponents );

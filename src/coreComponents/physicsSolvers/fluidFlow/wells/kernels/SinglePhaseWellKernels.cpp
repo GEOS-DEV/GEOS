@@ -550,19 +550,9 @@ RateInitializationKernel::
 
   WellControls::Control const control = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-  real64 constraintVal;
-  if( isProducer )
-  {
-    std::vector< WellConstraintBase * >  const constraints = wellControls.getProdRateConstraints();
-    // Use first rate constraint to set initial connection rates
-    constraintVal = constraints[0]->getConstraintValue( currentTime );
-  }
-  else
-  {
-    std::vector< WellConstraintBase * >  const constraints = wellControls.getInjRateConstraints();
-    // Use first rate constraint to set initial connection rates
-    constraintVal = constraints[0]->getConstraintValue( currentTime );;
-  }
+  auto const * rateConstraint = wellControls.getRateConstraint();
+  real64 const constraintVal = rateConstraint->getConstraintValue( currentTime );
+
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
@@ -578,6 +568,10 @@ RateInitializationKernel::
       {
         connRate[iwelem] = LvArray::math::min( 0.1 * constraintVal * wellElemDens[iwelem][0], 1e3 );
       }
+    }
+    else if( control == WellControls::Control::MASSRATE )
+    {
+      connRate[iwelem] = constraintVal;
     }
     else
     {

@@ -407,109 +407,6 @@ public:
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
-#if 0
-  /**
-   * @brief calculate the norm of the global system residual
-   * @param time the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localRhs the system right-hand side vector
-   * @return norm of the residual
-   *
-   * This function returns the norm of global residual vector, which is suitable for comparison with
-   * a tolerance.
-   */
-  virtual real64
-  calculateResidualNorm( real64 const & time,
-                         real64 const & dt,
-                         DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs );
-  /**
-   * @brief Function to check system solution for physical consistency and constraint violation
-   * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localSolution the solution vector
-   * @param scalingFactor factor to scale the solution prior to application
-   * @return true if solution can be safely applied without violating physical constraints, false otherwise
-   *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
-   * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
-   *
-   */
-  virtual bool
-  checkSystemSolution( DomainPartition & domain,
-                       DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor );
-
-  /**
-   * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
-   * @param[in] domain The domain partition.
-   * @param[in] dofManager degree-of-freedom manager associated with the linear system
-   * @param[in] localSolution the solution vector
-   * @return The factor that should be used to scale the solution vector values when they are being applied.
-   */
-  virtual real64
-  scalingForSystemSolution( DomainPartition & domain,
-                            DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution );
-
-  /**
-   * @brief Function to apply the solution vector to the state
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localSolution the solution vector
-   * @param scalingFactor factor to scale the solution prior to application
-   * @param dt the timestep
-   * @param domain the domain partition
-   *
-   * This function performs 2 operations:
-   * 1) extract the solution vector for the "blockSystem" parameter, and applies the
-   *    contents of the solution vector to the primary variable field data,
-   * 2) perform a synchronization of the primary field variable such that all ghosts are updated,
-   *
-   * The "scalingFactor" parameter allows for the scaled application of the solution vector. For
-   * instance, a line search may apply a negative scaling factor to remove part of the previously
-   * applied solution.
-   *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
-   * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
-   *
-   */
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       real64 const dt,
-                       DomainPartition & domain );
-
-
-  /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param domain the domain containing the mesh and fields
-   */
-  virtual void updateState( DomainPartition & domain );
-
-  /**
-   * @brief perform cleanup for implicit timestep
-   * @param time the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   *
-   * This function performs whatever tasks are required to complete an implicit timestep. For
-   * example, the acceptance of the solution will occur during this step, and deallocation of
-   * temporaries will be be performed in this function.
-   *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
-   * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
-   */
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-#endif
 
   /**
    * @brief Utility function to keep the well variables during a time step (used in
@@ -523,14 +420,11 @@ public:
 
 
 protected:
-  //virtual void postInputInitialization() override;
-
   virtual void initializePostSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void postRestartInitialization() override final;
-
 
 private:
 

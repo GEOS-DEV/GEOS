@@ -233,7 +233,7 @@ protected:
    * @param[in] currentTime the current time
    * @param[inout] nextDt the time step
    */
-  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+  void setNextDtFromTables( real64 const currentTime, real64 & nextDt ) const;
 
 
 protected:
@@ -247,7 +247,7 @@ protected:
   /// Constraint value
   real64 m_constraintValue;
 
-  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
   /// Constraint schedule table name
   string m_constraintScheduleTableName;

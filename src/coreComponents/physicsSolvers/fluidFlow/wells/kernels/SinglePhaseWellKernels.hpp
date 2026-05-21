@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
 
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 
@@ -812,18 +813,10 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_currentControl( wellControls.getControl() ),
     m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
+    m_targetBHP( wellControls.getTargetBHP( time ) ),
     m_volume( subRegion.getElementVolume() ),
     m_density_n( fluid.density_n() )
-  {
-    if( wellControls.isProducer() )
-    {
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-    }
-    else
-    {
-      m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-    }
-  }
+  {}
 
   GEOS_HOST_DEVICE
   virtual void computeLinf( localIndex const iwelem,
