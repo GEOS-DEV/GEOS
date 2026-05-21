@@ -36,23 +36,23 @@ RLFGraphColoringMPI::~RLFGraphColoringMPI()
 {}
 
 
-int RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localAdjncy )
+int RLFGraphColoringMPI::colorGraph( const stdVector< size_t > & localAdjncy )
 {
-  std::vector< camp::idx_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
-  std::vector< int > localColors = RLFGraphColoringMPI::colorGraph( localXadj, localAdjncy );
+  stdVector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  stdVector< int > localColors = RLFGraphColoringMPI::colorGraph( localXadj, localAdjncy );
   return localColors[0];
 }
 
 
-std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localXadj,
-                                                    const std::vector< camp::idx_t > & localAdjncy )
+stdVector< int > RLFGraphColoringMPI::colorGraph( const stdVector< size_t > & localXadj,
+                                                  const stdVector< size_t > & localAdjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
   int const size = MpiWrapper::commSize( m_comm );
 
   // Perform coloring on rank 0
   auto [xadj, adjncy] = gatherGraphData( localXadj, localAdjncy, m_comm );
-  std::vector< int > colors;
+  stdVector< int > colors;
   if( rank == 0 )
   {
     // Symmetrize the gathered graph before coloring.
@@ -62,25 +62,25 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
     // RLFGraphColoring treats the graph as undirected, so an asymmetric input
     // can yield a coloring that is valid from one direction but not the other.
     // Symmetrizing here ensures the coloring is globally valid.
-    int const numNodes = static_cast< int >( xadj.size() ) - 1;
+    size_t const numNodes = xadj.size() - 1;
     // Build adjacency sets for each node, then add reverse edges.
-    std::vector< std::set< camp::idx_t > > adjSets( numNodes );
-    for( int i = 0; i < numNodes; ++i )
+    stdVector< std::set< size_t > > adjSets( numNodes );
+    for( size_t i = 0; i < numNodes; ++i )
     {
-      for( camp::idx_t j = xadj[i]; j < xadj[i + 1]; ++j )
+      for( size_t j = xadj[i]; j < xadj[i + 1]; ++j )
       {
-        camp::idx_t const neighbor = adjncy[j];
+        size_t const neighbor = adjncy[j];
         adjSets[i].insert( neighbor );
-        adjSets[neighbor].insert( static_cast< camp::idx_t >( i ) ); // reverse edge
+        adjSets[neighbor].insert( i ); // reverse edge
       }
     }
     // Rebuild xadj and adjncy from the symmetrized sets.
-    std::vector< camp::idx_t > symXadj( numNodes + 1, 0 );
-    std::vector< camp::idx_t > symAdjncy;
-    for( int i = 0; i < numNodes; ++i )
+    stdVector< size_t > symXadj( numNodes + 1, 0 );
+    stdVector< size_t > symAdjncy;
+    for( size_t i = 0; i < numNodes; ++i )
     {
-      symXadj[i + 1] = symXadj[i] + static_cast< camp::idx_t >( adjSets[i].size() );
-      for( camp::idx_t nb : adjSets[i] )
+      symXadj[i + 1] = symXadj[i] + adjSets[i].size();
+      for( size_t nb : adjSets[i] )
       {
         symAdjncy.push_back( nb );
       }
@@ -93,8 +93,8 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
   }
 
   // Scatter colors back to original ranks
-  std::vector< int > sendCounts;
-  std::vector< int > displacements;
+  stdVector< int > sendCounts;
+  stdVector< int > displacements;
 
   if( rank==0 )
   {
@@ -114,7 +114,7 @@ std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx
     }
   }
 
-  std::vector< int > localColors( localNodeCounts );
+  stdVector< int > localColors( localNodeCounts );
   MpiWrapper::scatterv( colors.data(), sendCounts.data(), displacements.data(),
                         localColors.data(), localNodeCounts, 0, m_comm );
 
@@ -127,13 +127,13 @@ size_t RLFGraphColoringMPI::getNumberOfColors( const int color ) const
   return GraphColoringBase::getNumberOfColors( color, m_comm );
 }
 
-size_t RLFGraphColoringMPI::getNumberOfColors( const std::vector< int > & colors ) const
+size_t RLFGraphColoringMPI::getNumberOfColors( const stdVector< int > & colors ) const
 {
   return GraphColoringBase::getNumberOfColors( colors, m_comm );
 }
 
 
-bool RLFGraphColoringMPI::isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color ) const
+bool RLFGraphColoringMPI::isColoringValid( const stdVector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }
