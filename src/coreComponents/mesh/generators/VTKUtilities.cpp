@@ -1459,7 +1459,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
   }
 
   // Build map: candidate cellId -> set of its nodes that match fracture's collocated nodes
-  std::unordered_map< vtkIdType, std::unordered_set< vtkIdType > > cellToMatchedNodes;
+  stdUnorderedMap< vtkIdType, std::unordered_set< vtkIdType > > cellToMatchedNodes;
   cellToMatchedNodes.reserve( fractureCollocatedNodes.size() );
 
   for( vtkIdType const & collocatedNode : fractureCollocatedNodes )
@@ -1469,7 +1469,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
     {
       for( vtkIdType const & cellId : it->second )
       {
-        cellToMatchedNodes[cellId].insert( collocatedNode );
+        cellToMatchedNodes.get_inserted( cellId ).insert( collocatedNode );
       }
     }
   }
