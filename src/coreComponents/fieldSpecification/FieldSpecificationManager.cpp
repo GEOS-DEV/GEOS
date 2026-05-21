@@ -129,6 +129,33 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         isFieldNameFound = 1;
       }
 
+      if( fs.usesNonScalarValues() && targetGroup.hasWrapper( fieldName ) )
+      {
+        localIndex numElem = targetGroup.getWrapperBase( fieldName ).numArrayComp();
+
+        GEOS_THROW_IF_NE_MSG( fs.getScales().size(), numElem,
+                              GEOS_FMT( "Field `{}` requires {} values in `{}`, but {} {} given",
+                                        fieldName, numElem,
+                                        FieldSpecification::viewKeyStruct::scaleString(),
+                                        fs.getScales().size(),
+                                        fs.getScales().size() > 1 ? "were" : "was" ),
+                              InputError,
+                              getDataContext() );
+
+        // functionName of size 1 is a "broadcast" to all scales 
+        if( fs.getFunctionNames().size() != 1 )
+        {
+          GEOS_THROW_IF_NE_MSG( static_cast< localIndex >( fs.getFunctionNames().size() ), numElem,
+                                GEOS_FMT( "Field `{}` requires {} values (or one value) in `{}`, but {} {} given",
+                                          fieldName, numElem,
+                                          FieldSpecification::viewKeyStruct::functionNameString(),
+                                          fs.getFunctionNames().size(),
+                                          fs.getFunctionNames().size() > 1 ? "were" : "was" ),
+                                InputError,
+                                getDataContext() );
+        }
+      }
+
       if( targetSet.size() > 0 )
       {
         // Use the single set name provided by the callback (setName), not the outer array (setNames)
