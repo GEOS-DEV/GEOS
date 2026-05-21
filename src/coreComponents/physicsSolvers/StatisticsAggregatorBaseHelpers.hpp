@@ -445,10 +445,10 @@ StatsAggregatorBase< Impl >::computeRegionsStatistics( real64 const timeRequest 
 
     // aggregation of computations from the sub regions
     forRegionStatistics( mesh, meshLevelStats, true,
-                         [&, timeRequest] ( MeshLevelSet meshSet, StatsGroupType & setStats )
+                         [&] ( MeshLevelSet meshSet, StatsGroupType & setStats )
     {
       forRegionStatistics( meshSet, setStats,
-                           [&, timeRequest] ( CellElementRegion & region, StatsGroupType & regionStats )
+                           [&] ( CellElementRegion & region, StatsGroupType & regionStats )
       {
         forRegionStatistics( region, regionStats,
                              [&] ( CellElementSubRegion &, StatsGroupType & subRegionStats )
