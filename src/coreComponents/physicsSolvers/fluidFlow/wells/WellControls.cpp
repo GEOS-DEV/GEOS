@@ -1094,7 +1094,7 @@ bool WellControls::validateReferenceRegion() const
   {
     GEOS_WARNING_IF( isRoot,
                      GEOS_FMT( "WellControls {} referenceReservoirRegion not set and well constraint "
-                               "fluid property calculations will use top segement pressure and temperature.",
+                               "fluid property calculations will use top segment pressure and temperature.",
                                getName()) );
   }
   else
