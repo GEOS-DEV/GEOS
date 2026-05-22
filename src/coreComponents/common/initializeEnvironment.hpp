@@ -95,7 +95,7 @@ struct CommandLineOptions
   real64 printMemoryUsage = -1.0;
 
   /// Set the archiving level
-  integer archiveInputDeck = 1;
+  integer archiveInputDeck = 0;
 };
 
 /**
