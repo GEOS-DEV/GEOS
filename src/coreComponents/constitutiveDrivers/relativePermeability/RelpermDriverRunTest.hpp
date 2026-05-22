@@ -60,7 +60,8 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm, const arrayView2d< real64 > & ta
     using CurveType = constitutive::KilloughHysteresis::HysteresisCurve;
     using KeyStruct = typename RELPERM_TYPE::viewKeyStruct;
 
-    auto [ipWetting, ipNonWetting] = relperm.wettingAndNonWettingPhaseIndices();
+    integer ipWetting, ipNonWetting;
+    std::tie( ipWetting, ipNonWetting ) = relperm.wettingAndNonWettingPhaseIndices();
 
     stackArray1d< real64, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES > historicalSaturations( numPhases );
     historicalSaturations.zero();
