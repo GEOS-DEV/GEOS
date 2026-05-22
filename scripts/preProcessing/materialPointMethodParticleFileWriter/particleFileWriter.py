@@ -855,10 +855,8 @@ for h in find_numpy_wrappers(pfw):
 print("\nHopefully that looks ok.")
 
 # Normalize legacy PFW input keys that should not become solver XML attributes.
-if "planeStrain" in pfw:
-  if "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw["planeStrain"]
-  pfw.pop("planeStrain", None)
+# Keep planeStrain in pfw: PFW uses it to generate the reduced particle layer,
+# and the solver receives the same flag in the SolidMechanics_MPM XML node.
 pfw.pop("useConstantTimeStep", None)
 
 tabIndent = 3*"  "  

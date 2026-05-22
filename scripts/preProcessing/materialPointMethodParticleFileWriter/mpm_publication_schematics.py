@@ -229,6 +229,8 @@ def classify_family(case_id: str, path: Path | None, text: str) -> str:
         return "borehole"
     if "pdc" in s or "cutter" in s:
         return "pdc"
+    if "copperfoam" in s or "copper foam" in s or "poissondiskfoam" in s or "poisson-disk" in s:
+        return "copper_foam"
     if "colliding" in s:
         return "colliding_disks"
     if "elasticdisk" in s:
@@ -546,6 +548,20 @@ def features(ci: CaseInfo) -> list[str]:
         out.append("SinglePointBSpline particles")
     if "periodic" in s or "pbc" in s:
         out.append("periodic boundaries")
+    if "copper" in s:
+        out.append("copper VonMisesJ material")
+    if "poissondiskfoam" in s or "poisson-disk" in s or "poisson disk" in s:
+        out.append("Poisson-disk pores")
+    if "compactionwave" in s or "compaction-wave" in s:
+        out.append("compaction-wave stop time")
+    plane_strain_enabled = False
+    if isinstance(ci.pfw, dict):
+        try:
+            plane_strain_enabled = bool(int(float(ci.pfw.get("planeStrain", 0) or 0)))
+        except Exception:
+            plane_strain_enabled = False
+    if plane_strain_enabled or "plane-strain" in s or "plane strain" in s:
+        out.append("plane-strain kinematics")
     if "cohesive" in s or "cz" in s:
         out.append("cohesive-zone fields")
     if "contact" in s or "gapcorrection" in s:
@@ -596,6 +612,8 @@ def render_case(ci: CaseInfo, out_png: Path, out_svg: Path | None = None, force:
         fig = draw_borehole(ci)
     elif family == "pdc":
         fig = draw_pdc(ci)
+    elif family == "copper_foam":
+        fig = draw_copper_foam(ci)
     elif family in ("colliding_disks", "elastic_disk"):
         fig = draw_disk_pair_or_elastic(ci)
     elif family == "spinning_disk":
@@ -754,6 +772,170 @@ def draw_pdc(ci: CaseInfo):
     add_title(ax, ci, "PDC cutter/substrate contact with prescribed motion")
     add_feature_box(ax, features(ci))
     ax.set_xlim(-3, 43); ax.set_ylim(-2, 34)
+    return fig
+
+
+def _namespace_float(ci: CaseInfo, name: str, default: float) -> float:
+    value = ci.namespace.get(name, None) if isinstance(ci.namespace, dict) else None
+    try:
+        return float(value)
+    except Exception:
+        pass
+    # Fallback for report-only generation when mpi4py is unavailable and the PFW
+    # input could not be executed.  This intentionally matches simple assignments
+    # used by the examples rather than trying to parse arbitrary Python.
+    m = re.search(r"^\s*" + re.escape(name) + r"\s*=\s*([-+0-9.eE]+)", ci.source_text, re.MULTILINE)
+    if m:
+        with contextlib.suppress(Exception):
+            return float(m.group(1))
+    return default
+
+
+def _sample_periodic_pore_slice(xmin, xmax, ymin, ymax, radius, area_fraction, seed, max_count=90):
+    width = xmax - xmin
+    height = ymax - ymin
+    area = max(width * height, 1.0e-12)
+    target = int(round(area_fraction * area / max(math.pi * radius * radius, 1.0e-16)))
+    target = max(10, min(max_count, target))
+    min_spacing = 2.03 * radius
+    rng = np.random.default_rng(int(seed))
+    centers: list[tuple[float, float]] = []
+    attempts = 0
+    while len(centers) < target and attempts < max(6000, 250 * target):
+        attempts += 1
+        x = rng.uniform(xmin, xmax)
+        y = rng.uniform(ymin + radius, ymax - radius)
+        ok = True
+        for cx, cy in centers:
+            dx = abs(cx - x)
+            dx = min(dx, width - dx)  # lateral pore structure is periodic.
+            dy = abs(cy - y)
+            if dx * dx + dy * dy < min_spacing * min_spacing:
+                ok = False
+                break
+        if ok:
+            centers.append((x, y))
+    return np.asarray(centers, dtype=float)
+
+
+def _foam_slice_centers(ci: CaseInfo, is_2d: bool, xmin, xmax, ymin, ymax, radius, area_fraction, seed):
+    # Prefer actual poissonDiskFoam centers when the input can be evaluated.  For
+    # 3D, show a representative x-z center slice through the specimen; for 2D,
+    # show the generated x-y pore centers directly.
+    for obj in geometry_objects(ci):
+        if obj.__class__.__name__ != "poissonDiskFoam" or not hasattr(obj, "centers"):
+            continue
+        with contextlib.suppress(Exception):
+            centers = np.asarray(getattr(obj, "centers"), dtype=float)
+            if centers.size == 0:
+                continue
+            if is_2d and centers.shape[1] >= 2:
+                return centers[:, [0, 1]]
+            if (not is_2d) and centers.shape[1] >= 3:
+                y_mid = 0.5 * (_namespace_float(ci, "domainSize_y", 1.0))
+                # The 3D input is centered at y=0, so select a mid-plane slab.
+                y_mid = 0.0
+                mask = np.abs(centers[:, 1] - y_mid) <= 1.5 * radius
+                sliced = centers[mask][:, [0, 2]]
+                if sliced.shape[0] >= 8:
+                    return sliced
+    return _sample_periodic_pore_slice(xmin, xmax, ymin, ymax, radius, area_fraction, seed)
+
+
+def draw_copper_foam(ci: CaseInfo):
+    is_2d = ("2d" in ci.case_id.lower()) or bool(int(float(ci.pfw.get("planeStrain", 0) or 0)))
+    width = _namespace_float(ci, "lateralLength", 1.0)
+    aspect = _namespace_float(ci, "impactAspectRatio", 6.0)
+    length = aspect * width
+    pore_d = _namespace_float(ci, "poreDiameter", 0.15)
+    radius = 0.5 * pore_d
+    pore_fraction = _namespace_float(ci, "poreAreaFraction" if is_2d else "poreVolumeFraction", 0.18)
+    impact_v = _namespace_float(ci, "impactVelocity", 0.25)
+    compaction_speed = _namespace_float(ci, "compactionWaveSpeed", impact_v / max(pore_fraction, 1.0e-12))
+    stop_time = _namespace_float(ci, "stopTime", length / max(compaction_speed, 1.0e-12))
+    seed = int(_namespace_float(ci, "poreSeed", 20260520 if not is_2d else 20260521))
+
+    xmin = get_num(ci.pfw, "xmin", default=-0.5 * width)
+    xmax = get_num(ci.pfw, "xmax", default=0.5 * width)
+    if is_2d:
+        ymin = get_num(ci.pfw, "ymin", default=0.0)
+        ymax = get_num(ci.pfw, "ymax", default=length)
+        axis_label = "y"
+        part_y = ci.pfw.get("ypar")
+        subtitle = "Plane-strain copper foam: periodic x, impact into y=0 symmetry plane"
+    else:
+        ymin = get_num(ci.pfw, "zmin", default=0.0)
+        ymax = get_num(ci.pfw, "zmax", default=length)
+        axis_label = "z"
+        part_y = ci.pfw.get("zpar")
+        subtitle = "3D copper foam: x-z slice; x/y pore field is periodic"
+
+    try:
+        partitions = (int(ci.pfw.get("xpar")), int(part_y))
+    except Exception:
+        partitions = (3, 18)
+
+    fig, ax = setup_axes(ci, (7.2, 8.2))
+    w, h = xmax - xmin, ymax - ymin
+    draw_domain(ax, xmin, xmax, ymin, ymax, grid=True, partitions=partitions, fill="#f9f5ed")
+    clip = patches.Rectangle((xmin, ymin), w, h, transform=ax.transData)
+
+    centers = _foam_slice_centers(ci, is_2d, xmin, xmax, ymin, ymax, radius, pore_fraction, seed)
+    for cx, cy in centers:
+        for off in (-w, 0.0, w):
+            if cx + off + radius < xmin or cx + off - radius > xmax:
+                continue
+            pore = patches.Circle((cx + off, cy), radius, fc="white", ec="#9b6a32", lw=0.75, zorder=8)
+            pore.set_clip_path(clip)
+            ax.add_patch(pore)
+
+    # Symmetry impact plane and support hatching.
+    ax.plot([xmin, xmax], [ymin, ymin], color="0.05", lw=3.2, zorder=12, solid_capstyle="butt")
+    for x in np.linspace(xmin, xmax, 13):
+        ax.plot([x, x - 0.045 * w], [ymin, ymin - 0.075 * h], color="0.18", lw=0.7, zorder=11)
+    ax.text(0.5 * (xmin + xmax), ymin - 0.105 * h, f"symmetry impact plane ({axis_label}=0)",
+            ha="center", va="top", fontsize=8.4)
+
+    # Initial downward velocity field and estimated compaction wave.
+    for i, x in enumerate(np.linspace(xmin + 0.22 * w, xmax - 0.22 * w, 3)):
+        arrow(ax, (x, ymax - 0.08 * h), (0.0, -0.16 * h),
+              "v0 = " + short_num(impact_v, " mm/us") if i == 1 else None, color="#1f5aa6", zorder=20)
+    arrow(ax, (xmax + 0.58 * w, ymin + 0.10 * h), (0.0, 0.25 * h),
+          "compaction wave\n" + short_num(compaction_speed, " mm/us"), color="#b64a2b", zorder=20)
+
+    add_dimension(ax, (xmin, ymax), (xmax, ymax), "lateral width = " + short_num(w, " mm"), offset=(0, 0.055 * h))
+    dim_x = xmax + 0.30 * w
+    ax.annotate("", xy=(dim_x, ymax), xytext=(dim_x, ymin),
+                arrowprops=dict(arrowstyle="<->", lw=1.0, color="0.1", shrinkA=0, shrinkB=0), zorder=18)
+    ax.text(dim_x + 0.085 * w, 0.5 * (ymin + ymax), "bar length = " + short_num(h, " mm"),
+            rotation=90, ha="center", va="center", fontsize=8.5, color="0.1",
+            bbox=dict(fc="white", ec="none", pad=1.0, alpha=0.85), zorder=19)
+
+    ax.text(xmin - 0.11 * w, ymin + 0.50 * h, "periodic lateral face", rotation=90,
+            ha="center", va="center", fontsize=8.4)
+    ax.text(xmax + 0.11 * w, ymin + 0.50 * h, "periodic lateral face", rotation=270,
+            ha="center", va="center", fontsize=8.4)
+    ax.text(xmin + 0.04 * w, ymax - 0.035 * h, "Cu matrix\nwhite pores", ha="left", va="top", fontsize=8.3,
+            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.65", lw=0.7, alpha=0.92), zorder=30)
+    ax.text(xmin + 0.04 * w, ymin + 0.035 * h, "stop time = one transit\n" + short_num(stop_time, " us"),
+            ha="left", va="bottom", fontsize=8.3,
+            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.65", lw=0.7, alpha=0.92), zorder=30)
+
+    note_lines = [
+        "FMPM + SinglePointBSpline",
+        "Cu VonMisesJ matrix",
+        "Poisson-disk pores",
+        "PBC: x" if is_2d else "PBC: x and y",
+    ]
+    if is_2d:
+        note_lines.append("plane-strain kinematics")
+    ax.text(xmax + 0.52 * w, ymax - 0.02 * h, "Code features\n" + "\n".join("- " + s for s in note_lines),
+            ha="left", va="top", fontsize=8.2,
+            bbox=dict(boxstyle="round,pad=0.35", fc="white", ec="0.65", lw=0.8, alpha=0.94), zorder=30)
+
+    add_title(ax, ci, subtitle)
+    ax.set_xlim(xmin - 0.36 * w, xmax + 1.48 * w)
+    ax.set_ylim(ymin - 0.16 * h, ymax + 0.12 * h)
     return fig
 
 
