@@ -380,8 +380,8 @@ void WellControls::postInputInitialization()
     return std::get< 1 >( constraint_tuple ) != bhp_type;
   } );
   GEOS_THROW_IF( !rate_match_found,
-                 GEOS_FMT( "Missing rate constraint for well {}",
-                           getName(), (isProducerWell ? "producer" : "injector") ),
+                 GEOS_FMT( "Missing rate constraint for {} well {}",
+                           (isProducerWell ? "producer" : "injector"), getName() ),
                  InputError, getDataContext() );
 }
 
