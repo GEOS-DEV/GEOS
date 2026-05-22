@@ -86,9 +86,6 @@ public:
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
-
-    static constexpr char const * computePrescribedStressPathString() { return "computePrescribedStressPath"; }
-    static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
   };
 
   /**
