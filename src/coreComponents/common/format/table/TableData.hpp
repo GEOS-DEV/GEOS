@@ -55,9 +55,9 @@ public:
   bool operator<( TableData const & other ) const;
 
   /**
- * @brief Equality comparison of all cells.
- * @param comparingTable Table to compare with
- * @return true if row count and sizes match and if all cell values are identical in both tables.
+   * @brief Equality comparison of all cells.
+   * @param comparingTable Table to compare with
+   * @return true if row count and sizes match and if all cell values are identical in both tables.
    */
   bool operator==( TableData const & other ) const;
 
@@ -349,7 +349,8 @@ inline unsigned long sizeOfString( string const & str )
  * @param data Destination variable.
  * @param out The buffer to write in.
  */
-template< typename T >
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > = true >
 void serializePrimitive ( T const data, stdVector< buffer_unit_type > & out );
 
 /**
@@ -366,7 +367,8 @@ void serializeString ( string const & data, stdVector< buffer_unit_type > & out 
  * @param ptr Current read pointer (advanced by sizeof(string)).
  * @param end Safety: maximum buffer limit.
  */
-template< typename T >
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > = true >
 void deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end );
 
 /**
@@ -390,24 +392,35 @@ namespace tableDataSorting
 bool positiveNumberStringComp( string_view a, string_view b );
 }
 
-template< typename T >
-void basicSerialization::serializePrimitive ( T const data, stdVector< buffer_unit_type > & out )
+/**
+ * @name Inlines definition
+ */
+///@{
+
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > >
+void basicSerialization::serializePrimitive( T const data,
+                                             stdVector< buffer_unit_type > & out )
 {
-  static_assert( std::is_trivially_copyable_v< T > );
   buffer_unit_type const * begin = reinterpret_cast< buffer_unit_type const * >( &data );
   buffer_unit_type const * end = begin + sizeof(data);
   out.insert( out.end(), begin, end );
 }
 
-template< typename T >
-void basicSerialization::deserializePrimitive( T & data, buffer_unit_type const * & ptr, buffer_unit_type const * end )
+template< typename T,
+          std::enable_if_t< std::is_trivially_copyable_v< T >, bool > >
+void basicSerialization::deserializePrimitive( T & data,
+                                               buffer_unit_type const * & ptr,
+                                               buffer_unit_type const * end )
 {
-  static_assert( std::is_trivially_copyable_v< T > );
   if( ptr + sizeof(T)> end )
     throw std::runtime_error( "Buffer overflow" );
+
   data = *reinterpret_cast< T const * >(ptr);
   ptr += sizeof(T);
 }
+
+///@}
 
 }
 #endif /* GEOS_COMMON_FORMAT_TABLE_TABLEDATA_HPP */
