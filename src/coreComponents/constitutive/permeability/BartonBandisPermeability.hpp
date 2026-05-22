@@ -288,8 +288,8 @@ public:
 
     /// string/key for aperture under zero normal stress
     static constexpr char const * apertureZeroString() { return "referenceAperture"; }
-    static constexpr char const * biotString()                  { return "biot"; }
-    static constexpr char const * poissonString()               { return "poisson"; }
+    static constexpr char const * biotString()                  { return "biotCoefficient"; }
+    static constexpr char const * poissonString()               { return "poissonRatio"; }
     static constexpr char const * normalStiffnessString()       { return "normalStiffness"; }
     static constexpr char const * referencePressureString()     { return "referencePressure"; }
     static constexpr char const * referenceTotalStressString()  { return "referenceTotalStress"; }
