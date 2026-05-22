@@ -744,7 +744,7 @@ public:
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
   setLimits( std::optional< Bound< limit_value_type_t< T > > > min,
              std::optional< Bound< limit_value_type_t< T > > > max,
-             LimitsMode mode = LimitsMode::Warning )
+             LimitsMode mode = LimitsMode::Error )
   {
     m_limits.min = min;
     m_limits.max = max;
@@ -756,7 +756,7 @@ public:
   std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
   setLimits( std::optional< Bound< limit_value_type_t< T > > >,
              std::optional< Bound< limit_value_type_t< T > > >,
-             LimitsMode mode = LimitsMode::Warning )
+             LimitsMode mode = LimitsMode::Error )
   {
     static_assert( is_limitable_v< U >,
                    "setLimits is only supported on scalar arithmetic types." );
