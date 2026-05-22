@@ -1207,7 +1207,7 @@ private:
     }
 
     string const msg = GEOS_FMT( "Value {} for attribute '{}' is outside the allowed range.",
-                                 value, getName() );
+                                 value, getDataContext() );
 
     switch( m_limitsMode )
     {
