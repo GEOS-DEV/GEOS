@@ -5,6 +5,21 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #4057 (2026-05-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4057-16739-5dde641.tar.gz>
+Remove dependency on PVT package
+
+PR #3814 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3814-16717-d17ea59.tar.gz>
+Fix RLF coloring
+
+PR #4008 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4008-16688-17c55fe.tar.gz>
+Fix Fracture/3D cell co-location in parallel mesh redistribution
+
+PR #4055 (2026-05-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4055-16683-0251bb6.tar.gz>
+Trim some fluid model tests
+
+PR #4041 (2026-05-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4041-16664-9a29348.tar.gz>
+Fix wellbore nonlinear thermal diffusion
+
 PR #3977 (2026-05-15) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3977-16644-9fc03e7.tar.gz>
 Change face normal, centers and area for local Newell's formula
 

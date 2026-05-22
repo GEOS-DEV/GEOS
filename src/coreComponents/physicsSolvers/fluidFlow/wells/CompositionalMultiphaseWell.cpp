@@ -932,9 +932,9 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
-    using ExecPolicy = typename FluidType::exec_policy;
+
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< ExecPolicy, FluidType >;
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy, FluidType >;
     KernelType::launch( subRegion.size(),
                         fluidWrapper,
                         pres,
