@@ -126,6 +126,8 @@ def copy_pfw_files(pfw_root: Path, run_dir: Path, source_dir: Path, input_file: 
     examples_postprocess = pfw_root / "examples" / "mpm_example_postprocess.py"
     if examples_postprocess.is_file():
         shutil.copy2(examples_postprocess, run_dir / examples_postprocess.name)
+    for src in source_dir.glob("visitRender_*.py"):
+        shutil.copy2(src, run_dir / src.name)
     for src in source_dir.glob("*.py"):
         if src.is_file() and src.name != input_file:
             shutil.copy2(src, run_dir / src.name)
