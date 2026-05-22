@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_RELPERMDRIVER_TASKS_START -->
+  <Tasks>
+    <RelpermDriver
+      name="test_sandstone"
+      relperm="sandstone"
+      steps="20"
+      output="sandstone_model.txt"
+      logLevel="1" />
+  </Tasks>
+  <!-- SPHINX_RELPERMDRIVER_TASKS_END -->
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="1">
+    <!-- SPHINX_RELPERMDRIVER_EVENT_START -->
+    <SoloEvent
+      name="test_sandstone_event"
+      target="/Tasks/test_sandstone" />
+    <!-- SPHINX_RELPERMDRIVER_EVENT_END -->
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput" />      
+  </Events>
+
+  <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_START -->
+  <Constitutive>
+    <TableRelativePermeability
+      name="sandstone"
+      phaseNames="{ gas, water }"
+      wettingNonWettingRelPermTableNames="{ waterRelPerm, gasRelPerm }" />
+  </Constitutive>
+  <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_END -->
+
+  <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_START -->
+  <Functions>
+    <TableFunction
+      name="waterRelPerm"
+      coordinates="{ 0.15, 0.2095, 0.269, 0.3285, 0.3965, 0.456, 0.5155, 0.575, 0.6345, 0.694, 0.7535, 0.8215, 0.881, 0.9405, 1 }"
+      values="{ 0, 0, 0.0001, 0.0007, 0.0036, 0.0105, 0.0242, 0.0483, 0.087, 0.1454, 0.2291, 0.3643, 0.5251, 0.7341, 1 }"
+      interpolation="linear" />
+
+    <TableFunction
+      name="gasRelPerm"
+      coordinates="{ 0, 0.0595, 0.119, 0.1785, 0.2465, 0.306, 0.3655, 0.425, 0.4845, 0.544, 0.6035, 0.6715, 0.731, 0.7905, 0.85 }"
+      values="{ 0, 0.0035, 0.0142, 0.0319, 0.0608, 0.0936, 0.1336, 0.1806, 0.2347, 0.2959, 0.3642, 0.4509, 0.5344, 0.6249, 0.64 }"
+      interpolation="linear" />      
+  </Functions>
+  <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_END -->
+</Problem>
