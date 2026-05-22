@@ -78,8 +78,8 @@ public:
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              dHydraulicAperture_dNormalJump,
-             m_permeability[k][0],
-             m_dPerm_dDispJump[k][0] );
+m_permeability[k][q],
+m_dPerm_dDispJump[k][q] );
          
   }
 
