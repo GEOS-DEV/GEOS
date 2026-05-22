@@ -787,6 +787,42 @@ public:
     return m_limits.max;
   }
 
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && !traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    validateLimitValue( reference() );
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    auto const values = m_data->toViewConst();
+    for( limit_value_type_t< T > value : values )
+    {
+      validateLimitValue( value );
+    }
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable_v< U >, void >
+  validateLimits()
+  {
+    /* no-op */
+  }
+
+
   virtual bool processInputFile( xmlWrapper::xmlNode const & targetNode,
                                  xmlWrapper::xmlNodePos const & nodePos ) override
   {
@@ -1187,41 +1223,6 @@ private:
         GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
         break;
     }
-  }
-
-  template< typename U=T >
-  std::enable_if_t< is_limitable_v< U > && !traits::is_array_type< U >, void >
-  validateLimits()
-  {
-    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == LimitsMode::Indicative )
-    {
-      return;
-    }
-    validateLimitValue( reference() );
-  }
-
-  template< typename U=T >
-  std::enable_if_t< is_limitable_v< U > && traits::is_array_type< U >, void >
-  validateLimits()
-  {
-    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == LimitsMode::Indicative )
-    {
-      return;
-    }
-    auto const values = m_data->toViewConst();
-    for( limit_value_type_t< T > value : values )
-    {
-      validateLimitValue( value );
-    }
-  }
-
-  template< typename U=T >
-  std::enable_if_t< !is_limitable_v< U >, void >
-  validateLimits()
-  {
-    /* no-op */
   }
 
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
