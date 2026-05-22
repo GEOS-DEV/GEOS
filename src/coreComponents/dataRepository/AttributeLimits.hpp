@@ -17,6 +17,7 @@
 #ifndef GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
 #define GEOS_DATAREPOSITORY_ATTRIBUTELIMITS_HPP_
 
+#include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/EnumStrings.hpp"
 #include <optional>
@@ -49,16 +50,49 @@ ENUM_STRINGS( LimitsMode,
               "Error" );
 
 /**
+ * @struct LimitValueType
+ * @brief Structure giving the underlying value type that limits apply to.
+ *
+ * For a scalar T is T itself. For an array T is the type of the values in
+ * the array (Array::value_type).
+ */
+template< typename T, bool = traits::is_array_type< T > >
+struct LimitValueType
+{};
+
+template< typename T >
+struct LimitValueType< T, true >
+{
+  using type = typename T::value_type;
+};
+
+template< typename T >
+struct LimitValueType< T, false >
+{
+  using type = T;
+};
+
+/**
+ * @brief Alias resolving to the type that limits apply to
+ *
+ * For a scalar value it is the scalar type itself.
+ * For an array it is the type of the values in the array.
+ */
+template< typename T >
+using limit_value_type_t = typename LimitValueType< T >::type;
+
+/**
  * @struct is_limitable
  * @tparam T type to check
  * @brief Trait determining whether attribute limits can be applied to type @p T
  *
- * Limits apply to scalar numeric types (integer, real32, real64, etc.)
+ * Limits apply to numeric types (integer, real32, real64, etc.) including arrays
+ * of numeric types (array1d< integer >, array2d< real64 >, etc.)
  */
 template< typename T >
 struct is_limitable
 {
-  static constexpr bool value = std::is_arithmetic< T >::value;
+  static constexpr bool value = std::is_arithmetic< limit_value_type_t< T > >::value;
 };
 
 /**
@@ -128,8 +162,8 @@ struct Limits
 template< typename T >
 struct Limits< T, true >
 {
-  std::optional< Bound< T > > min;
-  std::optional< Bound< T > > max;
+  std::optional< Bound< limit_value_type_t< T > > > min;
+  std::optional< Bound< limit_value_type_t< T > > > max;
 };
 
 

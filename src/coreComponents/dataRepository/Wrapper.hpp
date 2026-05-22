@@ -742,8 +742,8 @@ public:
    */
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< Bound< T > > min,
-             std::optional< Bound< T > > max,
+  setLimits( std::optional< Bound< limit_value_type_t< T > > > min,
+             std::optional< Bound< limit_value_type_t< T > > > max,
              LimitsMode mode = LimitsMode::Warning )
   {
     m_limits.min = min;
@@ -753,9 +753,9 @@ public:
   }
 
   template< typename U=T >
-  std::enable_if_t< !is_limitable_v< U >, Wrapper< T > & >
-  setLimits( std::optional< Bound< T > >,
-             std::optional< Bound< T > >,
+  std::enable_if_t< !is_limitable_v< U > && !traits::is_array_type< U >, Wrapper< T > & >
+  setLimits( std::optional< Bound< limit_value_type_t< T > > >,
+             std::optional< Bound< limit_value_type_t< T > > >,
              LimitsMode mode = LimitsMode::Warning )
   {
     static_assert( is_limitable_v< U >,
@@ -769,7 +769,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< T > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
   getMinValue() const
   {
     return m_limits.min;
@@ -781,7 +781,7 @@ public:
    * @note Only available when T is a limitable type
    */
   template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< T > > const & >
+  std::enable_if_t< is_limitable_v< U >, std::optional< Bound< limit_value_type_t< T > > > const & >
   getMaxValue() const
   {
     return m_limits.max;
@@ -1160,17 +1160,9 @@ private:
     return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
   }
 
-  template< typename U=T >
-  std::enable_if_t< is_limitable_v< U >, void >
-  validateLimits()
+  template< typename V >
+  void validateLimitValue( V const & value ) const
   {
-    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
-        m_limitsMode == LimitsMode::Indicative )
-    {
-      return;
-    }
-
-    T const & value = reference();
     bool const belowMin = m_limits.min.has_value() ? isValueBelowMin( value, *m_limits.min ) : false;
     bool const aboveMax = m_limits.max.has_value() ? isValueAboveMax( value, *m_limits.max ) : false;
     if( !belowMin && !aboveMax )
@@ -1194,6 +1186,34 @@ private:
       default:
         GEOS_LOG_RANK_0( "Unimplemented LimitsMode" );
         break;
+    }
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && !traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    validateLimitValue( reference() );
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U > && traits::is_array_type< U >, void >
+  validateLimits()
+  {
+    if( (!m_limits.min.has_value() && !m_limits.max.has_value()) ||
+        m_limitsMode == LimitsMode::Indicative )
+    {
+      return;
+    }
+    auto const values = m_data->toViewConst();
+    for( limit_value_type_t< T > value : values )
+    {
+      validateLimitValue( value );
     }
   }
 
