@@ -247,7 +247,12 @@
     <PeriodicEvent
       name="displacementJumpOutput"
       targetExactTimestep="0"
-      target="/Outputs/displacementJumpOutput"/>    	
+      target="/Outputs/displacementJumpOutput"/>
+
+    <PeriodicEvent
+      name="restartOutput"
+      timeFrequency="10.0"
+      target="/Outputs/restartOutput"/>
   </Events>
 
 </Problem>
