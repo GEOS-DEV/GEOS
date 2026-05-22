@@ -218,9 +218,9 @@
     </Tasks>
 
   <Events minTime="0.0" maxTime="10.0">
-    <SoloEvent name="intact_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/intact_matrix_initialization"/>
+    <!-- <SoloEvent name="intact_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/intact_matrix_initialization"/>
     <SoloEvent name="fracturingStep" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
-    <SoloEvent name="fractured_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/fractured_matrix_initialization"/>    
+    <SoloEvent name="fractured_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/fractured_matrix_initialization"/>     -->
 
     <PeriodicEvent
       name="outputs"
