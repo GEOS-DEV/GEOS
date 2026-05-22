@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+
+find_repo_root() {
+  local d="$SCRIPT_DIR"
+  while [[ "$d" != "/" ]]; do
+    if [[ -d "$d/scripts/preProcessing/materialPointMethodParticleFileWriter" ]]; then
+      printf '%s\n' "$d"
+      return 0
+    fi
+    d=$(dirname "$d")
+  done
+  return 1
+}
+
+REPO_ROOT=$(find_repo_root)
+exec "${PYTHON:-/usr/tce/bin/python3}" \
+  "$REPO_ROOT/scripts/preProcessing/materialPointMethodParticleFileWriter/mpm_publication_schematics.py" \
+  --repo "$REPO_ROOT" "$@"

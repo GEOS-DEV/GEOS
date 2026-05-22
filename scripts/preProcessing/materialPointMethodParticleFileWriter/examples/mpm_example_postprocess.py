@@ -1,306 +1,241 @@
 #!/usr/bin/env python3
-"""Generic robust post-processing for staged MPM examples."""
+"""Generic post-processing for staged MPM example runs.
+
+The runProblem wrapper copies this script and any case-specific visitRender_*.py
+script into the Lustre run directory.  This script then runs VisIt in CLI mode,
+copies any generated PNG/CSV/JSON/log products back to the source example
+output directory, and leaves useful logs even when rendering fails.
+"""
 from __future__ import annotations
 
 import argparse
-import csv
-import json
+import glob
 import os
-import re
 import shutil
+import signal
 import subprocess
 import sys
+import textwrap
 from datetime import datetime
 from pathlib import Path
 
 
-def parse_args():
-    p = argparse.ArgumentParser(description="Post-process one staged MPM example")
-    p.add_argument("--run-dir", required=True)
-    p.add_argument("--output-dir", required=True)
-    p.add_argument("--job-id", default="")
-    p.add_argument("--case-name", required=True)
-    p.add_argument("--output-prefix", required=True)
-    p.add_argument("--initial-variable", default="Damage")
-    p.add_argument("--final-variable", default="Damage")
-    p.add_argument("--view", default="xy")
-    p.add_argument("--mesh", default="CellRegion1")
-    p.add_argument("--visit-cmd", default=os.environ.get("VISIT_COMMAND", ""))
-    p.add_argument("--no-visit", action="store_true")
-    p.add_argument("--skip-render", action="store_true")
-    p.add_argument("--copy-only", action="store_true")
-    p.add_argument("--skip-slurm-check", action="store_true")
-    p.add_argument("--force", "-y", action="store_true")
-    return p.parse_args()
+def log_line(handle, message: str) -> None:
+    print(message, flush=True)
+    handle.write(message + "\n")
+    handle.flush()
 
 
-def log(args, msg):
-    print(f"[{args.case_name} post] {msg}", flush=True)
-
-
-def warn(args, msg):
-    print(f"[{args.case_name} post] WARNING: {msg}", file=sys.stderr, flush=True)
-
-
-def expand(path):
-    return Path(os.path.expandvars(os.path.expanduser(str(path)))).resolve()
-
-
-def plot_database_exists(run_dir: Path) -> bool:
-    silo = run_dir / "siloFiles"
-    return silo.is_dir() and (any(silo.glob("mpm_cpdi_*")) or any(silo.glob("mpm_*")))
-
-
-def slurm_file_for(run_dir: Path, job_id: str) -> Path | None:
-    if not job_id:
-        return None
-    candidates = [run_dir / f"slurm-{job_id}.out", run_dir / f"slurm-{job_id}_0.out"]
-    for c in candidates:
-        if c.is_file():
-            return c
-    found = sorted(run_dir.glob(f"slurm-{job_id}*.out"))
-    return found[0] if found else None
-
-
-def check_geos_completed(args, run_dir: Path) -> bool:
-    if args.skip_slurm_check or not args.job_id:
-        return True
-    log_path = run_dir / f"{args.output_prefix}_geos_slurm_check.log"
-    slurm = slurm_file_for(run_dir, args.job_id)
-    records = []
-    if slurm and slurm.is_file():
-        log(args, "checking GEOS slurm output: " + str(slurm))
-        data = slurm.read_text(errors="replace")
-        tail = data[-30000:]
-        records.append("slurm=" + str(slurm))
-        failure = re.search(r"(CANCELLED|TIME LIMIT|OUT_OF_MEMORY|NODE_FAIL|Segmentation fault|Traceback|EXCEPTION|MPI_Abort)", tail, re.I)
-        success = re.search(r"(Job complete|GEOSX executed successfully|problem run complete|Total elapsed time|run complete)", tail, re.I)
-        records.append("success_marker=" + str(bool(success)))
-        records.append("failure_marker=" + (failure.group(0) if failure else ""))
-        log_path.write_text("\n".join(records) + "\n")
-        if failure and not success:
-            warn(args, "failure marker found in GEOS slurm output; post-processing will copy existing products only")
-            return False
-        if success:
-            return True
-        if plot_database_exists(run_dir):
-            warn(args, "no success marker found, but Silo plot database exists; continuing")
-            return True
-    else:
-        warn(args, f"slurm output for job {args.job_id} was not found")
-        if plot_database_exists(run_dir):
-            warn(args, "Silo plot database exists; continuing")
-            return True
-    if shutil.which("sacct") and args.job_id:
-        proc = subprocess.run(["sacct", "-j", args.job_id, "-X", "-n", "-P", "-o", "JobID,State,ExitCode"], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-        line = next((l for l in proc.stdout.splitlines() if l.strip()), "")
-        if line:
-            parts = line.split("|")
-            state = parts[1] if len(parts) > 1 else ""
-            exit_code = parts[2] if len(parts) > 2 else ""
-            with log_path.open("a") as f:
-                f.write(f"sacct_state={state}\nsacct_exit={exit_code}\n")
-            log(args, f"sacct state={state} exit={exit_code}")
-            if state == "COMPLETED" and exit_code == "0:0":
-                return True
-            if state in {"RUNNING", "PENDING", "CONFIGURING", "COMPLETING"}:
-                return False
-    return plot_database_exists(run_dir)
-
-
-def detect_visit(requested: str) -> str | None:
+def find_visit_command() -> str | None:
     candidates = []
-    if requested:
-        candidates.append(requested)
-    candidates += [os.environ.get("VISIT_CMD", ""), os.environ.get("VISIT_COMMAND", ""), "/usr/gapps/visit/bin/visit", "visit"]
-    for c in candidates:
-        if not c:
-            continue
-        if os.path.isabs(c) and os.access(c, os.X_OK):
-            return c
-        found = shutil.which(c)
+    env = os.environ.get("VISIT_COMMAND")
+    if env:
+        candidates.append(env)
+    candidates.extend(["/usr/gapps/visit/bin/visit", "visit"])
+    for cmd in candidates:
+        if os.path.isabs(cmd) and os.path.exists(cmd):
+            return cmd
+        found = shutil.which(cmd)
         if found:
             return found
     return None
 
 
-def run_visit_command(args, run_dir: Path, frame_dir: Path, states: str, variable: str, range_mode: str, logf) -> None:
-    custom = run_dir / f"visitRender_{args.output_prefix}.py"
-    if custom.is_file():
-        visit = detect_visit(args.visit_cmd)
-        if not visit:
-            warn(args, "VisIt command not found; skipping render")
-            return
-        frame_dir.mkdir(parents=True, exist_ok=True)
-        log_file = run_dir / f"{args.output_prefix}_visit_render.log"
-        cmd = [visit, "-nowin", "-cli", "-s", str(custom), "--run-dir", str(run_dir), "--output-dir", str(frame_dir), "--case-name", args.output_prefix, "--states", "initial,final", "--mesh", args.mesh, "--list-databases"]
-        log(args, "running VisIt: " + " ".join(cmd))
-        with log_file.open("w") as logf:
-            logf.write("Running: " + " ".join(cmd) + "\n")
-            proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            logf.write(proc.stdout)
-            print(proc.stdout, end="")
-            if proc.returncode != 0:
-                warn(args, f"VisIt command exited with {proc.returncode}; continuing to copy any generated PNGs")
-        return
-    script = run_dir / "pfw_visit_render.py"
-    visit = detect_visit(args.visit_cmd)
-    if not script.is_file():
-        warn(args, "pfw_visit_render.py not found in run directory; skipping VisIt")
-        return
-    if not visit:
-        warn(args, "VisIt command not found; skipping render")
-        return
-    cmd = [
-        visit, "-nowin", "-cli", "-s", str(script),
-        "--run-dir", str(run_dir),
-        "--output-dir", str(frame_dir),
-        "--case-name", args.output_prefix,
-        "--states", states,
-        "--view", args.view,
-        "--variable", variable,
-        "--mesh", args.mesh,
-        "--colortable", "hot_desaturated",
-        "--range-mode", range_mode,
-        "--list-databases",
+def find_renderer(run_dir: Path, case_name: str, output_prefix: str) -> Path | None:
+    candidates = [
+        run_dir / f"visitRender_{case_name}.py",
+        run_dir / f"visitRender_{output_prefix}.py",
+        run_dir / f"visitRender_{case_name.replace('-', '_')}.py",
+        run_dir / f"visitRender_{output_prefix.replace('-', '_')}.py",
     ]
-    log(args, "running VisIt: " + " ".join(cmd))
-    logf.write("Running: " + " ".join(cmd) + "\n")
-    proc = subprocess.run(cmd, cwd=run_dir, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    logf.write(proc.stdout)
-    print(proc.stdout, end="")
-    if proc.returncode != 0:
-        warn(args, f"VisIt command exited with {proc.returncode}; continuing to copy any generated PNGs")
+    # Case aliases used by example suite.
+    if case_name == "borehole_Ghareb":
+        candidates.append(run_dir / "visitRender_borehole_Ghareb.py")
+    for p in candidates:
+        if p.exists():
+            return p
+    matches = sorted(run_dir.glob("visitRender_*.py"))
+    if matches:
+        return matches[0]
+    return None
 
 
-def run_visit(args, run_dir: Path, frame_dir: Path) -> None:
-    if args.no_visit or args.skip_render or args.copy_only:
-        return
-    frame_dir.mkdir(parents=True, exist_ok=True)
-    log_file = run_dir / f"{args.output_prefix}_visit_render.log"
-    with log_file.open("w") as logf:
-        run_visit_command(args, run_dir, frame_dir, "initial", args.initial_variable, "auto", logf)
-        final_range = "unit" if "damage" in args.final_variable.lower() else "auto"
-        run_visit_command(args, run_dir, frame_dir, "final", args.final_variable, final_range, logf)
+def write_visit_driver(driver: Path, renderer: Path, renderer_args: list[str]) -> None:
+    # The key detail is exec(..., globals(), globals()).  VisIt injects functions
+    # such as OpenDatabase, AddPlot, DrawPlots, SaveWindow into the driver global
+    # namespace.  runpy.run_path creates a fresh namespace, so those functions are
+    # not visible to the renderer and OpenDatabase appears unavailable.
+    content = """# Auto-generated by mpm_example_postprocess.py\n"""
+    content += f"RENDERER = {str(renderer)!r}\n"
+    content += f"ARGS = {renderer_args!r}\n"
+    content += """
+import sys
+sys.argv = [RENDERER] + ARGS
+with open(RENDERER, 'r', encoding='utf-8') as _fh:
+    _code = compile(_fh.read(), RENDERER, 'exec')
+exec(_code, globals(), globals())
+"""
+    driver.write_text(content)
 
 
-def parse_float(value: str):
-    try:
-        return float(value)
-    except Exception:
-        return None
+def run_with_timeout(cmd: list[str], cwd: Path, timeout: int, log_path: Path, handle) -> int:
+    log_line(handle, "Running command: " + " ".join(cmd))
+    with log_path.open("w") as lf:
+        lf.write("Command: " + " ".join(cmd) + "\n")
+        lf.flush()
+        proc = subprocess.Popen(
+            cmd,
+            cwd=str(cwd),
+            stdout=lf,
+            stderr=subprocess.STDOUT,
+            text=True,
+            preexec_fn=os.setsid,
+        )
+        try:
+            return proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            lf.write(f"\nTIMEOUT after {timeout} seconds. Killing process group.\n")
+            lf.flush()
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except Exception:
+                pass
+            try:
+                proc.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                except Exception:
+                    pass
+                proc.wait()
+            return 124
 
 
-def plot_reactions(args, run_dir: Path) -> Path | None:
-    path = run_dir / "reactionHistory.csv"
-    if not path.is_file():
-        return None
-    try:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except Exception as exc:
-        warn(args, f"matplotlib unavailable for reaction plot: {exc}")
-        return None
-    with path.open(newline="") as f:
-        reader = csv.reader(f)
-        rows = [r for r in reader if r]
-    if len(rows) < 2:
-        return None
-    header = [h.strip() for h in rows[0]]
-    numeric = []
-    for row in rows[1:]:
-        vals = [parse_float(x) for x in row]
-        if any(v is not None for v in vals):
-            numeric.append(vals)
-    if not numeric:
-        return None
-    time_idx = 0
-    for i, h in enumerate(header):
-        if h.lower() in {"time", "t"} or "time" in h.lower():
-            time_idx = i
-            break
-    candidates = []
-    for i, h in enumerate(header):
-        low = h.lower()
-        if i == time_idx:
-            continue
-        if "reaction" in low or "force" in low or "ry" in low or "_y" in low or low.endswith("y"):
-            candidates.append(i)
-    if not candidates:
-        candidates = [i for i in range(len(header)) if i != time_idx][:6]
-    x = [row[time_idx] if time_idx < len(row) else None for row in numeric]
-    fig, ax = plt.subplots(figsize=(7.0, 4.0))
-    plotted = 0
-    for i in candidates[:8]:
-        y = [row[i] if i < len(row) else None for row in numeric]
-        if all(v is None for v in y):
-            continue
-        ax.plot(x, y, label=header[i] if i < len(header) else f"col{i}")
-        plotted += 1
-    if plotted == 0:
-        plt.close(fig)
-        return None
-    ax.set_xlabel(header[time_idx] if time_idx < len(header) else "time")
-    ax.set_ylabel("reaction / force")
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    out = run_dir / f"{args.output_prefix}_reactions.png"
-    fig.savefig(out, dpi=180)
-    plt.close(fig)
-    return out
-
-
-def copy_products(args, run_dir: Path, output_dir: Path, frame_dir: Path) -> None:
+def copy_products(run_dir: Path, frames_dir: Path, output_dir: Path, handle) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
-    copied = []
-    seen_sources = set()
-    patterns = [f"{args.output_prefix}*.png", f"{args.output_prefix}*.csv", f"{args.output_prefix}*.log", f"{args.output_prefix}*.json", "*.png", "*.log"]
-    for base in [frame_dir, run_dir]:
-        if not base.exists():
-            continue
-        for pattern in patterns:
-            for src in sorted(base.glob(pattern)):
-                if src.is_file() and src.resolve() not in seen_sources:
-                    seen_sources.add(src.resolve())
-                    dst = output_dir / src.name
-                    shutil.copy2(src, dst)
-                    copied.append(dst.name)
-    for name in ["reactionHistory.csv", "boxAverageHistory.csv"]:
-        src = run_dir / name
-        if src.is_file():
-            shutil.copy2(src, output_dir / name)
-            copied.append(name)
-    if copied:
-        for name in sorted(set(copied)):
-            log(args, "copied " + name)
-    else:
-        warn(args, "no PNG/CSV/log products were found to copy")
-        if frame_dir.exists():
-            warn(args, "visit_frames contents: " + ", ".join(p.name for p in frame_dir.iterdir()))
+    patterns = [
+        frames_dir / "*.png", frames_dir / "*.csv", frames_dir / "*.json", frames_dir / "*.log",
+        run_dir / "*.png", run_dir / "*.csv", run_dir / "*.json", run_dir / "*.log",
+        run_dir / "reactionHistory.csv", run_dir / "boxAverageHistory.csv",
+    ]
+    copied = 0
+    seen: set[Path] = set()
+    for pat in patterns:
+        for src_s in glob.glob(str(pat)):
+            src = Path(src_s)
+            if not src.is_file() or src in seen:
+                continue
+            seen.add(src)
+            dst = output_dir / src.name
+            try:
+                shutil.copy2(src, dst)
+                copied += 1
+                log_line(handle, f"Copied product: {src.name}")
+            except Exception as exc:
+                log_line(handle, f"WARNING: failed to copy {src}: {exc}")
+    if copied == 0:
+        log_line(handle, "WARNING: no products were copied")
+        for sub in [run_dir, frames_dir]:
+            if sub.exists():
+                listing = sorted(p.name for p in sub.iterdir())[:80]
+                log_line(handle, f"Listing {sub}: " + ", ".join(listing))
+    return copied
 
 
-def main():
-    args = parse_args()
-    run_dir = expand(args.run_dir)
-    output_dir = expand(args.output_dir)
-    frame_dir = run_dir / "visit_frames"
-    log(args, "run directory: " + str(run_dir))
-    log(args, "output directory: " + str(output_dir))
-    log(args, "visit frames directory: " + str(frame_dir))
-    ok = check_geos_completed(args, run_dir)
-    if not ok:
-        warn(args, "GEOS completion check failed or job is not complete; copying existing products only")
-        args.copy_only = True
-    if not args.copy_only:
-        plot_reactions(args, run_dir)
-        run_visit(args, run_dir, frame_dir)
-    copy_products(args, run_dir, output_dir, frame_dir)
-    payload = {"case": args.case_name, "generated_at": datetime.now().isoformat(timespec="seconds"), "job_id": args.job_id, "run_dir": str(run_dir), "output_dir": str(output_dir)}
-    output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / f"{args.output_prefix}_postprocess.json").write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-dir", required=True)
+    parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--case-name", required=True)
+    parser.add_argument("--output-prefix", default=None)
+    parser.add_argument("--job-id", default=None)
+    parser.add_argument("--skip-slurm-check", action="store_true")
+    parser.add_argument("--force", "-y", action="store_true")
+    parser.add_argument("--skip-render", action="store_true")
+    parser.add_argument("--copy-only", action="store_true")
+    parser.add_argument("--visit-timeout", type=int, default=600)
+    parser.add_argument("--visit-list-databases", action="store_true")
+    parser.add_argument("--initial-variable", default=None)
+    parser.add_argument("--final-variable", default=None)
+    parser.add_argument("--view", default=None)
+    parser.add_argument("--mesh", default="CellRegion1")
+    args, extra = parser.parse_known_args()
+
+    run_dir = Path(args.run_dir).expanduser().resolve()
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    frames_dir = run_dir / "visit_frames"
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    output_prefix = args.output_prefix or args.case_name
+
+    post_log = run_dir / f"{output_prefix}_postprocess.log"
+    visit_log = run_dir / f"{output_prefix}_visit_render.log"
+
+    with post_log.open("w") as log:
+        log_line(log, "Postprocess started at " + datetime.now().isoformat(timespec="seconds"))
+        log_line(log, f"Run directory: {run_dir}")
+        log_line(log, f"Output directory: {output_dir}")
+        log_line(log, f"Visit frames directory: {frames_dir}")
+        if args.skip_slurm_check:
+            log_line(log, "Skipping GEOS Slurm-output check")
+        else:
+            log_line(log, "GEOS Slurm-output check is not enforced by this generic postprocessor")
+
+        visit_rc = 0
+        if not args.skip_render and not args.copy_only:
+            visit_cmd = find_visit_command()
+            if not visit_cmd:
+                log_line(log, "WARNING: VisIt command not found; copying existing products only")
+                visit_rc = 127
+            else:
+                renderer = find_renderer(run_dir, args.case_name, output_prefix)
+                if not renderer:
+                    log_line(log, "WARNING: no visitRender_*.py renderer found; copying existing products only")
+                    visit_rc = 126
+                else:
+                    renderer_args = [
+                        "--run-dir", str(run_dir),
+                        "--output-dir", str(frames_dir),
+                        "--case-name", args.case_name,
+                        "--states", "initial,final",
+                    ]
+                    if args.mesh:
+                        renderer_args += ["--mesh", args.mesh]
+                    if args.view:
+                        renderer_args += ["--view", args.view]
+                    if args.initial_variable:
+                        renderer_args += ["--initial-variable", args.initial_variable]
+                    if args.final_variable:
+                        renderer_args += ["--final-variable", args.final_variable]
+                    if args.visit_list_databases:
+                        renderer_args += ["--list-databases"]
+                    renderer_args += extra
+                    driver = run_dir / f"{output_prefix}_visit_driver.py"
+                    write_visit_driver(driver, renderer, renderer_args)
+                    cmd = [visit_cmd, "-nowin", "-cli", "-s", str(driver)]
+                    log_line(log, f"Using VisIt command: {visit_cmd}")
+                    log_line(log, f"Running custom VisIt renderer through driver: {driver}")
+                    visit_rc = run_with_timeout(cmd, run_dir, args.visit_timeout, visit_log, log)
+                    log_line(log, f"VisIt return code: {visit_rc}")
+        else:
+            log_line(log, "Skipping rendering; copy-only mode")
+
+        copied = copy_products(run_dir, frames_dir, output_dir, log)
+        try:
+            shutil.copy2(post_log, output_dir / post_log.name)
+        except Exception:
+            pass
+        try:
+            if visit_log.exists():
+                shutil.copy2(visit_log, output_dir / visit_log.name)
+        except Exception:
+            pass
+
+        # Do not fail if VisIt wrote valid products but returned nonzero during cleanup.
+        pngs = list(output_dir.glob("*.png"))
+        if visit_rc != 0 and not pngs:
+            return visit_rc
+        return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
