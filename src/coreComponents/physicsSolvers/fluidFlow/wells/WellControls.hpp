@@ -767,12 +767,31 @@ public:
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
 
+  /**
+   * @brief Gets the defined BHP constraint
+   * @details Returns the BHP constraint if one is defined for the WellControl. For a producer
+   * well this will be a minimum BHP constraint and for an injector well this will be a maximum
+   * BHP constraint. This will possibly return null if no BHP constraint is set. Validation is
+   * in place to enforce the setting of at least one BHp constraint.
+   * @return A BHP constraint object of one is defined
+   */
   WellConstraintBase const * getBHPConstraint() const;
   WellConstraintBase * getBHPConstraint();
 
+  /**
+   * @brief Gets a list of rate constraints
+   * @details Returns a list of rate constraints for the WellControl. For a producer
+   * well these will be a production rate constraints `ProductionConstraint<T>` and for an
+   * injector well these will be injection rate constraints `InjectionConstraint<T>`.
+   */
   stdVector< WellConstraintBase const * > getRateConstraints() const;
   stdVector< WellConstraintBase * > getRateConstraints();
 
+  /**
+   * @brief Gets a list of all constraints constraints
+   * @details Returns a list of all constraints for the WellControl including rate and BHP
+   * constraints.
+   */
   stdVector< WellConstraintBase const * > getAllConstraints() const;
   stdVector< WellConstraintBase * > getAllConstraints();
 
@@ -810,12 +829,53 @@ public:
 protected:
   virtual void postRestartInitialization( )override;
 
-  void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false ) const;
+  /**
+   * @brief Logs the state and values of a specific well constraint.
+   *
+   * @details This method evaluates whether the provided constraint requires
+   * logging based on its validity, the current log level being strictly greater
+   * than 4, and the region being locally owned. When the constraint is flagged
+   * as the limiting constraint, it logs extensive operational data such as the
+   * bottom hole pressure, individual phase volume rates, the total volume rate,
+   * and the mass rate. Otherwise, it logs general information, specifically
+   * whether the constraint is active and its target value at the current time.
+   *
+   * @param constraint Pointer to the base constraint object to evaluate and log.
+   * @param region Reference to the well element sub-region associated with it.
+   * @param time The current simulation time used to get the constraint value.
+   * @param isLimiting Boolean indicating if this is the active limiting constraint.
+   */
+  void logConstraint( WellConstraintBase const * constraint,
+                      WellElementSubRegion const & region,
+                      real64 time,
+                      bool isLimiting = false ) const;
 
+  /**
+   * @brief Validates the reference region
+   * @details Validates the reference region by ensuring that it is defined for cases that do not
+   * use surface conditions. If the reference region is provided, it is checked against the flow
+   * solves regions.
+   * @return @c true if the region is valid
+   */
   bool validateReferenceRegion() const;
 
+  /**
+   * @brief Validates and retrieves the reference region statistics for average pressure and temperature.
+   *
+   * @details This template method checks if a reference reservoir region is configured for the well control.
+   * If a region is specified, it retrieves the region from the provided element manager and verifies
+   * that the required statistics wrapper exists. It then extracts the average pressure and temperature,
+   * throwing an exception if the average pressure has not been properly computed.
+   *
+   * @tparam STATISTICS Type providing static methods and types for region statistics (SinglePhaseStatistics or
+   * CompositionalMultiphaseStatistics).
+   * @param elementManager Reference to the ElementRegionManager used to look up the reservoir region.
+   * @param[out] averagePressure Reference to a real64 variable where the retrieved average pressure is stored.
+   * @param[out] averageTemperature Reference to a real64 variable where the retrieved average temperature is stored.
+   * @return Boolean value, always returning true upon successful validation.
+   */
   template< typename STATISTICS >
-  bool validateReferenceRegionStatistics( ElementRegionManager const & elemManager,
+  bool validateReferenceRegionStatistics( ElementRegionManager const & elementManager,
                                           real64 & averagePressure,
                                           real64 & averageTemperature ) const;
 
