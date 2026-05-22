@@ -576,16 +576,6 @@ public:
   WellConstraintBase const * getCurrentConstraint() const { return m_currentConstraint; }
 
   /**
-   * @brief Get the rate constraint.
-   * @details Returns the first rate constraint attached to the well controls. This will be a prodcution rate
-   * constraint for a producer well and an injection rate constraint for an injector well. This will return the
-   * first constraint assigned regardless of type (phase volume, liquid volume or mass). If there is no rate
-   * constraint assigned to the well controls this will return a null value.
-   * @return The constraint object of one exists nullptr otherwise
-   */
-  WellConstraintBase const * getRateConstraint() const;
-
-  /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
    */
@@ -775,6 +765,15 @@ public:
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
 
+  WellConstraintBase const * getBHPConstraint() const;
+  WellConstraintBase * getBHPConstraint();
+
+  stdVector< WellConstraintBase const * > getRateConstraints() const;
+  stdVector< WellConstraintBase * > getRateConstraints();
+
+  stdVector< WellConstraintBase const * > getAllConstraints() const;
+  stdVector< WellConstraintBase * > getAllConstraints();
+
   /**
    * @brief Set thermal effects enable
    * @param[in] true/false
@@ -808,32 +807,6 @@ public:
 
 protected:
   virtual void postRestartInitialization( )override;
-
-  /**
-   * @brief Iterates over rate constraints and applies a lambda function.
-   * @details This constant member function checks whether the well is a producer or an injector.
-   * It then dispatches the provided lambda to the underlying rate-specific constraint subgroups
-   * (PhaseVolumeRateConstraint, VolumeRateConstraint, MassRateConstraint) while explicitly
-   * excluding BHP constraints.
-   * @param lambda The callable object to apply to each rate constraint subgroup.
-   */
-  template< typename LAMBDA >
-  void forRateConstraints( LAMBDA && lambda ) const;
-  template< typename LAMBDA >
-  void forRateConstraints( LAMBDA && lambda );
-
-  /**
-   * @brief Iterates over all constraints, including BHP, and applies a lambda function.
-   * @details This constant member function evaluates if the well is a producer or an injector.
-   * It then applies the provided lambda to all constraint subgroups, which includes both the rate
-   * constraints and the appropriate Bottom Hole Pressure constraint (MinimumBHPConstraint for
-   * producers and MaximumBHPConstraint for injectors).
-   * @param lambda The callable object to apply to each constraint subgroup.
-   */
-  template< typename LAMBDA >
-  void forAllConstraints( LAMBDA && lambda ) const;
-  template< typename LAMBDA >
-  void forAllConstraints( LAMBDA && lambda );
 
   void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false ) const;
 

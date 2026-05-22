@@ -36,6 +36,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 
 #include "functions/FunctionManager.hpp"
+
 namespace geos
 {
 
@@ -231,91 +232,6 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   }
 }
 
-template< typename >
-struct isInjectionRateConstraint : std::false_type {};
-template< typename T >
-struct isInjectionRateConstraint< InjectionConstraint< T > > : std::true_type {};
-template< bool IS_PRODUCER, typename T >
-using RateConstraint = std::conditional_t< IS_PRODUCER, ProductionConstraint< T >, InjectionConstraint< T > >;
-
-namespace
-{
-
-// Unpacks a camp::list of types and forwards the lambda to the group's forSubGroups method.
-template< typename GROUP, typename LAMBDA, typename ... Ts >
-void forConstraints( GROUP & group, camp::list< Ts... >, LAMBDA && lambda )
-{
-  group.template forSubGroups< Ts... >( std::forward< LAMBDA >( lambda ));
-}
-
-// Constructs a compile-time list of constraint types based on boolean template parameters,
-// then invokes the unpacked forConstraints function above.
-template< bool IS_PRODUCER, bool INCLUDE_BHP, typename GROUP, typename LAMBDA >
-void forConstraints( GROUP & group, LAMBDA && lambda )
-{
-  using BHPConstraint = std::conditional_t< IS_PRODUCER, MinimumBHPConstraint, MaximumBHPConstraint >;
-  using RateTypes = camp::list< RateConstraint< IS_PRODUCER, PhaseVolumeRateConstraint >,
-                                RateConstraint< IS_PRODUCER, VolumeRateConstraint >,
-                                RateConstraint< IS_PRODUCER, MassRateConstraint > >;
-  using AllTypes = std::conditional_t< INCLUDE_BHP,
-                                       typename camp::prepend< RateTypes, BHPConstraint >::type,
-                                       RateTypes >;
-  forConstraints( group, AllTypes{}, std::forward< LAMBDA >( lambda ) );
-}
-}
-
-template< typename LAMBDA >
-void WellControls::forRateConstraints( LAMBDA && lambda ) const
-{
-  if( isProducer())
-  {
-    forConstraints< true, false >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-  else
-  {
-    forConstraints< false, false >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-}
-
-template< typename LAMBDA >
-void WellControls::forRateConstraints( LAMBDA && lambda )
-{
-  if( isProducer())
-  {
-    forConstraints< true, false >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-  else
-  {
-    forConstraints< false, false >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-}
-
-template< typename LAMBDA >
-void WellControls::forAllConstraints( LAMBDA && lambda ) const
-{
-  if( isProducer())
-  {
-    forConstraints< true, true >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-  else
-  {
-    forConstraints< false, true >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-}
-
-template< typename LAMBDA >
-void WellControls::forAllConstraints( LAMBDA && lambda )
-{
-  if( isProducer())
-  {
-    forConstraints< true, true >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-  else
-  {
-    forConstraints< false, true >( *this, std::forward< LAMBDA >( lambda ) );
-  }
-}
-
 void WellControls::postInputInitialization()
 {
   Group::postInputInitialization();
@@ -384,23 +300,26 @@ void WellControls::postInputInitialization()
                              m_statusTable->getName() ),
                    InputError, getDataContext() );
   }
+
+//##  // 13) Validate constraints
+//##  bool const producer = isProducer();
+//##  ((void)producer);
+//##  mapBase <string,integer,std::false_type> typeCount;
+//##  for( auto & catalog : WellConstraintBase::getCatalog())
+//##  {
+//##    typeCount[catalog.first] = 0;
+//##  }
+//##  forSubGroups<
+//##  >([&](auto const & group)
+//##  {
+//##    string const catalogName = group.getCatalogName();
+//##    ((void)catalogName);
+//##//if (typeCount. in )
+//##  });
 }
 
 void WellControls::postRestartInitialization( )
 {}
-
-WellConstraintBase const * WellControls::getRateConstraint() const
-{
-  WellConstraintBase const * rateConstraint = nullptr;
-  forRateConstraints( [&]( auto const & constraint )
-  {
-    if( rateConstraint == nullptr )
-    {
-      rateConstraint = &constraint;
-    }
-  } );
-  return rateConstraint;
-}
 
 void WellControls::logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting ) const
 {
@@ -435,13 +354,13 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
 
     if( !hasZeroRate )
     {
-      forRateConstraints( [&] ( auto const & constraint )
+      for( auto const * constraint : getRateConstraints() )
       {
-        if( isZero( constraint.getConstraintValue( currentTime ) ) )
+        if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
           hasZeroRate = true;
         }
-      } );
+      }
     }
 
     if( hasZeroRate )
@@ -496,10 +415,10 @@ bool WellControls::getWellState() const
 
 void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
 {
-  forAllConstraints( [&] ( auto const & constraint )
+  for( auto const * constraint : getAllConstraints() )
   {
-    constraint.setNextDtFromTables( currentTime, nextDt );
-  } );
+    constraint->setNextDtFromTables( currentTime, nextDt );
+  }
 
   setNextDtFromTable( m_statusTable, currentTime, nextDt );
 }
@@ -520,35 +439,24 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
 
 real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 {
-  WellConstraintBase const * bhpConstraint = nullptr;
-  if( isProducer())
-  {
-    forSubGroups< MinimumBHPConstraint >( [&] ( auto const & constraint )
-    {
-      bhpConstraint = &constraint;
-    } );
-  }
-  else
-  {
-    forSubGroups< MaximumBHPConstraint >( [&] ( auto const & constraint )
-    {
-      bhpConstraint = &constraint;
-    } );
-  }
-  return bhpConstraint->getConstraintValue( targetTime );
+  return getBHPConstraint()->getConstraintValue( targetTime );
 }
 
 real64 WellControls::getInjectionTemperature() const
 {
   real64 injectionTemperature = 0.0;
-  forRateConstraints( [&] ( auto const & constraint )
+  localIndex firstIndex = -1;  // Used to "capture" the first one
+  forSubGroupsIndex< InjectionConstraint< MassRateConstraint >,
+                     InjectionConstraint< VolumeRateConstraint >,
+                     InjectionConstraint< PhaseVolumeRateConstraint >,
+                     InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
-    if constexpr ( isInjectionRateConstraint< std::decay_t< decltype(constraint) > >::value )
+    if( firstIndex < 0 )
     {
-      if( constraint.isConstraintActive())
+      if( constraint.isConstraintActive() )
       {
         injectionTemperature = constraint.getInjectionTemperature();
-        return;
+        firstIndex = index;
       }
     }
   } );
@@ -558,14 +466,18 @@ real64 WellControls::getInjectionTemperature() const
 arrayView1d< real64 const > WellControls::getInjectionStream() const
 {
   arrayView1d< real64 const > injectionStream;
-  forRateConstraints( [&] ( auto const & constraint )
+  localIndex firstIndex = -1;  // Used to "capture" the first one
+  forSubGroupsIndex< InjectionConstraint< MassRateConstraint >,
+                     InjectionConstraint< VolumeRateConstraint >,
+                     InjectionConstraint< PhaseVolumeRateConstraint >,
+                     InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
-    if constexpr ( isInjectionRateConstraint< std::decay_t< decltype(constraint) > >::value )
+    if( firstIndex < 0 )
     {
       if( constraint.isConstraintActive())
       {
         injectionStream = constraint.getInjectionStream();
-        return;
+        firstIndex = index;
       }
     }
   } );
@@ -575,48 +487,29 @@ arrayView1d< real64 const > WellControls::getInjectionStream() const
 integer WellControls::getConstraintPhaseIndex() const
 {
   integer phaseIndex = -1;
-
-  if( isProducer() )
+  // Validation should make sure we are not mixing constraints.
+  // Here we assume that we have zero or one or the other but not both
+  forSubGroups< ProductionConstraint< PhaseVolumeRateConstraint >,
+                InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
   {
-    forSubGroups< ProductionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    if( constraint.isConstraintActive() )
     {
-      if( constraint.isConstraintActive() )
-      {
-        phaseIndex = constraint.getPhaseIndex();
-      }
-    } );
-  }
-  else
-  {
-    forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
-    {
-      if( constraint.isConstraintActive() )
-      {
-        phaseIndex = constraint.getPhaseIndex();
-      }
-    } );
-  }
-
+      phaseIndex = constraint.getPhaseIndex();
+    }
+  } );
   return phaseIndex;
 }
 
 real64 WellControls::getReferenceElevation() const
 {
   real64 referenceElevation = 0.0;
-  if( isProducer () )
+  // Validation should make sure we are not mixing constraints.
+  // Here we assume that we have zero or one or the other but not both
+  forSubGroups< MinimumBHPConstraint,
+                MaximumBHPConstraint >( [&] ( auto & constraint )
   {
-    forSubGroups< MinimumBHPConstraint >( [&] ( auto & constraint )
-    {
-      referenceElevation = constraint.getReferenceElevation();
-    } );
-  }
-  else
-  {
-    forSubGroups< MaximumBHPConstraint >( [&] ( auto & constraint )
-    {
-      referenceElevation = constraint.getReferenceElevation();
-    } );
-  }
+    referenceElevation = constraint.getReferenceElevation();
+  } );
   return referenceElevation;
 }
 
@@ -800,11 +693,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
 {
 
   // create list of all constraints to process
-  stdVector< WellConstraintBase * > constraintList;
-  forAllConstraints( [&] ( auto & constraint )
-  {
-    constraintList.emplace_back( &constraint );
-  } );
+  stdVector< WellConstraintBase * > constraintList = getAllConstraints();
 
   // Get current constraint
   WellConstraintBase * limitingConstraint = nullptr;
@@ -852,11 +741,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   // create list of all constraints to solve
   // note that initializeWells sets the initial constraint
   // tjb reactive control schema to allow use to set if needed
-  stdVector< WellConstraintBase * > constraintList;
-  forRateConstraints( [&] ( auto & constraint )
-  {
-    constraintList.emplace_back( &constraint );
-  } );
+  stdVector< WellConstraintBase * > constraintList = getRateConstraints();
   WellConstraintBase * limitingConstraint = getCurrentConstraint();
   if( isProducer() )
   {
@@ -885,10 +770,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
   {
     if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
     {
-      forSubGroups< MaximumBHPConstraint >( [&] ( auto & constraint )
-      {
-        constraintList.emplace_back( &constraint );
-      } );
+      constraintList.emplace_back( getBHPConstraint() );
     }
   }
   if( isoThermalEstimatorEnabled() )

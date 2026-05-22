@@ -188,7 +188,7 @@ public:
     m_phaseVolFraction_n( subRegion.getField< fields::well::phaseVolumeFraction_n >()),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n() )
   {
-    auto const * rateConstraint = wellControls.getRateConstraint();
+    auto const * rateConstraint = wellControls.getRateConstraints().front();
     if( m_isProducer )
     {
       // tjb This needs to be fixed  should use current constraint rate for normalization

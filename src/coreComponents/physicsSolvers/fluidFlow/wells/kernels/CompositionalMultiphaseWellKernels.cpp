@@ -466,7 +466,7 @@ RateInitializationKernel::
     {
       // this assumes phase control present
       integer const targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-      auto const * rateConstraint = wellControls.getRateConstraint();
+      auto const * rateConstraint = wellControls.getRateConstraints().front();
       // Use first rate constraint to set initial connection rates
       real64 const rateVal = rateConstraint->getConstraintValue( time );
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
@@ -506,7 +506,7 @@ RateInitializationKernel::
     }
     else if( controlType == ConstraintTypeId::BHP )
     {
-      auto const * rateConstraint = wellControls.getRateConstraint();
+      auto const * rateConstraint = wellControls.getRateConstraints().front();
       // Use first rate constraint to set initial connection rates
       real64 const rateVal = rateConstraint->getConstraintValue( time );
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
