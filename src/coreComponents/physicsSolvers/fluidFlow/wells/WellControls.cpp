@@ -437,6 +437,89 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
   }
 }
 
+namespace
+{
+template< typename GROUP,
+          typename CONSTRAINT = std::conditional_t<
+            std::is_const_v< std::remove_reference_t< GROUP > >,
+            WellConstraintBase const,
+            WellConstraintBase > >
+void populateConstraints( GROUP & group, bool isProducer, stdVector< CONSTRAINT * > & constraints )
+{
+  if( isProducer )
+  {
+    group.template forSubGroups< ProductionConstraint< MassRateConstraint >,
+                                 ProductionConstraint< VolumeRateConstraint >,
+                                 ProductionConstraint< PhaseVolumeRateConstraint >,
+                                 ProductionConstraint< LiquidRateConstraint > >( [&]( CONSTRAINT & constraint )
+    {
+      constraints.push_back( &constraint );
+    } );
+  }
+  else
+  {
+    group.template forSubGroups< InjectionConstraint< MassRateConstraint >,
+                                 InjectionConstraint< VolumeRateConstraint >,
+                                 InjectionConstraint< PhaseVolumeRateConstraint >,
+                                 InjectionConstraint< LiquidRateConstraint > >( [&]( CONSTRAINT & constraint )
+    {
+      constraints.push_back( &constraint );
+    } );
+  }
+}
+}
+
+WellConstraintBase const * WellControls::getBHPConstraint() const
+{
+  WellConstraintBase const * bhpConstraint = nullptr;
+  // Rely on validation here. We assume that there aren't both constraints listed
+  forSubGroups< MinimumBHPConstraint,
+                MaximumBHPConstraint >( [&]( WellConstraintBase const & constraint )
+  {
+    bhpConstraint = &constraint;
+  } );
+  return bhpConstraint;
+}
+
+WellConstraintBase * WellControls::getBHPConstraint()
+{
+  WellConstraintBase * bhpConstraint = nullptr;
+  // Rely on validation here. We assume that there aren't both constraints listed
+  forSubGroups< MinimumBHPConstraint,
+                MaximumBHPConstraint >( [&]( WellConstraintBase & constraint )
+  {
+    bhpConstraint = &constraint;
+  } );
+  return bhpConstraint;
+}
+
+stdVector< WellConstraintBase const * > WellControls::getRateConstraints() const
+{
+  stdVector< WellConstraintBase const * > constraints;
+  populateConstraints( *this, isProducer(), constraints );
+  return constraints;
+}
+
+stdVector< WellConstraintBase * > WellControls::getRateConstraints()
+{
+  stdVector< WellConstraintBase * > constraints;
+  populateConstraints( *this, isProducer(), constraints );
+  return constraints;
+}
+
+stdVector< WellConstraintBase const * > WellControls::getAllConstraints() const
+{
+  stdVector< WellConstraintBase const * > constraints = getRateConstraints();
+  constraints.insert( constraints.begin(), getBHPConstraint() );
+  return constraints;
+}
+stdVector< WellConstraintBase * > WellControls::getAllConstraints()
+{
+  stdVector< WellConstraintBase * > constraints = getRateConstraints();
+  constraints.insert( constraints.begin(), getBHPConstraint() );
+  return constraints;
+}
+
 real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 {
   return getBHPConstraint()->getConstraintValue( targetTime );
@@ -451,13 +534,10 @@ real64 WellControls::getInjectionTemperature() const
                      InjectionConstraint< PhaseVolumeRateConstraint >,
                      InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
-    if( firstIndex < 0 )
+    if( firstIndex < 0 && constraint.isConstraintActive() )
     {
-      if( constraint.isConstraintActive() )
-      {
-        injectionTemperature = constraint.getInjectionTemperature();
-        firstIndex = index;
-      }
+      injectionTemperature = constraint.getInjectionTemperature();
+      firstIndex = index;
     }
   } );
   return injectionTemperature;
@@ -472,13 +552,10 @@ arrayView1d< real64 const > WellControls::getInjectionStream() const
                      InjectionConstraint< PhaseVolumeRateConstraint >,
                      InjectionConstraint< LiquidRateConstraint > >( [&] ( localIndex index, auto const & constraint )
   {
-    if( firstIndex < 0 )
+    if( firstIndex < 0 && constraint.isConstraintActive() )
     {
-      if( constraint.isConstraintActive())
-      {
-        injectionStream = constraint.getInjectionStream();
-        firstIndex = index;
-      }
+      injectionStream = constraint.getInjectionStream();
+      firstIndex = index;
     }
   } );
   return injectionStream;

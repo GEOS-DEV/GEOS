@@ -88,9 +88,9 @@ void InjectionConstraint< ConstraintRateType >::validateInjectionStream( )
 }
 
 // Register concrete wrapper constraint types and instantiate templates.
-template class InjectionConstraint< LiquidRateConstraint >;
-using InjectionLiquidRateConstraint = InjectionConstraint< LiquidRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionLiquidRateConstraint, string const &, Group * const )
+//template class InjectionConstraint< LiquidRateConstraint >;
+//using InjectionLiquidRateConstraint = InjectionConstraint< LiquidRateConstraint >;
+//REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionLiquidRateConstraint, string const &, Group * const )
 
 template class InjectionConstraint< MassRateConstraint >;
 using InjectionMassRateConstraint = InjectionConstraint< MassRateConstraint >;
