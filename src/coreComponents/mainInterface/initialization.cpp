@@ -271,6 +271,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case ARCHIVE:
       {
         integer const level = std::stoi( opt.arg );
+        GEOS_THROW_IF( level < 0 || level > 2,
+                       "Archive level must be between 0 and 2",
+                       InputError );
         commandLineOptions->archiveInputDeck = level;
       }
       break;
