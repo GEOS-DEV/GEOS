@@ -379,6 +379,8 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 
   // produce the period stats of this rank
   m_stats.m_elementCount = m_periodStats.m_elementCount;
+  // MPI ranks without cells in the flux region may bypass gatherTimeStepStats() entirely,
+  // leaving their m_periodStart behind. Take the max so all ranks agree on the most advanced time.
   m_statsPeriodStart = MpiWrapper::max( m_periodStats.m_periodStart );
   m_statsPeriodDT = m_periodStats.m_timeStepDeltaTime + m_periodStats.m_periodPendingDeltaTime;
 
@@ -399,6 +401,8 @@ void SourceFluxStatsAggregator::WrappedStats::finalizePeriod()
 void SourceFluxStatsAggregator::WrappedStats::combine( WrappedStats const & other )
 {
   stats().combine( other.stats() );
+  // Some fluxes may lag behind (their ranks may have skipped gatherTimeStepStats()),
+  // so take the most advanced period start time across all combined stats.
   m_statsPeriodStart = LvArray::math::max( m_statsPeriodStart, other.m_statsPeriodStart );
 }
 void SourceFluxStatsAggregator::WrappedStats::PeriodStats::allocate( integer phaseCount )
