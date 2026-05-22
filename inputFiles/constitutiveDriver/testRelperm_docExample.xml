@@ -7,7 +7,6 @@
       name="test_sandstone"
       relperm="sandstone"
       steps="20"
-      output="sandstone_model.txt"
       logLevel="1" />
   </Tasks>
   <!-- SPHINX_RELPERMDRIVER_TASKS_END -->
