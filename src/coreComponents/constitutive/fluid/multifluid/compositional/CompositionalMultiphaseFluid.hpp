@@ -63,8 +63,6 @@ public:
                  (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...),
                  "All phase models must either use NullModel for Enthalpy, or none should." );
 
-  using exec_policy = parallelDevicePolicy<>;
-
 public:
   CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
 

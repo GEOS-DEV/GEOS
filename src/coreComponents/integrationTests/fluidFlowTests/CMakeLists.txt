@@ -1,19 +1,15 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testCompMultiphaseFlow.cpp
+     testCompMultiphaseFlowHybrid.cpp
+     testCompositionalMultiPhaseMFDPolyhedral.cpp
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp
+     testReactiveCompositionalMultiphaseOBL.cpp
      testSinglePhaseMFDPolyhedral.cpp
      testSinglePhaseReactiveTransport.cpp )
-
-if( ENABLE_PVTPackage )
-    list( APPEND gtest_geosx_tests
-          testCompMultiphaseFlow.cpp
-          testCompMultiphaseFlowHybrid.cpp
-          testReactiveCompositionalMultiphaseOBL.cpp
-          testCompositionalMultiPhaseMFDPolyhedral.cpp )
-endif()
 
 set( tplDependencyList ${parallelDeps} gtest )
 
