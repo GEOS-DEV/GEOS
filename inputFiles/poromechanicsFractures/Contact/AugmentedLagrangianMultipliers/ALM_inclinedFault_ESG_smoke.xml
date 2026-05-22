@@ -74,7 +74,7 @@
     <Coulomb
       name="fractureContact"
       cohesion="0.1e6"
-      frictionCoefficient="0.2"/>
+      frictionCoefficient="0.5"/>
 
     <HydraulicApertureTable
       name="hApertureModel"
@@ -208,7 +208,7 @@
             fieldName="displacementJump"/>   
     </Tasks>
 
-  <Events maxTime="10.0">
+  <Events maxTime="2.0">
     <PeriodicEvent
       name="outputs"
       timeFrequency="2.0"
@@ -238,7 +238,7 @@
 
     <PeriodicEvent
       name="restartOutput"
-      timeFrequency="10.0"
+      timeFrequency="2.0"
       target="/Outputs/restartOutput"/>
   </Events>
 

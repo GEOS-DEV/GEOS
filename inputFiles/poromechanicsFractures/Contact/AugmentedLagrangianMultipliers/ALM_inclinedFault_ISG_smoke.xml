@@ -74,7 +74,7 @@
     <Coulomb
       name="fractureContact"
       cohesion="0.1e6"
-      frictionCoefficient="0.2"/>
+      frictionCoefficient="0.5"/>
 
     <HydraulicApertureTable
       name="hApertureModel"
@@ -213,11 +213,9 @@
             fieldName="displacementJump"/>   
     </Tasks>
 
-  <Events minTime="0.0" maxTime="10.0">
-    <SoloEvent name="intact_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/intact_matrix_initialization"/>
+  <Events minTime="0.0" maxTime="2.0">
     <SoloEvent name="fracturingStep" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
-    <SoloEvent name="fractured_matrix_initialization" targetTime="0.0" beginTime="0.0" target="/Tasks/fractured_matrix_initialization"/>    
-
+ 
     <PeriodicEvent
       name="outputs"
       timeFrequency="2.0"
@@ -247,7 +245,7 @@
 
     <PeriodicEvent
       name="restartOutput"
-      timeFrequency="10.0"
+      timeFrequency="2.0"
       target="/Outputs/restartOutput"/>
   </Events>
 
