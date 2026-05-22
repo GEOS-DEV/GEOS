@@ -81,16 +81,17 @@
   </Events>
 
   <Constitutive>
-    <CompositionalMultiphaseFluid
+    <CompositionalTwoPhaseFluid
       name="hydrocarbonMixture"
       phaseNames="{ oil, gas }"
-      equationsOfState="{ PR, PR }"
+      equationsOfState="{ PengRobinson, PengRobinson }"
       componentNames="{ N2, C1, C10, H2O }"
       componentCriticalPressure="{ 34e5, 46.6e5, 25.3e5, 220.5e5 }"
       componentCriticalTemperature="{ 126.2, 191.15, 622.0, 647.0 }"
       componentAcentricFactor="{ 0.04, 0.011, 0.443, 0.344 }"
       componentMolarWeight="{ 28e-3, 16e-3, 134e-3, 18e-3 }"
-      componentVolumeShift="{ 0, 0, 0, 0 }"/>
+      componentVolumeShift="{ 0, 0, 0, 0 }"
+      constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
 
     <DeadOilFluid
       name="deadOilA"

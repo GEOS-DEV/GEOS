@@ -193,32 +193,11 @@ The flash calculation process is as follows:
 Parameters
 =========================
 
-The model represented by ``<CompositionalMultiphaseFluid>`` node in the input.
-Under the hood this is a wrapper around ``PVTPackage`` library, which is included as a submodule.
-In order to use the model, GEOS must be built with ``-DENABLE_PVTPACKAGE=ON`` (default).
+The model represented by ``<CompositionalTwoPhaseFluid>`` node in the input.
 
 The following attributes are supported:
 
-.. include:: /docs/sphinx/datastructure/CompositionalMultiphaseFluid.rst
-
-Supported phase names are:
-
-===== ===========
-Value Comment
-===== ===========
-oil   Oil phase
-gas   Gas phase
-water Water phase
-===== ===========
-
-Supported Equation of State types:
-
-===== =======================
-Value Comment
-===== =======================
-PR    Peng-Robinson EOS
-SRK   Soave-Redlich-Kwong EOS
-===== =======================
+.. include:: /docs/sphinx/datastructure/CompositionalTwoPhaseFluid.rst
 
 Example
 =========================
@@ -226,19 +205,16 @@ Example
 .. code-block:: xml
 
   <Constitutive>
-    <CompositionalMultiphaseFluid name="fluid1"
-                                  phaseNames="{ oil, gas }"
-                                  equationsOfState="{ PR, PR }"
-                                  componentNames="{ N2, C10, C20, H2O }"
-                                  componentCriticalPressure="{ 34e5, 25.3e5, 14.6e5, 220.5e5 }"
-                                  componentCriticalTemperature="{ 126.2, 622.0, 782.0, 647.0 }"
-                                  componentAcentricFactor="{ 0.04, 0.443, 0.816, 0.344 }"
-                                  componentMolarWeight="{ 28e-3, 134e-3, 275e-3, 18e-3 }"
-                                  componentVolumeShift="{ 0, 0, 0, 0 }"
-                                  componentBinaryCoeff="{ { 0, 0, 0, 0 },
-                                                        { 0, 0, 0, 0 },
-                                                        { 0, 0, 0, 0 },
-                                                        { 0, 0, 0, 0 } }"/>
+      <CompositionalTwoPhaseFluid
+          name="fluid"
+          phaseNames="{ oil, gas }"
+          equationsOfState="{ SoaveRedlichKwong, SoaveRedlichKwong }"
+          componentNames="{ H2, CH4 }"
+          componentCriticalPressure="{ 12.96e5, 45.99e5 }"
+          componentCriticalTemperature="{ 33.15, 190.6 }"
+          componentAcentricFactor="{ -0.219, 0.0114 }"
+          componentMolarWeight="{ 2.0159e-3, 16.043e-3 }"
+          constantPhaseViscosity="{ 1.0e-3, 1.0e-3 }" />
   </Constitutive>
 
 References
