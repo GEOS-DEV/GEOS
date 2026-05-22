@@ -48,18 +48,18 @@ public:
   ///@endcond
 
   /**
-   * @brief Lexicographic sorting
-   * @param other The table data to compate
-   * @return true
+   * @brief Lexicographic comparison operator, can be used for ordering in containers.
+   * @param other The table data to compare against.
+   * @return true if this table is ordered before @p other
    */
   bool operator<( TableData const & other ) const;
 
   /**
-   * @brief Comparison operator for data rows
-   * @param comparingTable The tableData values to compare
-   * @return The comparison result
+ * @brief Equality comparison of all cells.
+ * @param comparingTable Table to compare with
+ * @return true if row count and sizes match and if all cell values are identical in both tables.
    */
-  bool operator==( TableData const & comparingTable ) const;
+  bool operator==( TableData const & other ) const;
 
   /**
    * @brief Representing a single cell's data within a TableData row.
