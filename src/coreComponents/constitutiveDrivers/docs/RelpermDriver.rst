@@ -69,14 +69,14 @@ The key XML parameters for the RelpermDriver are summarized in the following tab
 .. include:: /docs/sphinx/datastructure/RelpermDriver.rst
 
 Phase Count and Step Logic
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 The internal behavior of the driver depends on the number of phases present in the relative permeability model:
 
 * **2-Phase Models:** The driver iterates exactly ``steps`` + 1 times, spanning from the minimum non-wetting saturation to its maximum valid bounds.
 * **3-Phase Models:** The driver iterates through combinations of the wetting and non-wetting phase saturations based on the specified number of ``steps``. Only combinations where the sum of saturations is valid (i.e., less than or equal to 1.0) are evaluated, with the third intermediate phase making up the balance. Thus, the total number of output rows for a 3-phase model depends heavily on the saturation end-points and will be generally greater than the provided ``steps`` parameter.
 
 Hysteresis Support
-^^^^^^^^^^^^^^^^^^
+------------------
 For relative permeability models featuring hysteresis (e.g., ``TableRelativePermeabilityHysteresis``), the driver requires historical phase saturations to determine the departure paths of the curves. This can be directly specified via the ``historicalSaturations`` array in the XML. If omitted, the driver will default to extracting the extremum phase volume fractions from the underlying curve definitions.
 
 Output Format
