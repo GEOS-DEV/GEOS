@@ -5,7 +5,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #4057 (2026-05-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4057-16699-f02b580.tar.gz>
+PR #4057 (2026-05-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr4057-16739-5dde641.tar.gz>
 Remove dependency on PVT package
 
 PR #3814 (2026-05-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3814-16717-d17ea59.tar.gz>
