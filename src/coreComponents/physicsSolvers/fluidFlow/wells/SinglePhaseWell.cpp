@@ -345,22 +345,11 @@ void SinglePhaseWell::updateSeparator( ElementRegionManager const & elemManager,
   {
     if( !getReferenceReservoirRegion().empty() )
     {
-      ElementRegionBase const & region = elemManager.getRegion( getReferenceReservoirRegion() );
-      GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
-                      GEOS_FMT( "WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                                getName(), getReferenceReservoirRegion() ),
-                      getDataContext() );
-
-      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
-        SinglePhaseStatistics::regionStatisticsName() );
-
-      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                     GEOS_FMT(
-                       "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                       getName(), getReferenceReservoirRegion() ),
-                     getDataContext());
-      setRegionAveragePressure( stats.averagePressure );
-      setRegionAverageTemperature( stats.averageTemperature );
+      real64 averagePressure = 0.0;
+      real64 averageTemperature = 0.0;
+      validateReferenceRegionStatistics< SinglePhaseStatistics >( elemManager, averagePressure, averageTemperature );
+      setRegionAveragePressure( averagePressure );
+      setRegionAverageTemperature( averageTemperature );
     }
     // use region conditions
     flashPressure =        getRegionAveragePressure();

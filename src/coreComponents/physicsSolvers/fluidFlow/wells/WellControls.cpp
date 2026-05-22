@@ -27,6 +27,10 @@
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
+
 #include "LogLevelsInfo.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
@@ -301,21 +305,90 @@ void WellControls::postInputInitialization()
                    InputError, getDataContext() );
   }
 
-//##  // 13) Validate constraints
-//##  bool const producer = isProducer();
-//##  ((void)producer);
-//##  mapBase <string,integer,std::false_type> typeCount;
-//##  for( auto & catalog : WellConstraintBase::getCatalog())
-//##  {
-//##    typeCount[catalog.first] = 0;
-//##  }
-//##  forSubGroups<
-//##  >([&](auto const & group)
-//##  {
-//##    string const catalogName = group.getCatalogName();
-//##    ((void)catalogName);
-//##//if (typeCount. in )
-//##  });
+  // 13) Validate constraints
+  bool const isProducerWell = isProducer();
+  stdVector< std::tuple< string, string, WellConstraintBase const * > > constraints;
+  forSubGroups< MaximumBHPConstraint,
+                InjectionConstraint< MassRateConstraint >,
+                InjectionConstraint< VolumeRateConstraint >,
+                InjectionConstraint< PhaseVolumeRateConstraint >,
+                InjectionConstraint< LiquidRateConstraint >,
+                MinimumBHPConstraint,
+                ProductionConstraint< MassRateConstraint >,
+                ProductionConstraint< VolumeRateConstraint >,
+                ProductionConstraint< PhaseVolumeRateConstraint >,
+                ProductionConstraint< LiquidRateConstraint > >( [&]( auto const & constraint )
+  {
+    using ConstraintType = std::decay_t< decltype(constraint) >;
+    constraints.emplace_back( constraint.getName(), ConstraintType::catalogName(), &constraint );
+  } );
+
+  // 13.1) Make sure a producer does not have injector constraints and vice versa
+  const std::set< string > types = [isProducerWell]() -> std::set< string >
+  {
+    if( isProducerWell )
+    {
+      return { MaximumBHPConstraint::catalogName(),
+               InjectionConstraint< MassRateConstraint >::catalogName(),
+               InjectionConstraint< VolumeRateConstraint >::catalogName(),
+               InjectionConstraint< PhaseVolumeRateConstraint >::catalogName(),
+               InjectionConstraint< LiquidRateConstraint >::catalogName() };
+    }
+    else
+    {
+      return { MinimumBHPConstraint::catalogName(),
+               ProductionConstraint< MassRateConstraint >::catalogName(),
+               ProductionConstraint< VolumeRateConstraint >::catalogName(),
+               ProductionConstraint< PhaseVolumeRateConstraint >::catalogName(),
+               ProductionConstraint< LiquidRateConstraint >::catalogName() };
+    }
+  }();
+  for( const auto & [name, type, constraint] : constraints )
+  {
+    GEOS_THROW_IF( types.find( type ) != types.end(),
+                   GEOS_FMT( "Constraint {} of type {} is not allowed for {} wells",
+                             name, type, (isProducerWell ? "producer" : "injector")),
+                   InputError, constraint->getDataContext() );
+  }
+
+  // 13.2) Make sure we don't have multiple constraints of the same type
+  // Track the types we have already seen
+  mapBase< string, WellConstraintBase const *, std::false_type > seen_types;
+  for( const auto & [name, type, constraint] : constraints )
+  {
+    auto [it, inserted] = seen_types.insert( {type, constraint} );
+    GEOS_THROW_IF( !inserted,
+                   GEOS_FMT( "Constraint of type {} is duplicated by {} and {}",
+                             type, name, it->second->getName() ),
+                   InputError, constraint->getDataContext() );
+  }
+
+  // 13.3) Make sure there is a BHP constraint
+  string const bhp_type = isProducerWell ? MinimumBHPConstraint::catalogName() : MaximumBHPConstraint::catalogName();
+  bool const no_match_found = std::none_of( constraints.begin(), constraints.end(), [&bhp_type]( const auto & constraint_tuple )
+  {
+    return std::get< 1 >( constraint_tuple ) == bhp_type;
+  } );
+  GEOS_THROW_IF( no_match_found,
+                 GEOS_FMT( "Constraint of type {} is missing and is required for a {} well",
+                           bhp_type, (isProducerWell ? "producer" : "injector") ),
+                 InputError, getDataContext() );
+
+  // 13.4) Make sure there is at least one non-BHP constraint
+  bool const rate_match_found = std::any_of( constraints.begin(), constraints.end(), [&bhp_type]( const auto & constraint_tuple )
+  {
+    return std::get< 1 >( constraint_tuple ) != bhp_type;
+  } );
+  GEOS_THROW_IF( !rate_match_found,
+                 GEOS_FMT( "Missing rate constraint for well {}",
+                           getName(), (isProducerWell ? "producer" : "injector") ),
+                 InputError, getDataContext() );
+}
+
+void WellControls::initializePreSubGroups()
+{
+  // Validate the reference region
+  validateReferenceRegion();
 }
 
 void WellControls::postRestartInitialization( )
@@ -1006,6 +1079,73 @@ WellControls::assembleSystem( real64 const & time_n,
   assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   computeWellPerforationRates( time_n, dt, elemManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
 }
+
+bool WellControls::validateReferenceRegion() const
+{
+  // If using surface conditions then there is nothing to validate
+  if( useSurfaceConditions())
+  {
+    return true;
+  }
+  bool const isRoot = MpiWrapper::commRank() == 0;
+  string const regionName = getReferenceReservoirRegion();
+  if( regionName.empty() )
+  {
+    GEOS_WARNING_IF( isRoot,
+                     GEOS_FMT( "WellControls {} referenceReservoirRegion not set and well constraint "
+                               "fluid property calculations will use top segement pressure and temperature.",
+                               getName()) );
+  }
+  else
+  {
+    FlowSolverBase const * flowSolver = getParent().getParent().getGroupPointer< FlowSolverBase >( getFlowSolverName() );
+    if( flowSolver == nullptr )
+    {
+      return true;
+    }
+    string_array const & targetRegionsNames = flowSolver->getTargetRegionNames();
+    auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
+    GEOS_THROW_IF( pos == targetRegionsNames.end(),
+                   GEOS_FMT( "Region {} is not a target of the reservoir solver {} and cannot "
+                             "be used for referenceReservoirRegion in WellControl {}.",
+                             regionName, flowSolver->getName(), getName() ),
+                   InputError, getDataContext() );
+
+    return pos != targetRegionsNames.end();
+  }
+  return true;
+}
+
+template< typename STATISTICS >
+bool WellControls::validateReferenceRegionStatistics( ElementRegionManager const & elemManager,
+                                                      real64 & averagePressure,
+                                                      real64 & averageTemperature ) const
+{
+  averagePressure = 0.0;
+  averageTemperature = 0.0;
+  string const regionName = getReferenceReservoirRegion();
+  if( !regionName.empty())
+  {
+    ElementRegionBase const & region = elemManager.getRegion( regionName );
+    GEOS_THROW_IF( !region.hasWrapper( STATISTICS::regionStatisticsName() ),
+                   GEOS_FMT( "WellControl {} referenceReservoirRegion field requires {} to be configured for region {}",
+                             getName(), STATISTICS::catalogName(), regionName ),
+                   RuntimeError, getDataContext() );
+
+    auto const & stats = region.getReference< typename STATISTICS::RegionStatistics >( STATISTICS::regionStatisticsName() );
+    GEOS_THROW_IF( stats.averagePressure <= 0.0,
+                   GEOS_FMT( "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires "
+                             "{} to be configured for region {} ",
+                             getName(), STATISTICS::catalogName(), regionName ),
+                   RuntimeError, getDataContext());
+    averagePressure = stats.averagePressure;
+    averageTemperature = stats.averageTemperature;
+  }
+  return true;
+}
+
+template bool WellControls::validateReferenceRegionStatistics< SinglePhaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
+template bool WellControls::validateReferenceRegionStatistics< CompositionalMultiphaseStatistics >( ElementRegionManager const &, real64 &, real64 & ) const;
+
 } //namespace geos

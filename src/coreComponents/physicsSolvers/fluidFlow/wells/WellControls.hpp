@@ -376,6 +376,8 @@ public:
 
   virtual void postInputInitialization() override;
 
+  virtual void initializePreSubGroups() override;
+
   virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) = 0;
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
@@ -809,6 +811,13 @@ protected:
   virtual void postRestartInitialization( )override;
 
   void logConstraint( WellConstraintBase const * constraint, WellElementSubRegion const & region, real64 time, bool isLimiting = false ) const;
+
+  bool validateReferenceRegion() const;
+
+  template< typename STATISTICS >
+  bool validateReferenceRegionStatistics( ElementRegionManager const & elemManager,
+                                          real64 & averagePressure,
+                                          real64 & averageTemperature ) const;
 
 private:
   /// List of names of regions the solver will be applied to
