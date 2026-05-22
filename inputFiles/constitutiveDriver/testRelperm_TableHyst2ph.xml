@@ -6,7 +6,7 @@
       name="testRelperm"
       relperm="relperm"
       steps="100" 
-      output="out_alt.txt"
+      output="testRelperm_TableHyst2ph.txt"
       logLevel="1" />  
   </Tasks>
   
