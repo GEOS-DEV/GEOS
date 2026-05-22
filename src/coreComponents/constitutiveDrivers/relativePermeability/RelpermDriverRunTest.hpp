@@ -27,8 +27,7 @@ namespace geos
 
 // Hysteresis traits
 template< typename RELPERM_TYPE >
-struct HasHysteresis : std::false_type
-{};
+struct HasHysteresis : std::false_type {};
 
 template< typename RELPERM_TYPE >
 void
