@@ -60,7 +60,7 @@ private:
   constitutive::RelativePermeabilityBase & getRelperm();
   constitutive::RelativePermeabilityBase const & getRelperm() const;
 
-  void allocateTable( integer numColumns, integer numPhases );
+  void allocateTable( integer numRows, integer numColumns );
 
   /**
    * @brief Initialises the table by filling in primary variables

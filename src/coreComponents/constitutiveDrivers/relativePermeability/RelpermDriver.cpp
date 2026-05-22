@@ -60,12 +60,6 @@ void RelpermDriver::postInputInitialization()
                    "Number of historical saturations must be the same as the number of phases",
                    getWrapperDataContext( viewKeyStruct::historicalSaturationsString() ) );
   }
-
-  string_array columnNames;
-  getColumnNames( columnNames );
-  integer const numCols = static_cast< integer >(columnNames.size());
-
-  allocateTable( numCols, numPhases );
 }
 
 bool RelpermDriver::execute()
@@ -135,10 +129,8 @@ void RelpermDriver::getColumnNames( string_array & columnNames ) const
   }
 }
 
-void RelpermDriver::allocateTable( integer numColumns, integer numPhases )
+void RelpermDriver::allocateTable( integer numRows, integer numColumns )
 {
-  // For 3-phase we have m_numSteps+1 points for each of the other two phases
-  integer const numRows = (numPhases == 3) ? (m_numSteps+1)*(m_numSteps+1) : (m_numSteps+1);
   m_table.resize( numRows, numColumns );
   for( integer index = 0; index < numRows; ++index )
   {
@@ -166,22 +158,55 @@ void RelpermDriver::initializeTable()
   // Offset for saturations in table
   constexpr integer SATURATION = 1;
 
+  // For 3-phase we don't know apriori how many rows it will be because we don't want negative saturations
+  string_array columnNames;
+  getColumnNames( columnNames );
+  integer const numCols = static_cast< integer >( columnNames.size() );
+  integer const numRows = [&]( bool is3Phase ) -> integer
+  {
+    if( is3Phase )
+    {
+      integer rowCount = 0;
+      for( integer ni = 0; ni < m_numSteps + 1; ++ni )
+      {
+        real64 const swat = min_wetting_saturation + ni*dSw;
+        for( integer nj = 0; nj < m_numSteps + 1; ++nj )
+        {
+          real64 const sgas = min_non_wetting_saturation + nj*dSw;
+          if( swat + sgas <= 1.0 )
+          {
+            ++rowCount;
+          }
+        }
+      }
+      return rowCount;
+    }
+    else
+    {
+      return m_numSteps + 1;
+    }
+  }( numPhases == 3 );
+
+  // Resize the table
+  allocateTable( numRows, numCols );
+
   // 3-phase branch
   if( numPhases == 3 )
   {
-    real64 swat = 0.0;
-    real64 sgas = 0.0;
+    integer index = 0;
     for( integer ni = 0; ni < m_numSteps + 1; ++ni )
     {
-      swat = min_wetting_saturation + ni*dSw;
+      real64 const swat = min_wetting_saturation + ni*dSw;
       for( integer nj = 0; nj < m_numSteps + 1; ++nj )
       {
-        sgas = min_non_wetting_saturation + nj*dSw;
-
-        integer index = ni * ( m_numSteps + 1 ) + nj;
-        m_table( index, ipWater + SATURATION ) = swat;
-        m_table( index, ipGas + SATURATION ) = sgas;
-        m_table( index, ipOil + SATURATION ) = 1.0 - swat - sgas;
+        real64 const sgas = min_non_wetting_saturation + nj*dSw;
+        if( swat + sgas <= 1.0 )
+        {
+          m_table( index, ipWater + SATURATION ) = swat;
+          m_table( index, ipGas + SATURATION ) = sgas;
+          m_table( index, ipOil + SATURATION ) = LvArray::math::max( 1.0 - swat - sgas, 0.0 );  // aesthetic
+          ++index;
+        }
       }
     }
   }

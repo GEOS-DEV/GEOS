@@ -12,13 +12,26 @@ def create_pvt_test(name, description=None):
         check_step=0,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 
+def create_relperm_test(name, description=None):
+    if description is None: description = name
+    return TestDeck(
+        name=name,
+        description=description,
+        partitions=[(1, 1, 1)],
+        restart_step=0,
+        check_step=0,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+
 decks = [
     create_pvt_test("testPVT"),
     create_pvt_test("testPVT_CO2Brine", "PVT Driver test for CO2 fluid models"),
     create_pvt_test("testPVT_CO2BrineTables", "PVT Driver test for CO2 fluid models with solubility tables"),
     create_pvt_test("testPVT_PhaseComposition", "PVT Driver test with composition output"),
     create_pvt_test("testPVT_ThreePhaseCompositional", "PVT Driver test for three phase compositional models"),
-    create_pvt_test("testPVT_docExample", "PVT Driver documentation example")
+    create_pvt_test("testPVT_docExample", "PVT Driver documentation example"),
+    
+    create_relperm_test("testRelperm_Table_2_phase", "Relperm driver for 2 phase tables"),
+    create_relperm_test("testRelperm_Table_3_phase", "Relperm driver for 3 phase tables")
 ]
 
 generate_geos_tests(decks)

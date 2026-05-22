@@ -3,9 +3,15 @@
 <Problem>
   <Tasks>
     <RelpermDriver
+      name="test_3_phase"
+      relperm="3_phase"
+      steps="15"
+      logLevel="1" />
+    <RelpermDriver
       name="test_3_phase_hysteresis"
       relperm="3_phase_hysteresis"
       steps="15"
+      output="testRelperm_Table_3_phase_3_phase_hysteresis.txt"
       logLevel="1" />
   </Tasks>
   
@@ -16,6 +22,9 @@
 
   <Events
     maxTime="1">
+    <SoloEvent
+      name="event_3_phase"
+      target="/Tasks/test_3_phase" />
     <SoloEvent
       name="event_3_phase_hysteresis"
       target="/Tasks/test_3_phase_hysteresis" />
@@ -28,14 +37,21 @@
   </Events>
 
   <Constitutive>
+    <TableRelativePermeability
+      name="3_phase"
+      phaseNames="{ gas, oil, water }"
+      nonWettingIntermediateRelPermTableNames="{ KRG_D1, KROG_D1 }"
+      wettingIntermediateRelPermTableNames="{ KRW_D1, KROW_D1 }" />
     <TableRelativePermeabilityHysteresis
       name="3_phase_hysteresis"
-      phaseNames="{ gas, water }"
-      drainageWettingNonWettingRelPermTableNames="{ KRW_D1, KRG_D1 }"
+      phaseNames="{ gas, oil, water }"
+      drainageNonWettingIntermediateRelPermTableNames="{ KRG_D1, KROG_D1 }"
+      drainageWettingIntermediateRelPermTableNames="{ KRW_D1, KROW_D1 }"
       imbibitionNonWettingRelPermTableName="KRG_I1"      
       imbibitionWettingRelPermTableName="KRW_I1" />
   </Constitutive>
 
-  <Functions>
-  </Functions>
+  <Included>
+    <File name="testRelperm_data/relperm_tables.xml" />
+  </Included>
 </Problem>
