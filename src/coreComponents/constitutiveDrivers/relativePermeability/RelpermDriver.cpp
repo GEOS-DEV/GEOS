@@ -19,6 +19,9 @@
 #include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -34,6 +37,14 @@ RelpermDriver::RelpermDriver( const string & name,
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Relative permeability model to test" );
+
+  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "The names of the phases for which saturations are defined" );
+
+  registerWrapper( viewKeyStruct::saturationFunctionsString(), &m_saturationFunctionNames ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Functions controlling saturation time history of the selected phases" );
 
   registerWrapper( viewKeyStruct::historicalSaturationsString(), &m_historicalSaturations ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -53,6 +64,42 @@ void RelpermDriver::postInputInitialization()
                  "Number of phases for relative permeability model must be 2 or 3",
                  getWrapperDataContext( viewKeyStruct::relpermNameString() ) );
 
+  // Table functions should be provided for np-1 phases
+  integer const numSelectedPhases = m_phaseNames.size();
+  GEOS_ERROR_IF( numSelectedPhases != numPhases - 1,
+                 GEOS_FMT( "Number of selected phases should be {} not {}", numPhases - 1, numSelectedPhases ),
+                 getWrapperDataContext( viewKeyStruct::phaseNamesString() ) );
+
+  integer const numFunctions = m_saturationFunctionNames.size();
+  GEOS_ERROR_IF( numFunctions != numSelectedPhases,
+                 "Number of saturations functions should match the number of selected phases",
+                 getWrapperDataContext( viewKeyStruct::saturationFunctionsString() ) );
+
+  // Check that the phase names are valid
+  std::set< string > const relpermPhases( baseRelperm.phaseNames().begin(), baseRelperm.phaseNames().end());
+  std::set< string > seenPhases;
+  for( auto const & phaseName : m_phaseNames )
+  {
+    GEOS_ERROR_IF ( relpermPhases.find( phaseName ) == relpermPhases.end(),
+                    GEOS_FMT( "Phase {} is not in the list of allowed phases for the relative permeability model", phaseName ),
+                    getWrapperDataContext( viewKeyStruct::phaseNamesString() ) );
+
+    GEOS_ERROR_IF ( seenPhases.find( phaseName ) != seenPhases.end(),
+                    GEOS_FMT( "Phase {} is repeated in the list of selected phases", phaseName ),
+                    getWrapperDataContext( viewKeyStruct::phaseNamesString() ) );
+
+    seenPhases.insert( phaseName );
+  }
+
+  // Check that the functions exist
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  for( auto const & functionName : m_saturationFunctionNames )
+  {
+    GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( functionName ),
+                   GEOS_FMT( "Saturation function with name '{}' not found", functionName ),
+                   getWrapperDataContext( viewKeyStruct::saturationFunctionsString() ) );
+  }
+
   // Historical saturations must be the same number as the phases
   if( !m_historicalSaturations.empty())
   {
@@ -60,6 +107,28 @@ void RelpermDriver::postInputInitialization()
                    "Number of historical saturations must be the same as the number of phases",
                    getWrapperDataContext( viewKeyStruct::historicalSaturationsString() ) );
   }
+
+  string_array columnNames;
+  getColumnNames( columnNames );
+  integer const numCols = static_cast< integer >(columnNames.size());
+
+  // Initialize functions and extract limits
+  real64 minTime =  LvArray::NumericLimits< real64 >::max;
+  real64 maxTime = -LvArray::NumericLimits< real64 >::max;
+  for( auto const & functionName : m_saturationFunctionNames )
+  {
+    TableFunction & function = functionManager.getGroup< TableFunction >( functionName );
+    function.initializeFunction();
+    ArrayOfArraysView< real64 > coordinates = function.getCoordinates();
+    minTime = LvArray::math::min( minTime, coordinates[0][0] );
+    maxTime = LvArray::math::max( maxTime, coordinates[0][coordinates.sizeOfArray( 0 )-1] );
+  }
+
+  // Allocate the data
+  allocateTable( numCols, minTime, maxTime );
+
+  // Populate the data
+  initializeTable( baseRelperm );
 }
 
 bool RelpermDriver::execute()
@@ -73,12 +142,12 @@ bool RelpermDriver::execute()
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseRelperm.getCatalogName() );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << numPhases );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Selected phases ........ " << stringutilities::join( m_phaseNames, ',' ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Saturation functions ... " << stringutilities::join( m_saturationFunctionNames, ',' ) );
   if( !m_outputFile.empty())
   {
     GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
   }
-
-  initializeTable();
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -129,95 +198,52 @@ void RelpermDriver::getColumnNames( string_array & columnNames ) const
   }
 }
 
-void RelpermDriver::allocateTable( integer numRows, integer numColumns )
+void RelpermDriver::initializeTable( RelativePermeabilityBase const & baseRelperm )
 {
-  m_table.resize( numRows, numColumns );
-  for( integer index = 0; index < numRows; ++index )
-  {
-    m_table( index, TIME ) = index;
-  }
-}
-
-void RelpermDriver::initializeTable()
-{
-  RelativePermeabilityBase & baseRelperm = getRelperm();
-
-  using PT = RelativePermeabilityBase::PhaseType;
-  integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
-  integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
-  integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
-
+  integer const numRows = m_table.size( 0 );
   integer const numPhases = baseRelperm.numFluidPhases();
 
-  auto const [ipWetting, ipNonWetting] = baseRelperm.wettingAndNonWettingPhaseIndices();
-  real64 const min_wetting_saturation = baseRelperm.getPhaseMinVolumeFraction()[ipWetting];
-  real64 const min_non_wetting_saturation = baseRelperm.getPhaseMinVolumeFraction()[ipNonWetting];
+  string_array const & phaseNames = baseRelperm.phaseNames();
+  array1d< integer > phaseOrder( numPhases );
+  phaseOrder[0] = numPhases * (numPhases - 1) / 2;
+  for( integer ip = 0; ip < numPhases-1; ++ip )
+  {
+    integer const index = static_cast< integer >(std::distance( phaseNames.begin(), std::find( phaseNames.begin(), phaseNames.end(), m_phaseNames[ip] )));
+    phaseOrder[ip+1] = index;
+    phaseOrder[0] -= index;
+  }
 
-  real64 const dSw = ( 1.0 - min_wetting_saturation - min_non_wetting_saturation ) / m_numSteps;
+  FunctionManager const & functionManager = FunctionManager::getInstance();
+  stdVector< TableFunction const * > tableFunctions;
+  for( auto const & functionName : m_saturationFunctionNames )
+  {
+    TableFunction const * function = functionManager.getGroupPointer< TableFunction >( functionName );
+    tableFunctions.emplace_back( function );
+  }
 
   // Offset for saturations in table
   constexpr integer SATURATION = 1;
 
-  // For 3-phase we don't know apriori how many rows it will be because we don't want negative saturations
-  string_array columnNames;
-  getColumnNames( columnNames );
-  integer const numCols = static_cast< integer >( columnNames.size() );
-  integer const numRows = [&]( bool is3Phase ) -> integer
+  for( integer step = 0; step < numRows; ++step )
   {
-    if( is3Phase )
+    real64 const time = m_table( step, TIME );
+    real64 sumSaturation = 0.0;
+    for( integer ip = 1; ip < numPhases; ip++ )
     {
-      integer rowCount = 0;
-      for( integer ni = 0; ni < m_numSteps + 1; ++ni )
+      real64 const saturation = LvArray::math::max( tableFunctions[ip-1]->evaluate( &time ), 0.0 );
+      m_table( step, phaseOrder[ip] + SATURATION ) = saturation;
+      sumSaturation += saturation;
+    }
+    if( 1.0 - sumSaturation < -LvArray::NumericLimits< real64 >::epsilon )
+    {
+      real64 const scale = 1.0 / sumSaturation;
+      for( integer ip = 1; ip < numPhases; ip++ )
       {
-        real64 const swat = min_wetting_saturation + ni*dSw;
-        for( integer nj = 0; nj < m_numSteps + 1; ++nj )
-        {
-          real64 const sgas = min_non_wetting_saturation + nj*dSw;
-          if( swat + sgas <= 1.0 )
-          {
-            ++rowCount;
-          }
-        }
+        m_table( step, phaseOrder[ip] + SATURATION ) *= scale;
       }
-      return rowCount;
+      sumSaturation = 1.0;
     }
-    else
-    {
-      return m_numSteps + 1;
-    }
-  }( numPhases == 3 );
-
-  // Resize the table
-  allocateTable( numRows, numCols );
-
-  // 3-phase branch
-  if( numPhases == 3 )
-  {
-    integer index = 0;
-    for( integer ni = 0; ni < m_numSteps + 1; ++ni )
-    {
-      real64 const swat = min_wetting_saturation + ni*dSw;
-      for( integer nj = 0; nj < m_numSteps + 1; ++nj )
-      {
-        real64 const sgas = min_non_wetting_saturation + nj*dSw;
-        if( swat + sgas <= 1.0 )
-        {
-          m_table( index, ipWater + SATURATION ) = swat;
-          m_table( index, ipGas + SATURATION ) = sgas;
-          m_table( index, ipOil + SATURATION ) = LvArray::math::max( 1.0 - swat - sgas, 0.0 );  // aesthetic
-          ++index;
-        }
-      }
-    }
-  }
-  else // 2-phase branch
-  {
-    for( integer ni = 0; ni < m_numSteps + 1; ++ni )
-    {
-      real64 const s_nw = min_non_wetting_saturation + ni * dSw;
-      m_table( ni, ipNonWetting + SATURATION ) = s_nw;
-      m_table( ni, ipWetting + SATURATION ) = 1.0 - s_nw;
-    }
+    m_table( step, phaseOrder[0] + SATURATION ) = 1.0 - sumSaturation;
   }
 }
 

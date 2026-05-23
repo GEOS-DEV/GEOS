@@ -41,6 +41,8 @@ public:
 
   void postInputInitialization() override;
 
+  using ConstitutiveDriver::execute;
+
   bool execute() override;
 
   void getColumnNames( string_array & columnNames ) const override;
@@ -60,12 +62,10 @@ private:
   constitutive::RelativePermeabilityBase & getRelperm();
   constitutive::RelativePermeabilityBase const & getRelperm() const;
 
-  void allocateTable( integer numRows, integer numColumns );
-
   /**
    * @brief Initialises the table by filling in primary variables
    */
-  void initializeTable();
+  void initializeTable( constitutive::RelativePermeabilityBase const & baseRelperm );
 
   /**
    * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
@@ -73,10 +73,14 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * relpermNameString() { return "relperm"; }
+    constexpr static char const * phaseNamesString() { return "phaseNames"; }
+    constexpr static char const * saturationFunctionsString() { return "saturationControls"; }
     constexpr static char const * historicalSaturationsString() { return "historicalSaturations"; }
   };
 
   string m_relpermName;               ///< relPermType identifier
+  string_array m_phaseNames;
+  string_array m_saturationFunctionNames;
   array1d< real64 > m_historicalSaturations;
 };
 
