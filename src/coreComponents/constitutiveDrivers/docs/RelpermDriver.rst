@@ -49,6 +49,7 @@ A ``RelpermDriver`` is then added as a ``Task``, a particular type of executable
 The driver itself takes as input the relative permeability model (referenced by the ``relperm`` parameter). The model is evaluated over time increments defined by the ``steps`` parameter, while the saturations at each step are evaluated using functions provided in the ``saturationControls`` array. Results will be written in a simple ASCII table format to a specified file if an ``output`` parameter is provided; otherwise, it is written to the standard log. 
 
 The driver task is added as a ``SoloEvent`` to the event queue.
+
 .. literalinclude:: ../../../../inputFiles/constitutiveDriver/testRelperm_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_RELPERMDRIVER_EVENT_START -->
@@ -84,7 +85,7 @@ These saturation functions are explicitly defined in the XML as shown below:
   :start-after: <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_BEGIN -->
   :end-before: <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_END -->
 
-.. plot:: inputFiles/constitutiveDriver/testRelperm_data/plot_relperm.py
+.. plot:: ../inputFiles/constitutiveDriver/testRelperm_data/plot_relperm.py
 
 Output of the ``test_sandstone_hysteresis`` task. The plotted trajectory follows the defined ``gasSaturationHysteresis`` values ``{ 0.0, 0.4, 0.3, 0.6, 0.4 }``. The color scale indicates the internally tracked maximum historical gas saturation (Sghy), dictating the departure curves:
    
