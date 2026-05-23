@@ -9,9 +9,9 @@ plt.rcParams.update({'font.size': 12})
 # Load data (ignore comment lines starting with '#')
 data_dir = "../../../../../../../inputFiles/constitutiveDriver/testRelperm_data"
 file_name = "test_relperm_sandstone_hysteresis.txt"
-data_file = os.path.join(geos_dir, "..", file_name)
+data_file = os.path.join(data_dir, "..", file_name)
 if not os.path.exists(data_file):
-    data_file = os.path.join(geos_dir, file_name)
+    data_file = os.path.join(data_dir, file_name)
 data = np.loadtxt(data_file)
 
 # Columns:
