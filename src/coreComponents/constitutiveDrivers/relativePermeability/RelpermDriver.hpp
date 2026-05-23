@@ -75,13 +75,11 @@ private:
     constexpr static char const * relpermNameString() { return "relperm"; }
     constexpr static char const * phaseNamesString() { return "phaseNames"; }
     constexpr static char const * saturationFunctionsString() { return "saturationControls"; }
-    constexpr static char const * historicalSaturationsString() { return "historicalSaturations"; }
   };
 
   string m_relpermName;               ///< relPermType identifier
   string_array m_phaseNames;
   string_array m_saturationFunctionNames;
-  array1d< real64 > m_historicalSaturations;
 };
 
 }

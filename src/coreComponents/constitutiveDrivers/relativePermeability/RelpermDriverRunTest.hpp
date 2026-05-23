@@ -57,55 +57,31 @@ RelpermDriver::runTest( RELPERM_TYPE & relperm, const arrayView2d< real64 > & ta
     // Offset for the historical saturations
     integer const OFFSET = SATURATION + numPhases;
 
-    using CurveType = constitutive::KilloughHysteresis::HysteresisCurve;
-    using KeyStruct = typename RELPERM_TYPE::viewKeyStruct;
-
     integer ipWetting, ipNonWetting;
     std::tie( ipWetting, ipNonWetting ) = relperm.wettingAndNonWettingPhaseIndices();
 
-    stackArray1d< real64, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES > historicalSaturations( numPhases );
-    historicalSaturations.zero();
-
-    if( m_historicalSaturations.empty())
-    {
-      auto const & phaseHasHysteresis = relperm.template getReference< array1d< integer > >( KeyStruct::phaseHasHysteresisString());
-      if( phaseHasHysteresis[ipNonWetting] )
-      {
-        CurveType const nonWettingCurve = relperm.template getReference< CurveType >( KeyStruct::nonWettingCurveString() );
-        historicalSaturations[ipNonWetting] = nonWettingCurve.m_extremumPhaseVolFraction;
-      }
-      if( phaseHasHysteresis[ipWetting] )
-      {
-        CurveType const wettingCurve = relperm.template getReference< CurveType >( KeyStruct::wettingCurveString());
-        historicalSaturations[ipWetting] = wettingCurve.m_extremumPhaseVolFraction;
-      }
-    }
-    else
-    {
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        historicalSaturations[p] = m_historicalSaturations[p];
-      }
-    }
-    auto historicalView = historicalSaturations.toView();
+    // For the wetting phase, we need the minimum saturation
+    // For the non-wetting phase, we need the maximum saturation
+    real64 maxNonWetting = 0.0;
+    real64 minWetting = 1.0;
 
     arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMaxHistoricalVolFraction >().reference();
     arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = relperm.template getField< fields::relperm::phaseMinHistoricalVolFraction >().reference();
-    forAll< parallelDevicePolicy<> >( numRows,
-                                      [numPhases, table,
-                                       ipWetting, ipNonWetting,
-                                       OFFSET,
-                                       phaseMaxHistoricalVolFraction,
-                                       phaseMinHistoricalVolFraction,
-                                       historicalView] GEOS_HOST_DEVICE ( integer const n )
+
+    for( integer step = 0; step < numRows; ++step )
     {
-      phaseMaxHistoricalVolFraction( n, ipNonWetting ) = historicalView[ipNonWetting];
-      phaseMinHistoricalVolFraction( n, ipWetting ) = historicalView[ipWetting];
-      for( integer p = 0; p < numPhases; ++p )
-      {
-        table( n, p + OFFSET ) = historicalView[p];
-      }
-    } );
+      real64 const sw = table( step, SATURATION + ipWetting );
+      real64 const snw = table( step, SATURATION + ipNonWetting );
+
+      minWetting = LvArray::math::min( minWetting, sw );
+      maxNonWetting = LvArray::math::max( maxNonWetting, snw );
+
+      phaseMinHistoricalVolFraction( step, ipWetting ) = minWetting;
+      phaseMaxHistoricalVolFraction( step, ipNonWetting ) = maxNonWetting;
+
+      table( step, OFFSET + ipWetting ) = minWetting;
+      table( step, OFFSET + ipNonWetting ) = maxNonWetting;
+    }
   }
 
   forAll< parallelDevicePolicy<> >( numRows,

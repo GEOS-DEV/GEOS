@@ -45,10 +45,6 @@ RelpermDriver::RelpermDriver( const string & name,
   registerWrapper( viewKeyStruct::saturationFunctionsString(), &m_saturationFunctionNames ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Functions controlling saturation time history of the selected phases" );
-
-  registerWrapper( viewKeyStruct::historicalSaturationsString(), &m_historicalSaturations ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Historical saturations for each phase." );
 }
 
 void RelpermDriver::postInputInitialization()
@@ -98,14 +94,6 @@ void RelpermDriver::postInputInitialization()
     GEOS_ERROR_IF( !functionManager.hasGroup< TableFunction >( functionName ),
                    GEOS_FMT( "Saturation function with name '{}' not found", functionName ),
                    getWrapperDataContext( viewKeyStruct::saturationFunctionsString() ) );
-  }
-
-  // Historical saturations must be the same number as the phases
-  if( !m_historicalSaturations.empty())
-  {
-    GEOS_ERROR_IF( m_historicalSaturations.size() != numPhases,
-                   "Number of historical saturations must be the same as the number of phases",
-                   getWrapperDataContext( viewKeyStruct::historicalSaturationsString() ) );
   }
 
   string_array columnNames;
