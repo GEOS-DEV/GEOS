@@ -95,8 +95,8 @@
 	<!-- SPHINX_TUT_STRESS_PATH_DRIVEN_LAW -->
     <BartonBandisPermeability
       name="fracturePerm"
-      biot="1.0" 
-      poisson="0.3"	
+      biotCoefficient="1.0" 
+      poissonRatio="0.3"	
       normalStiffness="10.0e9" 
       referenceAperture="1.0e-4"
       referencePressure="1e7" 

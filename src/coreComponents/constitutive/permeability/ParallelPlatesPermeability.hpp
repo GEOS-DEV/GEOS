@@ -73,13 +73,13 @@ public:
                                                     arraySlice1d< real64 const > const & normal,
                                                     real64 const & dHydraulicAperture_dNormalJump ) const override final
   {
-    GEOS_UNUSED_VAR( q, pressure, normal );
+    GEOS_UNUSED_VAR( pressure, normal );
 
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              dHydraulicAperture_dNormalJump,
-m_permeability[k][q],
-m_dPerm_dDispJump[k][q] );
+             m_permeability[k][q],
+             m_dPerm_dDispJump[k][q] );
          
   }
 

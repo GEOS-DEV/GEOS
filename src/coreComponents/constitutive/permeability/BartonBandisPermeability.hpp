@@ -45,17 +45,17 @@ public:
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_numDimensionsToUpdate( 3 ),
     m_aperture0( aperture0 ),
-    m_biot( biot ),
-    m_poisson( poisson ),
+    m_biotCoefficient( biot ),
+    m_poissonRatio( poisson ),
     m_normalStiffness( normalStiffness ), // Kni
     m_referencePressure( referencePressure ),
     m_referenceTotalStress( referenceTotalStress )
   {
     m_numDimensionsToUpdate = updateTransversalComponent ? 3 : 2;
 
-    m_referenceEffectiveStress[0] = m_referenceTotalStress[0] - m_biot*m_referencePressure; 
-    m_referenceEffectiveStress[1] = m_referenceTotalStress[1] - m_biot*m_referencePressure; 
-    m_referenceEffectiveStress[2] = m_referenceTotalStress[2] - m_biot*m_referencePressure; 
+    m_referenceEffectiveStress[0] = m_referenceTotalStress[0] - m_biotCoefficient*m_referencePressure; 
+    m_referenceEffectiveStress[1] = m_referenceTotalStress[1] - m_biotCoefficient*m_referencePressure; 
+    m_referenceEffectiveStress[2] = m_referenceTotalStress[2] - m_biotCoefficient*m_referencePressure; 
   }
 
   GEOS_HOST_DEVICE
@@ -113,7 +113,7 @@ public:
                                    arraySlice1d< real64 const > const & normal, real64 & dAperture_dStress, int k ) const
   {
     real64 const referenceTotalStress[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (m_referenceTotalStress); 
-    real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
+    real64 const biot_pressure = m_biotCoefficient * m_referencePressure; // biot is alpha in the equations
 
     // Computation of maximum fracture closure (Barton-Bandis parameter)
     // Fracture traction via Terzaghi's Principle
@@ -144,41 +144,6 @@ public:
 
     return newHydraulicAperture;
   }
-  /*GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  real64 computeHydraulicAperture( real64 const pressure, real64 const normalComponentOfStressOnFracture, 
-                                   array1d< real64 > const & normal, real64 & dAperture_dStress, int k ) const
-  {
-    real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
-
-    // Computation of maximum fracture closure (Barton-Bandis parameter)
-    // Fracture traction via Terzaghi's Principle
-    real64 const sigma_c0[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
-                                m_referenceTotalStress[1] * normal[1] - biot_pressure * normal[1],
-                                m_referenceTotalStress[2] * normal[2] - biot_pressure * normal[2] };
-    real64 const sigma_n0 = sigma_c0[0]*normal[0] + 
-                            sigma_c0[1]*normal[1] + 
-                            sigma_c0[2]*normal[2];
-    real64 const g0 = (-m_normalStiffness*m_aperture0 + 
-                        std::sqrt((m_normalStiffness*m_aperture0)*
-                        (m_normalStiffness*m_aperture0) + 
-                        4.0*m_normalStiffness*sigma_n0*m_aperture0)) / (2.0*m_normalStiffness);
-    real64 const maximumFractureClosure = g0 + m_aperture0; // Vm -> a_m -> aperture at free-stress state
-
-    // Normal effective stress on the fracture
-    real64 const fractureClosure = normalComponentOfStressOnFracture*maximumFractureClosure/(m_normalStiffness*maximumFractureClosure + normalComponentOfStressOnFracture); // gn_BB
-
-    // Compute the new aperture which is equal to the aperture at the free-stress state 
-    // minus the closure from the free-stress state to the current state
-    real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
-
-    // derivative
-    real64 const Kni_apert = m_normalStiffness*maximumFractureClosure;
-    real64 const Kni_aper_stress = Kni_apert + normalComponentOfStressOnFracture;
-    dAperture_dStress = -(Kni_apert*maximumFractureClosure) / (Kni_aper_stress * Kni_aper_stress);
-
-    return newHydraulicAperture;
-  }*/
 
 private:
 
@@ -187,8 +152,8 @@ private:
 
   real64 m_aperture0;
   
-  real64 m_biot;
-  real64 m_poisson;
+  real64 m_biotCoefficient;
+  real64 m_poissonRatio;
   real64 m_normalStiffness; // Kni
   real64 m_referencePressure; // p_0
   
@@ -201,8 +166,8 @@ private:
   {  
     //real64 const normal[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (normal_);
     
-    real64 const deltaSigmaZ = m_biot * (pressure - m_referencePressure);
-    real64 const poisson_deltaSigma = deltaSigmaZ * m_poisson/(1.0 - m_poisson);
+    real64 const deltaSigmaZ = m_biotCoefficient * (pressure - m_referencePressure);
+    real64 const poisson_deltaSigma = deltaSigmaZ * m_poissonRatio/(1.0 - m_poissonRatio);
     // sigma: matrix diagonal
     real64 effectiveStress[3] = { m_referenceEffectiveStress[0] - poisson_deltaSigma,
                                   m_referenceEffectiveStress[1] - poisson_deltaSigma,
@@ -212,39 +177,10 @@ private:
     real64 const normalComponentOfStressOnFracture = LvArray::tensorOps::AiBi< 3 >(effectiveStressOnFracture, normal); // sigmaN_N
     
     // derivative 
-    dStress_dPressure = -m_biot;
+    dStress_dPressure = -m_biotCoefficient;
 
     return normalComponentOfStressOnFracture;
   }
-
-  
- /*GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  real64 computeFractureStress( real64 const pressure, array1d< real64 > const & normal, real64 & dStress_dPressure ) const
-  {  
-    // TODO: remove this lambda expression
-    auto matmul = [](real64 const (&u)[3], array1d< real64 > const &v, array1d< real64 > &r) -> void
-    {
-      r[0] = u[0]*v[0];
-      r[1] = u[1]*v[1];
-      r[2] = u[2]*v[2];
-    }; 
-    
-    real64 const deltaSigmaZ = m_biot * (pressure - m_referencePressure);
-    real64 const poisson_deltaSigma = deltaSigmaZ * m_poisson/(1.0 - m_poisson);
-    // sigma: matrix diagonal
-    real64 effectiveStress[3] = { m_referenceEffectiveStress[0] - poisson_deltaSigma,
-                                  m_referenceEffectiveStress[1] - poisson_deltaSigma,
-                                  m_referenceEffectiveStress[2] - deltaSigmaZ };
-    array1d< real64 > effectiveStressOnFracture(3); // sigma_c
-    matmul(effectiveStress, normal, effectiveStressOnFracture);
-    real64 normalComponentOfStressOnFracture = dot(effectiveStressOnFracture, normal); // sigmaN_N
-    // derivative 
-    dStress_dPressure = -m_biot;
-
-    return normalComponentOfStressOnFracture;
-  }*/
-    
 
 };
 
@@ -274,8 +210,8 @@ public:
                           m_dPerm_dPressure,
                           m_updateTransversalComponent, 
                           m_aperture0, 
-                          m_biot, 
-                          m_poisson, 
+                          m_biotCoefficient, 
+                          m_poissonRatio, 
                           m_normalStiffness, 
                           m_referencePressure, 
                           m_referenceTotalStress);
@@ -288,8 +224,8 @@ public:
 
     /// string/key for aperture under zero normal stress
     static constexpr char const * apertureZeroString() { return "referenceAperture"; }
-    static constexpr char const * biotString()                  { return "biotCoefficient"; }
-    static constexpr char const * poissonString()               { return "poissonRatio"; }
+    static constexpr char const * biotCoefficientString()       { return "biotCoefficient"; }
+    static constexpr char const * poissonRatioString()          { return "poissonRatio"; }
     static constexpr char const * normalStiffnessString()       { return "normalStiffness"; }
     static constexpr char const * referencePressureString()     { return "referencePressure"; }
     static constexpr char const * referenceTotalStressString()  { return "referenceTotalStress"; }
@@ -307,8 +243,8 @@ private:
 
   /// Reference hydraulic aperture. Aperture at zero normal stress
   real64 m_aperture0;  /// TODO: this will replace what is currently called defaultAperture.
-  real64 m_biot;
-  real64 m_poisson;
+  real64 m_biotCoefficient;
+  real64 m_poissonRatio;
   real64 m_normalStiffness; // Kni  
   real64 m_referencePressure; // p_0
   

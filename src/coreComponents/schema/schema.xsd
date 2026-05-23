@@ -743,10 +743,6 @@
 					<xsd:selector xpath="CompressibleSinglePhaseFluid" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="domainConstitutiveCompressibleSolidBartonBandisPermeabilityUniqueName">
-					<xsd:selector xpath="CompressibleSolidBartonBandisPermeability" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="domainConstitutiveCompressibleSolidCarmanKozenyPermeabilityUniqueName">
 					<xsd:selector xpath="CompressibleSolidCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
@@ -6753,7 +6749,6 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CompositionalTwoPhaseKValueFluidLohrenzBrayClark" type="CompositionalTwoPhaseKValueFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseKValueFluidPhillipsBrine" type="CompositionalTwoPhaseKValueFluidPhillipsBrineType" />
 			<xsd:element name="CompressibleSinglePhaseFluid" type="CompressibleSinglePhaseFluidType" />
-			<xsd:element name="CompressibleSolidBartonBandisPermeability" type="CompressibleSolidBartonBandisPermeabilityType" />
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidExponentialDecayPermeability" type="CompressibleSolidExponentialDecayPermeabilityType" />
@@ -6852,12 +6847,12 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BartonBandisPermeabilityType">
-		<!--biot => Biot coefficient.-->
-		<xsd:attribute name="biot" type="real64" use="required" />
+		<!--biotCoefficient => Biot coefficient.-->
+		<xsd:attribute name="biotCoefficient" type="real64" use="required" />
 		<!--normalStiffness => Normal stiffness: Kni.-->
 		<xsd:attribute name="normalStiffness" type="real64" use="required" />
-		<!--poisson => Poisson ratio.-->
-		<xsd:attribute name="poisson" type="real64" use="required" />
+		<!--poissonRatio => Poisson ratio.-->
+		<xsd:attribute name="poissonRatio" type="real64" use="required" />
 		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
 		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
 		<!--referencePressure => Reference pressure: p_0.-->
@@ -7473,18 +7468,6 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 			<xsd:pattern value=".*[\[\]`$].*|exponential|linear|quadratic" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="CompressibleSolidBartonBandisPermeabilityType">
-		<!--permeabilityModelName => Name of the permeability model.-->
-		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
-		<!--porosityModelName => Name of the porosity model.-->
-		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
-		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
-		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
-		<!--solidModelName => Name of the solid model.-->
-		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
