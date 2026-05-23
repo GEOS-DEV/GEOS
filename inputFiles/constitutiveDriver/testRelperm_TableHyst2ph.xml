@@ -6,6 +6,8 @@
       name="testRelperm"
       relperm="relperm"
       steps="100" 
+      phaseNames="{ gas }"
+      saturationControls="{ gasSaturation }"
       output="testRelperm_TableHyst2ph.txt"
       logLevel="1" />  
   </Tasks>
@@ -54,6 +56,11 @@
       name="imbibitionGasRelativePermeabilityTable"
       coordinateFiles="{ testRelperm_data/imbibitionPhaseVolFraction_gas.txt }"
       voxelFile="testRelperm_data/imbibitionRelPerm_gas.txt"/>
-  </Functions>
 
+    <TableFunction
+      name="gasSaturation"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 0.0, 1.0, 0.2 }"
+      interpolation="linear" />
+  </Functions>
 </Problem>

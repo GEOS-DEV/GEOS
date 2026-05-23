@@ -7,24 +7,32 @@
       relperm="2_phase_residual"
       steps="10"
       output="testRelperm_Table_2_phase_2_phase_residual.txt"
+      phaseNames="{ gas }"
+      saturationControls="{ LINEAR.SATURATION }"
       logLevel="1" />
     <RelpermDriver
       name="test_2_phase"
       relperm="2_phase"
       steps="15"
       output="testRelperm_Table_2_phase_2_phase.txt"
+      phaseNames="{ water }"
+      saturationControls="{ LINEAR.SATURATION }"
       logLevel="1" />
     <RelpermDriver
       name="test_2_phase_hysteresis"
       relperm="2_phase_hysteresis"
       steps="15"
       output="testRelperm_Table_2_phase_2_phase_hysteresis.txt"
+      phaseNames="{ water }"
+      saturationControls="{ LINEAR.SATURATION }"
       logLevel="1" />
     <RelpermDriver
       name="test_2_phase_hysteresis_historical"
       relperm="2_phase_hysteresis"
       historicalSaturations="{ 0.55, 0.3 }"
       steps="15"
+      phaseNames="{ gas }"
+      saturationControls="{ LINEAR.SATURATION }"
       logLevel="1" />
   </Tasks>
   

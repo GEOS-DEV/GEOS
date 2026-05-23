@@ -33,8 +33,7 @@ decks = [
     create_relperm_test("testRelperm_Table_2_phase", "Relperm driver for 2 phase tables"),
     create_relperm_test("testRelperm_Table_3_phase", "Relperm driver for 3 phase tables"),
     create_relperm_test("testRelperm_TableHyst2ph", "Two-phase hysteresis with large tables"),
-    create_relperm_test("testRelperm_BCBaker", "Three-phase Brooks-Corey with Baker mixing rule"),
-    create_relperm_test("testRelperm_BCStoneII", "Three-phase Brooks-Corey with Stone II mixing rule"),
+    create_relperm_test("testRelperm_BrooksCorey", "Three-phase Brooks-Corey with Baker and Stone II mixing rule"),
     create_relperm_test("testRelperm_VanGenuchten", "Three-phase van Genuchten-Mualem models"),
     create_relperm_test("testRelperm_docExample", "Relperm Driver documentation example")
 ]

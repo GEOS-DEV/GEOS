@@ -6,7 +6,9 @@
     <RelpermDriver
       name="test_sandstone"
       relperm="sandstone"
-      steps="20"
+      steps="16"
+      phaseNames="{ gas }"
+      saturationControls="{ gasSaturation }"
       logLevel="1" />
   </Tasks>
   <!-- SPHINX_RELPERMDRIVER_TASKS_END -->
@@ -40,8 +42,8 @@
   </Constitutive>
   <!-- SPHINX_RELPERMDRIVER_CONSTITUTIVE_END -->
 
-  <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_START -->
   <Functions>
+    <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_START -->
     <TableFunction
       name="waterRelPerm"
       coordinates="{ 0.15, 0.2095, 0.269, 0.3285, 0.3965, 0.456, 0.5155, 0.575, 0.6345, 0.694, 0.7535, 0.8215, 0.881, 0.9405, 1 }"
@@ -53,6 +55,13 @@
       coordinates="{ 0, 0.0595, 0.119, 0.1785, 0.2465, 0.306, 0.3655, 0.425, 0.4845, 0.544, 0.6035, 0.6715, 0.731, 0.7905, 0.85 }"
       values="{ 0, 0.0035, 0.0142, 0.0319, 0.0608, 0.0936, 0.1336, 0.1806, 0.2347, 0.2959, 0.3642, 0.4509, 0.5344, 0.6249, 0.64 }"
       interpolation="linear" />      
+    <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_END -->
+    <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_BEGIN -->
+    <TableFunction
+      name="gasSaturation"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0.0, 1.0 }"
+      interpolation="linear" />
+    <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_END -->
   </Functions>
-  <!-- SPHINX_RELPERMDRIVER_FUNCTIONS_END -->
 </Problem>

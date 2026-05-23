@@ -142,8 +142,8 @@ bool RelpermDriver::execute()
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseRelperm.getCatalogName() );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << numPhases );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Selected phases ........ " << stringutilities::join( m_phaseNames, ',' ) );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Saturation functions ... " << stringutilities::join( m_saturationFunctionNames, ',' ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Selected phases ........ " << stringutilities::join( m_phaseNames, ", " ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Saturation functions ... " << stringutilities::join( m_saturationFunctionNames, ", " ) );
   if( !m_outputFile.empty())
   {
     GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );

@@ -5,13 +5,18 @@
     <RelpermDriver
       name="test_3_phase"
       relperm="3_phase"
-      steps="15"
+      precision="6"
+      steps="65"
+      phaseNames="{ gas, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
       logLevel="1" />
     <RelpermDriver
       name="test_3_phase_hysteresis"
       relperm="3_phase_hysteresis"
-      steps="15"
       output="testRelperm_Table_3_phase_3_phase_hysteresis.txt"
+      steps="65"
+      phaseNames="{ gas, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
       logLevel="1" />
   </Tasks>
   

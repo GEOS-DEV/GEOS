@@ -5,13 +5,17 @@
     <RelpermDriver
       name="test_3_phase_baker"
       relperm="3_phase_baker"
-      steps="15"
+      steps="65"
+      phaseNames="{ water, oil }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
       output="testRelperm_VanGenuchten_3_phase_baker.txt"
       logLevel="1" />
     <RelpermDriver
       name="test_3_phase_stone2"
       relperm="3_phase_stone2"
-      steps="15"
+      steps="65"
+      phaseNames="{ gas, water }"
+      saturationControls="{ THREE.PHASE.SATURATION.0, THREE.PHASE.SATURATION.1 }"
       output="testRelperm_VanGenuchten_3_phase_stone2.txt"
       logLevel="1" />
   </Tasks>
@@ -56,4 +60,8 @@
       waterOilRelPermExponentInv="{ 0.25, 0.5 }"
       waterOilRelPermMaxValue="{ 0.65, 0.75 }" />
   </Constitutive>
+
+  <Included>
+    <File name="testRelperm_data/relperm_tables.xml" />
+  </Included>
 </Problem>
