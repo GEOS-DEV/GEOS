@@ -7,7 +7,8 @@ import os
 plt.rcParams.update({'font.size': 12})
 
 # Load data (ignore comment lines starting with '#')
-data_dir = "../../../../../../../inputFiles/constitutiveDriver/testRelperm_data"
+data_dir = "."
+data_dir = os.path.normpath(os.path.abspath(data_dir))
 file_name = "test_relperm_sandstone_hysteresis.txt"
 data_file = os.path.join(data_dir, "..", file_name)
 if not os.path.exists(data_file):
