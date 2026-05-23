@@ -83,7 +83,16 @@ These saturation functions are explicitly defined in the XML as shown below:
   :language: xml
   :start-after: <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_BEGIN -->
   :end-before: <!-- SPHINX_RELPERMDRIVER_SATURATION_FUNCTIONS_END -->
-  
+
+.. plot:: inputFiles/constitutiveDriver/testRelperm_data/plot_relperm.py
+
+Output of the ``test_sandstone_hysteresis`` task. The plotted trajectory follows the defined ``gasSaturationHysteresis`` values ``{ 0.0, 0.4, 0.3, 0.6, 0.4 }``. The color scale indicates the internally tracked maximum historical gas saturation (Sghy), dictating the departure curves:
+   
+* **Primary Drainage (0.0 to 0.4):** Sghy updates alongside the current saturation (dark blue to yellow).
+* **Primary Imbibition (0.4 to 0.3):** The curve drops from the main envelope; Sghy remains constant at 0.4 (yellow).
+* **Secondary Drainage (0.3 to 0.6):** The curve climbs back up, with Sghy resuming updates past 0.4 until it hits 0.6 (dark red).
+* **Secondary Imbibition (0.6 to 0.4):** The relative permeability drops along a new, lower path, while Sghy stays fixed at 0.6 (dark red).
+
 Output Format
 -------------
 The ``output`` key is used to identify a file to which the results of the simulation are written. If this key is omitted, file output will be suppressed and instead the resulting table will be output to the screen. When written to standard output, the data is written in a table format similar to the one below.
