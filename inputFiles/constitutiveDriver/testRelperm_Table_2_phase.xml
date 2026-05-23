@@ -29,7 +29,6 @@
     <RelpermDriver
       name="test_2_phase_hysteresis_historical"
       relperm="2_phase_hysteresis"
-      historicalSaturations="{ 0.55, 0.3 }"
       steps="15"
       phaseNames="{ gas }"
       saturationControls="{ LINEAR.SATURATION }"
