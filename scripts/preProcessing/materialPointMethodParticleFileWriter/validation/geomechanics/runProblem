@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Run one or more PFW verification/validation cases from this directory.
+
+This wrapper accepts either the local input name, for example
+``pfw_input_elasticBlockUni.py``, or the suite-level case id, for example
+``Ftable__elasticBlockUni``.  The suite driver normally dispatches through the
+shared mpm_vv_case_runner directly, but keeping this wrapper permissive makes
+manual smoke tests less error-prone.
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+
+def slug(s: str) -> str:
+    s = re.sub(r"^pfw_input_", "", str(s))
+    s = re.sub(r"[^A-Za-z0-9_.-]+", "_", s)
+    return s.strip("_")
+
+
+def find_pfw(start: Path) -> Path:
+    for parent in [start, *start.parents]:
+        if (parent / "particleFileWriter.py").exists() and (parent / "pfw_geometryObjects.py").exists():
+            return parent
+    raise SystemExit("Could not find materialPointMethodParticleFileWriter root")
+
+
+def infer_suite(pfw: Path, here: Path) -> str:
+    try:
+        rel = here.relative_to(pfw)
+    except ValueError:
+        raise SystemExit("runProblem must be inside the PFW tree")
+    if rel.parts and rel.parts[0] in ("verification", "validation"):
+        return rel.parts[0]
+    raise SystemExit("runProblem must be under verification/ or validation/")
+
+
+def infer_vars(path: Path):
+    text = path.read_text(errors="ignore")[:8000]
+    low = (path.name + "\n" + str(path.parent) + "\n" + text).lower()
+    view = "auto" if "triplyperiodic" in low or "3d" in low else "xy"
+    if "geomechanics" in low or "borehole" in low:
+        return "Pressure", "PlasticStrainMagnitude", view
+    if any(k in low for k in ("damage", "quartz", "ceramic", "cohesive", "polymer", "weibull", "cz")):
+        return "StrengthScale", "Damage", view
+    if any(k in low for k in ("velocity", "spinning", "disk", "gas", "momentum")):
+        return "VelocityMagnitude", "VelocityMagnitude", view
+    return "MaterialType", "VelocityMagnitude", view
+
+
+def parse_args():
+    p = argparse.ArgumentParser(description="Run staged PFW verification/validation case(s) from this directory")
+    p.add_argument("--case", action="append", help="Input file, input stem, suite case id, directory, or substring. May be repeated.")
+    p.add_argument("--python", dest="python_cmd", default=os.environ.get("PFW_PYTHON", "/usr/tce/bin/python3"))
+    p.add_argument("--force", "-y", action="store_true")
+    p.add_argument("--prepare-only", action="store_true")
+    p.add_argument("--no-submit", action="store_true")
+    p.add_argument("--no-visit", action="store_true")
+    p.add_argument("--post-walltime", default="00:05:00")
+    p.add_argument("--post-partition", default="pdebug")
+    p.add_argument("--walltime", default="")
+    return p.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    here = Path(__file__).resolve().parent
+    pfw = find_pfw(here)
+    suite = infer_suite(pfw, here)
+    root = pfw / suite
+    rel = here.relative_to(root).as_posix()
+    inputs = sorted(p for p in here.glob("pfw_input*.py") if not any(tok in p.name for tok in ("XXXX", "YYYY", "ZZZZ")))
+    if not inputs:
+        raise SystemExit("No pfw_input*.py files in this directory")
+
+    case_records = []
+    for p in inputs:
+        case_id = (slug(rel) + "__" if rel != "." else "") + slug(p.stem)
+        aliases = {p.name, p.stem, slug(p.stem), case_id, rel, slug(rel)}
+        case_records.append((p, case_id, aliases))
+
+    if args.case:
+        selected = []
+        for q in args.case:
+            ql = q.lower()
+            matches = []
+            for p, case_id, aliases in case_records:
+                alias_text = "\n".join(str(a) for a in aliases).lower()
+                if ql in alias_text:
+                    matches.append((p, case_id, aliases))
+            if not matches:
+                valid = ", ".join(f"{p.name} [{case_id}]" for p, case_id, _ in case_records)
+                raise SystemExit(f"Unknown case {q!r}. Valid inputs: {valid}")
+            selected.extend(matches)
+        seen = set(); case_records = []
+        for rec in selected:
+            if rec[1] not in seen:
+                seen.add(rec[1]); case_records.append(rec)
+
+    rc = 0
+    for path, case_id, _aliases in case_records:
+        iv, fv, view = infer_vars(path)
+        cmd = [
+            str(pfw / "mpm_vv_case_runner.py"),
+            "--suite", suite,
+            "--case-id", case_id,
+            "--input", path.name,
+            "--source-dir", str(here),
+            "--output-prefix", case_id,
+            "--initial-variable", iv,
+            "--final-variable", fv,
+            "--view", view,
+            "--mesh", "CellRegion1",
+            "--python", args.python_cmd,
+            "--post-walltime", args.post_walltime,
+            "--post-partition", args.post_partition,
+        ]
+        if args.force:
+            cmd.append("--force")
+        if args.prepare_only:
+            cmd.append("--prepare-only")
+        if args.no_submit:
+            cmd.append("--no-submit")
+        if args.no_visit:
+            cmd.append("--no-visit")
+        if args.walltime:
+            cmd += ["--walltime", args.walltime]
+        print("+ " + " ".join(cmd), flush=True)
+        proc = subprocess.run(cmd, cwd=here)
+        if proc.returncode:
+            rc = proc.returncode
+    return rc
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

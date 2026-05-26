@@ -20,7 +20,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
-#include "common/format/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
 #include "events/mpmEvents/MPMEventManager.hpp"
 #include "LvArray/src/tensorOps.hpp"
@@ -31,6 +30,7 @@
 #include "MPMSolverFields.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -45,150 +45,6 @@ class SpatialPartition;
 class SolidMechanicsMPM : public PhysicsSolverBase
 {
 public:
-
-  /**
-   * @enum TimeIntegrationOption
-   *
-   * The options for time integration
-   */
-  enum class TimeIntegrationOption : integer
-  {
-    QuasiStatic,      //!< QuasiStatic
-    ImplicitDynamic,  //!< ImplicitDynamic
-    ExplicitDynamic   //!< ExplicitDynamic
-  };
-
-  /**
-   * @enum UpdateMethodOption
-   *
-   * The options for time integration
-   */
-  enum class UpdateMethodOption : integer
-  {
-    FLIP,      //!< FLIP
-    PIC,       //!< PIC
-    XPIC,      //!< XPIC
-    FMPM       //!< FMPM
-  };
-
-  /**
-   * @enum BoundaryConditionOption
-   *
-   * The options for essential boundary conditions
-   */
-  enum struct BoundaryConditionOption : integer
-  {
-    Outflow,    //!<Outflow
-    Symmetry,   //!<Symmetry
-    Moving,     //!<Moving
-    Contact     //!<Contact
-  };
-
-  /**
-   * @enum SurfaceFlag
-   *
-   * The flags associated with different surface types
-   */
-  enum struct SurfaceFlag : integer
-  {
-    Interior,
-    FullyDamaged,
-    Surface,
-    Cohesive,
-    DamagedCohesive
-  };
-
-  /**
-   * @enum InterpolationOption
-   *
-   * The options for interpolating tables
-   */
-  enum struct InterpolationOption : integer
-  {
-    Linear,
-    Cosine,
-    Smoothstep
-  };
-
-  /**
-   * @enum ContactNormalTypeOption
-   *
-   * The options for contact gap correction
-   */
-  enum struct ContactNormalTypeOption : integer
-  {
-    Difference,
-    MassWeighted,
-    LargerMass,
-    Mixed,
-    Aligned,
-    LogisticRegression
-  };
-
-  /**
-   * @enum ContactGapCorrectionOption
-   *
-   * The options for contact gap correction
-   */
-  enum struct ContactGapCorrectionOption : integer
-  {
-    Simple,
-    Implicit,
-    Softened
-  };
-
-  /**
-   * @enum AreaIntegrationOption
-   *
-   * The options for nodal area integration
-   */
-  enum struct AreaIntegrationOption : integer
-  {
-    BruteForce,
-    Mesh
-  };
-
-  /**
-   * @enum OverlapCorrectionOption
-   *
-   * The options for overlap correction
-   */
-  enum struct OverlapCorrectionOption : integer
-  {
-    Off,
-    NormalForce,
-    SPH,
-    Volume
-  };
-
-  /**
-   * @enum CohesiveLawOption
-   *
-   * The options for cohesive laws
-   */
-  enum struct CohesiveLawOption : integer
-  {
-    Uncoupled,
-    NeedlemanXu,
-    Polymer
-  };
-
-  enum struct GPUSchemeOption : integer
-  {
-    Atomics,
-    NoAtomics,
-    RandomMix,
-    MinimalAtomics,
-    Reduction,
-    Colors
-  };
-
-  enum struct NormalsAndPositionsMethodOption : integer
-  {
-    LogisticRegression,
-    DFGAndVolumeIntegration
-  };
-
   /**
    * Constructor
    * @param name The name of the solver instance
@@ -309,6 +165,8 @@ public:
     static constexpr char const * bufferNodesString() { return "bufferNodes"; }
     static constexpr char const * cflFactorString() { return "cflFactor"; }
     static constexpr char const * gridAccelerationString() { return "gridAcceleration"; }
+    // Per-step active grid-field mask, computed once from post-P2G mass and synchronized.
+    static constexpr char const * gridActiveString() { return "gridActive"; }
     static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
     static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
     static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
@@ -367,6 +225,8 @@ public:
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
+  void checkEventCompletion( const real64 time_n );
+
   void performMaterialSwap( ParticleManager & particleManager,
                             string sourceRegionName,
                             string destinationRegionName );
@@ -380,6 +240,17 @@ public:
                        NodeManager & nodeManager,
                        MeshLevel & mesh,
                        MPI_Op op );
+
+  /**
+   * @brief Computes a per-step active grid-field mask from synchronized grid mass.
+   *
+   * This avoids repeated mass-threshold decisions after P2G. The mask is
+   * synchronized with MPI_MAX so all partitions make the same active/inactive
+   * decision for shared grid nodes during the rest of the step.
+   */
+  void computeActiveGridFieldsForExplicitStep( DomainPartition & domain,
+                                               NodeManager & nodeManager,
+                                               MeshLevel & mesh );
 
   void singleFaceVectorFieldSymmetryBC( const int face,
                                         arrayView3d< real64 > const & vectorMultiField,
@@ -615,8 +486,8 @@ public:
    */
   static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computePairwiseNodalContactImpulse( ContactGapCorrectionOption const & contactGapCorrection,
-                                           OverlapCorrectionOption const & overlapCorrection,
+  void computePairwiseNodalContactImpulse( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                           mpm::OverlapCorrectionOption const & overlapCorrection,
                                            real64 const overlapThreshold1,
                                            real64 const overlapThreshold2,
                                            real64 const maxParticleVelocitySquared,
@@ -652,8 +523,8 @@ public:
 
   static GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
-                                         OverlapCorrectionOption const & overlapCorrection,
+  void computePairwiseNodalContactForce( mpm::ContactGapCorrectionOption const & contactGapCorrection,
+                                         mpm::OverlapCorrectionOption const & overlapCorrection,
                                          real64 const overlapThreshold1,
                                          real64 const overlapThreshold2,
                                          real64 const maxParticleVelocitySquared,
@@ -965,7 +836,7 @@ public:
                          array2d< real64 > table,
                          arrayView1d< real64 > output,
                          arrayView1d< real64 > outputRate,
-                         SolidMechanicsMPM::InterpolationOption interpolationType );
+                         mpm::InterpolationOption interpolationType );
 
   void interpolateValueInRange( real64 const & x,
                                 real64 const & xmin,
@@ -973,7 +844,7 @@ public:
                                 real64 const & ymin,
                                 real64 const & ymax,
                                 real64 & output,
-                                SolidMechanicsMPM::InterpolationOption interpolationType );
+                                mpm::InterpolationOption interpolationType );
 
   void interpolateFTable( real64 dt, real64 time_n );
 
@@ -1247,7 +1118,7 @@ protected:
   virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
 
   // Member fields are ordered alphabetically by member name to match the constructor initializer list.
-  AreaIntegrationOption m_areaIntegrationMethod;
+  mpm::AreaIntegrationOption m_areaIntegrationMethod;
   real64 m_artificialViscosityQ0;
   real64 m_artificialViscosityQ1;
   array2d< real64 > m_bcTable;
@@ -1271,12 +1142,14 @@ protected:
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
   array1d< real64 > m_confiningStress;
-  ContactGapCorrectionOption m_contactGapCorrection;
+  mpm::ContactGapCorrectionOption m_contactGapCorrection;
   real64 m_contactNormalExponent;
-  ContactNormalTypeOption m_contactNormalType;
+  mpm::ContactNormalTypeOption m_contactNormalType;
   int m_cpdiDomainScaling;
   real64 m_crackTipDetectionThreshold;
   int m_damageFieldPartitioning;
+  real64 m_damageHessianSurfaceThreshold;
+  int m_computeCZInterfacesFromDamage;
   int m_directionalOverlapCorrection;
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
@@ -1301,10 +1174,10 @@ protected:
   array2d< real64 > m_frictionCoefficientTable;
   int m_FSubcycles;
   array2d< real64 > m_fTable;
-  InterpolationOption m_fTableInterpType;
+  mpm::InterpolationOption m_fTableInterpType;
   int m_generalizedVortexMMS;
   array1d< real64 > m_globalFaceReactions;
-  GPUSchemeOption m_gpuScheme;
+  mpm::GPUSchemeOption m_gpuScheme;
   int m_hasContact;
   array1d< real64 > m_hEl;                // Grid spacing in x-y-z
   array3d< localIndex > m_ijkMap;        // Map from indices in each spatial dimension to local node ID
@@ -1331,7 +1204,7 @@ protected:
   real64 m_nextReactionWriteTime;
   real64 m_nextXProfileWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
-  NormalsAndPositionsMethodOption m_normalAndPositionMethod;
+  mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
   int m_numContactFlags;
   int m_numContactGroups;
@@ -1339,7 +1212,7 @@ protected:
   stdVector< array1d< localIndex > > m_numEffectiveMappedNodes;
   int m_numSurfaceIntegrationPoints;
   int m_numVelocityFields;
-  OverlapCorrectionOption m_overlapCorrection;
+  mpm::OverlapCorrectionOption m_overlapCorrection;
   real64 m_overlapThreshold1;
   real64 m_overlapThreshold2;
   int m_overwriteExistingNormalsAndPositions;
@@ -1382,7 +1255,7 @@ protected:
   real64 m_stressControlKp;
   array1d< real64 > m_stressControlLastError;
   array2d< real64 > m_stressTable;
-  InterpolationOption m_stressTableInterpType;
+  mpm::InterpolationOption m_stressTableInterpType;
   int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
   int m_surfaceDetection;
   int m_surfaceHealing;
@@ -1390,12 +1263,12 @@ protected:
   real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
   real64 m_surfaceTensionCoefficient;
   array2d< real64 > m_temperatureTable;
-  InterpolationOption m_temperatureTableInterpType;
+  mpm::InterpolationOption m_temperatureTableInterpType;
   real64 m_thinFeatureDFGThreshold;
-  TimeIntegrationOption m_timeIntegrationOption;
+  mpm::TimeIntegrationOption m_timeIntegrationOption;
   real64 m_totalBinderVolume;
   int m_treatFullyDamagedAsSingleField;
-  UpdateMethodOption m_updateMethod;
+  mpm::UpdateMethodOption m_updateMethod;
   int m_updateOrder;
   int m_useAPIC;
   int m_useArtificialViscosity;
@@ -1447,68 +1320,6 @@ private:
 
   void setParticlesConstitutiveNames( ParticleSubRegionBase & subRegion ) const;
 };
-
-ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
-              "QuasiStatic",
-              "ImplicitDynamic",
-              "ExplicitDynamic" );
-
-ENUM_STRINGS( SolidMechanicsMPM::UpdateMethodOption,
-              "FLIP",
-              "PIC",
-              "XPIC",
-              "FMPM" );
-
-ENUM_STRINGS( SolidMechanicsMPM::BoundaryConditionOption,
-              "Outflow",
-              "Symmetry",
-              "Moving",
-              "Contact" );
-
-ENUM_STRINGS( SolidMechanicsMPM::InterpolationOption,
-              "Linear",
-              "Cosine",
-              "Smoothstep" );
-
-ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
-              "Difference",
-              "MassWeighted",
-              "LargerMass",
-              "Mixed",
-              "Aligned",
-              "LogisticRegression" );
-
-ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
-              "Simple",
-              "Implicit",
-              "Softened" );
-
-ENUM_STRINGS( SolidMechanicsMPM::AreaIntegrationOption,
-              "BruteForce",
-              "Mesh" );
-
-ENUM_STRINGS( SolidMechanicsMPM::OverlapCorrectionOption,
-              "Off",
-              "NormalForce",
-              "SPH",
-              "Volume" );
-
-ENUM_STRINGS( SolidMechanicsMPM::CohesiveLawOption,
-              "Uncoupled",
-              "NeedlemanXu",
-              "Polymer" );
-
-ENUM_STRINGS( SolidMechanicsMPM::GPUSchemeOption,
-              "Atomics",
-              "NoAtomics",
-              "RandomMix",
-              "MinimalAtomics",
-              "Reduction",
-              "Colors" );
-
-ENUM_STRINGS( SolidMechanicsMPM::NormalsAndPositionsMethodOption,
-              "LogisticRegression",
-              "DFGAndVolumeIntegration" );
 
 } /* namespace geos */
 

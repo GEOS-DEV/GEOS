@@ -30,7 +30,7 @@ CohesiveZoneMPMEvent::CohesiveZoneMPMEvent( const string & name,
   MPMEventBase( name, parent ),
   m_czVolumeNormalization( 1 ),
   m_computeNormalsAndPositions( 0 ),
-  m_normalsAndPositionsMethod( SolidMechanicsMPM::NormalsAndPositionsMethodOption::LogisticRegression )
+  m_normalsAndPositionsMethod( mpm::NormalsAndPositionsMethodOption::LogisticRegression )
 {
   registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
     setInputFlag( InputFlags::REQUIRED ).

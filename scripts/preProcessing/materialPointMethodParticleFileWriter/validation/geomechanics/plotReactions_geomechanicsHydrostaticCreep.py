@@ -1,6 +1,5 @@
 import numpy as np   
 import sys
-sys.path.insert(1,'/g/g19/homel1/pfwx/particleFileWriter')
 import pfw_geometryObjects as geom              
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm

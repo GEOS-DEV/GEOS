@@ -21,7 +21,7 @@
 
 #include "MPMEventBase.hpp"
 
-#include "physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -75,7 +75,7 @@ public:
 
   int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
   int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
-  SolidMechanicsMPM::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
+  mpm::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
 
 private:
 
@@ -88,7 +88,7 @@ protected:
 
   int m_czVolumeNormalization;
   int m_computeNormalsAndPositions;
-  SolidMechanicsMPM::NormalsAndPositionsMethodOption m_normalsAndPositionsMethod;
+  mpm::NormalsAndPositionsMethodOption m_normalsAndPositionsMethod;
 };
 
 } /* namespace geos */

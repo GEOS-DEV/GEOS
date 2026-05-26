@@ -1,0 +1,174 @@
+{
+  "cases": {
+    "polymer__polymerCompression": {
+      "jobs": {
+        "case": "polymer__polymerCompression",
+        "geos": "6046423",
+        "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerCompression",
+        "post": "6046424",
+        "returncode": 0,
+        "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerCompression/polymer__polymerCompression_runProblem.log",
+        "status": "submitted"
+      },
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "29",
+          "Elapsed": "00:00:29",
+          "ElapsedRaw": "29",
+          "ExitCode": "0:0",
+          "JobID": "6046423",
+          "JobIDRaw": "6046423",
+          "JobName": "260517221443_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "16",
+          "Elapsed": "00:00:16",
+          "ElapsedRaw": "16",
+          "ExitCode": "0:0",
+          "JobID": "6046424",
+          "JobIDRaw": "6046424",
+          "JobName": "post_polymer__polymerCompress",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
+    "polymer__polymerTension": {
+      "jobs": {
+        "case": "polymer__polymerTension",
+        "geos": "6046425",
+        "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerTension",
+        "post": "6046426",
+        "returncode": 0,
+        "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerTension/polymer__polymerTension_runProblem.log",
+        "status": "submitted"
+      },
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "34",
+          "Elapsed": "00:00:34",
+          "ElapsedRaw": "34",
+          "ExitCode": "0:0",
+          "JobID": "6046425",
+          "JobIDRaw": "6046425",
+          "JobName": "260517221445_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "16",
+          "Elapsed": "00:00:16",
+          "ElapsedRaw": "16",
+          "ExitCode": "0:0",
+          "JobID": "6046426",
+          "JobIDRaw": "6046426",
+          "JobName": "post_polymer__polymerTension",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    }
+  },
+  "generated_at": "2026-05-17T22:18:17",
+  "jobs": [
+    {
+      "case": "polymer__polymerCompression",
+      "geos": "6046423",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerCompression",
+      "post": "6046424",
+      "returncode": 0,
+      "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerCompression/polymer__polymerCompression_runProblem.log",
+      "status": "submitted"
+    },
+    {
+      "case": "polymer__polymerTension",
+      "geos": "6046425",
+      "output_dir": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerTension",
+      "post": "6046426",
+      "returncode": 0,
+      "run_log": "/usr/WS1/homel1/GEOS/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/polymer/output/polymer__polymerTension/polymer__polymerTension_runProblem.log",
+      "status": "submitted"
+    }
+  ],
+  "note": "",
+  "sacct_by_job_id": {
+    "6046423": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "29",
+      "Elapsed": "00:00:29",
+      "ElapsedRaw": "29",
+      "ExitCode": "0:0",
+      "JobID": "6046423",
+      "JobIDRaw": "6046423",
+      "JobName": "260517221443_runGEOS.sh",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046424": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "16",
+      "Elapsed": "00:00:16",
+      "ElapsedRaw": "16",
+      "ExitCode": "0:0",
+      "JobID": "6046424",
+      "JobIDRaw": "6046424",
+      "JobName": "post_polymer__polymerCompress",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046425": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "34",
+      "Elapsed": "00:00:34",
+      "ElapsedRaw": "34",
+      "ExitCode": "0:0",
+      "JobID": "6046425",
+      "JobIDRaw": "6046425",
+      "JobName": "260517221445_runGEOS.sh",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6046426": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "16",
+      "Elapsed": "00:00:16",
+      "ElapsedRaw": "16",
+      "ExitCode": "0:0",
+      "JobID": "6046426",
+      "JobIDRaw": "6046426",
+      "JobName": "post_polymer__polymerTension",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    }
+  }
+}

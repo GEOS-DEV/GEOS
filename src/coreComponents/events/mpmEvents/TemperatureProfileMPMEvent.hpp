@@ -20,6 +20,7 @@
 #define GEOSX_TEMPERATUREPROFILE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -49,12 +50,27 @@ public:
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
-  {} TemperatureProfileMPMEventViewKeys;
+  {
+    static constexpr char const * temperatureTableString() { return "temperatureTable"; }
+    static constexpr char const * interpolationTypeString() { return "interpolationType"; }
+  } TemperatureProfileMPMEventViewKeys;
   /// @endcond
+
+  arrayView2d< real64 const > getTemperatureTable() const
+  {
+    return m_temperatureTable;
+  }
+
+  mpm::InterpolationOption getInterpolationType() const
+  {
+    return m_interpolationType;
+  }
 
 protected:
   virtual void postInputInitialization() override final;
 
+  array2d< real64 > m_temperatureTable;
+  mpm::InterpolationOption m_interpolationType;
 };
 
 } /* namespace geos */

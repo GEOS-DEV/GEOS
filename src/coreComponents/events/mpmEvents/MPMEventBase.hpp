@@ -82,6 +82,10 @@ public:
   {
     static constexpr char const * startTimeString() { return "startTime"; }
     static constexpr char const * endTimeString() { return "endTime"; }
+    static constexpr char const * delayString() { return "delay"; }
+    static constexpr char const * durationString() { return "duration"; }
+    static constexpr char const * dependenciesString() { return "dependencies"; }
+    static constexpr char const * hasStartedString() { return "hasStarted"; }
     static constexpr char const * isCompleteString() { return "isComplete"; }
 
     dataRepository::ViewKey startTime = { startTimeString() };
@@ -96,17 +100,33 @@ public:
   /// @copydoc dataRepository::Group::getCatalog()
   static CatalogInterface::CatalogType & getCatalog();
 
+ void setStartTime( real64 startTime ) { m_startTime = startTime; }
+  void setEndTime( real64 endTime ) { m_endTime = endTime; }
+ 
   real64 getStartTime() const { return m_startTime; }
   real64 getEndTime() const { return m_endTime; }
   real64 getTimeInterval() const { return m_endTime - m_startTime; }
+  real64 getDelay() const { return m_delay; }
+  real64 getDuration() const { return m_duration; }
 
+  int hasStarted() const { return m_hasStarted; }
+  void setHasStarted( int hasStarted ) { m_hasStarted = hasStarted; }
   int isComplete() const { return m_isComplete; }
   void setIsComplete( int isComplete ) { m_isComplete = isComplete; }
+
+  bool hasDependencies() const { return m_dependencies.size() > 0; }
+  string_array getDependencies() { return m_dependencies; }
 
 protected:
   // Event variables
   real64 m_startTime;
   real64 m_endTime;
+
+  real64 m_delay;
+  real64 m_duration;
+  string_array m_dependencies;
+
+  int m_hasStarted;
   int m_isComplete;
 };
 

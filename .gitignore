@@ -21,8 +21,52 @@ uberenv_libs
 spack-*.txt
 /src/docs/sphinx/datastructure
 *~
-__pycache__
+__pycache__/
+*.py[cod]
 
 # ignore all folders except the template one
 /src/externalComponents/*
 !/src/externalComponents/newComponentTemplate/
+# GEOS-MPM generated example/V&V case outputs
+/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/**/output/**
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/**/output/
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/**/output/.gitignore
+
+/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/**/output/**
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/**/output/
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/verification/**/output/.gitignore
+
+/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/**/output/**
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/**/output/
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/validation/**/output/.gitignore
+
+
+# GEOS-MPM generated suite-report LaTeX/build products.
+# Keep *_suite_report.tex and schematics/** tracked.
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*.aux
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*.log
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*.out
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*.toc
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/pdflatex.log
+
+# Generated rendered report PDFs. Comment these out if you want PDFs committed.
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_report.pdf
+
+# GEOS-MPM generated suite-run metadata
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_jobs.json
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_timing.csv
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_timing.json
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_status.json
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_dispatch_records.json
+/scripts/preProcessing/materialPointMethodParticleFileWriter/**/*_suite_report/*_suite_selected_cases.txt
+
+
+# GEOS-MPM setup logs
+/setupMPM-logs/
+
+# GEOS-MPM local user setup files
+/mpm
+/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_*.py
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/userDefs_username.py
+/scripts/preProcessing/materialPointMethodParticleFileWriter/runClean_*.sh
+!/scripts/preProcessing/materialPointMethodParticleFileWriter/runClean_username.sh

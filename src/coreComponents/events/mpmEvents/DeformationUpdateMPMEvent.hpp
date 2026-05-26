@@ -20,6 +20,7 @@
 #define GEOSX_DEFORMATIONUPDATE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -50,23 +51,48 @@ public:
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
+    static constexpr char const * relativeDeformationString() { return "relativeDeformation"; }
+
     static constexpr char const * prescribedFTableString() { return "prescribedFTable"; }
-    static constexpr char const * prescribedBoundaryFTableString() { return "prescribedFTable"; }
+    static constexpr char const * prescribedBoundaryFTableString() { return "prescribedBoundaryFTable"; }
     static constexpr char const * stressControlString() { return "stressControl"; }
+
+    static constexpr char const * fTableInterpTypeString() { return "fTableInterpType"; }
+    static constexpr char const * stressTableInterpTypeString() { return "stressTableInterpType"; }
+    
+    static constexpr char const * fTableString() { return "fTable"; }
+    static constexpr char const * stressTableString() { return "stressTable"; }
+
   } DeformationUpdateMPMEventViewKeys;
   /// @endcond
+
+  int getRelativeDeformation() const { return m_relativeDeformation; }
 
   int getPrescribedBoundaryFTable() const { return m_prescribedBoundaryFTable; }
   int getPrescribedFTable() const { return m_prescribedFTable; }
   array1d< int > getStressControl() const { return m_stressControl; }
 
+  mpm::InterpolationOption getFTableInterpolation() const { return m_fTableInterpType; }
+  mpm::InterpolationOption getStressTableInterpolation() const { return m_stressTableInterpType; }
+
+  arrayView2d< real64 const > getFTable() const { return m_fTable; }
+  arrayView2d< real64 const > getStressTable() const { return m_stressTable; }
+
 protected:
   virtual void postInputInitialization() override final;
 
   // Event variables
+  int m_relativeDeformation;
+
   int m_prescribedFTable;
   int m_prescribedBoundaryFTable;
   array1d< int > m_stressControl;
+
+  mpm::InterpolationOption  m_fTableInterpType;
+  mpm::InterpolationOption  m_stressTableInterpType;
+
+  array2d< real64 > m_fTable;
+  array2d< real64 > m_stressTable;
 };
 
 } /* namespace geos */

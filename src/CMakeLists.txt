@@ -13,10 +13,15 @@ cmake_policy(SET CMP0056 NEW) # use CMAKE_EXE_LINKER_FLAGS in try_compile() in a
 project( geosx LANGUAGES C CXX )
 include(GNUInstallDirs)
 set( BLT_CXX_STD "c++17" CACHE STRING "Version of C++ standard" )
-if(CMAKE_BUILD_TYPE EQUAL "Debug")
-  set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE PATH "")
-else()
-  set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE PATH "")
+# Host-configs may define ENABLE_WARNINGS_AS_ERRORS before project setup.
+# Respect that value when it is provided. Otherwise keep the historical default:
+# warnings-as-errors are disabled for Debug and enabled for non-Debug builds.
+if( NOT DEFINED ENABLE_WARNINGS_AS_ERRORS )
+  if( "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+    set( ENABLE_WARNINGS_AS_ERRORS "OFF" CACHE BOOL "Treat compiler warnings as errors" )
+  else()
+    set( ENABLE_WARNINGS_AS_ERRORS "ON" CACHE BOOL "Treat compiler warnings as errors" )
+  endif()
 endif()
 set( CMAKE_ENABLE_EXPORTS ON )
 

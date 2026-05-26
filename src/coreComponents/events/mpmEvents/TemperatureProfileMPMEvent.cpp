@@ -25,8 +25,21 @@ using namespace dataRepository;
 
 TemperatureProfileMPMEvent::TemperatureProfileMPMEvent( const string & name,
                                                         Group * const parent ):
-  MPMEventBase( name, parent )
-{}
+  MPMEventBase( name, parent ),
+  m_temperatureTable(),
+  m_interpolationType( mpm::InterpolationOption::Linear )
+{
+  registerWrapper( viewKeyStruct::temperatureTableString(), &m_temperatureTable ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Temperature table");
+
+  registerWrapper( viewKeyStruct::interpolationTypeString(), &m_interpolationType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_interpolationType ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Interpolation type of temperature table" );
+}
 
 TemperatureProfileMPMEvent::~TemperatureProfileMPMEvent()
 {}
@@ -34,10 +47,22 @@ TemperatureProfileMPMEvent::~TemperatureProfileMPMEvent()
 void TemperatureProfileMPMEvent::postInputInitialization()
 {
   MPMEventBase::postInputInitialization();
+  
+  int numRows = m_temperatureTable.size( 0 );
+  GEOS_ERROR_IF( numRows == 0, "Temperature table must have at least one entry" );
+  for( int i = 0; i < numRows; ++i )
+  {
+    GEOS_ERROR_IF( m_temperatureTable[i].size() != 2, "F table row " << i+1 << " must have 2 elements." );
 
-  GEOS_LOG_RANK_0( "TemperatureProfileEvent: " <<
-                   "Start time=" << m_startTime << ", " <<
-                   "Time interval=" << getTimeInterval() );
+    if( i == 0 )
+    {
+      GEOS_ERROR_IF( m_temperatureTable[0][0] > 0.0, "Temperature table times must be positive." );
+    }
+    else
+    {
+      GEOS_ERROR_IF( ( m_temperatureTable[i][0] - m_temperatureTable[i-1][0] ) < 0.0, "Temperature table time entries must be monotonically increasing." );
+    }
+  }
 }
 
 REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureProfileMPMEvent, string const &, Group * const )
