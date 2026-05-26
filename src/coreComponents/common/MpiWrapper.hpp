@@ -196,7 +196,7 @@ public:
   static int init( int * argc, char * * * argv );
 
   /**
-   * @brief Free MPI managed resources, then call MPI_Finalize().
+   * @brief Finalize the MPI environment and free MPI-managed resources.
    * Please note that once called, MPI functions, communicators and resources can no longer be used.
    */
   static void finalize();
@@ -1307,7 +1307,7 @@ int MpiWrapper::scatterv( TS const * const sendbuf,
 #else
   static_assert( std::is_same< TS, TR >::value,
                  "MpiWrapper::scatterv() for serial run requires send and receive buffers are of the same type" );
-  std::size_t const sendBufferSize = sendcounts * sizeof(TS);
+  std::size_t const sendBufferSize = sendcounts[0] * sizeof(TS);
   std::size_t const recvBufferSize = recvcount * sizeof(TR);
   GEOS_ERROR_IF_NE_MSG( sendBufferSize, recvBufferSize, "size of send buffer and receive buffer are not equal" );
   memcpy( recvbuf, sendbuf, sendBufferSize );

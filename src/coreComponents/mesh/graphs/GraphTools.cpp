@@ -29,16 +29,16 @@ namespace geos
 namespace graph
 {
 
-size_t getGraphNodeDegree( idx_t node, const stdVector< idx_t > & xadj )
+size_t getGraphNodeDegree( size_t node, const stdVector< size_t > & xadj )
 {
   return xadj[node + 1] - xadj[node];
 }
 
 
-std::unordered_set< idx_t > getGraphNodeNeighbors( idx_t node, const stdVector< idx_t > & xadj, const stdVector< idx_t > & adjncy )
+std::unordered_set< size_t > getGraphNodeNeighbors( size_t node, const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy )
 {
-  std::unordered_set< idx_t > neighbors;
-  for( idx_t i = xadj[node]; i < xadj[node + 1]; ++i )
+  std::unordered_set< size_t > neighbors;
+  for( size_t i = xadj[node]; i < xadj[node + 1]; ++i )
   {
     neighbors.insert( adjncy[i] );
   }
@@ -46,17 +46,17 @@ std::unordered_set< idx_t > getGraphNodeNeighbors( idx_t node, const stdVector< 
 }
 
 
-bool isGraphValid( const stdVector< idx_t > & xadj,
-                   const stdVector< idx_t > & adjncy )
+bool isGraphValid( const stdVector< size_t > & xadj,
+                   const stdVector< size_t > & adjncy )
 {
-  idx_t num_nodes = xadj.size() - 1;
+  size_t num_nodes = xadj.size() - 1;
 
-  for( idx_t i = 0; i < num_nodes; ++i )
+  for( size_t i = 0; i < num_nodes; ++i )
   {
-    std::unordered_set< idx_t > neighbors;
-    for( idx_t j = xadj[i]; j < xadj[i + 1]; ++j )
+    std::unordered_set< size_t > neighbors;
+    for( size_t j = xadj[i]; j < xadj[i + 1]; ++j )
     {
-      idx_t neighbor = adjncy[j];
+      size_t neighbor = adjncy[j];
 
       // Check for out-of-bounds indices
       if( neighbor >= num_nodes )
@@ -75,7 +75,7 @@ bool isGraphValid( const stdVector< idx_t > & xadj,
 
       // Check for bidirectional connection
       bool bidirectional = false;
-      for( idx_t k = xadj[neighbor]; k < xadj[neighbor + 1]; ++k )
+      for( size_t k = xadj[neighbor]; k < xadj[neighbor + 1]; ++k )
       {
         if( adjncy[k] == i )
         {
@@ -95,7 +95,7 @@ bool isGraphValid( const stdVector< idx_t > & xadj,
 }
 
 
-std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphRandom( size_t numVertices, size_t numEdges )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphRandom( size_t numVertices, size_t numEdges )
 {
   stdVector< std::pair< size_t, size_t > > edges;
   srand( static_cast< unsigned int >(time( 0 )));
@@ -116,8 +116,8 @@ std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphRandom( size_t
   std::sort( edges.begin(), edges.end());
 
   // Initialize xadj and adjncy
-  stdVector< idx_t > xadj( numVertices + 1, 0 );
-  stdVector< idx_t > adjncy;
+  stdVector< size_t > xadj( numVertices + 1, 0 );
+  stdVector< size_t > adjncy;
   adjncy.reserve( edges.size());
 
   // Fill xadj and adjncy
@@ -142,25 +142,25 @@ std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphRandom( size_t
 }
 
 
-std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphCartPartitionning3D( idx_t nx, idx_t ny, idx_t nz, const stdVector< stdArray< int, 3 > > & neighbor_offsets )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D( size_t nx, size_t ny, size_t nz, const stdVector< stdArray< int, 3 > > & neighbor_offsets )
 {
-  idx_t num_nodes = nx * ny * nz;
-  stdVector< idx_t > xadj( num_nodes + 1, 0 );
-  stdVector< idx_t > adjncy;
+  size_t num_nodes = nx * ny * nz;
+  stdVector< size_t > xadj( num_nodes + 1, 0 );
+  stdVector< size_t > adjncy;
 
-  auto getNodeIndex = [nx, ny] ( const idx_t x, const idx_t y, const idx_t z )
+  auto getNodeIndex = [nx, ny] ( const size_t x, const size_t y, const size_t z )
   {
     return x + nx * (y + ny * z);
   };
 
-  idx_t node_counter = 0;
-  for( idx_t z = 0; z < nz; ++z )
+  size_t node_counter = 0;
+  for( size_t z = 0; z < nz; ++z )
   {
-    for( idx_t y = 0; y < ny; ++y )
+    for( size_t y = 0; y < ny; ++y )
     {
-      for( idx_t x = 0; x < nx; ++x )
+      for( size_t x = 0; x < nx; ++x )
       {
-        stdVector< idx_t > neighbors;
+        stdVector< size_t > neighbors;
         for( const auto & offset : neighbor_offsets )
         {
 
@@ -186,15 +186,15 @@ std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphCartPartitionn
   return {xadj, adjncy};
 }
 
-std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphCartPartitionning3D6( idx_t nx, idx_t ny, idx_t nz )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz )
 {
   stdVector< stdArray< int, 3 > > neighbor_offsets = {
     {-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}
   };
-  return generateGraphCartPartitionning3D( nx, ny, nz, neighbor_offsets );
+  return generateGraphCartPartitioning3D( nx, ny, nz, neighbor_offsets );
 }
 
-std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphCartPartitionning3D26( idx_t nx, idx_t ny, idx_t nz )
+std::tuple< stdVector< size_t >, stdVector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz )
 {
   stdVector< stdArray< int, 3 > > neighbor_offsets;
   for( int dz = -1; dz <= 1; ++dz )
@@ -210,7 +210,7 @@ std::tuple< stdVector< idx_t >, stdVector< idx_t > > generateGraphCartPartitionn
       }
     }
   }
-  return generateGraphCartPartitionning3D( nx, ny, nz, neighbor_offsets );
+  return generateGraphCartPartitioning3D( nx, ny, nz, neighbor_offsets );
 }
 
 

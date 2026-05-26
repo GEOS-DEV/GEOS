@@ -20,6 +20,7 @@
 #include "ZoltanGraphColoring.hpp"
 #include "GraphToolsMPI.hpp"
 #include <algorithm>
+#include <limits>
 
 
 #define GEOS_ZOLTAN_CHECK( call ) \
@@ -58,23 +59,34 @@ ZoltanGraphColoring::~ZoltanGraphColoring()
 }
 
 
-int ZoltanGraphColoring::colorGraph( const stdVector< camp::idx_t > & localAdjncy )
+int ZoltanGraphColoring::colorGraph( const stdVector< size_t > & localAdjncy )
 {
-  stdVector< camp::idx_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  stdVector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
   stdVector< int > colors = colorGraph( localXadj, localAdjncy );
   return colors[0];
 }
 
 
-stdVector< int > ZoltanGraphColoring::colorGraph( const stdVector< camp::idx_t > & xadj,
-                                                  const stdVector< camp::idx_t > & adjncy )
+stdVector< int > ZoltanGraphColoring::colorGraph( const stdVector< size_t > & xadj,
+                                                  const stdVector< size_t > & adjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
 
+  // Convert size_t to int with overflow checking for Zoltan
+  auto safeConvert = []( size_t value ) -> int {
+    GEOS_ERROR_IF( value > static_cast< size_t >( std::numeric_limits< int >::max()),
+                   "Value " << value << " exceeds maximum int value for Zoltan interface" );
+    return static_cast< int >( value );
+  };
+
   ZoltanGraph graph;
-  graph.m_xadj.assign( xadj.begin(), xadj.end());
-  graph.m_adjncy.assign( adjncy.begin(), adjncy.end());
-  graph.m_numVertices = xadj.size() - 1;
+  graph.m_xadj.reserve( xadj.size());
+  std::transform( xadj.begin(), xadj.end(), std::back_inserter( graph.m_xadj ), safeConvert );
+
+  graph.m_adjncy.reserve( adjncy.size());
+  std::transform( adjncy.begin(), adjncy.end(), std::back_inserter( graph.m_adjncy ), safeConvert );
+
+  graph.m_numVertices = safeConvert( xadj.size() - 1 );
   graph.m_rank = rank;
 
   stdVector< int > vertexGID = createVertexGlobalID( xadj, m_comm );
@@ -204,7 +216,7 @@ size_t ZoltanGraphColoring::getNumberOfColors( const stdVector< int > & colors )
 }
 
 
-bool ZoltanGraphColoring::isColoringValid( const stdVector< camp::idx_t > & adjncy, const int color ) const
+bool ZoltanGraphColoring::isColoringValid( const stdVector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }

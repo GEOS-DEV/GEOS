@@ -6,14 +6,14 @@
         <DataArray type="Int64" IdType="1" Name="vtkOriginalPointIds" format="binary" RangeMin="0" RangeMax="171">
           AQAAAACAAABgBQAALgEAAA==eJwtxdciEAAAAEBCRogGTRKKlJZo01CZlRRFKJVRaSAhRWgRpUEqilLqJz24e7mAgEWBXuIgBzvESx3qMIc7wssc6ShHe7ljHOsVXulVXu04x3uN13qd13uDNzrBid7kJG92slOc6i3e6jSne5szvN07nOmd3uXd3uO9zvI+ZzvH+33AB33Ih33ER53rPB/zcZ/wSef7lE/7jAtc6CIXu8SlPutzPu8yX3C5L/qSK1zpy77iKlf7qmtc6zpf83XX+4Zv+pYb3OgmN/u27/iuW3zP9/3AD93qNrf7kTv82J3ucrefuMdP/cy97vNz93vAg37hl37l137jIQ/7rUc86nd+7zF/8Ed/8mePe8JfPOmv/ubvnvK0f/inZzzrX/7tOf/xX8/7n/97AZDZOXM=
         </DataArray>
-        <DataArray type="Int64" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAABgBQAAGgAAAA==eJxjZIAARgrpUTC0wGh8joJRQHsAAEIQAA4=
+        <DataArray type="UInt8" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAACsAAAAEgAAAA==eJxjZIQCBrIA+TrJAAAIQgAO
         </DataArray>
-        <DataArray type="Int64" Name="f2_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAABgBQAAIQAAAA==eJxjYEAFjGg0LoAuj66PED0KBjcYjb9RMAooBwBAKAAO
+        <DataArray type="UInt8" Name="f2_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAACsAAAAGgAAAA==eJxjYGBkZGBgYARSIMBABiBXH8kAAAgFAA4=
         </DataArray>
-        <DataArray type="Int64" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAABgBQAAIQAAAA==eJxjZEAFjAT4uACp+hgJ0KNgcIPR+BsFo4AwAAA/UAAO
+        <DataArray type="UInt8" Name="f3_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAACsAAAAGQAAAA==eJxjZGAEQiCAUIxAwEAGIFcfSQAAB+oADg==
         </DataArray>
       </PointData>
       <CellData Scalars="CellEntityIds">

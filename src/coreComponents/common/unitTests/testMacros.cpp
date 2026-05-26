@@ -75,9 +75,9 @@ TEST( testMacros, testRestArguments )
 
   {
     auto const generatedArray = stdArray< double, 16 >{ GEOS_DETAIL_REST_ARGS( 01.0, 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0,
-                                                                                 09.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 ) };
+                                                                               09.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 ) };
     auto const expectedArray = stdArray< double, 16 >{ 02.0, 03.0, 04.0, 05.0, 06.0, 07.0, 08.0, 09.0,
-                                                         10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
+                                                       10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
     EXPECT_EQ( generatedArray, expectedArray );
   }
 

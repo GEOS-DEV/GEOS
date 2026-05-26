@@ -14,7 +14,7 @@
  */
 
 /**
- * @file testColoring.cpp
+ * @file testGraphColoringMPI.cpp
  */
 
 #include "../graphs/GraphTools.hpp"
@@ -47,7 +47,7 @@ protected:
 };
 
 
-void runColoringTest( GraphColoringBase & graphColoring, const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, int expectedNumberOfColors )
+void runColoringTest( GraphColoringBase & graphColoring, const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy, int expectedNumberOfColors )
 {
   auto [localXadj, localAdjncy] = scatterGraphData( xadj, adjncy, MPI_COMM_GEOS );
   int color = graphColoring.colorGraph( localAdjncy );
@@ -59,87 +59,85 @@ void runColoringTest( GraphColoringBase & graphColoring, const stdVector< camp::
   }
 }
 
-// TODO This TEST is temporarily removed
-// The error is located in getGraphNodeDegree() with an array out of bound
-// TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
-// {
-// #ifdef GEOS_USE_TRILINOS
-//   ZoltanGraphColoring zoltanColoring;
-// #endif
-//   RLFGraphColoringMPI rlfColoringMPI;
+TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
+{
+#ifdef GEOS_USE_TRILINOS
+  ZoltanGraphColoring zoltanColoring;
+#endif
+  RLFGraphColoringMPI rlfColoringMPI;
 
-//   stdVector< camp::idx_t > xadj;
-//   stdVector< camp::idx_t > adjncy;
+  stdVector< size_t > xadj;
+  stdVector< size_t > adjncy;
 
-//   if( rank == 0 )
-//   {
-//     idx_t const nx = 4, ny = 2, nz = 1;
-//     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D6( nx, ny, nz );
-//   }
+  if( rank == 0 )
+  {
+    size_t const nx = 2, ny = 2, nz = 1;
+    std::tie( xadj, adjncy ) = generateGraphCartPartitioning3D6( nx, ny, nz );
+  }
 
-// #ifdef GEOS_USE_TRILINOS
-//   runColoringTest( zoltanColoring, xadj, adjncy, 2 );
-// #endif
-//   runColoringTest( rlfColoringMPI, xadj, adjncy, 2 );
-// }
+#ifdef GEOS_USE_TRILINOS
+  runColoringTest( zoltanColoring, xadj, adjncy, 2 );
+#endif
+  runColoringTest( rlfColoringMPI, xadj, adjncy, 2 );
+}
 
 
-// TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
-// {
-// #ifdef GEOS_USE_TRILINOS
-//   ZoltanGraphColoring zoltanColoring;
-// #endif
-//   RLFGraphColoringMPI rlfColoringMPI;
+TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
+{
+#ifdef GEOS_USE_TRILINOS
+  ZoltanGraphColoring zoltanColoring;
+#endif
+  RLFGraphColoringMPI rlfColoringMPI;
 
-//   stdVector< camp::idx_t > xadj;
-//   stdVector< camp::idx_t > adjncy;
+  stdVector< size_t > xadj;
+  stdVector< size_t > adjncy;
 
-//   if( rank == 0 )
-//   {
-//     idx_t const nx = 2, ny = 2, nz = 2;
-//     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D26( nx, ny, nz );
-//   }
+  if( rank == 0 )
+  {
+    size_t const nx = 2, ny = 2, nz = 1;
+    std::tie( xadj, adjncy ) = generateGraphCartPartitioning3D26( nx, ny, nz );
+  }
 
-// #ifdef GEOS_USE_TRILINOS
-//   runColoringTest( zoltanColoring, xadj, adjncy, 8 );
-// #endif
-//   runColoringTest( rlfColoringMPI, xadj, adjncy, 8 );
-// }
-
-
-// TEST_F( GraphColoringTest, RandomGraphs )
-// {
-// #ifdef GEOS_USE_TRILINOS
-//   ZoltanGraphColoring zoltanColoring;
-// #endif
-//   RLFGraphColoringMPI rlfColoringMPI;
-
-//   size_t const iterations = 10;
-//   for( size_t i = 0; i < iterations; ++i )
-//   {
-//     stdVector< camp::idx_t > xadj;
-//     stdVector< camp::idx_t > adjncy;
-
-//     if( rank == 0 )
-//     {
-//       size_t num_nodes = 8;
-//       size_t num_edges = rand() % (num_nodes * 3 + 1) + num_nodes;
-//       std::tie( xadj, adjncy ) = generateGraphRandom( num_nodes, num_edges );
-//     }
-
-// #ifdef GEOS_USE_TRILINOS
-//     runColoringTest( zoltanColoring, xadj, adjncy, 0 );
-// #endif
-//     runColoringTest( rlfColoringMPI, xadj, adjncy, 0 );
-//   }
-// }
+#ifdef GEOS_USE_TRILINOS
+  runColoringTest( zoltanColoring, xadj, adjncy, 4 );
+#endif
+  runColoringTest( rlfColoringMPI, xadj, adjncy, 4 );
+}
 
 
-// TEST_F( GraphColoringTest, CountPositiveDistinctColors )
-// {
-//   stdVector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
-//   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_GEOS ), 6 );
-// }
+TEST_F( GraphColoringTest, RandomGraphs )
+{
+#ifdef GEOS_USE_TRILINOS
+  ZoltanGraphColoring zoltanColoring;
+#endif
+  RLFGraphColoringMPI rlfColoringMPI;
+
+  size_t const iterations = 10;
+  for( size_t i = 0; i < iterations; ++i )
+  {
+    stdVector< size_t > xadj;
+    stdVector< size_t > adjncy;
+
+    if( rank == 0 )
+    {
+      size_t num_nodes = 4;
+      size_t num_edges = rand() % (num_nodes * 3 + 1) + num_nodes;
+      std::tie( xadj, adjncy ) = generateGraphRandom( num_nodes, num_edges );
+    }
+
+#ifdef GEOS_USE_TRILINOS
+    runColoringTest( zoltanColoring, xadj, adjncy, 0 );
+#endif
+    runColoringTest( rlfColoringMPI, xadj, adjncy, 0 );
+  }
+}
+
+
+TEST_F( GraphColoringTest, CountPositiveDistinctColors )
+{
+  stdVector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
+  EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_GEOS ), 6 );
+}
 
 
 int main( int argc, char * *argv )
@@ -163,7 +161,6 @@ int main( int argc, char * *argv )
   int result = RUN_ALL_TESTS();
 
   // Finalize MPI
-  MpiWrapper::commFree( MPI_COMM_GEOS );
   MpiWrapper::finalize();
 
   return result;

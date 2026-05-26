@@ -269,7 +269,8 @@ void ExternalErrorHandler::defaultErrorHandling( std::string_view errorMsg,
 
 bool ExternalErrorHandler::isNotAnErrorMsg( string_view errorMsg )
 {
-  return errorMsg.find( "INFO|" ) != string_view::npos; // VTK info messages
+  return errorMsg.find( "INFO|" ) != string_view::npos || // VTK info messages
+         errorMsg.find( "[HYPREDRV]" ) == 0; // hypredrive debug traces are informational
 }
 
 } /* namespace geos */

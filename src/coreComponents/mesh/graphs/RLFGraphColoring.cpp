@@ -34,21 +34,27 @@ RLFGraphColoring::~RLFGraphColoring()
 {}
 
 
-int RLFGraphColoring::colorGraph( const stdVector< camp::idx_t > & GEOS_UNUSED_PARAM( adjncy ))
+int RLFGraphColoring::colorGraph( const stdVector< size_t > & GEOS_UNUSED_PARAM( adjncy ))
 {
   return -1;
 }
 
 
-stdVector< int > RLFGraphColoring::colorGraph( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy )
+stdVector< int > RLFGraphColoring::colorGraph( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy )
 {
   return RecursiveLargestFirstColoring( xadj, adjncy );
 }
 
-stdVector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy )
+
+stdVector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy )
 {
+  if( xadj.empty())
+  {
+    return {};
+  }
+
   stdVector< int > color( xadj.size() - 1, -1 );
-  std::unordered_set< camp::idx_t > uncoloredNodes;
+  std::unordered_set< size_t > uncoloredNodes;
   for( size_t i = 0; i < (xadj.size() - 1); ++i )
   {
     uncoloredNodes.insert( i );
@@ -58,77 +64,105 @@ stdVector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const stdVecto
   while( !uncoloredNodes.empty())
   {
     // Find the uncolored node with the largest number of connections
-    idx_t largestDegreeNode = *std::max_element( uncoloredNodes.begin(), uncoloredNodes.end(),
-                                                 [xadj]( const idx_t a, const idx_t b ){ return getGraphNodeDegree( a, xadj ) < getGraphNodeDegree( b, xadj ); } );
-
-    // Save its neighbors
-    std::unordered_set< camp::idx_t > largestDegreeNodeNeighbors = getGraphNodeNeighbors( largestDegreeNode, xadj, adjncy );
-
-    // Initialize the node to be colored with the current color
-    int selectedNode = static_cast< int >(largestDegreeNode);
+    auto cmp = [&]( size_t a, size_t b ) {
+      const auto degreeA = getGraphNodeDegree( a, xadj );
+      const auto degreeB = getGraphNodeDegree( b, xadj );
+      if( degreeA != degreeB )
+      {
+        return degreeA < degreeB;
+      }
+      return a > b;
+    };
+    size_t startNode = *std::max_element( uncoloredNodes.begin(), uncoloredNodes.end(), cmp );
 
     // Declare the set of forbidden nodes (nodes adjacent to nodes_to_color)
-    std::unordered_set< camp::idx_t > forbiddenNodes;
+    std::unordered_set< size_t > forbiddenNodes;
 
-    while( selectedNode != -1 )
+    // Create the candidate set once per color.
+    // At this stage, candidates are all uncolored nodes... that set will shrink as we go
+    std::unordered_set< size_t > candidatesForThisColor = uncoloredNodes;
+
+    size_t selectedNode = startNode;
+
+    while( selectedNode != std::numeric_limits< size_t >::max())
     {
-      // Color the selected node
+      // Color the selected node and remove it from future consideration
       color[selectedNode] = currentColor;
-      std::unordered_set< camp::idx_t > selectedNodeNeighbors = getGraphNodeNeighbors( selectedNode, xadj, adjncy );
-      forbiddenNodes.insert( selectedNodeNeighbors.begin(), selectedNodeNeighbors.end());
       uncoloredNodes.erase( selectedNode );
+      candidatesForThisColor.erase( selectedNode );
 
-      // Find new nodes to color with the current color
-      std::unordered_set< camp::idx_t > candidateNodesToColor;
-      for( camp::idx_t node : uncoloredNodes )
+      // Update the set of forbidden nodes for the current color
+      // Any node adjacent to the selectedNode cannot be colored with currentColor
+      const auto selectedNodeNeighbors = getGraphNodeNeighbors( selectedNode, xadj, adjncy );
+      forbiddenNodes.insert( selectedNodeNeighbors.begin(), selectedNodeNeighbors.end());
+
+      for( const auto & neighbor : selectedNodeNeighbors )
       {
-        if( forbiddenNodes.find( node ) == forbiddenNodes.end())
-        {
-          candidateNodesToColor.insert( node );
-        }
+        candidatesForThisColor.erase( neighbor );
       }
 
-      // Among the candidates, select one node
+      // Find the next best node to color from the remaining candidates
+      size_t bestCandidate = std::numeric_limits< size_t >::max();
       size_t maxCommonNeighbors = 0;
-      selectedNode = -1;
-      for( camp::idx_t node : candidateNodesToColor )
-      {
-        std::unordered_set< camp::idx_t > nodeNeighbors = getGraphNodeNeighbors( node, xadj, adjncy );
+      size_t bestCandidateDegree = std::numeric_limits< size_t >::max();
 
-        size_t commonNeighbors = 0;
-        for( camp::idx_t neighbor : nodeNeighbors )
+      // Iterate over the shrinking set of candidates
+      for( const auto & node : candidatesForThisColor )
+      {
+        const auto nodeNeighbors = getGraphNodeNeighbors( node, xadj, adjncy );
+
+        // Count common neighbors with the forbidden set
+        size_t commonNeighborsCount = 0;
+        for( const auto & neighbor : nodeNeighbors )
         {
-          if( largestDegreeNodeNeighbors.find( neighbor ) != largestDegreeNodeNeighbors.end())
+          if( forbiddenNodes.count( neighbor ))
           {
-            ++commonNeighbors;
+            ++commonNeighborsCount;
           }
         }
-        size_t nodeDegree = getGraphNodeDegree( node, xadj );
-        if( commonNeighbors > maxCommonNeighbors || (commonNeighbors == maxCommonNeighbors &&  selectedNode >= 0 && nodeDegree < getGraphNodeDegree( selectedNode, xadj )))
+
+        // Apply RLF heuristic
+        bool shouldSelect = false;
+        if( bestCandidate == std::numeric_limits< size_t >::max() || commonNeighborsCount > maxCommonNeighbors )
         {
-          selectedNode = static_cast< int >(node);
-          maxCommonNeighbors = commonNeighbors;
+          shouldSelect = true;
+        }
+        else if( commonNeighborsCount == maxCommonNeighbors )
+        {
+          const size_t nodeDegree = getGraphNodeDegree( node, xadj );
+          if( nodeDegree < bestCandidateDegree )
+          {
+            shouldSelect = true;
+          }
+        }
+
+        if( shouldSelect )
+        {
+          bestCandidate = node;
+          maxCommonNeighbors = commonNeighborsCount;
+          bestCandidateDegree = getGraphNodeDegree( node, xadj );
         }
       }
+      selectedNode = bestCandidate;
     }
 
-    // Increment the current color
+    // Move to the next color
     ++currentColor;
   }
 
   return color;
 }
 
+
 size_t RLFGraphColoring::getNumberOfColors( const stdVector< int > & colors ) const
 {
   return GraphColoringBase::getNumberOfColors( colors );
 }
 
-bool RLFGraphColoring::isColoringValid( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, const stdVector< int > & colors ) const
+bool RLFGraphColoring::isColoringValid( const stdVector< size_t > & xadj, const stdVector< size_t > & adjncy, const stdVector< int > & colors ) const
 {
   return GraphColoringBase::isColoringValid( xadj, adjncy, colors );
 }
-
 
 } // namespace graph
 } // namespace geos

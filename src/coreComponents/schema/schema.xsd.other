@@ -526,7 +526,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_std___1_basic_string_lt_char_cm_-std___1_char_traits_lt_char_gt__cm_-std___1_allocator_lt_char_gt__gt__cm_-geos_internal_StdVectorWrapper_lt_std___1_basic_string_lt_char_cm_-std___1_char_traits_lt_char_gt__cm_-std___1_allocator_lt_char_gt__gt__cm_-std___1_allocator_lt_std___1_basic_string_lt_char_cm_-std___1_char_traits_lt_char_gt__cm_-std___1_allocator_lt_char_gt__gt__gt__cm_-false_gt__cm_-std___1_integral_constant_lt_bool_cm_-true_gt__gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1549,7 +1549,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType" />
-	<xsd:complexType name="PVTDriverType" />
+	<xsd:complexType name="PVTDriverType">
+		<!--outputData => Time-history of data-->
+		<xsd:attribute name="outputData" type="real64_array2d" />
+	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="RelpermDriverType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
@@ -1600,7 +1603,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std___1_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
@@ -1619,7 +1622,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CO2BrinePhillipsThermalFluid" type="CO2BrinePhillipsThermalFluidType" />
 			<xsd:element name="CarmanKozenyPermeability" type="CarmanKozenyPermeabilityType" />
 			<xsd:element name="CeramicDamage" type="CeramicDamageType" />
-			<xsd:element name="CompositionalMultiphaseFluid" type="CompositionalMultiphaseFluidType" />
 			<xsd:element name="CompositionalThreePhaseFluidLohrenzBrayClark" type="CompositionalThreePhaseFluidLohrenzBrayClarkType" />
 			<xsd:element name="CompositionalTwoPhaseFluid" type="CompositionalTwoPhaseFluidType" />
 			<xsd:element name="CompositionalTwoPhaseFluidLohrenzBrayClark" type="CompositionalTwoPhaseFluidLohrenzBrayClarkType" />
@@ -2068,58 +2070,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="lengthScale" type="real64_array" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="CompositionalMultiphaseFluidType">
-		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseCompFraction" type="LvArray_Array_lt_double_cm_-5_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_cm_-2l_cm_-3l_cm_-4l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
-		<!--dPhaseDensity => Derivative of phase density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseDensity" type="real64_array4d" />
-		<!--dPhaseEnthalpy => Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseEnthalpy" type="real64_array4d" />
-		<!--dPhaseFraction => Derivative of phase fraction with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseFraction" type="real64_array4d" />
-		<!--dPhaseInternalEnergy => Derivative of phase internal energy with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseInternalEnergy" type="real64_array4d" />
-		<!--dPhaseMassDensity => Derivative of phase mass density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseMassDensity" type="real64_array4d" />
-		<!--dPhaseViscosity => Derivative of phase viscosity with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dPhaseViscosity" type="real64_array4d" />
-		<!--dTotalDensity => Derivative of total density with respect to pressure, temperature, and global component fractions-->
-		<xsd:attribute name="dTotalDensity" type="real64_array3d" />
-		<!--phaseCompFraction => Phase component fraction-->
-		<xsd:attribute name="phaseCompFraction" type="real64_array4d" />
-		<!--phaseCompFraction_n => Phase component fraction at the previous converged time step-->
-		<xsd:attribute name="phaseCompFraction_n" type="real64_array4d" />
-		<!--phaseDensity => Phase density-->
-		<xsd:attribute name="phaseDensity" type="real64_array3d" />
-		<!--phaseDensity_n => Phase density at the previous converged time step-->
-		<xsd:attribute name="phaseDensity_n" type="real64_array3d" />
-		<!--phaseEnthalpy => Phase enthalpy-->
-		<xsd:attribute name="phaseEnthalpy" type="real64_array3d" />
-		<!--phaseEnthalpy_n => Phase enthalpy at the previous converged time step-->
-		<xsd:attribute name="phaseEnthalpy_n" type="real64_array3d" />
-		<!--phaseFraction => Phase fraction-->
-		<xsd:attribute name="phaseFraction" type="real64_array3d" />
-		<!--phaseInternalEnergy => Phase internal energy-->
-		<xsd:attribute name="phaseInternalEnergy" type="real64_array3d" />
-		<!--phaseInternalEnergy_n => Phase internal energy at the previous converged time step-->
-		<xsd:attribute name="phaseInternalEnergy_n" type="real64_array3d" />
-		<!--phaseMassDensity => Phase mass density-->
-		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
-		<!--phaseViscosity => Phase viscosity-->
-		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--totalDensity => Total density-->
-		<xsd:attribute name="totalDensity" type="real64_array2d" />
-		<!--totalDensity_n => Total density at the previous converged time step-->
-		<xsd:attribute name="totalDensity_n" type="real64_array2d" />
-		<!--useMass => (no description available)-->
-		<xsd:attribute name="useMass" type="integer" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalThreePhaseFluidLohrenzBrayClarkType">
 		<!--componentType => (no description available)-->
@@ -2503,6 +2463,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2515,6 +2477,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamagePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
@@ -2545,6 +2509,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2557,6 +2523,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
 		<!--biotCoefficient => Biot coefficient-->
@@ -2581,6 +2549,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldDamage" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--strainEnergyDensity => Material strain energy density-->
@@ -2593,6 +2563,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--volStrain => Volumetric strain-->
 		<xsd:attribute name="volStrain" type="real64_array2d" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DeadOilFluidType">
 		<!--dPhaseCompFraction => Derivative of phase component fraction with respect to pressure, temperature, and global component fractions-->
@@ -2661,6 +2633,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldPreConsolidationPressure" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--preConsolidationPressure => Current preconsolidation pressure-->
 		<xsd:attribute name="preConsolidationPressure" type="real64_array2d" />
 		<!--recompressionIndex => Recompression index-->
@@ -2675,6 +2649,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--virginCompressionIndex => Virgin compression index-->
 		<xsd:attribute name="virginCompressionIndex" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="DruckerPragerType">
 		<!--bulkModulus => Bulk modulus-->
@@ -2693,12 +2669,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicType">
 		<!--bulkModulus => Bulk modulus-->
@@ -2707,12 +2687,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--density => Material density-->
@@ -2805,6 +2789,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldState" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--pressureIntercept => Pressure intercept-->
 		<xsd:attribute name="pressureIntercept" type="real64_array" />
 		<!--residualFriction => Final friction angle-->
@@ -2817,6 +2803,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
 	<xsd:complexType name="HydraulicApertureTableType" />
@@ -2956,6 +2944,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="density" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
@@ -2964,6 +2954,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--yieldStress => Yield stress-->
 		<xsd:attribute name="yieldStress" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDamageElasticIsotropicType" />
 	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType" />
@@ -3225,6 +3217,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dEffectiveConductivity_dT" type="real64_array3d" />
 		<!--effectiveConductivity => Effective conductivity-->
 		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
+		<!--referenceThermalConductivity => Reference thermal conductivity-->
+		<xsd:attribute name="referenceThermalConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="SlipDependentPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
@@ -3403,12 +3397,16 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldCohesion" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
 		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoExtendedDruckerPragerType">
 		<!--bulkModulus => Bulk modulus-->
@@ -3425,6 +3423,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="oldState" type="real64_array2d" />
 		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--poissonRatio => Poisson's ratio (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="poissonRatio" type="real64_array" />
 		<!--pressureIntercept => Pressure intercept-->
 		<xsd:attribute name="pressureIntercept" type="real64_array" />
 		<!--residualFriction => Final friction angle-->
@@ -3437,6 +3437,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="stress" type="real64_array3d" />
 		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
+		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
+		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ViscoModifiedCamClayType">
 		<!--cslSlope => Critical state line slope-->
@@ -3514,7 +3516,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3542,7 +3544,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3561,11 +3563,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3575,7 +3577,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesEdgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3585,11 +3587,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3599,7 +3601,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--maxGlobalIndex => (no description available)-->
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="embeddedSurfacesNodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3609,7 +3611,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3619,7 +3621,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3649,7 +3651,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="integer_array2d" />
 		<!--elemRegionList => (no description available)-->
@@ -3677,7 +3679,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isBoundaryFace => Boundary face indicator: 1 for faces with Dirichlet BCs, 0 for interior faces => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="isBoundaryFace" type="integer_array" />
 		<!--isExternal => (no description available)-->
@@ -3691,7 +3693,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--mimGravityCoefficient => Mimetic gravity coefficient => CompositionalMultiphaseHybridFVM-->
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -3703,7 +3705,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
-		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="edgeList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--elemList => (no description available)-->
 		<xsd:attribute name="elemList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--elemRegionList => (no description available)-->
@@ -3711,11 +3713,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--elemSubRegionList => (no description available)-->
 		<xsd:attribute name="elemSubRegionList" type="LvArray_ArrayOfArrays_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--faceList => (no description available)-->
-		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="faceList" type="geos_InterObjectRelation_lt_LvArray_ArrayOfSets_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3738,7 +3740,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3764,7 +3766,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3785,7 +3787,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3815,7 +3817,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3829,7 +3831,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--nextWellElementIndexGlobal => (no description available)-->
 		<xsd:attribute name="nextWellElementIndexGlobal" type="integer_array" />
 		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt__gt_" />
+		<xsd:attribute name="nodeList" type="geos_InterObjectRelation_lt_LvArray_Array_lt_int_cm_-2_cm_-camp_int_seq_lt_long_cm_-0l_cm_-1l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_-_gt_" />
 		<!--numEdgesPerElement => (no description available)-->
 		<xsd:attribute name="numEdgesPerElement" type="integer" />
 		<!--numFacesPerElement => (no description available)-->
@@ -3860,7 +3862,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->
@@ -3905,7 +3907,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std___1_integral_constant_lt_bool_cm_-false_gt__gt_" />
+		<xsd:attribute name="globalToLocalMap" type="geos_mapBase_lt_long-long_cm_-int_cm_-std_integral_constant_lt_bool_cm_-false_gt_-_gt_" />
 		<!--isExternal => (no description available)-->
 		<xsd:attribute name="isExternal" type="integer_array" />
 		<!--localMaxGlobalIndex => (no description available)-->

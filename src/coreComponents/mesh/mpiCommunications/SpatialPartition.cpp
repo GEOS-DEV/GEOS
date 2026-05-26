@@ -94,31 +94,15 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  if( m_metisNeighborList.empty() )
-  {
-    // Internal cartesian partitioner (for internal mesh)
-    int color=0;
-    if( isOdd( m_coords[0] ) )
-    {
-      color += 1;
-    }
+  return getColor( {} );
+}
 
-    if( isOdd( m_coords[1] ) )
-    {
-      color += 2;
-    }
+int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
+{
+  // Determine neighbor source
+  bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
 
-    if( isOdd( m_coords[2] ) )
-    {
-      color += 4;
-    }
-
-    // With this algorithm, numbering may have gaps.
-    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
-    m_numColors = MpiWrapper::max( color )+1;
-    return color;
-  }
-  else
+  if( useGraphColoring )
   {
     // External partitioner such as ParMetis or PTScotch (for VTK external mesh).
     //
@@ -178,14 +162,14 @@ int SpatialPartition::getColor()
       }
     }
 
-    stdVector< camp::idx_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
+    stdVector< size_t > adjncy( symmetricNeighbors.begin(), symmetricNeighbors.end() );
 
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
     geos::graph::RLFGraphColoringMPI coloring;
 #endif
-    int color = coloring.colorGraph( adjncy );
+    int const color = coloring.colorGraph( adjncy );
 
     if( !coloring.isColoringValid( adjncy, color ))
     {
@@ -200,7 +184,18 @@ int SpatialPartition::getColor()
       GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
     }
     m_numColors = coloring.getNumberOfColors( color );
+    return color;
+  }
+  else
+  {
+    // Cartesian partitioner coloring
+    int const color = (isOdd( m_coords[0] ) ? 1 : 0) |
+                      (isOdd( m_coords[1] ) ? 2 : 0) |
+                      (isOdd( m_coords[2] ) ? 4 : 0);
 
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
+    m_numColors = MpiWrapper::max( color ) + 1;
     return color;
   }
 }

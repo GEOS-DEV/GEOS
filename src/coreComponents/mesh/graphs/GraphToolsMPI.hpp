@@ -30,8 +30,6 @@ namespace geos
 namespace graph
 {
 
-using camp::idx_t;
-
 /**
  * @brief Distributes graph data and returns local adjacency lists for each rank.
  *
@@ -44,17 +42,16 @@ using camp::idx_t;
  * @param comm The MPI communicator (default is MPI_COMM_GEOS).
  * @return A pair of vectors containing the local adjacency list offsets and neighbors for each rank.
  */
-std::pair< stdVector< camp::idx_t >, stdVector< camp::idx_t > >
-scatterGraphData( const stdVector< camp::idx_t > & xadj,
-                  const stdVector< camp::idx_t > & adjncy,
+std::pair< stdVector< size_t >, stdVector< size_t > >
+scatterGraphData( const stdVector< size_t > & xadj,
+                  const stdVector< size_t > & adjncy,
                   MPI_Comm comm = MPI_COMM_GEOS );
 
 
 /**
  * @brief Gathers distributed graph data from MPI ranks.
  *
- * This function collects local adjacency lists from all ranks and reconstructs
- * the global xadj and adjncy arrays.
+ * This function collects local adjacency lists from all ranks and reconstructs the global xadj and adjncy arrays.
  *
  * @param localXadj Local adjacency list offsets.
  * @param localAdjncy Local adjacency list.
@@ -62,9 +59,9 @@ scatterGraphData( const stdVector< camp::idx_t > & xadj,
  * @return A pair of vectors: global xadj and adjncy.
  */
 
-std::pair< stdVector< camp::idx_t >, stdVector< camp::idx_t > >
-gatherGraphData( const stdVector< camp::idx_t > & localXadj,
-                 const stdVector< camp::idx_t > & localAdjncy,
+std::pair< stdVector< size_t >, stdVector< size_t > >
+gatherGraphData( const stdVector< size_t > & localXadj,
+                 const stdVector< size_t > & localAdjncy,
                  MPI_Comm comm= MPI_COMM_GEOS );
 
 
@@ -78,7 +75,7 @@ gatherGraphData( const stdVector< camp::idx_t > & localXadj,
  * @param comm The MPI communicator.
  * @return The xadj array.
  */
-stdVector< camp::idx_t > createXadjFromAdjncy( const stdVector< camp::idx_t > & localAdjncy, MPI_Comm comm );
+stdVector< size_t > createXadjFromAdjncy( const stdVector< size_t > & localAdjncy, MPI_Comm comm );
 
 
 /**
@@ -90,7 +87,7 @@ stdVector< camp::idx_t > createXadjFromAdjncy( const stdVector< camp::idx_t > & 
  * @param comm MPI communicator.
  * @return A vector of global vertex IDs.
  */
-stdVector< int > createVertexGlobalID( const stdVector< camp::idx_t > & localXadj, MPI_Comm comm );
+stdVector< int > createVertexGlobalID( const stdVector< size_t > & localXadj, MPI_Comm comm );
 
 } // namespace geos
 } // namespace graph
