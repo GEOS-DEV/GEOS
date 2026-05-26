@@ -3,8 +3,8 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="125" NumberOfCells="64">
       <PointData Scalars="f1_node_set">
-        <DataArray type="Int64" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
-          AQAAAACAAADoAwAAGQAAAA==eJxjYBjZgHGA1FEbjPqDMnXDHQAAFaAACg==
+        <DataArray type="UInt8" Name="f1_node_set" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAAB9AAAAEgAAAA==eJxjYMAPGFEJSiQwAQACtAAK
         </DataArray>
       </PointData>
       <CellData>
