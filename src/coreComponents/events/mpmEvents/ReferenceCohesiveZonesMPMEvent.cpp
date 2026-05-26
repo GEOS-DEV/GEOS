@@ -37,16 +37,6 @@ ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & n
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Region names for cohesive zones");
 
-  registerWrapper( viewKeyStruct::constitutiveModelsString(), &m_constitutiveModelNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Constitutive model names for cohesive zones");
-
-  registerWrapper( viewKeyStruct::czTagsString(), &m_czTags ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Tag IDs for cohesive zones");
-
   registerWrapper( viewKeyStruct::czVolumeNormalizationString(), &m_czVolumeNormalization ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_czVolumeNormalization ).
@@ -83,17 +73,6 @@ void ReferenceCohesiveZonesMPMEvent::postInputInitialization()
 
   GEOS_ERROR_IF( m_regionNames.size() == 0,
                  "ReferenceCohesiveZone event must specify at least one region name." );
-
-  bool const hasModels = m_constitutiveModelNames.size() > 0;
-  bool const hasTags = m_czTags.size() > 0;
-
-  GEOS_ERROR_IF( hasModels && hasTags,
-                 "ReferenceCohesiveZones event must specify both constitutiveModels and czTags" );
-
-  GEOS_ERROR_IF( m_regionNames.size() != m_constitutiveModelNames.size() ||
-                 m_regionNames.size() != static_cast< size_t >( m_czTags.size() ),
-                 "ReferenceCohesiveZones event regionNames, constitutiveModels, and czTags "
-                 "must have the same length." );
 
   GEOS_ERROR_IF( !( m_czVolumeNormalization == 0 || m_czVolumeNormalization == 1 ),
                  "czVolumeNormalization can only be 0 or 1." );

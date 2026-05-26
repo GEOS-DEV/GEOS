@@ -7666,8 +7666,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
       CohesiveZoneManager & cohesiveZoneManager = getGroup< CohesiveZoneManager >( groupKeyStruct::cohesiveZoneManagerString() );
 
       string_array const & czRegionNames = cohesiveZoneReference.getRegionNames();
-      string_array const & czModelNames = cohesiveZoneReference.getConstitutiveModelNames();
-      arrayView1d< localIndex const > const & czTags = cohesiveZoneReference.getCZTags();
 
       bool const eventStart = time_n >= startTime - dt / 2 && time_n < startTime + dt / 2;
       bool const eventEnd = time_n >= endTime - dt / 2;
@@ -7682,8 +7680,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
         for( int i = 0; i < static_cast< int >( czRegionNames.size() ); ++i )
         {
           string const & czName = czRegionNames[i];
-          string const & czConstitutiveModel = czModelNames[i];
-          localIndex const & czTag = czTags[i];
 
           CohesiveZoneRegion & czRegion = cohesiveZoneManager.getRegion< CohesiveZoneRegion >( czName );
 
@@ -7691,7 +7687,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           // Do one time check that all cz Regions exist
           GEOS_ERROR_IF( !cohesiveZoneManager.hasRegion< CohesiveZoneRegion >( czName ), "No cohesive zone region named " << czName << " registered!" );
 
-          GEOS_LOG_RANK_0( "Enabling cohesive zone region, " << czName << ", with constitutive model, " << czConstitutiveModel << ", and tag " << czTag );
+          GEOS_LOG_RANK_0( "Enabling cohesive zone region, " << czName );
           czRegion.setEnabled( 1 );
           czRegion.setInitialized( 0 );
         }

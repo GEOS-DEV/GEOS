@@ -20,15 +20,20 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
-#include "common/TimingMacros.hpp"
-#include "events/mpmEvents/MPMEventManager.hpp"
 #include "LvArray/src/tensorOps.hpp"
+
+#include "physicsSolvers/PhysicsSolverBase.hpp"
+
+#include "common/TimingMacros.hpp"
 #include "kernels/ExplicitMPM.hpp"
-#include "mesh/CohesiveZoneManager.hpp"
+
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+
+#include "events/mpmEvents/MPMEventManager.hpp"
+#include "mesh/CohesiveZoneManager.hpp"
+
 #include "MPMSolverFields.hpp"
-#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 

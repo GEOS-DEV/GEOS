@@ -50,8 +50,6 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   string_array const & getRegionNames() { return m_regionNames; }
-  string_array const & getConstitutiveModelNames() { return m_constitutiveModelNames; }
-  array1d< localIndex > const & getCZTags() { return m_czTags; }
 
   //  /**
   //   * @brief Create a new CohesiveZoneBase object as a child of this group.
@@ -83,8 +81,6 @@ protected:
   virtual void postInputInitialization() override final;
 
   string_array m_regionNames;
-  string_array m_constitutiveModelNames;
-  array1d< localIndex > m_czTags;
 
   int m_czVolumeNormalization;
   int m_computeNormalsAndPositions;

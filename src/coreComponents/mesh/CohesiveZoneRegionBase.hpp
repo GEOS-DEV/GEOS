@@ -230,6 +230,7 @@ private:
 
   int m_enabled;
   int m_initialized;
+  
   int m_czVolumeNormalization;
   int m_computeParticleSurfaceNormalsAndPositions;
   int m_normalsAndPositionsMethod; // Should be the enum from SolidMechanicsMPM, but currently circular dependences that needs to be resolved
