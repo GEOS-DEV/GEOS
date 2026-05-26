@@ -33,12 +33,10 @@ pfw["runDebug"] = True
 # =============================================================================
 
 # Initial aspect ratio is 6:1, longer in the in-plane impact direction y.
-lateralLength = 1.0          # mm
-impactAspectRatio = 6.0
-domainSize = {
-    "x": lateralLength,
-    "y": impactAspectRatio * lateralLength,
-}
+AR = 6.
+
+sampleY = 1.0          # mm
+sampleX = AR*1.0          # mm
 
 # Circular plane-strain pore controls.  The realized area fraction is printed by
 # the geometry object when PFW imports this input.
@@ -54,51 +52,37 @@ impactVelocity = 0.25        # mm/us = 250 m/s
 # Resolution controls.  cpp, xpar, and ypar are scaled by refine.  PFW requires
 # zpar=1 and nK=3 for planeStrain=1, so through-thickness partitioning is fixed.
 refine = 1
-cpp = 24
-xpar = 3
-ypar = 18
-zpar = 1
-ppc = 2                      # particles per cell per active direction
 
-# End time estimate: snowplow compaction wave speed in a porous bar.  The 2D
-# area fraction is used as the relative missing density in this plane-strain demo.
-lockedPorosity = 0.0
-initialRelativeDensity = 1.0 - poreAreaFraction
-lockedRelativeDensity = 1.0 - lockedPorosity
-compactionStrain = max(1.0e-12, 1.0 - initialRelativeDensity / lockedRelativeDensity)
-compactionWaveSpeed = impactVelocity / compactionStrain
-compactionWaveTransitTime = domainSize["y"] / compactionWaveSpeed
-stopTime = compactionWaveTransitTime
+stopTime = sampleX / impactVelocity
 
 # =============================================================================
 # Domain and grid
 # =============================================================================
 
-pfw["xmin"] = -0.5 * domainSize["x"]
-pfw["xmax"] =  0.5 * domainSize["x"]
-pfw["ymin"] = 0.0
-pfw["ymax"] = domainSize["y"]
+pfw["xmin"] = 0.0
+pfw["xmax"] = sampleX
+pfw["ymin"] = -0.5*sampleY
+pfw["ymax"] = 0.5*sampleY
 
-pfw["periodic"] = [True, False, False]
+pfw["periodic"] = [False, True, False]
 pfw["planeStrain"] = 1
 
-cppRefined = max(1, int(round(refine * cpp)))
-pfw["xpar"] = max(3 if pfw["periodic"][0] else 1, int(round(refine * xpar)))
-pfw["ypar"] = max(3 if pfw["periodic"][1] else 1, int(round(refine * ypar)))
+pfw["xpar"] = int(AR*3*refine)
+pfw["ypar"] = int(3*refine)
 pfw["zpar"] = 1
 
-pfw["nI"] = pfw["xpar"] * cppRefined
-pfw["nJ"] = pfw["ypar"] * cppRefined + 2
+cpp = 24
+pfw["nI"] = pfw["xpar"] * cpp
+pfw["nJ"] = pfw["ypar"] * cpp
 pfw["nK"] = 3
-pfw["ppc"] = ppc
+pfw["ppc"] = 2
 
 # Choose the z thickness so the single plane-strain interior cell is roughly the
 # same size as the in-plane cells.
-domainThickness = domainSize["y"] / (pfw["nJ"] - 2)
-pfw["zmin"] = -0.5 * domainThickness
-pfw["zmax"] =  0.5 * domainThickness
+domainZ = (pfw["xmax"] - pfw["xmin"]) / ( pfw["nI"] - 2 )
+pfw["zmin"] = -0.5 * domainZ
+pfw["zmax"] =  0.5 * domainZ
 
-pfw["sortObjects"] = True
 pfw["outputType"] = "silo"
 
 # =============================================================================
@@ -106,8 +90,6 @@ pfw["outputType"] = "silo"
 # =============================================================================
 
 pfw["mWallTime"] = "00:10:00"
-pfw["mCores"] = pfw["xpar"] * pfw["ypar"] * pfw["zpar"]
-pfw["mNodes"] = int(math.ceil(float(pfw["mCores"]) / 112.0))
 pfw["mSubmitJobs"] = True
 
 # =============================================================================
@@ -115,7 +97,7 @@ pfw["mSubmitJobs"] = True
 # =============================================================================
 
 pfw["endTime"] = stopTime
-pfw["plotInterval"] = stopTime
+pfw["plotInterval"] = stopTime / 64
 pfw["restartInterval"] = 2.0 * stopTime
 
 pfw["timeIntegrationOption"] = "ExplicitDynamic"
@@ -125,17 +107,15 @@ pfw["updateMethod"] = "FMPM"
 pfw["updateOrder"] = 2
 
 # SinglePointBSpline particles do not use CPDI domain scaling.
-pfw["cpdiDomainScaling"] = 0
 pfw["damageFieldPartitioning"] = 0
 pfw["needsNeighborList"] = 0
 
-pfw["solverProfiling"] = 1
-pfw["reactionHistory"] = 1
-pfw["reactionWriteInterval"] = stopTime / 1000.0
-pfw["boxAverageHistory"] = 1
-pfw["boxAverageWriteInterval"] = stopTime / 1000.0
+# pfw["reactionHistory"] = 1
+# pfw["reactionWriteInterval"] = stopTime / 1000.0
+# pfw["boxAverageHistory"] = 1
+# pfw["boxAverageWriteInterval"] = stopTime / 1000.0
 
-pfw["maxParticleVelocity"] = max(10.0, 10.0 * impactVelocity)
+pfw["maxParticleVelocity"] = 10.0
 pfw["minParticleJacobian"] = 0.01
 pfw["maxParticleJacobian"] = 10.0
 
@@ -174,7 +154,7 @@ foam = geom.poissonDiskFoam(
     dim = 2,
     # geom.box-style order for dim=2: [x-, y-, x+, y+].
     flaggedSurfaces = [False, True, False, True],
-    vel = [0.0, -impactVelocity, 0.0],
+    vel = [ -impactVelocity, 0.0, 0.0],
     mat = COPPER,
     group = 0,
     particleType = 1,  # SinglePointBSpline
@@ -186,11 +166,7 @@ pfw["objects"] = [foam]
 # Boundary conditions
 # =============================================================================
 
-pfw["prescribedBcTable"] = 0
-pfw["prescribedBoundaryFTable"] = 0
-pfw["fTableInterpType"] = "Linear"
-
 # Boundary-condition order is x-, x+, y-, y+, z-, z+.
 # x is periodic; y- is the impact symmetry plane; y+ is outflow/free; z faces are
 # symmetry planes for plane strain.
-pfw["boundaryConditionTypes"] = [0, 0, 1, 0, 1, 1]
+pfw["boundaryConditionTypes"] = [1, 0, 0, 0, 1, 1]

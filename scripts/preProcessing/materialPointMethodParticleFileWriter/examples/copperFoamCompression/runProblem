@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
 PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
-CASE='copperFoamCompression'
+CASE='copperFoamCompression2D'
 PASSTHRU=()
 
 while [ "$#" -gt 0 ]; do
