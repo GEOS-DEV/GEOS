@@ -164,6 +164,17 @@ struct Limits< T, true >
 {
   std::optional< Bound< limit_value_type_t< T > > > min;
   std::optional< Bound< limit_value_type_t< T > > > max;
+
+  string getRangeStr() const
+  {
+    string const lowerRange = this->min.has_value()
+      ? GEOS_FMT( "{}{}", this->min->isInclusive ? "[" : "(", this->min->value )
+      : string( "(-inf" );
+    string const upperRange = this->max.has_value()
+      ? GEOS_FMT( "{}{}", this->max->value, this->max->isInclusive ? "]" : ")" )
+      : string( "+inf)" );
+    return GEOS_FMT( "{}, {}", lowerRange, upperRange );
+  }
 };
 
 

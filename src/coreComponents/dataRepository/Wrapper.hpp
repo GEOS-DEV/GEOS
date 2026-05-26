@@ -1206,14 +1206,8 @@ private:
       return;
     }
 
-    string const lowerRange = m_limits.min.has_value()
-      ? GEOS_FMT( "{}{}", m_limits.min->isInclusive ? "[" : "(", m_limits.min->value )
-      : string( "(-inf" );
-    string const upperRange = m_limits.max.has_value()
-      ? GEOS_FMT( "{}{}", m_limits.max->value, m_limits.max->isInclusive ? "]" : ")" )
-      : string( "+inf)" );
-    string const msg = GEOS_FMT( "Value {} for attribute '{}' is outside the allowed range {}, {}.",
-                                 value, getDataContext(), lowerRange, upperRange );
+    string const msg = GEOS_FMT( "Value {} for attribute '{}' is outside the allowed range {}.",
+                                 value, getDataContext(), m_limits.getRangeStr() );
 
     switch( m_limitsMode )
     {
