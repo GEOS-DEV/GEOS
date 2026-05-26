@@ -20,6 +20,7 @@ These models are grouped together based on their input/output interface.
    PorousSolids
    TemperatureDependentSolidVolumetricHeatCapacity
    TemperatureDependentThermalConductivity
+   ExternalMaterialModels
 
 
 In an input XML file, constitutive models are listed in the ``<Constitutive>`` block.

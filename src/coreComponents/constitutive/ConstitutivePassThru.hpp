@@ -22,6 +22,7 @@
 #define GEOS_CONSTITUTIVE_CONSTITUTIVEPASSTHRU_HPP_
 
 #include "ConstitutivePassThruHandler.hpp"
+#include "constitutive/ExternalConstitutiveModels.hpp"
 #include "NullModel.hpp"
 #include "ContinuumBase.hpp"
 #include "cohesiveZone/CohesiveZoneBase.hpp"
@@ -240,7 +241,8 @@ struct ConstitutivePassThruMPM< ContinuumBase >
   static
   void execute( ContinuumBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< Graphite,
+    ConstitutivePassThruHandler< GEOS_EXTERNAL_CONSTITUTIVE_MPM_MODEL_TYPES
+                                 Graphite,
                                  Geomechanics,
                                  CeramicDamage,
                                  Chiumenti,
@@ -279,7 +281,8 @@ struct ConstitutivePassThruCohesiveZone< CohesiveZoneBase >
   static
   void execute( CohesiveZoneBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< BicrystalCohesiveZone,
+    ConstitutivePassThruHandler< GEOS_EXTERNAL_CONSTITUTIVE_MPM_COHESIVE_ZONE_MODEL_TYPES
+                                 BicrystalCohesiveZone,
                                  PolymerCohesiveZone,
                                  CoupledCohesiveZone,
                                  UncoupledCohesiveZone >::execute( constitutiveRelation,

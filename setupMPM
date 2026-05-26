@@ -7,6 +7,13 @@
 # machine-specific MPM minimal-TPL host-config.  The machine is inferred from the
 # hostname unless --setup-machine, --dane, --tuolumne, or GEOS_MPM_SETUP_MACHINE
 # is supplied.
+#
+# External/internal material models:
+#   ./setupMPM --dane --external-material-models /path/to/internal/materials
+#   ./setupMPM --tuolumne --external-material-models /path/to/internal/materials
+# The external folder should contain GEOSExternalConstitutiveModels.cmake or
+# CMakeLists.txt and call geos_register_external_constitutive_models().  The
+# option is forwarded to CMake as GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR.
 
 set -euo pipefail
 
@@ -59,6 +66,13 @@ Options:
                             /p/lustre5/$USER/geosxInstalls on Tuolumne.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
+  --external-material-models DIR
+                            Optional out-of-tree material-model folder. Works for
+                            both Dane and Tuolumne. The folder should contain
+                            GEOSExternalConstitutiveModels.cmake or CMakeLists.txt.
+                            Also accepted: --external-constitutive-models,
+                            --material-models-dir, --external-models-dir.
+                            Default: GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR, if set.
   --tpl-dir DIR             Existing minimal TPL install/view root. If provided, exported as
                             GEOS_TPL_DIR and GEOS_MPM_TPL_DIR before configure.
   --queue QUEUE             Tuolumne Flux queue written to runClean_$USER.sh. Default: pdebug
@@ -1090,6 +1104,12 @@ configure_and_build() {
   else
     config_cmd+=(--buildrootdir "$BUILD_ROOT")
   fi
+  if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+    # External material models are kept out of the public checkout.  Their
+    # manifest is included from src/coreComponents/constitutive/CMakeLists.txt
+    # and can register sources, headers, dependencies, and MPM dispatch types.
+    config_cmd+=("-DGEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR=$EXTERNAL_MATERIAL_MODELS_DIR")
+  fi
   run_cmd "${config_cmd[@]}"
 
   if [ "$CONFIGURE_ONLY" -eq 1 ]; then
@@ -1140,6 +1160,7 @@ BUILD_TYPE="Release"
 JOBS="${GEOS_BUILD_JOBS:-32}"
 BUILD_TARGET="geosx"
 HOST_CONFIG=""
+EXTERNAL_MATERIAL_MODELS_DIR="${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR:-}"
 TPL_DIR=""
 DEFAULT_QUEUE="pdebug"
 LOAD_MODULES=1
@@ -1294,6 +1315,11 @@ while [ "$#" -gt 0 ]; do
       HOST_CONFIG="$2"
       shift 2
       ;;
+    --external-material-models|--external-constitutive-models|--material-models-dir|--external-models-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      EXTERNAL_MATERIAL_MODELS_DIR="$2"
+      shift 2
+      ;;
     --tpl-dir)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       TPL_DIR="$2"
@@ -1418,6 +1444,19 @@ fi
 
 if [ -n "$TPL_DIR" ]; then
   TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
+fi
+
+if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+  EXTERNAL_MATERIAL_MODELS_DIR=$(trim_trailing_slashes "$(abs_path "$EXTERNAL_MATERIAL_MODELS_DIR")")
+  externalManifestPrimary="$EXTERNAL_MATERIAL_MODELS_DIR/GEOSExternalConstitutiveModels.cmake"
+  externalManifestFallback="$EXTERNAL_MATERIAL_MODELS_DIR/CMakeLists.txt"
+  if [ ! -d "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+    fail "external material-model directory does not exist: $EXTERNAL_MATERIAL_MODELS_DIR"
+  fi
+  if [ ! -f "$externalManifestPrimary" ] && [ ! -f "$externalManifestFallback" ]; then
+    log "external material-model dir has no GEOSExternalConstitutiveModels.cmake or CMakeLists.txt: $EXTERNAL_MATERIAL_MODELS_DIR"
+    log "CMake will continue, but no external material models will be added unless a manifest is present"
+  fi
 fi
 
 DEFAULT_BANK=$(detect_bank)
@@ -1582,6 +1621,9 @@ log "active default run dir: $DEFAULT_RUN_DIR_USER"
 log "active build root: $(shell_to_display_path "$BUILD_ROOT")"
 log "active build dir: $BUILD_DIR_USER"
 log "active geosx path: $ACTIVE_GEOS_USER_PATH"
+if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+  log "external material-model dir: $EXTERNAL_MATERIAL_MODELS_DIR"
+fi
 log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"
 if [ -n "$TPL_DIR" ]; then
