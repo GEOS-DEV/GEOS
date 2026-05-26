@@ -5,6 +5,7 @@
   "artifact_public_url_base": "https://storage.googleapis.com",
   "artifact_public_url_bucket_scoped": false,
   "runner_ca_bundle_host_paths": { "streak2": "/etc/pki/tls/certs/ca-bundle.crt" },
+  "runner_cuda_architectures": { "streak2": "86" },
   "runners": {
     "default": "ubuntu-22.04",
     "cpu_heavy": "streak2",
