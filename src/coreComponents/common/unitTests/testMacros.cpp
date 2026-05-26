@@ -19,8 +19,9 @@
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
 // test dependancies
-#include <array>
 #include "common/StdContainerWrappers.hpp"
+
+using namespace geos;
 
 TEST( testMacros, testArgumentCount )
 {
