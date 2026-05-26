@@ -134,10 +134,6 @@ stdVector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const stdVecto
           {
             shouldSelect = true;
           }
-          else if( nodeDegree == bestCandidateDegree && node < bestCandidate )
-          {
-            shouldSelect = true;
-          }
         }
 
         if( shouldSelect )
