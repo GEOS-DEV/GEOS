@@ -1367,10 +1367,11 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
     } );
   } );
 
-  rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                        "negative pressure", minPressure, units::Unit::Pressure );
+  ElementsReporterOutput const negPressureIds = rankNegPressureIds.createOutput();
+  negPressureIds.outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                     "negative pressure", minPressure, units::Unit::Pressure );
 
-  return (m_allowNegativePressure || rankNegPressureIds.getSignaledElementsCount() == 0) ?  1 : 0;
+  return (m_allowNegativePressure || negPressureIds.getRanksSignaledIdsCount() == 0) ? 1 : 0;
 }
 
 void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) const
