@@ -940,8 +940,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
     units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
     rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                          "negative component density", minDens, massUnit );
-    rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
-                                                         "negative component total density", minTotalDens, massUnit );
+    rankTotalNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                              "negative component total density", minTotalDens, massUnit );
 
     return MpiWrapper::min( localCheck );
   }
