@@ -136,7 +136,7 @@ makeGhostDofMap( MeshObjectManager const & manager,
   arrayView1d< globalIndex const > const newDofNumber = manager.getReference< array1d< globalIndex > >( newDofKey );
   for( localIndex i = manager.numOwnedObjects(); i < manager.size(); ++i )
   {
-    ghostDofMap[oldDofNumber[i]] = newDofNumber[i];
+    ghostDofMap.get_inserted(oldDofNumber[i]) = newDofNumber[i];
   }
   return ghostDofMap;
 }

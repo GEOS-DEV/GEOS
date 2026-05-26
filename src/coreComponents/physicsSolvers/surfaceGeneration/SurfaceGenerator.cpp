@@ -4479,7 +4479,7 @@ stdVector< std::set< localIndex > > SurfaceGenerator::groupRupturedFacesIntoSets
   stdMap< localIndex, std::set< localIndex > > components;
   for( localIndex const fi : allFaces )
   {
-    components[findRoot( fi )].insert( fi );
+    components.get_inserted(findRoot( fi )).insert( fi );
   }
 
   // Convert to a vector.

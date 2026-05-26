@@ -894,7 +894,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.get_inserted(bc.getName()) = bcCounter;
     bcCounter++;
   } );
 
