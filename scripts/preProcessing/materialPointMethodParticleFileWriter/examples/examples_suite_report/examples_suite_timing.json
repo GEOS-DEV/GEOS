@@ -168,6 +168,90 @@
         }
       }
     },
+    "copperFoamCompression": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6076455",
+        "post": "6076456"
+      },
+      "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/output",
+      "runProblem_log": "",
+      "run_dir": "/p/lustre1/homel1/geosxTests/copperFoamCompression2D",
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "54",
+          "CPUTimeRAW": "324",
+          "Elapsed": "00:00:06",
+          "ElapsedRaw": "6",
+          "ExitCode": "0:0",
+          "JobID": "6076455",
+          "JobIDRaw": "6076455",
+          "JobName": "260522003755_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "7",
+          "Elapsed": "00:00:07",
+          "ElapsedRaw": "7",
+          "ExitCode": "0:0",
+          "JobID": "6076456",
+          "JobIDRaw": "6076456",
+          "JobName": "post_copperFoamCompression2D",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
+    "copperFoamCompression2D": {
+      "dispatch_returncode": 0,
+      "jobs": {
+        "geos": "6076455",
+        "post": "6076456"
+      },
+      "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/output",
+      "runProblem_log": "",
+      "run_dir": "/p/lustre1/homel1/geosxTests/copperFoamCompression2D",
+      "timing": {
+        "geos": {
+          "Account": "mahem",
+          "AllocCPUS": "54",
+          "CPUTimeRAW": "324",
+          "Elapsed": "00:00:06",
+          "ElapsedRaw": "6",
+          "ExitCode": "0:0",
+          "JobID": "6076455",
+          "JobIDRaw": "6076455",
+          "JobName": "260522003755_runGEOS.sh",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        },
+        "post": {
+          "Account": "mahem",
+          "AllocCPUS": "1",
+          "CPUTimeRAW": "7",
+          "Elapsed": "00:00:07",
+          "ElapsedRaw": "7",
+          "ExitCode": "0:0",
+          "JobID": "6076456",
+          "JobIDRaw": "6076456",
+          "JobName": "post_copperFoamCompression2D",
+          "NNodes": "1",
+          "Partition": "pdebug",
+          "State": "COMPLETED",
+          "TotalCPU": "00:00:00"
+        }
+      }
+    },
     "elasticDisk": {
       "dispatch_returncode": 0,
       "jobs": {
@@ -253,7 +337,7 @@
       }
     }
   },
-  "generated_at": "2026-05-21T08:00:50",
+  "generated_at": "2026-05-26T09:05:15",
   "jobs": [
     {
       "case": "brazilianDisk_FMPM",
@@ -332,6 +416,20 @@
       "post": "6075347",
       "runProblem_log": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/pdc/output/pdc_runProblem.log",
       "run_dir": "/p/lustre1/homel1/geosxTests/pdc"
+    },
+    {
+      "case": "copperFoamCompression",
+      "geos": "6076455",
+      "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/output",
+      "post": "6076456",
+      "run_dir": "/p/lustre1/homel1/geosxTests/copperFoamCompression2D"
+    },
+    {
+      "case": "copperFoamCompression2D",
+      "geos": "6076455",
+      "output_dir": "/usr/WS1/homel1/geos/scripts/preProcessing/materialPointMethodParticleFileWriter/examples/copperFoamCompression/output",
+      "post": "6076456",
+      "run_dir": "/p/lustre1/homel1/geosxTests/copperFoamCompression2D"
     }
   ],
   "sacct_by_job_id": {
@@ -453,6 +551,36 @@
       "NNodes": "1",
       "Partition": "pdebug",
       "State": "FAILED",
+      "TotalCPU": "00:00:00"
+    },
+    "6076455": {
+      "Account": "mahem",
+      "AllocCPUS": "54",
+      "CPUTimeRAW": "324",
+      "Elapsed": "00:00:06",
+      "ElapsedRaw": "6",
+      "ExitCode": "0:0",
+      "JobID": "6076455",
+      "JobIDRaw": "6076455",
+      "JobName": "260522003755_runGEOS.sh",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
+      "TotalCPU": "00:00:00"
+    },
+    "6076456": {
+      "Account": "mahem",
+      "AllocCPUS": "1",
+      "CPUTimeRAW": "7",
+      "Elapsed": "00:00:07",
+      "ElapsedRaw": "7",
+      "ExitCode": "0:0",
+      "JobID": "6076456",
+      "JobIDRaw": "6076456",
+      "JobName": "post_copperFoamCompression2D",
+      "NNodes": "1",
+      "Partition": "pdebug",
+      "State": "COMPLETED",
       "TotalCPU": "00:00:00"
     }
   },

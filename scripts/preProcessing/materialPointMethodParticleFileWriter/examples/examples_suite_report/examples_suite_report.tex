@@ -33,29 +33,73 @@ brazilianDisk\_FLIP & figures available &  &  &  &  &  \\
 brazilianDisk\_PIC & figures available &  &  &  &  &  \\
 brazilianDisk\_XPIC & figures available &  &  &  &  &  \\
 benchy & figures available &  &  &  &  &  \\
-borehole\_Ghareb & post FAILED & COMPLETED & 00:00:40 & 00:00:00 & FAILED & 00:00:00 \\
-collidingDisks & post FAILED & COMPLETED & 00:00:12 & 00:00:00 & FAILED & 00:00:01 \\
-elasticDisk & post FAILED & COMPLETED & 00:01:26 & 00:00:00 & FAILED & 00:00:00 \\
-pdc & post FAILED & COMPLETED & 00:09:55 & 00:00:00 & FAILED & 00:00:00 \\
+borehole\_Ghareb & complete & COMPLETED & 00:00:40 & 00:00:00 & FAILED & 00:00:00 \\
+collidingDisks & complete & COMPLETED & 00:00:12 & 00:00:00 & FAILED & 00:00:01 \\
+elasticDisk & complete & COMPLETED & 00:01:26 & 00:00:00 & FAILED & 00:00:00 \\
+copperFoamCompression & missing figures & COMPLETED & 00:00:06 & 00:00:00 & COMPLETED & 00:00:07 \\
+copperFoamCompression2D & missing figures & COMPLETED & 00:00:06 & 00:00:00 & COMPLETED & 00:00:07 \\
+pdc & complete & COMPLETED & 00:09:55 & 00:00:00 & FAILED & 00:00:00 \\
 \bottomrule
 \end{longtable}
 \section*{Incomplete, failed, or missing-output cases}
-\subsection*{borehole\_Ghareb -- post FAILED}
-\textbf{GEOS job/state:} 6075340 / COMPLETED\\
-\textbf{Post job/state:} 6075341 / FAILED
-No diagnostic log excerpt was found. The case may not have started or may still be queued/running.
-\subsection*{collidingDisks -- post FAILED}
-\textbf{GEOS job/state:} 6075342 / COMPLETED\\
-\textbf{Post job/state:} 6075343 / FAILED
-No diagnostic log excerpt was found. The case may not have started or may still be queued/running.
-\subsection*{elasticDisk -- post FAILED}
-\textbf{GEOS job/state:} 6075344 / COMPLETED\\
-\textbf{Post job/state:} 6075345 / FAILED
-No diagnostic log excerpt was found. The case may not have started or may still be queued/running.
-\subsection*{pdc -- post FAILED}
-\textbf{GEOS job/state:} 6075346 / COMPLETED\\
-\textbf{Post job/state:} 6075347 / FAILED
-No diagnostic log excerpt was found. The case may not have started or may still be queued/running.
+\subsection*{copperFoamCompression -- missing figures}
+\textbf{GEOS job/state:} 6076455 / COMPLETED\\
+\textbf{Post job/state:} 6076456 / COMPLETED
+\begin{verbatim}
+Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py
+Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py
+VisIt: Error - VisIt could not read from the file "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".
+The generated error message was:
+There was an error opening /p/lustre1/homel1/geosxTests/copperFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried using the following file format readers to open the file: <No suitable plugins were identified>
+The following error(s) may be helpful in identifying the problem:
+VisIt: Error - VisIt could not read from the file "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+The generated error message was:
+There was an error opening /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid file.
+VisIt tried using the following file format readers to open the file: Uintah, PDB, Silo
+If you know the specific format reader VisIt should use to
+for VisIt to try. This will possibly give more information on
+the exact error.
+Ignoring unknown VisIt/script arguments: --initial-variable velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto --final-range-mode auto
+Output directory: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/visit_frames
+Opening database: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+OpenDatabase returned failure for /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+Traceback (most recent call last):
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py", line 9, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/visitRender_copperFoamCompression2D.py", line 6, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 607, in main
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 171, in open_database
+    raise FileNotFoundError("No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*")
+FileNotFoundError: No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*
+\end{verbatim}
+\subsection*{copperFoamCompression2D -- missing figures}
+\textbf{GEOS job/state:} 6076455 / COMPLETED\\
+\textbf{Post job/state:} 6076456 / COMPLETED
+\begin{verbatim}
+Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py
+Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py
+VisIt: Error - VisIt could not read from the file "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".
+The generated error message was:
+There was an error opening /p/lustre1/homel1/geosxTests/copperFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried using the following file format readers to open the file: <No suitable plugins were identified>
+The following error(s) may be helpful in identifying the problem:
+VisIt: Error - VisIt could not read from the file "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+The generated error message was:
+There was an error opening /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid file.
+VisIt tried using the following file format readers to open the file: Uintah, PDB, Silo
+If you know the specific format reader VisIt should use to
+for VisIt to try. This will possibly give more information on
+the exact error.
+Ignoring unknown VisIt/script arguments: --initial-variable velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto --final-range-mode auto
+Output directory: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/visit_frames
+Opening database: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+OpenDatabase returned failure for /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+Traceback (most recent call last):
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py", line 9, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/visitRender_copperFoamCompression2D.py", line 6, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 607, in main
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 171, in open_database
+    raise FileNotFoundError("No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*")
+FileNotFoundError: No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*
+\end{verbatim}
 \clearpage
 \section*{brazilianDisk\_FMPM}
 Plane-strain Brazilian disk compression with quartz damage, Weibull strength scaling, and CPDI particles.
@@ -210,7 +254,7 @@ STL import and prescribed multi-field contact between a copper 3DBenchy boat and
 \clearpage
 \section*{borehole\_Ghareb}
 A plane-strain borehole collapse demonstration using the Ghareb geomechanics parameterization from pfw\_materials.py. The rendered initial state shows hydrostatic/mean pressure and the final state shows plastic-strain magnitude.
-\textbf{Status:} post FAILED
+\textbf{Status:} complete
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.58\textwidth]{schematics/borehole_Ghareb_schematic.png}
@@ -227,15 +271,15 @@ A plane-strain borehole collapse demonstration using the Ghareb geomechanics par
 \end{itemize}
 \begin{figure}[H]
 \centering
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\includegraphics[width=0.45\textwidth]{../borehole/output/borehole_Ghareb_initial_pressure.png}
+\includegraphics[width=0.45\textwidth]{../borehole/output/borehole_Ghareb_final_plasticStrainMagnitude.png}
 \caption{Initial and final state for borehole\_Ghareb.}
 \end{figure}
-\textbf{Missing expected products:} initial image, final image.
+\textbf{Output figures:} borehole\_Ghareb\_final\_plasticStrainMagnitude.png, borehole\_Ghareb\_initial\_pressure.png
 \clearpage
 \section*{collidingDisks}
 Two disk-shaped particle bodies move toward one another in plane strain. The case exercises moving material points, contact-like interactions, and the XPIC update path.
-\textbf{Status:} post FAILED
+\textbf{Status:} complete
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.58\textwidth]{schematics/collidingDisks_schematic.png}
@@ -250,15 +294,15 @@ Two disk-shaped particle bodies move toward one another in plane strain. The cas
 \end{itemize}
 \begin{figure}[H]
 \centering
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\includegraphics[width=0.45\textwidth]{../collidingDisks/output/collidingDisks_initial_velocityMagnitude.png}
+\includegraphics[width=0.45\textwidth]{../collidingDisks/output/collidingDisks_final_velocityMagnitude.png}
 \caption{Initial and final state for collidingDisks.}
 \end{figure}
-\textbf{Missing expected products:} initial image, final image.
+\textbf{Output figures:} collidingDisks\_final\_velocityMagnitude.png, collidingDisks\_initial\_velocityMagnitude.png, collidingDisks\_reactions.png
 \clearpage
 \section*{elasticDisk}
 An elastic disk compressed by prescribed boundary motion. It is a compact example of F-table interpolation, reaction history, and elastic response.
-\textbf{Status:} post FAILED
+\textbf{Status:} complete
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.58\textwidth]{schematics/elasticDisk_schematic.png}
@@ -273,15 +317,93 @@ An elastic disk compressed by prescribed boundary motion. It is a compact exampl
 \end{itemize}
 \begin{figure}[H]
 \centering
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\includegraphics[width=0.45\textwidth]{../elasticDisk/output/elasticDisk_initial_velocityMagnitude.png}
+\includegraphics[width=0.45\textwidth]{../elasticDisk/output/elasticDisk_final_density.png}
 \caption{Initial and final state for elasticDisk.}
 \end{figure}
+\textbf{Output figures:} elasticDisk\_final\_density.png, elasticDisk\_initial\_velocityMagnitude.png, elasticDisk\_reactions.png
+\clearpage
+\section*{copperFoamCompression}
+A 3D copper foam bar with periodic lateral pore structure impacts a symmetry plane in reverse-ballistic uniaxial compression. The initial and final visualizations show velocity magnitude.
+\textbf{Status:} missing figures
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.58\textwidth]{schematics/copperFoamCompression_schematic.png}
+\caption{Schematic for copperFoamCompression.}
+\end{figure}
+\textbf{Code features exercised.}
+\begin{itemize}
+\item copper VonMisesJ material
+\item Poisson-disk spherical pores
+\item periodic x/y boundaries
+\item SinglePointBSpline particles
+\item compaction-wave stop-time estimate
+\item custom velocity-magnitude VisIt rendering
+\end{itemize}
+\begin{figure}[H]
+\centering
+\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
+\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\caption{Initial and final state for copperFoamCompression.}
+\end{figure}
 \textbf{Missing expected products:} initial image, final image.
+\begin{verbatim}
+the exact error.
+Ignoring unknown VisIt/script arguments: --initial-variable velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto --final-range-mode auto
+Output directory: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/visit_frames
+Opening database: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+OpenDatabase returned failure for /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+Traceback (most recent call last):
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py", line 9, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/visitRender_copperFoamCompression2D.py", line 6, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 607, in main
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 171, in open_database
+    raise FileNotFoundError("No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*")
+FileNotFoundError: No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*
+\end{verbatim}
+\clearpage
+\section*{copperFoamCompression2D}
+A plane-strain copper foam bar with periodic x pore structure impacts a y=0 symmetry plane. The initial and final visualizations show velocity magnitude.
+\textbf{Status:} missing figures
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.58\textwidth]{schematics/copperFoamCompression2D_schematic.png}
+\caption{Schematic for copperFoamCompression2D.}
+\end{figure}
+\textbf{Code features exercised.}
+\begin{itemize}
+\item plane-strain MPM
+\item copper VonMisesJ material
+\item Poisson-disk circular pores
+\item periodic x boundary
+\item SinglePointBSpline particles
+\item compaction-wave stop-time estimate
+\end{itemize}
+\begin{figure}[H]
+\centering
+\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
+\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\caption{Initial and final state for copperFoamCompression2D.}
+\end{figure}
+\textbf{Missing expected products:} initial image, final image.
+\begin{verbatim}
+the exact error.
+Ignoring unknown VisIt/script arguments: --initial-variable velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto --final-range-mode auto
+Output directory: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/visit_frames
+Opening database: /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+OpenDatabase returned failure for /p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit
+Traceback (most recent call last):
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_driver.py", line 9, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/visitRender_copperFoamCompression2D.py", line 6, in <module>
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 607, in main
+  File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D/copperFoam_visit_common.py", line 171, in open_database
+    raise FileNotFoundError("No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*")
+FileNotFoundError: No GEOS-MPM plot database found. Expected <run-dir>/siloFiles/mpm_cpdi_*
+\end{verbatim}
 \clearpage
 \section*{pdc}
 A small PDC cutter example with a cutter interacting with a substrate. The final visualization uses the stored three-dimensional VisIt GUI view and overlays the background grid with plastic-strain-magnitude pseudocolors for both particle regions.
-\textbf{Status:} post FAILED
+\textbf{Status:} complete
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.58\textwidth]{schematics/pdc_schematic.png}
@@ -298,9 +420,9 @@ A small PDC cutter example with a cutter interacting with a substrate. The final
 \end{itemize}
 \begin{figure}[H]
 \centering
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering initial image unavailable\end{minipage}}
-\fbox{\begin{minipage}[c][0.16\textheight][c]{0.45\textwidth}\centering final image unavailable\end{minipage}}
+\includegraphics[width=0.45\textwidth]{../pdc/output/pdc_final_plasticStrainMagnitude.png}
+\includegraphics[width=0.45\textwidth]{../pdc/output/pdc_final_plasticStrainMagnitude.png}
 \caption{Initial and final state for pdc.}
 \end{figure}
-\textbf{Missing expected products:} initial image, final image.
+\textbf{Output figures:} pdc\_final\_plasticStrainMagnitude.png, pdc\_initial\_velocity.png
 \end{document}
