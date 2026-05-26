@@ -25,6 +25,7 @@ using namespace dataRepository;
 
 CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
+  m_enabled( 0 ),
   m_initialized( 0 ),
   m_czVolumeNormalization( 1 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
@@ -46,11 +47,17 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of cohesive region constitutive model");
 
+  registerWrapper( "enabled", &m_enabled ).
+    setInputFlag( InputFlags::FALSE).
+    setApplyDefaultValue( m_enabled ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag to enable the cohesive zone region");
+
   registerWrapper( "initialized", &m_initialized ).
     setInputFlag( InputFlags::FALSE).
     setApplyDefaultValue( m_initialized ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Flag marking whether cohesive zone has already be initialized.");
+    setDescription( "Flag marking whether cohesive zone region has already be initialized.");
 
   registerWrapper( "tag", &m_tag ).
    setInputFlag( InputFlags::FALSE ).

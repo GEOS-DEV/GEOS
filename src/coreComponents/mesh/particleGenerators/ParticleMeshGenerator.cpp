@@ -27,6 +27,8 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
+
 #include <cmath>
 
 namespace geos
@@ -287,7 +289,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array2d< real64 > particleVelocity( npInBlock, 3 );
     array3d< real64 > particleMaterialDirection( npInBlock, 3, 3 );
     array1d< int > particleGroup( npInBlock );
-    array1d< int > particleSurfaceFlag( npInBlock );
+    array1d< integer > particleSurfaceFlag( npInBlock );
     array1d< real64 > particleDamage( npInBlock );
     array1d< real64 > particlePorosity( npInBlock );
     array1d< real64 > particleTemperature( npInBlock );

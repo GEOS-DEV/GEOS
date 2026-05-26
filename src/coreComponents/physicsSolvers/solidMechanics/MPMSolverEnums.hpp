@@ -74,11 +74,11 @@ namespace mpm
    */
   enum struct SurfaceFlag : integer
   {
-    Interior,
-    FullyDamaged,
-    Surface,
-    Cohesive,
-    DamagedCohesive
+    Interior = 0,
+    FullyDamaged = 1,
+    Surface = 2,
+    Cohesive = 3,
+    DamagedCohesive = 4
   };
 
   /**
@@ -189,6 +189,13 @@ ENUM_STRINGS( mpm::BoundaryConditionOption,
               "Moving",
               "Contact" );
 
+ENUM_STRINGS( mpm::SurfaceFlag,
+              "Interior",
+              "FullyDamaged",
+              "Surface",
+              "Cohesive",
+              "DamagedCohesive" );
+
 ENUM_STRINGS( mpm::InterpolationOption,
               "Linear",
               "Cosine",
@@ -233,6 +240,18 @@ ENUM_STRINGS( mpm::GPUSchemeOption,
 ENUM_STRINGS( mpm::NormalsAndPositionsMethodOption,
               "LogisticRegression",
               "DFGAndVolumeIntegration" );
+
+GEOS_HOST_DEVICE
+inline integer toInteger( SurfaceFlag const flag )
+{
+  return static_cast< integer >( flag );
+}
+
+GEOS_HOST_DEVICE
+inline SurfaceFlag toSurfaceFlag( integer const flag )
+{
+  return static_cast< SurfaceFlag >( flag );
+}
 
 } // namespace mpm
 

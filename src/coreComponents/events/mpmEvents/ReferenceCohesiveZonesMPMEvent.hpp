@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CohesiveZoneMPMEvent.hpp
+ * @file ReferenceCohesiveZoneMPMEvent.hpp
  */
 
-#ifndef GEOSX_COHESIVEZONE_MPMEVENT_HPP_
-#define GEOSX_COHESIVEZONE_MPMEVENT_HPP_
+#ifndef GEOSX_REFERENCECOHESIVEZONES_MPMEVENT_HPP_
+#define GEOSX_REFERENCECOHESIVEZONES_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -27,25 +27,25 @@ namespace geos
 {
 
 /**
- * @class CohesiveZoneMPMEvent
+ * @class ReferenceCohesiveZonesMPMEvent
  *
  * This class implements the material swap mpm event for the solid mechanics material point method solver
  */
-class CohesiveZoneMPMEvent : public MPMEventBase
+class ReferenceCohesiveZonesMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  CohesiveZoneMPMEvent( const string & name,
+  ReferenceCohesiveZonesMPMEvent( const string & name,
                                  Group * const parent );
 
   /// Destructor
-  virtual ~CohesiveZoneMPMEvent() override;
+  virtual ~ReferenceCohesiveZonesMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "CohesiveZone"; }
+  static string catalogName() { return "ReferenceCohesiveZones"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -93,4 +93,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_COHESIVEZONE_MPMEVENT_HPP_ */
+#endif /* GEOSX_REFERENCECOHESIVEZONES_MPMEVENT_HPP_ */

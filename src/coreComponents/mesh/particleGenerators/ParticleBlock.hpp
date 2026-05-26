@@ -131,14 +131,14 @@ public:
   void setParticleGroup( array1d< int > const particleGroup )
   { m_particleGroup = particleGroup; } // TODO: Rename to particleContactGroup
 
-  array1d< int > getParticleSurfaceFlag() const override
+  array1d< integer > getParticleSurfaceFlag() const override
   { return m_particleSurfaceFlag; }
 
   /**
    * @brief Set the list of particle surface flags in this subregion.
    * @param particleSurfaceFlag The input list of surface flags.
    */
-  void setParticleSurfaceFlag( array1d< int > const particleSurfaceFlag )
+  void setParticleSurfaceFlag( array1d< integer > const particleSurfaceFlag )
   { m_particleSurfaceFlag = particleSurfaceFlag; }
 
   array1d< real64 > getParticleDamage() const override
@@ -300,7 +300,7 @@ private:
   array1d< int > m_particleGroup;
 
   /// Member level field for the particle surface flag.
-  array1d< int > m_particleSurfaceFlag;
+  array1d< integer > m_particleSurfaceFlag;
 
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;

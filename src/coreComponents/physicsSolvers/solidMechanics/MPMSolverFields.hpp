@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_MPMSOLVERBASEFIELDS_HPP_
 
 #include "mesh/MeshFields.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -245,7 +246,7 @@ DECLARE_FIELD( particleDamageGradient,
 
 DECLARE_FIELD( particleSurfaceFlag,
                "particleSurfaceFlag",
-               array1d< int >,
+               array1d< integer >,
                0,
                LEVEL_1,
                WRITE_AND_READ,
@@ -442,6 +443,22 @@ DECLARE_FIELD( particleEstimatedSurfacePosition,
                LEVEL_0,
                WRITE_AND_READ,
                "particleEstimatedSurfacePosition" );
+
+               DECLARE_FIELD( particleDamageHessian,
+               "particleDamageHessian",
+               array3d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleDamageHessian" );
+
+DECLARE_FIELD( particleDamageHessianL2Norm,
+               "particleDamageHessianL2Norm",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleDamageHessianL2Norm" );
 
 } // namespace mpm
 } // namespace fields

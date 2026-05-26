@@ -25,6 +25,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
 #include "ToParticleRelation.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 namespace geos
 {
@@ -114,13 +115,13 @@ public:
    * @brief Get the contact group of each particle in this subregion.
    * @return an arrayView1d of const particle surface flags
    */
-  arrayView1d< int const > getParticleSurfaceFlag() const
+  arrayView1d< integer const > getParticleSurfaceFlag() const
   { return m_particleSurfaceFlag; }
 
   /**
    * @copydoc getParticleSurfaceFlag() const
    */
-  arrayView1d< int > getParticleSurfaceFlag()
+  arrayView1d< integer > getParticleSurfaceFlag()
   { return m_particleSurfaceFlag; }
 
   /**
@@ -592,7 +593,7 @@ protected:
   array1d< int > m_particleGroup;
 
   /// Member level field for the particle surface flag.
-  array1d< int > m_particleSurfaceFlag;
+  array1d< integer > m_particleSurfaceFlag;
 
   /// Member level field for the particle damage.
   array1d< real64 > m_particleDamage;

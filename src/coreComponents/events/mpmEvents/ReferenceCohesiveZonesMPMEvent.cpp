@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CohesiveZoneMPMEvent.cpp
+ * @file ReferenceCohesiveZonesMPMEvent.cpp
  */
 
-#include "CohesiveZoneMPMEvent.hpp"
+#include "ReferenceCohesiveZonesMPMEvent.hpp"
 
 #include "constitutive/cohesiveZone/CohesiveZoneBase.hpp"
 
@@ -25,7 +25,7 @@ namespace geos
 
 using namespace dataRepository;
 
-CohesiveZoneMPMEvent::CohesiveZoneMPMEvent( const string & name,
+ReferenceCohesiveZonesMPMEvent::ReferenceCohesiveZonesMPMEvent( const string & name,
                                                               Group * const parent ):
   MPMEventBase( name, parent ),
   m_czVolumeNormalization( 1 ),
@@ -66,7 +66,7 @@ CohesiveZoneMPMEvent::CohesiveZoneMPMEvent( const string & name,
     setDescription( "Method for computing particle surface normals and positions" );
 }
 
-CohesiveZoneMPMEvent::~CohesiveZoneMPMEvent()
+ReferenceCohesiveZonesMPMEvent::~ReferenceCohesiveZonesMPMEvent()
 {}
 
 // Group * CohesiveZoneMPMEvent::createChild( string const & childKey, string const & childName )
@@ -77,17 +77,28 @@ CohesiveZoneMPMEvent::~CohesiveZoneMPMEvent()
 //                                                     childName, this ) );
 // }
 
-void CohesiveZoneMPMEvent::postInputInitialization()
+void ReferenceCohesiveZonesMPMEvent::postInputInitialization()
 {
   MPMEventBase::postInputInitialization();
 
-  GEOS_ERROR_IF( !( ( m_regionNames.size() == m_constitutiveModelNames.size() ) & ( m_constitutiveModelNames.size() == static_cast< long unsigned int >( m_czTags.size() ) ) ), "Region names, constitutive model names, and cz tags must be the same length" );
-  GEOS_ERROR_IF( m_regionNames.size() == 0, "Region names, constitutive model names, and cz tags must not be empty" );
+  GEOS_ERROR_IF( m_regionNames.size() == 0,
+                 "ReferenceCohesiveZone event must specify at least one region name." );
 
-  GEOS_ERROR_IF( !( m_czVolumeNormalization == 0 || m_czVolumeNormalization == 1 ), "czVolumeNormalization can only be 0 or 1" );
-  GEOS_ERROR_IF( !( m_computeNormalsAndPositions == 0 || m_computeNormalsAndPositions == 1 ), "computeNormalsAndPositions can only be 0 or 1" );
+  bool const hasModels = m_constitutiveModelNames.size() > 0;
+  bool const hasTags = m_czTags.size() > 0;
+
+  GEOS_ERROR_IF( hasModels && hasTags,
+                 "ReferenceCohesiveZones event must specify both constitutiveModels and czTags" );
+
+  GEOS_ERROR_IF( m_regionNames.size() != m_constitutiveModelNames.size() ||
+                 m_regionNames.size() != static_cast< size_t >( m_czTags.size() ),
+                 "ReferenceCohesiveZones event regionNames, constitutiveModels, and czTags "
+                 "must have the same length." );
+
+  GEOS_ERROR_IF( !( m_czVolumeNormalization == 0 || m_czVolumeNormalization == 1 ),
+                 "czVolumeNormalization can only be 0 or 1." );
 }
 
-REGISTER_CATALOG_ENTRY( MPMEventBase, CohesiveZoneMPMEvent, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( MPMEventBase, ReferenceCohesiveZonesMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

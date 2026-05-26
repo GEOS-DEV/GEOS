@@ -120,7 +120,10 @@ public:
   string const & getConstitutiveModelName() const { return m_constitutiveModelName; }
 
   void setInitialized( int const & initialized ) { m_initialized = initialized; }
-  int isInitalized() const { return m_initialized; }
+  int isInitialized() const { return m_initialized; }
+
+  void setEnabled( int const & enabled ) { m_enabled = enabled; }
+  int isEnabled() const { return m_enabled; }
 
   /**
    * @brief Get the global ID of each cohesive zone node.
@@ -225,6 +228,7 @@ private:
 
   CohesiveZoneRegionBase & operator=( const CohesiveZoneRegionBase & rhs );
 
+  int m_enabled;
   int m_initialized;
   int m_czVolumeNormalization;
   int m_computeParticleSurfaceNormalsAndPositions;

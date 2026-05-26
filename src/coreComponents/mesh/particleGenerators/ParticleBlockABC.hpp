@@ -19,6 +19,7 @@
 #include "mesh/ParticleType.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/DataTypes.hpp"
+#include "physicsSolvers/solidMechanics/MPMSolverEnums.hpp"
 
 #include <vector>
 
@@ -72,7 +73,7 @@ public:
    * @brief Get the list of particle surface flag values in this subregion.
    * @return the list of particle surface flag values in this subregion.
    */
-  virtual array1d< int > getParticleSurfaceFlag() const = 0;
+  virtual array1d< integer > getParticleSurfaceFlag() const = 0;
 
   /**
    * @brief Get the list of particle damage values in this subregion.

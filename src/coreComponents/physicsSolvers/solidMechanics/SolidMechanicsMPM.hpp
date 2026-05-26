@@ -170,6 +170,7 @@ public:
     static constexpr char const * gridBackgroundStressString() { return "gridBackgroundStress"; }
     static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
     static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
+    static constexpr char const * gridHasBinderString() { return "gridHasBinder"; }
     static constexpr char const * gridCenterOfMassString() { return "gridCenterOfMass"; }
     static constexpr char const * gridCenterOfVolumeString() { return "gridCenterOfVolume"; }
     static constexpr char const * gridDisplacementString() { return "gridDisplacement"; }
@@ -221,7 +222,6 @@ public:
 
   void triggerEvents( const real64 dt,
                       const real64 time_n,
-                      DomainPartition & domain,
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
@@ -685,7 +685,7 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  bool markSurfaceAsDamage( int const & surfaceFlag );
+  bool markSurfaceAsDamage( integer const & surfaceFlag );
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
 
@@ -759,7 +759,8 @@ public:
 
   void enforceCohesiveLaw( real64 dt,
                            ParticleManager & particleManager,
-                           NodeManager & nodeManager );
+                           NodeManager & nodeManager,
+                           SpatialPartition & partition );
 
   GEOS_HOST_DEVICE
   real64 computeDistanceToParticleSurface( real64 ( &normal )[3],
@@ -833,11 +834,11 @@ public:
 
   void interpolateTable( real64 x,
                          real64 dx,
-                         array2d< real64 > table,
+                         arrayView2d< real64 const > const & table,
                          arrayView1d< real64 > output,
                          arrayView1d< real64 > outputRate,
-                         mpm::InterpolationOption interpolationType );
-
+                         mpm::InterpolationOption const & interpolationType );
+  
   void interpolateValueInRange( real64 const & x,
                                 real64 const & xmin,
                                 real64 const & xmax,
@@ -849,8 +850,6 @@ public:
   void interpolateFTable( real64 dt, real64 time_n );
 
   void interpolateStressTable( real64 dt, real64 time_n );
-
-  void interpolateTemperatureTable( real64 dt, real64 time_n );
 
   void gridToParticle( real64 dt,
                        ParticleManager & particleManager,
@@ -1097,6 +1096,13 @@ public:
                         NodeManager & nodeManager,
                         SpatialPartition & partition );
 
+  void computeDamageHessian( ParticleManager & particleManager );
+
+  void czSurfaceFlagUpdate( ParticleManager & particleManager );
+
+  void tagBinderCZSurfaces( ParticleManager & particleManager,
+                            NodeManager & nodeManager );
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 Mod( real64 num, real64 denom );
@@ -1111,6 +1117,13 @@ public:
   int factorial( int n );
 
 protected:
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode );
+
+  void processInputFileRecursive( xmlWrapper::xmlDocument & xmlDocument,
+                                  xmlWrapper::xmlNode & targetNode,
+                                  xmlWrapper::xmlNodePos const & targetNodePos );
+
   virtual void postInputInitialization() override final;
 
   virtual void postRestartInitialization() override final;
@@ -1262,8 +1275,6 @@ protected:
   real64 m_surfaceNormalAndPositionDamageThreshold;
   real64 m_surfaceQualityThreshold;  // value [0,1] 0: no restriction on separability.  1: perfect alignment betweeen particle and grid DFG (no curvature) required.
   real64 m_surfaceTensionCoefficient;
-  array2d< real64 > m_temperatureTable;
-  mpm::InterpolationOption m_temperatureTableInterpType;
   real64 m_thinFeatureDFGThreshold;
   mpm::TimeIntegrationOption m_timeIntegrationOption;
   real64 m_totalBinderVolume;
