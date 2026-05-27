@@ -110,11 +110,29 @@ pfw["updateOrder"] = 2
 pfw["damageFieldPartitioning"] = 0
 pfw["needsNeighborList"] = 0
 
-# pfw["reactionHistory"] = 1
-# pfw["reactionWriteInterval"] = stopTime / 1000.0
-# pfw["boxAverageHistory"] = 1
-# pfw["boxAverageWriteInterval"] = stopTime / 1000.0
+# =============================================================================
+# Profile history output
+# =============================================================================
 
+pfw["profileHistory"] = 1
+
+# Literal x-direction profile. This slices the domain normal to x and writes
+# one CSV file per requested variable.
+pfw["profileDirection"] = "x"
+
+# 0 means use the background-grid resolution in x.
+# For this copperFoamCompression setup, that corresponds to the x grid spacing.
+pfw["profileNumSlices"] = 0
+
+# Write at the same cadence as reactionHistory and boxAverageHistory.
+# Do not also set profileCycleInterval > 0.
+pfw["profileWriteInterval"] = stopTime / 1000.0
+pfw["profileCycleInterval"] = 0
+
+# String form is safest with the current PFW pass-through behavior.
+pfw["profileVariables"] = "{ density, volumeFraction, velocityX, velocityY, velocityZ, kineticEnergy, damage, stressXX, stressYY, stressZZ, plasticStrainMagnitude }"
+
+# Limits for particle deletion.  
 pfw["maxParticleVelocity"] = 10.0
 pfw["minParticleJacobian"] = 0.01
 pfw["maxParticleJacobian"] = 10.0
