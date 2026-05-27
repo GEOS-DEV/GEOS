@@ -38,7 +38,7 @@ weibullVolume = 1.0
 enableEnergyFailureCriterion = 1
 fractureToughness = 1.591*(.001)*np.sqrt(1000.)     # fracture toughness, KIc:  GPa mm^1/2
 constrainedModulus = bulk + 4./3.*shear
-fractureEnergyReleaseRate = fractureToughness / constrainedModulus
+fractureEnergyReleaseRate = fractureToughness * fractureToughness / constrainedModulus
 
 # LOADING ----------------------------------------------------------------------------
 waveSpeed = np.sqrt( (bulk+1.333*shear)/density )

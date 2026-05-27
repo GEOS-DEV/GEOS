@@ -22086,9 +22086,16 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     //   } );
     // }
 
-    if( constitutiveModel.hasWrapper( "crackTipDistance" ) )
+    char const * crackTipDistanceKey = "distanceToCrackTip";
+    if( !constitutiveModel.hasWrapper( crackTipDistanceKey ) &&
+        constitutiveModel.hasWrapper( "crackTipDistance" ) )
     {
-      arrayView1d< real64 > const constitutiveCrackTipDistance = constitutiveModel.getReference< array1d< real64 > >( "crackTipDistance" );
+      crackTipDistanceKey = "crackTipDistance";
+    }
+
+    if( constitutiveModel.hasWrapper( crackTipDistanceKey ) )
+    {
+      arrayView1d< real64 > const constitutiveCrackTipDistance = constitutiveModel.getReference< array1d< real64 > >( crackTipDistanceKey );
       arrayView1d< real64 const > const particleCrackTipDistance = subRegion.getField< fields::mpm::particleCrackTipDistance >();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {

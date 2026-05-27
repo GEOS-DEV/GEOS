@@ -22,8 +22,10 @@ np.random.seed(1)
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD # gets communication pool 
+g_comm_world = comm
 g_rank = comm.Get_rank()  # gets rank of current process 
 num_ranks = comm.Get_size() # total number of processes
+g_num_ranks = num_ranks
 
 # ===========================================
 # TYPES
@@ -578,7 +580,7 @@ class maxFlawRadius:
         if not readFromFile:
             self.ranks_per_side = int(np.floor(np.cbrt(g_num_ranks)))
             self.num_ranks_used = self.ranks_per_side**self.dim
-            self.comm = g_comm_world.Create(g_comm_world.group.Incl([i for i in range(self.num_ranks_used)]))
+            self.comm = g_comm_world.Create(g_comm_world.Get_group().Incl([i for i in range(self.num_ranks_used)]))
 
             self.rank_coord = self.rankIndexToCoord(g_rank)
 
@@ -1056,7 +1058,7 @@ class maxFlawRadius2D:
         if not readFromFile:
             self.ranks_per_side = math.floor(g_num_ranks**(1/self.dim))
             self.num_ranks_used = self.ranks_per_side**self.dim
-            self.comm = g_comm_world.Create(g_comm_world.group.Incl([i for i in range(self.num_ranks_used)]))
+            self.comm = g_comm_world.Create(g_comm_world.Get_group().Incl([i for i in range(self.num_ranks_used)]))
 
             self.rank_coord = self.rankIndexToCoord(g_rank)
 
@@ -1559,9 +1561,14 @@ def combvec(offsets):
 
 
 # Randomly samples points on surface of unit n-sphere
-def random_direction(dim: int=3):
-    direction = np.random.normal(size=dim)
-    return direction / np.linalg.norm(direction)
+def random_direction(dim: int=3, rng=None):
+    generator = np.random if rng is None else rng
+    direction = generator.normal(size=dim)
+    norm = np.linalg.norm(direction)
+    while norm == 0.0:
+        direction = generator.normal(size=dim)
+        norm = np.linalg.norm(direction)
+    return direction / norm
 
 
 # Adds images of pores for nearest neighbors
@@ -8444,6 +8451,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     self.x1 = self.x1[:self.dim]
     self.randomMatDir = randomMatDir
     self.seed = weibullSeed
+    self.rng = np.random.default_rng( int( weibullSeed ) )
 
     if vpts is None:
       self.vpts = poisson(flawSize, x0=self.x0, dx=self.dx[:self.dim], seed=self.seed, dim=self.dim)
@@ -8484,7 +8492,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     cellStrengthScale = []
     for i in range(self.npts):
       s = ((weibullVolume / vol[i]) * 
-          (np.log(np.random.uniform(1e-20, 1.0)) / np.log(0.5))) ** (1.0 / weibullModulus)
+          (np.log(self.rng.uniform(1e-20, 1.0)) / np.log(0.5))) ** (1.0 / weibullModulus)
       cellStrengthScale.append(s)
     self.cellStrengthScale = np.array(cellStrengthScale)
 
@@ -8492,7 +8500,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     cellMatDir=[]
     if ( self.randomMatDir ): 
       for i in range(0,self.npts):
-        d = random_direction(dim=self.dim)
+        d = random_direction(dim=self.dim, rng=self.rng)
         if self.dim == 2:
           d = np.append(d, 0.0)
         u1, u2, u3 = generate_orthonormal_axes(d)
@@ -8709,7 +8717,8 @@ class sizeEffectVoronoiWeibullBoxWrapper(BaseWrapper):
 
     # self.vor = vor #CC: Temporary fix to grab from particle file writer for surface detection of voronoi cells
 
-    self.rr = [np.random.uniform(1e-20,1.0) for i in range(self.npts)] # Store random weibull perturbations for strength query
+    rng = np.random.default_rng( int( weibullSeed ) )
+    self.rr = [rng.uniform(1e-20,1.0) for i in range(self.npts)] # Store random weibull perturbations for strength query
 
     # compute volume of each voronoi cell
     # vol = np.zeros(vor.npoints)
@@ -8739,7 +8748,7 @@ class sizeEffectVoronoiWeibullBoxWrapper(BaseWrapper):
         for v in vertices:
           v3d = mapToRange(v, self.x0, self.x1)
 
-          if subObject.isInterior(v3d, fromFile=True):
+          if subObject.isInterior(v3d, 0.0) >= 0:
             numInteriorVertices += 1
         
         vol[i] = vol[i]*numInteriorVertices/numVertices

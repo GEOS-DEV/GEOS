@@ -743,7 +743,9 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     real64 fractureProcessZoneRadius =
       LvArray::math::max( 1.e-12, constrainedModulus * fractureEnergyReleaseRate /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
-    m_crackTipStressConcentration[k] = LvArray::math::max( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    // LEFM near-tip stress scales as 1/sqrt(r), so the strength reduction is
+    // active inside the process-zone radius and tends to one outside it.
+    m_crackTipStressConcentration[k] = LvArray::math::max( 1.0, LvArray::math::sqrt( fractureProcessZoneRadius / LvArray::math::max( 1.e-12, m_distanceToCrackTip[k] ) ) );
   }
 
   // Check for tensile failure in preferred direction

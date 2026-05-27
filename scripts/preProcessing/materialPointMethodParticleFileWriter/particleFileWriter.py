@@ -217,9 +217,10 @@ def _normalize_generated_geos_xml(text: str) -> str:
   if not text:
     return text
 
-  # Common legacy typo that used to be accepted by old examples but is now an
-  # unused SolidMechanics_MPM attribute.
-  text = text.replace("planeStrain", "planeStrain")
+  # Common legacy typos that used to be accepted by old examples but are now
+  # unused SolidMechanics_MPM attributes.
+  text = text.replace("planeSrain", "planeStrain")
+  text = text.replace("planeStrian", "planeStrain")
 
   def _get_attr(attrs: str, name: str):
     m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
@@ -857,6 +858,11 @@ print("\nHopefully that looks ok.")
 # Normalize legacy PFW input keys that should not become solver XML attributes.
 # Keep planeStrain in pfw: PFW uses it to generate the reduced particle layer,
 # and the solver receives the same flag in the SolidMechanics_MPM XML node.
+for _legacyPlaneStrainKey in ("planeSrain", "planeStrian"):
+  if _legacyPlaneStrainKey in pfw and "planeStrain" not in pfw:
+    pfw["planeStrain"] = pfw.pop( _legacyPlaneStrainKey )
+  else:
+    pfw.pop( _legacyPlaneStrainKey, None )
 pfw.pop("useConstantTimeStep", None)
 
 tabIndent = 3*"  "  
