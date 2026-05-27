@@ -122,8 +122,8 @@ pfw["fTable"]=[[0.0,        1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
-# pfw["autoRestart"]=False
+pfw["mSubmitJobs"]=True
+pfw["autoRestart"]=False
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
 
@@ -132,32 +132,37 @@ K = 38.67 # bulk modulus (GPa)
 G = 29.0 # shear modulus (GPa)
 
 pfw["materials"] = ["elasticIsotropic"] # Include only the particle constitutive models
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz1"
-    maxNormalStress="0.1"
-    maxShearStress="0.1"
+    defaultMaxNormalStress="0.1"
+    defaultMaxShearStress="0.1"
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
     maxNormalDisplacement="0.1"/>"""
 
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
+    constitutiveModel="cz1"
+    tag="0"/>"""
+
 # EVENTS ------------------------------------------------------------------------------------
 
-pfw["mpmEventsString"]="""
-<CohesiveZone
-    name="cz1" 
-    startTime=
-""" + '"' + str(stopTime/4) + '"' + """
-    endTime=""" + '"' + str(stopTime) + '"' + """
-    constitutiveModel="cz1"
-    computeNormalsAndPositions=""" + '"' + str(0) + '"' + """
-    normalsAndPositionsMethod=""" + '"' + str("LogisticRegression") + '"' + """/>
+pfw["mpmEventsString"] = f"""
+<ReferenceCohesiveZones
+    name="cz1"
+    startTime="{stopTime / 4}"
+    endTime="{stopTime}"
+    regionNames="{{ cz1 }}"
+    computeNormalsAndPositions="0"
+    normalsAndPositionsMethod="LogisticRegression"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

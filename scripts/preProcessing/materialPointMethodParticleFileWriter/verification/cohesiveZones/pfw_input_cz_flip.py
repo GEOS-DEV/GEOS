@@ -7,7 +7,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 stopTime = 2.0
 
 # Domain ---------------------------------------------------------------------------------
@@ -113,29 +113,36 @@ K = 38.67 # bulk modulus (GPa)
 G = 29.0 # shear modulus (GPa)
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz"
-    maxNormalStress="0.01"
-    maxShearStress="0.01"
+    defaultMaxNormalStress="0.01"
+    defaultMaxShearStress="0.01"
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"/>"""
 
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz"
+    constitutiveModel="cz"
+    tag="0"/>"""
+
 # EVENTS ------------------------------------------------------------------------------------
 
-pfw["mpmEventsString"]="""
-<CohesiveZone 
-    constitutiveModel="cz"
+pfw["mpmEventsString"] = """
+<ReferenceCohesiveZones
+    name="cz"
+    regionNames="{cz}"
     czVolumeNormalization="1"
-    startTime=
-""" + '"' + str(0.0) + '"' + """/>
+    startTime="{0.0}"/>
 <TransformParticles
-    startTime=""" + '"' + str(1.0) + '"' + """/>"""
+    startTime="1.0"/>"""
+
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
 def _vv_fast_int(_value, _default):

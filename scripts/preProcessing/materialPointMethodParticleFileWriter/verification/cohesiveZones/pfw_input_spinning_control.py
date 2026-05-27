@@ -122,12 +122,12 @@ K = 38.67 # bulk modulus (GPa)
 G = 29.0 # shear modulus (GPa)
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>"""
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>"""
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
 def _vv_fast_int(_value, _default):

@@ -127,22 +127,22 @@ pfw["fTable"]=[[0.0,        1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
-# pfw["autoRestart"]=False
+pfw["mSubmitJobs"]=True
+pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz1"
-    maxNormalStress="0.1"
-    maxShearStress="0.1"
+    defaultMaxNormalStress="0.1"
+    defaultMaxShearStress="0.1"
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
@@ -151,27 +151,54 @@ pfw["materialPropertyString"]="""
     name="cz2"
     thickness="0.1"
     bulkModulus="2.8"
+    bulkModulusA="0.0"
+    bulkModulusB="1.0"
+    bulkModulusT0="0.0"
     shearModulus="0.2"
+    shearModulusA="0.0"
+    shearModulusB="1.0"
+    shearModulusT0="0.0"
     yieldStrength0="0.016"
+    yieldStrengthA="0.0"
+    yieldStrengthB="1.0"
+    yieldStrengthT0="0.0"
     r0="0.012"
+    r0A="0.0"
+    r0B="1.0"
+    r0T0="0.0"
     r1="0.1"
     r2="1.0"
     Gr="0.0081"
-    maxStretch="3.0"/>"""
+    GrA="0.0"
+    GrB="1.0"
+    GrT0="0.0"
+    maximumStretch="3.0"
+    maximumStretchA="0.0"
+    maximumStretchB="1.0"
+    maximumStretchT0="0.0"/>"""
 
-pfw["mpmEventsString"]="""
-<CohesiveZone
-    name="cz1" 
-    startTime=
-""" + '"' + str(0.0) + '"' + """
-    endTime=""" + '"' + str(stopTime/2) + '"' + """
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
     constitutiveModel="cz1"
-    computeNormalsAndPositions=""" + '"' + str(1) + '"' + """
-    normalsAndPositionsMethod=""" + '"' + str("LogisticRegression") + '"' + """/>
-<CohesiveZone 
+    tag="0"/>
+<CohesiveZoneRegion
     name="cz2"
-    startTime=""" + '"' + str(stopTime/2) + '"' + """
-    constitutiveModel="cz2"/>
+    constitutiveModel="cz2"
+    tag="0"/>"""
+
+pfw["mpmEventsString"] = f"""
+<ReferenceCohesiveZones
+    name="cz1"
+    startTime="0.0"
+    endTime="{stopTime / 2}"
+    regionNames="{cz1}"
+    computeNormalsAndPositions="1"
+    normalsAndPositionsMethod="LogisticRegression"/>
+<ReferenceCohesiveZones
+    name="cz2"
+    startTime="{stopTime / 2}"
+    regionNames="{cz2}"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

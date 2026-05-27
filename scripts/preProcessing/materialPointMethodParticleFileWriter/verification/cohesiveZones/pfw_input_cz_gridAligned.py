@@ -7,7 +7,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 stopTime = 20.0
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -114,35 +114,41 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
-# pfw["autoRestart"]=True
+pfw["mSubmitJobs"]=True
+pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz1"
-    maxNormalStress="0.1"
-    maxShearStress="0.1"
+    defaultMaxNormalStress="0.1"
+    defaultMaxShearStress="0.1"
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
     maxNormalDisplacement="0.1"/>"""
 
-pfw["mpmEventsString"]="""
-<CohesiveZone
-    name="cz1" 
-    startTime=
-""" + '"' + str(0.0) + '"' + """
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
     constitutiveModel="cz1"
+    tag="0"/>"""
+
+pfw["mpmEventsString"] = """
+<ReferenceCohesiveZones
+    name="cz1"
+    startTime="0.0"
+    regionNames="{cz1}"
     czVolumeNormalization="1"/>
 """
+
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
 def _vv_fast_int(_value, _default):

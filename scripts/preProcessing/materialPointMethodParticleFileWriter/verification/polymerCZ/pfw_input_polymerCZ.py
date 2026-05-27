@@ -84,14 +84,8 @@ pfw["updateOrder"]=2
 
 pfw["useEvents"]=1
 
-pfw["enableCohesiveFailure"]=0
-pfw["cohesiveLaw"]="Polymer"
-pfw["maxCohesiveNormalStress"]=0.1 # GPa (Not used for polymer cz model)
-pfw["maxCohesiveShearStress"]=0.1 # GPa (Not used for polymer cz model)
-pfw["characteristicNormalDisplacement"] = 0.1 # mm
-pfw["characteristicTangentialDisplacement"]= 0.1 # mm (Not used for polymer cz model)
-pfw["maxCohesiveNormalDisplacement"]=10.0 # mm (Not used for polymer cz model)
-pfw["maxCohesiveTangentialDisplacement"]=10.0 # mm (Not used for polymer cz model)
+# Cohesive failure is configured through the PolymerCohesiveZone constitutive model,
+# the CohesiveZoneRegion below, and the ReferenceCohesiveZones event.
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
@@ -133,19 +127,55 @@ pfw["mSubmitJobs"]=False
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materials"] = ["elasticIsotropic"]
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>"""
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
+<PolymerCohesiveZone
+    name="cz1"
+    thickness="0.1"
+    bulkModulus="2.8"
+    bulkModulusA="0.0"
+    bulkModulusB="1.0"
+    bulkModulusT0="0.0"
+    shearModulus="0.2"
+    shearModulusA="0.0"
+    shearModulusB="1.0"
+    shearModulusT0="0.0"
+    yieldStrength0="0.016"
+    yieldStrengthA="0.0"
+    yieldStrengthB="1.0"
+    yieldStrengthT0="0.0"
+    r0="0.012"
+    r0A="0.0"
+    r0B="1.0"
+    r0T0="0.0"
+    r1="0.1"
+    r2="1.0"
+    Gr="0.0081"
+    GrA="0.0"
+    GrB="1.0"
+    GrT0="0.0"
+    maximumStretch="3.0"
+    maximumStretchA="0.0"
+    maximumStretchB="1.0"
+    maximumStretchT0="0.0"/>"""
 
-pfw["mpmEventsString"]="""
-<CohesiveZone 
-    time=
-""" + '"' + str(0.0) + '"' + """
-    interval=""" + '"' + str(stopTime) + '"' + """/>
-</MPMEvents>
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
+    constitutiveModel="cz1"
+    tag="0"/>"""
+
+pfw["mpmEventsString"] = f"""
+<ReferenceCohesiveZones
+    name="cz1"
+    startTime="{0.0}"
+    endTime="{stopTime}"
+    regionNames="{{ cz1 }}"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

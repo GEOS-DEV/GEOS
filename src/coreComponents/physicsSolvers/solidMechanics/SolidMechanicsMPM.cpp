@@ -23449,45 +23449,61 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
   {
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     const ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
-    string constitutiveModelName = constitutiveModel.getCatalogName();
 
-    arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
-    arrayView1d< int const > particleDomainScaledFlag;
-    if( cpdiDomainScaling == 1 )
-    {
-      particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
-    }
+    bool const isGasMaterial = constitutiveModel.getCatalogName() == "Gas";
+    bool const shouldResetDeformationGradientInSubRegion = isGasMaterial || resetDefGradForFullyDamagedParticles == 1 || resetDefGradForScaledSurfaceParticles == 1;
 
-    arrayView2d< real64 const > particleSurfaceNormal;
-    arrayView2d< real64 const > particleSurfacePosition;
-    arrayView2d< real64 const > particleSurfaceTraction;
-    arrayView2d< real64 > particleReferenceSurfaceNormal;
-    arrayView2d< real64 > particleReferenceSurfacePosition;
-    arrayView2d< real64 > particleReferenceSurfaceTraction;
-    if( m_resetDefGradForScaledSurfaceParticles )
+    if( shouldResetDeformationGradientInSubRegion )
     {
-      particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
-      particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
-      particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
-      particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
-      particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
-    }
+      arrayView1d< int const > particleDomainScaledFlag;
+      if( cpdiDomainScaling == 1 )
+      {
+        particleDomainScaledFlag = subRegion.getField< fields::mpm::particleDomainScaledFlag >();
+      }
 
-    if( constitutiveModelName == "Gas" ||
-        resetDefGradForFullyDamagedParticles == 1 ||
-        resetDefGradForScaledSurfaceParticles == 1 )
-    {
+      arrayView1d< integer const > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+      arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+
+      arrayView2d< real64 const > particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
+      arrayView2d< real64 const > particleSurfacePosition = subRegion.getParticleSurfacePosition();
+      arrayView2d< real64 const > particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
+      arrayView2d< real64 > particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
+      arrayView2d< real64 > particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
+      arrayView2d< real64 > particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
+
       arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
 
       SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        if( constitutiveModelName == "Gas" ||
-            ( ( ( ( particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) || particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive ) ) && resetDefGradForScaledSurfaceParticles == 1 ) || particleDamage[p] > 0.9999999 ) && cpdiDomainScaling == 1 &&
-              particleDomainScaledFlag[p] == 1  ) )
+
+        bool const isCohesiveSurfaceParticle =
+          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Cohesive ) ||
+          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::DamagedCohesive );
+
+        bool const isSurfaceLikeParticle =
+          particleSurfaceFlag[p] == mpm::toInteger( mpm::SurfaceFlag::Surface ) ||
+          isCohesiveSurfaceParticle;
+
+        bool const isFullyDamagedParticle =
+          resetDefGradForFullyDamagedParticles == 1 &&
+          particleDamage[p] > 0.9999999;
+
+        bool const isScaledParticle =
+          cpdiDomainScaling == 1 &&
+          particleDomainScaledFlag[p] == 1;
+
+        bool const resetForScaledSurfaceParticle =
+          resetDefGradForScaledSurfaceParticles == 1 &&
+          isScaledParticle &&
+          isSurfaceLikeParticle;
+
+        bool const resetForFullyDamagedParticle =
+          isScaledParticle &&
+          isFullyDamagedParticle;
+
+        if( isGasMaterial || resetForScaledSurfaceParticle || resetForFullyDamagedParticle )
         {
           real64 rotation[3][3] = {};
           real64 deformationGradient[3][3] = {};
@@ -23496,8 +23512,14 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
           //   rotation = polar_rotation(deformationGradient).
           //   J = det(particleDeformationGradient[p]).
           LvArray::tensorOps::copy< 3, 3 >( deformationGradient, particleDeformationGradient[p] );
-          LvArray::tensorOps::polarDecomposition< 3 >( rotation, deformationGradient );
           real64 J = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
+          real64 constexpr minResetJacobian = 1.0e-12;
+          if( !( J > minResetJacobian ) )
+          {
+            return; // Add flag to output warning to console
+          }
+          LvArray::tensorOps::polarDecomposition< 3 >( rotation, deformationGradient );
+  
 
           real64 U[3][3] = {};
           if( planeStrain == 1 )
@@ -23540,8 +23562,24 @@ void SolidMechanicsMPM::resetDeformationGradient( ParticleManager & particleMana
             //   particleReferenceSurfacePosition[p] = invF * particleSurfacePosition[p].
             LvArray::tensorOps::invert< 3 >( invCofF, cofF );
             LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceNormal[p], invCofF, particleSurfaceNormal[p] );
-            LvArray::tensorOps::normalize< 3 >( particleReferenceSurfaceNormal[p] );
+
+            real64 const normSquared =
+              LvArray::tensorOps::l2NormSquared< 3 >( particleReferenceSurfaceNormal[p] );
+
+            if( normSquared > 1.0e-24 )
+            {
+              LvArray::tensorOps::scale< 3 >(
+                particleReferenceSurfaceNormal[p],
+                1.0 / LvArray::math::sqrt( normSquared ) );
+            }
+            else
+            {
+              LvArray::tensorOps::fill< 3 >( particleReferenceSurfaceNormal[p], 0.0 );
+            }
+            
             LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfacePosition[p], invF, particleSurfacePosition[p] );
+
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleReferenceSurfaceTraction[p], invCofF, particleSurfaceTraction[p] );
           }
 
           // Tensor equation: particleDeformationGradient[p] = rotation * U.

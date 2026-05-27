@@ -141,27 +141,33 @@ pfw["autoRestart"]=False #True
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultYoungModulus=""" + '"' + str(E) + '"' + """
-    defaultPoissonRatio=""" + '"' + str(nu) + '"' + """/>
+    defaultDensity="{density}"
+    defaultYoungModulus="{E}"
+    defaultPoissonRatio="{nu}"/>
 <CoupledCohesiveZone
     name="cz"
-    maxNormalStress="0.1"
-    maxShearStress="0.1"
+    defaultMaxNormalStress="0.1"
+    defaultMaxShearStress="0.1"
     characteristicNormalDisplacement="0.1"
     characteristicTangentialDisplacement="0.1"
     maxNormalDisplacement="0.1"
     maxTangentialDisplacement="0.1"/>"""
 
-pfw["mpmEventsString"]="""
-<CohesiveZone 
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz"
     constitutiveModel="cz"
+    tag="0"/>"""
+
+pfw["mpmEventsString"] = """
+<ReferenceCohesiveZones
+    name="cz"
+    regionNames="{cz}"
     czVolumeNormalization="1"
-    startTime=
-""" + '"' + str(0.0) + '"' + """/>
+    startTime="0.0"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

@@ -128,27 +128,33 @@ pfw["mSubmitJobs"]=False
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <BicrystalCohesiveZone
     name="cz1"
-    maxNormalStress="0.1"
-    maxShearStress="0.1"
+    defaultMaxNormalStress="0.1"
+    defaultMaxShearStress="0.1"
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
     maxNormalDisplacement="0.1"/>"""
 
-pfw["mpmEventsString"]="""
-<CohesiveZone
-    name="cz1" 
-    startTime=
-""" + '"' + str(0.0) + '"' + """
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
     constitutiveModel="cz1"
+    tag="0"/>"""
+
+pfw["mpmEventsString"] = f"""
+<ReferenceCohesiveZones
+    name="cz1"
+    startTime="{0.0}"
+    endTime="{stopTime}"
+    regionNames="{{ cz1 }}"
     czVolumeNormalization="1"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---

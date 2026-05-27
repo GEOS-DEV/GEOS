@@ -47,7 +47,7 @@ def _upgrade_mpm_event_attributes(text: str) -> str:
   """Modernize legacy event attributes in PFW-supplied XML snippets.
 
   Older MPM inputs used time/interval on event nodes. Current GEOS MPM events
-  require startTime/endTime. If the old form is found, map time -> startTime and
+  use startTime/endTime. If the old form is found, map time -> startTime and
   interval -> endTime. This preserves the common legacy meaning used by the old
   PFW examples, where interval stored the end of the ramp/window.
   """
@@ -66,31 +66,154 @@ def _upgrade_mpm_event_attributes(text: str) -> str:
         tag = tag[:m.start()] + f'endTime={m.group(1)}{m.group(2)}{m.group(1)}' + tag[m.end():]
     return tag
 
-  event_names = "Anneal|TemperatureProfile|InitializeStress|ConfiningPressure|BoreholePressure|BodyForceUpdate|MaterialSwap|FrictionCoefficientSwap|Heal|PolymerHeal|CrystalHeal|MachineSample|ResetDeformationGradient|TransformParticles|DeformationUpdate|CohesiveZone"
+  event_names = "Anneal|TemperatureProfile|InitializeStress|ConfiningPressure|BoreholePressure|BodyForceUpdate|MaterialSwap|FrictionCoefficientSwap|Heal|PolymerHeal|CrystalHeal|MachineSample|ResetDeformationGradient|TransformParticles|DeformationUpdate|ReferenceCohesiveZones"
   text = re.sub(r'<(?:' + event_names + r')\b[^>]*?/?>', repl_tag, text)
 
-  def add_region_names(match):
-    tag = match.group(0)
-    if "regionNames" not in tag:
-      tag = tag[:-2] + ' regionNames="{ ParticleRegion1 }"/>' if tag.endswith("/>") else tag[:-1] + ' regionNames="{ ParticleRegion1 }">'
-    return tag
-  text = re.sub(r'<CohesiveZone\b[^>]*?/?>', add_region_names, text)
+  text = re.sub(r'<\s*(?:CohesiveZoneReference|CohesiveZone)\b', '<ReferenceCohesiveZones', text)
+  text = re.sub(r'</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>', '</ReferenceCohesiveZones>', text)
   return text
 
 
 def _xml_attr(attrs: str, name: str) -> str | None:
-  m = re.search(r'\b' + re.escape(name) + r'\s*=\s*"([^"]*)"', attrs)
-  return m.group(1) if m else None
+  m = re.search(r"\b" + re.escape(name) + r"\s*=\s*([\"'])(.*?)\1", attrs, re.S)
+  return m.group(2) if m else None
 
 
 def _remove_xml_attr(attrs: str, name: str) -> str:
-  return re.sub(r'\s*\b' + re.escape(name) + r'\s*=\s*"[^"]*"', '', attrs)
+  return re.sub(r"\s*\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", '', attrs, flags=re.S)
 
 
 def _add_missing_xml_attr(attrs: str, name: str, value: object) -> str:
-  if re.search(r'\b' + re.escape(name) + r'\s*=', attrs):
+  if re.search(r'\b' + re.escape(name) + r'\s*=', attrs, flags=re.S):
     return attrs
   return attrs.rstrip() + f' {name}="{value}"'
+
+
+def _set_xml_attr(attrs: str, name: str, value: object) -> str:
+  if re.search(r"\b" + re.escape(name) + r"\s*=", attrs, flags=re.S):
+    return re.sub(r"\b" + re.escape(name) + r"\s*=\s*([\"']).*?\1", f'{name}="{value}"', attrs, flags=re.S)
+  return attrs.rstrip() + f' {name}="{value}"'
+
+
+def _split_braced_xml_array(value: str | None) -> list[str]:
+  if value is None:
+    return []
+  s = str(value).strip().strip("{}").strip()
+  if not s:
+    return []
+  return [x.strip() for x in s.split(",") if x.strip()]
+
+
+def _braced_xml_array(values) -> str:
+  vals = [str(v).strip() for v in values if str(v).strip()]
+  return "{ " + ", ".join(vals) + " }"
+
+
+def _normalize_cohesive_material_string(value: object) -> str:
+  """Update legacy cohesive constitutive XML to current model attributes."""
+  text = "" if value is None else str(value)
+  if "CohesiveZone" not in text:
+    return text
+
+  coupled_pat = re.compile(r"<(?P<tag>CoupledCohesiveZone|BicrystalCohesiveZone)\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
+
+  def _fix_coupled(match):
+    attrs = match.group("attrs")
+    end = match.group("end")
+    normal = _xml_attr(attrs, "maxNormalStress")
+    shear = _xml_attr(attrs, "maxShearStress")
+    if normal is not None:
+      attrs = _remove_xml_attr(attrs, "maxNormalStress")
+      attrs = _add_missing_xml_attr(attrs, "defaultMaxNormalStress", normal)
+    if shear is not None:
+      attrs = _remove_xml_attr(attrs, "maxShearStress")
+      attrs = _add_missing_xml_attr(attrs, "defaultMaxShearStress", shear)
+    return f"<{match.group('tag')}{attrs}{end}"
+
+  text = coupled_pat.sub(_fix_coupled, text)
+
+  polymer_pat = re.compile(r"<PolymerCohesiveZone\b(?P<attrs>.*?)(?P<end>/?>)", re.S)
+  thermal_defaults = {
+    "bulkModulus": ("bulkModulusA", "bulkModulusB", "bulkModulusT0"),
+    "shearModulus": ("shearModulusA", "shearModulusB", "shearModulusT0"),
+    "yieldStrength0": ("yieldStrengthA", "yieldStrengthB", "yieldStrengthT0"),
+    "r0": ("r0A", "r0B", "r0T0"),
+    "Gr": ("GrA", "GrB", "GrT0"),
+    "maximumStretch": ("maximumStretchA", "maximumStretchB", "maximumStretchT0"),
+  }
+
+  def _fix_polymer(match):
+    attrs = match.group("attrs")
+    end = match.group("end")
+    old_max_stretch = _xml_attr(attrs, "maxStretch")
+    if old_max_stretch is not None:
+      attrs = _remove_xml_attr(attrs, "maxStretch")
+      attrs = _add_missing_xml_attr(attrs, "maximumStretch", old_max_stretch)
+    for required_attr, (a_attr, b_attr, t0_attr) in thermal_defaults.items():
+      if _xml_attr(attrs, required_attr) is not None:
+        attrs = _add_missing_xml_attr(attrs, a_attr, "0.0")
+        attrs = _add_missing_xml_attr(attrs, b_attr, "1.0")
+        attrs = _add_missing_xml_attr(attrs, t0_attr, "0.0")
+    return f"<PolymerCohesiveZone{attrs}{end}"
+
+  return polymer_pat.sub(_fix_polymer, text)
+
+
+def _extract_cohesive_model_names(material_text: object) -> list[str]:
+  text = "" if material_text is None else str(material_text)
+  return [name for _, name in re.findall(
+    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone|UncoupledCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
+    text,
+    flags=re.S,
+  )]
+
+
+def _normalize_cohesive_zone_regions(value: object, material_text: object, event_text: object) -> object:
+  """Build current CohesiveZoneRegion entries from explicit or legacy event input.
+
+  Current GEOS stores the constitutive model and particle CZ tag on
+  CohesiveZoneRegion nodes.  Older PFW examples kept this information on the
+  cohesive-zone event itself, so infer regions when an input has not supplied the
+  new block explicitly.
+  """
+  if value is not None and value != [] and str(value).strip():
+    return value
+
+  material_models = _extract_cohesive_model_names(material_text)
+  default_model = material_models[0] if material_models else "cz1"
+  regions: dict[str, tuple[str, str]] = {}
+  text = "" if event_text is None else str(event_text)
+
+  event_pat = re.compile(
+    r"<(?P<tag>ReferenceCohesiveZones|CohesiveZoneReference|CohesiveZone)\b(?P<attrs>[^>]*)>",
+    re.S,
+  )
+  for match in event_pat.finditer(text):
+    attrs = match.group("attrs")
+    singular_model = _xml_attr(attrs, "constitutiveModel")
+    models = _split_braced_xml_array(_xml_attr(attrs, "constitutiveModels"))
+    if singular_model is not None and not models:
+      models = [singular_model]
+    region_names = _split_braced_xml_array(_xml_attr(attrs, "regionNames"))
+    if not region_names:
+      region_names = models if models else [default_model]
+    if not models:
+      models = [r if r in material_models else default_model for r in region_names]
+    tags = _split_braced_xml_array(_xml_attr(attrs, "czTags"))
+    if not tags or len(tags) != len(region_names):
+      tags = [str(i) for i in range(len(region_names))] if len(region_names) > 1 else ["0"]
+    for i, region_name in enumerate(region_names):
+      model = models[i] if i < len(models) else models[-1]
+      tag = tags[i] if i < len(tags) else tags[-1]
+      regions.setdefault(region_name, (model, tag))
+
+  if not regions:
+    return ""
+
+  return "\n".join(
+    f'<CohesiveZoneRegion\n    name="{region}"\n    constitutiveModel="{model}"\n    tag="{tag}"/>'
+    for region, (model, tag) in regions.items()
+  )
 
 
 def _float_expr(value: str | None, default: str = "0.0") -> str:
@@ -115,10 +238,11 @@ def _normalize_mpm_events_string(value: object, default_end_time: object = "1.0"
 
   Older PFW inputs commonly supplied a nested <MPMEvents>...</MPMEvents>
   wrapper, used event attributes named time/interval instead of startTime/endTime,
-  used the old CohesiveZoneReference tag, or omitted regionNames on CohesiveZone
-  events.  Current GEOS expects only event child nodes inside the solver's
-  MPMEvents block, explicit startTime/endTime attributes, and explicit regionNames
-  for CohesiveZone events.
+  used the old CohesiveZoneReference/CohesiveZone tags, or kept region/model/tag
+  data on cohesive-zone events.  Current GEOS expects only event child nodes
+  inside the solver's MPMEvents block, explicit startTime/endTime attributes,
+  ReferenceCohesiveZones event nodes, and explicit regionNames that refer to
+  CohesiveZoneRegion entries under the solver.
   """
   text = "" if value is None else str(value).strip()
   if not text:
@@ -135,11 +259,11 @@ def _normalize_mpm_events_string(value: object, default_end_time: object = "1.0"
     cut = lower.rfind(closing)
     text = text[:cut].strip()
 
-  text = re.sub(r"<\s*CohesiveZoneReference\b", "<CohesiveZone", text)
-  text = re.sub(r"</\s*CohesiveZoneReference\s*>", "</CohesiveZone>", text)
+  text = re.sub(r"<\s*(?:CohesiveZoneReference|CohesiveZone)\b", "<ReferenceCohesiveZones", text)
+  text = re.sub(r"</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>", "</ReferenceCohesiveZones>", text)
 
   event_names = (
-    "Anneal", "BodyForceUpdate", "BoreholePressure", "CohesiveZone",
+    "Anneal", "BodyForceUpdate", "BoreholePressure", "ReferenceCohesiveZones",
     "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
     "FrictionCoefficientSwap", "Heal", "InitializeStress",
     "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
@@ -169,8 +293,22 @@ def _normalize_mpm_events_string(value: object, default_end_time: object = "1.0"
       attrs += f' startTime="{old_time if old_time is not None else "0.0"}"'
     if _attr(attrs, "endTime") is None:
       attrs += f' endTime="{old_interval if old_interval is not None else default_end_time}"'
-    if tag == "CohesiveZone" and _attr(attrs, "regionNames") is None:
-      attrs += ' regionNames="{ ParticleRegion1 }"'
+    if tag == "ReferenceCohesiveZones":
+      singular_model = _attr(attrs, "constitutiveModel")
+      model_names = _split_braced_xml_array(_attr(attrs, "constitutiveModels"))
+      region_names = _split_braced_xml_array(_attr(attrs, "regionNames"))
+      if not region_names:
+        region_names = model_names if model_names else [singular_model or "cz1"]
+        attrs += f' regionNames="{_braced_xml_array(region_names)}"'
+      if _attr(attrs, "name") is None:
+        attrs += f' name="{region_names[0]}"'
+      attrs = _strip_attr(attrs, "constitutiveModel")
+      attrs = _strip_attr(attrs, "constitutiveModels")
+      attrs = _strip_attr(attrs, "czTags")
+      old_compute = _attr(attrs, "computeParticleSurfaceNormalsAndPositions")
+      if old_compute is not None and _attr(attrs, "computeNormalsAndPositions") is None:
+        attrs = _strip_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
+        attrs += f' computeNormalsAndPositions="{old_compute}"'
     return f"<{tag}{attrs}{' /' if self_close else ''}>"
 
   text = event_pattern.sub(_fix, text)
@@ -316,7 +454,7 @@ def _normalize_generated_geos_xml(text: str) -> str:
 
   # Determine a default cohesive constitutive model from the Constitutive block.
   cz_model_names = re.findall(
-    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
+    r"<(?:CoupledCohesiveZone|BicrystalCohesiveZone|PolymerCohesiveZone|UncoupledCohesiveZone)\b[^>]*\bname\s*=\s*([\"'])(.*?)\1",
     text,
     flags=re.S,
   )
@@ -328,13 +466,14 @@ def _normalize_generated_geos_xml(text: str) -> str:
     text = _normalize_geomechanics_material_string(text)
   except NameError:
     pass
+  text = _normalize_cohesive_material_string(text)
 
   # Convert nested/legacy event tags inside the generated XML.
-  text = re.sub(r"<\s*CohesiveZoneReference\b", "<CohesiveZone", text)
-  text = re.sub(r"</\s*CohesiveZoneReference\s*>", "</CohesiveZone>", text)
+  text = re.sub(r"<\s*(?:CohesiveZoneReference|CohesiveZone)\b", "<ReferenceCohesiveZones", text)
+  text = re.sub(r"</\s*(?:CohesiveZoneReference|CohesiveZone)\s*>", "</ReferenceCohesiveZones>", text)
 
   event_names = (
-    "Anneal", "BodyForceUpdate", "BoreholePressure", "CohesiveZone",
+    "Anneal", "BodyForceUpdate", "BoreholePressure", "ReferenceCohesiveZones",
     "ConfiningPressure", "CrystalHeal", "DeformationUpdate",
     "FrictionCoefficientSwap", "Heal", "InitializeStress",
     "InsertPeriodicContactSurfaces", "MachineSample", "MaterialSwap",
@@ -363,25 +502,27 @@ def _normalize_generated_geos_xml(text: str) -> str:
       if _get_attr(attrs, "targetRegion") is None:
         attrs = _set_attr(attrs, "targetRegion", "all")
 
-    if tag == "CohesiveZone":
+    if tag == "ReferenceCohesiveZones":
       singular = _get_attr(attrs, "constitutiveModel")
       if singular is not None:
         attrs = _remove_attr(attrs, "constitutiveModel")
       models = _split_braced(_get_attr(attrs, "constitutiveModels"))
       regions = _split_braced(_get_attr(attrs, "regionNames"))
-      tags = _split_braced(_get_attr(attrs, "czTags"))
-      if not models:
-        models = [singular or first_cz_model]
-        attrs = _set_attr(attrs, "constitutiveModels", _braced(models))
       if not regions:
         # Historical inputs usually used a single CZ material named cz1 and the
         # event name also cz1.  Using the model names as the CZ region names is
         # the closest current-schema equivalent and preserves multi-cz inputs.
-        regions = models
+        regions = models if models else [singular or first_cz_model]
         attrs = _set_attr(attrs, "regionNames", _braced(regions))
-      if not tags or len(tags) != len(models):
-        tags = list(range(len(models)))
-        attrs = _set_attr(attrs, "czTags", _braced(tags))
+      if _get_attr(attrs, "name") is None:
+        attrs = _set_attr(attrs, "name", regions[0])
+      attrs = _remove_attr(attrs, "constitutiveModels")
+      attrs = _remove_attr(attrs, "czTags")
+      old_compute = _get_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
+      if old_compute is not None:
+        attrs = _remove_attr(attrs, "computeParticleSurfaceNormalsAndPositions")
+        if _get_attr(attrs, "computeNormalsAndPositions") is None:
+          attrs = _set_attr(attrs, "computeNormalsAndPositions", old_compute)
     return f"<{tag}{attrs}{' /' if self_close else ''}>"
 
   text = event_pat.sub(_fix_event, text)
@@ -668,6 +809,7 @@ parameters = { 'runDebug' : ( False, False ),
                'resetDefGradForFullyDamagedParticles': (None, True),
                'treatFullyDamagedAsSingleField': (None, True),
                'plotUnscaledParticles': (None, True),
+               'plotGridFields': (None, True),
                'contactGapCorrection': (None, True),
                'explicitSurfaceNormalInfluence': (None, True),
                'useSurfacePositionForContact': (None, True),
@@ -702,14 +844,15 @@ parameters = { 'runDebug' : ( False, False ),
                'particleRefinement' : ( None, False ),
                'mpmEventsString' : ( '', False ),
                'maxParticleVelocity' : ( 10.0, True ),
-               'cohesiveFieldPartitioning' : ( 0, True),
-               'enableCohesiveFailure' : ( 0, True ),
-               'maxCohesiveNormalStress' : ( 0.01, True ),
-               'maxCohesiveShearStress' : ( 0.01, True ),
-               'characteristicNormalDisplacement' : ( 0.01, True ),
-               'characteristicTangentialDisplacement' : ( 0.01, True ),
-               'maxCohesiveNormalDisplacement' : ( 0.01, True ),
-               'maxCohesiveTangentialDisplacement' : ( 0.01, True ),
+               'cohesiveFieldPartitioning' : ( 0, False),
+               'enableCohesiveFailure' : ( 0, False ),
+               'cohesiveLaw' : ( None, False ),
+               'maxCohesiveNormalStress' : ( 0.01, False ),
+               'maxCohesiveShearStress' : ( 0.01, False ),
+               'characteristicNormalDisplacement' : ( 0.01, False ),
+               'characteristicTangentialDisplacement' : ( 0.01, False ),
+               'maxCohesiveNormalDisplacement' : ( 0.01, False ),
+               'maxCohesiveTangentialDisplacement' : ( 0.01, False ),
                'prescribedBoundaryTransverseVelocities' : ( [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], True ),
                'cohesiveZoneRegions' : ( [], False ),
                'particleFileFields' : (["Velocity",  # +3
@@ -960,8 +1103,13 @@ for filePath in dependencyPaths:
 if rank == 0:
   print("Dependency files: ",pfw["dependencies"] )
 
+def _has_cohesive_zone_event(event_text: object) -> bool:
+  text = "" if event_text is None else str(event_text)
+  return bool(re.search(r"<\s*(?:ReferenceCohesiveZones|CohesiveZoneReference|CohesiveZone)\b", text))
+
+
 # Check if particleFields contains all necessary particle fields based on specified pfw parameters
-if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in pfw or ('mpmEventsString' in pfw and 'CohesiveZoneReference' in pfw["mpmEventsString"]):
+if 'explicitSurfaceNormalInfluence' in pfw or 'useSurfacePositionForContact' in pfw or _has_cohesive_zone_event(pfw.get("mpmEventsString", "")):
   if 'SurfaceNormal' not in particleFileFields:
     particleFileFields.append('SurfaceNormal')
     print('WARNING! Explicit contact or cohesive zone parameters included pfw variables, but explicit surface normals were not included in particleFileFields. Surface normals are added automatically.')
@@ -974,10 +1122,7 @@ if parameterStrings:
   parameterStrings[-1] = parameterStrings[-1].replace('\n','')
 mpmSolverParameterString = ''.join(parameterStrings)
 
-cohesiveZoneRegionString = _format_solver_child_xml_block(
-  "CohesiveZoneRegions",
-  cohesiveZoneRegions
-)
+cohesiveZoneRegionString = ""
 
 # Remove fields form particleFileOrder the user does not wish to write to particle field (particleFieldOrder preseveres the correct header order for values written to the particle file)
 particleFieldOrder = [ f for f in particleFieldOrder if f in particleFileFields ]
@@ -1694,8 +1839,22 @@ if rank == 0:
 
   # Normalize legacy inline XML snippets after defaults have been resolved.
   materialPropertyString = _normalize_geomechanics_material_string(materialPropertyString)
+  materialPropertyString = _normalize_cohesive_material_string(materialPropertyString)
+  cohesiveZoneRegions = _normalize_cohesive_zone_regions(
+    cohesiveZoneRegions,
+    materialPropertyString,
+    mpmEventsString
+  )
+  cohesiveZoneRegionString = _format_solver_child_xml_block(
+    "CohesiveZoneRegions",
+    cohesiveZoneRegions
+  )
   mpmEventsString = _normalize_mpm_events_string(mpmEventsString, default_end_time=endTime)
-  geosInputFileName = 'mpm_'+inputFile.replace('pfw_input_',"")+'.xml'
+  mpmEventsBlock = f"""
+      <MPMEvents>
+      {mpmEventsString}
+      </MPMEvents>""" if mpmEventsString else ""
+  geosInputFileName = f"mpm_{inputFile.replace('pfw_input_', '')}.xml"
   geosInputFile = open(geosInputFileName, 'w')
 
   geosInputFileString = f"""<?xml version="1.0" ?>
@@ -1741,10 +1900,7 @@ srun -n {mCores:d} {geosPath} -i {geosInputFileName}
       name="mpmsolve"
       discretization="FE1"
       targetRegions="{{ backgroundGrid/CellRegion1, {targetRegionsString} }}"
-{mpmSolverParameterString}>""" + cohesiveZoneRegionString + ( f"""
-      <MPMEvents>
-      {mpmEventsString}
-      </MPMEvents>""" if mpmEventsString else "" ) + f"""
+{mpmSolverParameterString}>{cohesiveZoneRegionString}{mpmEventsBlock}
     </SolidMechanics_MPM>
   </Solvers>
 

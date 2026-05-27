@@ -128,12 +128,12 @@ K = 38.67 # bulk modulus (GPa)
 G = 29.0 # shear modulus (GPa)
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz"
     defaultMaxNormalStress="2.0"
@@ -141,15 +141,22 @@ pfw["materialPropertyString"]="""
     characteristicNormalDisplacement="0.05"
     characteristicTangentialDisplacement="0.05"/>"""
 
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz"
+    constitutiveModel="cz"
+    tag="0"/>"""
+
 # EVENTS ------------------------------------------------------------------------------------
 
-pfw["mpmEventsString"]="""
-<CohesiveZone 
-    constitutiveModel="cz"
+pfw["mpmEventsString"] = """
+<ReferenceCohesiveZones
+    name="cz"
+    regionNames="{cz}"
     czVolumeNormalization="1"
-    startTime=
-""" + '"' + str(0.0) + '"' + """/>
+    startTime="0.0"/>
 """
+
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
 def _vv_fast_int(_value, _default):

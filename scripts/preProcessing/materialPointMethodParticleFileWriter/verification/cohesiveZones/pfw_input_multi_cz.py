@@ -124,18 +124,18 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
-# pfw["autoRestart"]=True
+pfw["mSubmitJobs"]=True
+pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
 pfw["materials"] = ["elasticIsotropic"]
-pfw["materialPropertyString"]="""
+pfw["materialPropertyString"] = f"""
 <ElasticIsotropic
     name="elasticIsotropic"
-    defaultDensity=""" + '"' + str(density) + '"' + """
-    defaultBulkModulus=""" + '"' + str(K) + '"' + """
-    defaultShearModulus=""" + '"' + str(G) + '"' + """/>
+    defaultDensity="{density}"
+    defaultBulkModulus="{K}"
+    defaultShearModulus="{G}"/>
 <CoupledCohesiveZone
     name="cz1"
     defaultMaxNormalStress="0.1"
@@ -154,14 +154,21 @@ pfw["materialPropertyString"]="""
     maxNormalDisplacement="0.1"/>
 """
 
-pfw["mpmEventsString"]="""
-<CohesiveZone
-    name="czEvent" 
-    startTime=
-""" + '"' + str(0.0) + '"' + """
+pfw["cohesiveZoneRegions"] = """
+<CohesiveZoneRegion
+    name="cz1"
+    constitutiveModel="cz1"
+    tag="0"/>
+<CohesiveZoneRegion
+    name="cz2"
+    constitutiveModel="cz2"
+    tag="1"/>"""
+
+pfw["mpmEventsString"] = """
+<ReferenceCohesiveZones
+    name="czEvent"
+    startTime="0.0"
     regionNames="{cz1, cz2}"
-    constitutiveModels="{cz1, cz2}"
-    czTags="{0, 1}"
     czVolumeNormalization="1"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
