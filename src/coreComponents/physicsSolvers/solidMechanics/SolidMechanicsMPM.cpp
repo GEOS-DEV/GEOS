@@ -53,6 +53,7 @@
 #include <iomanip>
 #include <fstream>
 #include <algorithm>
+#include <cctype>
 #include <random>
 #include <thread>
 
@@ -62,6 +63,228 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
+namespace
+{
+
+string normalizeProfileInput( string const & input )
+{
+  string normalized;
+  normalized.reserve( input.size() );
+  for( unsigned char const c : input )
+  {
+    if( std::isalnum( c ) )
+    {
+      normalized.push_back( static_cast< char >( std::tolower( c ) ) );
+    }
+  }
+  return normalized;
+}
+
+string canonicalProfileVariableName( string const & input )
+{
+  string const name = normalizeProfileInput( input );
+
+  if( name == "density" || name == "rho" )
+  {
+    return "density";
+  }
+  if( name == "damage" || name == "d" )
+  {
+    return "damage";
+  }
+  if( name == "temperature" || name == "temp" )
+  {
+    return "temperature";
+  }
+  if( name == "internalenergy" || name == "specificinternalenergy" || name == "ie" )
+  {
+    return "internalEnergy";
+  }
+  if( name == "kineticenergy" || name == "ke" )
+  {
+    return "kineticEnergy";
+  }
+  if( name == "velocityx" || name == "vx" || name == "xvelocity" )
+  {
+    return "velocityX";
+  }
+  if( name == "velocityy" || name == "vy" || name == "yvelocity" )
+  {
+    return "velocityY";
+  }
+  if( name == "velocityz" || name == "vz" || name == "zvelocity" )
+  {
+    return "velocityZ";
+  }
+  if( name == "volumefraction" || name == "materialvolumefraction" || name == "volfrac" ||
+      name == "vf" )
+  {
+    return "volumeFraction";
+  }
+  if( name == "plasticstrainmagnitude" || name == "plasticstrainnorm" || name == "plasticstrain" ||
+      name == "equivalentplasticstrain" || name == "eqps" )
+  {
+    return "plasticStrainMagnitude";
+  }
+
+  if( name == "stressxx" || name == "sigmaxx" || name == "sxx" || name == "xstress" )
+  {
+    return "stressXX";
+  }
+  if( name == "stressyy" || name == "sigmayy" || name == "syy" || name == "ystress" )
+  {
+    return "stressYY";
+  }
+  if( name == "stresszz" || name == "sigmazz" || name == "szz" || name == "zstress" )
+  {
+    return "stressZZ";
+  }
+  if( name == "stressyz" || name == "sigmayz" || name == "syz" )
+  {
+    return "stressYZ";
+  }
+  if( name == "stressxz" || name == "sigmaxz" || name == "sxz" )
+  {
+    return "stressXZ";
+  }
+  if( name == "stressxy" || name == "sigmaxy" || name == "sxy" )
+  {
+    return "stressXY";
+  }
+
+  if( name == "plasticstrainxx" || name == "epxx" )
+  {
+    return "plasticStrainXX";
+  }
+  if( name == "plasticstrainyy" || name == "epyy" )
+  {
+    return "plasticStrainYY";
+  }
+  if( name == "plasticstrainzz" || name == "epzz" )
+  {
+    return "plasticStrainZZ";
+  }
+  if( name == "plasticstrainyz" || name == "epyz" )
+  {
+    return "plasticStrainYZ";
+  }
+  if( name == "plasticstrainxz" || name == "epxz" )
+  {
+    return "plasticStrainXZ";
+  }
+  if( name == "plasticstrainxy" || name == "epxy" )
+  {
+    return "plasticStrainXY";
+  }
+
+  GEOS_ERROR( "Unsupported MPM profile variable '" << input << "'. Supported variables are density, damage, "
+              "temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, "
+              "plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and "
+              "plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+  return "";
+}
+
+int profileDirectionIndexFromString( string const & input )
+{
+  string const direction = normalizeProfileInput( input );
+  if( direction == "x" || direction == "0" )
+  {
+    return 0;
+  }
+  if( direction == "y" || direction == "1" )
+  {
+    return 1;
+  }
+  if( direction == "z" || direction == "2" )
+  {
+    return 2;
+  }
+
+  GEOS_ERROR( "profileDirection must be x, y, or z." );
+  return 0;
+}
+
+string profileDirectionLabel( int const direction )
+{
+  return direction == 0 ? "x" : ( direction == 1 ? "y" : "z" );
+}
+
+string profileOutputFileName( int const direction, string const & variableName )
+{
+  return string( "profile_" ) + profileDirectionLabel( direction ) + "_" + variableName + ".csv";
+}
+
+bool profileVariableUsesSliceVolume( string const & variableName )
+{
+  return variableName == "density" ||
+         variableName == "kineticEnergy" ||
+         variableName == "stressXX" ||
+         variableName == "stressYY" ||
+         variableName == "stressZZ" ||
+         variableName == "stressYZ" ||
+         variableName == "stressXZ" ||
+         variableName == "stressXY";
+}
+
+bool profileVariableUsesMass( string const & variableName )
+{
+  return variableName == "damage" ||
+         variableName == "temperature" ||
+         variableName == "internalEnergy";
+}
+
+bool profileVariableUsesMaterialVolume( string const & variableName )
+{
+  return variableName == "plasticStrainMagnitude" ||
+         variableName == "plasticStrainXX" ||
+         variableName == "plasticStrainYY" ||
+         variableName == "plasticStrainZZ" ||
+         variableName == "plasticStrainYZ" ||
+         variableName == "plasticStrainXZ" ||
+         variableName == "plasticStrainXY";
+}
+
+int profileVelocityComponentIndex( string const & variableName )
+{
+  if( variableName == "velocityX" ) return 0;
+  if( variableName == "velocityY" ) return 1;
+  if( variableName == "velocityZ" ) return 2;
+  return -1;
+}
+
+int profileStressComponentIndex( string const & variableName )
+{
+  if( variableName == "stressXX" ) return 0;
+  if( variableName == "stressYY" ) return 1;
+  if( variableName == "stressZZ" ) return 2;
+  if( variableName == "stressYZ" ) return 3;
+  if( variableName == "stressXZ" ) return 4;
+  if( variableName == "stressXY" ) return 5;
+  return -1;
+}
+
+int profilePlasticStrainComponentIndex( string const & variableName )
+{
+  if( variableName == "plasticStrainXX" ) return 0;
+  if( variableName == "plasticStrainYY" ) return 1;
+  if( variableName == "plasticStrainZZ" ) return 2;
+  if( variableName == "plasticStrainYZ" ) return 3;
+  if( variableName == "plasticStrainXZ" ) return 4;
+  if( variableName == "plasticStrainXY" ) return 5;
+  return -1;
+}
+
+real64 plasticStrainMagnitudeFromVoigt( arraySlice1d< real64 const > const plasticStrain )
+{
+  return LvArray::math::sqrt( plasticStrain[0] * plasticStrain[0] +
+                              plasticStrain[1] * plasticStrain[1] +
+                              plasticStrain[2] * plasticStrain[2] +
+                              2.0 * ( plasticStrain[3] * plasticStrain[3] +
+                                      plasticStrain[4] * plasticStrain[4] +
+                                      plasticStrain[5] * plasticStrain[5] ) );
+}
+
+} // namespace
 
 
 // Flattened combinations function to avoid performance hit from recursive calls
@@ -217,7 +440,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_computeNodalArea( 0 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
   m_computeSPHJacobian( 0 ),
-  m_computeXProfile( 0 ),
   m_confiningPressureBoxMax(),
   m_confiningPressureBoxMin(),
   m_confiningStress(),
@@ -275,8 +497,8 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nEl(),
   m_nextBoxAverageWriteTime( 0.0 ),
   m_nextParticleDataWriteTime( 0.0 ),
+  m_nextProfileWriteTime( 0.0 ),
   m_nextReactionWriteTime( 0.0 ),
-  m_nextXProfileWriteTime( 0.0 ),
   m_normalAndPositionMethod( NormalsAndPositionsMethodOption::LogisticRegression ),
   m_numberOfSubRegions( 0 ),
   m_numContactFlags( 0 ),
@@ -290,6 +512,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_overlapThreshold2( 1.10 ),
   m_overwriteExistingNormalsAndPositions( 0 ),
   m_particleDataWriteInterval( 0.0 ),
+  m_profileDirection( "x" ),
+  m_profileCycleInterval( 0 ),
+  m_profileHistory( 0 ),
+  m_profileNumSlices( 0 ),
+  m_profileVariables(),
+  m_profileWriteInterval( 0.0 ),
   m_partitionExtent(),
   m_planeStrain( 0 ),
   m_plotGridFields( 0 ),
@@ -351,9 +579,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_xLocalMax(),
   m_xLocalMaxNoGhost(),
   m_xLocalMin(),
-  m_xLocalMinNoGhost(),
-  m_xProfileVx0( 0.0 ),
-  m_xProfileWriteInterval( 0.0 )
+  m_xLocalMinNoGhost()
 {
   registerWrapper( "areaIntegrationMethod", &m_areaIntegrationMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -460,12 +686,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription(
     "Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )" );
-
-  registerWrapper( "computeXProfile", &m_computeXProfile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_computeXProfile ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag to enable x profiling" );
 
   registerWrapper( "confiningPressureBoxMax", &m_confiningPressureBoxMax ).
     setInputFlag( InputFlags::FALSE ).
@@ -783,17 +1003,17 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Next time to write particle data" );
 
+  registerWrapper( "nextProfileWriteTime", &m_nextProfileWriteTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Next time to write MPM profile output when using a time-based profile interval" );
+
   registerWrapper( "nextReactionWriteTime", &m_nextReactionWriteTime ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Next time to write reactions" );
-
-  registerWrapper( "nextXProfileWriteTime", &m_nextXProfileWriteTime ).
-    setInputFlag( InputFlags::FALSE ).
-    setDefaultValue( m_nextXProfileWriteTime ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Next x profile writing time" );
 
   registerWrapper( "normalAndPositionMethod", &m_normalAndPositionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -870,6 +1090,41 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_particleDataWriteInterval ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Interval to write particle data to file" );
+
+  registerWrapper( "profileDirection", &m_profileDirection ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_profileDirection ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Direction for MPM profile output. Valid values are x, y, and z." );
+
+  registerWrapper( "profileCycleInterval", &m_profileCycleInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_profileCycleInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Cycle interval for MPM profile output. Use either profileCycleInterval or profileWriteInterval. A value of 0 means no cycle-based interval." );
+
+  registerWrapper( "profileHistory", &m_profileHistory ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_profileHistory ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable MPM profile CSV output. One CSV file is written per requested profile variable." );
+
+  registerWrapper( "profileNumSlices", &m_profileNumSlices ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_profileNumSlices ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection." );
+
+  registerWrapper( "profileVariables", &m_profileVariables ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+
+  registerWrapper( "profileWriteInterval", &m_profileWriteInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_profileWriteInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Time interval for MPM profile output. Use either profileWriteInterval or profileCycleInterval. A value of 0 means no time-based interval." );
 
   registerWrapper( "partitionExtent", &m_partitionExtent ).
     setInputFlag( InputFlags::FALSE ).
@@ -1165,18 +1420,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_writeParticleData ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag to enable writing particle data to file" );
-
-  registerWrapper( "xProfileVx0", &m_xProfileVx0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_xProfileVx0 ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Velocity to subtract from x profile" );
-
-  registerWrapper( "xProfileWriteInterval", &m_xProfileWriteInterval ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_xProfileWriteInterval ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Interval between writing x profiling data" );
 
   // Register groups
   registerGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
@@ -1509,6 +1752,39 @@ void SolidMechanicsMPM::postInputInitialization()
     {
       GEOS_ERROR_IF( m_stressTable[i][0] < 0.0, "Stress table times must be positive" );
     }
+  }
+
+  if( m_profileHistory == 1 )
+  {
+    GEOS_ERROR_IF( m_profileVariables.size() == 0,
+                   "profileHistory is enabled, but profileVariables is empty. Specify one or more variables to write." );
+    GEOS_ERROR_IF( m_profileNumSlices < 0,
+                   "profileNumSlices must be non-negative. Use 0 to default to the grid resolution." );
+    GEOS_ERROR_IF( m_profileWriteInterval < 0.0,
+                   "profileWriteInterval must be non-negative." );
+    GEOS_ERROR_IF( m_profileCycleInterval < 0,
+                   "profileCycleInterval must be non-negative." );
+    GEOS_ERROR_IF( m_profileWriteInterval > 0.0 && m_profileCycleInterval > 0,
+                   "Specify either profileWriteInterval or profileCycleInterval for profile output, not both." );
+
+    // Validate and canonicalize the direction and variable names once so the time-step path is cheap.
+    int const profileDirection = profileDirectionIndexFromString( m_profileDirection );
+    GEOS_UNUSED_VAR( profileDirection );
+
+    string_array canonicalVariables;
+    for( string const & variableName : m_profileVariables )
+    {
+      string const canonicalName = canonicalProfileVariableName( variableName );
+      if( std::find( canonicalVariables.begin(), canonicalVariables.end(), canonicalName ) == canonicalVariables.end() )
+      {
+        canonicalVariables.push_back( canonicalName );
+      }
+    }
+    m_profileVariables = canonicalVariables;
+
+    GEOS_ERROR_IF( std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end() &&
+                   m_computeInternalEnergyAndTemperature != 1,
+                   "The internalEnergy profile variable requires computeInternalEnergyAndTemperature=1." );
   }
 
   // Sort the grid indices and move any duplicates to the end.
@@ -1871,16 +2147,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( gridFieldPlotLevel ).
         setRegisteringObjects( this->getName() ).
         setDescription( "An array that holds the result of mapping particle positions to the nodes." );
-
-      nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridNormalStressString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the result of mapping particle normal stresses to the nodes for x profiling." );
-
-      nodeManager.registerWrapper< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() ).
-        setPlotLevel( gridFieldPlotLevel ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the result of mapping particle mass weighted damage to the nodes for x profiling." );
 
       nodeManager.registerWrapper< array3d< real64 > >( viewKeyStruct::gridVPlusString() ).
         setPlotLevel( gridFieldPlotLevel ).
@@ -2354,6 +2620,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
   }
 
+  if( m_profileHistory == 1 )
+  {
+    initializeProfileFiles();
+  }
+
   // GEOS_LOG_RANK_0( "Initialized files");
 
   // Resize grid arrays according to number of velocity fields
@@ -2422,8 +2693,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceAreaString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridCenterOfMassString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridPrincipalExplicitSurfaceNormalString() ).resize( numNodes, 3 );
-  nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() ).resize( numNodes, m_numVelocityFields, 3 );
-  nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() ).resize( numNodes, m_numVelocityFields );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVPlusString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridDVPlusString() ).resize( numNodes, m_numVelocityFields, 3 );
   nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridSurfaceFieldMassString() ).resize( numNodes, m_numVelocityFields );
@@ -2633,7 +2902,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
    * 13. Apply prescribed deformation and boundary conditions.
    *
    * Interpolate F/stress control tables, update stress-control kinematics, apply essential boundary conditions, and
-   * optionally write x-profiles.
+   * optionally write profile output.
    * ------------------------------------------------------------------------------------------------------------
    */
   logAndProfile( "13. Apply prescribed deformation and boundary conditions", particleManager, nodeManager );
@@ -3318,7 +3587,7 @@ void SolidMechanicsMPM::applyFMPMUncontactedVelocityBoundaryConditions( NodeMana
 }
 
 /**
- * @brief Applies prescribed deformation tables, stress control, essential boundary conditions, and x-profile output.
+ * @brief Applies prescribed deformation tables, stress control, essential boundary conditions, and profile output.
  */
 void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplicitStep( real64 const dt,
                                                                                        real64 const time_n,
@@ -3333,14 +3602,15 @@ void SolidMechanicsMPM::applyPrescribedDeformationAndBoundaryConditionsForExplic
                                              partition );
   applyEssentialBCs( dt, time_n, nodeManager );
   applyFMPMUncontactedVelocityBoundaryConditions( nodeManager );
-  if( m_computeXProfile == 1 && ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) ) )
+  real64 const profileOutputTime = time_n + dt;
+  if( shouldWriteProfiles( profileOutputTime, cycleNumber ) )
   {
-    computeXProfile( cycleNumber,
-                     time_n,
-                     dt,
-                     nodeManager,
-                     partition );
-    m_nextXProfileWriteTime += m_xProfileWriteInterval;
+    computeAndWriteProfiles( cycleNumber,
+                             time_n,
+                             dt,
+                             particleManager,
+                             nodeManager );
+    updateNextProfileWriteTime( profileOutputTime );
   }
 }
 
@@ -6378,7 +6648,6 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   stdVector< std::string > fieldLabels( m_numVelocityFields );
   std::generate( fieldLabels.begin(), fieldLabels.end(), [i=0]() mutable { return "velocityField" + std::to_string( ++i ); } );
   string const axesLabels[] = { "X", "Y", "Z" };
-  string const tensorLabels[] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
   // Apply labels to scalar multi-fields
   stdVector< std::string > keys2d = {
@@ -6389,7 +6658,6 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
     viewKeyStruct::gridSurfaceFieldMassString(),
     // viewKeyStruct::gridSurfaceNormalWeightsString(),
     // viewKeyStruct::gridSurfaceNormalWeightNormalizationString(),
-    // viewKeyStruct::gridMassWeightedDamageString(),
   };
   for( auto const & key: keys2d )
   {
@@ -6427,17 +6695,6 @@ void SolidMechanicsMPM::setGridFieldLabels( NodeManager & nodeManager )
   };
 
   for( auto const & key: keys3d )
-  {
-    WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( key );
-    wrapper.setDimLabels( 1, fieldLabels );
-    wrapper.setDimLabels( 2, axesLabels );
-  }
-
-  stdVector< std::string > keysVoigt = {
-    viewKeyStruct::gridNormalStressString()
-  };
-
-  for( auto const & key: keysVoigt )
   {
     WrapperBase & wrapper = nodeManager.getWrapper< array3d< real64 > >( key );
     wrapper.setDimLabels( 1, fieldLabels );
@@ -6487,7 +6744,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridFieldGradientAlignmentString(),
       viewKeyStruct::gridMassString(),
       viewKeyStruct::gridActiveString(),
-      viewKeyStruct::gridMassWeightedDamageString(),
       viewKeyStruct::gridMaterialVolumeString(),
       viewKeyStruct::gridMaxDamageString(),
       viewKeyStruct::gridPrincipalExplicitSurfaceNormalString(),
@@ -6508,7 +6764,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       viewKeyStruct::gridExternalForceString(),
       viewKeyStruct::gridInternalForceString(),
       viewKeyStruct::gridMomentumString(),
-      viewKeyStruct::gridNormalStressString(),
       viewKeyStruct::gridParticleMappedSurfaceNormalString(),
       viewKeyStruct::gridSurfaceNormalString(),
       viewKeyStruct::gridSurfacePositionString(),
@@ -6568,10 +6823,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
   arrayView2d< real64 > const gridActive =
     nodeManager.getReference< array2d< real64 > >(
       viewKeyStruct::gridActiveString() );
-
-  arrayView2d< real64 > const gridMassWeightedDamage =
-    nodeManager.getReference< array2d< real64 > >(
-      viewKeyStruct::gridMassWeightedDamageString() );
 
   arrayView2d< real64 > const gridMaterialVolume =
     nodeManager.getReference< array2d< real64 > >(
@@ -6653,10 +6904,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridMomentumString() );
 
-  arrayView3d< real64 > const gridNormalStress =
-    nodeManager.getReference< array3d< real64 > >(
-      viewKeyStruct::gridNormalStressString() );
-
   arrayView3d< real64 > const gridParticleSurfaceNormal =
     nodeManager.getReference< array3d< real64 > >(
       viewKeyStruct::gridParticleMappedSurfaceNormalString() );
@@ -6729,7 +6976,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
       gridDamage[g][fieldIndex] = 0.0;
       gridMaxDamage[g][fieldIndex] = 0.0;
       gridFieldGradientAlignment[g][fieldIndex] = 0.0;
-      gridMassWeightedDamage[g][fieldIndex] = 0.0;
 
       gridSurfaceNormalWeightNormalization[g][fieldIndex] = 0.0;
       gridSurfaceNormalWeights[g][fieldIndex] = 0.0;
@@ -6761,8 +7007,6 @@ void SolidMechanicsMPM::initializeGridFields( NodeManager & nodeManager )
         gridExternalForce[g][fieldIndex][i] = 0.0;
         gridSurfaceTensionForce[g][fieldIndex][i] = 0.0;
         gridContactForce[g][fieldIndex][i] = 0.0;
-
-        gridNormalStress[g][fieldIndex][i] = 0.0;
         gridCohesiveArea[g][fieldIndex][i] = 0.0;
         gridCohesiveForce[g][fieldIndex][i] = 0.0;
 
@@ -14237,8 +14481,8 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
                                         NodeManager & nodeManager )
 {
   GEOS_MARK_FUNCTION;
-
-
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( cycleNumber );
 
   /*
    * ---------------------------------------------------------------------------
@@ -14401,11 +14645,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   GEOS_UNUSED_VAR( numContactGroups );
   GEOS_UNUSED_VAR( damageFieldPartitioning );
 #endif
-
-  int const computeXProfile =
-    m_computeXProfile == 1 &&
-    ( ( m_nextXProfileWriteTime <= time_n ) || ( cycleNumber == 0 ) );
-
   int const explicitSurfaceNormalInfluence =
     m_explicitSurfaceNormalInfluence;
 
@@ -14471,10 +14710,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
     nodeManager.getReference< array2d< real64 > >
       ( viewKeyStruct::gridMassString() );
 
-  arrayView2d< real64 > const gridMassWeightedDamage =
-    nodeManager.getReference< array2d< real64 > >
-      ( viewKeyStruct::gridMassWeightedDamageString() );
-
   arrayView2d< real64 > const & gridMaterialVolume =
     nodeManager.getReference< array2d< real64 > >
       ( viewKeyStruct::gridMaterialVolumeString() );
@@ -14509,10 +14744,6 @@ void SolidMechanicsMPM::particleToGrid( real64 const time_n,
   arrayView3d< real64 > const & gridMomentum =
     nodeManager.getReference< array3d< real64 > >
       ( viewKeyStruct::gridMomentumString() );
-
-  arrayView3d< real64 > const gridNormalStress =
-    nodeManager.getReference< array3d< real64 > >
-      ( viewKeyStruct::gridNormalStressString() );
 
   arrayView3d< real64 > const gridSurfaceNormal =
     nodeManager.getReference< array3d< real64 > >
@@ -14914,30 +15145,6 @@ localIndex const mappedNode =
                           &gridCohesiveFieldFlag[mappedNode][fieldIndex],
                           cohesiveZoneFlag );
         }
-
-        // Optional profile-output fields.
-        if( computeXProfile == 1 )
-        {
-          real64 const profileScale =
-            shapeFunctionValue * pVolume;
-
-          RAJA::atomicAdd( parallelDeviceAtomic{},
-                           &gridNormalStress[mappedNode][fieldIndex][0],
-                           pStress0 * profileScale );
-
-          RAJA::atomicAdd( parallelDeviceAtomic{},
-                           &gridNormalStress[mappedNode][fieldIndex][1],
-                           pStress1 * profileScale );
-
-          RAJA::atomicAdd( parallelDeviceAtomic{},
-                           &gridNormalStress[mappedNode][fieldIndex][2],
-                           pStress2 * profileScale );
-
-          RAJA::atomicAdd( parallelDeviceAtomic{},
-                           &gridMassWeightedDamage[mappedNode][fieldIndex],
-                           shapeFunctionValue * pDamage * pMass );
-        }
-
         // Mass:
         //
         //   M_I += m_p N_Ip
@@ -18071,411 +18278,465 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   }
 }
 
-// This function will do sums of nodal data to write a profile to a file of the
-// state averaged across the y-z plane at each x-nodal position.  This is very slow
-// but is useful for on-the-fly extraction of shock profiles from mesoscale simulations.
-// Typically this is not done every time step.
-// Sum local arrays to compute x-profile to write to file
-/**
- * @brief Computes xprofile.
- *
- * Executable statements are unchanged; comments document intent where practical.
- */
-void SolidMechanicsMPM::computeXProfile( int const cycleNumber,
-                                         real64 const time,
-                                         real64 const dt,
-                                         NodeManager & nodeManager,
-                                         SpatialPartition & partition )
+int SolidMechanicsMPM::getProfileDirectionIndex() const
+{
+  return profileDirectionIndexFromString( m_profileDirection );
+}
+
+int SolidMechanicsMPM::getProfileNumSlices( int const direction ) const
+{
+  if( m_profileNumSlices > 0 )
+  {
+    return m_profileNumSlices;
+  }
+
+  return static_cast< int >( LvArray::math::round( ( m_xGlobalMax[direction] - m_xGlobalMin[direction] ) / m_hEl[direction] ) ) + 1;
+}
+
+bool SolidMechanicsMPM::shouldWriteProfiles( real64 const outputTime,
+                                             int const cycleNumber ) const
+{
+  if( m_profileHistory != 1 )
+  {
+    return false;
+  }
+
+  if( m_profileCycleInterval > 0 )
+  {
+    return cycleNumber == 0 || cycleNumber % m_profileCycleInterval == 0;
+  }
+
+  if( m_profileWriteInterval > 0.0 )
+  {
+    return cycleNumber == 0 || m_nextProfileWriteTime <= outputTime;
+  }
+
+  return true;
+}
+
+void SolidMechanicsMPM::updateNextProfileWriteTime( real64 const outputTime )
+{
+  if( m_profileWriteInterval > 0.0 )
+  {
+    do
+    {
+      m_nextProfileWriteTime += m_profileWriteInterval;
+    }
+    while( m_nextProfileWriteTime <= outputTime );
+  }
+}
+
+void SolidMechanicsMPM::initializeProfileFiles()
 {
   GEOS_MARK_FUNCTION;
 
-  int numXNodesLocal = m_nEl[0] + 1;
-  // int numYNodesLocal = m_nEl[0] + 1;
-  // int numZNodesLocal = m_nEl[0] + 1;
+  int const direction = getProfileDirectionIndex();
+  int const numSlices = getProfileNumSlices( direction );
+  GEOS_ERROR_IF( numSlices <= 0, "Computed profile slice count must be positive." );
 
-  int numXNodesGlobal = static_cast< int >( round( ( m_xGlobalMax[0] - m_xGlobalMin[0]) / m_hEl[0] ) ) + 1;
-  int numYNodesGlobal = static_cast< int >( round( ( m_xGlobalMax[1] - m_xGlobalMin[1]) / m_hEl[1] ) ) + 1;
-  int numZNodesGlobal = static_cast< int >( round( ( m_xGlobalMax[2] - m_xGlobalMin[2]) / m_hEl[2] ) ) + 1;
+  real64 const profileMin = m_xGlobalMin[direction];
+  real64 const profileMax = m_xGlobalMax[direction];
+  real64 const profileLength = profileMax - profileMin;
+  GEOS_ERROR_IF( profileLength <= 0.0, "Profile output requires a positive domain length in profileDirection." );
 
-  array1d< real64 > xProfileDensityLocal( numXNodesGlobal ),
-  xProfileDensityGlobal( numXNodesGlobal ),
-  xProfileDamageLocal( numXNodesGlobal ),
-  xProfileDamageGlobal( numXNodesGlobal ),
-  xProfileXStressLocal( numXNodesGlobal ),
-  xProfileXStressGlobal( numXNodesGlobal ),
-  xProfileYStressLocal( numXNodesGlobal ),
-  xProfileYStressGlobal( numXNodesGlobal ),
-  xProfileZStressLocal( numXNodesGlobal ),
-  xProfileZStressGlobal( numXNodesGlobal ),
-  xProfileKineticEnergyLocal( numXNodesGlobal ),
-  xProfileKineticEnergyGlobal( numXNodesGlobal );
+  bool const useGridResolution = m_profileNumSlices <= 0;
+  real64 const spacing = useGridResolution ? m_hEl[direction] : profileLength / numSlices;
 
-  for( int n=0; n < numXNodesGlobal; ++n )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
-    xProfileDamageLocal[n] = 0.0;
-    xProfileDamageGlobal[n] = 0.0;
+    for( string const & variableName : m_profileVariables )
+    {
+      std::ofstream file;
+      file.open( profileOutputFileName( direction, variableName ), std::ios::out );
+      if( file.fail() )
+      {
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
 
-    xProfileDensityLocal[n] = 0.0;
-    xProfileDensityGlobal[n] = 0.0;
-
-    xProfileXStressLocal[n] = 0.0;
-    xProfileXStressGlobal[n] = 0.0;
-
-    xProfileYStressLocal[n] = 0.0;
-    xProfileYStressGlobal[n] = 0.0;
-
-    xProfileZStressLocal[n] = 0.0;
-    xProfileZStressGlobal[n] = 0.0;
-
-    xProfileKineticEnergyLocal[n] = 0.0;
-    xProfileKineticEnergyGlobal[n] = 0.0;
+      file << "time";
+      for( int i = 0; i < numSlices; ++i )
+      {
+        real64 const position = useGridResolution ? profileMin + i * spacing : profileMin + ( i + 0.5 ) * spacing;
+        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << position;
+      }
+      file << std::endl;
+      file.close();
+    }
   }
 
-  // array will store density at each x-nodal position, averaged over the domain.
-  // Compute the damage, which is stored in the mass-weighted variable
-  // g_damage = (sum m_p*D_p)/m_i for each field (which also assumes p_flag=2 equates to D=1)
-  // dividing by the summed mass should give mass fraction of damaged material.
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+}
 
-  // index in the global x-position array of the current node.
-  int iGlobal,
-      jGlobal,
-      kGlobal,
-      iMin,
-      iMax,
-      jMin,
-      jMax,
-      kMin,
-      kMax;
+void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
+                                                 real64 const time,
+                                                 real64 const dt,
+                                                 ParticleManager & particleManager,
+                                                 NodeManager & nodeManager )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( cycleNumber );
 
-  real64 smallX = 1.0e-8*(m_xLocalMax[0] - m_xLocalMin[0]);
-  real64 smallY = 1.0e-8*(m_xLocalMax[1] - m_xLocalMin[1]);
-  real64 smallZ = 1.0e-8*(m_xLocalMax[2] - m_xLocalMin[2]);
+  int const direction = getProfileDirectionIndex();
+  int const numSlices = getProfileNumSlices( direction );
+  int const numVariables = static_cast< int >( m_profileVariables.size() );
+  GEOS_ERROR_IF( numSlices <= 0, "Computed profile slice count must be positive." );
+  GEOS_ERROR_IF( numVariables <= 0, "profileVariables must contain at least one variable when profileHistory is enabled." );
 
-  // limits are defined so that a node is counted if imin <= i <=imax
-  iMin = fabs( m_xLocalMin[0] - m_xGlobalMin[0] ) < smallX ? 0 : round( ( m_xLocalMin[0] - m_xGlobalMin[0] ) / m_hEl[0] ) + 2;
-  iMax = fabs( m_xLocalMax[0] - m_xGlobalMax[0] ) < smallX ? numXNodesGlobal : round( ( m_xLocalMax[0] - m_xGlobalMin[0] ) / m_hEl[0] ) - 1;
+  real64 const profileMin = m_xGlobalMin[direction];
+  real64 const profileMax = m_xGlobalMax[direction];
+  real64 const profileLength = profileMax - profileMin;
+  GEOS_ERROR_IF( profileLength <= 0.0, "Profile output requires a positive domain length in profileDirection." );
 
-  jMin = fabs( m_xLocalMin[1] - m_xGlobalMin[1] ) < smallY ? 0 : round( ( m_xLocalMin[1] - m_xGlobalMin[1] ) / m_hEl[1] ) + 2;
-  jMax = fabs( m_xLocalMax[1] - m_xGlobalMax[1] ) < smallY ? numYNodesGlobal : round( ( m_xLocalMax[1] - m_xGlobalMin[1] ) / m_hEl[1] ) - 1;
+  bool const useGridResolution = m_profileNumSlices <= 0;
+  real64 const sliceSpacing = useGridResolution ? m_hEl[direction] : profileLength / numSlices;
+  GEOS_ERROR_IF( sliceSpacing <= 0.0, "Computed profile slice spacing must be positive." );
 
-  kMin = fabs( m_xLocalMin[2] - m_xGlobalMin[2] ) < smallZ ? 0 : round( ( m_xLocalMin[2] - m_xGlobalMin[2] ) / m_hEl[2] ) + 2;
-  kMax = fabs( m_xLocalMax[2] - m_xGlobalMax[2] ) < smallZ ? numZNodesGlobal : round( ( m_xLocalMax[2] - m_xGlobalMin[2] ) / m_hEl[2] ) - 1;
-
-  arrayView1d< int const > const periodic = partition.getPeriodic();
-  // int numNodes = nodeManager.size();
-  arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
-  arrayView2d< real64 > const gridMassWeightedDamage = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassWeightedDamageString() );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & gridPosition = nodeManager.referencePosition();
-  arrayView3d< real64 > const gridNormalStress = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridNormalStressString() );
-  arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
-
-  // sum all values to local array.
-  for( localIndex g = 0; g < numXNodesLocal; ++g )
+  real64 crossSection = 1.0;
+  for( int dim = 0; dim < 3; ++dim )
   {
-    iGlobal = round( ( gridPosition[g][0] - m_xGlobalMin[0] ) / m_hEl[0] ); // index in the global x-position array of the current node.
-    jGlobal = round( ( gridPosition[g][1] - m_xGlobalMin[1] ) / m_hEl[1] ); // index in the global y-position array of the current node.
-    kGlobal = round( ( gridPosition[g][2] - m_xGlobalMin[2] ) / m_hEl[2] ); // index in the global z-position array of the current node.
+    if( dim != direction )
+    {
+      crossSection *= m_domainExtent[dim];
+    }
+  }
+  real64 const sliceVolume = crossSection * ( useGridResolution ? m_hEl[direction] : sliceSpacing );
+  GEOS_ERROR_IF( sliceVolume <= 0.0, "Computed profile slice volume must be positive." );
+
+  array1d< real64 > profileSumsLocal( numVariables * numSlices );
+  array1d< real64 > profileSumsGlobal( numVariables * numSlices );
+  array1d< real64 > profileMassLocal( numSlices );
+  array1d< real64 > profileMassGlobal( numSlices );
+  array1d< real64 > profileMaterialVolumeLocal( numSlices );
+  array1d< real64 > profileMaterialVolumeGlobal( numSlices );
+  array1d< real64 > profileGridMassLocal( numSlices );
+  array1d< real64 > profileGridMassGlobal( numSlices );
+  array1d< real64 > profileGridMaterialVolumeLocal( numSlices );
+  array1d< real64 > profileGridMaterialVolumeGlobal( numSlices );
+  array1d< real64 > profileGridMomentumLocal( 3 * numSlices );
+  array1d< real64 > profileGridMomentumGlobal( 3 * numSlices );
+
+  for( int i = 0; i < numVariables * numSlices; ++i )
+  {
+    profileSumsLocal[i] = 0.0;
+    profileSumsGlobal[i] = 0.0;
+  }
+  for( int i = 0; i < numSlices; ++i )
+  {
+    profileMassLocal[i] = 0.0;
+    profileMassGlobal[i] = 0.0;
+    profileMaterialVolumeLocal[i] = 0.0;
+    profileMaterialVolumeGlobal[i] = 0.0;
+    profileGridMassLocal[i] = 0.0;
+    profileGridMassGlobal[i] = 0.0;
+    profileGridMaterialVolumeLocal[i] = 0.0;
+    profileGridMaterialVolumeGlobal[i] = 0.0;
+  }
+  for( int i = 0; i < 3 * numSlices; ++i )
+  {
+    profileGridMomentumLocal[i] = 0.0;
+    profileGridMomentumGlobal[i] = 0.0;
+  }
+
+  bool const needInternalEnergy =
+    std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end();
+
+  real64 const coordinateTolerance = 1.0e-8 * LvArray::math::max( LvArray::math::abs( profileLength ), m_hEl[direction] );
+
+  nodeManager.getWrapperBase( viewKeyStruct::gridMassString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMaterialVolumeString() ).move( LvArray::MemorySpace::host, true );
+  nodeManager.getWrapperBase( viewKeyStruct::gridMomentumString() ).move( LvArray::MemorySpace::host, true );
+
+  arrayView1d< int const > const gridGhostRank = nodeManager.ghostRank();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView2d< real64 const > const gridMass =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  arrayView2d< real64 const > const gridMaterialVolume =
+    nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMaterialVolumeString() );
+  arrayView3d< real64 const > const gridMomentum =
+    nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+
+  // Velocity and volume-fraction profiles are grid-level quantities. Sum owned grid nodes
+  // over all velocity fields, then reduce the slice sums across MPI ranks.
+  for( localIndex g = 0; g < nodeManager.size(); ++g )
+  {
+    if( gridGhostRank[g] >= 0 )
+    {
+      continue;
+    }
+
+    real64 const coordinate = gridPosition[g][direction];
+    if( coordinate < profileMin - coordinateTolerance || coordinate > profileMax + coordinateTolerance )
+    {
+      continue;
+    }
+
+    int sliceIndex = -1;
+    if( useGridResolution )
+    {
+      sliceIndex = static_cast< int >( LvArray::math::round( ( coordinate - profileMin ) / sliceSpacing ) );
+    }
+    else
+    {
+      sliceIndex = static_cast< int >( LvArray::math::floor( ( coordinate - profileMin ) / sliceSpacing ) );
+      if( sliceIndex == numSlices && LvArray::math::abs( coordinate - profileMax ) <= coordinateTolerance )
+      {
+        sliceIndex = numSlices - 1;
+      }
+    }
+
+    if( sliceIndex < 0 || sliceIndex >= numSlices )
+    {
+      continue;
+    }
 
     for( localIndex fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
     {
-      // Avoid double counting ghost nodes for mass, which is being taken from a synced field..
-      if( iGlobal >= iMin && iGlobal <= iMax &&
-          jGlobal >= jMin && jGlobal <= (jMax-periodic[1]) &&
-          kGlobal >= kMin && kGlobal <= (kMax-periodic[2]) )
+      profileGridMassLocal[sliceIndex] += gridMass[g][fieldIndex];
+      profileGridMaterialVolumeLocal[sliceIndex] += gridMaterialVolume[g][fieldIndex];
+      for( int component = 0; component < 3; ++component )
       {
-        // CC: Moved this inside fieldIndex loop, NEED TO DOUBLE CHECK!
-        // mass weighted damage is computed from master particles and never synchronized between patches
-        // so a simple sum is adequate
-
-        xProfileDamageLocal[iGlobal] += gridMassWeightedDamage[g][fieldIndex];
-
-        // Normal stress components are mapped to nodes from master particles and never syncronized between patches,
-        // so a simple sum should be adequate
-        xProfileXStressLocal[iGlobal] += gridNormalStress[g][fieldIndex][0];
-        xProfileYStressLocal[iGlobal] += gridNormalStress[g][fieldIndex][1];
-        xProfileZStressLocal[iGlobal] += gridNormalStress[g][fieldIndex][2];
-
-        // Kinetic energy is computed relative to some initial velocity ( v0=[vx0,0,0] ) whre vx0 is input.  This allows
-        // for micro kinetic energy profiles to be computed for reverse ballistic simulations.
-        xProfileKineticEnergyLocal[iGlobal] += 0.5 * gridMass[g][fieldIndex] * (
-          ( gridVelocity[g][fieldIndex][0] - m_xProfileVx0 ) * ( gridVelocity[g][fieldIndex][0] - m_xProfileVx0 ) +
-          gridVelocity[g][fieldIndex][1] * gridVelocity[g][fieldIndex][1] +
-          gridVelocity[g][fieldIndex][2] * gridVelocity[g][fieldIndex][2] );
-
-        xProfileDensityLocal[iGlobal] += gridMass[g][fieldIndex];
+        profileGridMomentumLocal[component * numSlices + sliceIndex] += gridMomentum[g][fieldIndex][component];
       }
-    } // end loop over field index
-  } // end loop over grid nodes
-
-  // do additive sync on global mass-eighted damage array (not yet divided by mass)
-  MpiWrapper::allReduce( xProfileDamageLocal,
-                         xProfileDamageGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  // do additive sync on global mass array (e.g. mass)
-  MpiWrapper::allReduce( xProfileDensityLocal,
-                         xProfileDensityGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  // do additive sync on global normalStress arrays (e.g. summed stress*volume)
-  MpiWrapper::allReduce( xProfileXStressLocal,
-                         xProfileXStressGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  MpiWrapper::allReduce( xProfileYStressLocal,
-                         xProfileYStressGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  MpiWrapper::allReduce( xProfileZStressLocal,
-                         xProfileZStressGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  // do additive sync on global kinetic energy array (summed 0.5*m*V*V)
-  MpiWrapper::allReduce( xProfileKineticEnergyLocal,
-                         xProfileKineticEnergyGlobal,
-                         MpiWrapper::Reduction::Sum,
-                         MPI_COMM_GEOS );
-
-  // Divide the summed mass-weighted damage by the summed nodal mass (the latter is still stored
-  // in the not-yet-normalized-by-volume "density" array.  Divide element-wise by mass, but
-  // avoid division by zero for 0-mass nodes.
-  //
-  // The resulting array is now the mass fraction of damaged material at each x-nodal position.
-  for( int i = 0; i < numXNodesGlobal; ++i )
-  {
-    xProfileDamageGlobal[i] = ( xProfileDensityGlobal[i] > m_smallMass ) ? ( xProfileDamageGlobal[i] / xProfileDensityGlobal[i] ) : 0.0;
+    }
   }
 
-  // Compute cross section of global domain and divide to convert summed mass into density profile.
-  // This is global domain cross section in y-z plane, excluding ghost cells.
-  real64 volume = m_hEl[0] * ( m_xGlobalMax[1] - m_xGlobalMin[1] - (2.0 + periodic[1]) * m_hEl[1] ) * ( m_xGlobalMax[2] - m_xGlobalMin[2] - (2.0 + periodic[2]) * m_hEl[2] );
-
-  for( localIndex g = 0; g < numXNodesLocal; ++g )
+  localIndex subRegionIndex = 0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    xProfileDensityGlobal[g] *= 1.0 / volume;
-    xProfileXStressGlobal[g] *= 1.0 / volume;
-    xProfileYStressGlobal[g] *= 1.0 / volume;
-    xProfileZStressGlobal[g] *= 1.0 / volume;
-    xProfileKineticEnergyGlobal[g] *= 1.0 / volume;
+    m_numEffectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    m_effectiveMappedNodes[subRegionIndex].move( LvArray::MemorySpace::host, true );
+    m_effectiveShapeFunctionValues[subRegionIndex].move( LvArray::MemorySpace::host, true );
+
+    arrayView1d< localIndex const > const numEffectiveMappedNodes =
+      m_numEffectiveMappedNodes[subRegionIndex];
+    arrayView2d< localIndex const > const effectiveMappedNodes =
+      m_effectiveMappedNodes[subRegionIndex];
+    arrayView2d< real64 const > const effectiveShapeFunctionValues =
+      m_effectiveShapeFunctionValues[subRegionIndex];
+
+    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
+    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
+    arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+
+    arrayView1d< real64 const > particleInternalEnergy;
+    if( needInternalEnergy )
+    {
+      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
+    }
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      localIndex const numberOfEffectiveMappedNodesPerParticle = numEffectiveMappedNodes[pp];
+
+      real64 const pMass = particleMass[p];
+      real64 const pVolume = particleVolume[p];
+      real64 const pKineticEnergy = 0.5 * pMass * LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] );
+      real64 const pPlasticStrainMagnitude = plasticStrainMagnitudeFromVoigt( particlePlasticStrain[p] );
+
+      for( localIndex g = 0; g < numberOfEffectiveMappedNodesPerParticle; ++g )
+      {
+        localIndex const mappedNode = effectiveMappedNodes[pp][g];
+        real64 const shapeFunctionValue = effectiveShapeFunctionValues[pp][g];
+        real64 const coordinate = gridPosition[mappedNode][direction];
+
+        if( coordinate < profileMin - coordinateTolerance || coordinate > profileMax + coordinateTolerance )
+        {
+          continue;
+        }
+
+        int sliceIndex = -1;
+        if( useGridResolution )
+        {
+          sliceIndex = static_cast< int >( LvArray::math::round( ( coordinate - profileMin ) / sliceSpacing ) );
+        }
+        else
+        {
+          sliceIndex = static_cast< int >( LvArray::math::floor( ( coordinate - profileMin ) / sliceSpacing ) );
+          if( sliceIndex == numSlices && LvArray::math::abs( coordinate - profileMax ) <= coordinateTolerance )
+          {
+            sliceIndex = numSlices - 1;
+          }
+        }
+
+        if( sliceIndex < 0 || sliceIndex >= numSlices )
+        {
+          continue;
+        }
+
+        real64 const massWeight = pMass * shapeFunctionValue;
+        real64 const volumeWeight = pVolume * shapeFunctionValue;
+        profileMassLocal[sliceIndex] += massWeight;
+        profileMaterialVolumeLocal[sliceIndex] += volumeWeight;
+
+        for( int variableIndex = 0; variableIndex < numVariables; ++variableIndex )
+        {
+          string const & variableName = m_profileVariables[variableIndex];
+          real64 value = 0.0;
+          real64 weight = 1.0;
+
+          int const stressComponent = profileStressComponentIndex( variableName );
+          int const plasticStrainComponent = profilePlasticStrainComponentIndex( variableName );
+          int const velocityComponent = profileVelocityComponentIndex( variableName );
+
+          if( velocityComponent >= 0 || variableName == "volumeFraction" )
+          {
+            continue;
+          }
+
+          if( variableName == "density" )
+          {
+            value = pMass;
+            weight = shapeFunctionValue;
+          }
+          else if( variableName == "damage" )
+          {
+            value = particleDamage[p];
+            weight = massWeight;
+          }
+          else if( variableName == "temperature" )
+          {
+            value = particleTemperature[p];
+            weight = massWeight;
+          }
+          else if( variableName == "internalEnergy" )
+          {
+            value = particleInternalEnergy[p];
+            weight = massWeight;
+          }
+          else if( variableName == "kineticEnergy" )
+          {
+            value = pKineticEnergy;
+            weight = shapeFunctionValue;
+          }
+          else if( variableName == "plasticStrainMagnitude" )
+          {
+            value = pPlasticStrainMagnitude;
+            weight = volumeWeight;
+          }
+          else if( stressComponent >= 0 )
+          {
+            value = particleStress[p][stressComponent];
+            weight = volumeWeight;
+          }
+          else if( plasticStrainComponent >= 0 )
+          {
+            value = particlePlasticStrain[p][plasticStrainComponent];
+            weight = volumeWeight;
+          }
+          else
+          {
+            GEOS_ERROR( "Unsupported canonical MPM profile variable '" << variableName << "'." );
+          }
+
+          profileSumsLocal[variableIndex * numSlices + sliceIndex] += value * weight;
+        }
+      }
+    }
+
+    ++subRegionIndex;
+  } );
+
+  MpiWrapper::allReduce( profileSumsLocal,
+                         profileSumsGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( profileMassLocal,
+                         profileMassGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( profileMaterialVolumeLocal,
+                         profileMaterialVolumeGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( profileGridMassLocal,
+                         profileGridMassGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( profileGridMaterialVolumeLocal,
+                         profileGridMaterialVolumeGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( profileGridMomentumLocal,
+                         profileGridMomentumGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+
+  for( int variableIndex = 0; variableIndex < numVariables; ++variableIndex )
+  {
+    string const & variableName = m_profileVariables[variableIndex];
+    int const velocityComponent = profileVelocityComponentIndex( variableName );
+    for( int sliceIndex = 0; sliceIndex < numSlices; ++sliceIndex )
+    {
+      if( velocityComponent >= 0 )
+      {
+        profileSumsGlobal[variableIndex * numSlices + sliceIndex] =
+          profileGridMassGlobal[sliceIndex] > m_smallMass
+          ? profileGridMomentumGlobal[velocityComponent * numSlices + sliceIndex] / profileGridMassGlobal[sliceIndex]
+          : 0.0;
+        continue;
+      }
+
+      if( variableName == "volumeFraction" )
+      {
+        profileSumsGlobal[variableIndex * numSlices + sliceIndex] =
+          profileGridMaterialVolumeGlobal[sliceIndex] / sliceVolume;
+        continue;
+      }
+
+      real64 denominator = 1.0;
+      real64 minimumDenominator = 0.0;
+      if( profileVariableUsesSliceVolume( variableName ) )
+      {
+        denominator = sliceVolume;
+      }
+      else if( profileVariableUsesMass( variableName ) )
+      {
+        denominator = profileMassGlobal[sliceIndex];
+        minimumDenominator = m_smallMass;
+      }
+      else if( profileVariableUsesMaterialVolume( variableName ) )
+      {
+        denominator = profileMaterialVolumeGlobal[sliceIndex];
+      }
+      else
+      {
+        GEOS_ERROR( "Unsupported canonical MPM profile variable '" << variableName << "'." );
+      }
+
+      profileSumsGlobal[variableIndex * numSlices + sliceIndex] =
+        denominator > minimumDenominator ? profileSumsGlobal[variableIndex * numSlices + sliceIndex] / denominator : 0.0;
+    }
   }
 
-  // proc 0 writes the profile data.
-  int rank = 0;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  if( rank == 0 )
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
-    // ---------------------------------------------
-    // Mass Profile
-    //
-    std::ofstream file;
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_density.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
+    for( int variableIndex = 0; variableIndex < numVariables; ++variableIndex )
     {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < ( numXNodesGlobal ); ++i )
+      string const & variableName = m_profileVariables[variableIndex];
+      std::ofstream file;
+      file.open( profileOutputFileName( direction, variableName ), std::ios::out | std::ios::app );
+      if( file.fail() )
       {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+
+      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
+      for( int sliceIndex = 0; sliceIndex < numSlices; ++sliceIndex )
+      {
+        file << std::setprecision( std::numeric_limits< long double >::digits10 )
+             << "," << profileSumsGlobal[variableIndex * numSlices + sliceIndex];
       }
       file << std::endl;
+      file.close();
     }
-
-    // Write the current time and the nodal vaerage for each x position.
-
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < ( numXNodesGlobal ); ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileDensityGlobal[i];
-    }
-    file << std::endl;
-    file.close();
-
-    // ---------------------------------------------
-    // Damage Profile
-    //
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_damage.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
-    {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < ( numXNodesGlobal ); ++i )
-      {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
-      }
-      file << std::endl;
-    }
-
-    // Write the current time and the nodal vaerage for each x position.
-
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < ( numXNodesGlobal ); ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileDamageGlobal[i];
-    }
-    file << std::endl;
-    file.close();
-
-    // ---------------------------------------------
-    // xStress Profile
-    //
-
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_xStress.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
-    {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < ( numXNodesGlobal ); ++i )
-      {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
-      }
-      file << std::endl;
-    }
-
-    // Write the current time and the nodal average for each x position.
-
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < ( numXNodesGlobal ); ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileXStressGlobal[i];
-    }
-    file << std::endl;
-    file.close();
-
-    // ---------------------------------------------
-    // yStress Profile
-    //
-
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_yStress.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
-    {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < ( numXNodesGlobal ); ++i )
-      {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
-      }
-      file << std::endl;
-    }
-
-    // Write the current time and the nodal average for each x position.
-
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < numXNodesGlobal; ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileYStressGlobal[i];
-    }
-    file << std::endl;
-    file.close();
-
-    // ---------------------------------------------
-    // zStress Profile
-    //
-
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_zStress.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
-    {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < ( numXNodesGlobal ); ++i )
-      {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
-      }
-      file << std::endl;
-    }
-
-    // Write the current time and the nodal average for each x position.
-
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < ( numXNodesGlobal ); ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileZStressGlobal[i];
-    }
-    file << std::endl;
-    file.close();
-
-    // ---------------------------------------------
-    // KINETICENERGY Profile
-    //
-
-    //can't enable exception now because of gcc bug that raises ios_base::failure with useless message
-    //file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "x_profile_kineticEnergy.csv", std::ios::out | std::ios::app );
-    if( file.fail() )
-      throw std::ios_base::failure( std::strerror( errno ) );
-    //make sure write fails with exception if something is wrong
-    file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-
-    if( cycleNumber == 0 )
-    {
-      // Write the header to the file.
-      // time, x_0, x_1, ..., x_n
-
-      file << "time";
-      for( int i = 0; i < numXNodesGlobal; ++i )
-      {
-        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << m_xGlobalMin[0] + i * m_hEl[0];
-      }
-      file << std::endl;
-    }
-
-    // Write the current time and the nodal average for each x position.
-    file << std::setprecision( std::numeric_limits< long double >::digits10 ) << time + dt;
-    for( int i = 0; i < numXNodesGlobal; ++i )
-    {
-      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << xProfileKineticEnergyGlobal[i];
-    }
-    file << std::endl;
-    file.close();
   }
 }
 
