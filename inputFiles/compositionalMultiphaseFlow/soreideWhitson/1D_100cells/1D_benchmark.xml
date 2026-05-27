@@ -48,9 +48,6 @@
         control="totalVolRate"
         maxRelativePressureChange="0.5"
         maxCompFractionChange="0.5">
-        <InjectionPhaseVolumeRateConstraint
-          name="inj"
-          phaseName="water"/>
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -72,9 +69,6 @@
         control="totalVolRate"
         maxRelativePressureChange="0.5"
         maxCompFractionChange="0.5">
-        <InjectionPhaseVolumeRateConstraint
-          name="inj"
-          phaseName="gas"/>
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
