@@ -17,7 +17,7 @@
  * @file SolutionCheckKernel.cpp
  */
 
-#include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
+#include "physicsSolvers/SolutionCheckHelpers.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "common/format/table/TableMpiComponents.hpp"

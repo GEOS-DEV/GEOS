@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_SOLUTIONCHECKHELPERS_HPP
 #define GEOS_PHYSICSSOLVERS_SOLUTIONCHECKHELPERS_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
+#include "physicsSolvers/SolutionCheckKernelsHelpers.hpp"
 #include "common/Units.hpp"
 
 namespace geos
@@ -187,4 +187,4 @@ private:
 } // namespace geos
 
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPERS_HPP
+#endif //GEOS_PHYSICSSOLVERS_SOLUTIONCHECKHELPERS_HPP

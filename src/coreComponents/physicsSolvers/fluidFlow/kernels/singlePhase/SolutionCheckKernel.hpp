@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
+#include "physicsSolvers/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
 {

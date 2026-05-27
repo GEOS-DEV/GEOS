@@ -29,6 +29,8 @@ set( physicsSolversBase_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
+     SolutionCheckHelpers.hpp
+     SolutionCheckKernelsHelpers.hpp
      SolverStatistics.hpp )
 #
 # Specify solver sources
@@ -37,6 +39,7 @@ set( physicsSolversBase_sources
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverBase.cpp
+     SolutionCheckHelpers.cpp
      SolverStatistics.cpp )
 
 set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )

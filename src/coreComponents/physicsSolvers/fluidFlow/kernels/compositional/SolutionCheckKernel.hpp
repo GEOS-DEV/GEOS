@@ -22,7 +22,7 @@
 
 #include "LvArray/src/math.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
+#include "physicsSolvers/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
 {
