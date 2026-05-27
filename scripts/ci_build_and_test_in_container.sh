@@ -106,8 +106,12 @@ Usage: $0
       Request for the build of geos only.
   --cmake-build-type ...
       One of Debug, Release, RelWithDebInfo and MinSizeRel. Forwarded to CMAKE_BUILD_TYPE.
+  --cmake-cuda-architectures ...
+      Optional override for CMAKE_CUDA_ARCHITECTURES.
   --code-coverage
       run a code build and test.
+  --ctest-parallel-level N
+      Number of tests ctest may run in parallel.
   --data-basename output.tar.gz
       If some data needs to be extracted from the build, the argument will define the tarball. Has to be a `tar.gz`.
   --geos-enable-bounds-check
@@ -134,6 +138,8 @@ Usage: $0
       Do not run the unit tests (but they will be built).
   --nproc N
       Number of cores to use for the build.
+  --use-native-architecture
+      Build with compiler flags targeting the native runner CPU.
   --repository /path/to/repository
       Internal mountpoint where the geos repository will be available.
   --run-integrated-tests
@@ -153,7 +159,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-sccache,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,cmake-cuda-architectures:,code-coverage,ctest-parallel-level:,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-config:,test-code-style,test-documentation,use-native-architecture,use-sccache,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -170,10 +176,15 @@ TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
+CTEST_PARALLEL_LEVEL_ARG=""
 NPROC="$(nproc)"
 GEOS_ENABLE_BOUNDS_CHECK=ON
 SCCACHE_BIN=""
 USE_SCCACHE=false
+CMAKE_CUDA_ARCHITECTURES_ARGS=()
+CMAKE_NATIVE_ARCHITECTURE_ARGS=()
+ATS_CMAKE_ARGS=()
+LCOV_CMAKE_ARGS=""
 
 eval set -- ${args}
 while :
@@ -184,6 +195,9 @@ do
       RUN_UNIT_TESTS=false
       shift;;
     --cmake-build-type)      CMAKE_BUILD_TYPE=$2;        shift 2;;
+    --cmake-cuda-architectures)
+      CMAKE_CUDA_ARCHITECTURES_ARGS+=("-DCMAKE_CUDA_ARCHITECTURES=$2")
+      shift 2;;
     --ninja)
         BUILD_GENERATOR=$1;
         shift;;
@@ -208,10 +222,17 @@ do
     --no-install-schema)     GEOS_INSTALL_SCHEMA=false; shift;;
     --no-run-unit-tests)     RUN_UNIT_TESTS=false;       shift;;
     --nproc)                 NPROC=$2;                   shift 2;;
+    --use-native-architecture)
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_C_FLAGS:STRING="-march=native -mtune=native"')
+      CMAKE_NATIVE_ARCHITECTURE_ARGS+=('-DCMAKE_CXX_FLAGS:STRING="-march=native -mtune=native"')
+      shift;;
     --repository)            GEOS_SRC_DIR=$2;            shift 2;;
     --run-integrated-tests)  RUN_INTEGRATED_TESTS=true;  shift;;
     --upload-test-baselines) UPLOAD_TEST_BASELINES=true; shift;;
     --code-coverage)         CODE_COVERAGE=true;         shift;;
+    --ctest-parallel-level)
+      CTEST_PARALLEL_LEVEL_ARG=$2
+      shift 2;;
     --sccache-config)        SCCACHE_CONFIG_FILE=$2;     shift 2;;
     --use-sccache)           USE_SCCACHE=true;           shift;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
@@ -298,16 +319,22 @@ if [ -z "${NPROC}" ]; then
 fi
 echo "Using ${NPROC} cores."
 
+if [[ -n "${CTEST_PARALLEL_LEVEL_ARG}" ]]; then
+  export CTEST_PARALLEL_LEVEL="${CTEST_PARALLEL_LEVEL_ARG}"
+  echo "Running ctest with CTEST_PARALLEL_LEVEL=${CTEST_PARALLEL_LEVEL}."
+fi
+
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   phase_start "Set up integrated test environment"
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
-  #or_die apt-get update
-  or_die apt-get install -y virtualenv python3-dev python-is-python3
+  or_die apt-get update
+  or_die apt-get install -y python3-dev python3-venv
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
-  or_die virtualenv ${ATS_PYTHON_HOME}
+  or_die python3 -m venv ${ATS_PYTHON_HOME}
 
-  python3 -m pip cache purge
+  or_die ${ATS_PYTHON_HOME}/bin/python3 -m pip install --upgrade pip setuptools wheel
+  ${ATS_PYTHON_HOME}/bin/python3 -m pip cache purge
 
   # Setup a temporary directory to hold tests
   tempdir=$(mktemp -d)
@@ -316,7 +343,12 @@ if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   ATS_WORKING_DIR=$tempdir/GEOS_integratedTests_working
 
   export ATS_FILTER="np<=32"
-  ATS_CMAKE_ARGS="-DATS_ARGUMENTS=\"--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32\" -DPython3_ROOT_DIR=${ATS_PYTHON_HOME} -DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3 -DATS_BASELINE_DIR=${ATS_BASELINE_DIR} -DATS_WORKING_DIR=${ATS_WORKING_DIR}"
+  ATS_ARGUMENTS="--machine openmpi --ats openmpi_mpirun=/usr/bin/mpirun --ats openmpi_args=--allow-run-as-root --ats openmpi_procspernode=32 --ats openmpi_maxprocs=32 --ats cutoff=45m"
+  ATS_CMAKE_ARGS=("-DATS_ARGUMENTS:STRING=\"${ATS_ARGUMENTS}\""
+                  "-DPython3_ROOT_DIR=${ATS_PYTHON_HOME}"
+                  "-DPython3_EXECUTABLE=${ATS_PYTHON_HOME}/bin/python3"
+                  "-DATS_BASELINE_DIR=${ATS_BASELINE_DIR}"
+                  "-DATS_WORKING_DIR=${ATS_WORKING_DIR}")
   phase_finish 0
 fi
 
@@ -324,6 +356,36 @@ fi
 if [[ "${CODE_COVERAGE}" = true ]]; then
   or_die apt-get update
   or_die apt-get install -y lcov
+
+  LCOV_REAL=$(command -v lcov || true)
+  if [[ -n "${LCOV_REAL}" ]]; then
+    export GEOS_REAL_LCOV="${LCOV_REAL}"
+    LCOV_WRAPPER=/tmp/geos-lcov-wrapper
+    cat > "${LCOV_WRAPPER}" <<'EOF'
+#!/bin/bash
+set -e
+
+extra_args=()
+if "${GEOS_REAL_LCOV}" --version 2>&1 | grep -Eq 'LCOV version ([2-9]|[1-9][0-9])\.'; then
+  for arg in "$@"; do
+    case "${arg}" in
+      --capture|-c)
+        extra_args=(--ignore-errors mismatch,empty)
+        break
+        ;;
+      --remove|-r)
+        extra_args=(--ignore-errors unused)
+        break
+        ;;
+    esac
+  done
+fi
+
+exec "${GEOS_REAL_LCOV}" "${extra_args[@]}" "$@"
+EOF
+    or_die chmod +x "${LCOV_WRAPPER}"
+    LCOV_CMAKE_ARGS="-DLCOV_EXECUTABLE=${LCOV_WRAPPER}"
+  fi
 fi
 
 # The -DBLT_MPI_COMMAND_APPEND="--allow-run-as-root;--oversubscribe" option is added for OpenMPI.
@@ -355,8 +417,11 @@ or_die python3 scripts/config-build.py \
                -DGEOS_LA_INTERFACE:PATH=${GEOS_LA_INTERFACE} \
                -DENABLE_COVERAGE=$([[ "${CODE_COVERAGE}" = true ]] && echo 1 || echo 0) \
                -DGEOS_ENABLE_BOUNDS_CHECK=${GEOS_ENABLE_BOUNDS_CHECK} \
+               "${CMAKE_CUDA_ARCHITECTURES_ARGS[@]}" \
+               "${CMAKE_NATIVE_ARCHITECTURE_ARGS[@]}" \
                ${SCCACHE_CMAKE_ARGS} \
-               ${ATS_CMAKE_ARGS}
+               ${LCOV_CMAKE_ARGS} \
+               "${ATS_CMAKE_ARGS[@]}"
 phase_finish 0
 
 # The configuration step is now over, we can now move to the build directory for the build!
@@ -402,7 +467,14 @@ phase_finish 0
 
 if [[ -n "${SCCACHE_BIN}" ]]; then
   echo "sccache post-build state"
-  or_die ${SCCACHE_BIN} --show-adv-stats
+  SCCACHE_STATS_FILE="${GEOS_SRC_DIR}/.sccache-runtime/stats.txt"
+  or_die mkdir -p "$(dirname "${SCCACHE_STATS_FILE}")"
+  ${SCCACHE_BIN} --show-adv-stats | tee "${SCCACHE_STATS_FILE}"
+  SCCACHE_STATS_STATUS=${PIPESTATUS[0]}
+  if [[ ${SCCACHE_STATS_STATUS} != 0 ]]; then
+    echo ERROR ${SCCACHE_STATS_STATUS} command: ${SCCACHE_BIN} --show-adv-stats
+    exit ${SCCACHE_STATS_STATUS}
+  fi
 fi
 
 if [[ "${CODE_COVERAGE}" = true ]]; then
@@ -425,8 +497,13 @@ if [[ "${RUN_UNIT_TESTS}" = true ]]; then
 fi
 
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
-  # fix the setuptools/distutils conflict
-  export SETUPTOOLS_USE_DISTUTILS=stdlib
+  PYTHON_MINOR_VERSION="$(${ATS_PYTHON_HOME}/bin/python3 -c 'import sys; print(sys.version_info.minor if sys.version_info.major == 3 else 99)')"
+  if (( PYTHON_MINOR_VERSION < 12 )); then
+    # fix the setuptools/distutils conflict
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
+  else
+    unset SETUPTOOLS_USE_DISTUTILS
+  fi
 
   # We split the process in two steps. First installing the environment, then running the tests.
   phase_start "Build ATS environment"

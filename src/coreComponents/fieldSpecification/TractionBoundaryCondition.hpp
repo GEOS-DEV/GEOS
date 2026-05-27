@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_TRACTIONBOUNDARYCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/NodeManager.hpp"
 
@@ -34,10 +34,10 @@ class TableFunction;
  * @class TractionBoundaryCondition
  * Holds data and methods to apply a traction boundary condition
  */
-class TractionBoundaryCondition : public FieldSpecificationBase
+class TractionBoundaryCondition : public FieldSpecification
 {
 public:
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   TractionBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -98,7 +98,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
     /// @return The key for tractionType
     constexpr static char const * tractionTypeString() { return "tractionType"; }
