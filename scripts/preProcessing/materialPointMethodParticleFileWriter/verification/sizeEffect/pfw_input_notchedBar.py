@@ -229,9 +229,10 @@ try:
 except Exception:
     pass
 
-# Fix common legacy typo before GEOS XML is written.
-if "planeStrain" in pfw and "planeStrain" not in pfw:
-    pfw["planeStrain"] = pfw.pop("planeStrain")
+# Fix common legacy typos before GEOS XML is written.
+for _legacyPlaneStrainKey in ("planeSrain", "planeStrian"):
+    if _legacyPlaneStrainKey in pfw and "planeStrain" not in pfw:
+        pfw["planeStrain"] = pfw.pop(_legacyPlaneStrainKey)
 
 _vv_fast_plane = _vv_fast_bool(pfw.get("planeStrain", False))
 # Treat thin 2D/plane-strain legacy cases as plane-like even when planeStrain was omitted.
