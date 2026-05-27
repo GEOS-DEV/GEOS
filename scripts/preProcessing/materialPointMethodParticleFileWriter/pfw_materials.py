@@ -54,6 +54,354 @@
 
 import numpy as np
 
+# -------------------------------------------------------------------------------------------------
+# MATERIAL STRING GENERATORS
+# -------------------------------------------------------------------------------------------------
+# Material entries remain dictionary-compatible, but each entry is finalized below as a
+# MaterialProperties object.  MaterialProperties is a dict subclass, so existing code that indexes
+# material["defaultDensity"] or material["materialString"] still works.  The materialString value
+# is generated from the model-specific generator attached to each finalized entry.
+
+class MaterialProperties(dict):
+    """Dictionary-compatible material entry with helper functions exposed as attributes.
+
+    The ``materialString`` field is generated from the model-specific generator every time it is
+    requested.  This keeps legacy dictionary use working while avoiding stale XML when a user edits
+    a parameter after importing this module.
+    """
+
+    def __getitem__(self, key):
+        if key == 'materialString':
+            return self.refreshMaterialString()
+        return dict.__getitem__(self, key)
+
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+        if key not in ('materialString',) and getattr(self, '_autoRefreshMaterialString', False):
+            self.refreshMaterialString()
+
+    def get(self, key, default=None):
+        if key == 'materialString' and self.hasMaterialStringGenerator():
+            return self.refreshMaterialString()
+        return dict.get(self, key, default)
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as exc:
+            raise AttributeError(name) from exc
+
+    def __setattr__(self, name, value):
+        if name.startswith('_') or name == 'generateMaterialString':
+            object.__setattr__(self, name, value)
+        else:
+            self[name] = value
+
+    def hasMaterialStringGenerator(self):
+        return hasattr(self, 'generateMaterialString')
+
+    def refreshMaterialString(self):
+        generator = getattr(self, 'generateMaterialString', None)
+        if generator is None:
+            return dict.__getitem__(self, 'materialString')
+        material_string = generator(self)
+        dict.__setitem__(self, 'materialString', material_string)
+        return material_string
+
+    def copy(self):
+        result = MaterialProperties(self)
+        for attr, value in getattr(self, '__dict__', {}).items():
+            object.__setattr__(result, attr, value)
+        return result
+
+
+def _format_material_value(value):
+    if isinstance(value, np.generic):
+        value = value.item()
+    return str(value)
+
+
+def _required(material, key):
+    if key not in material:
+        name = material.get('name', '<unnamed>')
+        model = material.get('model', '<unknown model>')
+        raise KeyError('Material %s (%s) is missing required parameter %s' % (name, model, key))
+    return material[key]
+
+
+def _format_material_xml(material, attribute_names):
+    name = _required(material, 'name')
+    model = _required(material, 'model')
+    version = material.get('version', 'unknown')
+    lines = [
+        '<!--%s parameterization of %s model, version: %s-->' % (name, model, version),
+        '<%s' % model,
+        'name="%s"' % _format_material_value(name),
+    ]
+    emitted = set(['name'])
+    for attr in attribute_names:
+        if attr in emitted:
+            continue
+        if attr in material:
+            lines.append('%s="%s"' % (attr, _format_material_value(material[attr])))
+            emitted.add(attr)
+    lines.append('/>')
+    return '\n'.join(lines) + '\n'
+
+
+def _select_isotropic_elastic_pair(material):
+    # GEOS ElasticIsotropic-derived models require one valid pair of elastic constants.  Prefer
+    # E/nu when present so a user edit such as material["defaultYoungModulus"] = 2.0 is reflected
+    # directly in the generated XML.  Polymer entries below store K/G by default and keep the
+    # literature E/nu values under referenceYoungModulus/referencePoissonRatio to avoid over-
+    # specifying the GEOS input.
+    possible_pairs = [
+        ('defaultYoungModulus', 'defaultPoissonRatio'),
+        ('defaultBulkModulus', 'defaultShearModulus'),
+        ('defaultYoungModulus', 'defaultShearModulus'),
+        ('defaultBulkModulus', 'defaultPoissonRatio'),
+        ('defaultLambda', 'defaultShearModulus'),
+    ]
+    for pair in possible_pairs:
+        if all(key in material for key in pair):
+            return list(pair)
+    name = material.get('name', '<unnamed>')
+    raise KeyError('Material %s does not define a complete ElasticIsotropic constant pair.' % name)
+
+
+def generateVonMisesJMaterialString(material):
+    return _format_material_xml(material, [
+        'defaultDensity',
+        'defaultBulkModulus',
+        'defaultShearModulus',
+        'defaultYieldStrength',
+    ])
+
+
+def generateCeramicDamageMaterialString(material):
+    return _format_material_xml(material, [
+        'defaultDensity',
+        'defaultBulkModulus',
+        'defaultShearModulus',
+        'tensileStrength',
+        'compressiveStrength',
+        'maximumStrength',
+        'crackSpeed',
+        'damagedMaterialFrictionSlope',
+        'enableEnergyFailureCriterion',
+        'fractureEnergyReleaseRate',
+        'fractureToughness',
+    ])
+
+
+def generateElasticIsotropicMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material))
+
+
+def generateGeomechanicsMaterialString(material):
+    return _format_material_xml(material, [
+        'defaultDensity',
+        'b0', 'b1', 'b2', 'b3', 'b4',
+        'dstrendh', 'dfslopedh', 'dpeakI1dh', 'dcrdh',
+        'g0', 'g1', 'g2', 'g3', 'g4',
+        'p0', 'p1', 'p2', 'p3', 'p4',
+        'cr',
+        'fluidBulkModulus',
+        'fluidInitialPressure',
+        't1RateDependence',
+        't2RateDependence',
+        'peakI1',
+        'fSlope',
+        'fSlopeFailed',
+        'stren',
+        'ySlope',
+        'beta',
+        'fractureEnergyReleaseRate',
+        'fractureSofteningExponent',
+        'fractureStress',
+        'initialTemperature',
+        'Q',
+        'brittleDuctileTransition',
+        'damageEvolutionCriterion',
+        'enableBuckling',
+        'bucklingLength',
+        'bucklingAmplitude',
+        'enableCreep',
+        'creepC0', 'creepC1', 'creepC2',
+        'creepA', 'creepB', 'creepC', 'creepD', 'creepE', 'creepF', 'creepG',
+        'strainHardeningN',
+        'strainHardeningK',
+        'plasticStrainTolerance',
+        'stressReturnTolerance',
+        'maxAllowedSubcycles',
+        'failedStepResponse',
+    ])
+
+
+
+def generateGraphiteMaterialString(material):
+    return _format_material_xml(material, [
+        'defaultDensity',
+        'defaultDrainedLinearTEC',
+        'defaultYoungModulusTransverse',
+        'defaultYoungModulusAxial',
+        'defaultPoissonRatioTransverse',
+        'defaultPoissonRatioAxialTransverse',
+        'defaultShearModulusAxialTransverse',
+        'defaultYoungModulusTransversePressureDerivative',
+        'defaultYoungModulusAxialPressureDerivative',
+        'defaultShearModulusAxialTransversePressureDerivative',
+        'failureStrength',
+        'maximumPrincipalStressDamage',
+        'crackSpeed',
+        'scaleFractureEnergyReleaseRate',
+        'basalPlaneFractureEnergyReleaseRate',
+        'totalFractureEnergyReleaseRate',
+        'damagedMaterialFrictionalSlope',
+        'distortionShearResponseX2',
+        'distortionShearResponseY1',
+        'distortionShearResponseY2',
+        'distortionShearResponseM1',
+        'inPlaneShearResponseX2',
+        'inPlaneShearResponseY1',
+        'inPlaneShearResponseY2',
+        'inPlaneShearResponseM1',
+        'coupledShearResponseX2',
+        'coupledShearResponseY1',
+        'coupledShearResponseY2',
+        'coupledShearResponseM1',
+        'distortionStrainHardeningC0',
+        'inPlaneStrainHardeningC0',
+        'coupledStrainHardeningC0',
+        'maximumPlasticStrain',
+        'alphaL',
+        'alphaT',
+        'enableCrackTipStressConcentration',
+    ])
+
+
+def generateStrainHardeningPolymerMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+        'defaultYieldStrength',
+        'yieldStrengthA',
+        'yieldStrengthB',
+        'yieldStrengthT0',
+        'strainHardeningSlope',
+        'strainHardeningSlopeA',
+        'strainHardeningSlopeB',
+        'strainHardeningSlopeT0',
+        'shearSofteningMagnitude',
+        'shearSofteningMagnitudeA',
+        'shearSofteningMagnitudeB',
+        'shearSofteningMagnitudeT0',
+        'shearSofteningShapeParameter1',
+        'shearSofteningShapeParameter2',
+        'maximumStretch',
+        'maximumStretchA',
+        'maximumStretchB',
+        'maximumStretchT0',
+        'bulkModulusA',
+        'bulkModulusB',
+        'bulkModulusT0',
+        'shearModulusA',
+        'shearModulusB',
+        'shearModulusT0',
+    ])
+
+
+def generateHyperelasticMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+    ])
+
+
+def generateHyperelasticMMSMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+    ])
+
+
+def generateChiumentiMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+        'criticalLength',
+        'failureStrength',
+        'energyReleaseRate',
+    ])
+
+
+def generatePerfectlyPlasticMaterialString(material):
+    return _format_material_xml(material, ['defaultDensity'] + _select_isotropic_elastic_pair(material) + [
+        'defaultDrainedLinearTEC',
+        'defaultYieldStress',
+    ])
+
+
+def _select_transverse_isotropic_elastic_set(material):
+    engineering_constants = [
+        'defaultYoungModulusTransverse',
+        'defaultYoungModulusAxial',
+        'defaultPoissonRatioTransverse',
+        'defaultPoissonRatioAxialTransverse',
+        'defaultShearModulusAxialTransverse',
+    ]
+    stiffness_constants = [
+        'defaultC11',
+        'defaultC13',
+        'defaultC33',
+        'defaultC44',
+        'defaultC66',
+    ]
+    if all(key in material for key in engineering_constants):
+        return engineering_constants
+    if all(key in material for key in stiffness_constants):
+        return stiffness_constants
+    name = material.get('name', '<unnamed>')
+    raise KeyError(
+        'Material %s does not define a complete ElasticTransverseIsotropic ' 
+        'engineering-constant or stiffness-constant set.' % name
+    )
+
+
+def generateElasticTransverseIsotropicMaterialString(material):
+    return _format_material_xml(material, [
+        'defaultDensity',
+        'defaultDrainedLinearTEC',
+    ] + _select_transverse_isotropic_elastic_set(material))
+
+
+MATERIAL_STRING_GENERATORS = {
+    'VonMisesJ': generateVonMisesJMaterialString,
+    'CeramicDamage': generateCeramicDamageMaterialString,
+    'ElasticIsotropic': generateElasticIsotropicMaterialString,
+    'Geomechanics': generateGeomechanicsMaterialString,
+    'Graphite': generateGraphiteMaterialString,
+    'StrainHardeningPolymer': generateStrainHardeningPolymerMaterialString,
+    'Hyperelastic': generateHyperelasticMaterialString,
+    'HyperelasticMMS': generateHyperelasticMMSMaterialString,
+    'Chiumenti': generateChiumentiMaterialString,
+    'PerfectlyPlastic': generatePerfectlyPlasticMaterialString,
+    'ElasticTransverseIsotropic': generateElasticTransverseIsotropicMaterialString,
+}
+
+
+def getMaterialStringGenerator(material_or_model):
+    if isinstance(material_or_model, str):
+        model = material_or_model
+    else:
+        model = _required(material_or_model, 'model')
+    try:
+        return MATERIAL_STRING_GENERATORS[model]
+    except KeyError as exc:
+        raise KeyError('No material string generator registered for model %s' % model) from exc
+
+
+def generateMaterialString(material):
+    """Generate a GEOS XML material string for a material dictionary."""
+    return getMaterialStringGenerator(material)(material)
+
+
 
 # -------------------------------------------------------------------------------------------------
 # METALS AND ENGINEERING ALLOYS
@@ -80,15 +428,7 @@ aluminum["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 aluminum["waveSpeed"] = float(np.sqrt( ( aluminum["defaultBulkModulus"] + 4./3.*aluminum["defaultShearModulus"] ) / aluminum["defaultDensity"] ))
 
-aluminum["materialString"]="<!--"+aluminum["name"]+" parameterization of "+aluminum["model"]+" model, version: "+str(aluminum["version"])+"""-->
-<"""+aluminum["model"]+"""
-name="""+'"'+aluminum["name"]+'"'+"""
-defaultDensity=""" + '"' + str(aluminum["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(aluminum["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(aluminum["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(aluminum["defaultYieldStrength"]) + '"' + """
-/>
-"""
+aluminum["materialString"] = generateMaterialString(aluminum)
 # #################################################################################################
 
 ###################################################################################################
@@ -111,15 +451,7 @@ al6061T6["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 al6061T6["waveSpeed"] = float(np.sqrt( ( al6061T6["defaultBulkModulus"] + 4./3.*al6061T6["defaultShearModulus"] ) / al6061T6["defaultDensity"] ))
 
-al6061T6["materialString"]="<!--"+al6061T6["name"]+" parameterization of "+al6061T6["model"]+" model, version: "+str(al6061T6["version"])+"""-->
-<"""+al6061T6["model"]+"""
-name="""+'"'+al6061T6["name"]+'"'+"""
-defaultDensity=""" + '"' + str(al6061T6["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(al6061T6["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(al6061T6["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(al6061T6["defaultYieldStrength"]) + '"' + """
-/>
-"""
+al6061T6["materialString"] = generateMaterialString(al6061T6)
 # #################################################################################################
 
 ###################################################################################################
@@ -142,15 +474,7 @@ al7075T6["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 al7075T6["waveSpeed"] = float(np.sqrt( ( al7075T6["defaultBulkModulus"] + 4./3.*al7075T6["defaultShearModulus"] ) / al7075T6["defaultDensity"] ))
 
-al7075T6["materialString"]="<!--"+al7075T6["name"]+" parameterization of "+al7075T6["model"]+" model, version: "+str(al7075T6["version"])+"""-->
-<"""+al7075T6["model"]+"""
-name="""+'"'+al7075T6["name"]+'"'+"""
-defaultDensity=""" + '"' + str(al7075T6["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(al7075T6["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(al7075T6["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(al7075T6["defaultYieldStrength"]) + '"' + """
-/>
-"""
+al7075T6["materialString"] = generateMaterialString(al7075T6)
 # #################################################################################################
 
 ###################################################################################################
@@ -174,15 +498,7 @@ steel["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 steel["waveSpeed"] = float(np.sqrt( ( steel["defaultBulkModulus"] + 4./3.*steel["defaultShearModulus"] ) / steel["defaultDensity"] ))
 
-steel["materialString"]="<!--"+steel["name"]+" parameterization of "+steel["model"]+" model, version: "+str(steel["version"])+"""-->
-<"""+steel["model"]+"""
-name="""+'"'+steel["name"]+'"'+"""
-defaultDensity=""" + '"' + str(steel["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(steel["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(steel["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(steel["defaultYieldStrength"]) + '"' + """
-/>
-"""
+steel["materialString"] = generateMaterialString(steel)
 # #################################################################################################
 
 ###################################################################################################
@@ -205,15 +521,7 @@ carbonSteelA36["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 carbonSteelA36["waveSpeed"] = float(np.sqrt( ( carbonSteelA36["defaultBulkModulus"] + 4./3.*carbonSteelA36["defaultShearModulus"] ) / carbonSteelA36["defaultDensity"] ))
 
-carbonSteelA36["materialString"]="<!--"+carbonSteelA36["name"]+" parameterization of "+carbonSteelA36["model"]+" model, version: "+str(carbonSteelA36["version"])+"""-->
-<"""+carbonSteelA36["model"]+"""
-name="""+'"'+carbonSteelA36["name"]+'"'+"""
-defaultDensity=""" + '"' + str(carbonSteelA36["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(carbonSteelA36["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(carbonSteelA36["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(carbonSteelA36["defaultYieldStrength"]) + '"' + """
-/>
-"""
+carbonSteelA36["materialString"] = generateMaterialString(carbonSteelA36)
 # #################################################################################################
 
 ###################################################################################################
@@ -237,15 +545,7 @@ alloySteel4140["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 alloySteel4140["waveSpeed"] = float(np.sqrt( ( alloySteel4140["defaultBulkModulus"] + 4./3.*alloySteel4140["defaultShearModulus"] ) / alloySteel4140["defaultDensity"] ))
 
-alloySteel4140["materialString"]="<!--"+alloySteel4140["name"]+" parameterization of "+alloySteel4140["model"]+" model, version: "+str(alloySteel4140["version"])+"""-->
-<"""+alloySteel4140["model"]+"""
-name="""+'"'+alloySteel4140["name"]+'"'+"""
-defaultDensity=""" + '"' + str(alloySteel4140["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(alloySteel4140["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(alloySteel4140["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(alloySteel4140["defaultYieldStrength"]) + '"' + """
-/>
-"""
+alloySteel4140["materialString"] = generateMaterialString(alloySteel4140)
 # #################################################################################################
 
 ###################################################################################################
@@ -268,15 +568,7 @@ stainlessSteel304["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 stainlessSteel304["waveSpeed"] = float(np.sqrt( ( stainlessSteel304["defaultBulkModulus"] + 4./3.*stainlessSteel304["defaultShearModulus"] ) / stainlessSteel304["defaultDensity"] ))
 
-stainlessSteel304["materialString"]="<!--"+stainlessSteel304["name"]+" parameterization of "+stainlessSteel304["model"]+" model, version: "+str(stainlessSteel304["version"])+"""-->
-<"""+stainlessSteel304["model"]+"""
-name="""+'"'+stainlessSteel304["name"]+'"'+"""
-defaultDensity=""" + '"' + str(stainlessSteel304["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(stainlessSteel304["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(stainlessSteel304["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(stainlessSteel304["defaultYieldStrength"]) + '"' + """
-/>
-"""
+stainlessSteel304["materialString"] = generateMaterialString(stainlessSteel304)
 # #################################################################################################
 
 ###################################################################################################
@@ -299,15 +591,7 @@ stainlessSteel316["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 stainlessSteel316["waveSpeed"] = float(np.sqrt( ( stainlessSteel316["defaultBulkModulus"] + 4./3.*stainlessSteel316["defaultShearModulus"] ) / stainlessSteel316["defaultDensity"] ))
 
-stainlessSteel316["materialString"]="<!--"+stainlessSteel316["name"]+" parameterization of "+stainlessSteel316["model"]+" model, version: "+str(stainlessSteel316["version"])+"""-->
-<"""+stainlessSteel316["model"]+"""
-name="""+'"'+stainlessSteel316["name"]+'"'+"""
-defaultDensity=""" + '"' + str(stainlessSteel316["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(stainlessSteel316["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(stainlessSteel316["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(stainlessSteel316["defaultYieldStrength"]) + '"' + """
-/>
-"""
+stainlessSteel316["materialString"] = generateMaterialString(stainlessSteel316)
 # #################################################################################################
 
 ###################################################################################################
@@ -330,15 +614,7 @@ toolSteelA2["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 toolSteelA2["waveSpeed"] = float(np.sqrt( ( toolSteelA2["defaultBulkModulus"] + 4./3.*toolSteelA2["defaultShearModulus"] ) / toolSteelA2["defaultDensity"] ))
 
-toolSteelA2["materialString"]="<!--"+toolSteelA2["name"]+" parameterization of "+toolSteelA2["model"]+" model, version: "+str(toolSteelA2["version"])+"""-->
-<"""+toolSteelA2["model"]+"""
-name="""+'"'+toolSteelA2["name"]+'"'+"""
-defaultDensity=""" + '"' + str(toolSteelA2["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(toolSteelA2["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(toolSteelA2["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(toolSteelA2["defaultYieldStrength"]) + '"' + """
-/>
-"""
+toolSteelA2["materialString"] = generateMaterialString(toolSteelA2)
 # #################################################################################################
 
 ###################################################################################################
@@ -361,15 +637,7 @@ maragingSteel300["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 maragingSteel300["waveSpeed"] = float(np.sqrt( ( maragingSteel300["defaultBulkModulus"] + 4./3.*maragingSteel300["defaultShearModulus"] ) / maragingSteel300["defaultDensity"] ))
 
-maragingSteel300["materialString"]="<!--"+maragingSteel300["name"]+" parameterization of "+maragingSteel300["model"]+" model, version: "+str(maragingSteel300["version"])+"""-->
-<"""+maragingSteel300["model"]+"""
-name="""+'"'+maragingSteel300["name"]+'"'+"""
-defaultDensity=""" + '"' + str(maragingSteel300["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(maragingSteel300["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(maragingSteel300["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(maragingSteel300["defaultYieldStrength"]) + '"' + """
-/>
-"""
+maragingSteel300["materialString"] = generateMaterialString(maragingSteel300)
 # #################################################################################################
 
 ###################################################################################################
@@ -393,15 +661,7 @@ grayCastIron["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 grayCastIron["waveSpeed"] = float(np.sqrt( ( grayCastIron["defaultBulkModulus"] + 4./3.*grayCastIron["defaultShearModulus"] ) / grayCastIron["defaultDensity"] ))
 
-grayCastIron["materialString"]="<!--"+grayCastIron["name"]+" parameterization of "+grayCastIron["model"]+" model, version: "+str(grayCastIron["version"])+"""-->
-<"""+grayCastIron["model"]+"""
-name="""+'"'+grayCastIron["name"]+'"'+"""
-defaultDensity=""" + '"' + str(grayCastIron["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(grayCastIron["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(grayCastIron["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(grayCastIron["defaultYieldStrength"]) + '"' + """
-/>
-"""
+grayCastIron["materialString"] = generateMaterialString(grayCastIron)
 # #################################################################################################
 
 ###################################################################################################
@@ -424,15 +684,7 @@ ductileIron["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 ductileIron["waveSpeed"] = float(np.sqrt( ( ductileIron["defaultBulkModulus"] + 4./3.*ductileIron["defaultShearModulus"] ) / ductileIron["defaultDensity"] ))
 
-ductileIron["materialString"]="<!--"+ductileIron["name"]+" parameterization of "+ductileIron["model"]+" model, version: "+str(ductileIron["version"])+"""-->
-<"""+ductileIron["model"]+"""
-name="""+'"'+ductileIron["name"]+'"'+"""
-defaultDensity=""" + '"' + str(ductileIron["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(ductileIron["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(ductileIron["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(ductileIron["defaultYieldStrength"]) + '"' + """
-/>
-"""
+ductileIron["materialString"] = generateMaterialString(ductileIron)
 # #################################################################################################
 
 ###################################################################################################
@@ -455,15 +707,7 @@ titaniumGrade2["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 titaniumGrade2["waveSpeed"] = float(np.sqrt( ( titaniumGrade2["defaultBulkModulus"] + 4./3.*titaniumGrade2["defaultShearModulus"] ) / titaniumGrade2["defaultDensity"] ))
 
-titaniumGrade2["materialString"]="<!--"+titaniumGrade2["name"]+" parameterization of "+titaniumGrade2["model"]+" model, version: "+str(titaniumGrade2["version"])+"""-->
-<"""+titaniumGrade2["model"]+"""
-name="""+'"'+titaniumGrade2["name"]+'"'+"""
-defaultDensity=""" + '"' + str(titaniumGrade2["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(titaniumGrade2["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(titaniumGrade2["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(titaniumGrade2["defaultYieldStrength"]) + '"' + """
-/>
-"""
+titaniumGrade2["materialString"] = generateMaterialString(titaniumGrade2)
 # #################################################################################################
 
 ###################################################################################################
@@ -487,15 +731,7 @@ ti64["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 ti64["waveSpeed"] = float(np.sqrt( ( ti64["defaultBulkModulus"] + 4./3.*ti64["defaultShearModulus"] ) / ti64["defaultDensity"] ))
 
-ti64["materialString"]="<!--"+ti64["name"]+" parameterization of "+ti64["model"]+" model, version: "+str(ti64["version"])+"""-->
-<"""+ti64["model"]+"""
-name="""+'"'+ti64["name"]+'"'+"""
-defaultDensity=""" + '"' + str(ti64["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(ti64["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(ti64["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(ti64["defaultYieldStrength"]) + '"' + """
-/>
-"""
+ti64["materialString"] = generateMaterialString(ti64)
 # #################################################################################################
 
 ###################################################################################################
@@ -518,15 +754,7 @@ copper["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 copper["waveSpeed"] = float(np.sqrt( ( copper["defaultBulkModulus"] + 4./3.*copper["defaultShearModulus"] ) / copper["defaultDensity"] ))
 
-copper["materialString"]="<!--"+copper["name"]+" parameterization of "+copper["model"]+" model, version: "+str(copper["version"])+"""-->
-<"""+copper["model"]+"""
-name="""+'"'+copper["name"]+'"'+"""
-defaultDensity=""" + '"' + str(copper["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(copper["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(copper["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(copper["defaultYieldStrength"]) + '"' + """
-/>
-"""
+copper["materialString"] = generateMaterialString(copper)
 # #################################################################################################
 
 ###################################################################################################
@@ -549,15 +777,7 @@ brassC260["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 brassC260["waveSpeed"] = float(np.sqrt( ( brassC260["defaultBulkModulus"] + 4./3.*brassC260["defaultShearModulus"] ) / brassC260["defaultDensity"] ))
 
-brassC260["materialString"]="<!--"+brassC260["name"]+" parameterization of "+brassC260["model"]+" model, version: "+str(brassC260["version"])+"""-->
-<"""+brassC260["model"]+"""
-name="""+'"'+brassC260["name"]+'"'+"""
-defaultDensity=""" + '"' + str(brassC260["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(brassC260["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(brassC260["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(brassC260["defaultYieldStrength"]) + '"' + """
-/>
-"""
+brassC260["materialString"] = generateMaterialString(brassC260)
 # #################################################################################################
 
 ###################################################################################################
@@ -580,15 +800,7 @@ phosphorBronzeC510["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 phosphorBronzeC510["waveSpeed"] = float(np.sqrt( ( phosphorBronzeC510["defaultBulkModulus"] + 4./3.*phosphorBronzeC510["defaultShearModulus"] ) / phosphorBronzeC510["defaultDensity"] ))
 
-phosphorBronzeC510["materialString"]="<!--"+phosphorBronzeC510["name"]+" parameterization of "+phosphorBronzeC510["model"]+" model, version: "+str(phosphorBronzeC510["version"])+"""-->
-<"""+phosphorBronzeC510["model"]+"""
-name="""+'"'+phosphorBronzeC510["name"]+'"'+"""
-defaultDensity=""" + '"' + str(phosphorBronzeC510["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(phosphorBronzeC510["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(phosphorBronzeC510["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(phosphorBronzeC510["defaultYieldStrength"]) + '"' + """
-/>
-"""
+phosphorBronzeC510["materialString"] = generateMaterialString(phosphorBronzeC510)
 # #################################################################################################
 
 ###################################################################################################
@@ -612,15 +824,7 @@ nickel["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 nickel["waveSpeed"] = float(np.sqrt( ( nickel["defaultBulkModulus"] + 4./3.*nickel["defaultShearModulus"] ) / nickel["defaultDensity"] ))
 
-nickel["materialString"]="<!--"+nickel["name"]+" parameterization of "+nickel["model"]+" model, version: "+str(nickel["version"])+"""-->
-<"""+nickel["model"]+"""
-name="""+'"'+nickel["name"]+'"'+"""
-defaultDensity=""" + '"' + str(nickel["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(nickel["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(nickel["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(nickel["defaultYieldStrength"]) + '"' + """
-/>
-"""
+nickel["materialString"] = generateMaterialString(nickel)
 # #################################################################################################
 
 ###################################################################################################
@@ -643,15 +847,7 @@ inconel718["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 inconel718["waveSpeed"] = float(np.sqrt( ( inconel718["defaultBulkModulus"] + 4./3.*inconel718["defaultShearModulus"] ) / inconel718["defaultDensity"] ))
 
-inconel718["materialString"]="<!--"+inconel718["name"]+" parameterization of "+inconel718["model"]+" model, version: "+str(inconel718["version"])+"""-->
-<"""+inconel718["model"]+"""
-name="""+'"'+inconel718["name"]+'"'+"""
-defaultDensity=""" + '"' + str(inconel718["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(inconel718["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(inconel718["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(inconel718["defaultYieldStrength"]) + '"' + """
-/>
-"""
+inconel718["materialString"] = generateMaterialString(inconel718)
 # #################################################################################################
 
 ###################################################################################################
@@ -674,15 +870,7 @@ cobaltChromeF75["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 cobaltChromeF75["waveSpeed"] = float(np.sqrt( ( cobaltChromeF75["defaultBulkModulus"] + 4./3.*cobaltChromeF75["defaultShearModulus"] ) / cobaltChromeF75["defaultDensity"] ))
 
-cobaltChromeF75["materialString"]="<!--"+cobaltChromeF75["name"]+" parameterization of "+cobaltChromeF75["model"]+" model, version: "+str(cobaltChromeF75["version"])+"""-->
-<"""+cobaltChromeF75["model"]+"""
-name="""+'"'+cobaltChromeF75["name"]+'"'+"""
-defaultDensity=""" + '"' + str(cobaltChromeF75["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(cobaltChromeF75["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(cobaltChromeF75["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(cobaltChromeF75["defaultYieldStrength"]) + '"' + """
-/>
-"""
+cobaltChromeF75["materialString"] = generateMaterialString(cobaltChromeF75)
 # #################################################################################################
 
 ###################################################################################################
@@ -705,15 +893,7 @@ magnesium["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 magnesium["waveSpeed"] = float(np.sqrt( ( magnesium["defaultBulkModulus"] + 4./3.*magnesium["defaultShearModulus"] ) / magnesium["defaultDensity"] ))
 
-magnesium["materialString"]="<!--"+magnesium["name"]+" parameterization of "+magnesium["model"]+" model, version: "+str(magnesium["version"])+"""-->
-<"""+magnesium["model"]+"""
-name="""+'"'+magnesium["name"]+'"'+"""
-defaultDensity=""" + '"' + str(magnesium["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(magnesium["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(magnesium["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(magnesium["defaultYieldStrength"]) + '"' + """
-/>
-"""
+magnesium["materialString"] = generateMaterialString(magnesium)
 # #################################################################################################
 
 ###################################################################################################
@@ -736,15 +916,7 @@ magnesiumAZ31B["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 magnesiumAZ31B["waveSpeed"] = float(np.sqrt( ( magnesiumAZ31B["defaultBulkModulus"] + 4./3.*magnesiumAZ31B["defaultShearModulus"] ) / magnesiumAZ31B["defaultDensity"] ))
 
-magnesiumAZ31B["materialString"]="<!--"+magnesiumAZ31B["name"]+" parameterization of "+magnesiumAZ31B["model"]+" model, version: "+str(magnesiumAZ31B["version"])+"""-->
-<"""+magnesiumAZ31B["model"]+"""
-name="""+'"'+magnesiumAZ31B["name"]+'"'+"""
-defaultDensity=""" + '"' + str(magnesiumAZ31B["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(magnesiumAZ31B["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(magnesiumAZ31B["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(magnesiumAZ31B["defaultYieldStrength"]) + '"' + """
-/>
-"""
+magnesiumAZ31B["materialString"] = generateMaterialString(magnesiumAZ31B)
 # #################################################################################################
 
 ###################################################################################################
@@ -767,15 +939,7 @@ zinc["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 zinc["waveSpeed"] = float(np.sqrt( ( zinc["defaultBulkModulus"] + 4./3.*zinc["defaultShearModulus"] ) / zinc["defaultDensity"] ))
 
-zinc["materialString"]="<!--"+zinc["name"]+" parameterization of "+zinc["model"]+" model, version: "+str(zinc["version"])+"""-->
-<"""+zinc["model"]+"""
-name="""+'"'+zinc["name"]+'"'+"""
-defaultDensity=""" + '"' + str(zinc["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(zinc["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(zinc["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(zinc["defaultYieldStrength"]) + '"' + """
-/>
-"""
+zinc["materialString"] = generateMaterialString(zinc)
 # #################################################################################################
 
 ###################################################################################################
@@ -798,15 +962,7 @@ zamak3["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 zamak3["waveSpeed"] = float(np.sqrt( ( zamak3["defaultBulkModulus"] + 4./3.*zamak3["defaultShearModulus"] ) / zamak3["defaultDensity"] ))
 
-zamak3["materialString"]="<!--"+zamak3["name"]+" parameterization of "+zamak3["model"]+" model, version: "+str(zamak3["version"])+"""-->
-<"""+zamak3["model"]+"""
-name="""+'"'+zamak3["name"]+'"'+"""
-defaultDensity=""" + '"' + str(zamak3["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(zamak3["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(zamak3["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(zamak3["defaultYieldStrength"]) + '"' + """
-/>
-"""
+zamak3["materialString"] = generateMaterialString(zamak3)
 # #################################################################################################
 
 ###################################################################################################
@@ -830,15 +986,7 @@ tungsten["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 tungsten["waveSpeed"] = float(np.sqrt( ( tungsten["defaultBulkModulus"] + 4./3.*tungsten["defaultShearModulus"] ) / tungsten["defaultDensity"] ))
 
-tungsten["materialString"]="<!--"+tungsten["name"]+" parameterization of "+tungsten["model"]+" model, version: "+str(tungsten["version"])+"""-->
-<"""+tungsten["model"]+"""
-name="""+'"'+tungsten["name"]+'"'+"""
-defaultDensity=""" + '"' + str(tungsten["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(tungsten["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(tungsten["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(tungsten["defaultYieldStrength"]) + '"' + """
-/>
-"""
+tungsten["materialString"] = generateMaterialString(tungsten)
 # #################################################################################################
 
 ###################################################################################################
@@ -862,15 +1010,7 @@ molybdenum["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 molybdenum["waveSpeed"] = float(np.sqrt( ( molybdenum["defaultBulkModulus"] + 4./3.*molybdenum["defaultShearModulus"] ) / molybdenum["defaultDensity"] ))
 
-molybdenum["materialString"]="<!--"+molybdenum["name"]+" parameterization of "+molybdenum["model"]+" model, version: "+str(molybdenum["version"])+"""-->
-<"""+molybdenum["model"]+"""
-name="""+'"'+molybdenum["name"]+'"'+"""
-defaultDensity=""" + '"' + str(molybdenum["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(molybdenum["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(molybdenum["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(molybdenum["defaultYieldStrength"]) + '"' + """
-/>
-"""
+molybdenum["materialString"] = generateMaterialString(molybdenum)
 # #################################################################################################
 
 ###################################################################################################
@@ -893,15 +1033,7 @@ tantalum["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 tantalum["waveSpeed"] = float(np.sqrt( ( tantalum["defaultBulkModulus"] + 4./3.*tantalum["defaultShearModulus"] ) / tantalum["defaultDensity"] ))
 
-tantalum["materialString"]="<!--"+tantalum["name"]+" parameterization of "+tantalum["model"]+" model, version: "+str(tantalum["version"])+"""-->
-<"""+tantalum["model"]+"""
-name="""+'"'+tantalum["name"]+'"'+"""
-defaultDensity=""" + '"' + str(tantalum["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(tantalum["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(tantalum["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(tantalum["defaultYieldStrength"]) + '"' + """
-/>
-"""
+tantalum["materialString"] = generateMaterialString(tantalum)
 # #################################################################################################
 
 ###################################################################################################
@@ -925,15 +1057,7 @@ niobium["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 niobium["waveSpeed"] = float(np.sqrt( ( niobium["defaultBulkModulus"] + 4./3.*niobium["defaultShearModulus"] ) / niobium["defaultDensity"] ))
 
-niobium["materialString"]="<!--"+niobium["name"]+" parameterization of "+niobium["model"]+" model, version: "+str(niobium["version"])+"""-->
-<"""+niobium["model"]+"""
-name="""+'"'+niobium["name"]+'"'+"""
-defaultDensity=""" + '"' + str(niobium["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(niobium["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(niobium["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(niobium["defaultYieldStrength"]) + '"' + """
-/>
-"""
+niobium["materialString"] = generateMaterialString(niobium)
 # #################################################################################################
 
 ###################################################################################################
@@ -956,15 +1080,7 @@ lead["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 lead["waveSpeed"] = float(np.sqrt( ( lead["defaultBulkModulus"] + 4./3.*lead["defaultShearModulus"] ) / lead["defaultDensity"] ))
 
-lead["materialString"]="<!--"+lead["name"]+" parameterization of "+lead["model"]+" model, version: "+str(lead["version"])+"""-->
-<"""+lead["model"]+"""
-name="""+'"'+lead["name"]+'"'+"""
-defaultDensity=""" + '"' + str(lead["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(lead["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(lead["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(lead["defaultYieldStrength"]) + '"' + """
-/>
-"""
+lead["materialString"] = generateMaterialString(lead)
 # #################################################################################################
 
 ###################################################################################################
@@ -987,15 +1103,7 @@ tin["weibullModulus"] = 0.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 tin["waveSpeed"] = float(np.sqrt( ( tin["defaultBulkModulus"] + 4./3.*tin["defaultShearModulus"] ) / tin["defaultDensity"] ))
 
-tin["materialString"]="<!--"+tin["name"]+" parameterization of "+tin["model"]+" model, version: "+str(tin["version"])+"""-->
-<"""+tin["model"]+"""
-name="""+'"'+tin["name"]+'"'+"""
-defaultDensity=""" + '"' + str(tin["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(tin["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(tin["defaultShearModulus"]) + '"' + """
-defaultYieldStrength=""" + '"' + str(tin["defaultYieldStrength"]) + '"' + """
-/>
-"""
+tin["materialString"] = generateMaterialString(tin)
 # #################################################################################################
 
 
@@ -1046,22 +1154,7 @@ alumina995["weibullModulus"] = 10.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 alumina995["waveSpeed"] = float(np.sqrt( ( alumina995["defaultBulkModulus"] + 4./3.*alumina995["defaultShearModulus"] ) / alumina995["defaultDensity"] ))
 
-alumina995["materialString"]="<!--"+alumina995["name"]+" parameterization of "+alumina995["model"]+" model, version: "+str(alumina995["version"])+"""-->
-<"""+alumina995["model"]+"""
-name="""+'"'+alumina995["name"]+'"'+"""
-defaultDensity=""" + '"' + str(alumina995["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(alumina995["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(alumina995["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(alumina995["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(alumina995["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(alumina995["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(alumina995["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(alumina995["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(alumina995["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(alumina995["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(alumina995["fractureToughness"]) + '"' + """
-/>
-"""
+alumina995["materialString"] = generateMaterialString(alumina995)
 # #################################################################################################
 
 ###################################################################################################
@@ -1106,22 +1199,7 @@ zirconiaYTZP["weibullModulus"] = 10.9
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 zirconiaYTZP["waveSpeed"] = float(np.sqrt( ( zirconiaYTZP["defaultBulkModulus"] + 4./3.*zirconiaYTZP["defaultShearModulus"] ) / zirconiaYTZP["defaultDensity"] ))
 
-zirconiaYTZP["materialString"]="<!--"+zirconiaYTZP["name"]+" parameterization of "+zirconiaYTZP["model"]+" model, version: "+str(zirconiaYTZP["version"])+"""-->
-<"""+zirconiaYTZP["model"]+"""
-name="""+'"'+zirconiaYTZP["name"]+'"'+"""
-defaultDensity=""" + '"' + str(zirconiaYTZP["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(zirconiaYTZP["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(zirconiaYTZP["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(zirconiaYTZP["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(zirconiaYTZP["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(zirconiaYTZP["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(zirconiaYTZP["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(zirconiaYTZP["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(zirconiaYTZP["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(zirconiaYTZP["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(zirconiaYTZP["fractureToughness"]) + '"' + """
-/>
-"""
+zirconiaYTZP["materialString"] = generateMaterialString(zirconiaYTZP)
 # #################################################################################################
 
 ###################################################################################################
@@ -1166,22 +1244,7 @@ siliconCarbide["weibullModulus"] = 10.7
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 siliconCarbide["waveSpeed"] = float(np.sqrt( ( siliconCarbide["defaultBulkModulus"] + 4./3.*siliconCarbide["defaultShearModulus"] ) / siliconCarbide["defaultDensity"] ))
 
-siliconCarbide["materialString"]="<!--"+siliconCarbide["name"]+" parameterization of "+siliconCarbide["model"]+" model, version: "+str(siliconCarbide["version"])+"""-->
-<"""+siliconCarbide["model"]+"""
-name="""+'"'+siliconCarbide["name"]+'"'+"""
-defaultDensity=""" + '"' + str(siliconCarbide["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(siliconCarbide["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(siliconCarbide["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(siliconCarbide["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(siliconCarbide["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(siliconCarbide["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(siliconCarbide["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(siliconCarbide["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(siliconCarbide["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(siliconCarbide["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(siliconCarbide["fractureToughness"]) + '"' + """
-/>
-"""
+siliconCarbide["materialString"] = generateMaterialString(siliconCarbide)
 # #################################################################################################
 
 ###################################################################################################
@@ -1226,22 +1289,7 @@ siliconNitride["weibullModulus"] = 16.5
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 siliconNitride["waveSpeed"] = float(np.sqrt( ( siliconNitride["defaultBulkModulus"] + 4./3.*siliconNitride["defaultShearModulus"] ) / siliconNitride["defaultDensity"] ))
 
-siliconNitride["materialString"]="<!--"+siliconNitride["name"]+" parameterization of "+siliconNitride["model"]+" model, version: "+str(siliconNitride["version"])+"""-->
-<"""+siliconNitride["model"]+"""
-name="""+'"'+siliconNitride["name"]+'"'+"""
-defaultDensity=""" + '"' + str(siliconNitride["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(siliconNitride["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(siliconNitride["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(siliconNitride["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(siliconNitride["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(siliconNitride["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(siliconNitride["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(siliconNitride["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(siliconNitride["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(siliconNitride["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(siliconNitride["fractureToughness"]) + '"' + """
-/>
-"""
+siliconNitride["materialString"] = generateMaterialString(siliconNitride)
 # #################################################################################################
 
 ###################################################################################################
@@ -1286,22 +1334,7 @@ boronCarbide["weibullModulus"] = 12.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 boronCarbide["waveSpeed"] = float(np.sqrt( ( boronCarbide["defaultBulkModulus"] + 4./3.*boronCarbide["defaultShearModulus"] ) / boronCarbide["defaultDensity"] ))
 
-boronCarbide["materialString"]="<!--"+boronCarbide["name"]+" parameterization of "+boronCarbide["model"]+" model, version: "+str(boronCarbide["version"])+"""-->
-<"""+boronCarbide["model"]+"""
-name="""+'"'+boronCarbide["name"]+'"'+"""
-defaultDensity=""" + '"' + str(boronCarbide["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(boronCarbide["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(boronCarbide["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(boronCarbide["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(boronCarbide["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(boronCarbide["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(boronCarbide["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(boronCarbide["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(boronCarbide["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(boronCarbide["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(boronCarbide["fractureToughness"]) + '"' + """
-/>
-"""
+boronCarbide["materialString"] = generateMaterialString(boronCarbide)
 # #################################################################################################
 
 ###################################################################################################
@@ -1346,22 +1379,7 @@ aluminumNitride["weibullModulus"] = 10.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 aluminumNitride["waveSpeed"] = float(np.sqrt( ( aluminumNitride["defaultBulkModulus"] + 4./3.*aluminumNitride["defaultShearModulus"] ) / aluminumNitride["defaultDensity"] ))
 
-aluminumNitride["materialString"]="<!--"+aluminumNitride["name"]+" parameterization of "+aluminumNitride["model"]+" model, version: "+str(aluminumNitride["version"])+"""-->
-<"""+aluminumNitride["model"]+"""
-name="""+'"'+aluminumNitride["name"]+'"'+"""
-defaultDensity=""" + '"' + str(aluminumNitride["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(aluminumNitride["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(aluminumNitride["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(aluminumNitride["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(aluminumNitride["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(aluminumNitride["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(aluminumNitride["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(aluminumNitride["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(aluminumNitride["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(aluminumNitride["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(aluminumNitride["fractureToughness"]) + '"' + """
-/>
-"""
+aluminumNitride["materialString"] = generateMaterialString(aluminumNitride)
 # #################################################################################################
 
 ###################################################################################################
@@ -1406,22 +1424,7 @@ boronNitride["weibullModulus"] = 5.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 boronNitride["waveSpeed"] = float(np.sqrt( ( boronNitride["defaultBulkModulus"] + 4./3.*boronNitride["defaultShearModulus"] ) / boronNitride["defaultDensity"] ))
 
-boronNitride["materialString"]="<!--"+boronNitride["name"]+" parameterization of "+boronNitride["model"]+" model, version: "+str(boronNitride["version"])+"""-->
-<"""+boronNitride["model"]+"""
-name="""+'"'+boronNitride["name"]+'"'+"""
-defaultDensity=""" + '"' + str(boronNitride["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(boronNitride["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(boronNitride["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(boronNitride["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(boronNitride["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(boronNitride["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(boronNitride["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(boronNitride["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(boronNitride["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(boronNitride["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(boronNitride["fractureToughness"]) + '"' + """
-/>
-"""
+boronNitride["materialString"] = generateMaterialString(boronNitride)
 # #################################################################################################
 
 ###################################################################################################
@@ -1466,22 +1469,7 @@ tungstenCarbide["weibullModulus"] = 12.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 tungstenCarbide["waveSpeed"] = float(np.sqrt( ( tungstenCarbide["defaultBulkModulus"] + 4./3.*tungstenCarbide["defaultShearModulus"] ) / tungstenCarbide["defaultDensity"] ))
 
-tungstenCarbide["materialString"]="<!--"+tungstenCarbide["name"]+" parameterization of "+tungstenCarbide["model"]+" model, version: "+str(tungstenCarbide["version"])+"""-->
-<"""+tungstenCarbide["model"]+"""
-name="""+'"'+tungstenCarbide["name"]+'"'+"""
-defaultDensity=""" + '"' + str(tungstenCarbide["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(tungstenCarbide["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(tungstenCarbide["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(tungstenCarbide["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(tungstenCarbide["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(tungstenCarbide["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(tungstenCarbide["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(tungstenCarbide["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(tungstenCarbide["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(tungstenCarbide["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(tungstenCarbide["fractureToughness"]) + '"' + """
-/>
-"""
+tungstenCarbide["materialString"] = generateMaterialString(tungstenCarbide)
 # #################################################################################################
 
 ###################################################################################################
@@ -1526,22 +1514,7 @@ titaniumCarbide["weibullModulus"] = 11.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 titaniumCarbide["waveSpeed"] = float(np.sqrt( ( titaniumCarbide["defaultBulkModulus"] + 4./3.*titaniumCarbide["defaultShearModulus"] ) / titaniumCarbide["defaultDensity"] ))
 
-titaniumCarbide["materialString"]="<!--"+titaniumCarbide["name"]+" parameterization of "+titaniumCarbide["model"]+" model, version: "+str(titaniumCarbide["version"])+"""-->
-<"""+titaniumCarbide["model"]+"""
-name="""+'"'+titaniumCarbide["name"]+'"'+"""
-defaultDensity=""" + '"' + str(titaniumCarbide["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(titaniumCarbide["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(titaniumCarbide["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(titaniumCarbide["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(titaniumCarbide["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(titaniumCarbide["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(titaniumCarbide["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(titaniumCarbide["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(titaniumCarbide["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(titaniumCarbide["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(titaniumCarbide["fractureToughness"]) + '"' + """
-/>
-"""
+titaniumCarbide["materialString"] = generateMaterialString(titaniumCarbide)
 # #################################################################################################
 
 ###################################################################################################
@@ -1586,22 +1559,7 @@ titaniumNitride["weibullModulus"] = 11.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 titaniumNitride["waveSpeed"] = float(np.sqrt( ( titaniumNitride["defaultBulkModulus"] + 4./3.*titaniumNitride["defaultShearModulus"] ) / titaniumNitride["defaultDensity"] ))
 
-titaniumNitride["materialString"]="<!--"+titaniumNitride["name"]+" parameterization of "+titaniumNitride["model"]+" model, version: "+str(titaniumNitride["version"])+"""-->
-<"""+titaniumNitride["model"]+"""
-name="""+'"'+titaniumNitride["name"]+'"'+"""
-defaultDensity=""" + '"' + str(titaniumNitride["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(titaniumNitride["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(titaniumNitride["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(titaniumNitride["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(titaniumNitride["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(titaniumNitride["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(titaniumNitride["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(titaniumNitride["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(titaniumNitride["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(titaniumNitride["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(titaniumNitride["fractureToughness"]) + '"' + """
-/>
-"""
+titaniumNitride["materialString"] = generateMaterialString(titaniumNitride)
 # #################################################################################################
 
 ###################################################################################################
@@ -1646,22 +1604,7 @@ fusedSilica["weibullModulus"] = 5.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 fusedSilica["waveSpeed"] = float(np.sqrt( ( fusedSilica["defaultBulkModulus"] + 4./3.*fusedSilica["defaultShearModulus"] ) / fusedSilica["defaultDensity"] ))
 
-fusedSilica["materialString"]="<!--"+fusedSilica["name"]+" parameterization of "+fusedSilica["model"]+" model, version: "+str(fusedSilica["version"])+"""-->
-<"""+fusedSilica["model"]+"""
-name="""+'"'+fusedSilica["name"]+'"'+"""
-defaultDensity=""" + '"' + str(fusedSilica["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(fusedSilica["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(fusedSilica["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(fusedSilica["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(fusedSilica["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(fusedSilica["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(fusedSilica["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(fusedSilica["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(fusedSilica["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(fusedSilica["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(fusedSilica["fractureToughness"]) + '"' + """
-/>
-"""
+fusedSilica["materialString"] = generateMaterialString(fusedSilica)
 # #################################################################################################
 
 ###################################################################################################
@@ -1705,22 +1648,7 @@ quartz["weibullModulus"] = 5.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 quartz["waveSpeed"] = float(np.sqrt( ( quartz["defaultBulkModulus"] + 4./3.*quartz["defaultShearModulus"] ) / quartz["defaultDensity"] ))
 
-quartz["materialString"]="<!--"+quartz["name"]+" parameterization of "+quartz["model"]+" model, version: "+str(quartz["version"])+"""-->
-<"""+quartz["model"]+"""
-name="""+'"'+quartz["name"]+'"'+"""
-defaultDensity=""" + '"' + str(quartz["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(quartz["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(quartz["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(quartz["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(quartz["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(quartz["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(quartz["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(quartz["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(quartz["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(quartz["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(quartz["fractureToughness"]) + '"' + """
-/>
-"""
+quartz["materialString"] = generateMaterialString(quartz)
 # #################################################################################################
 
 ###################################################################################################
@@ -1765,22 +1693,7 @@ sapphire["weibullModulus"] = 4.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 sapphire["waveSpeed"] = float(np.sqrt( ( sapphire["defaultBulkModulus"] + 4./3.*sapphire["defaultShearModulus"] ) / sapphire["defaultDensity"] ))
 
-sapphire["materialString"]="<!--"+sapphire["name"]+" parameterization of "+sapphire["model"]+" model, version: "+str(sapphire["version"])+"""-->
-<"""+sapphire["model"]+"""
-name="""+'"'+sapphire["name"]+'"'+"""
-defaultDensity=""" + '"' + str(sapphire["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(sapphire["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(sapphire["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(sapphire["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(sapphire["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(sapphire["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(sapphire["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(sapphire["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(sapphire["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(sapphire["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(sapphire["fractureToughness"]) + '"' + """
-/>
-"""
+sapphire["materialString"] = generateMaterialString(sapphire)
 # #################################################################################################
 
 ###################################################################################################
@@ -1825,22 +1738,7 @@ mullite["weibullModulus"] = 8.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 mullite["waveSpeed"] = float(np.sqrt( ( mullite["defaultBulkModulus"] + 4./3.*mullite["defaultShearModulus"] ) / mullite["defaultDensity"] ))
 
-mullite["materialString"]="<!--"+mullite["name"]+" parameterization of "+mullite["model"]+" model, version: "+str(mullite["version"])+"""-->
-<"""+mullite["model"]+"""
-name="""+'"'+mullite["name"]+'"'+"""
-defaultDensity=""" + '"' + str(mullite["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(mullite["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(mullite["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(mullite["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(mullite["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(mullite["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(mullite["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(mullite["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(mullite["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(mullite["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(mullite["fractureToughness"]) + '"' + """
-/>
-"""
+mullite["materialString"] = generateMaterialString(mullite)
 # #################################################################################################
 
 ###################################################################################################
@@ -1885,22 +1783,7 @@ cordierite["weibullModulus"] = 6.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 cordierite["waveSpeed"] = float(np.sqrt( ( cordierite["defaultBulkModulus"] + 4./3.*cordierite["defaultShearModulus"] ) / cordierite["defaultDensity"] ))
 
-cordierite["materialString"]="<!--"+cordierite["name"]+" parameterization of "+cordierite["model"]+" model, version: "+str(cordierite["version"])+"""-->
-<"""+cordierite["model"]+"""
-name="""+'"'+cordierite["name"]+'"'+"""
-defaultDensity=""" + '"' + str(cordierite["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(cordierite["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(cordierite["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(cordierite["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(cordierite["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(cordierite["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(cordierite["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(cordierite["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(cordierite["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(cordierite["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(cordierite["fractureToughness"]) + '"' + """
-/>
-"""
+cordierite["materialString"] = generateMaterialString(cordierite)
 # #################################################################################################
 
 ###################################################################################################
@@ -1945,22 +1828,7 @@ steatite["weibullModulus"] = 8.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 steatite["waveSpeed"] = float(np.sqrt( ( steatite["defaultBulkModulus"] + 4./3.*steatite["defaultShearModulus"] ) / steatite["defaultDensity"] ))
 
-steatite["materialString"]="<!--"+steatite["name"]+" parameterization of "+steatite["model"]+" model, version: "+str(steatite["version"])+"""-->
-<"""+steatite["model"]+"""
-name="""+'"'+steatite["name"]+'"'+"""
-defaultDensity=""" + '"' + str(steatite["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(steatite["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(steatite["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(steatite["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(steatite["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(steatite["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(steatite["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(steatite["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(steatite["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(steatite["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(steatite["fractureToughness"]) + '"' + """
-/>
-"""
+steatite["materialString"] = generateMaterialString(steatite)
 # #################################################################################################
 
 ###################################################################################################
@@ -2005,22 +1873,7 @@ porcelain["weibullModulus"] = 10.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 porcelain["waveSpeed"] = float(np.sqrt( ( porcelain["defaultBulkModulus"] + 4./3.*porcelain["defaultShearModulus"] ) / porcelain["defaultDensity"] ))
 
-porcelain["materialString"]="<!--"+porcelain["name"]+" parameterization of "+porcelain["model"]+" model, version: "+str(porcelain["version"])+"""-->
-<"""+porcelain["model"]+"""
-name="""+'"'+porcelain["name"]+'"'+"""
-defaultDensity=""" + '"' + str(porcelain["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(porcelain["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(porcelain["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(porcelain["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(porcelain["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(porcelain["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(porcelain["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(porcelain["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(porcelain["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(porcelain["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(porcelain["fractureToughness"]) + '"' + """
-/>
-"""
+porcelain["materialString"] = generateMaterialString(porcelain)
 # #################################################################################################
 
 ###################################################################################################
@@ -2065,22 +1918,7 @@ macorGlassCeramic["weibullModulus"] = 5.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 macorGlassCeramic["waveSpeed"] = float(np.sqrt( ( macorGlassCeramic["defaultBulkModulus"] + 4./3.*macorGlassCeramic["defaultShearModulus"] ) / macorGlassCeramic["defaultDensity"] ))
 
-macorGlassCeramic["materialString"]="<!--"+macorGlassCeramic["name"]+" parameterization of "+macorGlassCeramic["model"]+" model, version: "+str(macorGlassCeramic["version"])+"""-->
-<"""+macorGlassCeramic["model"]+"""
-name="""+'"'+macorGlassCeramic["name"]+'"'+"""
-defaultDensity=""" + '"' + str(macorGlassCeramic["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(macorGlassCeramic["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(macorGlassCeramic["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(macorGlassCeramic["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(macorGlassCeramic["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(macorGlassCeramic["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(macorGlassCeramic["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(macorGlassCeramic["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(macorGlassCeramic["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(macorGlassCeramic["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(macorGlassCeramic["fractureToughness"]) + '"' + """
-/>
-"""
+macorGlassCeramic["materialString"] = generateMaterialString(macorGlassCeramic)
 # #################################################################################################
 
 ###################################################################################################
@@ -2125,22 +1963,7 @@ magnesiumOxide["weibullModulus"] = 5.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 magnesiumOxide["waveSpeed"] = float(np.sqrt( ( magnesiumOxide["defaultBulkModulus"] + 4./3.*magnesiumOxide["defaultShearModulus"] ) / magnesiumOxide["defaultDensity"] ))
 
-magnesiumOxide["materialString"]="<!--"+magnesiumOxide["name"]+" parameterization of "+magnesiumOxide["model"]+" model, version: "+str(magnesiumOxide["version"])+"""-->
-<"""+magnesiumOxide["model"]+"""
-name="""+'"'+magnesiumOxide["name"]+'"'+"""
-defaultDensity=""" + '"' + str(magnesiumOxide["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(magnesiumOxide["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(magnesiumOxide["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(magnesiumOxide["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(magnesiumOxide["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(magnesiumOxide["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(magnesiumOxide["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(magnesiumOxide["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(magnesiumOxide["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(magnesiumOxide["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(magnesiumOxide["fractureToughness"]) + '"' + """
-/>
-"""
+magnesiumOxide["materialString"] = generateMaterialString(magnesiumOxide)
 # #################################################################################################
 
 ###################################################################################################
@@ -2185,23 +2008,516 @@ stabilizedZirconia["weibullModulus"] = 15.0
 # in pfw, e.g. to make stopTime some multiple of the transit time for an elastic wave in the material
 stabilizedZirconia["waveSpeed"] = float(np.sqrt( ( stabilizedZirconia["defaultBulkModulus"] + 4./3.*stabilizedZirconia["defaultShearModulus"] ) / stabilizedZirconia["defaultDensity"] ))
 
-stabilizedZirconia["materialString"]="<!--"+stabilizedZirconia["name"]+" parameterization of "+stabilizedZirconia["model"]+" model, version: "+str(stabilizedZirconia["version"])+"""-->
-<"""+stabilizedZirconia["model"]+"""
-name="""+'"'+stabilizedZirconia["name"]+'"'+"""
-defaultDensity=""" + '"' + str(stabilizedZirconia["defaultDensity"]) + '"' + """
-defaultBulkModulus=""" + '"' + str(stabilizedZirconia["defaultBulkModulus"]) + '"' + """
-defaultShearModulus=""" + '"' + str(stabilizedZirconia["defaultShearModulus"]) + '"' + """
-tensileStrength=""" + '"' + str(stabilizedZirconia["tensileStrength"]) + '"' + """
-compressiveStrength=""" + '"' + str(stabilizedZirconia["compressiveStrength"]) + '"' + """
-maximumStrength=""" + '"' + str(stabilizedZirconia["maximumStrength"]) + '"' + """
-crackSpeed=""" + '"' + str(stabilizedZirconia["crackSpeed"]) + '"' + """
-damagedMaterialFrictionSlope=""" + '"' + str(stabilizedZirconia["damagedMaterialFrictionSlope"]) + '"' + """
-enableEnergyFailureCriterion=""" + '"' + str(stabilizedZirconia["enableEnergyFailureCriterion"]) + '"' + """
-fractureEnergyReleaseRate=""" + '"' + str(stabilizedZirconia["fractureEnergyReleaseRate"]) + '"' + """
-fractureToughness=""" + '"' + str(stabilizedZirconia["fractureToughness"]) + '"' + """
-/>
-"""
+stabilizedZirconia["materialString"] = generateMaterialString(stabilizedZirconia)
 # #################################################################################################
+
+# -------------------------------------------------------------------------------------------------
+# GRAPHITE AND ENGINEERING POLYMERS
+# -------------------------------------------------------------------------------------------------
+# Graphite entries use the transversely isotropic Graphite model parameters.  The elastic constants
+# distinguish ideal single-crystal / pyrolytic graphite from a fine-grain near-isotropic engineering
+# graphite.  Strength, fracture-energy, and plastic-response parameters are representative validation
+# values chosen to be consistent with the model constraints and published engineering data; recalibrate
+# them for production analysis against the exact graphite grade and stress-strain/fracture data.
+
+
+def _set_graphite_auxiliary_properties(material):
+    transverse_shear = material['defaultYoungModulusTransverse']/(2.0*(1.0 + material['defaultPoissonRatioTransverse']))
+    material['defaultEffectiveBulkModulus'] = float((2.0*material['defaultYoungModulusTransverse'] + material['defaultYoungModulusAxial'])/9.0)
+    material['defaultEffectiveShearModulus'] = float((2.0*material['defaultShearModulusAxialTransverse'] + transverse_shear)/3.0)
+    material['weibullReferenceVolume'] = 1.0
+    material['weibullModulus'] = 0.0
+    material['waveSpeed'] = float(np.sqrt((material['defaultEffectiveBulkModulus'] + 4.0/3.0*material['defaultEffectiveShearModulus'])/material['defaultDensity']))
+
+
+###################################################################################################
+# GRAPHITE SINGLE CRYSTAL:
+# Room-temperature single-crystal graphite approximation.  The transverse plane corresponds to the
+# basal plane; the axial direction corresponds to the c axis.
+#
+graphiteSingleCrystal = {}
+graphiteSingleCrystal['name'] = 'graphiteSingleCrystal'
+graphiteSingleCrystal['version'] = 2605190001
+graphiteSingleCrystal['model'] = 'Graphite'
+graphiteSingleCrystal['defaultDensity'] = 2.267
+graphiteSingleCrystal['defaultYoungModulusTransverse'] = 1090.0
+graphiteSingleCrystal['defaultYoungModulusAxial'] = 38.7
+graphiteSingleCrystal['defaultPoissonRatioTransverse'] = 0.125
+graphiteSingleCrystal['defaultPoissonRatioAxialTransverse'] = 0.0
+graphiteSingleCrystal['defaultShearModulusAxialTransverse'] = 4.95
+graphiteSingleCrystal['defaultYoungModulusTransversePressureDerivative'] = 0.0
+graphiteSingleCrystal['defaultYoungModulusAxialPressureDerivative'] = 0.0
+graphiteSingleCrystal['defaultShearModulusAxialTransversePressureDerivative'] = 0.0
+graphiteSingleCrystal['failureStrength'] = 0.035
+graphiteSingleCrystal['maximumPrincipalStressDamage'] = 1
+graphiteSingleCrystal['crackSpeed'] = 4.14
+graphiteSingleCrystal['scaleFractureEnergyReleaseRate'] = 0
+graphiteSingleCrystal['basalPlaneFractureEnergyReleaseRate'] = 4.0e-7
+graphiteSingleCrystal['totalFractureEnergyReleaseRate'] = 1.0e-5
+graphiteSingleCrystal['damagedMaterialFrictionalSlope'] = 0.30
+graphiteSingleCrystal['distortionShearResponseX2'] = 0.10
+graphiteSingleCrystal['distortionShearResponseY1'] = 0.025
+graphiteSingleCrystal['distortionShearResponseY2'] = 0.080
+graphiteSingleCrystal['distortionShearResponseM1'] = 0.60
+graphiteSingleCrystal['inPlaneShearResponseX2'] = 0.20
+graphiteSingleCrystal['inPlaneShearResponseY1'] = 0.080
+graphiteSingleCrystal['inPlaneShearResponseY2'] = 0.250
+graphiteSingleCrystal['inPlaneShearResponseM1'] = 0.90
+graphiteSingleCrystal['coupledShearResponseX2'] = 0.05
+graphiteSingleCrystal['coupledShearResponseY1'] = 0.005
+graphiteSingleCrystal['coupledShearResponseY2'] = 0.025
+graphiteSingleCrystal['coupledShearResponseM1'] = 0.45
+graphiteSingleCrystal['distortionStrainHardeningC0'] = 1.00
+graphiteSingleCrystal['inPlaneStrainHardeningC0'] = 1.10
+graphiteSingleCrystal['coupledStrainHardeningC0'] = 1.00
+graphiteSingleCrystal['maximumPlasticStrain'] = 0.020
+_set_graphite_auxiliary_properties(graphiteSingleCrystal)
+# #################################################################################################
+
+###################################################################################################
+# PYROLYTIC GRAPHITE:
+# Strongly anisotropic graphite approximation with slightly reduced basal-plane stiffness relative
+# to the ideal single-crystal entry.
+#
+graphitePyrolytic = {}
+graphitePyrolytic['name'] = 'graphitePyrolytic'
+graphitePyrolytic['version'] = 2605190002
+graphitePyrolytic['model'] = 'Graphite'
+graphitePyrolytic['defaultDensity'] = 2.20
+graphitePyrolytic['defaultYoungModulusTransverse'] = 900.0
+graphitePyrolytic['defaultYoungModulusAxial'] = 36.5
+graphitePyrolytic['defaultPoissonRatioTransverse'] = 0.13
+graphitePyrolytic['defaultPoissonRatioAxialTransverse'] = 0.02
+graphitePyrolytic['defaultShearModulusAxialTransverse'] = 4.50
+graphitePyrolytic['defaultYoungModulusTransversePressureDerivative'] = 0.0
+graphitePyrolytic['defaultYoungModulusAxialPressureDerivative'] = 0.0
+graphitePyrolytic['defaultShearModulusAxialTransversePressureDerivative'] = 0.0
+graphitePyrolytic['failureStrength'] = 0.030
+graphitePyrolytic['maximumPrincipalStressDamage'] = 1
+graphitePyrolytic['crackSpeed'] = 4.00
+graphitePyrolytic['scaleFractureEnergyReleaseRate'] = 0
+graphitePyrolytic['basalPlaneFractureEnergyReleaseRate'] = 8.0e-7
+graphitePyrolytic['totalFractureEnergyReleaseRate'] = 1.5e-5
+graphitePyrolytic['damagedMaterialFrictionalSlope'] = 0.30
+graphitePyrolytic['distortionShearResponseX2'] = 0.10
+graphitePyrolytic['distortionShearResponseY1'] = 0.020
+graphitePyrolytic['distortionShearResponseY2'] = 0.070
+graphitePyrolytic['distortionShearResponseM1'] = 0.55
+graphitePyrolytic['inPlaneShearResponseX2'] = 0.20
+graphitePyrolytic['inPlaneShearResponseY1'] = 0.060
+graphitePyrolytic['inPlaneShearResponseY2'] = 0.200
+graphitePyrolytic['inPlaneShearResponseM1'] = 0.80
+graphitePyrolytic['coupledShearResponseX2'] = 0.05
+graphitePyrolytic['coupledShearResponseY1'] = 0.004
+graphitePyrolytic['coupledShearResponseY2'] = 0.020
+graphitePyrolytic['coupledShearResponseM1'] = 0.40
+graphitePyrolytic['distortionStrainHardeningC0'] = 1.00
+graphitePyrolytic['inPlaneStrainHardeningC0'] = 1.10
+graphitePyrolytic['coupledStrainHardeningC0'] = 1.00
+graphitePyrolytic['maximumPlasticStrain'] = 0.020
+_set_graphite_auxiliary_properties(graphitePyrolytic)
+# #################################################################################################
+
+###################################################################################################
+# FINE-GRAIN ISOTROPIC GRAPHITE:
+# Engineering-grade near-isotropic graphite.  The Graphite model is still transversely isotropic, so
+# the axial and transverse moduli are set close together rather than exactly equal.
+#
+graphiteFineGrainIso = {}
+graphiteFineGrainIso['name'] = 'graphiteFineGrainIso'
+graphiteFineGrainIso['version'] = 2605190003
+graphiteFineGrainIso['model'] = 'Graphite'
+graphiteFineGrainIso['defaultDensity'] = 1.82
+graphiteFineGrainIso['defaultYoungModulusTransverse'] = 11.0
+graphiteFineGrainIso['defaultYoungModulusAxial'] = 9.0
+graphiteFineGrainIso['defaultPoissonRatioTransverse'] = 0.20
+graphiteFineGrainIso['defaultPoissonRatioAxialTransverse'] = 0.15
+graphiteFineGrainIso['defaultShearModulusAxialTransverse'] = 3.80
+graphiteFineGrainIso['defaultYoungModulusTransversePressureDerivative'] = 0.0
+graphiteFineGrainIso['defaultYoungModulusAxialPressureDerivative'] = 0.0
+graphiteFineGrainIso['defaultShearModulusAxialTransversePressureDerivative'] = 0.0
+graphiteFineGrainIso['failureStrength'] = 0.035
+graphiteFineGrainIso['maximumPrincipalStressDamage'] = 1
+graphiteFineGrainIso['crackSpeed'] = 2.50
+graphiteFineGrainIso['scaleFractureEnergyReleaseRate'] = 0
+graphiteFineGrainIso['basalPlaneFractureEnergyReleaseRate'] = 2.0e-5
+graphiteFineGrainIso['totalFractureEnergyReleaseRate'] = 3.0e-5
+graphiteFineGrainIso['damagedMaterialFrictionalSlope'] = 0.35
+graphiteFineGrainIso['distortionShearResponseX2'] = 0.10
+graphiteFineGrainIso['distortionShearResponseY1'] = 0.035
+graphiteFineGrainIso['distortionShearResponseY2'] = 0.120
+graphiteFineGrainIso['distortionShearResponseM1'] = 0.85
+graphiteFineGrainIso['inPlaneShearResponseX2'] = 0.10
+graphiteFineGrainIso['inPlaneShearResponseY1'] = 0.040
+graphiteFineGrainIso['inPlaneShearResponseY2'] = 0.130
+graphiteFineGrainIso['inPlaneShearResponseM1'] = 0.90
+graphiteFineGrainIso['coupledShearResponseX2'] = 0.08
+graphiteFineGrainIso['coupledShearResponseY1'] = 0.025
+graphiteFineGrainIso['coupledShearResponseY2'] = 0.080
+graphiteFineGrainIso['coupledShearResponseM1'] = 0.70
+graphiteFineGrainIso['distortionStrainHardeningC0'] = 1.10
+graphiteFineGrainIso['inPlaneStrainHardeningC0'] = 1.10
+graphiteFineGrainIso['coupledStrainHardeningC0'] = 1.05
+graphiteFineGrainIso['maximumPlasticStrain'] = 0.030
+_set_graphite_auxiliary_properties(graphiteFineGrainIso)
+# #################################################################################################
+
+# Polymer entries use the StrainHardeningPolymer model.  Published density, modulus, yield strength,
+# and elongation data set the elastic constants, reference yield strength, and maximum stretch.  The
+# model's zero-plastic-strain flow stress is defaultYieldStrength + shearSofteningMagnitude, so the
+# defaultYieldStrength below is chosen to make that initial flow stress match the reference yield.
+# The hardening and softening shape parameters are representative validation values and should be
+# calibrated against full stress-strain curves for production studies.
+
+
+def _set_polymer_elastic_constants(material, young_modulus, poisson_ratio):
+    material['referenceYoungModulus'] = young_modulus
+    material['referencePoissonRatio'] = poisson_ratio
+    material['defaultBulkModulus'] = float(young_modulus/(3.0*(1.0 - 2.0*poisson_ratio)))
+    material['defaultShearModulus'] = float(young_modulus/(2.0*(1.0 + poisson_ratio)))
+
+
+def _set_polymer_reference_yield(material, reference_yield_strength):
+    material['referenceYieldStrength'] = reference_yield_strength
+    material['defaultYieldStrength'] = max(reference_yield_strength - material['shearSofteningMagnitude'], 0.0)
+
+
+def _set_polymer_temperature_defaults(material):
+    for prefix in ['yieldStrength', 'strainHardeningSlope', 'shearSofteningMagnitude', 'maximumStretch', 'bulkModulus', 'shearModulus']:
+        material[prefix + 'A'] = 0.0
+        material[prefix + 'B'] = 0.0
+        material[prefix + 'T0'] = 300.0
+
+
+def _set_polymer_wave_properties(material):
+    material['weibullReferenceVolume'] = 1.0
+    material['weibullModulus'] = 0.0
+    material['waveSpeed'] = float(np.sqrt((material['defaultBulkModulus'] + 4.0/3.0*material['defaultShearModulus'])/material['defaultDensity']))
+
+
+###################################################################################################
+# POLYCARBONATE:
+# Ductile engineering thermoplastic with high impact resistance.
+#
+polymerPolycarbonate = {}
+polymerPolycarbonate['name'] = 'polymerPolycarbonate'
+polymerPolycarbonate['version'] = 2605190101
+polymerPolycarbonate['model'] = 'StrainHardeningPolymer'
+polymerPolycarbonate['defaultDensity'] = 1.20
+_set_polymer_elastic_constants(polymerPolycarbonate, 2.35, 0.37)
+polymerPolycarbonate['strainHardeningSlope'] = 0.012
+polymerPolycarbonate['shearSofteningMagnitude'] = 0.010
+polymerPolycarbonate['shearSofteningShapeParameter1'] = 0.10
+polymerPolycarbonate['shearSofteningShapeParameter2'] = 1.10
+polymerPolycarbonate['maximumStretch'] = 1.80
+_set_polymer_reference_yield(polymerPolycarbonate, 0.060)
+_set_polymer_temperature_defaults(polymerPolycarbonate)
+_set_polymer_wave_properties(polymerPolycarbonate)
+# #################################################################################################
+
+###################################################################################################
+# ABS:
+# Acrylonitrile butadiene styrene engineering thermoplastic.
+#
+polymerABS = {}
+polymerABS['name'] = 'polymerABS'
+polymerABS['version'] = 2605190102
+polymerABS['model'] = 'StrainHardeningPolymer'
+polymerABS['defaultDensity'] = 1.05
+_set_polymer_elastic_constants(polymerABS, 2.30, 0.35)
+polymerABS['strainHardeningSlope'] = 0.010
+polymerABS['shearSofteningMagnitude'] = 0.0075
+polymerABS['shearSofteningShapeParameter1'] = 0.08
+polymerABS['shearSofteningShapeParameter2'] = 1.00
+polymerABS['maximumStretch'] = 1.24
+_set_polymer_reference_yield(polymerABS, 0.045)
+_set_polymer_temperature_defaults(polymerABS)
+_set_polymer_wave_properties(polymerABS)
+# #################################################################################################
+
+###################################################################################################
+# NYLON 6/6:
+# Polyamide 6/6 engineering thermoplastic.
+#
+polymerNylon66 = {}
+polymerNylon66['name'] = 'polymerNylon66'
+polymerNylon66['version'] = 2605190103
+polymerNylon66['model'] = 'StrainHardeningPolymer'
+polymerNylon66['defaultDensity'] = 1.15
+_set_polymer_elastic_constants(polymerNylon66, 2.93, 0.39)
+polymerNylon66['strainHardeningSlope'] = 0.018
+polymerNylon66['shearSofteningMagnitude'] = 0.010
+polymerNylon66['shearSofteningShapeParameter1'] = 0.12
+polymerNylon66['shearSofteningShapeParameter2'] = 1.00
+polymerNylon66['maximumStretch'] = 1.50
+_set_polymer_reference_yield(polymerNylon66, 0.083)
+_set_polymer_temperature_defaults(polymerNylon66)
+_set_polymer_wave_properties(polymerNylon66)
+# #################################################################################################
+
+###################################################################################################
+# ACETAL / POM-C:
+# Polyoxymethylene acetal copolymer.
+#
+polymerAcetalPOM = {}
+polymerAcetalPOM['name'] = 'polymerAcetalPOM'
+polymerAcetalPOM['version'] = 2605190104
+polymerAcetalPOM['model'] = 'StrainHardeningPolymer'
+polymerAcetalPOM['defaultDensity'] = 1.41
+_set_polymer_elastic_constants(polymerAcetalPOM, 2.80, 0.35)
+polymerAcetalPOM['strainHardeningSlope'] = 0.012
+polymerAcetalPOM['shearSofteningMagnitude'] = 0.008
+polymerAcetalPOM['shearSofteningShapeParameter1'] = 0.10
+polymerAcetalPOM['shearSofteningShapeParameter2'] = 1.00
+polymerAcetalPOM['maximumStretch'] = 1.32
+_set_polymer_reference_yield(polymerAcetalPOM, 0.067)
+_set_polymer_temperature_defaults(polymerAcetalPOM)
+_set_polymer_wave_properties(polymerAcetalPOM)
+# #################################################################################################
+
+###################################################################################################
+# PEEK:
+# Polyether ether ketone high-performance engineering thermoplastic.
+#
+polymerPEEK = {}
+polymerPEEK['name'] = 'polymerPEEK'
+polymerPEEK['version'] = 2605190105
+polymerPEEK['model'] = 'StrainHardeningPolymer'
+polymerPEEK['defaultDensity'] = 1.32
+_set_polymer_elastic_constants(polymerPEEK, 3.70, 0.37)
+polymerPEEK['strainHardeningSlope'] = 0.025
+polymerPEEK['shearSofteningMagnitude'] = 0.012
+polymerPEEK['shearSofteningShapeParameter1'] = 0.12
+polymerPEEK['shearSofteningShapeParameter2'] = 1.00
+polymerPEEK['maximumStretch'] = 1.45
+_set_polymer_reference_yield(polymerPEEK, 0.115)
+_set_polymer_temperature_defaults(polymerPEEK)
+_set_polymer_wave_properties(polymerPEEK)
+# #################################################################################################
+
+###################################################################################################
+# PMMA:
+# Acrylic, comparatively brittle polymer entry.
+#
+polymerPMMA = {}
+polymerPMMA['name'] = 'polymerPMMA'
+polymerPMMA['version'] = 2605190106
+polymerPMMA['model'] = 'StrainHardeningPolymer'
+polymerPMMA['defaultDensity'] = 1.18
+_set_polymer_elastic_constants(polymerPMMA, 2.90, 0.35)
+polymerPMMA['strainHardeningSlope'] = 0.004
+polymerPMMA['shearSofteningMagnitude'] = 0.003
+polymerPMMA['shearSofteningShapeParameter1'] = 0.04
+polymerPMMA['shearSofteningShapeParameter2'] = 1.00
+polymerPMMA['maximumStretch'] = 1.04
+_set_polymer_reference_yield(polymerPMMA, 0.065)
+_set_polymer_temperature_defaults(polymerPMMA)
+_set_polymer_wave_properties(polymerPMMA)
+# #################################################################################################
+
+###################################################################################################
+# HDPE:
+# High-density polyethylene, highly ductile semicrystalline polyolefin.
+#
+polymerHDPE = {}
+polymerHDPE['name'] = 'polymerHDPE'
+polymerHDPE['version'] = 2605190107
+polymerHDPE['model'] = 'StrainHardeningPolymer'
+polymerHDPE['defaultDensity'] = 0.948
+_set_polymer_elastic_constants(polymerHDPE, 0.86, 0.42)
+polymerHDPE['strainHardeningSlope'] = 0.0010
+polymerHDPE['shearSofteningMagnitude'] = 0.003
+polymerHDPE['shearSofteningShapeParameter1'] = 0.25
+polymerHDPE['shearSofteningShapeParameter2'] = 1.00
+polymerHDPE['maximumStretch'] = 6.00
+_set_polymer_reference_yield(polymerHDPE, 0.022)
+_set_polymer_temperature_defaults(polymerHDPE)
+_set_polymer_wave_properties(polymerHDPE)
+# #################################################################################################
+
+###################################################################################################
+# POLYPROPYLENE:
+# Ductile polypropylene homopolymer / general engineering polypropylene approximation.
+#
+polymerPolypropylene = {}
+polymerPolypropylene['name'] = 'polymerPolypropylene'
+polymerPolypropylene['version'] = 2605190108
+polymerPolypropylene['model'] = 'StrainHardeningPolymer'
+polymerPolypropylene['defaultDensity'] = 0.905
+_set_polymer_elastic_constants(polymerPolypropylene, 1.50, 0.42)
+polymerPolypropylene['strainHardeningSlope'] = 0.0025
+polymerPolypropylene['shearSofteningMagnitude'] = 0.004
+polymerPolypropylene['shearSofteningShapeParameter1'] = 0.18
+polymerPolypropylene['shearSofteningShapeParameter2'] = 1.00
+polymerPolypropylene['maximumStretch'] = 3.00
+_set_polymer_reference_yield(polymerPolypropylene, 0.033)
+_set_polymer_temperature_defaults(polymerPolypropylene)
+_set_polymer_wave_properties(polymerPolypropylene)
+# #################################################################################################
+
+# -------------------------------------------------------------------------------------------------
+# ADDITIONAL EXPLICIT-MPM SOLID MODEL EXAMPLES
+# -------------------------------------------------------------------------------------------------
+# These entries cover GEOS solid constitutive models that are explicitly dispatched by the MPM
+# solver but were not represented in the original PFW material database.  They are intended as
+# starting cards for verification/example inputs.  The Chiumenti entries use the same units as the
+# rest of this file: density in mg/mm^3, stress in GPa, and fracture energy in GPa*mm
+# (equivalently J/mm^2).
+
+
+def _set_lame_wave_properties(material):
+    bulk_modulus = material['defaultLambda'] + 2.0 * material['defaultShearModulus'] / 3.0
+    material['referenceBulkModulus'] = bulk_modulus
+    material['waveSpeed'] = float(np.sqrt((bulk_modulus + 4.0/3.0*material['defaultShearModulus']) / material['defaultDensity']))
+
+
+def _set_isotropic_wave_properties(material):
+    if 'defaultBulkModulus' in material and 'defaultShearModulus' in material:
+        bulk_modulus = material['defaultBulkModulus']
+        shear_modulus = material['defaultShearModulus']
+    elif 'defaultYoungModulus' in material and 'defaultPoissonRatio' in material:
+        bulk_modulus = material['defaultYoungModulus']/(3.0*(1.0 - 2.0*material['defaultPoissonRatio']))
+        shear_modulus = material['defaultYoungModulus']/(2.0*(1.0 + material['defaultPoissonRatio']))
+        material['referenceBulkModulus'] = bulk_modulus
+        material['referenceShearModulus'] = shear_modulus
+    else:
+        return
+    material['waveSpeed'] = float(np.sqrt((bulk_modulus + 4.0/3.0*shear_modulus) / material['defaultDensity']))
+
+
+###################################################################################################
+# HYPERELASTIC MMS - GENERALIZED VORTEX VERIFICATION:
+# Exact parameter set from verification/generalizedVortex/pfw_input_generalizedVortexMMS.py.
+# This is a manufactured-solution verification material rather than a physical material card.
+#
+hyperelasticMMS = {}
+hyperelasticMMS['name'] = 'hyperelasticMMS'
+hyperelasticMMS['version'] = 2605200001
+hyperelasticMMS['model'] = 'HyperelasticMMS'
+hyperelasticMMS['defaultDensity'] = 1000.0
+hyperelasticMMS['defaultLambda'] = 577.0
+hyperelasticMMS['defaultShearModulus'] = 384.615384615384585
+_set_lame_wave_properties(hyperelasticMMS)
+# #################################################################################################
+
+###################################################################################################
+# CHIUMENTI - HOMEL/HERBOLD KALTHOFF-WINKLER DFG PARAMETERIZATION:
+# Homel and Herbold used K = 158.333 GPa, G = 73.0769 GPa, density = 8 g/cm^3,
+# tensile strength = 570 MPa, fracture energy = 22.3 mJ/mm^2, and l_ch = 1.414 mm
+# for their Kalthoff-Winkler DFG comparison.  The GEOS Chiumenti model multiplies
+# criticalLength by the particle lengthScale, so this value should be revisited for
+# a production mesh if particle volumes are not near 1 mm^3.
+#
+chiumentiHomelHerboldKalthoff = {}
+chiumentiHomelHerboldKalthoff['name'] = 'chiumentiHomelHerboldKalthoff'
+chiumentiHomelHerboldKalthoff['version'] = 2605200011
+chiumentiHomelHerboldKalthoff['model'] = 'Chiumenti'
+chiumentiHomelHerboldKalthoff['defaultDensity'] = 8.0
+chiumentiHomelHerboldKalthoff['defaultBulkModulus'] = 158.333
+chiumentiHomelHerboldKalthoff['defaultShearModulus'] = 73.0769
+chiumentiHomelHerboldKalthoff['failureStrength'] = 0.570
+chiumentiHomelHerboldKalthoff['energyReleaseRate'] = 0.0223
+chiumentiHomelHerboldKalthoff['criticalLength'] = 1.414
+_set_isotropic_wave_properties(chiumentiHomelHerboldKalthoff)
+# #################################################################################################
+
+###################################################################################################
+# CHIUMENTI - HOMEL/HERBOLD CHARPY DFG PARAMETERIZATION:
+# Same elastic constants and fracture energy as the Homel/Herbold Kalthoff-Winkler case, but with
+# the simplified Charpy impact target tensile strength of 1.0 GPa from the DFG paper.
+#
+chiumentiHomelHerboldCharpy = {}
+chiumentiHomelHerboldCharpy['name'] = 'chiumentiHomelHerboldCharpy'
+chiumentiHomelHerboldCharpy['version'] = 2605200012
+chiumentiHomelHerboldCharpy['model'] = 'Chiumenti'
+chiumentiHomelHerboldCharpy['defaultDensity'] = 8.0
+chiumentiHomelHerboldCharpy['defaultBulkModulus'] = 158.333
+chiumentiHomelHerboldCharpy['defaultShearModulus'] = 73.0769
+chiumentiHomelHerboldCharpy['failureStrength'] = 1.000
+chiumentiHomelHerboldCharpy['energyReleaseRate'] = 0.0223
+chiumentiHomelHerboldCharpy['criticalLength'] = 1.414
+_set_isotropic_wave_properties(chiumentiHomelHerboldCharpy)
+# #################################################################################################
+
+###################################################################################################
+# CHIUMENTI - CERVERA/CHIUMENTI 2006 BENCHMARK PARAMETERIZATION:
+# Cervera and Chiumenti's 2006 mesh-objective tensile-cracking examples use E = 30 GPa,
+# nu = 0.2, tensile strength = 2 MPa, and mode-I fracture energy = 100 J/m^2.
+# Their examples use exponential softening; this GEOS card maps the same reference material
+# properties onto the Chiumenti linear Rankine-damage update.  Density was not part of that
+# quasi-static benchmark, so a concrete-like 2.4 mg/mm^3 is used as an explicit-MPM placeholder.
+#
+chiumentiCerveraChiumenti2006 = {}
+chiumentiCerveraChiumenti2006['name'] = 'chiumentiCerveraChiumenti2006'
+chiumentiCerveraChiumenti2006['version'] = 2605200013
+chiumentiCerveraChiumenti2006['model'] = 'Chiumenti'
+chiumentiCerveraChiumenti2006['defaultDensity'] = 2.4
+chiumentiCerveraChiumenti2006['defaultYoungModulus'] = 30.0
+chiumentiCerveraChiumenti2006['defaultPoissonRatio'] = 0.2
+chiumentiCerveraChiumenti2006['failureStrength'] = 0.002
+chiumentiCerveraChiumenti2006['energyReleaseRate'] = 1.0e-4
+chiumentiCerveraChiumenti2006['criticalLength'] = 1.0
+_set_isotropic_wave_properties(chiumentiCerveraChiumenti2006)
+# #################################################################################################
+
+###################################################################################################
+# HYPERELASTIC NATURAL RUBBER:
+# Compressible neo-Hookean-style Hyperelastic card for a common elastomer.  The nearly
+# incompressible Poisson ratio is kept below GEOS's strict nu < 0.5 check.
+#
+hyperelasticNaturalRubber = {}
+hyperelasticNaturalRubber['name'] = 'hyperelasticNaturalRubber'
+hyperelasticNaturalRubber['version'] = 2605200021
+hyperelasticNaturalRubber['model'] = 'Hyperelastic'
+hyperelasticNaturalRubber['defaultDensity'] = 1.10
+hyperelasticNaturalRubber['defaultYoungModulus'] = 0.010
+hyperelasticNaturalRubber['defaultPoissonRatio'] = 0.49
+_set_isotropic_wave_properties(hyperelasticNaturalRubber)
+# #################################################################################################
+
+###################################################################################################
+# PERFECTLY PLASTIC MILD STEEL:
+# Common isotropic elastic-perfectly-plastic steel approximation for the MPM PerfectlyPlastic model.
+#
+perfectlyPlasticMildSteel = {}
+perfectlyPlasticMildSteel['name'] = 'perfectlyPlasticMildSteel'
+perfectlyPlasticMildSteel['version'] = 2605200022
+perfectlyPlasticMildSteel['model'] = 'PerfectlyPlastic'
+perfectlyPlasticMildSteel['defaultDensity'] = 7.85
+perfectlyPlasticMildSteel['defaultYoungModulus'] = 200.0
+perfectlyPlasticMildSteel['defaultPoissonRatio'] = 0.26
+perfectlyPlasticMildSteel['defaultYieldStress'] = 0.250
+_set_isotropic_wave_properties(perfectlyPlasticMildSteel)
+# #################################################################################################
+
+###################################################################################################
+# ELASTIC TRANSVERSE ISOTROPIC CARBON-FIBER/EPOXY:
+# Unidirectional carbon-fiber/epoxy engineering-constant approximation for the MPM
+# ElasticTransverseIsotropic model.  The axial direction follows the particle materialDirection.
+#
+transverseIsotropicCarbonFiberEpoxy = {}
+transverseIsotropicCarbonFiberEpoxy['name'] = 'transverseIsotropicCarbonFiberEpoxy'
+transverseIsotropicCarbonFiberEpoxy['version'] = 2605200023
+transverseIsotropicCarbonFiberEpoxy['model'] = 'ElasticTransverseIsotropic'
+transverseIsotropicCarbonFiberEpoxy['defaultDensity'] = 1.60
+transverseIsotropicCarbonFiberEpoxy['defaultYoungModulusTransverse'] = 10.0
+transverseIsotropicCarbonFiberEpoxy['defaultYoungModulusAxial'] = 135.0
+transverseIsotropicCarbonFiberEpoxy['defaultPoissonRatioTransverse'] = 0.35
+transverseIsotropicCarbonFiberEpoxy['defaultPoissonRatioAxialTransverse'] = 0.28
+transverseIsotropicCarbonFiberEpoxy['defaultShearModulusAxialTransverse'] = 5.0
+# Effective wave speed estimate only; GEOS computes effective moduli during model initialization.
+transverseIsotropicCarbonFiberEpoxy['waveSpeed'] = float(np.sqrt((135.0 / (3.0*(1.0 - 2.0*0.28))) / transverseIsotropicCarbonFiberEpoxy['defaultDensity']))
+# #################################################################################################
+
+mpmExplicitSolidMaterials = [
+    hyperelasticMMS,
+    chiumentiHomelHerboldKalthoff,
+    chiumentiHomelHerboldCharpy,
+    chiumentiCerveraChiumenti2006,
+    hyperelasticNaturalRubber,
+    perfectlyPlasticMildSteel,
+    transverseIsotropicCarbonFiberEpoxy,
+]
 
 engineeringMetals = [
     aluminum,
@@ -2259,7 +2575,24 @@ engineeringCeramics = [
     stabilizedZirconia,
 ]
 
-engineeringMaterials = engineeringMetals + engineeringCeramics
+graphiteMaterials = [
+    graphiteSingleCrystal,
+    graphitePyrolytic,
+    graphiteFineGrainIso,
+]
+
+engineeringPolymers = [
+    polymerPolycarbonate,
+    polymerABS,
+    polymerNylon66,
+    polymerAcetalPOM,
+    polymerPEEK,
+    polymerPMMA,
+    polymerHDPE,
+    polymerPolypropylene,
+]
+
+engineeringMaterials = engineeringMetals + engineeringCeramics + graphiteMaterials + engineeringPolymers
 
 # -------------------------------------------------------------------------------------------------
 # EXAMPLE-SUITE MATERIAL DICTIONARY ENTRIES
@@ -2290,14 +2623,7 @@ elasticDemo["defaultPoissonRatio"] = 0.25
 elasticDemo["defaultBulkModulus"] = elasticDemo["defaultYoungModulus"]/(3.0*(1.0 - 2.0*elasticDemo["defaultPoissonRatio"]))
 elasticDemo["defaultShearModulus"] = elasticDemo["defaultYoungModulus"]/(2.0*(1.0 + elasticDemo["defaultPoissonRatio"]))
 elasticDemo["waveSpeed"] = float(np.sqrt((elasticDemo["defaultBulkModulus"] + 4.0/3.0*elasticDemo["defaultShearModulus"])/elasticDemo["defaultDensity"]))
-elasticDemo["materialString"] = "<!--"+elasticDemo["name"]+" parameterization of "+elasticDemo["model"]+" model, version: "+str(elasticDemo["version"])+"""-->
-<"""+elasticDemo["model"]+"""
-name="""+'"'+elasticDemo["name"]+'"'+"""
-defaultDensity="""+'"'+str(elasticDemo["defaultDensity"])+'"'+"""
-defaultYoungModulus="""+'"'+str(elasticDemo["defaultYoungModulus"])+'"'+"""
-defaultPoissonRatio="""+'"'+str(elasticDemo["defaultPoissonRatio"])+'"'+"""
-/>
-"""
+elasticDemo["materialString"] = generateMaterialString(elasticDemo)
 # #################################################################################################
 
 # #################################################################################################
@@ -2323,14 +2649,7 @@ elasticAluminumSI["defaultPoissonRatio"] = 0.33
 elasticAluminumSI["defaultBulkModulus"] = elasticAluminumSI["defaultYoungModulus"]/(3.0*(1.0 - 2.0*elasticAluminumSI["defaultPoissonRatio"]))
 elasticAluminumSI["defaultShearModulus"] = elasticAluminumSI["defaultYoungModulus"]/(2.0*(1.0 + elasticAluminumSI["defaultPoissonRatio"]))
 elasticAluminumSI["waveSpeed"] = float(np.sqrt((elasticAluminumSI["defaultBulkModulus"] + 4.0/3.0*elasticAluminumSI["defaultShearModulus"])/elasticAluminumSI["defaultDensity"]))
-elasticAluminumSI["materialString"] = "<!--"+elasticAluminumSI["name"]+" parameterization of "+elasticAluminumSI["model"]+" model, version: "+str(elasticAluminumSI["version"])+"""-->
-<"""+elasticAluminumSI["model"]+"""
-name="""+'"'+elasticAluminumSI["name"]+'"'+"""
-defaultDensity="""+'"'+str(elasticAluminumSI["defaultDensity"])+'"'+"""
-defaultYoungModulus="""+'"'+str(elasticAluminumSI["defaultYoungModulus"])+'"'+"""
-defaultPoissonRatio="""+'"'+str(elasticAluminumSI["defaultPoissonRatio"])+'"'+"""
-/>
-"""
+elasticAluminumSI["materialString"] = generateMaterialString(elasticAluminumSI)
 # #################################################################################################
 
 # #################################################################################################
@@ -2458,69 +2777,7 @@ ghareb["failedStepResponse"] = 2
 
 ghareb["waveSpeed"] = float(np.sqrt((ghareb["b0"] + 4.0/3.0*ghareb["g0"])/ghareb["defaultDensity"]))
 
-ghareb["materialString"] = "<!--"+ghareb["name"]+" parameterization of "+ghareb["model"]+" model, version: "+str(ghareb["version"])+"""-->
-<"""+ghareb["model"]+"""
-name="""+'"'+ghareb["name"]+'"'+"""
-defaultDensity="""+'"'+str(ghareb["defaultDensity"])+'"'+"""
-b0="""+'"'+str(ghareb["b0"])+'"'+"""
-b1="""+'"'+str(ghareb["b1"])+'"'+"""
-b2="""+'"'+str(ghareb["b2"])+'"'+"""
-b3="""+'"'+str(ghareb["b3"])+'"'+"""
-b4="""+'"'+str(ghareb["b4"])+'"'+"""
-dstrendh="""+'"'+str(ghareb["dstrendh"])+'"'+"""
-dfslopedh="""+'"'+str(ghareb["dfslopedh"])+'"'+"""
-dpeakI1dh="""+'"'+str(ghareb["dpeakI1dh"])+'"'+"""
-dcrdh="""+'"'+str(ghareb["dcrdh"])+'"'+"""
-g0="""+'"'+str(ghareb["g0"])+'"'+"""
-g1="""+'"'+str(ghareb["g1"])+'"'+"""
-g2="""+'"'+str(ghareb["g2"])+'"'+"""
-g3="""+'"'+str(ghareb["g3"])+'"'+"""
-g4="""+'"'+str(ghareb["g4"])+'"'+"""
-p0="""+'"'+str(ghareb["p0"])+'"'+"""
-p1="""+'"'+str(ghareb["p1"])+'"'+"""
-p2="""+'"'+str(ghareb["p2"])+'"'+"""
-p3="""+'"'+str(ghareb["p3"])+'"'+"""
-p4="""+'"'+str(ghareb["p4"])+'"'+"""
-cr="""+'"'+str(ghareb["cr"])+'"'+"""
-fluidBulkModulus="""+'"'+str(ghareb["fluidBulkModulus"])+'"'+"""
-fluidInitialPressure="""+'"'+str(ghareb["fluidInitialPressure"])+'"'+"""
-t1RateDependence="""+'"'+str(ghareb["t1RateDependence"])+'"'+"""
-t2RateDependence="""+'"'+str(ghareb["t2RateDependence"])+'"'+"""
-peakI1="""+'"'+str(ghareb["peakI1"])+'"'+"""
-fSlope="""+'"'+str(ghareb["fSlope"])+'"'+"""
-fSlopeFailed="""+'"'+str(ghareb["fSlopeFailed"])+'"'+"""
-stren="""+'"'+str(ghareb["stren"])+'"'+"""
-ySlope="""+'"'+str(ghareb["ySlope"])+'"'+"""
-beta="""+'"'+str(ghareb["beta"])+'"'+"""
-fractureEnergyReleaseRate="""+'"'+str(ghareb["fractureEnergyReleaseRate"])+'"'+"""
-fractureSofteningExponent="""+'"'+str(ghareb["fractureSofteningExponent"])+'"'+"""
-fractureStress="""+'"'+str(ghareb["fractureStress"])+'"'+"""
-initialTemperature="""+'"'+str(ghareb["initialTemperature"])+'"'+"""
-Q="""+'"'+str(ghareb["Q"])+'"'+"""
-brittleDuctileTransition="""+'"'+str(ghareb["brittleDuctileTransition"])+'"'+"""
-damageEvolutionCriterion="""+'"'+str(ghareb["damageEvolutionCriterion"])+'"'+"""
-enableBuckling="""+'"'+str(ghareb["enableBuckling"])+'"'+"""
-bucklingLength="""+'"'+str(ghareb["bucklingLength"])+'"'+"""
-bucklingAmplitude="""+'"'+str(ghareb["bucklingAmplitude"])+'"'+"""
-enableCreep="""+'"'+str(ghareb["enableCreep"])+'"'+"""
-creepC0="""+'"'+str(ghareb["creepC0"])+'"'+"""
-creepC1="""+'"'+str(ghareb["creepC1"])+'"'+"""
-creepC2="""+'"'+str(ghareb["creepC2"])+'"'+"""
-creepA="""+'"'+str(ghareb["creepA"])+'"'+"""
-creepB="""+'"'+str(ghareb["creepB"])+'"'+"""
-creepC="""+'"'+str(ghareb["creepC"])+'"'+"""
-creepD="""+'"'+str(ghareb["creepD"])+'"'+"""
-creepE="""+'"'+str(ghareb["creepE"])+'"'+"""
-creepF="""+'"'+str(ghareb["creepF"])+'"'+"""
-creepG="""+'"'+str(ghareb["creepG"])+'"'+"""
-strainHardeningN="""+'"'+str(ghareb["strainHardeningN"])+'"'+"""
-strainHardeningK="""+'"'+str(ghareb["strainHardeningK"])+'"'+"""
-plasticStrainTolerance="""+'"'+str(ghareb["plasticStrainTolerance"])+'"'+"""
-stressReturnTolerance="""+'"'+str(ghareb["stressReturnTolerance"])+'"'+"""
-maxAllowedSubcycles="""+'"'+str(ghareb["maxAllowedSubcycles"])+'"'+"""
-failedStepResponse="""+'"'+str(ghareb["failedStepResponse"])+'"'+"""
-/>
-"""
+ghareb["materialString"] = generateMaterialString(ghareb)
 # #################################################################################################
 
 # #################################################################################################
@@ -2541,47 +2798,107 @@ verificationElastic["defaultPoissonRatio"] = 0.25
 verificationElastic["defaultBulkModulus"] = verificationElastic["defaultYoungModulus"]/(3.0*(1.0 - 2.0*verificationElastic["defaultPoissonRatio"]))
 verificationElastic["defaultShearModulus"] = verificationElastic["defaultYoungModulus"]/(2.0*(1.0 + verificationElastic["defaultPoissonRatio"]))
 verificationElastic["waveSpeed"] = float(np.sqrt((verificationElastic["defaultBulkModulus"] + 4.0/3.0*verificationElastic["defaultShearModulus"])/verificationElastic["defaultDensity"]))
-verificationElastic["materialString"] = (
-    "<!--"+verificationElastic["name"]+" parameterization of "+verificationElastic["model"]+" model, version: "+str(verificationElastic["version"])+"-->\n"
-    "<"+verificationElastic["model"]+"\n"
-    "name=\""+verificationElastic["name"]+"\"\n"
-    "defaultDensity=\""+str(verificationElastic["defaultDensity"])+"\"\n"
-    "defaultYoungModulus=\""+str(verificationElastic["defaultYoungModulus"])+"\"\n"
-    "defaultPoissonRatio=\""+str(verificationElastic["defaultPoissonRatio"])+"\"\n"
-    "/>\n"
-)
+verificationElastic["materialString"] = generateMaterialString(verificationElastic)
 # #################################################################################################
 
 ###################################################################################################
 # VERIFICATION QUARTZ DAMAGE MATERIAL:
-# Deterministic quartz-like damage material for verification cases that should not rely on stochastic
-# Weibull fields unless the input explicitly creates them.
+# Quartz is not a separate GEOS constitutive-model catalog entry in this MPM source tree; this is a
+# deterministic quartz-like CeramicDamage card for verification cases that should not rely on
+# stochastic Weibull fields unless the input explicitly creates them.
 verificationQuartz = {}
 verificationQuartz["name"] = "verificationQuartz"
-verificationQuartz["version"] = 2605180002
-verificationQuartz["model"] = "Quartz"
+verificationQuartz["version"] = 2605180003
+verificationQuartz["model"] = "CeramicDamage"
 verificationQuartz["defaultDensity"] = 2.65
 verificationQuartz["defaultBulkModulus"] = 37.0
 verificationQuartz["defaultShearModulus"] = 44.0
-verificationQuartz["defaultTensileStrength"] = 0.030
-verificationQuartz["defaultCompressiveStrength"] = 0.300
-verificationQuartz["defaultShearStrength"] = 0.050
-verificationQuartz["fractureEnergy"] = 1.0e-5
+verificationQuartz["tensileStrength"] = 0.030
+verificationQuartz["compressiveStrength"] = 0.300
+verificationQuartz["maximumStrength"] = 5.0
+verificationQuartz["crackSpeed"] = 1.0e16
+verificationQuartz["damagedMaterialFrictionSlope"] = 0.25
+verificationQuartz["enableEnergyFailureCriterion"] = 1
+verificationQuartz["fractureEnergyReleaseRate"] = 1.0e-5
+verificationQuartz["fractureToughness"] = 0.03
 verificationQuartz["weibullReferenceVolume"] = 1.0
 verificationQuartz["weibullModulus"] = 0.0
 verificationQuartz["waveSpeed"] = float(np.sqrt((verificationQuartz["defaultBulkModulus"] + 4.0/3.0*verificationQuartz["defaultShearModulus"])/verificationQuartz["defaultDensity"]))
-verificationQuartz["materialString"] = (
-    "<!--"+verificationQuartz["name"]+" parameterization of "+verificationQuartz["model"]+" model, version: "+str(verificationQuartz["version"])+"-->\n"
-    "<"+verificationQuartz["model"]+"\n"
-    "name=\""+verificationQuartz["name"]+"\"\n"
-    "defaultDensity=\""+str(verificationQuartz["defaultDensity"])+"\"\n"
-    "defaultBulkModulus=\""+str(verificationQuartz["defaultBulkModulus"])+"\"\n"
-    "defaultShearModulus=\""+str(verificationQuartz["defaultShearModulus"])+"\"\n"
-    "defaultTensileStrength=\""+str(verificationQuartz["defaultTensileStrength"])+"\"\n"
-    "defaultCompressiveStrength=\""+str(verificationQuartz["defaultCompressiveStrength"])+"\"\n"
-    "defaultShearStrength=\""+str(verificationQuartz["defaultShearStrength"])+"\"\n"
-    "fractureEnergy=\""+str(verificationQuartz["fractureEnergy"])+"\"\n"
-    "/>\n"
-)
+verificationQuartz["materialString"] = generateMaterialString(verificationQuartz)
 # #################################################################################################
+
+
+# -------------------------------------------------------------------------------------------------
+# FINALIZE MATERIAL DICTIONARIES
+# -------------------------------------------------------------------------------------------------
+# Regenerate each materialString from its model-specific generator and attach that generator directly
+# to the dictionary-compatible material object.  This intentionally happens at the end of the module
+# so every exported material entry uses the canonical generator for its current model.
+
+
+def _finalize_material(material):
+    generator = getMaterialStringGenerator(material)
+    finalized = MaterialProperties(material)
+    # Discard any pre-finalization XML before attaching the generator.  From this point on,
+    # finalized["materialString"], finalized.get("materialString"), and
+    # finalized.materialString are all generated from the current dictionary values.
+    dict.pop(finalized, 'materialString', None)
+    object.__setattr__(finalized, 'generateMaterialString', generator)
+    object.__setattr__(finalized, '_autoRefreshMaterialString', True)
+    finalized.refreshMaterialString()
+    return finalized
+
+
+def _material_variable_names():
+    names = []
+    for name, value in list(globals().items()):
+        if isinstance(value, dict) and 'name' in value and 'model' in value:
+            names.append(name)
+    return names
+
+
+def _refresh_material_list(material_list):
+    refreshed = []
+    for material in material_list:
+        refreshed.append(globals()[material['name']])
+    return refreshed
+
+
+for _material_variable_name in _material_variable_names():
+    globals()[_material_variable_name] = _finalize_material(globals()[_material_variable_name])
+
+engineeringMetals = _refresh_material_list(engineeringMetals)
+engineeringCeramics = _refresh_material_list(engineeringCeramics)
+graphiteMaterials = _refresh_material_list(graphiteMaterials)
+engineeringPolymers = _refresh_material_list(engineeringPolymers)
+mpmExplicitSolidMaterials = _refresh_material_list(mpmExplicitSolidMaterials)
+engineeringMaterials = engineeringMetals + engineeringCeramics + graphiteMaterials + engineeringPolymers
+
+exampleSuiteMaterials = [
+    elasticDemo,
+    elasticAluminumSI,
+    ghareb,
+]
+
+verificationMaterials = [
+    verificationElastic,
+    verificationQuartz,
+]
+
+allMaterials = engineeringMaterials + mpmExplicitSolidMaterials + exampleSuiteMaterials + verificationMaterials
+materialDatabase = {material['name']: material for material in allMaterials}
+
+
+def finalizeMaterialEntry(material):
+    """Return a MaterialProperties entry with its generator attached and materialString refreshed."""
+    return _finalize_material(material)
+
+
+# Convenience camel-case alias for users who refer to the model name rather than the XML instance name.
+hyperElasticMMS = hyperelasticMMS
+
+try:
+    del _material_variable_name
+except NameError:
+    pass
 
