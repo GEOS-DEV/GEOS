@@ -276,7 +276,7 @@ public:
           // the residual is in mass units
           normalizer = m_dt * LvArray::math::abs( m_constraintValue ) * m_phaseDens_n[iwelem][0][m_targetPhaseIndex];
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else // WellType::INJECTOR, only TOTALVOLRATE is supported for now
         {
           if( m_currentControl == WellControls::Control::MASSRATE )
           {
@@ -301,7 +301,7 @@ public:
           // the residual is in volume units
           normalizer = m_dt * LvArray::math::abs( m_constraintValue );
         }
-        else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+        else // WellType::INJECTOR, only TOTALVOLRATE is supported for now
         {
           if( m_currentControl == WellControls::Control::MASSRATE )
           {

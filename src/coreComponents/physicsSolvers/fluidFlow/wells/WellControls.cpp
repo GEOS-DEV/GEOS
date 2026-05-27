@@ -33,7 +33,7 @@ using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_type( Type::PRODUCER ),
+  m_type( WellType::PRODUCER ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -50,7 +50,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
   m_currentConstraint( nullptr ),
-  m_wellStatus( WellControls::Status::OPEN ),
+  m_wellStatus( WellStatus::OPEN ),
   m_wellOpen( false ),
   m_statusTable( nullptr ),
   m_regionAveragePressure( -1 )
@@ -59,7 +59,7 @@ WellControls::WellControls( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
+    setDescription( "Well type. Valid options:\n* " + EnumStrings< WellType >::concat( "\n* " ) );
 
 
 
@@ -303,10 +303,10 @@ void WellControls::postInputInitialization()
 }
 void WellControls::postRestartInitialization( )
 {}
-void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
+void WellControls::setWellStatus( real64 const & currentTime, WellStatus status )
 {
   m_wellStatus = status;
-  if( m_wellStatus == WellControls::Status::OPEN )
+  if( m_wellStatus == WellStatus::OPEN )
   {
     if( isProducer())
     {
@@ -315,7 +315,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
       {
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
-          m_wellStatus =  WellControls::Status::CLOSED;
+          m_wellStatus =  WellStatus::CLOSED;
           break;
         }
       }
@@ -327,7 +327,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
       {
         if( isZero( constraint->getConstraintValue( currentTime ) ) )
         {
-          m_wellStatus =  WellControls::Status::CLOSED;
+          m_wellStatus =  WellStatus::CLOSED;
           break;
         }
       }
@@ -335,7 +335,7 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
 
     if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
     {
-      m_wellStatus =  WellControls::Status::CLOSED;
+      m_wellStatus =  WellStatus::CLOSED;
     }
   }
 }
@@ -367,7 +367,7 @@ real64 WellControls::setNextDt( real64 const & currentTime,
 }
 bool WellControls::isWellOpen() const
 {
-  return getWellStatus() == WellControls::Status::OPEN;
+  return getWellStatus() == WellStatus::OPEN;
 }
 
 void WellControls::setWellState( bool open )
@@ -555,7 +555,7 @@ void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRe
   {
     numOpenElements += updatedStatus[i];
   }
-  numOpenElements>0 ?  setWellStatus( time_n, WellControls::Status::OPEN ) :  setWellStatus( time_n, WellControls::Status::CLOSED );
+  numOpenElements>0 ?  setWellStatus( time_n, WellStatus::OPEN ) :  setWellStatus( time_n, WellStatus::CLOSED );
 
 
   // Set local well element status array

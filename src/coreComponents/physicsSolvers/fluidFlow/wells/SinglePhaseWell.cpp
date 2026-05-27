@@ -663,7 +663,7 @@ void SinglePhaseWell::assembleWellConstraintTerms( real64 const & time_n,
 
   // the rank that owns the reference well element is responsible for the calculations below.
 
-  if( !subRegion.isLocallyOwned() || !(  getWellStatus() == WellControls::Status::OPEN ))
+  if( !subRegion.isLocallyOwned() || !(  getWellStatus() == WellStatus::OPEN ))
   {
     return;
   }
@@ -757,7 +757,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-  if( getWellStatus() == WellControls::Status::OPEN && !m_keepVariablesConstantDuringInitStep )
+  if( getWellStatus() == WellStatus::OPEN && !m_keepVariablesConstantDuringInitStep )
   {
     if( isThermal() )
     {

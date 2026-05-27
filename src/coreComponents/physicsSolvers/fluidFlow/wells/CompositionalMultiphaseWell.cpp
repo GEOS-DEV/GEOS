@@ -1229,7 +1229,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
   integer const numPhases = fluid.numFluidPhases();
   integer const numComponents = fluid.numFluidComponents();
 
-  if( getWellStatus() == WellControls::Status::OPEN && !m_keepVariablesConstantDuringInitStep )
+  if( getWellStatus() == WellStatus::OPEN && !m_keepVariablesConstantDuringInitStep )
   {
     if( isThermal() )
     {
@@ -1984,7 +1984,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
 
   // the rank that owns the reference well element is responsible for the calculations below.
 
-  if( !subRegion.isLocallyOwned() || !(  getWellStatus() == WellControls::Status::OPEN ))
+  if( !subRegion.isLocallyOwned() || !(  getWellStatus() == WellStatus::OPEN ))
   {
     return;
   }
@@ -2272,7 +2272,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
     outputFile << time_n << "," << dt;
   }
 
-  if( getWellStatus() == WellControls::Status::CLOSED )
+  if( getWellStatus() == WellStatus::CLOSED )
   {
     GEOS_LOG( GEOS_FMT( "{}: well is shut", wellControlsName ) );
     if( outputFile.is_open())

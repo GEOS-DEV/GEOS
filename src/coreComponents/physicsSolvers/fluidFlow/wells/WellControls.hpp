@@ -26,6 +26,7 @@
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellConstants.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
@@ -56,24 +57,6 @@ class ElementsReporterBuffer;
 class WellControls :  public dataRepository::Group //public PhysicsSolverBase
 {
 public:
-
-  /** Type of wells
-   * Either producer or injector
-   */
-  enum class Type : integer
-  {
-    PRODUCER,  /**< A production well */
-    INJECTOR   /**< An injection well */
-  };
-
-  /** Status of wells
-   * Either open or closed
-   */
-  enum class Status : integer
-  {
-    OPEN,  /**< flowing well */
-    CLOSED   /**< shutin well */
-  };
 
   /** Types of well controls
    * Used to specifiy a well's operating conditions
@@ -581,13 +564,13 @@ public:
    * @brief Is the well an injector?
    * @return a boolean
    */
-  bool isInjector() const { return ( m_type == Type::INJECTOR ); }
+  bool isInjector() const { return ( m_type == WellType::INJECTOR ); }
 
   /**
    * @brief Is the well a producer?
    * @return a boolean
    */
-  bool isProducer() const { return ( m_type == Type::PRODUCER ); }
+  bool isProducer() const { return ( m_type == WellType::PRODUCER ); }
 
   /**
    * @brief getter for iso/thermal switch
@@ -715,13 +698,13 @@ public:
    * @param[in] currentTime the current time
    * @param[in] status
    */
-  void setWellStatus ( real64 const & currentTime, WellControls::Status status );
+  void setWellStatus ( real64 const & currentTime, WellStatus status );
 
   /**
    * @brief Is the well open (or shut) based on internal action
    * @return a Status
    */
-  WellControls::Status getWellStatus () const { return m_wellStatus; }
+  WellStatus getWellStatus () const { return m_wellStatus; }
   ///@}
 
 
@@ -840,7 +823,7 @@ private:
 protected:
 
   /// Well type (as Type enum)
-  Type m_type;
+  WellType m_type;
 
   /// Name of the flow solver managing this well
   std::string m_flowSolverName;
@@ -921,7 +904,7 @@ protected:
   std::vector< WellConstraintBase * > m_injectionRateConstraintList;
 
   /// Well status
-  WellControls::Status m_wellStatus;
+  WellStatus m_wellStatus;
 
   /// Well open flag
   bool m_wellOpen;
@@ -942,7 +925,7 @@ protected:
 
 
 // Use local aliases to avoid accidental macro expansion of the tokens 'Type' or 'Control'
-using WellControls_Type = WellControls::Type;
+using WellControls_Type = WellType;
 ENUM_STRINGS( WellControls_Type,
               "producer",
               "injector" );
