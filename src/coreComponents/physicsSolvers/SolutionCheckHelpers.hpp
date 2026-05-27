@@ -17,8 +17,8 @@
  * @file SolutionCheckHelpers.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPERS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SOLUTIONCHECKHELPERS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_SOLUTIONCHECKHELPERS_HPP
+#define GEOS_PHYSICSSOLVERS_SOLUTIONCHECKHELPERS_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 #include "common/Units.hpp"
