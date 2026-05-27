@@ -16,7 +16,7 @@
       solidSolverName="fractureMechSolver"
       logLevel="3">
       <NonlinearSolverParameters
-        couplingType="Sequential"
+        couplingType="FullyImplicit"
         lineSearchAction="None"
         maxTimeStepCuts="10"
         newtonTol="1e-2"
@@ -38,16 +38,7 @@
       flowSolverName="flowSolver"
       wellSolverName="wellSolver"
       targetRegions="{ Region, Fault, wellInjector }"
-      logLevel="3">
-      <NonlinearSolverParameters
-        lineSearchAction="None"
-        maxTimeStepCuts="10"
-        newtonTol="1e-2"
-        newtonMaxIter="20"/>
-      <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="mgr"/>
-    </CompositionalMultiphaseReservoir>
+      logLevel="3"/>
 
     <CompositionalMultiphaseFVM
       name="flowSolver"
@@ -91,7 +82,7 @@
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{ fracture }"
-      file="verticalFault_ExternalMesh.vtm">
+      file="../../MESH/verticalFault_ExternalMesh.vtm">
       <InternalWell
         name="well_injector"
         logLevel="1"
