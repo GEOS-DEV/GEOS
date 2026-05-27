@@ -375,7 +375,7 @@ TEST( HypredriveYaml, UsesAuthoritativeFileWhenProvided )
   LinearSolverParameters params;
   params.solverType = LinearSolverParameters::SolverType::direct;
   params.preconditionerType = LinearSolverParameters::PreconditionerType::none;
-  params.hypredriveInputFile = authoritativeFile;
+  params.hypredriveInputFile = Path( authoritativeFile.c_str() );
 
   hypre::hypredrive::InputArgsParseTarget target;
   ASSERT_TRUE( hypre::hypredrive::buildInputArgsParseTarget( params, target ) );
@@ -455,7 +455,7 @@ TEST( HypredriveLogging, PrintsStatisticsSummaryWhenHandleIsDestroyed )
   }
 
   LinearSolverParameters params;
-  params.hypredriveInputFile = authoritativeFile;
+  params.hypredriveInputFile = Path( authoritativeFile.c_str() );
 
   HypreMatrix matrix;
   testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );
@@ -599,7 +599,7 @@ TEST( HypredriveSolverReuse, RecreatesHandleWhenAuthoritativeYamlChanges )
   }
 
   LinearSolverParameters params;
-  params.hypredriveInputFile = authoritativeFile;
+  params.hypredriveInputFile = Path( authoritativeFile.c_str() );
 
   HypreMatrix matrix;
   testing::computeIdentity( MPI_COMM_GEOS, 4, matrix );

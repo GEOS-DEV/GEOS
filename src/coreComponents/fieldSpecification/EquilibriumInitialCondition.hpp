@@ -21,7 +21,7 @@
 #ifndef GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 #define GEOS_FIELDSPECIFICATION_EQUILIBRIUMINITIALCONDITION_HPP
 
-#include "FieldSpecificationBase.hpp"
+#include "FieldSpecification.hpp"
 
 namespace geos
 {
@@ -30,11 +30,11 @@ namespace geos
  * @class EquilibriumInitialCondition
  * Holds data to compute an hydrostatic equilibrium condition for flow problems
  */
-class EquilibriumInitialCondition : public FieldSpecificationBase
+class EquilibriumInitialCondition : public FieldSpecification
 {
 public:
 
-  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
+  /// @copydoc FieldSpecification(string const &, dataRepository::Group *)
   EquilibriumInitialCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -124,7 +124,7 @@ public:
   /**
    * @brief View keys
    */
-  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  struct viewKeyStruct : public FieldSpecification::viewKeyStruct
   {
 
     // equilibration parameters

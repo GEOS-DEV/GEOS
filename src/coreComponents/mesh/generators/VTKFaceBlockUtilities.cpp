@@ -451,7 +451,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   stdMap< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
   for( vtkIdType i = 0; i < globalPtIds->GetNumberOfValues(); ++i )
   {
-    ng2l.insert( { globalPtIds->GetValue( i ), i} );
+    ng2l.emplace( globalPtIds->GetValue( i ), i );
   }
 
   // Let's build the elem2d to elem3d mapping.
@@ -491,7 +491,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       {
         stdVector< vtkIdType > const & tmp = it->second;
         std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
-        nodesToCells.insert( {n, cells} );
+        nodesToCells.emplace( n, cells );
       }
     }
   }
@@ -508,8 +508,14 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   {
     // We collect all the duplicated points that are involved for each 2d element.
     vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
-    std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
-    // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
+
+    // Use the common matching function to find candidate 3D cells
+    stdVector< vtkIdType > matchingCells = vtk::findMatchingCellsForFractureElement(
+      pointIds,
+      collocatedNodes,
+      nodesToCells );
+
+    // Collect all duplicated nodes for this 2D element (needed for elem2dToNodes)
     std::set< vtkIdType > duplicatedPointOfElem2d;
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
@@ -517,6 +523,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
     }
 
+    // Build elem2dToNodes mapping
     for( vtkIdType const & gni: duplicatedPointOfElem2d )
     {
       auto it = ng2l.find( gni );
@@ -532,42 +539,41 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       }
     }
 
-    // Here, we collect all the 3d elements that are concerned by at least one of those duplicated elements.
-    stdMap< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
-    for( vtkIdType const & n: duplicatedPointOfElem2d )
+    // Process each matching 3D cell
+    for( vtkIdType const & cellGlobalId : matchingCells )
     {
-      auto const ncs = nodesToCells.find( n );
-      if( ncs != nodesToCells.cend() )
+      elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( cellGlobalId ) );
+
+      // Find which face matches
+      auto faces = elemToFaces[cellGlobalId];
+      for( int j = 0; j < faces.size( 0 ); ++j )
       {
-        for( vtkIdType const & c: ncs->second )
+        localIndex const faceIndex = faces[j];
+        auto nodes = faceToNodes[faceIndex];
+        std::set< vtkIdType > globalNodes;
+        for( auto const & n: nodes )
         {
-          elem3dToDuplicatedNodes.get_inserted( c ).insert( n );
+          globalNodes.insert( globalPtIds->GetValue( n ) );
         }
-      }
-    }
-    // Last we extract which of those candidate 3d elements are the ones actually neighboring the 2d element.
-    for( auto const & e2n: elem3dToDuplicatedNodes )
-    {
-      // If the face of the element 3d has the same number of nodes than the elem 2d, it should be a successful (the mesh is conformal).
-      if( e2n.second.size() == elem2dNumPoints )
-      {
-        // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
-        // Computing the elem2dToFaces mapping.
-        auto faces = elemToFaces[e2n.first];
-        for( int j = 0; j < faces.size( 0 ); ++j )
+
+        // Check if face nodes are a subset of duplicated nodes
+        // Face should have same number of nodes as the fracture element
+        if( globalNodes.size() == static_cast< std::size_t >(pointIds->GetNumberOfIds()) )
         {
-          localIndex const faceIndex = faces[j];
-          auto nodes = faceToNodes[faceIndex];
-          std::set< vtkIdType > globalNodes;
-          for( auto const & n: nodes )
+          bool faceMatch = true;
+          for( vtkIdType gn : globalNodes )
           {
-            globalNodes.insert( globalPtIds->GetValue( n ) );
+            if( duplicatedPointOfElem2d.find( gn ) == duplicatedPointOfElem2d.end() )
+            {
+              faceMatch = false;
+              break;
+            }
           }
-          if( globalNodes == e2n.second )
+
+          if( faceMatch )
           {
             elem2dToFaces.emplaceBack( e2d, faceIndex );
-            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( e2n.first ) );
+            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( cellGlobalId ) );
             break;
           }
         }
@@ -598,7 +604,12 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
   // In order to avoid any cell global id collision, we gather the max cell global id over all the ranks.
   // Then we use this maximum as on offset.
   // TODO This does not take into account multiple fractures.
-  vtkIdType const maxLocalCellId = meshCellGlobalIds->GetMaxId();
+  vtkIdType maxLocalCellId = 0;
+  for( vtkIdType i = 0; i < meshCellGlobalIds->GetNumberOfTuples(); ++i )
+  {
+    maxLocalCellId = std::max( maxLocalCellId,
+                               static_cast< vtkIdType >(meshCellGlobalIds->GetValue( i )) );
+  }
   vtkIdType const maxGlobalCellId = MpiWrapper::max( maxLocalCellId );
   vtkIdType const cellGlobalOffset = maxGlobalCellId + 1;
 
