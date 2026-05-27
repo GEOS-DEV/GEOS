@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Copper foam reverse-ballistic compression examples.  The PFW input files are
+# copyable problem definitions; staging, optional submission, and post-processing
+# hooks are delegated to the shared examples/mpm_example_runner.py helper.
+
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+PFW_ROOT=$(cd "$SCRIPT_DIR/../.." && pwd -P)
+PYTHON_CMD="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-/usr/tce/bin/python3}}"
+CASE='copperFoamCompression2D'
+PASSTHRU=()
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --python)
+      [ "$#" -ge 2 ] || { echo "--python requires an argument" >&2; exit 2; }
+      PYTHON_CMD="$2"
+      PASSTHRU+=("--python" "$2")
+      shift 2
+      ;;
+    --case|--variant)
+      [ "$#" -ge 2 ] || { echo "$1 requires an argument" >&2; exit 2; }
+      CASE="$2"
+      shift 2
+      ;;
+    --help|-h)
+      echo "Usage: ./runProblem [--case CASE] [--python PYTHON] [runner options]"
+      echo "Cases: copperFoamCompression, copperFoamCompression2D, 3d, 2d"
+      "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" --help || true
+      exit 0
+      ;;
+    *)
+      PASSTHRU+=("$1")
+      shift
+      ;;
+  esac
+done
+
+case "$CASE" in
+  copperFoamCompression|3d)
+    CASE_ID='copperFoamCompression'
+    INPUT='pfw_input_copperFoamCompression.py'
+    PREFIX='copperFoamCompression'
+    VIEW='xz'
+    ;;
+  copperFoamCompression2D|2d)
+    CASE_ID='copperFoamCompression2D'
+    INPUT='pfw_input_copperFoamCompression2D.py'
+    PREFIX='copperFoamCompression2D'
+    VIEW='xy'
+    ;;
+  *)
+    echo "Unknown case '$CASE'. Valid cases: copperFoamCompression, copperFoamCompression2D" >&2
+    exit 2
+    ;;
+esac
+
+exec "$PYTHON_CMD" "$PFW_ROOT/examples/mpm_example_runner.py" \
+  --case-id "$CASE_ID" \
+  --source-dir "$SCRIPT_DIR" \
+  --input "$INPUT" \
+  --output-prefix "$PREFIX" \
+  --initial-variable velocityMagnitude \
+  --final-variable velocityMagnitude \
+  --initial-range-mode auto \
+  --final-range-mode auto \
+  --view "$VIEW" \
+  "${PASSTHRU[@]}"

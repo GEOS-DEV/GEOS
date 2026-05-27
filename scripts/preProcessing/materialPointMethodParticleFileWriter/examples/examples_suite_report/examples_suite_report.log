@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  17 MAY 2026 23:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022 - Spack) (preloaded format=pdflatex 2024.9.27)  26 MAY 2026 09:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -254,20 +254,220 @@ Overfull \hbox (1.13641pt too wide) in paragraph at lines 31--31
  []
 
 
-Overfull \hbox (37.17082pt too wide) in alignment at lines 29--41
+Overfull \hbox (15.25864pt too wide) in paragraph at lines 39--39
+[]|\OT1/cmr/m/n/10 copperFoamCompression| 
+ []
+
+
+Overfull \hbox (3.25574pt too wide) in paragraph at lines 39--39
+[]|\OT1/cmr/m/n/10 COMPLETED| 
+ []
+
+
+Overfull \hbox (27.89755pt too wide) in paragraph at lines 40--40
+[]|\OT1/cmr/m/n/10 copperFoamCompression2D| 
+ []
+
+
+Overfull \hbox (3.25574pt too wide) in paragraph at lines 40--40
+[]|\OT1/cmr/m/n/10 COMPLETED| 
+ []
+
+
+Overfull \hbox (37.17082pt too wide) in alignment at lines 29--43
  [] [] [] [] [] [] [] 
+ []
+
+
+Overfull \hbox (230.39856pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_drive
+r.py[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/cop
+perFoamCompression2D/copperFoamCompression2D_visit_driver.py[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".[] 
+ []
+
+
+Overfull \hbox (692.39453pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried usi
+ng the following file format readers to open the file: <No suitable plugins wer
+e identified>[] 
+ []
+
+
+Overfull \hbox (209.39874pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+[] 
  []
 
 [1
 
 {/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-
 5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdftex.map}
-] [2]
+]
+Overfull \hbox (219.89865pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid fil
+e.[] 
+ []
+
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+ []
+
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+ []
+
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+ []
+
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+ []
+
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+ []
+
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 73--73
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+ []
+
+
+Overfull \hbox (230.39856pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_drive
+r.py[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/cop
+perFoamCompression2D/copperFoamCompression2D_visit_driver.py[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".[] 
+ []
+
+
+Overfull \hbox (692.39453pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried usi
+ng the following file format readers to open the file: <No suitable plugins wer
+e identified>[] 
+ []
+
+
+Overfull \hbox (209.39874pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+[] 
+ []
+
+
+Overfull \hbox (219.89865pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid fil
+e.[] 
+ []
+
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+ []
+
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+ []
+
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+ []
+
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+ []
+
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+ []
+
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 102--102
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+ []
+
+[2]
 <schematics/brazilianDisk_FMPM_schematic.png, id=15, 264.187pt x 196.3335pt>
 File: schematics/brazilianDisk_FMPM_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_FMPM_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_FMPM_schematic.png  used on i
-nput line 65.
+nput line 109.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthScale.
 png, id=17, 1606.0pt x 1606.0pt>
@@ -276,7 +476,7 @@ cale.png Graphic file (type png)
 <use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initial_particleStrengthSc
 ale.png>
 Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_initia
-l_particleStrengthScale.png  used on input line 79.
+l_particleStrengthScale.png  used on input line 123.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png, id=1
 8, 1606.0pt x 1606.0pt>
@@ -284,7 +484,7 @@ File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png
 Graphic file (type png)
 <use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_final_
-particleDamage.png  used on input line 80.
+particleDamage.png  used on input line 124.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png, id=19, 505.89
 pt x 325.215pt>
@@ -292,10 +492,10 @@ File: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png Graphic f
 ile (type png)
 <use ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_FMPM/output/brazilianDisk_FMPM_reacti
-ons_y.png  used on input line 81.
+ons_y.png  used on input line 125.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
 
-Overfull \hbox (10.2155pt too wide) in paragraph at lines 84--85
+Overfull \hbox (10.2155pt too wide) in paragraph at lines 128--129
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]FMPM[]final[
 ]particleDamage.png, brazil-ian-Disk[]FMPM[]initial[]particleStrengthScale.png,
 
@@ -312,7 +512,7 @@ zilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>]
 File: schematics/brazilianDisk_BSpline_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_BSpline_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_BSpline_schematic.png  used o
-n input line 91.
+n input line 135.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStrength
 Scale.png, id=27, 1606.0pt x 1606.0pt>
@@ -321,7 +521,7 @@ engthScale.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_initial_particleStre
 ngthScale.png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-initial_particleStrengthScale.png  used on input line 105.
+initial_particleStrengthScale.png  used on input line 149.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png
 , id=28, 1606.0pt x 1606.0pt>
@@ -330,7 +530,7 @@ e.png Graphic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage
 .png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-final_particleDamage.png  used on input line 106.
+final_particleDamage.png  used on input line 150.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png, id=29, 
 505.89pt x 325.215pt>
@@ -338,10 +538,10 @@ File: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png Gra
 phic file (type png)
 <use ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_BSpline/output/brazilianDisk_BSpline_
-reactions_y.png  used on input line 107.
+reactions_y.png  used on input line 151.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
 
-Overfull \hbox (14.38219pt too wide) in paragraph at lines 110--111
+Overfull \hbox (14.38219pt too wide) in paragraph at lines 154--155
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]BSpline[]fin
 al[]particleDamage.png, brazil-ian-Disk[]BSpline[]initial[]particleStrengthScal
 e.png,
@@ -358,7 +558,7 @@ razilianDisk_BSpline/output/brazilianDisk_BSpline_final_particleDamage.png (PNG
 File: schematics/brazilianDisk_FLIP_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_FLIP_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_FLIP_schematic.png  used on i
-nput line 117.
+nput line 161.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthScale.
 png, id=36, 1606.0pt x 1606.0pt>
@@ -367,7 +567,7 @@ cale.png Graphic file (type png)
 <use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initial_particleStrengthSc
 ale.png>
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_initia
-l_particleStrengthScale.png  used on input line 130.
+l_particleStrengthScale.png  used on input line 174.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png, id=3
 7, 1606.0pt x 1606.0pt>
@@ -375,7 +575,7 @@ File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png
 Graphic file (type png)
 <use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_final_
-particleDamage.png  used on input line 131.
+particleDamage.png  used on input line 175.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png, id=38, 505.89
 pt x 325.215pt>
@@ -383,7 +583,7 @@ File: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png Graphic f
 ile (type png)
 <use ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reacti
-ons_y.png  used on input line 132.
+ons_y.png  used on input line 176.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
  [5
 
@@ -395,7 +595,7 @@ zilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>]
 File: schematics/brazilianDisk_PIC_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_PIC_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_PIC_schematic.png  used on in
-put line 142.
+put line 186.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScale.pn
 g, id=45, 1606.0pt x 1606.0pt>
@@ -404,7 +604,7 @@ le.png Graphic file (type png)
 <use ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_particleStrengthScal
 e.png>
 Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_initial_
-particleStrengthScale.png  used on input line 155.
+particleStrengthScale.png  used on input line 199.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png, id=46,
  1606.0pt x 1606.0pt>
@@ -412,7 +612,7 @@ File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png Gr
 aphic file (type png)
 <use ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_final_pa
-rticleDamage.png  used on input line 156.
+rticleDamage.png  used on input line 200.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png, id=47, 505.89pt
  x 325.215pt>
@@ -420,10 +620,10 @@ File: ../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png Graphic fil
 e (type png)
 <use ../brazilianDisk_PIC/output/brazilianDisk_PIC_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_PIC/output/brazilianDisk_PIC_reaction
-s_y.png  used on input line 157.
+s_y.png  used on input line 201.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
 
-Overfull \hbox (12.40988pt too wide) in paragraph at lines 160--161
+Overfull \hbox (12.40988pt too wide) in paragraph at lines 204--205
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]PIC[]final[]
 particleDamage.png, brazil-ian-Disk[]PIC[]initial[]particleStrengthScale.png, b
 razil-
@@ -439,7 +639,7 @@ nDisk_PIC/output/brazilianDisk_PIC_reactions_y.png>]
 File: schematics/brazilianDisk_XPIC_schematic.png Graphic file (type png)
 <use schematics/brazilianDisk_XPIC_schematic.png>
 Package pdftex.def Info: schematics/brazilianDisk_XPIC_schematic.png  used on i
-nput line 167.
+nput line 211.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthScale.
 png, id=54, 1606.0pt x 1606.0pt>
@@ -448,7 +648,7 @@ cale.png Graphic file (type png)
 <use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initial_particleStrengthSc
 ale.png>
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_initia
-l_particleStrengthScale.png  used on input line 180.
+l_particleStrengthScale.png  used on input line 224.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png, id=5
 5, 1606.0pt x 1606.0pt>
@@ -456,7 +656,7 @@ File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png
 Graphic file (type png)
 <use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_particleDamage.png>
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_final_
-particleDamage.png  used on input line 181.
+particleDamage.png  used on input line 225.
 (pdftex.def)             Requested size: 161.30563pt x 161.29556pt.
 <../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png, id=56, 505.89
 pt x 325.215pt>
@@ -464,7 +664,7 @@ File: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png Graphic f
 ile (type png)
 <use ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png>
 Package pdftex.def Info: ../brazilianDisk_XPIC/output/brazilianDisk_XPIC_reacti
-ons_y.png  used on input line 182.
+ons_y.png  used on input line 226.
 (pdftex.def)             Requested size: 161.30563pt x 103.69875pt.
  [7
 
@@ -475,8 +675,8 @@ zilianDisk_XPIC/output/brazilianDisk_XPIC_reactions_y.png>]
 <schematics/benchy_schematic.png, id=63, 264.187pt x 196.3335pt>
 File: schematics/benchy_schematic.png Graphic file (type png)
 <use schematics/benchy_schematic.png>
-Package pdftex.def Info: schematics/benchy_schematic.png  used on input line 19
-2.
+Package pdftex.def Info: schematics/benchy_schematic.png  used on input line 23
+6.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
 <../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.png, 
 id=64, 1606.0pt x 1606.0pt>
@@ -485,7 +685,7 @@ png Graphic file (type png)
 <use ../benchy/output/benchy_FMPM_initial_boatGhostRank_ballVelocityMagnitude.p
 ng>
 Package pdftex.def Info: ../benchy/output/benchy_FMPM_initial_boatGhostRank_bal
-lVelocityMagnitude.png  used on input line 205.
+lVelocityMagnitude.png  used on input line 249.
 (pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
 <../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocityMagn
 itude.png, id=65, 1606.0pt x 1606.0pt>
@@ -494,10 +694,10 @@ yMagnitude.png Graphic file (type png)
 <use ../benchy/output/benchy_FMPM_final_boatPlasticStrainMagnitude_ballVelocity
 Magnitude.png>
 Package pdftex.def Info: ../benchy/output/benchy_FMPM_final_boatPlasticStrainMa
-gnitude_ballVelocityMagnitude.png  used on input line 206.
+gnitude_ballVelocityMagnitude.png  used on input line 250.
 (pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
 
-Overfull \hbox (188.62433pt too wide) in paragraph at lines 209--210
+Overfull \hbox (188.62433pt too wide) in paragraph at lines 253--254
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 benchy[]FMPM[]final[]boatPlas
 ticStrainMagnitude[]ballVelocityMagnitude.png, benchy[]FMPM[]initial[]boatGhost
 Rank[]ballVelocityMagnitude.png 
@@ -513,71 +713,265 @@ inal_boatPlasticStrainMagnitude_ballVelocityMagnitude.png (PNG copy)>]
 File: schematics/borehole_Ghareb_schematic.png Graphic file (type png)
 <use schematics/borehole_Ghareb_schematic.png>
 Package pdftex.def Info: schematics/borehole_Ghareb_schematic.png  used on inpu
-t line 216.
+t line 260.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 230.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 230.
+<../borehole/output/borehole_Ghareb_initial_pressure.png, id=74, 1606.0pt x 160
+6.0pt>
+File: ../borehole/output/borehole_Ghareb_initial_pressure.png Graphic file (typ
+e png)
+<use ../borehole/output/borehole_Ghareb_initial_pressure.png>
+Package pdftex.def Info: ../borehole/output/borehole_Ghareb_initial_pressure.pn
+g  used on input line 274.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+<../borehole/output/borehole_Ghareb_final_plasticStrainMagnitude.png, id=75, 16
+06.0pt x 1606.0pt>
+File: ../borehole/output/borehole_Ghareb_final_plasticStrainMagnitude.png Graph
+ic file (type png)
+<use ../borehole/output/borehole_Ghareb_final_plasticStrainMagnitude.png>
+Package pdftex.def Info: ../borehole/output/borehole_Ghareb_final_plasticStrain
+Magnitude.png  used on input line 275.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
  [10
 
- <./schematics/borehole_Ghareb_schematic.png>]
-<schematics/collidingDisks_schematic.png, id=78, 264.187pt x 196.3335pt>
+ <./schematics/borehole_Ghareb_schematic.png>] [11 <../borehole/output/borehole
+_Ghareb_initial_pressure.png (PNG copy)> <../borehole/output/borehole_Ghareb_fi
+nal_plasticStrainMagnitude.png (PNG copy)>]
+<schematics/collidingDisks_schematic.png, id=83, 264.187pt x 196.3335pt>
 File: schematics/collidingDisks_schematic.png Graphic file (type png)
 <use schematics/collidingDisks_schematic.png>
 Package pdftex.def Info: schematics/collidingDisks_schematic.png  used on input
- line 241.
+ line 285.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [11
+<../collidingDisks/output/collidingDisks_initial_velocityMagnitude.png, id=84, 
+1606.0pt x 1606.0pt>
+File: ../collidingDisks/output/collidingDisks_initial_velocityMagnitude.png Gra
+phic file (type png)
+<use ../collidingDisks/output/collidingDisks_initial_velocityMagnitude.png>
+Package pdftex.def Info: ../collidingDisks/output/collidingDisks_initial_veloci
+tyMagnitude.png  used on input line 297.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+<../collidingDisks/output/collidingDisks_final_velocityMagnitude.png, id=85, 16
+06.0pt x 1606.0pt>
+File: ../collidingDisks/output/collidingDisks_final_velocityMagnitude.png Graph
+ic file (type png)
+<use ../collidingDisks/output/collidingDisks_final_velocityMagnitude.png>
+Package pdftex.def Info: ../collidingDisks/output/collidingDisks_final_velocity
+Magnitude.png  used on input line 298.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
 
- <./schematics/collidingDisks_schematic.png>]
-<schematics/elasticDisk_schematic.png, id=83, 264.187pt x 196.3335pt>
+Overfull \hbox (69.50455pt too wide) in paragraph at lines 301--302
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 col-lid-ingDisks[]final[]velo
+cityMagnitude.png, col-lid-ingDisks[]initial[]velocityMagnitude.png, col-lid-in
+gDisks[]reactions.png 
+ []
+
+[12
+
+ <./schematics/collidingDisks_schematic.png> <../collidingDisks/output/collidin
+gDisks_initial_velocityMagnitude.png (PNG copy)> <../collidingDisks/output/coll
+idingDisks_final_velocityMagnitude.png (PNG copy)>] [13]
+<schematics/elasticDisk_schematic.png, id=94, 264.187pt x 196.3335pt>
 File: schematics/elasticDisk_schematic.png Graphic file (type png)
 <use schematics/elasticDisk_schematic.png>
 Package pdftex.def Info: schematics/elasticDisk_schematic.png  used on input li
-ne 264.
+ne 308.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [12
+<../elasticDisk/output/elasticDisk_initial_velocityMagnitude.png, id=95, 1606.0
+pt x 1606.0pt>
+File: ../elasticDisk/output/elasticDisk_initial_velocityMagnitude.png Graphic f
+ile (type png)
+<use ../elasticDisk/output/elasticDisk_initial_velocityMagnitude.png>
+Package pdftex.def Info: ../elasticDisk/output/elasticDisk_initial_velocityMagn
+itude.png  used on input line 320.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+<../elasticDisk/output/elasticDisk_final_density.png, id=96, 1606.0pt x 1606.0p
+t>
+File: ../elasticDisk/output/elasticDisk_final_density.png Graphic file (type pn
+g)
+<use ../elasticDisk/output/elasticDisk_final_density.png>
+Package pdftex.def Info: ../elasticDisk/output/elasticDisk_final_density.png  u
+sed on input line 321.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+ [14
 
- <./schematics/elasticDisk_schematic.png>]
-<schematics/pdc_schematic.png, id=88, 264.187pt x 196.3335pt>
+ <./schematics/elasticDisk_schematic.png> <../elasticDisk/output/elasticDisk_in
+itial_velocityMagnitude.png (PNG copy)> <../elasticDisk/output/elasticDisk_fina
+l_density.png (PNG copy)>] [15]
+<schematics/copperFoamCompression_schematic.png, id=104, 264.187pt x 196.3335pt
+>
+File: schematics/copperFoamCompression_schematic.png Graphic file (type png)
+<use schematics/copperFoamCompression_schematic.png>
+Package pdftex.def Info: schematics/copperFoamCompression_schematic.png  used o
+n input line 331.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 345.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 345.
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+ []
+
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+[16
+
+ <./schematics/copperFoamCompression_schematic.png>]
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+ []
+
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+ []
+
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+ []
+
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+ []
+
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 363--363
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+ []
+
+[17]
+<schematics/copperFoamCompression2D_schematic.png, id=112, 264.187pt x 196.3335
+pt>
+File: schematics/copperFoamCompression2D_schematic.png Graphic file (type png)
+<use schematics/copperFoamCompression2D_schematic.png>
+Package pdftex.def Info: schematics/copperFoamCompression2D_schematic.png  used
+ on input line 370.
+(pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+ []
+
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+ []
+
+[18
+
+ <./schematics/copperFoamCompression2D_schematic.png>]
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+ []
+
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+ []
+
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+ []
+
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+ []
+
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 402--402
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+ []
+
+[19]
+<schematics/pdc_schematic.png, id=121, 264.187pt x 196.3335pt>
 File: schematics/pdc_schematic.png Graphic file (type png)
 <use schematics/pdc_schematic.png>
-Package pdftex.def Info: schematics/pdc_schematic.png  used on input line 287.
+Package pdftex.def Info: schematics/pdc_schematic.png  used on input line 409.
 (pdftex.def)             Requested size: 301.80098pt x 224.3108pt.
- [13
+<../pdc/output/pdc_final_plasticStrainMagnitude.png, id=122, 1606.0pt x 1606.0p
+t>
+File: ../pdc/output/pdc_final_plasticStrainMagnitude.png Graphic file (type png
+)
+<use ../pdc/output/pdc_final_plasticStrainMagnitude.png>
+Package pdftex.def Info: ../pdc/output/pdc_final_plasticStrainMagnitude.png  us
+ed on input line 423.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+File: ../pdc/output/pdc_final_plasticStrainMagnitude.png Graphic file (type png
+)
+<use ../pdc/output/pdc_final_plasticStrainMagnitude.png>
+Package pdftex.def Info: ../pdc/output/pdc_final_plasticStrainMagnitude.png  us
+ed on input line 424.
+(pdftex.def)             Requested size: 234.15361pt x 234.15057pt.
+ [20
 
- <./schematics/pdc_schematic.png>] (./examples_suite_report.aux) ) 
+ <./schematics/pdc_schematic.png>] [21 <../pdc/output/pdc_final_plasticStrainMa
+gnitude.png (PNG copy)>] (./examples_suite_report.aux) ) 
 Here is how much of TeX's memory you used:
- 2783 strings out of 478268
- 56551 string characters out of 5754030
- 359922 words of memory out of 5000000
- 20961 multiletter control sequences out of 15000+600000
+ 2850 strings out of 478268
+ 60354 string characters out of 5754030
+ 362922 words of memory out of 5000000
+ 21015 multiletter control sequences out of 15000+600000
  474017 words of font info for 44 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,8n,62p,419b,231s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/tce/bac
-kend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bm
-fyzzzstanspbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/
-tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmo
-j4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb
-></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321
--5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmb
-x12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2
-0220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmr10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/tex
-live-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/am
-sfonts/cm/cmr12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3
-.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/pub
-lic/amsfonts/cm/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gc
-c-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/typ
-e1/public/amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x8
-6_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fo
-nts/type1/public/cm-super/sfrm1000.pfb>
-Output written on examples_suite_report.pdf (13 pages, 2607644 bytes).
+ 55i,8n,62p,419b,269s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/tce/backend/insta
+llations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstans
+pbcoex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/backen
+d/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyz
+zzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/tce
+/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4m
+r7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></
+usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5d
+vbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.
+pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220
+321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfonts/cm/
+cmr12.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive
+-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsfon
+ts/cm/cmr17.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/t
+exlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-1
+0.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/
+public/cm-super/sfrm1000.pfb>
+Output written on examples_suite_report.pdf (21 pages, 3771677 bytes).
 PDF statistics:
- 126 PDF objects out of 1000 (max. 8388607)
- 54 compressed objects within 1 object stream
+ 162 PDF objects out of 1000 (max. 8388607)
+ 71 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 136 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 181 words of extra memory for PDF output out of 10000 (max. 10000000)
 

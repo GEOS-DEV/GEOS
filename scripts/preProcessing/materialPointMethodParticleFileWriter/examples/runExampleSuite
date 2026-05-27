@@ -168,6 +168,38 @@ EXAMPLES = [{'id': 'brazilianDisk_FMPM',
   'final': 'final',
   'reaction': '',
   'args': []},
+ {'id': 'copperFoamCompression',
+  'dir': 'copperFoamCompression',
+  'prefix': 'copperFoamCompression',
+  'family': 'Copper foam compression',
+  'label': '3D reverse-ballistic compression',
+  'description': 'A 3D copper foam bar with periodic lateral pore structure impacts a symmetry plane in reverse-ballistic uniaxial compression. The initial and final visualizations show velocity magnitude.',
+  'features': ['copper VonMisesJ material',
+               'Poisson-disk spherical pores',
+               'periodic x/y boundaries',
+               'SinglePointBSpline particles',
+               'compaction-wave stop-time estimate',
+               'custom velocity-magnitude VisIt rendering'],
+  'initial': 'copperFoamCompression_initial_velocityMagnitude.png',
+  'final': 'copperFoamCompression_final_velocityMagnitude.png',
+  'reaction': '',
+  'args': ['--case', 'copperFoamCompression']},
+ {'id': 'copperFoamCompression2D',
+  'dir': 'copperFoamCompression',
+  'prefix': 'copperFoamCompression2D',
+  'family': 'Copper foam compression',
+  'label': '2D plane strain',
+  'description': 'A plane-strain copper foam bar with periodic x pore structure impacts a y=0 symmetry plane. The initial and final visualizations show velocity magnitude.',
+  'features': ['plane-strain MPM',
+               'copper VonMisesJ material',
+               'Poisson-disk circular pores',
+               'periodic x boundary',
+               'SinglePointBSpline particles',
+               'compaction-wave stop-time estimate'],
+  'initial': 'copperFoamCompression2D_initial_velocityMagnitude.png',
+  'final': 'copperFoamCompression2D_final_velocityMagnitude.png',
+  'reaction': '',
+  'args': ['--case', 'copperFoamCompression2D']},
  {'id': 'pdc',
   'dir': 'pdc',
   'prefix': 'pdc',
@@ -708,6 +740,38 @@ def try_make_schematics(root, cases, report_dir):
             ax.text(1.05, 0.82, "PDC cutter", ha="center")
             arrow((0.8, 0.9), (0.55, 0.35)); arrow((0.0, -0.95), (0.4, -0.55))
             ax.text(-1.1, 0.4, "periodic x", ha="center")
+        elif "copper foam" in fam or "copperfoam" in cid:
+            bx0, by0, bw, bh = -0.32, -1.02, 0.64, 2.04
+            ax.add_patch(Rectangle((bx0, by0), bw, bh, facecolor="#f9f0df", edgecolor="0.08", linewidth=1.3))
+            # Processor/grid hints scaled to the 6:1 specimen without crowding the report page.
+            for k in range(1, 4):
+                x = bx0 + bw * k / 4.0
+                ax.plot([x, x], [by0, by0 + bh], color="0.82", linewidth=0.35)
+            for k in range(1, 13):
+                y = by0 + bh * k / 13.0
+                ax.plot([bx0, bx0 + bw], [y, y], color="0.86", linewidth=0.30)
+            r = 0.045 if "2d" in cid else 0.038
+            for row in range(15):
+                cols = 3 if row % 2 else 4
+                for col in range(cols):
+                    x = bx0 + bw * (col + 0.5) / cols
+                    x += (0.018 if row % 3 == 0 else -0.012 if row % 3 == 1 else 0.0)
+                    y = by0 + 0.10 + bh * (row + 0.35) / 15.0
+                    if (row + col) % 7 == 0:
+                        continue
+                    ax.add_patch(Circle((x, y), r, facecolor="white", edgecolor="#8f6231", linewidth=0.55))
+            ax.plot([bx0, bx0 + bw], [by0, by0], color="0.05", linewidth=2.4)
+            for x in [bx0 + i * bw / 9.0 for i in range(10)]:
+                ax.plot([x, x - 0.04], [by0, by0 - 0.07], color="0.2", linewidth=0.55)
+            arrow((0.0, 0.90), (0.0, 0.55))
+            arrow((0.0, 0.55), (0.0, 0.18))
+            arrow((0.52, -0.88), (0.52, -0.30))
+            ax.text(0.0, 1.12, "v0 = 0.25 mm/us", ha="center", fontsize=8)
+            ax.text(0.66, -0.52, "compaction\nwave", ha="left", va="center", fontsize=8)
+            ax.text(-0.58, 0.0, "periodic", rotation=90, ha="center", va="center", fontsize=8)
+            ax.text(0.58, 0.0, "periodic", rotation=270, ha="center", va="center", fontsize=8)
+            ax.text(0.0, by0 - 0.18, "symmetry impact plane", ha="center", fontsize=8)
+            ax.text(0.0, -0.06, "Cu foam\nPoisson pores", ha="center", va="center", fontsize=8)
         elif "ring" in fam:
             ax.add_patch(Circle((0, 0), 0.75, fill=False, linewidth=1.3)); ax.add_patch(Circle((0, 0), 0.35, fill=False, linewidth=1.3))
             for a,b in [((0,0.75),(0,1.1)), ((0.75,0),(1.1,0)), ((0,-0.75),(0,-1.1)), ((-0.75,0),(-1.1,0))]: arrow(a,b)

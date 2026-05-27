@@ -489,6 +489,30 @@ This solver has many solver specific variables. The following list describes eac
      - 0
      - Enables output of global boundary reactions
    * - bool
+     - profileHistory
+     - 0
+     - Enables one-file-per-variable MPM profile CSV output along x, y, or z.
+   * - string
+     - profileDirection
+     - x
+     - Direction for profile output: x, y, or z.
+   * - int
+     - profileNumSlices
+     - 0
+     - Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection.
+   * - string_array
+     - profileVariables
+     - {}
+     - Variables to write, for example density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.
+   * - real
+     - profileWriteInterval
+     - 0.0
+     - Time interval for profile output. A value of 0 writes every time step unless profileCycleInterval is set.
+   * - int
+     - profileCycleInterval
+     - 0
+     - Cycle interval for profile output. Use either profileCycleInterval or profileWriteInterval, not both.
+   * - bool
      - planeStrain
      - 0
      - Enables plane strain calculations for 2-D simulations

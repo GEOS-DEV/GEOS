@@ -22,8 +22,10 @@ np.random.seed(1)
 
 from mpi4py import MPI
 comm = MPI.COMM_WORLD # gets communication pool 
+g_comm_world = comm
 g_rank = comm.Get_rank()  # gets rank of current process 
 num_ranks = comm.Get_size() # total number of processes
+g_num_ranks = num_ranks
 
 # ===========================================
 # TYPES
@@ -578,7 +580,7 @@ class maxFlawRadius:
         if not readFromFile:
             self.ranks_per_side = int(np.floor(np.cbrt(g_num_ranks)))
             self.num_ranks_used = self.ranks_per_side**self.dim
-            self.comm = g_comm_world.Create(g_comm_world.group.Incl([i for i in range(self.num_ranks_used)]))
+            self.comm = g_comm_world.Create(g_comm_world.Get_group().Incl([i for i in range(self.num_ranks_used)]))
 
             self.rank_coord = self.rankIndexToCoord(g_rank)
 
@@ -1056,7 +1058,7 @@ class maxFlawRadius2D:
         if not readFromFile:
             self.ranks_per_side = math.floor(g_num_ranks**(1/self.dim))
             self.num_ranks_used = self.ranks_per_side**self.dim
-            self.comm = g_comm_world.Create(g_comm_world.group.Incl([i for i in range(self.num_ranks_used)]))
+            self.comm = g_comm_world.Create(g_comm_world.Get_group().Incl([i for i in range(self.num_ranks_used)]))
 
             self.rank_coord = self.rankIndexToCoord(g_rank)
 
@@ -1559,9 +1561,14 @@ def combvec(offsets):
 
 
 # Randomly samples points on surface of unit n-sphere
-def random_direction(dim: int=3):
-    direction = np.random.normal(size=dim)
-    return direction / np.linalg.norm(direction)
+def random_direction(dim: int=3, rng=None):
+    generator = np.random if rng is None else rng
+    direction = generator.normal(size=dim)
+    norm = np.linalg.norm(direction)
+    while norm == 0.0:
+        direction = generator.normal(size=dim)
+        norm = np.linalg.norm(direction)
+    return direction / norm
 
 
 # Adds images of pores for nearest neighbors
@@ -4787,6 +4794,347 @@ class foam(Geometry):
 
   def xMax(self):
     return self.x1[0]
+
+
+#############################################
+class poissonDiskFoam(Geometry):
+  """
+  Geometry object for a grid-aligned foam block with Poisson-disk pores.
+
+  In three dimensions this object removes monodisperse spherical pores from the
+  retained box.  With ``dim=2`` it removes circular plane-strain pores from the
+  active x-y plane; the pores are implicitly extruded through the z thickness.
+  The pore centers are generated with a minimum center spacing and optional
+  periodicity, so pore cuts match across periodic faces.
+
+  Parameters
+  ----------
+  x0, x1 : array-like
+      Opposite corners of the foam block.  The first ``dim`` entries are used.
+  poreRadius or poreDiameter : float
+      Monodisperse pore size.  If poreDiameter is supplied, poreRadius is taken
+      as half of it.
+  porosity : float
+      Target void volume fraction for ``dim=3`` or area fraction for ``dim=2``.
+      The realized value is stored as ``realizedPorosity`` because an integer
+      number of pores is generated.
+  periodic : array-like bool
+      Periodicity of the pore structure in the first ``dim`` directions.  For
+      nonperiodic directions, pore centers are kept at least one pore radius away
+      from the block faces.
+  minLigament : float
+      Extra clearance added to the minimum pore-center spacing.  The minimum
+      center spacing is ``2*poreRadius + minLigament``.
+  flaggedSurfaces : array-like bool
+      Exterior foam-block surfaces to flag, ordered consistently with ``box`` as
+      [x-, y-, z-, x+, y+, z+] for ``dim=3`` and [x-, y-, x+, y+] for ``dim=2``.
+      Pore surfaces are always flagged.
+  """
+  def __init__(self,
+               name,
+               x0,
+               x1,
+               poreRadius=None,
+               poreDiameter=None,
+               porosity=0.1,
+               seed=1,
+               periodic=[False, False, False],
+               minLigament=0.0,
+               maxTrialsPerPore=10000,
+               flaggedSurfaces=None,
+               dim=3,
+               vel=_defaultVelocity,
+               mat=_defaultMat,
+               group=_defaultGroup,
+               particleType=_defaultParticleType):
+    super().__init__(name,
+                     vel = vel,
+                     mat = mat,
+                     group = group,
+                     particleType = particleType)
+
+    self.dim = int(dim)
+    if self.dim not in (2, 3):
+      raise ValueError("poissonDiskFoam supports dim=2 or dim=3")
+
+    x0 = np.asarray(x0, dtype=float)
+    x1 = np.asarray(x1, dtype=float)
+    if x0.size < self.dim or x1.size < self.dim:
+      raise ValueError("poissonDiskFoam requires x0 and x1 with length at least dim")
+    self.x0 = np.minimum(x0[:self.dim], x1[:self.dim])
+    self.x1 = np.maximum(x0[:self.dim], x1[:self.dim])
+    self.dx = self.x1 - self.x0
+
+    if np.any(self.dx <= 0.0):
+      raise ValueError("poissonDiskFoam requires x1 to be greater than x0 in all active directions")
+
+    if poreDiameter is not None:
+      poreDiameter = float(poreDiameter)
+      if poreRadius is None:
+        poreRadius = 0.5 * poreDiameter
+      elif not math.isclose(float(poreDiameter), 2.0 * float(poreRadius), rel_tol=1.0e-10, abs_tol=1.0e-14):
+        raise ValueError("poreDiameter must equal 2*poreRadius when both are supplied")
+
+    if poreRadius is None:
+      raise ValueError("poissonDiskFoam requires poreRadius or poreDiameter")
+
+    self.poreRadius = float(poreRadius)
+    self.poreDiameter = 2.0 * self.poreRadius
+    self.porosity = float(porosity)
+    self.seed = int(seed)
+    periodic = np.asarray(periodic, dtype=bool)
+    if periodic.size < self.dim:
+      raise ValueError("poissonDiskFoam requires periodic with length at least dim")
+    self.periodic = periodic[:self.dim]
+    self.minLigament = float(minLigament)
+    self.minCenterSpacing = 2.0 * self.poreRadius + self.minLigament
+    self.maxTrialsPerPore = int(maxTrialsPerPore)
+
+    if self.poreRadius <= 0.0:
+      raise ValueError("poreRadius must be positive")
+    if self.porosity < 0.0 or self.porosity >= 1.0:
+      raise ValueError("porosity must satisfy 0 <= porosity < 1")
+    if self.minLigament < 0.0:
+      raise ValueError("minLigament must be non-negative")
+    if self.maxTrialsPerPore <= 0:
+      raise ValueError("maxTrialsPerPore must be positive")
+
+    for d in range(self.dim):
+      if self.poreDiameter >= self.dx[d]:
+        raise ValueError("poreDiameter must be smaller than the domain length in every active direction")
+
+    if flaggedSurfaces is None:
+      flaggedSurfaces = []
+      for d in range(self.dim):
+        flaggedSurfaces.append(not self.periodic[d])
+      for d in range(self.dim):
+        flaggedSurfaces.append(not self.periodic[d])
+    flaggedSurfaces = np.asarray(flaggedSurfaces, dtype=bool)
+    if flaggedSurfaces.size < 2*self.dim:
+      raise ValueError("poissonDiskFoam requires flaggedSurfaces with length at least 2*dim")
+    self.flaggedSurfaces = flaggedSurfaces[:2*self.dim]
+
+    self.measure = float(np.prod(self.dx))
+    if self.dim == 3:
+      self.poreMeasure = 4.0 * math.pi * self.poreRadius**3 / 3.0
+      self.measureName = "volume fraction"
+    else:
+      self.poreMeasure = math.pi * self.poreRadius**2
+      self.measureName = "area fraction"
+
+    self.targetPoreCount = int(round(self.porosity * self.measure / self.poreMeasure)) if self.porosity > 0.0 else 0
+    if self.porosity > 0.0:
+      self.targetPoreCount = max(1, self.targetPoreCount)
+
+    self.centers = self._samplePoreCenters(self.targetPoreCount)
+    self.realizedPoreCount = int(self.centers.shape[0])
+    self.realizedPorosity = self.realizedPoreCount * self.poreMeasure / self.measure
+
+    if self.realizedPoreCount > 0:
+      self.pores = np.column_stack((np.full(self.realizedPoreCount, self.poreRadius), self.centers))
+    else:
+      self.pores = np.empty((0, self.dim + 1), dtype=float)
+
+    self._buildPoreSearchTree()
+
+    if g_rank == 0:
+      print(f"poissonDiskFoam '{self.name}': target {self.measureName} = {self.porosity:.6g}, "
+            f"realized {self.measureName} = {self.realizedPorosity:.6g}, pores = {self.realizedPoreCount}, "
+            f"pore diameter = {self.poreDiameter:.6g}, dim = {self.dim}")
+
+  def _samplePoreCenters(self, targetCount):
+    if targetCount == 0:
+      return np.empty((0, self.dim), dtype=float)
+
+    centerX0 = self.x0.copy()
+    centerDx = self.dx.copy()
+    for d in range(self.dim):
+      if not self.periodic[d]:
+        centerX0[d] += self.poreRadius
+        centerDx[d] -= 2.0 * self.poreRadius
+
+    if np.any(centerDx <= 0.0):
+      raise ValueError("No valid pore-center domain remains after applying nonperiodic pore-radius margins")
+
+    rng = np.random.default_rng(self.seed)
+    centers = []
+    rejectedSinceLastAccept = 0
+    minSpacing2 = self.minCenterSpacing * self.minCenterSpacing
+
+    while len(centers) < targetCount:
+      if rejectedSinceLastAccept >= self.maxTrialsPerPore:
+        raise RuntimeError(
+          "poissonDiskFoam could only place " + str(len(centers)) + " of " + str(targetCount) +
+          " requested pores. Reduce porosity, reduce pore size/minLigament, enlarge the domain, " +
+          "or increase maxTrialsPerPore."
+        )
+
+      candidate = centerX0 + rng.random(self.dim) * centerDx
+
+      if len(centers) == 0:
+        centers.append(candidate)
+        rejectedSinceLastAccept = 0
+        continue
+
+      centerArray = np.asarray(centers)
+      delta = np.abs(centerArray - candidate)
+      for d in range(self.dim):
+        if self.periodic[d]:
+          delta[:, d] = np.minimum(delta[:, d], self.dx[d] - delta[:, d])
+
+      if np.all(np.einsum('ij,ij->i', delta, delta) >= minSpacing2):
+        centers.append(candidate)
+        rejectedSinceLastAccept = 0
+      else:
+        rejectedSinceLastAccept += 1
+
+    return np.asarray(centers, dtype=float)
+
+  def _buildPoreSearchTree(self):
+    if self.realizedPoreCount == 0:
+      self.queryCenters = np.empty((0, self.dim), dtype=float)
+      self.queryRadii = np.empty((0,), dtype=float)
+      self.kdt = None
+      return
+
+    offsets = []
+    for d in range(self.dim):
+      if self.periodic[d]:
+        offsets.append([-self.dx[d], 0.0, self.dx[d]])
+      else:
+        offsets.append([0.0])
+
+    centers = []
+    radii = []
+    for offset in itertools.product(*offsets):
+      offsetArray = np.asarray(offset, dtype=float)
+      centers.append(self.centers + offsetArray)
+      radii.append(np.full(self.realizedPoreCount, self.poreRadius))
+
+    self.queryCenters = np.vstack(centers)
+    self.queryRadii = np.concatenate(radii)
+    leafSize = max(1, int(np.ceil(self.queryCenters.shape[0] / 20)))
+    self.kdt = KDTree(self.queryCenters, leaf_size=leafSize, metric='euclidean')
+
+  def _nearestPoreWithin(self, pt, searchDistance):
+    if self.kdt is None:
+      return np.inf, None, 0.0, np.inf
+
+    x = np.asarray(pt[:self.dim], dtype=float)
+    idx = self.kdt.query_radius(x.reshape(1, -1), r=float(searchDistance))[0]
+    if len(idx) == 0:
+      return np.inf, None, 0.0, np.inf
+
+    delta = self.queryCenters[idx] - x
+    d2 = np.einsum('ij,ij->i', delta, delta)
+    j = int(np.argmin(d2))
+    qidx = int(idx[j])
+    centerDistance = math.sqrt(float(d2[j]))
+    radius = float(self.queryRadii[qidx])
+    return centerDistance - radius, self.queryCenters[qidx], radius, centerDistance
+
+  def _nearestPore(self, pt):
+    if self.kdt is None:
+      return np.inf, None, 0.0, np.inf
+
+    x = np.asarray(pt[:self.dim], dtype=float)
+    dist, idx = self.kdt.query(x.reshape(1, -1), k=1)
+    qidx = int(idx[0][0])
+    centerDistance = float(dist[0][0])
+    radius = float(self.queryRadii[qidx])
+    return centerDistance - radius, self.queryCenters[qidx], radius, centerDistance
+
+  def _nearestOuterSurface(self, pt):
+    x = np.asarray(pt[:self.dim], dtype=float)
+    bestDistance = np.inf
+    bestNormal = _defaultSurfaceNormal.copy()
+    bestPosition = _defaultSurfacePosition.copy()
+
+    for d in range(self.dim):
+      if self.flaggedSurfaces[d]:
+        distance = x[d] - self.x0[d]
+        if distance < bestDistance:
+          bestDistance = distance
+          bestNormal = np.zeros(3)
+          bestNormal[d] = -1.0
+          bestPosition = np.zeros(3)
+          bestPosition[d] = -distance
+
+      if self.flaggedSurfaces[d + self.dim]:
+        distance = self.x1[d] - x[d]
+        if distance < bestDistance:
+          bestDistance = distance
+          bestNormal = np.zeros(3)
+          bestNormal[d] = 1.0
+          bestPosition = np.zeros(3)
+          bestPosition[d] = distance
+
+    return bestDistance, bestNormal, bestPosition
+
+  def isInterior(self, pt, skinDepth):
+    x = np.asarray(pt[:self.dim], dtype=float)
+    if not np.all(np.logical_and(x >= self.x0, x < self.x1)):
+      return -1
+
+    poreSurfaceDistance, _, _, _ = self._nearestPoreWithin(x, self.poreRadius + skinDepth)
+    if poreSurfaceDistance < 0.0:
+      return -1
+
+    surfaceFlag = 0
+    if poreSurfaceDistance <= skinDepth:
+      surfaceFlag = _defaultSurfaceFlag
+
+    outerDistance, _, _ = self._nearestOuterSurface(x)
+    if outerDistance <= skinDepth:
+      surfaceFlag = _defaultSurfaceFlag
+
+    return surfaceFlag
+
+  def getSurfaceNormal(self, pt):
+    x = np.asarray(pt[:self.dim], dtype=float)
+    poreSurfaceDistance, center, radius, centerDistance = self._nearestPore(x)
+    outerDistance, outerNormal, _ = self._nearestOuterSurface(x)
+
+    if center is not None and poreSurfaceDistance <= outerDistance:
+      if centerDistance <= 0.0:
+        return _defaultSurfaceNormal
+      normal = np.zeros(3)
+      normal[:self.dim] = (center - x) / centerDistance
+      return normal
+
+    return outerNormal
+
+  def getSurfacePosition(self, pt):
+    x = np.asarray(pt[:self.dim], dtype=float)
+    poreSurfaceDistance, center, radius, centerDistance = self._nearestPore(x)
+    outerDistance, _, outerPosition = self._nearestOuterSurface(x)
+
+    if center is not None and poreSurfaceDistance <= outerDistance:
+      if centerDistance <= 0.0:
+        return _defaultSurfacePosition
+      pos = np.zeros(3)
+      pos[:self.dim] = center + (x - center) * (radius / centerDistance) - x
+      return pos
+
+    return outerPosition
+
+  def xMin(self):
+    return self.x0[0]
+
+  def xMax(self):
+    return self.x1[0]
+
+  def yMin(self):
+    return self.x0[1]
+
+  def yMax(self):
+    return self.x1[1]
+
+  def zMin(self):
+    return self.x0[2] if self.dim == 3 else 0.0
+
+  def zMax(self):
+    return self.x1[2] if self.dim == 3 else 0.0
 
 
 #############################################
@@ -8103,6 +8451,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     self.x1 = self.x1[:self.dim]
     self.randomMatDir = randomMatDir
     self.seed = weibullSeed
+    self.rng = np.random.default_rng( int( weibullSeed ) )
 
     if vpts is None:
       self.vpts = poisson(flawSize, x0=self.x0, dx=self.dx[:self.dim], seed=self.seed, dim=self.dim)
@@ -8143,7 +8492,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     cellStrengthScale = []
     for i in range(self.npts):
       s = ((weibullVolume / vol[i]) * 
-          (np.log(np.random.uniform(1e-20, 1.0)) / np.log(0.5))) ** (1.0 / weibullModulus)
+          (np.log(self.rng.uniform(1e-20, 1.0)) / np.log(0.5))) ** (1.0 / weibullModulus)
       cellStrengthScale.append(s)
     self.cellStrengthScale = np.array(cellStrengthScale)
 
@@ -8151,7 +8500,7 @@ class voronoiWeibullBoxWrapper(BaseWrapper):
     cellMatDir=[]
     if ( self.randomMatDir ): 
       for i in range(0,self.npts):
-        d = random_direction(dim=self.dim)
+        d = random_direction(dim=self.dim, rng=self.rng)
         if self.dim == 2:
           d = np.append(d, 0.0)
         u1, u2, u3 = generate_orthonormal_axes(d)
@@ -8368,7 +8717,8 @@ class sizeEffectVoronoiWeibullBoxWrapper(BaseWrapper):
 
     # self.vor = vor #CC: Temporary fix to grab from particle file writer for surface detection of voronoi cells
 
-    self.rr = [np.random.uniform(1e-20,1.0) for i in range(self.npts)] # Store random weibull perturbations for strength query
+    rng = np.random.default_rng( int( weibullSeed ) )
+    self.rr = [rng.uniform(1e-20,1.0) for i in range(self.npts)] # Store random weibull perturbations for strength query
 
     # compute volume of each voronoi cell
     # vol = np.zeros(vor.npoints)
@@ -8398,7 +8748,7 @@ class sizeEffectVoronoiWeibullBoxWrapper(BaseWrapper):
         for v in vertices:
           v3d = mapToRange(v, self.x0, self.x1)
 
-          if subObject.isInterior(v3d, fromFile=True):
+          if subObject.isInterior(v3d, 0.0) >= 0:
             numInteriorVertices += 1
         
         vol[i] = vol[i]*numInteriorVertices/numVertices

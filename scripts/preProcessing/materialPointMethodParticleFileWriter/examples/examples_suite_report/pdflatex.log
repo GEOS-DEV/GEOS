@@ -62,12 +62,148 @@ Overfull \hbox (37.17082pt too wide) in alignment at lines 25--29
 Overfull \hbox (1.13641pt too wide) in paragraph at lines 31--31
 []|\OT1/cmr/m/n/10 brazilianDisk[]BSpline| 
 
-Overfull \hbox (37.17082pt too wide) in alignment at lines 29--41
+Overfull \hbox (15.25864pt too wide) in paragraph at lines 39--39
+[]|\OT1/cmr/m/n/10 copperFoamCompression| 
+
+Overfull \hbox (3.25574pt too wide) in paragraph at lines 39--39
+[]|\OT1/cmr/m/n/10 COMPLETED| 
+
+Overfull \hbox (27.89755pt too wide) in paragraph at lines 40--40
+[]|\OT1/cmr/m/n/10 copperFoamCompression2D| 
+
+Overfull \hbox (3.25574pt too wide) in paragraph at lines 40--40
+[]|\OT1/cmr/m/n/10 COMPLETED| 
+
+Overfull \hbox (37.17082pt too wide) in alignment at lines 29--43
  [] [] [] [] [] [] [] 
+
+Overfull \hbox (230.39856pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_drive
+r.py[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/cop
+perFoamCompression2D/copperFoamCompression2D_visit_driver.py[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".[] 
+
+Overfull \hbox (692.39453pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried usi
+ng the following file format readers to open the file: <No suitable plugins wer
+e identified>[] 
+
+Overfull \hbox (209.39874pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+[] 
 [1{/usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.1/texlive-2022032
 1-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/map/pdftex/updmap/pdftex.ma
-p}] [2]
-Overfull \hbox (10.2155pt too wide) in paragraph at lines 84--85
+p}]
+Overfull \hbox (219.89865pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid fil
+e.[] 
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 73--73
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 73--73
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 73--73
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+
+Overfull \hbox (230.39856pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Command: /usr/gapps/visit/bin/visit -nowin -cli -s /p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_visit_drive
+r.py[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Running: cli3.5.0 -nowin -s /p/lustre1/homel1/geosxTests/cop
+perFoamCompression2D/copperFoamCompression2D_visit_driver.py[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/mpm_* database".[] 
+
+Overfull \hbox (692.39453pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/mpm_* database. It may be an invalid file.  VisIt tried usi
+ng the following file format readers to open the file: <No suitable plugins wer
+e identified>[] 
+
+Overfull \hbox (209.39874pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 VisIt: Error - VisIt could not read from the file "/p/lustre
+1/homel1/geosxTests/copperFoamCompression2D/copperFoamCompression2D_mpm.visit".
+[] 
+
+Overfull \hbox (219.89865pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 There was an error opening /p/lustre1/homel1/geosxTests/copp
+erFoamCompression2D/copperFoamCompression2D_mpm.visit. It may be an invalid fil
+e.[] 
+
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 102--102
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 102--102
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 102--102
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+[2]
+Overfull \hbox (10.2155pt too wide) in paragraph at lines 128--129
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]FMPM[]final[
 ]particleDamage.png, brazil-ian-Disk[]FMPM[]initial[]particleStrengthScale.png,
 
@@ -75,7 +211,7 @@ Overfull \hbox (10.2155pt too wide) in paragraph at lines 84--85
 t/brazilianDisk_FMPM_initial_particleStrengthScale.png (PNG copy)> <../brazilia
 nDisk_FMPM/output/brazilianDisk_FMPM_final_particleDamage.png (PNG copy)> <../b
 razilianDisk_FMPM/output/brazilianDisk_FMPM_reactions_y.png>]
-Overfull \hbox (14.38219pt too wide) in paragraph at lines 110--111
+Overfull \hbox (14.38219pt too wide) in paragraph at lines 154--155
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]BSpline[]fin
 al[]particleDamage.png, brazil-ian-Disk[]BSpline[]initial[]particleStrengthScal
 e.png,
@@ -87,7 +223,7 @@ g>] [5 <./schematics/brazilianDisk_FLIP_schematic.png> <../brazilianDisk_FLIP/o
 utput/brazilianDisk_FLIP_initial_particleStrengthScale.png (PNG copy)> <../braz
 ilianDisk_FLIP/output/brazilianDisk_FLIP_final_particleDamage.png (PNG copy)> <
 ../brazilianDisk_FLIP/output/brazilianDisk_FLIP_reactions_y.png>]
-Overfull \hbox (12.40988pt too wide) in paragraph at lines 160--161
+Overfull \hbox (12.40988pt too wide) in paragraph at lines 204--205
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 brazil-ian-Disk[]PIC[]final[]
 particleDamage.png, brazil-ian-Disk[]PIC[]initial[]particleStrengthScale.png, b
 razil-
@@ -99,16 +235,93 @@ anDisk_XPIC_schematic.png> <../brazilianDisk_XPIC/output/brazilianDisk_XPIC_ini
 tial_particleStrengthScale.png (PNG copy)> <../brazilianDisk_XPIC/output/brazil
 ianDisk_XPIC_final_particleDamage.png (PNG copy)> <../brazilianDisk_XPIC/output
 /brazilianDisk_XPIC_reactions_y.png>]
-Overfull \hbox (188.62433pt too wide) in paragraph at lines 209--210
+Overfull \hbox (188.62433pt too wide) in paragraph at lines 253--254
 \OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 benchy[]FMPM[]final[]boatPlas
 ticStrainMagnitude[]ballVelocityMagnitude.png, benchy[]FMPM[]initial[]boatGhost
 Rank[]ballVelocityMagnitude.png 
 [8 <./schematics/benchy_schematic.png> <../benchy/output/benchy_FMPM_initial_bo
 atGhostRank_ballVelocityMagnitude.png (PNG copy)> <../benchy/output/benchy_FMPM
 _final_boatPlasticStrainMagnitude_ballVelocityMagnitude.png (PNG copy)>]
-[9] [10 <./schematics/borehole_Ghareb_schematic.png>] [11 <./schematics/collidi
-ngDisks_schematic.png>] [12 <./schematics/elasticDisk_schematic.png>] [13 <./sc
-hematics/pdc_schematic.png>] (./examples_suite_report.aux) )
+[9] [10 <./schematics/borehole_Ghareb_schematic.png>] [11 <../borehole/output/b
+orehole_Ghareb_initial_pressure.png (PNG copy)> <../borehole/output/borehole_Gh
+areb_final_plasticStrainMagnitude.png (PNG copy)>]
+Overfull \hbox (69.50455pt too wide) in paragraph at lines 301--302
+\OT1/cmr/bx/n/10 Output fig-ures: \OT1/cmr/m/n/10 col-lid-ingDisks[]final[]velo
+cityMagnitude.png, col-lid-ingDisks[]initial[]velocityMagnitude.png, col-lid-in
+gDisks[]reactions.png 
+[12 <./schematics/collidingDisks_schematic.png> <../collidingDisks/output/colli
+dingDisks_initial_velocityMagnitude.png (PNG copy)> <../collidingDisks/output/c
+ollidingDisks_final_velocityMagnitude.png (PNG copy)>] [13] [14 <./schematics/e
+lasticDisk_schematic.png> <../elasticDisk/output/elasticDisk_initial_velocityMa
+gnitude.png (PNG copy)> <../elasticDisk/output/elasticDisk_final_density.png (P
+NG copy)>] [15]
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 363--363
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+[16 <./schematics/copperFoamCompression_schematic.png>]
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 363--363
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 363--363
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+[17]
+Overfull \hbox (330.14769pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 Ignoring unknown VisIt/script arguments: --initial-variable 
+velocityMagnitude --final-variable velocityMagnitude --initial-range-mode auto 
+--final-range-mode auto[] 
+
+Overfull \hbox (25.65034pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 Opening database: /p/lustre1/homel1/geosxTests/copperFoamCom
+pression2D/copperFoamCompression2D_mpm.visit[] 
+
+Overfull \hbox (109.64961pt too wide) in paragraph at lines 402--402
+[]\OT1/cmtt/m/n/10 OpenDatabase returned failure for /p/lustre1/homel1/geosxTes
+ts/copperFoamCompression2D/copperFoamCompression2D_mpm.visit[] 
+[18 <./schematics/copperFoamCompression2D_schematic.png>]
+Overfull \hbox (120.14952pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoamCompression2D_visit_driver.py", line 9, in <module>[] 
+
+Overfull \hbox (114.89957pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/visitRender_copperFoamCompression2D.py", line 6, in <module>[] 
+
+Overfull \hbox (41.4002pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 607, in main[] 
+
+Overfull \hbox (88.6498pt too wide) in paragraph at lines 402--402
+[]  \OT1/cmtt/m/n/10 File "/p/lustre1/homel1/geosxTests/copperFoamCompression2D
+/copperFoam_visit_common.py", line 171, in open_database[] 
+
+Overfull \hbox (20.40039pt too wide) in paragraph at lines 402--402
+[]    \OT1/cmtt/m/n/10 raise FileNotFoundError("No GEOS-MPM plot database found
+. Expected <run-dir>/siloFiles/mpm_cpdi_*")[] 
+[19] [20 <./schematics/pdc_schematic.png>] [21 <../pdc/output/pdc_final_plastic
+StrainMagnitude.png (PNG copy)>] (./examples_suite_report.aux) )
 (see the transcript file for additional information){/usr/tce/backend/installat
 ions/linux-rhel8-x86_64/gcc-10.3.1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbco
 ex6ij/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/tce/backend/in
@@ -127,5 +340,5 @@ ve-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/public/amsf
 onts/cm/cmtt10.pfb></usr/tce/backend/installations/linux-rhel8-x86_64/gcc-10.3.
 1/texlive-20220321-5dvbmoj4mr7bmfyzzzstanspbcoex6ij/texmf-dist/fonts/type1/publ
 ic/cm-super/sfrm1000.pfb>
-Output written on examples_suite_report.pdf (13 pages, 2607644 bytes).
+Output written on examples_suite_report.pdf (21 pages, 3771677 bytes).
 Transcript written on examples_suite_report.log.

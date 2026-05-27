@@ -155,7 +155,6 @@ public:
     static constexpr char const * gridDamageGradientString() { return "gridDamageGradient"; }
     static constexpr char const * gridDamageString() { return "gridDamage"; }
     static constexpr char const * gridFieldGradientAlignmentString() { return "gridFieldGradientAlignment"; }
-    static constexpr char const * gridMassWeightedDamageString() { return "gridMassWeightedDamage"; }
     static constexpr char const * gridMaxDamageString() { return "gridMaxDamage"; }
 
     // Integration / update
@@ -186,7 +185,6 @@ public:
     static constexpr char const * gridMassString() { return "gridMass"; }
     static constexpr char const * gridMaterialVolumeString() { return "gridMaterialVolume"; }
     static constexpr char const * gridMomentumString() { return "gridMomentum"; }
-    static constexpr char const * gridNormalStressString() { return "gridNormalStress"; }
     static constexpr char const * gridPrincipalExplicitSurfaceNormalString() { return "gridPrincipalExplicitSurfaceNormal"; }
     static constexpr char const * gridSurfaceAreaString() { return "gridSurfaceArea"; }
     static constexpr char const * gridSurfaceFieldMassString() { return "gridSurfaceFieldMass"; }
@@ -1095,11 +1093,22 @@ public:
 
   void computeKineticEnergy( ParticleManager & particleManager );
 
-  void computeXProfile( int const cycleNumber,
-                        real64 const time,
-                        real64 const dt,
-                        NodeManager & nodeManager,
-                        SpatialPartition & partition );
+  int getProfileDirectionIndex() const;
+
+  int getProfileNumSlices( int const direction ) const;
+
+  bool shouldWriteProfiles( real64 const outputTime,
+                            int const cycleNumber ) const;
+
+  void updateNextProfileWriteTime( real64 const outputTime );
+
+  void initializeProfileFiles();
+
+  void computeAndWriteProfiles( int const cycleNumber,
+                                real64 const time,
+                                real64 const dt,
+                                ParticleManager & particleManager,
+                                NodeManager & nodeManager );
 
   void computeDamageHessian( ParticleManager & particleManager );
 
@@ -1156,7 +1165,6 @@ protected:
   int m_computeNodalArea;
   int m_computeParticleSurfaceNormalsAndPositions;
   int m_computeSPHJacobian;
-  int m_computeXProfile;
   array1d< real64 > m_confiningPressureBoxMax;
   array1d< real64 > m_confiningPressureBoxMin;
   array1d< real64 > m_confiningStress;
@@ -1219,8 +1227,8 @@ protected:
   array1d< int > m_nEl;                   // Number of elements in each grid direction including buffer and ghost cells
   real64 m_nextBoxAverageWriteTime;
   real64 m_nextParticleDataWriteTime;
+  real64 m_nextProfileWriteTime;
   real64 m_nextReactionWriteTime;
-  real64 m_nextXProfileWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   mpm::NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
@@ -1235,6 +1243,12 @@ protected:
   real64 m_overlapThreshold2;
   int m_overwriteExistingNormalsAndPositions;
   real64 m_particleDataWriteInterval;
+  string m_profileDirection;
+  int m_profileCycleInterval;
+  int m_profileHistory;
+  int m_profileNumSlices;
+  string_array m_profileVariables;
+  real64 m_profileWriteInterval;
   array1d< real64 > m_partitionExtent;    // Length of each edge of partition including buffer and ghost cells
   int m_planeStrain;
   int m_plotGridFields;
@@ -1302,8 +1316,6 @@ protected:
   array1d< real64 > m_xLocalMaxNoGhost;   // Maximum local grid coordinate EXCLUDING ghost nodes
   array1d< real64 > m_xLocalMin;          // Minimum local grid coordinate including ghost nodes
   array1d< real64 > m_xLocalMinNoGhost;   // Minimum local grid coordinate EXCLUDING ghost nodes
-  real64 m_xProfileVx0;
-  real64 m_xProfileWriteInterval;
 
 private:
   struct BinKey

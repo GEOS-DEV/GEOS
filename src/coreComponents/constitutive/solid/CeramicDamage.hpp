@@ -557,12 +557,21 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // switch this back later to reduce memory footprint of the model.
   // real64 crackTipStressConcentration = 1.0;
   m_crackTipStressConcentration[k] = 1.0;
-  if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
+  if( ( m_enableCrackTipStressConcentration == 1 ) and
+      ( m_distanceToCrackTip[k] > 0 ) and
+      ( nominalIntactStrength > 1.e-12 ) )
   {
     real64 fractureProcessZoneRadius =
-      LvArray::math::max( 1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
-    //crackTipStressConcentration = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
-    m_crackTipStressConcentration[k] = LvArray::math::max( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+      LvArray::math::max( 1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * nominalIntactStrength * nominalIntactStrength ) );
+    // distanceToCrackTip is the inverse-kernel DFG estimate of the
+    // unresolved crack-tip distance. If that distance is smaller than the
+    // fracture-process-zone radius, the resolved strength is unchanged. If it
+    // is larger than the fracture-process-zone radius, reduce the effective
+    // strength by the unresolved LEFM stress-concentration factor.
+    m_crackTipStressConcentration[k] =
+      LvArray::math::max( 1.0,
+                          LvArray::math::sqrt( m_distanceToCrackTip[k] /
+                                                fractureProcessZoneRadius ) );
   }
 
   // Evaluate the yield criterion:

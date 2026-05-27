@@ -1499,8 +1499,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="nextParticleDataWriteTime" type="real64" />
 		<!--nextReactionWriteTime => Next time to write reactions-->
 		<xsd:attribute name="nextReactionWriteTime" type="real64" />
-		<!--nextXProfileWriteTime => Next x profile writing time-->
-		<xsd:attribute name="nextXProfileWriteTime" type="real64" />
 		<!--numContactFlags => Number of contact flags that can appear due to damage-->
 		<xsd:attribute name="numContactFlags" type="integer" />
 		<!--numContactGroups => Number of prescribed contact groups-->

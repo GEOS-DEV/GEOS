@@ -17,6 +17,7 @@ option( GEOS_ENABLE_LINEARALGEBRA "Enable GEOS implicit linear algebra package" 
 option( GEOS_ENABLE_CONSTITUTIVE_DRIVERS "Enable standalone constitutive driver package" ON )
 option( GEOS_ENABLE_DENSE_LINEARALGEBRA "Enable GEOS dense BLAS/LAPACK linear algebra package" ON )
 option( GEOS_ENABLE_CONSTITUTIVE_MPM_ONLY "Build only constitutive models required by explicit MPM" OFF )
+set( GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR "" CACHE PATH "Optional out-of-tree constitutive/material-model directory. If set, the directory may contain CMakeLists.txt or GEOSExternalConstitutiveModels.cmake and can register extra model sources and MPM dispatch types." )
 
 option( ENABLE_MATHPRESSO "" ON )
 

@@ -6269,8 +6269,6 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="computeParticleSurfaceNormalsAndPositions" type="integer" default="0" />
 		<!--computeSPHJacobian => Overlap correction flag (0=off, 1=increase normal force to remove gap. (not fully developed), 2=compute the SPH Jacobian and use it to scale particle density to improve the overlap. )-->
 		<xsd:attribute name="computeSPHJacobian" type="integer" default="0" />
-		<!--computeXProfile => Flag to enable x profiling-->
-		<xsd:attribute name="computeXProfile" type="integer" default="0" />
 		<!--contactGapCorrection => Flag for mitigating contact gaps-->
 		<xsd:attribute name="contactGapCorrection" type="geos_SolidMechanicsMPM_ContactGapCorrectionOption" default="Simple" />
 		<!--contactNormalExponent => Exponent value for surface normal weights in contact normal type aligned-->
@@ -6370,6 +6368,18 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="overwriteExistingNormalsAndPositions" type="integer" default="0" />
 		<!--particleDataWriteInterval => Interval to write particle data to file-->
 		<xsd:attribute name="particleDataWriteInterval" type="real64" default="0" />
+		<!--profileDirection => Direction for MPM profile output. Valid values are x, y, and z.-->
+		<xsd:attribute name="profileDirection" type="string" default="x" />
+		<!--profileCycleInterval => Cycle interval for MPM profile output. Use either profileCycleInterval or profileWriteInterval. A value of 0 means no cycle-based interval.-->
+		<xsd:attribute name="profileCycleInterval" type="integer" default="0" />
+		<!--profileHistory => Flag to enable MPM profile CSV output. One CSV file is written per requested profile variable.-->
+		<xsd:attribute name="profileHistory" type="integer" default="0" />
+		<!--profileNumSlices => Number of profile slices. A value of 0 uses the background-grid resolution in profileDirection.-->
+		<xsd:attribute name="profileNumSlices" type="integer" default="0" />
+		<!--profileVariables => Variables to write to MPM profile CSV files. Supported names include density, damage, temperature, internalEnergy, kineticEnergy, velocityX, velocityY, velocityZ, volumeFraction, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY.-->
+		<xsd:attribute name="profileVariables" type="string_array" default="{}" />
+		<!--profileWriteInterval => Time interval for MPM profile output. Use either profileWriteInterval or profileCycleInterval. A value of 0 means no time-based interval.-->
+		<xsd:attribute name="profileWriteInterval" type="real64" default="0" />
 		<!--planeStrain => Flag for performing plane strain calculations-->
 		<xsd:attribute name="planeStrain" type="integer" default="0" />
 		<!--plotGridFields => Flag to enable plotting of grid fields in vtk output-->
@@ -6552,10 +6562,6 @@ Information output from lower logLevels is added with the desired log level
 <<<<<<< HEAD
 		<!--writeParticleData => Flag to enable writing particle data to file-->
 		<xsd:attribute name="writeParticleData" type="integer" default="0" />
-		<!--xProfileVx0 => Velocity to subtract from x profile-->
-		<xsd:attribute name="xProfileVx0" type="real64" default="0" />
-		<!--xProfileWriteInterval => Interval between writing x profiling data-->
-		<xsd:attribute name="xProfileWriteInterval" type="real64" default="0" />
 =======
 		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
 When set to `convergence`, output convergence information to a csv

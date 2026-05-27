@@ -17,6 +17,138 @@ Package: constitutive
 Contains the implementation of constitutive models for fluid and rock properties.
 #]]
 
+
+#
+# Optional out-of-tree constitutive/material models.
+#
+# An external material model directory can provide either CMakeLists.txt or
+# GEOSExternalConstitutiveModels.cmake and call
+# geos_register_external_constitutive_models().  Registered sources are compiled
+# into the constitutive target, registered include directories are added to the
+# target include path, and registered MPM dispatch types are appended to the
+# explicit MPM pass-through lists generated below.
+#
+set( geos_external_constitutive_include_dirs )
+set( geos_external_constitutive_mpm_model_list )
+set( geos_external_constitutive_mpm_include_list )
+set( geos_external_constitutive_mpm_cohesive_zone_model_list )
+set( geos_external_constitutive_mpm_cohesive_zone_include_list )
+
+macro( geos_register_external_constitutive_models )
+  set( options )
+  set( singleValueArgs BASE_DIR )
+  set( multiValueArgs
+       SOURCES
+       HEADERS
+       INCLUDE_DIRS
+       DEPENDS_ON
+       MPM_MODELS
+       MPM_INCLUDES
+       MPM_COHESIVE_ZONE_MODELS
+       MPM_COHESIVE_ZONE_INCLUDES )
+  cmake_parse_arguments( GEOS_EXT
+                         "${options}"
+                         "${singleValueArgs}"
+                         "${multiValueArgs}"
+                         ${ARGN} )
+
+  if( GEOS_EXT_UNPARSED_ARGUMENTS )
+    message( FATAL_ERROR "Unknown arguments to geos_register_external_constitutive_models: ${GEOS_EXT_UNPARSED_ARGUMENTS}" )
+  endif()
+
+  if( NOT GEOS_EXT_BASE_DIR )
+    set( GEOS_EXT_BASE_DIR "${CMAKE_CURRENT_LIST_DIR}" )
+  endif()
+  get_filename_component( GEOS_EXT_BASE_DIR "${GEOS_EXT_BASE_DIR}" ABSOLUTE )
+
+  list( APPEND geos_external_constitutive_include_dirs "${GEOS_EXT_BASE_DIR}" )
+
+  foreach( source IN LISTS GEOS_EXT_SOURCES )
+    if( IS_ABSOLUTE "${source}" )
+      list( APPEND constitutive_sources "${source}" )
+    else()
+      list( APPEND constitutive_sources "${GEOS_EXT_BASE_DIR}/${source}" )
+    endif()
+  endforeach()
+
+  foreach( header IN LISTS GEOS_EXT_HEADERS )
+    if( IS_ABSOLUTE "${header}" )
+      list( APPEND constitutive_headers "${header}" )
+    else()
+      list( APPEND constitutive_headers "${GEOS_EXT_BASE_DIR}/${header}" )
+    endif()
+  endforeach()
+
+  foreach( includeDir IN LISTS GEOS_EXT_INCLUDE_DIRS )
+    if( IS_ABSOLUTE "${includeDir}" )
+      list( APPEND geos_external_constitutive_include_dirs "${includeDir}" )
+    else()
+      list( APPEND geos_external_constitutive_include_dirs "${GEOS_EXT_BASE_DIR}/${includeDir}" )
+    endif()
+  endforeach()
+
+  list( APPEND dependencyList ${GEOS_EXT_DEPENDS_ON} )
+  list( APPEND geos_external_constitutive_mpm_model_list ${GEOS_EXT_MPM_MODELS} )
+  list( APPEND geos_external_constitutive_mpm_include_list ${GEOS_EXT_MPM_INCLUDES} )
+  list( APPEND geos_external_constitutive_mpm_cohesive_zone_model_list ${GEOS_EXT_MPM_COHESIVE_ZONE_MODELS} )
+  list( APPEND geos_external_constitutive_mpm_cohesive_zone_include_list ${GEOS_EXT_MPM_COHESIVE_ZONE_INCLUDES} )
+endmacro()
+
+macro( geos_process_external_constitutive_models )
+  if( GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR )
+    get_filename_component( GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR
+                            "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}" ABSOLUTE )
+
+    if( NOT IS_DIRECTORY "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}" )
+      message( FATAL_ERROR "GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR is not a directory: ${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}" )
+    endif()
+
+    set( externalConstitutiveManifest "" )
+    if( EXISTS "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}/GEOSExternalConstitutiveModels.cmake" )
+      set( externalConstitutiveManifest "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}/GEOSExternalConstitutiveModels.cmake" )
+    elseif( EXISTS "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}/CMakeLists.txt" )
+      set( externalConstitutiveManifest "${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}/CMakeLists.txt" )
+    endif()
+
+    if( externalConstitutiveManifest )
+      message( STATUS "Including external constitutive/material models from ${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}" )
+      include( "${externalConstitutiveManifest}" )
+    else()
+      message( WARNING "GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR was set to ${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR}, but no GEOSExternalConstitutiveModels.cmake or CMakeLists.txt file was found there; no external material models were added." )
+    endif()
+  endif()
+endmacro()
+
+macro( geos_generate_external_constitutive_models_header )
+  list( REMOVE_DUPLICATES geos_external_constitutive_include_dirs )
+  list( REMOVE_DUPLICATES geos_external_constitutive_mpm_include_list )
+  list( REMOVE_DUPLICATES geos_external_constitutive_mpm_cohesive_zone_include_list )
+  list( REMOVE_DUPLICATES geos_external_constitutive_mpm_model_list )
+  list( REMOVE_DUPLICATES geos_external_constitutive_mpm_cohesive_zone_model_list )
+
+  set( GEOS_EXTERNAL_CONSTITUTIVE_HEADER_INCLUDES "" )
+  foreach( includeName IN LISTS geos_external_constitutive_mpm_include_list
+                                geos_external_constitutive_mpm_cohesive_zone_include_list )
+    string( APPEND GEOS_EXTERNAL_CONSTITUTIVE_HEADER_INCLUDES "#include \"${includeName}\"\n" )
+  endforeach()
+
+  set( GEOS_EXTERNAL_CONSTITUTIVE_MPM_MODEL_TYPES "" )
+  foreach( modelName IN LISTS geos_external_constitutive_mpm_model_list )
+    string( APPEND GEOS_EXTERNAL_CONSTITUTIVE_MPM_MODEL_TYPES "${modelName}, " )
+  endforeach()
+
+  set( GEOS_EXTERNAL_CONSTITUTIVE_MPM_COHESIVE_ZONE_MODEL_TYPES "" )
+  foreach( modelName IN LISTS geos_external_constitutive_mpm_cohesive_zone_model_list )
+    string( APPEND GEOS_EXTERNAL_CONSTITUTIVE_MPM_COHESIVE_ZONE_MODEL_TYPES "${modelName}, " )
+  endforeach()
+
+  file( MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/constitutive" )
+  configure_file( "${CMAKE_CURRENT_LIST_DIR}/ExternalConstitutiveModels.hpp.in"
+                  "${CMAKE_BINARY_DIR}/include/constitutive/ExternalConstitutiveModels.hpp"
+                  @ONLY )
+  list( APPEND constitutive_headers "${CMAKE_BINARY_DIR}/include/constitutive/ExternalConstitutiveModels.hpp" )
+endmacro()
+
 #
 # Specify all headers
 #
@@ -450,6 +582,9 @@ if (ENABLE_HPCREACT)
   list( APPEND dependencyList hpcReact )
 endif()
 
+geos_process_external_constitutive_models()
+geos_generate_external_constitutive_models_header()
+
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
 
@@ -462,6 +597,10 @@ blt_add_library( NAME       constitutive
                )
 
 target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( constitutive PUBLIC ${CMAKE_BINARY_DIR}/include )
+if( geos_external_constitutive_include_dirs )
+  target_include_directories( constitutive PUBLIC ${geos_external_constitutive_include_dirs} )
+endif()
 
 install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 

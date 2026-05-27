@@ -37,7 +37,7 @@ case "$CASE" in
 esac
 
 case "$CASE" in
-    elasticDisk) INPUT='pfw_input_elasticDisk.py'; PREFIX='elasticDisk'; INITIAL_VAR='Velocity'; FINAL_VAR='Velocity'; VIEW='xy' ;;
+    elasticDisk) INPUT='pfw_input_elasticDisk.py'; PREFIX='elasticDisk'; INITIAL_VAR='VelocityMagnitude'; FINAL_VAR='Density'; VIEW='xy' ;;
     *) echo "Unknown case '$CASE'. Valid cases: elasticDisk" >&2; exit 2 ;;
 esac
 
