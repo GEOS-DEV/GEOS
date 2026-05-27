@@ -112,7 +112,7 @@ TEST( wrapperHelpers, size )
   checkSizeMethod( string( "hello" ) );
   checkSizeMethod( std::set< int > { 1, 2, 3 } );
   checkSizeMethod( stdVector< int > { 1, 2, 3 } );
-  checkSizeMethod( std::array< int, 5 > {} );
+  checkSizeMethod( stdArray< int, 5 > {} );
   checkSizeMethod( array1d< int >( 5 ) );
   checkSizeMethod( array2d< int >( 5, 5 ) );
 }

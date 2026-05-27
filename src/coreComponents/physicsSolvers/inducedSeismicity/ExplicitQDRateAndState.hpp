@@ -114,7 +114,7 @@ protected:
 public:
 
     GEOS_HOST_DEVICE
-    PIDController( std::array< const real64, 3 > const & cparams,
+    PIDController( stdArray< const real64, 3 > const & cparams,
                    const real64 atol,
                    const real64 rtol,
                    const real64 safety ):
@@ -141,7 +141,7 @@ public:
     PIDController & operator=( PIDController && ) =  delete;
 
     /// Parameters for the PID error controller
-    const std::array< const real64, 3 > controlParameters; // Controller parameters
+    const stdArray< const real64, 3 > controlParameters; // Controller parameters
 
     real64 const absTol; // absolut tolerence
 
@@ -149,8 +149,8 @@ public:
 
     real64 const acceptSafety; // Acceptance safety
 
-    std::array< real64, 3 > errors; // Errors for current and two previous updates
-                                    // stored as [n+1, n, n-1]
+    stdArray< real64, 3 > errors; // Errors for current and two previous updates
+                                  // stored as [n+1, n, n-1]
 
     real64 computeUpdateFactor( integer const algHighOrder, integer const algLowOrder )
     {

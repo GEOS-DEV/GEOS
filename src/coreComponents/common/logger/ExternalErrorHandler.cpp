@@ -190,7 +190,7 @@ OutputStreamDeviation::~OutputStreamDeviation()
 void OutputStreamDeviation::flush( OutputStreamDeviation::LineHandlingFunctor const & lineFunctor,
                                    std::string_view detectionLocation )
 {
-  std::array< char, 8192 > readBuffer;
+  stdArray< char, 8192 > readBuffer;
   ssize_t bytesRead;
 
   // read all pending data from the original stream & add it in the text buffer to process

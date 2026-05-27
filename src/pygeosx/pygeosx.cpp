@@ -284,7 +284,7 @@ PyObject * finalize( PyObject * self, PyObject * args ) noexcept
 
 static bool addConstants( PyObject * module )
 {
-  std::array< std::pair< long, char const * >, 4 > const constants = { {
+  stdArray< std::pair< long, char const * >, 4 > const constants = { {
     { static_cast< long >( geos::State::COMPLETED ), "COMPLETED" },
     { static_cast< long >( geos::State::INITIALIZED ), "INITIALIZED" },
     { static_cast< long >( geos::State::UNINITIALIZED ), "UNINITIALIZED" },

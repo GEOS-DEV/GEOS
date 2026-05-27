@@ -337,9 +337,9 @@ void DomainPartition::outputPartitionInformation() const
     {
       Node = 0, Edge, Face, Elem, Count
     };
-    std::array< globalIndex, 4 > localCount = {};
-    std::array< globalIndex, 4 > ghostCount = {};
-    std::array< double, 4 > ratio = {};
+    stdArray< globalIndex, 4 > localCount = {};
+    stdArray< globalIndex, 4 > ghostCount = {};
+    stdArray< double, 4 > ratio = {};
   };
 
   auto fillStats = []( RankMeshStats & stat,
@@ -372,7 +372,7 @@ void DomainPartition::outputPartitionInformation() const
                       addCommaSeparators( stat.localCount[3] + stat.ghostCount[3] ) );
   };
 
-  auto addSummaryRow = []( TableData & tableData, std::array< double, 4 > stats, string_view heading )
+  auto addSummaryRow = []( TableData & tableData, stdArray< double, 4 > const & stats, string_view heading )
   {
     tableData.addRow( heading,
                       CellType::MergeNext, CellType::MergeNext, stats[0],
@@ -462,8 +462,8 @@ void DomainPartition::outputPartitionInformation() const
             addLocalGhostRow( tableData, minStats, "min" );
             addLocalGhostRow( tableData, maxStats, "max" );
 
-            std::array< double, 4 > localTotalMinRatio;
-            std::array< double, 4 > localTotalMaxRatio;
+            stdArray< double, 4 > localTotalMinRatio;
+            stdArray< double, 4 > localTotalMaxRatio;
 
             for( size_t statId = 0; statId < RankMeshStats::Count; ++statId )
             {

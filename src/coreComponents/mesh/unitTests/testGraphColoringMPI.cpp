@@ -59,7 +59,6 @@ void runColoringTest( GraphColoringBase & graphColoring, const stdVector< size_t
   }
 }
 
-
 TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 {
 #ifdef GEOS_USE_TRILINOS

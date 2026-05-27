@@ -281,7 +281,7 @@ protected:
     {
       // collect node coordinates for element k
       localIndex const numNodes = this->numNodesPerElement( k );
-      std::vector< std::array< real64, 3 > > nodes;
+      stdVector< stdArray< real64, 3 > > nodes;
       nodes.reserve( numNodes );
       for( localIndex a = 0; a < numNodes; ++a )
       {
@@ -306,7 +306,7 @@ protected:
       nodes.erase( std::unique( nodes.begin(), nodes.end(), almostEqual ), nodes.end() );
 
       // compute average (center) of unique nodes
-      std::array< real64, 3 > centre = { 0.0, 0.0, 0.0 };
+      stdArray< real64, 3 > centre = { 0.0, 0.0, 0.0 };
       for( auto const & p : nodes )
       {
         centre[0] += p[0];

@@ -55,7 +55,7 @@ struct FluidData< 2 >
   static std::unique_ptr< TestFluid< 2 > > createFluid()
   {
     auto fluid = TestFluid< 2 >::create( {Fluid::CH4, Fluid::C5H12} );
-    const std::array< real64 const, 2 > bics = { 0.5 };
+    const stdArray< real64 const, 2 > bics = { 0.5 };
     fluid->setBinaryCoefficients( bics );
     return fluid;
   }
@@ -68,7 +68,7 @@ struct FluidData< 4 >
   static std::unique_ptr< TestFluid< 4 > > createFluid()
   {
     auto fluid = TestFluid< 4 >::create( {Fluid::CH4, Fluid::CO2, Fluid::H2S, Fluid::H2O} );
-    const std::array< real64 const, 6 > bics = { 0.0, 0.0, 0.0, 0.4850, 0.1896, 0.1353 };
+    const stdArray< real64 const, 6 > bics = { 0.0, 0.0, 0.0, 0.4850, 0.1896, 0.1353 };
     fluid->setBinaryCoefficients( bics );
     return fluid;
   }
@@ -81,7 +81,7 @@ struct FluidData< 9 >
   static std::unique_ptr< TestFluid< 9 > > createFluid()
   {
     auto fluid = TestFluid< 9 >::create( {Fluid::H2O, Fluid::CO2, Fluid::N2, Fluid::CH4, Fluid::C2H6, Fluid::C3H8, Fluid::C4H10, Fluid::C5H12, Fluid::C8H18} );
-    const std::array< real64 const, 36 > bics = {
+    const stdArray< real64 const, 36 > bics = {
       0.01, 0, 0.003732, 0, 0.01, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0.01, 0, 0.028, 0.01, 0.01, 0, 0, 0.01, 0, 0.04532, 0.01, 0.01, 0, 0, 0
     };

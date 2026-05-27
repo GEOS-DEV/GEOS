@@ -115,7 +115,7 @@ public:
    *       DoF components in the monolithic system.
    */
   void setupBlock( localIndex const blockIndex,
-                   std::vector< DofManager::SubComponent > blockDofs,
+                   stdVector< DofManager::SubComponent > blockDofs,
                    PreconditionerBase< LAI > * const solver,
                    real64 const scaling = 1.0 );
 
@@ -181,25 +181,25 @@ private:
   LinearSolverParameters::Block m_params;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< stdVector< DofManager::SubComponent >, 2 > m_blockDofs{};
+  stdArray< stdVector< DofManager::SubComponent >, 2 > m_blockDofs{};
 
   /// Pointers to prolongation operators for each sub-block
-  std::array< Matrix const *, 2 > m_prolongators{};
+  stdArray< Matrix const *, 2 > m_prolongators{};
 
   /// Prolongation operators for each sub-block
-  std::array< Matrix, 2 > m_prolongatorsOwned{};
+  stdArray< Matrix, 2 > m_prolongatorsOwned{};
 
   /// Matrix blocks
   BlockOperator< Vector, Matrix > m_matBlocks;
 
   /// Individual block preconditioner pointers
-  std::array< PreconditionerBase< LAI > *, 2 > m_solvers{};
+  stdArray< PreconditionerBase< LAI > *, 2 > m_solvers{};
 
   /// Individual block preconditioner operators (when owned)
-  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solversOwned{};
+  stdArray< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solversOwned{};
 
   /// Scaling of each block
-  std::array< real64, 2 > m_scaling{};
+  stdArray< real64, 2 > m_scaling{};
 
   /// Internal vector of block residuals
   mutable BlockVector< Vector > m_rhs;

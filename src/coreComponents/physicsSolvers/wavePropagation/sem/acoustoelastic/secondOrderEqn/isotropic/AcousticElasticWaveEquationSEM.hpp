@@ -91,7 +91,7 @@ protected:
   std::tuple< SOLVERS *... > m_solvers;
 
   /// Names of the single-physics solvers
-  std::array< string, sizeof...( SOLVERS ) > m_names;
+  stdArray< string, sizeof...( SOLVERS ) > m_names;
 };
 
 

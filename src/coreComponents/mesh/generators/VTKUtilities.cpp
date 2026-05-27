@@ -1665,7 +1665,7 @@ void dispatchArray( vtkDataSetAttributes & data,
                  InputError );
 }
 
-std::array< std::pair< int, int >, 2 >
+stdArray< std::pair< int, int >, 2 >
 findGlobalIndexBounds( vtkDataSet & mesh,
                        MPI_Comm const & comm,
                        string const & indexArrayName )
@@ -1710,7 +1710,7 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   GEOS_ERROR_IF_NE_MSG( numProcsRemainder, 0, "Number of ranks must evenly divide the number of z-partitions" );
 
   // Compute conversion from cell z-index to partition z-index
-  std::array< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );
+  stdArray< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );
   double const cellPerPartZInv = static_cast< double >( numPartZ ) / ( idxLimits[1].second - idxLimits[1].first + 1 );
   auto const computePartIndexZ = [minZ = idxLimits[1].first, cellPerPartZInv]( auto const zidx )
   {
@@ -2468,7 +2468,7 @@ splitCellsByType( vtkDataSet & mesh )
   vtkIdType const numCells = mesh.GetNumberOfCells();
 
   // Count the number of each cell type
-  std::array< size_t, numElementTypes() > cellTypeCounts{};
+  stdArray< size_t, numElementTypes() > cellTypeCounts{};
   for( vtkIdType c = 0; c < numCells; c++ )
   {
     ElementType const elemType = convertVtkToGeosxElementType( mesh.GetCell( c ) );
@@ -2476,7 +2476,7 @@ splitCellsByType( vtkDataSet & mesh )
   }
 
   // Allocate space to hold cell id lists by type
-  std::array< stdVector< vtkIdType >, numElementTypes() > cellListsByType;
+  stdArray< stdVector< vtkIdType >, numElementTypes() > cellListsByType;
   for( integer t = 0; t < numElementTypes(); ++t )
   {
     cellListsByType[t].reserve( cellTypeCounts[t] );
@@ -2560,11 +2560,11 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
       {
         using ArrayType = TYPEOFPTR( attributeArray );
         vtkDataArrayAccessor< ArrayType > attribute( attributeArray );
-        std::unordered_map< int, size_t > cellCounts;
+        stdUnorderedMap< int, size_t > cellCounts;
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
-          ++cellCounts[region];
+          ++cellCounts.get_inserted( region );
         }
         for( auto const & count : cellCounts )
         {
@@ -2757,10 +2757,10 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 6 );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the triangles
@@ -2852,10 +2852,10 @@ stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const ce
   stdVector< localIndex > nodeOrder( 5 );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( iPoint = 0; iPoint < 5; ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify the base
@@ -2926,10 +2926,10 @@ stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 2*NUM_SIDES );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < cell->GetNumberOfPoints(); ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.get_inserted( cell->GetPointId( iPoint )) = iPoint;
   }
 
   // Assuming the input parameters are correct, identify one of the bases
@@ -3575,7 +3575,7 @@ void writeCells( integer const logLevel,
     {
       continue;
     }
-    std::unordered_map< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
+    stdUnorderedMap< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
     for( auto const & regionCells : regionIdToCellIds )
     {
       int const regionId = regionCells.first;
