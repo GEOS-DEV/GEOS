@@ -117,7 +117,6 @@ mWallTime = pfw["mWallTime"]
 mCores = pfw["mCores"]
 # We used to set this manually, but coresPerNode changes with each machine.
 # This will ensure consistency since we now have that value for each platform.
-#mNodes = pfw["mNodes"]
 mNodes= int(np.ceil(float(mCores)/float(coresPerNode))) 
 print('machine = ',machine,', mNodes = ',mNodes,', mCores = ',mCores,', coresPerNode = ',coresPerNode)
 

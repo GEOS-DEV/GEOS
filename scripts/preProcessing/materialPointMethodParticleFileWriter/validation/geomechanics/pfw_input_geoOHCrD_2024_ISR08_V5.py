@@ -71,7 +71,6 @@ pfw["mBatch"]=True
 pfw["mWallTime"]="00:20:00"
 #in the 2023 code, mWall time is 00:10:00
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/36.)) 
 pfw["mSubmitJobs"]=False
 
 # GEOSX MPM SOLVER PARAMETERS -------------------------------------------------------------------

@@ -122,7 +122,6 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mNodes"]=int(np.ceil(float(pfw["mCores"])/112.))
 pfw["mSubmitJobs"]=False
 # pfw["autoRestart"]=True
 
@@ -209,5 +208,4 @@ else:
     pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
 
 pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-pfw["mNodes"] = max(1, (pfw["mCores"] + 111) // 112)
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---

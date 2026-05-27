@@ -76,7 +76,6 @@ mBank = userDefs.defaultBank
 
 mWallTime = "00:05:00"
 mCores=xpar*ypar*zpar
-mNodes=int(np.ceil(float(mCores)/36.)) 
 mSubmitJobs=False
 
 # GEOS MPM input parameters ---------------------------------------------------------------
@@ -165,7 +164,6 @@ pfw = {
     "mBank": mBank,
     "mWallTime": mWallTime,
     "mCores": mCores,
-    "mNodes": mNodes,
     "mSubmitJobs": mSubmitJobs,
     "endTime": float(endTime),
     "plotInterval": float(plotInterval),
@@ -249,5 +247,4 @@ else:
     pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
 
 pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-pfw["mNodes"] = max(1, (pfw["mCores"] + 111) // 112)
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES END ---

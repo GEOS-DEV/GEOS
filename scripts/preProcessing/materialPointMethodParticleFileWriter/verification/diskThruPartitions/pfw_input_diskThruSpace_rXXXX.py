@@ -48,7 +48,6 @@ minutes -= 60*hours
 mWallTime=str(hours)+":"+("00"+str(minutes))[-2:]+":00"
 
 mCores=xpar*ypar*zpar
-mNodes=int(np.ceil(float(mCores)/36.)) 
 mSubmitJobs=True
 
 # GEOSX MPM input parameters ---------------------------------------------------------------

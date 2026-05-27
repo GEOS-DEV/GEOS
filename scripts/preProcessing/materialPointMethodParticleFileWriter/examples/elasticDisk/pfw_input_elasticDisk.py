@@ -97,7 +97,6 @@ pfw["objects"] = [disk]
 
 pfw["mWallTime"] = "12:00:00"
 pfw["mCores"] = pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mNodes"] = int(np.ceil(float(pfw["mCores"])/36.))
 pfw["mSubmitJobs"] = False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------

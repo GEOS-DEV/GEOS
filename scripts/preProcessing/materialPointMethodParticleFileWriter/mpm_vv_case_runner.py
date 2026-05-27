@@ -206,7 +206,6 @@ if _vv_fast_plane:
 else:
     pfw["nK"] = _vv_fast_cap_cells("nK", "zpar", 8)
 pfw["mCores"] = max(1, _vv_fast_int(pfw.get("xpar", 1), 1) * _vv_fast_int(pfw.get("ypar", 1), 1) * _vv_fast_int(pfw.get("zpar", 1), 1))
-pfw["mNodes"] = max(1, (pfw["mCores"] + 111) // 112)
 """
     text = path.read_text()
     if "Runtime overrides appended by mpm_vv_case_runner.py" not in text:
