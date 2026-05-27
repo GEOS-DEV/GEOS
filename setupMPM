@@ -14,6 +14,14 @@
 # The external folder should contain GEOSExternalConstitutiveModels.cmake or
 # CMakeLists.txt and call geos_register_external_constitutive_models().  The
 # option is forwarded to CMake as GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR.
+#
+# Fast rebuild after source/header edits:
+#   ./setupMPM --dane --rebuild
+#   ./setupMPM --tuolumne --rebuild
+# This skips user-file generation and CMake configure, then runs cmake --build
+# on the existing build directory.  Any external material-model folder recorded
+# in that build directory's CMakeCache.txt remains active.  Re-run configure if
+# you need to change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR itself.
 
 set -euo pipefail
 
@@ -79,6 +87,12 @@ Options:
   --flux-time TIME          Tuolumne Flux walltime written to runClean_$USER.sh. Default: 30m
   --jobs N                  Build parallelism. Default: GEOS_BUILD_JOBS or 32
   --build-target TARGET     CMake build target. Default: geosx
+  --rebuild, --build-only   Rebuild an existing CMake build directory without
+                            regenerating user files or running config-build.py.
+                            This preserves any external material-model hooks
+                            already stored in that build directory's CMake cache.
+                            Re-run normal setup if the external model folder path
+                            itself changes.
   --log-file FILE           Write full setup/configure/build output to FILE.
   --log-dir DIR             Directory for the default log file.
                             Default: BUILD_ROOT/setupMPM-logs
@@ -293,6 +307,20 @@ detect_cmake() {
     return 0
   fi
   fail "Could not find cmake. Load the Tuolumne build environment or update the host-config."
+}
+
+cmake_cache_value() {
+  local key="$1"
+  local cache="$BUILD_DIR/CMakeCache.txt"
+  if [ ! -f "$cache" ]; then
+    return 1
+  fi
+  awk -F= -v key="$key" '
+    index($1, key ":") == 1 {
+      print substr($0, index($0, "=") + 1)
+      exit
+    }
+  ' "$cache"
 }
 
 parse_mshare_bank() {
@@ -1087,10 +1115,45 @@ configure_and_build() {
     return 0
   fi
 
+  prepare_build_environment
+
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    if [ "$DRY_RUN" -eq 0 ]; then
+      [ -d "$BUILD_DIR" ] || fail "Cannot rebuild because the build directory does not exist: $BUILD_DIR"
+      [ -f "$BUILD_DIR/CMakeCache.txt" ] || fail "Cannot rebuild because no CMakeCache.txt was found in: $BUILD_DIR. Run setupMPM normally first."
+    else
+      log "dry-run rebuild: not checking for an existing CMake cache"
+    fi
+
+    local cached_external
+    cached_external=$(cmake_cache_value GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR || true)
+    if [ -n "$cached_external" ]; then
+      log "cached external material-model dir: $cached_external"
+    elif [ "$DRY_RUN" -eq 0 ]; then
+      log "no cached external material-model dir was found in $BUILD_DIR/CMakeCache.txt"
+    fi
+
+    if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+      log "rebuild-only mode does not change GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR; rerun setupMPM without --rebuild to reconfigure a different external folder"
+    fi
+
+    local cmake_cmd
+    cmake_cmd=$(detect_cmake)
+    log "rebuilding target $BUILD_TARGET in existing build dir $BUILD_DIR"
+    run_cmd "$cmake_cmd" --build "$BUILD_DIR" --target "$BUILD_TARGET" -j "$JOBS"
+
+    if [ "$DRY_RUN" -eq 0 ]; then
+      if [ -x "$GEOS_EXECUTABLE" ]; then
+        log "GEOS executable: $GEOS_EXECUTABLE"
+      else
+        log "expected GEOS executable was not found yet: $GEOS_EXECUTABLE"
+      fi
+    fi
+    return 0
+  fi
+
   [ -f "$CONFIG_SCRIPT" ] || fail "Missing config script: $CONFIG_SCRIPT"
   [ -f "$HOST_CONFIG" ] || fail "Missing host config: $HOST_CONFIG. Use --host-config or apply the machine host-config patch."
-
-  prepare_build_environment
 
   run_cmd mkdir -p "$BUILD_ROOT" "$INSTALL_ROOT"
   log "configuring GEOS with $HOST_CONFIG"
@@ -1170,6 +1233,7 @@ OVERWRITE_USERDEFS=0
 OVERWRITE_RUNCLEAN=0
 SKIP_BUILD=0
 CONFIGURE_ONLY=0
+REBUILD_ONLY=0
 DRY_RUN=0
 LOG_FILE=""
 LOG_DIR=""
@@ -1340,6 +1404,10 @@ while [ "$#" -gt 0 ]; do
       BUILD_TARGET="$2"
       shift 2
       ;;
+    --rebuild|--build-only|--rebuild-only|--build-existing)
+      REBUILD_ONLY=1
+      shift
+      ;;
     --log-file)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       LOG_FILE="$2"
@@ -1402,6 +1470,13 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+if [ "$REBUILD_ONLY" -eq 1 ] && [ "$CONFIGURE_ONLY" -eq 1 ]; then
+  fail "--rebuild cannot be combined with --configure-only"
+fi
+if [ "$REBUILD_ONLY" -eq 1 ] && [ "$SKIP_BUILD" -eq 1 ]; then
+  fail "--rebuild cannot be combined with --skip-build/--no-build"
+fi
+
 SCRIPT_DIR=$(dirname -- "${BASH_SOURCE[0]}")
 REPO_ROOT_PHYSICAL=$(cd -- "$SCRIPT_DIR" && pwd -P)
 REPO_ROOT_LOGICAL=$(cd -- "$SCRIPT_DIR" && pwd -L)
@@ -1446,7 +1521,7 @@ if [ -n "$TPL_DIR" ]; then
   TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
 fi
 
-if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
+if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ] && [ "$REBUILD_ONLY" -eq 0 ]; then
   EXTERNAL_MATERIAL_MODELS_DIR=$(trim_trailing_slashes "$(abs_path "$EXTERNAL_MATERIAL_MODELS_DIR")")
   externalManifestPrimary="$EXTERNAL_MATERIAL_MODELS_DIR/GEOSExternalConstitutiveModels.cmake"
   externalManifestFallback="$EXTERNAL_MATERIAL_MODELS_DIR/CMakeLists.txt"
@@ -1459,11 +1534,15 @@ if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
   fi
 fi
 
-DEFAULT_BANK=$(detect_bank)
-if [ -z "$DEFAULT_BANK" ]; then
-  log "could not infer an LC bank from mshare; userDefs defaultBank will be blank"
+if [ "$REBUILD_ONLY" -eq 1 ]; then
+  DEFAULT_BANK=""
 else
-  log "using default bank/account: $DEFAULT_BANK"
+  DEFAULT_BANK=$(detect_bank)
+  if [ -z "$DEFAULT_BANK" ]; then
+    log "could not infer an LC bank from mshare; userDefs defaultBank will be blank"
+  else
+    log "using default bank/account: $DEFAULT_BANK"
+  fi
 fi
 
 BUILD_TYPE_LOWER=$(printf '%s' "$BUILD_TYPE" | tr '[:upper:]' '[:lower:]')
@@ -1605,10 +1684,12 @@ RUNCLEAN_PATH="$PFW_DIR/runClean_$LC_USER.sh"
 
 start_logging
 
-if [ -z "$DEFAULT_BANK" ]; then
-  log "default bank/account: <blank>"
-else
-  log "default bank/account: $DEFAULT_BANK"
+if [ "$REBUILD_ONLY" -eq 0 ]; then
+  if [ -z "$DEFAULT_BANK" ]; then
+    log "default bank/account: <blank>"
+  else
+    log "default bank/account: $DEFAULT_BANK"
+  fi
 fi
 log "repository root: $REPO_ROOT_USER"
 log "particle file writer: $PFW_REL"
@@ -1621,8 +1702,15 @@ log "active default run dir: $DEFAULT_RUN_DIR_USER"
 log "active build root: $(shell_to_display_path "$BUILD_ROOT")"
 log "active build dir: $BUILD_DIR_USER"
 log "active geosx path: $ACTIVE_GEOS_USER_PATH"
+if [ "$REBUILD_ONLY" -eq 1 ]; then
+  log "rebuild-only mode: skipping generated PFW files and CMake configure"
+fi
 if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
-  log "external material-model dir: $EXTERNAL_MATERIAL_MODELS_DIR"
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    log "external material-model dir option/env is ignored in rebuild-only mode: $EXTERNAL_MATERIAL_MODELS_DIR"
+  else
+    log "external material-model dir: $EXTERNAL_MATERIAL_MODELS_DIR"
+  fi
 fi
 log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"
@@ -1635,12 +1723,18 @@ if [ "$NO_LOG" -eq 1 ]; then
   log "setup/build logging disabled by --no-log"
 fi
 
-create_pfw_link
-run_cmd mkdir -p "$TEST_RUN_DIR" "$DEFAULT_RUN_DIR" "$BUILD_ROOT" "$INSTALL_ROOT"
-# Only create directories needed for the machine being configured.
-# The inactive machine filesystem may not be mounted or writable.
-write_user_defs
-write_runclean
+if [ "$REBUILD_ONLY" -eq 0 ]; then
+  create_pfw_link
+  run_cmd mkdir -p "$TEST_RUN_DIR" "$DEFAULT_RUN_DIR" "$BUILD_ROOT" "$INSTALL_ROOT"
+  # Only create directories needed for the machine being configured.
+  # The inactive machine filesystem may not be mounted or writable.
+  write_user_defs
+  write_runclean
+fi
 configure_and_build
 
-log "setup complete"
+if [ "$REBUILD_ONLY" -eq 1 ]; then
+  log "rebuild complete"
+else
+  log "setup complete"
+fi
