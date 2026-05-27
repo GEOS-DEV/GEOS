@@ -12,14 +12,15 @@
       defaultPoissonRatio="0.15"
       defaultYoungModulus="14950000000" />
 
-    <CO2BrinePhillipsFluid
-      name="fluid"
-      logLevel="1"
-      phaseNames="{ gas, water }"
-      componentNames="{ co2, water }"
-      componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      compressibility="2.09028227021e-10"
+      defaultDensity="1325"
+      defaultViscosity="0.001"
+      referenceDensity="1325"
+      referencePressure="0e6"
+      referenceViscosity="0.001"
+      viscosibility="0.0" />
 
     <BiotPorosity
       name="rockPorosity"
@@ -28,7 +29,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-12, 1.0e-12, 1.0e-12 }" />
+      permeabilityComponents="{ 1.0e-18, 1.0e-18, 1.0e-18 }" />
       <!-- Material inside the fault -->
     <CompressibleSolidParallelPlatesPermeability
       name="faultFilling"
@@ -56,12 +57,6 @@
 
     <NullModel
       name="nullSolid"/>
-
-    <TableRelativePermeability
-      name="relperm"
-      phaseNames="{ gas, water }"
-      wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
-                                            gasRelativePermeabilityTable }"/>
 
   </Constitutive>
 
@@ -103,40 +98,37 @@
       name="tractionTop"
       objectPath="faceManager"
       tractionType="normal"
-      scale="-1e7"      
+      scale="-4e7"      
       setNames="{ zposFace }"/>
 
-    <HydrostaticEquilibrium
-      name="equil"
-      objectPath="ElementRegions"      
-      datumElevation="-2000"
-      datumPressure="2e7"
-      initialPhaseName="water"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable,
-                                                initWaterCompFracTable }"
-      temperatureVsElevationTableName="initTempTable"/>
-
-    <SourceFlux
-      name="sourceTerm"
+    <FieldSpecification
+      name="init_pressure"
+      initialCondition="1"
+      setNames="{ all }"
       objectPath="ElementRegions"
-      component="0"
-      scale="-1e5"
-      setNames="{ source }"/>
-
+      fieldName="pressure"
+      scale="4e7"/>
   </FieldSpecifications>
 
   <ElementRegions>
     <CellElementRegion
       name="Region"
       cellBlocks="{ 2_hexahedra, 1_hexahedra, 0_hexahedra }"
-      materialList="{ fluid, relperm, porousRock }"/>  
+      materialList="{ water, porousRock }"/>  
 
     <SurfaceElementRegion
       name="Fault"
       faceBlock="fracture"
-      materialList="{ fluid, relperm, faultFilling, fractureContact, hApertureModel }"
+      materialList="{ water, faultFilling, fractureContact, hApertureModel }"
       defaultAperture="1e-3"/>
+
+    <WellElementRegion
+      name="wellRegion1"
+      materialList="{ water }"/>
+
+    <WellElementRegion
+      name="wellRegion2"
+      materialList="{ water }"/>
   </ElementRegions>
 
   <NumericalMethods>
@@ -148,60 +140,95 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFA"/>
+        name="singlePhaseTPFA"/>
       <TwoPointFluxApproximation
-        name="TPFA_stab"/>  
+        name="singlePhaseTPFA_stab"/>  
     </FiniteVolume>
   </NumericalMethods>
 
-  <Tasks>
-      <MultiphasePoromechanicsConformingFracturesInitialization 
-        logLevel="1" 
-        name="poroelasticityPreEquilibrationStep"  
-        poromechanicsSolverName="poroFractureSolver"/>
-  </Tasks>
-
   <Outputs>
     <VTK
-      name="vtkOutput"
-      fieldNames="{ initialPressure}" />
+      name="vtkOutput" />
 
     <Restart
       name="restartOutput"/>
   </Outputs>
 
   <Functions>
-
-    <TableFunction
-      name="initCO2CompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initCO2CompFrac.txt"/>
-
-    <TableFunction
-      name="initWaterCompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initWaterCompFrac.txt"/>       
-    
-    <TableFunction
-      name="initTempTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initTemp.txt"/>        
-
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-3, 1.0e-3 }"
     />
-
-    <TableFunction
-      name="waterRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_water.txt }"
-      voxelFile="relPerm_water.txt"/>
-
-    <TableFunction
-      name="gasRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_gas.txt }"
-      voxelFile="relPerm_gas.txt"/>       
-
   </Functions>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="../../MESH/verticalFault_ExternalMesh.vtm">
+      <InternalWell
+        name="well_producer1"
+        logLevel="1"
+        wellRegionName="wellRegion1"
+        wellControlsName="wellControls1"
+        polylineNodeCoords="{ { 5400, 5400, 0 },
+                              { 5400, 5400, -2500 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="1">
+        <Perforation
+          name="producer1_perf1"
+          distanceFromHead="2500"/>
+      </InternalWell>
+      <InternalWell
+        name="well_injector1"
+        logLevel="1"
+        wellRegionName="wellRegion2"
+        wellControlsName="wellControls2"
+        polylineNodeCoords="{ { -5400, -5400, 0 },
+                              { -5400, -5400, -2500 } }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.1"
+        numElementsPerSegment="1">
+        <Perforation
+          name="injector1_perf1"
+          distanceFromHead="2500"/>
+      </InternalWell>
+    </VTKMesh>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="xposFace"
+      xMin="{ 5999.99,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="xnegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{-5999.99,   6000.01,      0.01 }"/>
+
+    <Box
+      name="yposFace"
+      xMin="{-6000.01,   5999.99,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="ynegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,  -5999.99,      0.01 }"/>
+
+    <Box
+      name="zposFace"
+      xMin="{-6000.01,  -6000.01,     -0.01 }"
+      xMax="{ 6000.01,   6000.01,      0.01 }"/>
+
+    <Box
+      name="znegFace"
+      xMin="{-6000.01,  -6000.01,  -4000.01 }"
+      xMax="{ 6000.01,   6000.01,  -3999.99 }"/>
+  </Geometry>
+
 </Problem>

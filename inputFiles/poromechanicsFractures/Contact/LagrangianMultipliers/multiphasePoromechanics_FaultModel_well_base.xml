@@ -18,8 +18,8 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt" />
+      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas.txt, ../../MULTIPHASE_TABLES/pvtliquid.txt }"
+      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt" />
 
     <BiotPorosity
       name="rockPorosity"
@@ -203,18 +203,18 @@
 
     <TableFunction
       name="initCO2CompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initCO2CompFrac.txt" />
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initCO2CompFrac.txt" />
 
     <TableFunction
       name="initWaterCompFracTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initWaterCompFrac.txt" />       
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initWaterCompFrac.txt" />       
     
     <TableFunction
       name="initTempTable"
-      coordinateFiles="{ elevation.txt }"
-      voxelFile="initTemp.txt" />        
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/elevation.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/initTemp.txt" />        
 
     <TableFunction
       name="apertureTable"
@@ -223,13 +223,13 @@
 
     <TableFunction
       name="waterRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_water.txt }"
-      voxelFile="relPerm_water.txt" />
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/phaseVolFraction_water.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/relPerm_water.txt" />
 
     <TableFunction
       name="gasRelativePermeabilityTable"
-      coordinateFiles="{ phaseVolFraction_gas.txt }"
-      voxelFile="relPerm_gas.txt" />       
+      coordinateFiles="{ ../../MULTIPHASE_TABLES/phaseVolFraction_gas.txt }"
+      voxelFile="../../MULTIPHASE_TABLES/relPerm_gas.txt" />       
 
   </Functions>
 </Problem>

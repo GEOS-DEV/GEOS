@@ -121,8 +121,8 @@
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ multiphase_fluid/pvtgas.txt, multiphase_fluid/pvtwat.txt }"
-      flashModelParaFile="multiphase_fluid/co2flash.txt" />
+      phasePVTParaFiles="{ ../../MULTIPHASE_TABLES/pvtgas_curvedFrac.txt, ../../MULTIPHASE_TABLES/pvtwat.txt }"
+      flashModelParaFile="../../MULTIPHASE_TABLES/co2flash.txt" />
 
     <BiotPorosity
       name="rockPorosity"
