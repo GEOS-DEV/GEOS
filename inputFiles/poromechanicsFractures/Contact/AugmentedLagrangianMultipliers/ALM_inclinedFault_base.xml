@@ -1,0 +1,163 @@
+<?xml version="1.0" ?>
+<?xml-model href="schema_12-24.xsd" type="application/xml" schematypens="http://www.w3.org/2001/XMLSchema"?>
+
+
+<Problem>
+
+  <Geometry>
+    <Box
+      name="xneg"
+      xMin="{ -2001, -1, -3501 }"
+      xMax="{ -1999, 2001, -2499 }"/>
+    <Box
+      name="xpos"
+      xMin="{ 1999, -1, -3501 }"
+      xMax="{ 2001, 2001, -2499 }"/>
+    <Box
+      name="yneg"
+      xMin="{ -2001, -1, -3501 }"
+      xMax="{ 2001, 1, -2499 }"/>
+    <Box
+      name="ypos"
+      xMin="{ -2001, 1999, -3501 }"
+      xMax="{ 2001, 2001, -2499 }"/>
+    <Box
+      name="zpos"
+      xMin="{ -2001, -1, -2501 }"
+      xMax="{ 2001, 2001, -2499 }"/>
+    <Box
+      name="zneg"
+      xMin="{ -2001, -1, -3501 }"
+      xMax="{ 2001, 2001, -3499 }"/>
+  </Geometry>
+
+  <!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        />
+      <TwoPointFluxApproximation
+          name="singlePhaseTPFA_stab"/>  
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
+
+  <!-- SPHINX_BC -->
+  <FieldSpecifications>
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fault"
+      fieldName="pressure"
+      scale="35.0e6"/>
+
+    <FieldSpecification 
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      scale="35.0e6"
+    />
+    	     
+    <FieldSpecification 
+      name="stressXX"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="0"
+      scale="-28.499545e6"
+    />
+
+    <FieldSpecification 
+      name="stressYY"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="1"
+      scale="-28.499545e6"
+    />
+
+    <FieldSpecification 
+      name="stressZZ"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Domain"
+      fieldName="rock_stress"
+      component="2"
+      scale="-38.499545e6"
+    />
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xpos, xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ypos, yneg }"/>
+
+    <FieldSpecification
+      name="zconstraintFront"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <Traction
+      name="NormalTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-70.0e6"      
+      setNames="{ zpos }"/> 
+  </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <!-- SPHINX_OUTPUT -->  
+  <Outputs>
+    <VTK 
+      name="vtkOutput"
+      plotFileRoot="faultModel"/>
+
+    <TimeHistory
+      name="tractionOutput"
+      sources="{/Tasks/tractionCollection}"
+      filename="traction_history" />
+
+    <TimeHistory
+      name="displacementJumpOutput"
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_history" />
+
+    <Restart
+      name="restartOutput"
+    />  
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
+</Problem>

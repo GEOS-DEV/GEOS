@@ -11,7 +11,7 @@
       name="mesh1"
       useGlobalIds="1"
       faceBlocks="{ fracture }"
-      file="curvedFrac_coarse.vtm"/>
+      file="../../MESH/curvedFrac_coarse.vtm"/>
   </Mesh>
 
   <Geometry>
