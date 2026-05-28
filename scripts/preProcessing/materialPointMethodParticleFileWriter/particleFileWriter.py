@@ -497,60 +497,234 @@ userDefs = importlib.import_module(userDefsFile)
 def _expand_user_path(value):
   return os.path.abspath(os.path.expandvars(os.path.expanduser(str(value))))
 
+
+def _resolve_input_file_arg(inputFileArg):
+  """Return the concrete PFW input file path for a user-supplied argument."""
+  rawArg = str(inputFileArg).strip()
+  if not rawArg:
+    raise ValueError("PFW input file argument is empty")
+
+  rawPath = pathlib.Path(os.path.expandvars(os.path.expanduser(rawArg)))
+  candidates = []
+
+  if rawPath.suffix == ".py":
+    candidates.append(rawPath)
+  else:
+    candidates.append(rawPath.with_suffix(".py"))
+    if not rawPath.name.startswith("pfw_input_"):
+      candidates.append(rawPath.with_name("pfw_input_" + rawPath.name).with_suffix(".py"))
+
+  tried = []
+  for candidate in candidates:
+    candidatePath = candidate if candidate.is_absolute() else pathlib.Path.cwd() / candidate
+    candidatePath = candidatePath.resolve()
+    tried.append(str(candidatePath))
+    if candidatePath.is_file():
+      return candidatePath
+
+  raise FileNotFoundError(
+    "Could not find PFW input file for argument '" + rawArg + "'. Tried:\n  " +
+    "\n  ".join(tried))
+
+
+def _read_input_source_dir(defaultInputDir):
+  """Return the directory used as the base for input-relative dependencies.
+
+  runClean scripts can set PFW_INPUT_SOURCE_DIR or write .pfw_input_source_dir
+  when they stage an input file from an external case directory.  For direct
+  particleFileWriter.py runs, fall back to the directory containing the input
+  file that was passed on the command line.
+  """
+  envValue = os.environ.get("PFW_INPUT_SOURCE_DIR", "").strip()
+  if envValue:
+    return pathlib.Path(_expand_user_path(envValue))
+
+  marker = pathlib.Path(".pfw_input_source_dir")
+  if marker.is_file():
+    markerValue = marker.read_text().strip()
+    if markerValue:
+      return pathlib.Path(_expand_user_path(markerValue))
+
+  return pathlib.Path(defaultInputDir).resolve()
+
+
+def _strip_optional_quotes(value):
+  text = str(value).strip()
+  if len(text) >= 2 and text[0] == text[-1] and text[0] in ("'", '"'):
+    return text[1:-1]
+  return text
+
+
+def _parse_pfw_dependency_line(line):
+  """Parse a #[pfw_dependency] line.
+
+  Supported forms are:
+    #[pfw_dependency] file.dat
+    #[pfw_dependency] input:tables/file.dat
+    #[pfw_dependency] pfw:pfw_materials.py
+    #[pfw_dependency] /full/path/to/file.dat
+    #[pfw_dependency] input:tables/file.dat => tables/file.dat
+  """
+  match = re.match(r"^\s*#\s*\[pfw_dependency\]\s*(.*?)\s*$", line)
+  if match is None:
+    return None
+
+  spec = match.group(1).strip()
+  if not spec:
+    return None
+
+  if "=>" in spec:
+    sourceSpec, destSpec = spec.split("=>", 1)
+    return _strip_optional_quotes(sourceSpec), _strip_optional_quotes(destSpec)
+
+  return _strip_optional_quotes(spec), None
+
+
+def _unique_paths(paths):
+  unique = []
+  seen = set()
+  for path in paths:
+    key = str(path)
+    if key not in seen:
+      unique.append(path)
+      seen.add(key)
+  return unique
+
+
+def _resolve_dependency_source(sourceSpec, inputSourceDir, pfwPath):
+  """Resolve a dependency path using input-relative paths before pfwPath.
+
+  Relative paths now resolve relative to the original input-file directory first.
+  The old behavior is retained as a fallback by also checking pfwPath.  Users can
+  force one base directory with input:<path> or pfw:<path>.  True absolute paths
+  are also accepted.
+  """
+  expanded = os.path.expandvars(os.path.expanduser(str(sourceSpec).strip()))
+  inputBase = pathlib.Path(inputSourceDir)
+  pfwBase = pathlib.Path(pfwPath)
+
+  candidates = []
+  if expanded.startswith("input:"):
+    relativePath = expanded[len("input:"):].lstrip("/")
+    candidates.append(inputBase / relativePath)
+  elif expanded.startswith("pfw:"):
+    relativePath = expanded[len("pfw:"):].lstrip("/")
+    candidates.append(pfwBase / relativePath)
+  elif os.path.isabs(expanded):
+    candidates.append(pathlib.Path(expanded))
+    # Backward compatibility for legacy tags such as #[pfw_dependency] /foo.py.
+    # If /foo.py is not a real file, fall back to pfwPath/foo.py.
+    candidates.append(pfwBase / expanded.lstrip("/"))
+  else:
+    candidates.append(inputBase / expanded)
+    candidates.append(pfwBase / expanded)
+
+  candidates = _unique_paths([pathlib.Path(_expand_user_path(path)) for path in candidates])
+  for candidate in candidates:
+    if candidate.is_file():
+      return candidate.resolve()
+
+  raise FileNotFoundError(
+    "Could not resolve #[pfw_dependency] entry '" + str(sourceSpec) + "'. Tried:\n  " +
+    "\n  ".join(str(path) for path in candidates))
+
+
+def _safe_dependency_destination(sourceSpec, destSpec):
+  """Return a safe run-directory-relative copy destination."""
+  if destSpec is not None:
+    destination = pathlib.Path(str(destSpec).strip())
+    if str(destination) == "" or destination.is_absolute() or ".." in destination.parts:
+      raise ValueError(
+        "Invalid #[pfw_dependency] destination '" + str(destSpec) +
+        "'. Destination must be relative to the run directory and must not contain '..'.")
+    return destination
+
+  basenameSpec = str(sourceSpec).strip()
+  if basenameSpec.startswith("input:"):
+    basenameSpec = basenameSpec[len("input:"):]
+  elif basenameSpec.startswith("pfw:"):
+    basenameSpec = basenameSpec[len("pfw:"):]
+
+  basename = os.path.basename(basenameSpec.rstrip("/"))
+  if basename == "":
+    raise ValueError("Invalid #[pfw_dependency] entry with empty destination: " + str(sourceSpec))
+  return pathlib.Path(basename)
+
+
+def _stage_dependency_file(sourcePath, destinationPath):
+  destinationPath.parent.mkdir(parents=True, exist_ok=True)
+  temporaryPath = destinationPath.with_name(destinationPath.name + ".temp")
+  shutil.copyfile(str(sourcePath), str(temporaryPath))
+  os.rename(str(temporaryPath), str(destinationPath))
+
+  # Defend against stale metadata on Lustre filesystems, which has caused
+  # intermittent import failures immediately after a dependency was copied.
+  deadline = time.time() + 5.0
+  while time.time() < deadline:
+    if destinationPath.exists() and destinationPath.stat().st_size > 0:
+      break
+    time.sleep(0.05)
+
+
 geosPath = _expand_user_path(userDefs.geosPath)
-pfwPath = _expand_user_path(userDefs.pfwPath) # Copy all dependencies from the input file, which should be defined relative to pfwPath
+pfwPath = _expand_user_path(userDefs.pfwPath)
 
 
-# inputFile name (strip the extension just in case it was called that way)
-inputFile = args.input_file.replace('.py',"")
+# inputFile is the importable module name. inputFilePath is the concrete file to scan.
+inputFilePath = _resolve_input_file_arg(args.input_file)
+inputFile = inputFilePath.stem
+
+# Make both the run directory and the input-file directory importable.  The run
+# directory is kept first so staged dependencies override files from the source
+# input directory.
+currentDirectory = str(pathlib.Path.cwd().resolve())
+inputFileDirectory = str(inputFilePath.parent.resolve())
+if currentDirectory not in sys.path:
+  sys.path.insert(0, currentDirectory)
+if inputFileDirectory != currentDirectory and inputFileDirectory not in sys.path:
+  sys.path.insert(1, inputFileDirectory)
 
 
 # ===========================================
 # COPY DEPENDENCIES
 # ===========================================
-# Before importing the input file, we will first check to see if there are 
-# any dependencies that need to be copied to the run directory, other than the
-# standard pfw files.  These will need to be listed in the input file with 
-# the [pfw_dependency] tag.
-dependencyPaths = []
-with open(inputFile+".py","r") as fileText:
-    for line in fileText: 
-        strippedLine = line.replace(" ", "").replace("\n","")
-        if strippedLine.startswith("#[pfw_dependency]"):
-            dependencyName = strippedLine[17:].lstrip("/")
-            filePath = _expand_user_path(os.path.join(pfwPath, dependencyName))
-            dependencyPaths.append(filePath)
-print("Dependency file paths to be copied: ",dependencyPaths)
-dest = './' # could be './pfw_dependencies' if we wanted to keep them together.
+# Before importing the input file, check for extra files listed with
+# #[pfw_dependency].  Relative dependencies are resolved relative to the original
+# input-file directory first and userDefs.pfwPath second.  A dependency can force
+# a base directory with input:<path> or pfw:<path>, and absolute paths are also
+# accepted.  Optional copy destinations use "=>" and are always relative to the
+# run directory.
+inputSourceDir = _read_input_source_dir(inputFilePath.parent)
+dependencyCopies = []
+with open(str(inputFilePath), "r") as fileText:
+  for lineNumber, line in enumerate(fileText, start=1):
+    parsed = _parse_pfw_dependency_line(line)
+    if parsed is None:
+      continue
 
-# Copy the files from the dependency list to the run directory
+    sourceSpec, destSpec = parsed
+    sourcePath = _resolve_dependency_source(sourceSpec, inputSourceDir, pfwPath)
+    destinationPath = _safe_dependency_destination(sourceSpec, destSpec)
+    dependencyCopies.append((sourcePath, destinationPath))
+
+print("Dependency files to be copied:")
+if dependencyCopies:
+  for sourcePath, destinationPath in dependencyCopies:
+    print("  ", sourcePath, " -> ", destinationPath)
+else:
+  print("   <none>")
+
+copyDestinationRoot = pathlib.Path(".")
 if rank == 0:
-  from pathlib import Path
-  if not os.path.exists(f'{dest}'):
-      os.makedirs(f'{dest}')
-  for source in dependencyPaths:
-      fileName = os.path.basename(source)
-      # we do a copy and rename because rename is an atomic operation and will ensure copy is
-      # complete before subsequent import_module.
-      shutil.copyfile(source, f'{dest}'+fileName+'.temp')
-      os.rename(f'{dest}'+fileName+'.temp', f'{dest}'+fileName)
-      # This is something to make sure the file is visible to python, defending against
-      # stale metadata on lustre filesystems which resulted in non-deterministic behavior
-      # where the import would sometimes fail even if the file showed as copied.
-        
-        # Wait for all mpi processes to finish generating particles
-      if flux:
-        print('PFW does not support MPI on flux currently')
-      else:
-        comm.Barrier()
-        
-      dst = Path(f'{dest}') / fileName
-      # after your copy operation completes:
-      deadline = time.time() + 5.0  # seconds
-      while time.time() < deadline:
-        if dst.exists() and dst.stat().st_size > 0:
-          break
-        time.sleep(0.05)
+  copyDestinationRoot.mkdir(parents=True, exist_ok=True)
+  for sourcePath, destinationPath in dependencyCopies:
+    _stage_dependency_file(sourcePath, copyDestinationRoot / destinationPath)
+
+# Make sure rank 0 finishes staging dependencies before other ranks import the
+# input file.  Under Flux PFW is currently run serially, so there is no MPI
+# communicator to synchronize.
+if not flux:
+  comm.Barrier()
 
 # ===========================================
 # READ INPUT FILE AND IMPORT PFW DICTIONARY
@@ -920,8 +1094,8 @@ for paramName, paramValue in pfw.items():
 
 if "dependencies" not in pfw:
   pfw["dependencies"] = []
-for filePath in dependencyPaths:
-  pfw["dependencies"].append(os.path.basename(filePath))
+for sourcePath, destinationPath in dependencyCopies:
+  pfw["dependencies"].append(str(destinationPath))
 print("Dependency files: ",pfw["dependencies"] )
 
 # Check if particleFields contains all necessary particle fields based on specified pfw parameters

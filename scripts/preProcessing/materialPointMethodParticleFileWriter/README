@@ -1,25 +1,85 @@
-To use this you will need to have a working copy of GEOSX.  
+To use this you will need to have a working copy of GEOS.
 
 ***Running***
-(1) create a copy of userDefs_username.py where username is your LC name (i.e. userDefs_homel1.py) and which points to your version of GEOSX executable.
+(1) Create a copy of userDefs_username.py where username is your LC name
+    (for example userDefs_homel1.py) and point it to your GEOS executable.
 
-(2) modify/create an input file named "pfw_input_fileName.py", where "fileName" is whatever you want it to be.
+(2) Create an input file named pfw_input_fileName.py, where fileName is the
+    case name you want to run.
 
-(3) create a copy of runClean.sh (e.g. runClean_homel1.sh), change fileName (line 5) and runLocation (line 10). The run location should be on lscratche or somewhere that can handle a large file.
+(3) Create a copy of runClean_username.sh, for example runClean_homel1.sh.
+    Edit the fileNames list, fileLocation, and runLocation near the top of the
+    script.  fileLocation may point outside the GEOS repository.  runLocation
+    should be on a file system that can handle large files, such as Lustre or a
+    workspace.
 
-Note: when using git, don't add your vesions of userDefs_homel1.py or runClean_homel1.sh to the repo. These are specific to your file system and you don't want to have to change these everytime you checkout a different branch or merge with the MPMmerge branch.
+    The runClean script accepts either exact input filenames or case-name
+    suffixes:
 
-(4) to run from the directory "./runClean_username.sh"
+      fileNames=( "pfw_input_myCase.py" )
+      fileNames=( "myCase" )
 
-You will see some text splash as it creates the input files and it will indicate the number of particles created. If you see an "OOM" error you ran out of memory.
+    The second form is interpreted as pfw_input_myCase.py.
 
-change to the runDirectory to see the created files.
+Note: when using git, do not add your versions of userDefs_homel1.py or
+runClean_homel1.sh to the repository.  These are specific to your file system.
 
-type "squeue -u username " to see when the job will start.
+(4) Run from the PFW directory:
+
+      ./runClean_username.sh
+
+    To run the particle file writer with multiple MPI tasks under Slurm, pass the
+    number of tasks as the first argument:
+
+      ./runClean_username.sh 8
+
+You will see output as the GEOS input files and particle files are created.  If
+you see an OOM error, you ran out of memory.
+
+Change to the runDirectory to see the created files.
+
+Type "squeue -u username" to see when the job will start.
+
+***Input dependencies***
+Input files can request additional files by adding comments of the form:
+
+  #[pfw_dependency] path/to/file.dat
+
+Dependency path rules:
+
+  #[pfw_dependency] file.dat
+      First looks for file.dat relative to fileLocation, then falls back to
+      userDefs.pfwPath/file.dat for compatibility with older examples.
+
+  #[pfw_dependency] tables/file.dat
+      First looks for tables/file.dat relative to fileLocation, then falls back
+      to userDefs.pfwPath/tables/file.dat.  By default the file is copied into
+      the run directory using only its basename, file.dat.
+
+  #[pfw_dependency] input:tables/file.dat
+      Forces lookup relative to fileLocation.
+
+  #[pfw_dependency] pfw:pfw_materials.py
+      Forces lookup relative to userDefs.pfwPath.
+
+  #[pfw_dependency] /full/path/to/file.dat
+      Uses a real absolute path.  Legacy tags such as /pfw_materials.py still
+      fall back to userDefs.pfwPath/pfw_materials.py if the absolute path does
+      not exist.
+
+  #[pfw_dependency] input:tables/file.dat => tables/file.dat
+      Copies the dependency into a subdirectory of the run directory.  The
+      destination must be relative to the run directory and cannot contain "..".
+
+The runClean script writes .pfw_input_source_dir and exports
+PFW_INPUT_SOURCE_DIR so particleFileWriter.py can resolve dependencies relative
+to the original input-file directory after the input file has been staged into a
+run directory.
 
 ***Post processing***
 
-Open visit and load the set of output_*
+Open VisIt and load the set of output_* files.
 
-*You can add mesh (v_mesh for grid, p_mesh for particles), or add pseudocolor of particle data.
-*Vector plots are possible but seem to be buggy.
+* You can add mesh plots, such as v_mesh for grid or p_mesh for particles, or
+  add pseudocolor plots of particle data.
+* Vector plots are possible but may be buggy.
