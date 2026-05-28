@@ -344,7 +344,7 @@ public:
     real64 & v3 )
   {
     // Quick exit for trivial solutions
-    // Checks if the mixture universally prefers a single phase (e.g., single component).
+    // Checks if the mixture universally prefers a single phase
     // This avoids singularities in the Hessian matrix during Newton-Raphson.
 
     real64 maxK2 = -LvArray::NumericLimits< real64 >::max;
@@ -521,6 +521,7 @@ public:
 };
 
 } // namespace constitutive
+
 } // namespace geos
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_RACHFORDRICE_HPP_

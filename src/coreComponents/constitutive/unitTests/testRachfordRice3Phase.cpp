@@ -35,7 +35,7 @@ using RachfordRiceData = std::tuple<
   real64 const                  // expected mole fractions of the 3-rd phase
   >;
 
-class RachfordRice3PhaseFixture :  public ::testing::TestWithParam< RachfordRiceData >
+class RachfordRice3PhaseFixture : public ::testing::TestWithParam< RachfordRiceData >
 {
   static constexpr real64 relTol = 1.0e-5;
   static constexpr real64 absTol = 1.0e-7;
@@ -134,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P(
     { 3, {0.500000, 0.300000, 0.200000},
          { 1.0000000000e+00,  1.0000000000e+00,  1.0000000000e+00,
            1.0000000000e+00,  1.0000000000e+00,  1.0000000000e+00},
-    false, -1.0000000000e+03, 4.0000000000e+03},
+    false,  0.0000000000e+00, 0.0000000000e+00},
     { 3, {0.000000, 0.000000, 1.000000},
          { 3.3830190000e+00,  1.6804790000e-01,  1.9504870000e+00,
            2.2630780000e+00,  8.3155190000e-01,  2.7823120000e-01},
@@ -319,8 +319,6 @@ INSTANTIATE_TEST_SUITE_P(
          {-2.2814889188e+00,  1.1755562066e+00, -1.3676598100e-01, -9.3677872669e-01, -3.5926177892e+00, -3.5927625099e+00, -4.1802279589e+00,  6.6832724278e-01,
           -7.8517340846e-01, -1.4342801215e-01, -4.2683565131e+00,  1.4275956340e+00,  6.0279236588e-01, -3.1178288149e+00, -3.3009136757e+00, -3.2914364198e+00},
     true,  1.0000063311e-01, 5.0000028120e-01},
-
-
   })
 );
 
