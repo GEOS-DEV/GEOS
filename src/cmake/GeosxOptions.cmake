@@ -11,6 +11,7 @@ option( ENABLE_ADIAK "Enables Adiak metadata support" OFF )
 
 # GEOS build profiles
 option( GEOS_ENABLE_MPM_MINIMAL_TPL "Build an MPM-only profile with non-MPM TPLs disabled" OFF )
+option( GEOS_ENABLE_MPM_VTK "Keep VTK output support enabled in the MPM minimal-TPL profile" OFF )
 
 # Core packages that can be removed for an explicit MPM-only build.
 option( GEOS_ENABLE_LINEARALGEBRA "Enable GEOS implicit linear algebra package" ON )
@@ -193,7 +194,11 @@ if( GEOS_ENABLE_MPM_MINIMAL_TPL )
 
   # SiloFile provides the MPM particle/CPDI output path, so keep it enabled.
   set( ENABLE_SILO ON CACHE BOOL "" FORCE )
-  set( ENABLE_VTK OFF CACHE BOOL "" FORCE )
+  if( GEOS_ENABLE_MPM_VTK )
+    set( ENABLE_VTK ON CACHE BOOL "" FORCE )
+  else()
+    set( ENABLE_VTK OFF CACHE BOOL "" FORCE )
+  endif()
   set( ENABLE_SUPERLU_DIST OFF CACHE BOOL "" FORCE )
   set( ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
   set( ENABLE_HYPRE OFF CACHE BOOL "" FORCE )

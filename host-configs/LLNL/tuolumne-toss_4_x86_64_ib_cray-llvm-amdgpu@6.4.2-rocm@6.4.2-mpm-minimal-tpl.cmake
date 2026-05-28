@@ -11,7 +11,7 @@ include(${CMAKE_CURRENT_LIST_DIR}/tuolumne-toss_4_x86_64_ib_cray-llvm-amdgpu@6.4
 # Optional minimal-TPL install root.  A flat install/view may be supplied with
 # either -DGEOS_TPL_DIR=..., GEOS_MPM_TPL_DIR, GEOS_TPL_DIR, or GEOSX_TPL_DIR.
 # Expected subdirectories are:
-#   camp raja umpire chai hdf5 conduit silo pugixml fmt
+#   camp raja umpire chai hdf5 conduit silo pugixml fmt vtk
 if( NOT DEFINED GEOS_TPL_DIR )
   if( DEFINED ENV{GEOS_MPM_TPL_DIR} )
     set( GEOS_TPL_DIR "$ENV{GEOS_MPM_TPL_DIR}" CACHE PATH "" FORCE )
@@ -37,6 +37,7 @@ geos_mpm_set_tpl_dir( CONDUIT_DIR conduit )
 geos_mpm_set_tpl_dir( SILO_DIR silo )
 geos_mpm_set_tpl_dir( PUGIXML_DIR pugixml )
 geos_mpm_set_tpl_dir( FMT_DIR fmt )
+geos_mpm_set_tpl_dir( VTK_DIR vtk )
 
 include(${CMAKE_CURRENT_LIST_DIR}/../profiles/mpm-minimal-tpl.cmake)
 

@@ -15,6 +15,13 @@
 # CMakeLists.txt and call geos_register_external_constitutive_models().  The
 # option is forwarded to CMake as GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR.
 #
+# Optional VTK output support for the MPM solver:
+#   ./setupMPM --dane --enable-vtk
+#   ./setupMPM --tuolumne --enable-vtk
+#   ./setupMPM --enable-vtk --vtk-dir /path/to/vtk/install
+# This keeps the otherwise minimal MPM build profile, but preserves VTK_DIR and
+# enables GEOS VTK output classes.  It does not build the VTK TPL from source.
+#
 # Fast rebuild after source/header edits:
 #   ./setupMPM --dane --rebuild
 #   ./setupMPM --tuolumne --rebuild
@@ -74,6 +81,12 @@ Options:
                             /p/lustre5/$USER/geosxInstalls on Tuolumne.
   --build-type TYPE         CMake build type. Default: Release
   --host-config FILE        Host config. Default: machine-specific minimal-TPL MPM config
+  --enable-vtk, --with-vtk, --build-vtk
+                            Configure GEOS-MPM with VTK output support. This
+                            uses VTK_DIR from the host-config unless --vtk-dir
+                            is supplied. It does not build the VTK TPL itself.
+  --vtk-dir DIR             VTK install/CMake package prefix to pass as VTK_DIR.
+                            Implies --enable-vtk.
   --external-material-models DIR
                             Optional out-of-tree material-model folder. Works for
                             both Dane and Tuolumne. The folder should contain
@@ -321,6 +334,34 @@ cmake_cache_value() {
       exit
     }
   ' "$cache"
+}
+
+truthy() {
+  case "$(printf '%s' "${1:-}" | tr '[:upper:]' '[:lower:]')" in
+    1|on|true|yes|y) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+find_vtk_config() {
+  local vtk_root="$1"
+  [ -d "$vtk_root" ] || return 1
+  find "$vtk_root" -maxdepth 6 -type f \
+    \( -name VTKConfig.cmake -o -name vtk-config.cmake \) \
+    -print -quit 2>/dev/null
+}
+
+validate_vtk_options() {
+  if [ "$ENABLE_MPM_VTK" -ne 1 ]; then
+    return 0
+  fi
+
+  if [ -n "$VTK_DIR_OVERRIDE" ]; then
+    [ -d "$VTK_DIR_OVERRIDE" ] || fail "VTK directory does not exist: $VTK_DIR_OVERRIDE"
+    if [ "$DRY_RUN" -eq 0 ] && ! find_vtk_config "$VTK_DIR_OVERRIDE" >/dev/null; then
+      fail "Could not find VTKConfig.cmake below --vtk-dir: $VTK_DIR_OVERRIDE"
+    fi
+  fi
 }
 
 parse_mshare_bank() {
@@ -1208,6 +1249,7 @@ configure_and_build() {
 
   [ -f "$CONFIG_SCRIPT" ] || fail "Missing config script: $CONFIG_SCRIPT"
   [ -f "$HOST_CONFIG" ] || fail "Missing host config: $HOST_CONFIG. Use --host-config or apply the machine host-config patch."
+  validate_vtk_options
 
   run_cmd mkdir -p "$BUILD_ROOT" "$INSTALL_ROOT"
   log "configuring GEOS with $HOST_CONFIG"
@@ -1220,6 +1262,15 @@ configure_and_build() {
     config_cmd+=(--buildpath "$BUILD_DIR")
   else
     config_cmd+=(--buildrootdir "$BUILD_ROOT")
+  fi
+  if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
+    # Preserve the MPM minimal build, but enable the VTK-backed output code.
+    # VTK_DIR normally comes from the machine host-config.  --vtk-dir may
+    # override it when testing a different VTK install or TPL view.
+    config_cmd+=("-DGEOS_ENABLE_MPM_VTK=ON" "-DENABLE_VTK=ON")
+    if [ -n "$VTK_DIR_OVERRIDE" ]; then
+      config_cmd+=("-DVTK_DIR=$VTK_DIR_OVERRIDE")
+    fi
   fi
   if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
     # External material models are kept out of the public checkout.  Their
@@ -1278,6 +1329,14 @@ JOBS="${GEOS_BUILD_JOBS:-32}"
 BUILD_TARGET="geosx"
 HOST_CONFIG=""
 EXTERNAL_MATERIAL_MODELS_DIR="${GEOS_EXTERNAL_CONSTITUTIVE_MODELS_DIR:-}"
+ENABLE_MPM_VTK=0
+if truthy "${GEOS_ENABLE_MPM_VTK:-${GEOS_MPM_ENABLE_VTK:-}}"; then
+  ENABLE_MPM_VTK=1
+fi
+VTK_DIR_OVERRIDE="${GEOS_MPM_VTK_DIR:-}"
+if [ -n "$VTK_DIR_OVERRIDE" ]; then
+  ENABLE_MPM_VTK=1
+fi
 TPL_DIR=""
 DEFAULT_QUEUE="pdebug"
 LOAD_MODULES=1
@@ -1433,6 +1492,21 @@ while [ "$#" -gt 0 ]; do
       HOST_CONFIG="$2"
       shift 2
       ;;
+    --enable-vtk|--with-vtk|--build-vtk)
+      ENABLE_MPM_VTK=1
+      shift
+      ;;
+    --disable-vtk|--without-vtk|--no-vtk)
+      ENABLE_MPM_VTK=0
+      VTK_DIR_OVERRIDE=""
+      shift
+      ;;
+    --vtk-dir)
+      [ "$#" -ge 2 ] || fail "$1 requires a value"
+      ENABLE_MPM_VTK=1
+      VTK_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
     --external-material-models|--external-constitutive-models|--material-models-dir|--external-models-dir)
       [ "$#" -ge 2 ] || fail "$1 requires a value"
       EXTERNAL_MATERIAL_MODELS_DIR="$2"
@@ -1573,6 +1647,9 @@ fi
 
 if [ -n "$TPL_DIR" ]; then
   TPL_DIR=$(trim_trailing_slashes "$(abs_path "$TPL_DIR")")
+fi
+if [ -n "$VTK_DIR_OVERRIDE" ]; then
+  VTK_DIR_OVERRIDE=$(trim_trailing_slashes "$(abs_path "$VTK_DIR_OVERRIDE")")
 fi
 
 if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ] && [ "$REBUILD_ONLY" -eq 0 ]; then
@@ -1765,6 +1842,20 @@ if [ -n "$EXTERNAL_MATERIAL_MODELS_DIR" ]; then
   else
     log "external material-model dir: $EXTERNAL_MATERIAL_MODELS_DIR"
   fi
+fi
+if [ "$ENABLE_MPM_VTK" -eq 1 ]; then
+  if [ "$REBUILD_ONLY" -eq 1 ]; then
+    log "MPM VTK output support requested, but rebuild-only mode will not reconfigure CMake"
+  else
+    log "MPM VTK output support: enabled"
+  fi
+  if [ -n "$VTK_DIR_OVERRIDE" ]; then
+    log "VTK dir override: $VTK_DIR_OVERRIDE"
+  else
+    log "VTK dir source: active host-config"
+  fi
+else
+  log "MPM VTK output support: disabled"
 fi
 log "userDefs update scope: $SETUP_MACHINE dictionary entries only"
 log "inactive userDefs entries are preserved, or left as CHANGEME when unset"

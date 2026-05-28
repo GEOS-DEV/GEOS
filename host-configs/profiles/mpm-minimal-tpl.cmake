@@ -2,6 +2,11 @@
 # Include this after a machine/compiler host-config.
 
 set( GEOS_ENABLE_MPM_MINIMAL_TPL ON CACHE BOOL "" FORCE )
+# Keep the MPM profile minimal by default. setupMPM --enable-vtk sets this
+# before the host-config is loaded so VTK_DIR is preserved and ENABLE_VTK is ON.
+if( NOT DEFINED GEOS_ENABLE_MPM_VTK )
+  set( GEOS_ENABLE_MPM_VTK OFF CACHE BOOL "Keep VTK output support enabled in the MPM minimal-TPL profile" )
+endif()
 set( GEOS_ENABLE_LINEARALGEBRA OFF CACHE BOOL "" FORCE )
 set( GEOS_LA_INTERFACE "None" CACHE STRING "" FORCE )
 set( GEOS_ENABLE_CONSTITUTIVE_DRIVERS OFF CACHE BOOL "" FORCE )
@@ -34,7 +39,11 @@ set( ENABLE_SCOTCH OFF CACHE BOOL "" FORCE )
 # Keep Silo in the MPM profile: SiloFile contains the particle/CPDI output path.
 set( ENABLE_SILO ON CACHE BOOL "" FORCE )
 
-set( ENABLE_VTK OFF CACHE BOOL "" FORCE )
+if( GEOS_ENABLE_MPM_VTK )
+  set( ENABLE_VTK ON CACHE BOOL "" FORCE )
+else()
+  set( ENABLE_VTK OFF CACHE BOOL "" FORCE )
+endif()
 set( ENABLE_SUPERLU_DIST OFF CACHE BOOL "" FORCE )
 set( ENABLE_TRILINOS OFF CACHE BOOL "" FORCE )
 set( ENABLE_HYPRE OFF CACHE BOOL "" FORCE )
@@ -59,7 +68,10 @@ foreach( _tpl_dir
          TRILINOS_DIR
          HYPRE_DIR
          HYPREDRV_DIR
-         PETSC_DIR
-         VTK_DIR )
+         PETSC_DIR )
   unset( ${_tpl_dir} CACHE )
 endforeach()
+
+if( NOT GEOS_ENABLE_MPM_VTK )
+  unset( VTK_DIR CACHE )
+endif()
