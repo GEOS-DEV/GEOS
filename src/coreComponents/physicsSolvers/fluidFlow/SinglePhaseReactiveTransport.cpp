@@ -894,7 +894,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.get_inserted( bc.getName()) = bcCounter;
     bcCounter++;
   } );
 
@@ -1384,7 +1384,7 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ fields::flow::pressure::key() };
 
     if( m_isThermal )
     {

@@ -400,7 +400,7 @@ bool KValueFlashParameters< NUM_PHASE >::validateKValues( MultiFluidBase const *
 
   if( !tableData.getCellsData().empty())
   {
-    std::vector< TableLayout::Column > columns;
+    stdVector< TableLayout::Column > columns;
     columns.emplace_back( TableLayout::Column().setName( "Phase" ).setValuesAlignment( TableLayout::Alignment::left ) );
     columns.emplace_back( TableLayout::Column().setName( "Pressure" ).setValuesAlignment( TableLayout::Alignment::right ) );
     columns.emplace_back( TableLayout::Column().setName( "Temperature" ).setValuesAlignment( TableLayout::Alignment::right ) );
