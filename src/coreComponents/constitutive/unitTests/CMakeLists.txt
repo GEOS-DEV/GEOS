@@ -37,6 +37,7 @@ set( gtest_geosx_tests
      testStabilityTest2Comp.cpp
      testStabilityTest9Comp.cpp
      testRachfordRice.cpp
+     testRachfordRice3Phase.cpp
      testTwoPhaseImmiscibleFluid.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
