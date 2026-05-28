@@ -7,7 +7,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 stopTime = 20.0
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------

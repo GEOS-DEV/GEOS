@@ -4,77 +4,129 @@
 #SBATCH -A imcomp
 #SBATCH -p pdebug
 
-# Set fileName=xxx (no spaces), where the input file is pfw_input_xxx.py 
+set -euo pipefail
 
-fileNames=(
-	<INPUT_FILE_NAME_1>
-	<INPUT_FILE_NAME_2>
-	<...>
-)
-# ==========================================================================================================================================
-# This should be the location of the input file and anything else you need to copy over:
-fileLocation='<PATH_TO_INPUT_FILES>'
-
-# This is where you want to run the simulation, which should be on a large parallel file system (lustre or workspace).  
-# This directory should exist.  sub-directory with fileName will be created
-runLocation='<PATH_TO_RUN_LOCATION>' # Quartz and Ruby
-
-# This gets the username so the right localdefs file can be used.
-userName="$(whoami)"
-
-# You shouldn't need to modify any of this.  It checks if the fileName you provided isn't a null string (so you don't delete the parent directory!)
-# then it copies files needed to run, changes directory, and runs the particle file writer.  That script will create a batch file and submit the job
-# if those options are enabled:
+# =============================================================================
+# User settings
+# =============================================================================
+# List one or more PFW input files to stage and run.  Entries may be either full
+# input filenames or case-name suffixes:
 #
-# For certain input options (like using CT data) you'll also need to copy over any other needed files (CT data, input tables, etc.)
-for fileName in "${fileNames[@]}"
+#   fileNames=( "pfw_input_myCase.py" )
+#   fileNames=( "myCase" )                 # interpreted as pfw_input_myCase.py
+#
+fileNames=(
+  "pfw_input_myCase.py"
+)
+
+# Directory containing the input files above.  Dependencies tagged in an input
+# file with #[pfw_dependency] are resolved relative to this directory unless the
+# dependency uses an absolute path or the pfw:<path> prefix.
+fileLocation="<PATH_TO_INPUT_FILES>"
+
+# Directory where per-case run directories will be created.  This should be on a
+# large parallel file system such as Lustre or a workspace.
+runLocation="<PATH_TO_RUN_LOCATION>"
+
+# Directory containing particleFileWriter.py and the shared pfw_*.py modules.
+# The default assumes this runClean script lives in the PFW directory.
+particleFileWriterPath="${PFW_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
+
+# Python executable used to run particleFileWriter.py.
+pythonCommand="${PFW_PYTHON:-${PFW_PYTHON_COMMAND:-python3}}"
+
+# =============================================================================
+# Normal users should not need to edit below this line.
+# =============================================================================
+
+normalize_input_file()
+{
+  local name="$1"
+
+  if [[ "${name}" == *.py ]]; then
+    echo "${name}"
+  elif [[ "${name}" == pfw_input_* ]]; then
+    echo "${name}.py"
+  else
+    echo "pfw_input_${name}.py"
+  fi
+}
+
+case_name_from_input()
+{
+  local inputFile="$1"
+  local stem="${inputFile%.py}"
+  stem="${stem#pfw_input_}"
+  echo "${stem}"
+}
+
+sourceDir="$(cd "${fileLocation}" && pwd -P)"
+runRoot="$(mkdir -p "${runLocation}" && cd "${runLocation}" && pwd -P)"
+userName="$(whoami)"
+num_tasks="${1:-1}"
+
+for requestedInput in "${fileNames[@]}"
 do
-	if [ -n "$fileName" ]
-	then
-		if [ $# -eq 0 ] || [ $1 -eq 1 ];
-		then
-			num_tasks="1"
-			echo "Running job on 1 process: ${fileName}"
-		else
-			num_tasks="$1"
-			echo "Running job on ${num_tasks} processes: ${fileName}"
-		fi 
+  if [ -z "${requestedInput}" ] || [[ "${requestedInput}" == \<*\> ]]; then
+    continue
+  fi
 
-		aborted=false
-		if [ -d $runLocation/$fileName/ ] && [ -z "$SLURM_JOBID" ];
-		then
-			echo "Directory ${runLocation}/${fileName} exists."
-			while true; do
-				read -p "Do you wish to overwite? " yn
-				case $yn in
-					[Yy]* ) echo "Overwriting..."; break;;
-					[Nn]* ) echo "Aborted overwrite..."; aborted=true; break;;
-					* ) echo "Please answer yes (Y/y) or no (N/n).";;
-				esac
-			done
-		fi
+  inputFile="$(normalize_input_file "${requestedInput}")"
+  caseName="$(case_name_from_input "${inputFile}")"
+  inputPath="${sourceDir}/${inputFile}"
+  runDir="${runRoot}/${caseName}"
 
-		if [ $aborted = true ]
-		then
-			continue
-		fi
+  if [ ! -f "${inputPath}" ]; then
+    echo "ERROR: input file not found: ${inputPath}" >&2
+    exit 1
+  fi
 
-		rm -rf $runLocation/$fileName/											# delete old results for the same fileName!!!
-		mkdir -p $runLocation/$fileName/										# create the run/output directory
+  echo "Preparing ${caseName}"
+  echo "  input file: ${inputPath}"
+  echo "  run dir:    ${runDir}"
+  echo "  tasks:      ${num_tasks}"
 
-		cp $fileLocation/pfw_input_$fileName.py $runLocation/$fileName          # copy the input file
-		cp particleFileWriter.py $runLocation/$fileName           				# copy the preprocessor
-		cp pfw_check.py $runLocation/$fileName                    				# copy the autoRestart script
-		cp pfw_geometryObjects.py $runLocation/$fileName          				# copy the geometry object functions
-		cp userDefs_$userName.py $runLocation/$fileName           				# copy the local path information	
+  aborted=false
+  if [ -d "${runDir}" ] && [ -z "${SLURM_JOBID:-}" ]; then
+    echo "Directory ${runDir} exists."
+    while true; do
+      read -r -p "Do you wish to overwrite? " yn
+      case "${yn}" in
+        [Yy]* ) echo "Overwriting..."; break ;;
+        [Nn]* ) echo "Aborted overwrite..."; aborted=true; break ;;
+        * ) echo "Please answer yes (Y/y) or no (N/n)." ;;
+      esac
+    done
+  fi
 
-		cd $runLocation/$fileName                                 				# move to the run location
-		if [ $# -eq 0 ] || [ $1 -eq 1 ];
-		then
-			python3 particleFileWriter.py pfw_input_$fileName
-		else
-			srun -n ${num_tasks} python3 particleFileWriter.py pfw_input_$fileName          # launch the VML
-		fi
-		echo # Print empty line for legibility
-	fi
+  if [ "${aborted}" = true ]; then
+    continue
+  fi
+
+  rm -rf "${runDir}"
+  mkdir -p "${runDir}"
+
+  # Copy the input file from the external source directory.  The marker file and
+  # environment variable let particleFileWriter.py resolve #[pfw_dependency]
+  # entries relative to the original input-file location after staging.
+  cp "${inputPath}" "${runDir}/${inputFile}"
+  printf '%s\n' "${sourceDir}" > "${runDir}/.pfw_input_source_dir"
+
+  cp "${particleFileWriterPath}/particleFileWriter.py" "${runDir}/"
+  for pfwFile in "${particleFileWriterPath}"/pfw_*.py; do
+    [ -f "${pfwFile}" ] && cp "${pfwFile}" "${runDir}/"
+  done
+  for userDefsFile in "${particleFileWriterPath}"/userDefs_*.py; do
+    [ -f "${userDefsFile}" ] && cp "${userDefsFile}" "${runDir}/"
+  done
+
+  cd "${runDir}"
+  export PFW_INPUT_SOURCE_DIR="${sourceDir}"
+  if [ "${num_tasks}" = "1" ]; then
+    "${pythonCommand}" particleFileWriter.py "${inputFile}"
+  else
+    srun -n "${num_tasks}" "${pythonCommand}" particleFileWriter.py "${inputFile}"
+  fi
+  echo
+
 done

@@ -21,7 +21,7 @@ G = 29.0 # shear modulus (GPa)
 sampleWidth = 1.0
 sampleHeight = 1.0
 
-domainWidth = 1.25*sampleWidth
+domainWidth = sampleWidth
 domainHeight = sampleHeight
 
 pfw["xmin"] = -0.5*domainWidth # mm
@@ -34,7 +34,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 10 # cells per partition in each direction
+cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine
@@ -114,7 +114,7 @@ pfw["objects"]=[boxWFlag1,boxWFlag2]
 # Deformation ---------------------------------------------------------------------------------
 
 pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 1, 1 ]
+pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
 
 pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1
@@ -147,35 +147,14 @@ pfw["materialPropertyString"] = f"""
     characteristicTangentialDisplacement="0.05"
     maxTangentialDisplacement="0.1"
     maxNormalDisplacement="0.1"/>
-<PolymerCohesiveZone
+<CoupledCohesiveZone
     name="cz2"
-    thickness="0.1"
-    bulkModulus="2.8"
-    bulkModulusA="0.0"
-    bulkModulusB="1.0"
-    bulkModulusT0="0.0"
-    shearModulus="0.2"
-    shearModulusA="0.0"
-    shearModulusB="1.0"
-    shearModulusT0="0.0"
-    yieldStrength0="0.016"
-    yieldStrengthA="0.0"
-    yieldStrengthB="1.0"
-    yieldStrengthT0="0.0"
-    r0="0.012"
-    r0A="0.0"
-    r0B="1.0"
-    r0T0="0.0"
-    r1="0.1"
-    r2="1.0"
-    Gr="0.0081"
-    GrA="0.0"
-    GrB="1.0"
-    GrT0="0.0"
-    maximumStretch="3.0"
-    maximumStretchA="0.0"
-    maximumStretchB="1.0"
-    maximumStretchT0="0.0"/>"""
+    defaultMaxNormalStress="0.2"
+    defaultMaxShearStress="0.2"
+    characteristicNormalDisplacement="0.05"
+    characteristicTangentialDisplacement="0.05"
+    maxTangentialDisplacement="0.2"
+    maxNormalDisplacement="0.2"/>"""
 
 pfw["cohesiveZoneRegions"] = """
 <CohesiveZoneRegion
@@ -192,13 +171,13 @@ pfw["mpmEventsString"] = f"""
     name="cz1"
     startTime="0.0"
     endTime="{stopTime / 2}"
-    regionNames="{cz1}"
+    regionNames="{{cz1}}"
     computeNormalsAndPositions="1"
     normalsAndPositionsMethod="LogisticRegression"/>
 <ReferenceCohesiveZones
     name="cz2"
     startTime="{stopTime / 2}"
-    regionNames="{cz2}"/>
+    regionNames="{{cz2}}"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

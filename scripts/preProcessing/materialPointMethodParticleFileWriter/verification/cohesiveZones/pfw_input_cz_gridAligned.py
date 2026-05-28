@@ -21,7 +21,7 @@ G = 29.0 # shear modulus (GPa)
 sampleWidth = 1.0
 sampleHeight = 1.0
 
-domainWidth = 1.25*sampleWidth
+domainWidth = sampleWidth
 domainHeight = sampleHeight
 
 pfw["xmin"] = -0.5*domainWidth # mm
@@ -34,7 +34,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 11 # cells per partition in each direction
+cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine
@@ -103,7 +103,7 @@ pfw["objects"]=[boxWFlag1,boxWFlag2]
 # Deformation ---------------------------------------------------------------------------------
 
 pfw["prescribedBcTable"]=0
-pfw["boundaryConditionTypes"]=[ 2, 2, 2, 2, 2, 2 ]
+pfw["boundaryConditionTypes"]=[ 0, 0, 2, 2, 1, 1 ]
 
 pfw["fTableInterpType"] = "Cosine"
 pfw["prescribedBoundaryFTable"]=1

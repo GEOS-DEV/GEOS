@@ -34,7 +34,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 11  # cells per partition in each direction
+cpp = 10  # cells per partition in each direction
 
 pfw["xpar"]=refine  
 pfw["ypar"]=refine
@@ -154,7 +154,7 @@ pfw["cohesiveZoneRegions"] = """
 pfw["mpmEventsString"] = """
 <ReferenceCohesiveZones
     name="cz1"
-    startTime="{0.0}"
+    startTime="0.0"
     regionNames="{cz1}"
     czVolumeNormalization="1"/>
 """

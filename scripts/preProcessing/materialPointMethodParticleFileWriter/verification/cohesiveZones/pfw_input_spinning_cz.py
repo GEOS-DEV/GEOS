@@ -7,7 +7,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = False
+pfw["runDebug"] = True
 stopTime = 40.0
 
 # Domain ---------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 11 # cells per partition in each direction
+cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine
@@ -112,7 +112,7 @@ pfw["prescribedBoundaryFTable"]=0
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
+pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
