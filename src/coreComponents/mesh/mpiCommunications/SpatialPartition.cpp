@@ -123,19 +123,19 @@ int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
 
     // Step 1: allgather the sizes of every rank's neighbor list.
     int const localNeighborCount = static_cast< int >( m_metisNeighborList.size() );
-    std::vector< int > allNeighborCounts( commSize );
+    stdVector< int > allNeighborCounts( commSize );
     MpiWrapper::allgather( &localNeighborCount, 1, allNeighborCounts.data(), 1, MPI_COMM_GEOS );
 
     // Step 2: allgatherv the neighbor lists themselves.
-    std::vector< int > displacements( commSize, 0 );
+    stdVector< int > displacements( commSize, 0 );
     for( int i = 1; i < commSize; ++i )
     {
       displacements[i] = displacements[i - 1] + allNeighborCounts[i - 1];
     }
     int const totalNeighbors = displacements[commSize - 1] + allNeighborCounts[commSize - 1];
 
-    std::vector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
-    std::vector< int > allNeighbors( totalNeighbors );
+    stdVector< int > localNeighborVec( m_metisNeighborList.begin(), m_metisNeighborList.end() );
+    stdVector< int > allNeighbors( totalNeighbors );
     MpiWrapper::allgatherv( localNeighborVec.data(), localNeighborCount,
                             allNeighbors.data(), allNeighborCounts.data(),
                             displacements.data(), MPI_COMM_GEOS );
