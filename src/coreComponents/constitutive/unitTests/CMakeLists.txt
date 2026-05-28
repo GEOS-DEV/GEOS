@@ -32,6 +32,7 @@ set( gtest_geosx_tests
      testParticleFluidEnums.cpp
      testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
+     testRelPermHysteresis.cpp
      testSoreideWhitsonEOSPhaseModel.cpp
      testSoreideWhitsonFlash.cpp
      testStabilityTest2Comp.cpp
