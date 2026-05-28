@@ -86,15 +86,6 @@ void updatePorosityAndPermeabilityFixedStress( POROUSWRAPPER_TYPE porousWrapper,
   } );
 }
 
-void nada(arraySlice1d< real64 const > const & normal)
-{
-  GEOS_LOG_RANK_0("nada normal "<<normal[0]<<" "<<normal[1]<<" "<<normal[2] );
-  
-  real64 sigma_c0[3] = {0.0};
-  real64 referenceTotalStress[3] = {0.0};
-  LvArray::tensorOps::hadamardProduct< 3 >( sigma_c0, referenceTotalStress, normal );
-}
-
 template< typename POROUSWRAPPER_TYPE >
 void updatePorosityAndPermeabilityFromPressureApertureAndNormal( POROUSWRAPPER_TYPE porousWrapper,
                                                            SurfaceElementSubRegion & subRegion,

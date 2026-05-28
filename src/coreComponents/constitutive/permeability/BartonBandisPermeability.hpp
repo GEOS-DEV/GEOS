@@ -163,9 +163,7 @@ private:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 computeFractureStress( real64 const pressure, arraySlice1d< real64 const > const & normal, real64 & dStress_dPressure ) const
-  {  
-    //real64 const normal[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3 (normal_);
-    
+  {      
     real64 const deltaSigmaZ = m_biotCoefficient * (pressure - m_referencePressure);
     real64 const poisson_deltaSigma = deltaSigmaZ * m_poissonRatio/(1.0 - m_poissonRatio);
     // sigma: matrix diagonal
