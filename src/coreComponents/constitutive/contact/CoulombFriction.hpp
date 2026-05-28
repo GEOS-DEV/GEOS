@@ -216,6 +216,8 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
 private:
 
   /// The shear stiffness

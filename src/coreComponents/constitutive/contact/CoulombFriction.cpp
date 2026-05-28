@@ -63,6 +63,11 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
 
 void CoulombFriction::postInputInitialization()
 {
+  GEOS_THROW_IF( m_defaultCohesion < 0.0,
+                 GEOS_FMT( ": The provided default cohesion is less than zero. Value: {}",
+                           m_defaultCohesion ),
+                 InputError, getDataContext() );
+
   GEOS_THROW_IF( m_defaultFrictionCoefficient < 0.0,
                  GEOS_FMT( ": The provided default friction coefficient is less than zero. Value: {}",
                            m_defaultFrictionCoefficient ),
@@ -73,6 +78,48 @@ void CoulombFriction::postInputInitialization()
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionCoefficientString() ).
     setApplyDefaultValue( m_defaultFrictionCoefficient );
+}
+
+void CoulombFriction::initializePostInitialConditionsPreSubGroups()
+{
+  FrictionBase::initializePostInitialConditionsPreSubGroups();
+
+  localIndex negativeCohesionCount = 0;
+  localIndex negativeFrictionCoefficientCount = 0;
+  localIndex firstNegativeCohesionIndex = -1;
+  localIndex firstNegativeFrictionCoefficientIndex = -1;
+
+  for( localIndex k = 0; k < m_cohesion.size(); ++k )
+  {
+    if( m_cohesion[k] < 0.0 )
+    {
+      ++negativeCohesionCount;
+      if( firstNegativeCohesionIndex < 0 )
+      {
+        firstNegativeCohesionIndex = k;
+      }
+    }
+
+    if( m_frictionCoefficient[k] < 0.0 )
+    {
+      ++negativeFrictionCoefficientCount;
+      if( firstNegativeFrictionCoefficientIndex < 0 )
+      {
+        firstNegativeFrictionCoefficientIndex = k;
+      }
+    }
+  }
+
+  GEOS_THROW_IF( negativeCohesionCount > 0 || negativeFrictionCoefficientCount > 0,
+                 GEOS_FMT( "Negative Coulomb properties detected in per-cell data: "
+                           "cohesion count = {} (first index = {}), "
+                           "friction coefficient count = {} (first index = {})",
+                           negativeCohesionCount,
+                           firstNegativeCohesionIndex,
+                           negativeFrictionCoefficientCount,
+                           firstNegativeFrictionCoefficientIndex ),
+                 InputError,
+                 getDataContext() );
 }
 
 void CoulombFriction::allocateConstitutiveData( Group & parent, localIndex const numPts )
