@@ -248,10 +248,231 @@ private:
     }
   }
 
+  /**
+   * @brief Computes the objective function, gradient vector, and Hessian matrix.
+   *
+   * @details Evaluates Michelsen's objective function reformulated for the negative flash
+   * region as described in Leibovici and Nichita (2008), Section 3, Equations 10-14.
+   * Paper: "A new look at multiphase Rachford-Rice equations for negative flashes"
+   * DOI: 10.1016/j.fluid.2008.03.006
+   * The function F is convex and its unbounded minimization yields the phase fractions.
+   * Reference phase is Phase 1 (implicitly index 1).
+   *
+   * @param kValues Array slice of equilibrium constants (K-values).
+   * @param feed Array slice of feed composition (mole fractions).
+   * @param presentComponentIds Array slice of indices for components present in the mixture.
+   * @param v2 Mole fraction of the second phase.
+   * @param v3 Mole fraction of the third phase.
+   * @param F Computed objective function value (Equation 10).
+   * @param g Computed gradient vector of size 2 (Equation 13).
+   * @param H Computed Hessian matrix of size 4 (explicitly computed 2x2 matrix).
+   */
+  template< integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  static void computeObjective(
+    arraySlice2d< real64 const, USD2 > const & kValues,
+    arraySlice1d< real64 const, USD1 > const & feed,
+    arraySlice1d< integer const > const & presentComponentIds,
+    real64 const v2, real64 const v3,
+    real64 & F, real64 g[2], real64 H[4] )
+  {
+    F = 0.0;
+    g[0] = 0.0;
+    g[1] = 0.0;
+    H[0] = 0.0;
+    H[1] = 0.0;
+    H[2] = 0.0;
+    H[3] = 0.0;
+
+    for( integer const & ic : presentComponentIds )
+    {
+      real64 const z = feed[ic];
+
+      real64 const k2 = kValues( 0, ic );
+      real64 const k3 = kValues( 1, ic );
+
+      real64 const k2Minus1 = k2 - 1.0;
+      real64 const k3Minus1 = k3 - 1.0;
+
+      // E_i = 1 + (K_2i - 1)v_2 + (K_3i - 1)v_3 (Equation 12)
+      real64 const e = 1.0 + k2Minus1 * v2 + k3Minus1 * v3;
+
+      // Objective function summation (Equation 10)
+      F -= z * LvArray::math::log( e );
+
+      // Gradients (Equation 13)
+      real64 const term1 = z / e;
+      g[0] -= term1 * k2Minus1;
+      g[1] -= term1 * k3Minus1;
+
+      // Hessian entries (symmetric 2x2 matrix computed explicitly)
+      real64 const term2 = term1 / e;
+      H[0] += term2 * k2Minus1 * k2Minus1;
+      H[1] += term2 * k2Minus1 * k3Minus1;
+      H[2] += term2 * k3Minus1 * k2Minus1;
+      H[3] += term2 * k3Minus1 * k3Minus1;
+    }
+  }
+
+  /**
+   * @brief Solves the 3-phase Rachford-Rice equations allowing negative phase fractions.
+   *
+   * @details Implements the constrained optimization approach by Michelsen,
+   * extended to the negative flash region by Leibovici and Nichita (2008).
+   * Paper: "A new look at multiphase Rachford-Rice equations for negative flashes"
+   * DOI: 10.1016/j.fluid.2008.03.006
+   * The problem is formulated as an unbounded minimization with linear constraints
+   * (hyperplanes E_i > 0) to ensure continuous differentiability at phase boundaries.
+   * The inner loop uses a bounded Newton-Raphson scheme with Armijo backtracking line search.
+   *
+   * @param kValues Array slice of equilibrium constants (K-values).
+   * @param feed Array slice of feed composition (mole fractions).
+   * @param presentComponentIds Array slice of indices for components present in the mixture.
+   * @param v2 Output mole fraction of the second phase. Serves as initial guess if feasible.
+   * @param v3 Output mole fraction of the third phase. Serves as initial guess if feasible.
+   * @return bool True if the minimization converges successfully within tolerances, false otherwise.
+   */
+  template< integer USD1, integer USD2 >
+  GEOS_HOST_DEVICE
+  static bool solve(
+    arraySlice2d< real64 const, USD2 > const & kValues,
+    arraySlice1d< real64 const, USD1 > const & feed,
+    arraySlice1d< integer const > const & presentComponentIds,
+    real64 & v2,
+    real64 & v3 )
+  {
+    // 1. Initial feasibility check
+    // Evaluate if the provided initial conditions (v2, v3) are feasible (E_i > 0).
+    bool feasible = true;
+    for( integer const & ic : presentComponentIds )
+    {
+      real64 const k2 = kValues( 0, ic );
+      real64 const k3 = kValues( 1, ic );
+      real64 const e = 1.0 + (k2 - 1.0) * v2 + (k3 - 1.0) * v3;
+      if( e <= 0.0 )
+      {
+        feasible = false;
+        break;
+      }
+    }
+
+    // Fallback inherently feasible initialization (1 / np) for 3 phases
+    if( !feasible )
+    {
+      v2 = 1.0 / 3.0;
+      v3 = 1.0 / 3.0;
+    }
+
+    // 2. Bound-constrained Newton-Raphson Optimization
+    real64 F = 0.0;
+    real64 g[2]{};
+    real64 H[4]{};
+
+    for( integer iterations = 0; iterations < maxNewtonIterations; ++iterations )
+    {
+      computeObjective( kValues, feed, presentComponentIds, v2, v3, F, g, H );
+
+      real64 const error = LvArray::math::max( LvArray::math::abs( g[0] ), LvArray::math::abs( g[1] ));
+      if( error <= newtonTolerance )
+      {
+        return true;
+      }
+
+      // Add small regularization to strictly enforce positive definiteness
+      // in cases where phases might artificially merge
+      H[0] += epsilon;
+      H[3] += epsilon;
+
+      // Invert explicit 2x2 Hessian to compute Newton step (H * dv = -g)
+      real64 const determinant = H[0] * H[3] - H[1] * H[2];
+      if( determinant <= epsilon )
+      {
+        return false;
+      }
+
+      real64 const dv2 = (-g[0] * H[3] + g[1] * H[1]) / determinant;
+      real64 const dv3 = (-g[1] * H[0] + g[0] * H[2]) / determinant;
+
+      // Line Search Step 1: Find distance to hyperplane boundaries.
+      // The feasible domain is limited by hyperplanes E_i = 0 (Leibovici and Nichita 2008, Section 3).
+      // We compute the maximum step size alphaBound that keeps E_i > 0 for all components.
+      // The step along the search direction dv is restricted such that we do not cross the hyperplanes.
+      // For each component, if the step decreases E_i (i.e., de < 0), we find the intersection.
+      real64 alphaBound = 1.0;
+      for( integer const & ic : presentComponentIds )
+      {
+        real64 const k2 = kValues( 0, ic );
+        real64 const k3 = kValues( 1, ic );
+
+        real64 const de = (k2 - 1.0) * dv2 + (k3 - 1.0) * dv3;
+        if( de < 0.0 )
+        {
+          real64 const e = 1.0 + (k2 - 1.0) * v2 + (k3 - 1.0) * v3;
+          real64 const alphaI = -e / de;
+          if( alphaI < alphaBound )
+          {
+            alphaBound = alphaI;
+          }
+        }
+      }
+
+      // Limit the maximum step length to remain strictly inside the domain.
+      // We scale the boundary by 1.0 - epsilon to prevent E_i from becoming exactly 0.
+      real64 alpha = (alphaBound < 1.0) ? (alphaBound * (1.0 - epsilon)) : 1.0;
+
+      // Line Search Step 2: Backtracking (Armijo Rule).
+      // Ensures sufficient decrease in the objective function to guarantee global convergence.
+      // We start with the bounded step size 'alpha' and iteratively shrink it by half.
+      // The Armijo condition checks if the new objective value FNew is sufficiently smaller
+      // than the current value F plus a fraction (c1) of the directional derivative.
+      real64 const c1 = 1e-4;
+      real64 const directionalDerivative = g[0] * dv2 + g[1] * dv3;
+      bool stepAccepted = false;
+
+      for( integer lineSearchIteration = 0; lineSearchIteration < 20; ++lineSearchIteration )
+      {
+        real64 const v2New = v2 + alpha * dv2;
+        real64 const v3New = v3 + alpha * dv3;
+
+        bool valid = true;
+        real64 FNew = 0.0;
+
+        for( integer const & ic : presentComponentIds )
+        {
+          real64 const e = 1.0 + (kValues( 0, ic ) - 1.0) * v2New + (kValues( 1, ic ) - 1.0) * v3New;
+          if( e <= 0.0 )
+          {
+            valid = false;
+            break;
+          }
+          FNew -= feed[ic] * LvArray::math::log( e );
+        }
+
+        // Armijo condition check: F(x + alpha * p) <= F(x) + c1 * alpha * grad(F)^T * p
+        if( valid && FNew <= F + c1 * alpha * directionalDerivative )
+        {
+          v2 = v2New;
+          v3 = v3New;
+          stepAccepted = true;
+          break;
+        }
+
+        // Step too large; shrink
+        alpha *= 0.5;
+      }
+
+      if( !stepAccepted )
+      {
+        // Step size became too small (likely converged to machine precision limit)
+        return false;
+      }
+    }
+
+    return false;
+  }
 };
 
 } // namespace constitutive
-
 } // namespace geos
 
 #endif //GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_RACHFORDRICE_HPP_
