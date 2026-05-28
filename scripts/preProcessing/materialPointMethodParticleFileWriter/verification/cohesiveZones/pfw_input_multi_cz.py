@@ -34,7 +34,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 10 # cells per partition in each direction
+cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine

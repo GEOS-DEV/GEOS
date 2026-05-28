@@ -21,7 +21,7 @@ G = 29.0 # shear modulus (GPa)
 sampleWidth = 1.0
 sampleHeight = 1.0
 
-domainWidth = 1.25*sampleWidth
+domainWidth = sampleWidth
 domainHeight = sampleHeight
 
 pfw["xmin"] = -0.5*domainWidth # mm
@@ -33,7 +33,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cppx = 5 # cells per partition in each direction
+cppx = 10 # cells per partition in each direction
 cppy = 2*cppx
 
 pfw["xpar"]=refine
@@ -121,8 +121,8 @@ pfw["fTable"]=[[0.0,          1.00,  1.00,  1.00],
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
-# pfw["autoRestart"]=True
+pfw["mSubmitJobs"]=True
+pfw["autoRestart"]=False
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 
@@ -135,7 +135,7 @@ pfw["materialPropertyString"] = f"""
     defaultBulkModulus="{K}"
     defaultShearModulus="{G}"/>
 <PolymerCohesiveZone
-    name="cz1"
+    name="polymerCZ"
     thickness="0.1"
     bulkModulus="2.8"
     bulkModulusA="0.0"
@@ -167,15 +167,14 @@ pfw["materialPropertyString"] = f"""
 pfw["cohesiveZoneRegions"] = """
 <CohesiveZoneRegion
     name="cz1"
-    constitutiveModel="cz1"
+    constitutiveModel="polymerCZ"
     tag="0"/>"""
 
-pfw["mpmEventsString"] = f"""
+pfw["mpmEventsString"] = """
 <ReferenceCohesiveZones
-    name="cz1"
-    startTime="{0.0}"
-    endTime="{stopTime}"
-    regionNames="{{ cz1 }}"/>
+    name="czEvent"
+    startTime="0.0"
+    regionNames="{cz1}"/>
 """
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.

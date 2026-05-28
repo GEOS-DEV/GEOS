@@ -8,7 +8,7 @@ from sklearn.neighbors import KDTree          # nearest neighbor search with KDT
 
 pfw = {}
 pfw["runDebug"] = True
-stopTime = 2.0
+stopTime = 0.1
 
 # Domain ---------------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ pfw["planeStrain"] = 1
 pfw["periodic"] = [False, False, False]
 
 refine = 1 # grid partitions
-cpp = 11 # cells per partition in each direction
+cpp = 20 # cells per partition in each direction
 
 pfw["xpar"]=refine
 pfw["ypar"]=refine
@@ -74,6 +74,8 @@ pfw["updateMethod"]="FLIP"
 # pfw["updateOrder"]=2
 
 pfw["useEvents"]=1
+pfw["plotGridFields"]=1
+pfw["outputType"] = "vtk"
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
@@ -103,7 +105,7 @@ pfw["prescribedBoundaryFTable"]=0
 pfw["mBatch"]=True
 pfw["mWallTime"] = "00:05:00"
 pfw["mCores"]=pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mSubmitJobs"]=False
+pfw["mSubmitJobs"]=True
 pfw["autoRestart"]=False
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -134,14 +136,14 @@ pfw["cohesiveZoneRegions"] = """
 
 # EVENTS ------------------------------------------------------------------------------------
 
-pfw["mpmEventsString"] = """
+pfw["mpmEventsString"] = f"""
 <ReferenceCohesiveZones
     name="cz"
-    regionNames="{cz}"
+    regionNames="{{cz}}"
     czVolumeNormalization="1"
     startTime="{0.0}"/>
 <TransformParticles
-    startTime="1.0"/>"""
+    startTime="{stopTime/2}"/>"""
 
 # --- PFW VERIFICATION FAST DEBUG OVERRIDES BEGIN ---
 # Debug-only runtime caps.  Keep this block below all source-file pfw assignments.
