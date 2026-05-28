@@ -77,9 +77,18 @@ public:
     for( integer r=0; r < initialSurfaceArea.size(); ++r )
     {
       real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
+      real64 const volumeFraction_r_n = m_porosityUpdate.getVolumeFractionForMineral_n( k, q, r );
       real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+
+      if (volumeFraction_r - volumeFraction_r_n < 0) { // dissolution
+        surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
                        * pow( porosity / initialPorosity, 2.0/3.0 );
+        if (volumeFraction_r < 1e-6) { // if the mineral is completely dissolved, set surface area to 0 to avoid numerical issues
+          surfaceArea[r] = 0.0;
+        }
+      } else { // precipitation
+        surfaceArea[r] = initialSurfaceArea[r] * pow( porosity / initialPorosity, 2.0/3.0 );
+      }
     }
   }
 

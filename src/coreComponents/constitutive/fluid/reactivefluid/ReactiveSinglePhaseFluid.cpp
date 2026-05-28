@@ -85,9 +85,9 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
   switch( m_chemicalSystemType )
   {
     case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9;
-      m_numSecondarySpecies = 16;
-      m_numKineticReactions = 5;
+      m_numPrimarySpecies = 8;
+      m_numSecondarySpecies = 24;
+      m_numKineticReactions = 11;
       m_solventDensity = ultramaficSystem.getSolventDensity();
       break;
 

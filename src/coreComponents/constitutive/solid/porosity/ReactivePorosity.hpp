@@ -73,17 +73,31 @@ public:
 
     for( integer r=0; r < numKineticReactions; ++r )
     {
-      real64 const volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
-      volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
+      real64 volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
+      if (volumeFractionIncrement < 0) { // Dissolution
+        real64 const decayRate = -volumeFractionIncrement / volumeFractions_n[r];
+        volumeFractions[r] = volumeFractions_n[r] * exp(-decayRate);  
+        if (volumeFractions[r] < 1e-6) {
+          volumeFractions[r] = 1e-6; // Avoid negative or very small volume fractions
+          volumeFractionIncrement = 0.0; // No further change in porosity from this reaction
+        }
+      } else { // Precipitation
+        volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;  
+      }
+      //volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
 
       porosityIncrement -= volumeFractionIncrement;
     }
+    
+    real64 const phi0 = porosity_n;
+    real64 const logPorosity = log(std::max(phi0, 1e-8)) + porosityIncrement / phi0;
+    porosity = exp(logPorosity);
 
-    porosity = porosity_n + porosityIncrement;
+    //porosity = porosity_n + porosityIncrement;
 
-    if( porosity < 0 )
+    if( porosity < 1e-8 )
     {
-      porosity = 0;
+      porosity = 1e-8; // Avoid negative or very small porosity values that can cause numerical issues
     }
     else if( porosity > 1.0 )
     {
@@ -114,6 +128,15 @@ public:
                                       localIndex const r ) const
   {
     return m_volumeFractions[k][q][r];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  real64 getVolumeFractionForMineral_n( localIndex const k,
+                                        localIndex const q,
+                                        localIndex const r ) const
+  {
+    return m_volumeFractions_n[k][q][r];
   }
 
   GEOS_HOST_DEVICE

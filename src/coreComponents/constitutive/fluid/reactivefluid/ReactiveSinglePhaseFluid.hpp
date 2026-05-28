@@ -77,8 +77,8 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
-  static constexpr integer MAX_NUM_SPECIES = 20;
-  static constexpr integer MAX_NUM_KINETIC_REACTIONS = 10;
+  static constexpr integer MAX_NUM_SPECIES = 32;
+  static constexpr integer MAX_NUM_KINETIC_REACTIONS = 15;
 
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > primarySpeciesAggregateConcentration() const
   { return m_primarySpeciesAggregateConcentration; }
