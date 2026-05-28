@@ -332,6 +332,15 @@ DECLARE_FIELD( particleReferenceMappedNodes,
                WRITE_AND_READ,
                "ParticleReferenceMappedNodes" );
 
+DECLARE_FIELD( particleReferenceGlobalNodeIndex,
+               "particleReferenceGlobalNodeIndex",
+               array2d< globalIndex >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "Cached cohesive-zone local node index for each particle reference mapped node. "
+               "Non-cohesive mapped nodes are marked with std::numeric_limits< globalIndex >::max()." );
+
 DECLARE_FIELD( particleReferenceShapeFunctionValues,
                "particleReferenceShapeFunctionValues",
                array2d< real64 >,
