@@ -37,6 +37,7 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMContactPorousKernelsDispatchTypeList.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
@@ -783,12 +784,11 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           PorousSolid< ElasticIsotropic, ConstantPermeability >,
-                           CellElementSubRegion >( mesh,
-                                                   poromechanicsRegionNames,
-                                                   getDiscretizationName(),
-                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
-                                                   kernelFactory );
+                           SolidMechanicsALMContactPorousKernelsDispatchTypeList >( mesh,
+                                                                                    poromechanicsRegionNames,
+                                                                                    getDiscretizationName(),
+                                                                                    FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
   } );
