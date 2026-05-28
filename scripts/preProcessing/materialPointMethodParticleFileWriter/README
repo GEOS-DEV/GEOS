@@ -83,3 +83,47 @@ Open VisIt and load the set of output_* files.
 * You can add mesh plots, such as v_mesh for grid or p_mesh for particles, or
   add pseudocolor plots of particle data.
 * Vector plots are possible but may be buggy.
+
+***Packed spherical beds***
+
+PFW includes `geom.packedSphericalBed`, a single geometry object for packed beds
+of circular disks in plane strain (`dim=2`) or spherical grains in 3D (`dim=3`).
+It is intended to be used instead of creating one `sphere` or `cylinder` object
+per grain.
+
+Minimal example:
+
+  bed = geom.packedSphericalBed(
+      "bed",
+      x0=[pfw["xmin"], pfw["ymin"], pfw["zmin"]],
+      x1=[pfw["xmax"], pfw["ymax"], pfw["zmax"]],
+      dim=3,
+      periodic=pfw["periodic"],
+      materials=[
+          {"mat": 0, "volumeFraction": 0.45,
+           "meanDiameter": 1.0e-3, "stdDiameter": 0.10e-3},
+          {"mat": 1, "volumeFraction": 0.15,
+           "meanDiameter": 0.5e-3, "stdDiameter": 0.05e-3},
+      ],
+      overlapPercent=2.0,
+      method="auto",
+      seed=17,
+      numContactColors=16,
+  )
+
+  pfw["objects"] = [bed]
+
+The material volume fractions are absolute solid fractions of the box, so their
+sum is the requested total bed fraction.  Particle sizes are diameters.  Positive
+lognormal diameters are used by default when a nonzero standard deviation is
+specified; use `distribution="normal"` for truncated positive normal samples.
+
+`method="auto"` uses polydisperse RSA/cell-list insertion for lower fractions,
+a lattice plus local relaxation for moderate dense 2D/3D cases, and an O(N)
+triangular/FCC lattice path for dense or very large cases.  DEM import is a
+placeholder; for now, users can pass `grains={"centers": ..., "radii": ...,
+"mats": ...}` if centers and radii were generated externally.
+
+For contact, the object returns a color-based `ContactGroup` instead of one group
+per grain.  Keep `numContactColors` and any material offsets below the MPM
+solver contact-group limit, commonly 100.

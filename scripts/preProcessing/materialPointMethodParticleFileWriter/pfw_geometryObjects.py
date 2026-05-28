@@ -5137,6 +5137,1173 @@ class poissonDiskFoam(Geometry):
     return self.x1[2] if self.dim == 3 else 0.0
 
 
+class packedSphericalBed(Geometry):
+  """
+  Geometry object for a packed bed of spherical particles in a grid-aligned box.
+
+  The object represents all grains as one PFW geometry object.  It stores center,
+  radius, material, contact group, and particle type arrays, then answers PFW
+  point queries with a periodic cell list.  This avoids creating one geometry
+  object per grain.
+
+  Parameters
+  ----------
+  x0, x1 : array-like
+      Opposite corners of the packing box.  The first ``dim`` components are
+      active.  For ``dim=2`` the spheres are plane-strain disks in the x-y plane.
+  materials : list
+      Each entry may be a dict or tuple.  Dict keys include ``mat`` or
+      ``material``, ``volumeFraction`` or ``vf``, ``meanDiameter`` or
+      ``meanParticleSize``, and ``stdDiameter`` or ``stdParticleSize``.  Tuples
+      are interpreted as ``(mat, volumeFraction, meanDiameter, stdDiameter)``.
+  periodic : array-like bool
+      Periodicity of the bed in active directions.  Distance tests use minimum
+      images in periodic directions.
+  overlapPercent : float
+      Allowed center-distance overlap percentage used by RSA and relaxation:
+      ``distance >= (1-overlapPercent/100)*(ri+rj)``.
+  method : {'auto', 'poisson_rsa', 'rsa', 'lattice_jitter', 'lattice',
+            'grow_relax', 'relax', 'dem'}
+      ``poisson_rsa`` is a polydisperse random sequential insertion method with
+      a cell list.  ``lattice_jitter`` is an O(N) dense/large path based on a
+      triangular lattice in 2D or an FCC lattice in 3D.  ``grow_relax`` starts
+      from the lattice path and applies local repulsive corrections.  ``dem`` is
+      intentionally a placeholder for an external DEM import path.
+  contactGroupMode : {'color', 'greedyColor', 'hashColor', 'material', 'constant'}
+      ``color`` uses greedy graph coloring for modest N and a spatial hash for
+      large N.  Keep ``numContactColors * number_of_material_offsets <= 100`` if
+      the downstream solver has the usual MPM contact-group limit.
+
+  Notes
+  -----
+  The current PFW writer emits one material point per grid point and stops after
+  the first matching object.  In overlapped grain volumes this class assigns the
+  point to one owner grain, chosen by maximum signed depth ``radius-distance``.
+  """
+  def __init__(self,
+               name,
+               x0,
+               x1,
+               materials,
+               dim=3,
+               periodic=[False, False, False],
+               overlapPercent=0.0,
+               method="auto",
+               seed=1,
+               maxTrialsPerGrain=5000,
+               distribution="lognormal",
+               minDiameter=None,
+               maxDiameter=None,
+               jitterFraction=0.0,
+               relaxIterations=0,
+               relaxDamping=0.5,
+               contactGroupMode="color",
+               numContactColors=16,
+               groupBase=_defaultGroup,
+               materialGroupOffsets=False,
+               maxContactGroups=100,
+               colorGraphLimit=5000,
+               nearContactFactor=1.01,
+               validatePacking=False,
+               strictOverlap=False,
+               cellIndexMode="auto",
+               maxDictCellIndexGrains=1000000,
+               sampleBatchSize=1000000,
+               grains=None,
+               demFile=None,
+               dtype=np.float64,
+               vel=_defaultVelocity,
+               mat=_defaultMat,
+               group=_defaultGroup,
+               particleType=_defaultParticleType):
+    self.dim = int(dim)
+    if self.dim not in (2, 3):
+      raise ValueError("packedSphericalBed supports dim=2 or dim=3")
+
+    self.arrayDType = np.dtype(dtype)
+    x0 = np.asarray(x0, dtype=float)
+    x1 = np.asarray(x1, dtype=float)
+    if x0.size < self.dim or x1.size < self.dim:
+      raise ValueError("packedSphericalBed requires x0 and x1 with length at least dim")
+    self.x0 = np.minimum(x0[:self.dim], x1[:self.dim])
+    self.x1 = np.maximum(x0[:self.dim], x1[:self.dim])
+    self.dx = self.x1 - self.x0
+    if np.any(self.dx <= 0.0):
+      raise ValueError("packedSphericalBed requires x1 to be greater than x0 in all active directions")
+
+    periodic = np.asarray(periodic, dtype=bool)
+    if periodic.size < self.dim:
+      raise ValueError("packedSphericalBed requires periodic with length at least dim")
+    self.periodic = periodic[:self.dim]
+
+    self.seed = int(seed)
+    self.rng = np.random.default_rng(self.seed)
+    self.overlapPercent = float(overlapPercent)
+    if self.overlapPercent < 0.0 or self.overlapPercent >= 100.0:
+      raise ValueError("overlapPercent must satisfy 0 <= overlapPercent < 100")
+    self.overlapFraction = self.overlapPercent / 100.0
+    self.effectiveSeparationFactor = max(0.0, 1.0 - self.overlapFraction)
+
+    self.method = str(method).lower()
+    self.maxTrialsPerGrain = int(maxTrialsPerGrain)
+    if self.maxTrialsPerGrain <= 0:
+      raise ValueError("maxTrialsPerGrain must be positive")
+    self.distribution = str(distribution).lower()
+    self.globalMinDiameter = minDiameter
+    self.globalMaxDiameter = maxDiameter
+    self.jitterFraction = float(jitterFraction)
+    self.relaxIterations = int(relaxIterations)
+    self.relaxDamping = float(relaxDamping)
+    self.contactGroupMode = str(contactGroupMode)
+    self.numContactColors = int(numContactColors)
+    if self.numContactColors <= 0:
+      raise ValueError("numContactColors must be positive")
+    self.groupBase = int(groupBase if groupBase is not None else group)
+    self.materialGroupOffsets = bool(materialGroupOffsets)
+    self.maxContactGroups = int(maxContactGroups)
+    self.colorGraphLimit = int(colorGraphLimit)
+    self.nearContactFactor = float(nearContactFactor)
+    self.validatePacking = bool(validatePacking)
+    self.strictOverlap = bool(strictOverlap)
+    self.cellIndexMode = str(cellIndexMode).lower()
+    self.maxDictCellIndexGrains = int(maxDictCellIndexGrains)
+    self.sampleBatchSize = int(sampleBatchSize)
+    if self.maxDictCellIndexGrains < 0:
+      raise ValueError("maxDictCellIndexGrains must be non-negative")
+    if self.sampleBatchSize <= 0:
+      raise ValueError("sampleBatchSize must be positive")
+
+    self.materialSpecs = self._parseMaterialSpecs(materials, mat, particleType)
+    if len(self.materialSpecs) == 0:
+      raise ValueError("packedSphericalBed requires at least one material specification")
+
+    defaultMat = self.materialSpecs[0]["mat"]
+    defaultParticleType = self.materialSpecs[0]["particleType"]
+    super().__init__(name,
+                     vel = vel,
+                     mat = defaultMat,
+                     group = self.groupBase,
+                     particleType = defaultParticleType)
+
+    self.measure = float(np.prod(self.dx))
+    self.measureName = "volume fraction" if self.dim == 3 else "area fraction"
+    self.totalVolumeFraction = float(sum(spec["volumeFraction"] for spec in self.materialSpecs))
+    if self.totalVolumeFraction < 0.0:
+      raise ValueError("Total packed-bed volume fraction must be non-negative")
+    if self.totalVolumeFraction > 0.95 and g_rank == 0:
+      print("WARNING packedSphericalBed '", self.name, "': total requested ", self.measureName,
+            " is ", self.totalVolumeFraction, ". This is very dense and may require overlap or lattice order.", sep="")
+    if self.totalVolumeFraction < 0.20 or self.totalVolumeFraction > 0.80:
+      if g_rank == 0:
+        print("WARNING packedSphericalBed '", self.name, "': requested total ", self.measureName,
+              " = ", self.totalVolumeFraction, ". The intended operating range is 0.20 to 0.80.", sep="")
+
+    if demFile is not None or self.method == "dem":
+      raise NotImplementedError(
+        "DEM import for packedSphericalBed is a placeholder.  Generate a DEM dump externally, "
+        "then pass a grains dictionary with centers, radii, and optional material/group arrays."
+      )
+
+    self._lastQueryKey = None
+    self._lastQueryResult = None
+
+    if grains is not None:
+      self._loadGrains(grains)
+      self.generationMethod = "imported_grains"
+    else:
+      targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup = self._sampleTargetGrains()
+      self.targetGrainCount = int(targetRadii.size)
+      selectedMethod = self._selectMethod(self.method, self.totalVolumeFraction, self.targetGrainCount)
+      self.generationMethod = selectedMethod
+
+      if selectedMethod == "poisson_rsa":
+        centers, radii, mats, materialIndex, particleTypes, baseGroups = self._generateByRSA(
+          targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup)
+      elif selectedMethod == "lattice_jitter":
+        centers, radii, mats, materialIndex, particleTypes, baseGroups = self._generateByLattice(
+          targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup)
+      elif selectedMethod == "grow_relax":
+        centers, radii, mats, materialIndex, particleTypes, baseGroups = self._generateByLattice(
+          targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup)
+        if self.relaxIterations <= 0:
+          self.relaxIterations = 20
+        centers = self._relaxCenters(centers, radii)
+      else:
+        raise ValueError("Unknown packedSphericalBed method '" + str(method) + "'")
+
+      self.centers = np.asarray(centers, dtype=self.arrayDType)
+      self.radii = np.asarray(radii, dtype=self.arrayDType)
+      self.mats = np.asarray(mats, dtype=np.int64)
+      self.materialIndex = np.asarray(materialIndex, dtype=np.int64)
+      self.particleTypes = np.asarray(particleTypes, dtype=np.int64)
+      self.baseGroups = np.asarray(baseGroups, dtype=np.int64)
+
+    if self.centers.shape[0] == 0:
+      raise ValueError("packedSphericalBed generated no grains")
+
+    self.numGrains = int(self.radii.size)
+    self.maxRadius = float(np.max(self.radii))
+    self.minRadius = float(np.min(self.radii))
+    self._buildCenterCellList()
+    self.groups = self._assignContactGroups()
+    self.realizedVolumeFraction = float(np.sum(self._sphereMeasureArray(self.radii)) / self.measure)
+    self.realizedFractionsByMaterial = self._computeMaterialFractions()
+
+    if self.validatePacking or self.strictOverlap:
+      maxOverlap = self._estimateMaxOverlapPercent()
+      self.realizedMaxOverlapPercent = maxOverlap
+      if maxOverlap > self.overlapPercent + 1.0e-8:
+        msg = ("packedSphericalBed '" + self.name + "' realized maximum overlap " +
+               str(maxOverlap) + "% exceeds requested overlapPercent " + str(self.overlapPercent) + "%.")
+        if self.strictOverlap:
+          raise RuntimeError(msg)
+        if g_rank == 0:
+          print("WARNING " + msg)
+    else:
+      self.realizedMaxOverlapPercent = None
+
+    if g_rank == 0:
+      print("packedSphericalBed '", self.name, "': method = ", self.generationMethod,
+            ", grains = ", self.numGrains,
+            ", target ", self.measureName, " = ", self.totalVolumeFraction,
+            ", realized ", self.measureName, " = ", self.realizedVolumeFraction,
+            ", dim = ", self.dim,
+            ", overlapPercent = ", self.overlapPercent, sep="")
+
+  def _parseMaterialSpecs(self, materials, defaultMat, defaultParticleType):
+    parsed = []
+    for i, spec in enumerate(materials):
+      if isinstance(spec, dict):
+        matId = spec.get("mat", spec.get("material", spec.get("materialType", spec.get("materialId", defaultMat))))
+        vf = spec.get("volumeFraction", spec.get("vf", spec.get("fraction", spec.get("areaFraction", None))))
+        meanD = spec.get("meanDiameter", spec.get("meanParticleSize", spec.get("diameter", spec.get("meanSize", None))))
+        stdD = spec.get("stdDiameter", spec.get("stdParticleSize", spec.get("diameterStd", spec.get("stdDev", spec.get("sizeStdDev", spec.get("particleSizeStdDev", 0.0))))))
+        if meanD is None and "meanRadius" in spec:
+          meanD = 2.0 * float(spec["meanRadius"])
+        if "stdRadius" in spec:
+          stdD = 2.0 * float(spec["stdRadius"])
+        pType = spec.get("particleType", defaultParticleType)
+        group = spec.get("group", spec.get("contactGroup", None))
+        minD = spec.get("minDiameter", spec.get("minParticleSize", self.globalMinDiameter))
+        maxD = spec.get("maxDiameter", spec.get("maxParticleSize", self.globalMaxDiameter))
+        dist = spec.get("distribution", self.distribution)
+      elif isinstance(spec, (list, tuple)):
+        if len(spec) < 3:
+          raise ValueError("Material tuple entries must contain at least (mat, volumeFraction, meanDiameter)")
+        matId = spec[0]
+        vf = spec[1]
+        meanD = spec[2]
+        stdD = spec[3] if len(spec) > 3 else 0.0
+        pType = spec[4] if len(spec) > 4 else defaultParticleType
+        group = spec[5] if len(spec) > 5 else None
+        minD = self.globalMinDiameter
+        maxD = self.globalMaxDiameter
+        dist = self.distribution
+      else:
+        raise TypeError("Each packedSphericalBed material entry must be a dict, tuple, or list")
+
+      if vf is None or meanD is None:
+        raise ValueError("Each material must define volumeFraction and meanDiameter/meanParticleSize")
+      matId = int(matId)
+      vf = float(vf)
+      meanD = float(meanD)
+      stdD = float(stdD)
+      pType = int(pType)
+      if group is None:
+        group = self.groupBase + i*self.numContactColors if self.materialGroupOffsets else self.groupBase
+      group = int(group)
+      minD = None if minD is None else float(minD)
+      maxD = None if maxD is None else float(maxD)
+      dist = str(dist).lower()
+
+      if vf < 0.0:
+        raise ValueError("Material volume fractions must be non-negative")
+      if meanD <= 0.0:
+        raise ValueError("Material mean diameters must be positive")
+      if stdD < 0.0:
+        raise ValueError("Material diameter standard deviations must be non-negative")
+      if minD is not None and minD <= 0.0:
+        raise ValueError("minDiameter must be positive when supplied")
+      if maxD is not None and maxD <= 0.0:
+        raise ValueError("maxDiameter must be positive when supplied")
+      if minD is not None and maxD is not None and minD > maxD:
+        raise ValueError("minDiameter cannot exceed maxDiameter")
+
+      parsed.append({
+        "mat": matId,
+        "volumeFraction": vf,
+        "meanDiameter": meanD,
+        "stdDiameter": stdD,
+        "particleType": pType,
+        "group": group,
+        "minDiameter": minD,
+        "maxDiameter": maxD,
+        "distribution": dist,
+      })
+    return parsed
+
+  def _sampleDiameter(self, spec):
+    meanD = spec["meanDiameter"]
+    stdD = spec["stdDiameter"]
+    minD = spec["minDiameter"]
+    maxD = spec["maxDiameter"]
+    dist = spec["distribution"]
+
+    if stdD == 0.0:
+      d = meanD
+    elif dist in ("normal", "gaussian"):
+      for _ in range(100):
+        d = float(self.rng.normal(meanD, stdD))
+        if d > 0.0:
+          break
+      else:
+        d = meanD
+    elif dist in ("lognormal", "log-normal"):
+      cv2 = (stdD / meanD) ** 2
+      sigma = math.sqrt(math.log(1.0 + cv2))
+      mu = math.log(meanD) - 0.5 * sigma * sigma
+      d = float(self.rng.lognormal(mu, sigma))
+    else:
+      raise ValueError("Unsupported diameter distribution '" + dist + "'")
+
+    if minD is not None:
+      d = max(d, minD)
+    if maxD is not None:
+      d = min(d, maxD)
+    return d
+
+  def _sampleDiameterArray(self, spec, count):
+    count = int(count)
+    if count <= 0:
+      return np.empty((0,), dtype=float)
+
+    meanD = float(spec["meanDiameter"])
+    stdD = float(spec["stdDiameter"])
+    minD = spec["minDiameter"]
+    maxD = spec["maxDiameter"]
+    dist = spec["distribution"]
+
+    lower = 0.0 if minD is None else float(minD)
+    upper = np.inf if maxD is None else float(maxD)
+    eps = max(1.0e-30, 1.0e-12 * meanD)
+    lower = max(lower, eps)
+
+    if stdD == 0.0:
+      diameters = np.full(count, meanD, dtype=float)
+    elif dist in ("normal", "gaussian"):
+      diameters = self.rng.normal(meanD, stdD, count)
+      bad = diameters <= 0.0
+      attempts = 0
+      while np.any(bad) and attempts < 25:
+        diameters[bad] = self.rng.normal(meanD, stdD, int(np.count_nonzero(bad)))
+        bad = diameters <= 0.0
+        attempts += 1
+      if np.any(bad):
+        diameters[bad] = meanD
+    elif dist in ("lognormal", "log-normal"):
+      cv2 = (stdD / meanD) ** 2
+      sigma = math.sqrt(math.log(1.0 + cv2))
+      mu = math.log(meanD) - 0.5 * sigma * sigma
+      diameters = self.rng.lognormal(mu, sigma, count)
+    else:
+      raise ValueError("Unsupported diameter distribution '" + dist + "'")
+
+    return np.clip(diameters, lower, upper)
+
+  def _sphereMeasure(self, r):
+    if self.dim == 3:
+      return 4.0 * math.pi * float(r)**3 / 3.0
+    return math.pi * float(r)**2
+
+  def _sphereMeasureArray(self, radii):
+    radii = np.asarray(radii, dtype=float)
+    if self.dim == 3:
+      return 4.0 * math.pi * radii**3 / 3.0
+    return math.pi * radii**2
+
+  def _sampleTargetGrains(self):
+    radiusBlocks = []
+    matBlocks = []
+    materialIndexBlocks = []
+    particleTypeBlocks = []
+    baseGroupBlocks = []
+
+    for mi, spec in enumerate(self.materialSpecs):
+      targetMeasure = float(spec["volumeFraction"] * self.measure)
+      if targetMeasure <= 0.0:
+        continue
+
+      meanRadius = 0.5 * float(spec["meanDiameter"])
+      meanMeasure = max(self._sphereMeasure(meanRadius), 1.0e-300)
+      remaining = targetMeasure
+      accumulated = 0.0
+
+      while remaining > 0.0:
+        estimatedRemaining = max(1, int(math.ceil(remaining / meanMeasure)))
+        batchSize = int(max(256, min(self.sampleBatchSize, math.ceil(1.25 * estimatedRemaining) + 16)))
+        diameters = self._sampleDiameterArray(spec, batchSize)
+        radii = 0.5 * diameters
+
+        for d in range(self.dim):
+          if not self.periodic[d] and np.any(2.0 * radii > self.dx[d]):
+            raise ValueError("Sampled particle diameter exceeds a nonperiodic box length")
+
+        measures = self._sphereMeasureArray(radii)
+        cumulative = np.cumsum(measures)
+        crossing = int(np.searchsorted(cumulative, remaining, side="left"))
+        if crossing < radii.shape[0]:
+          radii = radii[:crossing+1]
+          measureBlock = float(cumulative[crossing])
+          radiusBlocks.append(radii)
+          matBlocks.append(np.full(radii.shape[0], spec["mat"], dtype=np.int64))
+          materialIndexBlocks.append(np.full(radii.shape[0], mi, dtype=np.int64))
+          particleTypeBlocks.append(np.full(radii.shape[0], spec["particleType"], dtype=np.int64))
+          baseGroupBlocks.append(np.full(radii.shape[0], spec["group"], dtype=np.int64))
+          accumulated += measureBlock
+          break
+
+        radiusBlocks.append(radii)
+        matBlocks.append(np.full(radii.shape[0], spec["mat"], dtype=np.int64))
+        materialIndexBlocks.append(np.full(radii.shape[0], mi, dtype=np.int64))
+        particleTypeBlocks.append(np.full(radii.shape[0], spec["particleType"], dtype=np.int64))
+        baseGroupBlocks.append(np.full(radii.shape[0], spec["group"], dtype=np.int64))
+        accumulated += float(cumulative[-1])
+        remaining = targetMeasure - accumulated
+
+    if len(radiusBlocks) == 0:
+      return (np.empty((0,), dtype=float), np.empty((0,), dtype=np.int64),
+              np.empty((0,), dtype=np.int64), np.empty((0,), dtype=np.int64),
+              np.empty((0,), dtype=np.int64))
+
+    radii = np.concatenate(radiusBlocks)
+    mats = np.concatenate(matBlocks)
+    materialIndex = np.concatenate(materialIndexBlocks)
+    particleTypes = np.concatenate(particleTypeBlocks)
+    baseGroups = np.concatenate(baseGroupBlocks)
+
+    # Sorting largest-first improves RSA success, but is costly and unnecessary
+    # for the large lattice path.  Auto uses RSA only for <= 2M grains.
+    rsaAliases = ("rsa", "poisson", "poisson_rsa", "poisson_disk", "poisson-rsa")
+    shouldSort = self.method in rsaAliases or (self.method == "auto" and radii.size <= 2000000)
+    if shouldSort:
+      order = np.argsort(-radii)
+      return radii[order], mats[order], materialIndex[order], particleTypes[order], baseGroups[order]
+
+    return radii, mats, materialIndex, particleTypes, baseGroups
+
+  def _selectMethod(self, requestedMethod, totalFraction, grainCount):
+    method = str(requestedMethod).lower()
+    aliases = {
+      "rsa": "poisson_rsa",
+      "poisson": "poisson_rsa",
+      "poisson_disk": "poisson_rsa",
+      "poisson-rsa": "poisson_rsa",
+      "lattice": "lattice_jitter",
+      "lattice-jitter": "lattice_jitter",
+      "fcc": "lattice_jitter",
+      "triangular": "lattice_jitter",
+      "relax": "grow_relax",
+      "grow-relax": "grow_relax",
+    }
+    method = aliases.get(method, method)
+    if method != "auto":
+      return method
+
+    if self.dim == 3:
+      rsaLimit = 0.25
+      relaxLimit = 0.55
+      relaxCountLimit = 2000
+    else:
+      rsaLimit = 0.45
+      relaxLimit = 0.70
+      relaxCountLimit = 5000
+
+    # RSA is the most random in-PFW generator but becomes rejection dominated as
+    # the fraction and particle count grow.  The auto policy favors the O(N)
+    # lattice path for large beds.
+    if totalFraction <= rsaLimit and grainCount <= 200000:
+      return "poisson_rsa"
+    if totalFraction <= relaxLimit and grainCount <= relaxCountLimit:
+      return "grow_relax"
+    return "lattice_jitter"
+
+  def _setupCellGeometry(self, cellSize):
+    cellSize = float(cellSize)
+    if cellSize <= 0.0:
+      raise ValueError("Cell size must be positive")
+    self.cellSize = cellSize
+    self.invCellSize = 1.0 / self.cellSize
+    self.numCells = np.maximum(np.ceil(self.dx * self.invCellSize).astype(np.int64), 1)
+
+  def _cellIndexFromPoint(self, pt):
+    x = np.asarray(pt[:self.dim], dtype=float).copy()
+    for d in range(self.dim):
+      if self.periodic[d]:
+        x[d] = ((x[d] - self.x0[d]) % self.dx[d]) + self.x0[d]
+    idx = np.floor((x - self.x0) * self.invCellSize).astype(np.int64)
+    idx = np.minimum(np.maximum(idx, 0), self.numCells - 1)
+    return tuple(int(v) for v in idx)
+
+  def _cellIndicesFromPoints(self, points):
+    points = np.asarray(points, dtype=float)
+    if points.ndim == 1:
+      points = points.reshape(1, -1)
+    x = points[:, :self.dim].copy()
+    for d in range(self.dim):
+      if self.periodic[d]:
+        x[:, d] = ((x[:, d] - self.x0[d]) % self.dx[d]) + self.x0[d]
+    idx = np.floor((x - self.x0.reshape(1, self.dim)) * self.invCellSize).astype(np.int64)
+    return np.minimum(np.maximum(idx, 0), self.numCells.reshape(1, self.dim) - 1)
+
+  def _cellStrides(self):
+    strides = np.ones(self.dim, dtype=np.int64)
+    for d in range(1, self.dim):
+      strides[d] = strides[d-1] * int(self.numCells[d-1])
+    return strides
+
+  def _flatCellIndex(self, cell):
+    return int(np.dot(np.asarray(cell, dtype=np.int64), self.cellStrides))
+
+  def _flatCellArray(self, cells):
+    cells = np.asarray(cells, dtype=np.int64)
+    return np.sum(cells * self.cellStrides.reshape(1, self.dim), axis=1).astype(np.int64)
+
+  def _particlesInCell(self, cell):
+    if getattr(self, "centerCellIndexMode", "dict") == "dict":
+      return self.cellParticles.get(tuple(int(v) for v in cell), [])
+    flat = self._flatCellIndex(cell)
+    pos = np.searchsorted(self.cellUniqueFlat, flat)
+    if pos < self.cellUniqueFlat.size and int(self.cellUniqueFlat[pos]) == flat:
+      return self.cellOrder[self.cellStarts[pos]:self.cellStops[pos]]
+    return []
+
+  def _neighborCells(self, centerCell, searchRadius):
+    searchRadius = max(0.0, float(searchRadius))
+    reach = np.ceil(searchRadius * self.invCellSize).astype(np.int64) + 1
+    ranges = []
+    for d in range(self.dim):
+      lo = int(centerCell[d] - reach)
+      hi = int(centerCell[d] + reach)
+      vals = []
+      for v in range(lo, hi + 1):
+        if self.periodic[d]:
+          vals.append(int(v % self.numCells[d]))
+        elif 0 <= v < self.numCells[d]:
+          vals.append(int(v))
+      ranges.append(sorted(set(vals)))
+    for cell in itertools.product(*ranges):
+      yield tuple(int(v) for v in cell)
+
+  def _minimumImageDelta(self, x, centers):
+    delta = np.asarray(x, dtype=float) - np.asarray(centers, dtype=float)
+    if delta.ndim == 1:
+      for d in range(self.dim):
+        if self.periodic[d]:
+          delta[d] -= round(delta[d] / self.dx[d]) * self.dx[d]
+    else:
+      for d in range(self.dim):
+        if self.periodic[d]:
+          delta[:, d] -= np.round(delta[:, d] / self.dx[d]) * self.dx[d]
+    return delta
+
+  def _wrapOrClipCenters(self, centers, radii):
+    centers = np.asarray(centers, dtype=float)
+    radii = np.asarray(radii, dtype=float)
+    for d in range(self.dim):
+      if self.periodic[d]:
+        centers[:, d] = ((centers[:, d] - self.x0[d]) % self.dx[d]) + self.x0[d]
+      else:
+        lo = self.x0[d] + radii
+        hi = self.x1[d] - radii
+        centers[:, d] = np.minimum(np.maximum(centers[:, d], lo), hi)
+    return centers
+
+  def _generateByRSA(self, targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup):
+    n = int(targetRadii.size)
+    if n == 0:
+      raise ValueError("No grains requested")
+
+    maxRadius = float(np.max(targetRadii))
+    self._setupCellGeometry(maxRadius)
+    centers = np.empty((n, self.dim), dtype=float)
+    cellParticles = {}
+
+    for i in range(n):
+      r = float(targetRadii[i])
+      centerLo = self.x0.copy()
+      centerHi = self.x1.copy()
+      for d in range(self.dim):
+        if not self.periodic[d]:
+          centerLo[d] += r
+          centerHi[d] -= r
+      if np.any(centerHi <= centerLo):
+        raise ValueError("No valid center location remains for one of the requested grains")
+
+      accepted = False
+      for _ in range(self.maxTrialsPerGrain):
+        c = centerLo + self.rng.random(self.dim) * (centerHi - centerLo)
+        c = self._wrapOrClipCenters(c.reshape(1, -1), np.asarray([r]))[0]
+        if self._candidateFitsRSA(c, r, centers, targetRadii, i, cellParticles):
+          centers[i, :] = c
+          cell = self._cellIndexFromPoint(c)
+          cellParticles.setdefault(cell, []).append(i)
+          accepted = True
+          break
+
+      if not accepted:
+        raise RuntimeError(
+          "packedSphericalBed poisson_rsa placed " + str(i) + " of " + str(n) +
+          " grains before exceeding maxTrialsPerGrain.  Try method='lattice_jitter' " +
+          "or method='grow_relax', increase overlapPercent, lower volume fraction, " +
+          "or increase maxTrialsPerGrain."
+        )
+
+    return centers, targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup
+
+  def _candidateFitsRSA(self, center, radius, centers, radii, placedCount, cellParticles):
+    searchRadius = self.effectiveSeparationFactor * (float(radius) + float(radii[0] if placedCount > 0 else radius))
+    centerCell = self._cellIndexFromPoint(center)
+    for cell in self._neighborCells(centerCell, searchRadius):
+      for j in cellParticles.get(cell, []):
+        delta = self._minimumImageDelta(center, centers[j, :])
+        d2 = float(np.dot(delta, delta))
+        minSep = self.effectiveSeparationFactor * (float(radius) + float(radii[j]))
+        if d2 < minSep * minSep:
+          return False
+    return True
+
+  def _centerDomainForLattice(self, maxRadius):
+    lo = self.x0.copy()
+    hi = self.x1.copy()
+    for d in range(self.dim):
+      if not self.periodic[d]:
+        lo[d] += maxRadius
+        hi[d] -= maxRadius
+    if np.any(hi <= lo):
+      raise ValueError("No valid lattice center domain remains after nonperiodic particle-radius margins")
+    return lo, hi
+
+  def _generateByLattice(self, targetRadii, targetMat, targetMaterialIndex, targetParticleType, targetBaseGroup):
+    n = int(targetRadii.size)
+    if n == 0:
+      raise ValueError("No grains requested")
+    maxRadius = float(np.max(targetRadii))
+    lo, hi = self._centerDomainForLattice(maxRadius)
+    activeDx = hi - lo
+
+    if self.dim == 2:
+      positions, nearestSpacing = self._generateTriangularSites(n, lo, hi, activeDx)
+    else:
+      positions, nearestSpacing = self._generateFCCSites(n, lo, hi, activeDx)
+
+    if positions.shape[0] < n:
+      raise RuntimeError("Internal lattice generation error: not enough sites generated")
+
+    # Randomize site and radius association so material bands do not follow the
+    # deterministic radius sort used for RSA.
+    siteOrder = self.rng.permutation(positions.shape[0])[:n]
+    grainOrder = self.rng.permutation(n)
+    centers = positions[siteOrder, :].astype(float)
+    radii = targetRadii[grainOrder]
+    mats = targetMat[grainOrder]
+    materialIndex = targetMaterialIndex[grainOrder]
+    particleTypes = targetParticleType[grainOrder]
+    baseGroups = targetBaseGroup[grainOrder]
+
+    if self.jitterFraction > 0.0:
+      jitter = self.jitterFraction * nearestSpacing
+      centers += self.rng.uniform(-jitter, jitter, size=centers.shape)
+      centers = self._wrapOrClipCenters(centers, radii)
+
+    return centers, radii, mats, materialIndex, particleTypes, baseGroups
+
+  def _generateTriangularSites(self, n, lo, hi, activeDx):
+    # Periodic-compatible staggered lattice.  When the y direction is periodic,
+    # use an even number of rows so the row-offset pattern wraps cleanly.
+    lx = float(activeDx[0])
+    ly = float(activeDx[1])
+    ratio = (math.sqrt(3.0) * 0.5) * lx / max(ly, 1.0e-30)
+    nx = max(1, int(math.floor(math.sqrt(max(n, 1) * ratio))))
+    ny = max(1, int(math.floor(float(n) / float(nx))))
+    if self.periodic[1] and ny % 2 == 1:
+      ny += 1
+
+    while nx * ny < n:
+      hx0 = lx / nx
+      hy0 = ly / ny
+      if hx0 > hy0:
+        nx += 1
+      else:
+        ny += 1
+        if self.periodic[1] and ny % 2 == 1:
+          ny += 1
+
+    for _ in range(32):
+      pts = []
+      hx = lx / nx
+      hy = ly / ny
+      for j in range(ny):
+        y = lo[1] + (j + 0.5) * hy
+        offset = 0.5 if (j % 2) else 0.0
+        for i in range(nx):
+          x = lo[0] + (i + 0.5 + offset) * hx
+          if x >= hi[0]:
+            if self.periodic[0]:
+              x = ((x - self.x0[0]) % self.dx[0]) + self.x0[0]
+            else:
+              continue
+          pts.append([x, y])
+      if len(pts) >= n:
+        nearestSpacing = min(hx, math.sqrt((0.5 * hx)**2 + hy**2))
+        return np.asarray(pts, dtype=float), nearestSpacing
+      if lx / nx > ly / ny:
+        nx += 1
+      else:
+        ny += 1
+        if self.periodic[1] and ny % 2 == 1:
+          ny += 1
+    raise RuntimeError("Could not generate enough triangular lattice sites")
+
+  def _generateFCCSites(self, n, lo, hi, activeDx):
+    # Periodic-compatible FCC-like lattice.  Integer cell counts make the site
+    # pattern tile cleanly across periodic faces and avoid artificially close
+    # pairs at the box seam.
+    volume = float(np.prod(activeDx))
+    targetCells = max(1, int(math.ceil(float(n) / 4.0)))
+    ideal = activeDx * (targetCells / max(volume, 1.0e-30)) ** (1.0 / 3.0)
+    counts = np.maximum(np.floor(ideal).astype(np.int64), 1)
+    while 4 * int(np.prod(counts)) < n:
+      # Increment the direction with the largest current cell size.  This keeps
+      # the lattice as coarse as possible while respecting the box aspect ratio.
+      hTrial = activeDx / counts.astype(float)
+      counts[int(np.argmax(hTrial))] += 1
+
+    h = activeDx / counts.astype(float)
+    basis = np.asarray([[0.0, 0.0, 0.0],
+                        [0.0, 0.5, 0.5],
+                        [0.5, 0.0, 0.5],
+                        [0.5, 0.5, 0.0]], dtype=float)
+    pts = []
+    for i in range(int(counts[0])):
+      for j in range(int(counts[1])):
+        for k in range(int(counts[2])):
+          base = np.asarray([i, j, k], dtype=float)
+          for b in basis:
+            p = lo + (base + b) * h
+            # The basis contains zeros.  Those points are valid for periodic
+            # directions and for nonperiodic directions because lo/hi already
+            # include the max-radius margin.
+            if np.all(p < hi + 1.0e-14):
+              for d in range(self.dim):
+                if self.periodic[d]:
+                  p[d] = ((p[d] - self.x0[d]) % self.dx[d]) + self.x0[d]
+              pts.append(p.tolist())
+    nearestSpacing = min(float(np.min(h)), float(np.linalg.norm([0.5*h[0], 0.5*h[1], 0.0])),
+                         float(np.linalg.norm([0.5*h[0], 0.0, 0.5*h[2]])),
+                         float(np.linalg.norm([0.0, 0.5*h[1], 0.5*h[2]])))
+    return np.asarray(pts, dtype=float), nearestSpacing
+
+  def _buildTemporaryCellList(self, centers, cellSize):
+    oldCellSize = getattr(self, "cellSize", None)
+    oldInvCellSize = getattr(self, "invCellSize", None)
+    oldNumCells = getattr(self, "numCells", None)
+    self._setupCellGeometry(cellSize)
+    cells = {}
+    for i, c in enumerate(centers):
+      cells.setdefault(self._cellIndexFromPoint(c), []).append(i)
+    saved = (oldCellSize, oldInvCellSize, oldNumCells)
+    return cells, saved
+
+  def _restoreCellGeometry(self, saved):
+    oldCellSize, oldInvCellSize, oldNumCells = saved
+    if oldCellSize is None:
+      if hasattr(self, "cellSize"):
+        del self.cellSize
+      if hasattr(self, "invCellSize"):
+        del self.invCellSize
+      if hasattr(self, "numCells"):
+        del self.numCells
+    else:
+      self.cellSize = oldCellSize
+      self.invCellSize = oldInvCellSize
+      self.numCells = oldNumCells
+
+  def _relaxCenters(self, centers, radii):
+    centers = np.asarray(centers, dtype=float).copy()
+    radii = np.asarray(radii, dtype=float)
+    if centers.shape[0] == 0 or self.relaxIterations <= 0:
+      return centers
+
+    maxRadius = float(np.max(radii))
+    for _ in range(self.relaxIterations):
+      cells, saved = self._buildTemporaryCellList(centers, maxRadius)
+      disp = np.zeros_like(centers)
+      maxViolation = 0.0
+      for i in range(centers.shape[0]):
+        c = centers[i, :]
+        cell = self._cellIndexFromPoint(c)
+        searchRadius = self.effectiveSeparationFactor * (float(radii[i]) + maxRadius)
+        for ncell in self._neighborCells(cell, searchRadius):
+          for j in cells.get(ncell, []):
+            if j <= i:
+              continue
+            delta = self._minimumImageDelta(centers[j, :], c)
+            dist = float(np.linalg.norm(delta))
+            target = self.effectiveSeparationFactor * (float(radii[i]) + float(radii[j]))
+            if dist < target and target > 0.0:
+              violation = target - dist
+              maxViolation = max(maxViolation, violation)
+              if dist <= 1.0e-30:
+                direction = self.rng.normal(size=self.dim)
+                direction /= max(np.linalg.norm(direction), 1.0e-30)
+              else:
+                direction = delta / dist
+              push = 0.5 * violation * direction
+              disp[i, :] -= push
+              disp[j, :] += push
+      self._restoreCellGeometry(saved)
+      centers += self.relaxDamping * disp
+      centers = self._wrapOrClipCenters(centers, radii)
+      if maxViolation <= 1.0e-12:
+        break
+    return centers
+
+  def _loadGrains(self, grains):
+    if isinstance(grains, dict):
+      centers = np.asarray(grains["centers"], dtype=self.arrayDType)
+      radii = np.asarray(grains["radii"], dtype=self.arrayDType)
+      mats = grains.get("mats", grains.get("mat", grains.get("materials", None)))
+      groups = grains.get("groups", grains.get("group", None))
+      particleTypes = grains.get("particleTypes", grains.get("particleType", None))
+    else:
+      arr = np.asarray(grains)
+      if arr.ndim != 2 or arr.shape[1] < self.dim + 1:
+        raise ValueError("grains array must have columns [radius, x, y, (z), optional mat, optional group]")
+      radii = np.asarray(arr[:, 0], dtype=self.arrayDType)
+      centers = np.asarray(arr[:, 1:1+self.dim], dtype=self.arrayDType)
+      mats = arr[:, 1+self.dim] if arr.shape[1] > 1+self.dim else None
+      groups = arr[:, 2+self.dim] if arr.shape[1] > 2+self.dim else None
+      particleTypes = arr[:, 3+self.dim] if arr.shape[1] > 3+self.dim else None
+
+    if centers.ndim != 2 or centers.shape[1] < self.dim:
+      raise ValueError("grains centers must have shape (N, dim)")
+    centers = centers[:, :self.dim]
+    if radii.ndim != 1 or radii.size != centers.shape[0]:
+      raise ValueError("grains radii must be a length-N array")
+    if np.any(radii <= 0.0):
+      raise ValueError("All imported grain radii must be positive")
+
+    n = int(radii.size)
+    if mats is None:
+      mats = np.full(n, self.materialSpecs[0]["mat"], dtype=np.int64)
+    if groups is None:
+      groups = np.full(n, self.materialSpecs[0]["group"], dtype=np.int64)
+    if particleTypes is None:
+      particleTypes = np.full(n, self.materialSpecs[0]["particleType"], dtype=np.int64)
+
+    self.centers = self._wrapOrClipCenters(np.asarray(centers, dtype=self.arrayDType), np.asarray(radii, dtype=float))
+    self.radii = np.asarray(radii, dtype=self.arrayDType)
+    self.mats = np.asarray(mats, dtype=np.int64)
+    self.baseGroups = np.asarray(groups, dtype=np.int64)
+    self.groups = np.asarray(groups, dtype=np.int64)
+    self.particleTypes = np.asarray(particleTypes, dtype=np.int64)
+    matToIndex = {spec["mat"]: i for i, spec in enumerate(self.materialSpecs)}
+    self.materialIndex = np.asarray([matToIndex.get(int(m), 0) for m in self.mats], dtype=np.int64)
+
+  def _buildCenterCellList(self):
+    self._setupCellGeometry(max(self.maxRadius, 1.0e-30))
+    self.cellStrides = self._cellStrides()
+
+    mode = self.cellIndexMode
+    if mode == "auto":
+      mode = "dict" if self.radii.size <= self.maxDictCellIndexGrains else "sorted"
+    if mode not in ("dict", "dictionary", "sorted", "array"):
+      raise ValueError("Unsupported packedSphericalBed cellIndexMode '" + self.cellIndexMode + "'")
+
+    if mode in ("dict", "dictionary"):
+      self.centerCellIndexMode = "dict"
+      self.cellParticles = {}
+      for i, c in enumerate(self.centers):
+        self.cellParticles.setdefault(self._cellIndexFromPoint(c), []).append(i)
+    else:
+      self.centerCellIndexMode = "sorted"
+      self.cellParticles = {}
+      cellIndices = self._cellIndicesFromPoints(self.centers)
+      flat = self._flatCellArray(cellIndices)
+      order = np.argsort(flat, kind="mergesort")
+      flatSorted = flat[order]
+      unique, starts = np.unique(flatSorted, return_index=True)
+      self.cellOrder = order.astype(np.int64)
+      self.cellUniqueFlat = unique.astype(np.int64)
+      self.cellStarts = starts.astype(np.int64)
+      self.cellStops = np.append(starts[1:], flatSorted.size).astype(np.int64)
+
+  def _computeMaterialFractions(self):
+    fractions = {}
+    measures = self._sphereMeasureArray(self.radii)
+    for matId in sorted(set(int(m) for m in self.mats)):
+      fractions[matId] = float(np.sum(measures[self.mats == matId]) / self.measure)
+    return fractions
+
+  def _assignContactGroups(self):
+    mode = self.contactGroupMode.lower()
+    if hasattr(self, "groups") and np.asarray(self.groups).size == self.radii.size and mode in ("import", "imported"):
+      return np.asarray(self.groups, dtype=np.int64)
+
+    if mode in ("constant", "none"):
+      groups = np.full(self.radii.size, self.groupBase, dtype=np.int64)
+    elif mode in ("material", "materialgroup"):
+      groups = self.baseGroups.astype(np.int64)
+    elif mode in ("greedycolor", "greedy_color"):
+      groups = self._assignGreedyColors()
+    elif mode in ("hashcolor", "hash_color", "hash"):
+      groups = self._assignHashColors()
+    elif mode in ("color", "colored"):
+      if self.radii.size <= self.colorGraphLimit:
+        groups = self._assignGreedyColors()
+      else:
+        groups = self._assignHashColors()
+    else:
+      raise ValueError("Unsupported contactGroupMode '" + self.contactGroupMode + "'")
+
+    if groups.size > 0:
+      minGroup = int(np.min(groups))
+      maxGroup = int(np.max(groups))
+      if (minGroup < 0 or maxGroup >= self.maxContactGroups) and g_rank == 0:
+        print("WARNING packedSphericalBed '", self.name, "': contact groups range from ",
+              minGroup, " to ", maxGroup, ", outside [0, ", self.maxContactGroups-1,
+              "]. GEOS MPM commonly supports at most 100 contact groups.", sep="")
+    return groups.astype(np.int64)
+
+  def _assignHashColors(self):
+    cells = self._cellIndicesFromPoints(self.centers)
+    h = cells[:, 0].astype(np.int64) * np.int64(73856093)
+    if self.dim >= 2:
+      h = np.bitwise_xor(h, cells[:, 1].astype(np.int64) * np.int64(19349663))
+    if self.dim == 3:
+      h = np.bitwise_xor(h, cells[:, 2].astype(np.int64) * np.int64(83492791))
+    h = np.bitwise_xor(h, np.arange(self.radii.size, dtype=np.int64) * np.int64(2654435761))
+    colors = np.mod(np.abs(h), self.numContactColors).astype(np.int64)
+    return self.baseGroups.astype(np.int64) + colors
+
+  def _assignGreedyColors(self):
+    colors = -np.ones(self.radii.size, dtype=np.int64)
+    groups = np.empty(self.radii.size, dtype=np.int64)
+    maxRadius = float(np.max(self.radii))
+
+    for i, c in enumerate(self.centers):
+      used = set()
+      cell = self._cellIndexFromPoint(c)
+      searchRadius = self.nearContactFactor * self.effectiveSeparationFactor * (float(self.radii[i]) + maxRadius)
+      for ncell in self._neighborCells(cell, searchRadius):
+        for j in self._particlesInCell(ncell):
+          if j >= i or colors[j] < 0:
+            continue
+          delta = self._minimumImageDelta(c, self.centers[j, :])
+          dist = float(np.linalg.norm(delta))
+          near = self.nearContactFactor * self.effectiveSeparationFactor * (float(self.radii[i]) + float(self.radii[j]))
+          if dist <= near:
+            used.add(int(colors[j]))
+      color = None
+      for k in range(self.numContactColors):
+        if k not in used:
+          color = k
+          break
+      if color is None:
+        color = int(i % self.numContactColors)
+      colors[i] = color
+      groups[i] = int(self.baseGroups[i]) + color
+    return groups
+
+  def _estimateMaxOverlapPercent(self, maxPairs=2000000):
+    maxOverlap = 0.0
+    checked = 0
+    maxRadius = float(np.max(self.radii))
+    for i, c in enumerate(self.centers):
+      cell = self._cellIndexFromPoint(c)
+      searchRadius = float(self.radii[i]) + maxRadius
+      for ncell in self._neighborCells(cell, searchRadius):
+        for j in self._particlesInCell(ncell):
+          if j <= i:
+            continue
+          delta = self._minimumImageDelta(c, self.centers[j, :])
+          dist = float(np.linalg.norm(delta))
+          denom = float(self.radii[i] + self.radii[j])
+          if denom > 0.0 and dist < denom:
+            maxOverlap = max(maxOverlap, 100.0 * (1.0 - dist / denom))
+          checked += 1
+          if checked >= maxPairs and self.radii.size > 100000:
+            return maxOverlap
+    return maxOverlap
+
+  def _pointInsideBox(self, x):
+    return bool(np.all(np.logical_and(x >= self.x0, x < self.x1)))
+
+  def _locate(self, pt, skinDepth=0.0):
+    x = np.asarray(pt[:self.dim], dtype=float)
+    key = (tuple(float(v) for v in x), float(skinDepth))
+    if self._lastQueryKey == key:
+      return self._lastQueryResult
+
+    result = {
+      "owner": -1,
+      "distance": np.inf,
+      "depth": -np.inf,
+      "delta": None,
+      "surfaceFlag": -1,
+    }
+
+    if not self._pointInsideBox(x):
+      self._lastQueryKey = key
+      self._lastQueryResult = result
+      return result
+
+    centerCell = self._cellIndexFromPoint(x)
+    searchRadius = self.maxRadius + max(0.0, float(skinDepth))
+    candidates = []
+    for cell in self._neighborCells(centerCell, searchRadius):
+      candidates.extend(self._particlesInCell(cell))
+    if len(candidates) == 0:
+      self._lastQueryKey = key
+      self._lastQueryResult = result
+      return result
+
+    candidateIds = np.asarray(sorted(set(candidates)), dtype=np.int64)
+    centers = self.centers[candidateIds, :]
+    delta = self._minimumImageDelta(x, centers)
+    d2 = np.einsum('ij,ij->i', delta, delta)
+    radii = self.radii[candidateIds]
+    inside = d2 <= radii * radii
+    if not np.any(inside):
+      self._lastQueryKey = key
+      self._lastQueryResult = result
+      return result
+
+    insideIds = candidateIds[inside]
+    insideDelta = delta[inside, :]
+    insideD2 = d2[inside]
+    insideRadii = radii[inside]
+    distances = np.sqrt(insideD2)
+    depths = insideRadii - distances
+    j = int(np.argmax(depths))
+    owner = int(insideIds[j])
+    depth = float(depths[j])
+    distance = float(distances[j])
+    surfaceFlag = _defaultSurfaceFlag if depth <= float(skinDepth) else 0
+
+    result = {
+      "owner": owner,
+      "distance": distance,
+      "depth": depth,
+      "delta": np.asarray(insideDelta[j, :], dtype=float),
+      "surfaceFlag": surfaceFlag,
+    }
+    self._lastQueryKey = key
+    self._lastQueryResult = result
+    return result
+
+  def isInterior(self, pt, skinDepth):
+    return int(self._locate(pt, skinDepth)["surfaceFlag"])
+
+  def _cachedLocateForPoint(self, pt):
+    x = tuple(float(v) for v in np.asarray(pt[:self.dim], dtype=float))
+    if self._lastQueryKey is not None and self._lastQueryKey[0] == x:
+      return self._lastQueryResult
+    return self._locate(pt, 0.0)
+
+  def getSurfaceNormal(self, pt):
+    loc = self._cachedLocateForPoint(pt)
+    if loc["owner"] < 0:
+      loc = self._locate(pt, 0.0)
+    if loc["owner"] < 0:
+      return _defaultSurfaceNormal
+    delta = np.asarray(loc["delta"], dtype=float)
+    dist = float(loc["distance"])
+    normal = np.zeros(3)
+    if dist <= 1.0e-30:
+      normal[0] = 1.0
+    else:
+      normal[:self.dim] = delta / dist
+    return normal
+
+  def getSurfacePosition(self, pt):
+    loc = self._cachedLocateForPoint(pt)
+    if loc["owner"] < 0:
+      loc = self._locate(pt, 0.0)
+    if loc["owner"] < 0:
+      return _defaultSurfacePosition
+    owner = int(loc["owner"])
+    delta = np.asarray(loc["delta"], dtype=float)
+    dist = float(loc["distance"])
+    pos = np.zeros(3)
+    if dist <= 1.0e-30:
+      pos[0] = float(self.radii[owner])
+    else:
+      pos[:self.dim] = (float(self.radii[owner]) / dist - 1.0) * delta
+    return pos
+
+  def getMat(self, pt):
+    loc = self._cachedLocateForPoint(pt)
+    if loc["owner"] < 0:
+      loc = self._locate(pt, 0.0)
+    if loc["owner"] < 0:
+      return self.mat
+    return int(self.mats[int(loc["owner"])])
+
+  def getGroup(self, pt):
+    loc = self._cachedLocateForPoint(pt)
+    if loc["owner"] < 0:
+      loc = self._locate(pt, 0.0)
+    if loc["owner"] < 0:
+      return int(self.group)
+    return int(self.groups[int(loc["owner"])])
+
+  def getParticleType(self, pt):
+    loc = self._cachedLocateForPoint(pt)
+    if loc["owner"] < 0:
+      loc = self._locate(pt, 0.0)
+    if loc["owner"] < 0:
+      return int(self.particleType)
+    return int(self.particleTypes[int(loc["owner"])])
+
+  def getSubregions(self):
+    subregions = set()
+    for matId, pType in zip(self.mats, self.particleTypes):
+      subregions.add((int(matId), int(pType)))
+    return sorted(subregions)
+
+  def xMin(self):
+    return float(self.x0[0])
+
+  def xMax(self):
+    return float(self.x1[0])
+
+  def yMin(self):
+    return float(self.x0[1]) if self.dim >= 2 else 0.0
+
+  def yMax(self):
+    return float(self.x1[1]) if self.dim >= 2 else 0.0
+
+  def zMin(self):
+    return float(self.x0[2]) if self.dim == 3 else 0.0
+
+  def zMax(self):
+    return float(self.x1[2]) if self.dim == 3 else 0.0
+
+
+# Backward-compatible camel-case alias for input files that prefer GEOS-style names.
+PackedSphericalBed = packedSphericalBed
+
+
+def importPackedSphericalBedFromDEM(*args, **kwargs):
+  """Placeholder for a future external DEM dump importer."""
+  raise NotImplementedError(
+    "DEM packed-bed import is not implemented yet.  For now, read the DEM dump "
+    "in user code and pass grains={'centers': ..., 'radii': ..., 'mats': ...} "
+    "to packedSphericalBed."
+  )
+
+
 #############################################
 class twoMaterialBox(Geometry):
   """

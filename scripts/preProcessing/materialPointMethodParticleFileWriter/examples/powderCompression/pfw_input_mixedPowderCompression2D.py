@@ -157,34 +157,34 @@ pfw["particleFileFields"] = [
 # Materials
 # =============================================================================
 
-pfw["materials"] = [matdb.copper["name"]]
-pfw["materialPropertyString"] = matdb.copper["materialString"]
+pfw["materials"] = [matdb.copper["name"],matdb.quartz["name"]]
+pfw["materialPropertyString"] = matdb.copper["materialString"]+matdb.quartz["materialString"]
 COPPER = 0
 
 # =============================================================================
 # Geometry
 # =============================================================================
-
-foam = geom.poissonDiskFoam(
-    "periodic_copper_foam_2d",
-    x0 = [pfw["xmin"], pfw["ymin"]],
-    x1 = [pfw["xmax"], pfw["ymax"]],
-    poreDiameter = poreDiameter,
-    porosity = poreAreaFraction,
-    seed = poreSeed,
-    periodic = [pfw["periodic"][0], pfw["periodic"][1]],
-    minLigament = poreMinLigament,
-    maxTrialsPerPore = 20000,
-    dim = 2,
-    # geom.box-style order for dim=2: [x-, y-, x+, y+].
-    flaggedSurfaces = [False, True, False, True],
+bed = geom.packedSphericalBed(
+    "bed",
+    x0=[pfw["xmin"], pfw["ymin"]],
+    x1=[pfw["xmax"], pfw["ymax"]],
+    dim=2,
+    periodic=[False,True],
+    materials=[
+        {"mat": 0, "volumeFraction": 0.45,
+         "meanDiameter": 0.25, "stdDiameter": 0.025},
+        {"mat": 1, "volumeFraction": 0.15,
+         "meanDiameter": 0.15, "stdDiameter": 0.015},
+    ],
     vel = [ -impactVelocity, 0.0, 0.0],
-    mat = COPPER,
-    group = 0,
-    particleType = 1,  # SinglePointBSpline
+    overlapPercent=2.0,
+    method="auto",
+    seed=17,
+    group=0,
+    particleType=1,
 )
 
-pfw["objects"] = [foam]
+pfw["objects"] = [bed]
 
 # =============================================================================
 # Boundary conditions
