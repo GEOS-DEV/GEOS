@@ -106,9 +106,15 @@ pfw["initialDt"] = 1.0e-16
 pfw["updateMethod"] = "FMPM"
 pfw["updateOrder"] = 2
 
-# SinglePointBSpline particles do not use CPDI domain scaling.
-pfw["damageFieldPartitioning"] = 0
-pfw["needsNeighborList"] = 0
+# Use damage-field partitioning/DFG for usto contact.  Will also allow damage separation
+# If the Johnson-Cook damage threshold is reached.
+pfw["damageFieldPartitioning"] = 1
+
+# Explicit contact settings.  SurfacePosition and SurfaceNormal are generated
+# below from the pore surfaces.
+pfw["contactGapCorrection"] = "Implicit" # Activate contact only if gap <=0
+pfw["useSurfacePositionForContact"] = 1
+pfw["explicitSurfaceNormalInfluence"] = 1000.0
 
 # =============================================================================
 # Profile history output
