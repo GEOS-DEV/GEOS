@@ -88,7 +88,6 @@
         "constitutive::CO2BrineEzrokhiThermalFluid",
         "constitutive::CompositionalKValuePhillipsBrine",
         "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
-        "constitutive::CompositionalMultiphaseFluidPVTPackage",
         "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "constitutive::CompositionalTwoPhaseConstantViscosity",
         "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",
@@ -195,7 +194,6 @@
       ]
     },
     "explicit": [
-      "geos::serialPolicy#constitutive::CompositionalMultiphaseFluidPVTPackage"
     ]
   },
 
@@ -213,7 +211,6 @@
         "constitutive::CO2BrineEzrokhiThermalFluid",
         "constitutive::CompositionalKValuePhillipsBrine",
         "constitutive::CompositionalKValueLohrenzBrayClarkViscosity",
-        "constitutive::CompositionalMultiphaseFluidPVTPackage",
         "constitutive::CompositionalThreePhaseLohrenzBrayClarkViscosity",
         "constitutive::CompositionalTwoPhaseConstantViscosity",
         "constitutive::CompositionalTwoPhaseLohrenzBrayClarkViscosity",

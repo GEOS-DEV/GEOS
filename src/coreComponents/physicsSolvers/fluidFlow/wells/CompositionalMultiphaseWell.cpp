@@ -934,7 +934,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
     using FluidType = TYPEOFREF( castedFluid );
 
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy, FluidType >;
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
     KernelType::launch( subRegion.size(),
                         fluidWrapper,
                         pres,

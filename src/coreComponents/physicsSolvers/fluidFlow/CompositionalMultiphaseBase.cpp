@@ -720,7 +720,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
     using FluidType = TYPEOFREF( castedFluid );
 
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy, FluidType >;
+    using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
     KernelType::launch( dataGroup.size(),
                         fluidWrapper,
                         pres,
@@ -2178,7 +2178,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         using FluidType = TYPEOFREF( castedFluid );
 
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-        using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy, FluidType >;
+        using KernelType = thermalCompositionalMultiphaseBaseKernels::FluidUpdateKernel< parallelDevicePolicy<>, FluidType >;
         KernelType::launch( targetSet,
                             fluidWrapper,
                             bcPres,
