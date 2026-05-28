@@ -596,6 +596,13 @@ partitionByCellGraph( AllMeshes & input,
 {
   GEOS_MARK_FUNCTION;
 
+#ifndef GEOS_USE_PARMETIS
+  GEOS_UNUSED_VAR( input, method, comm, numParts, minCommonNodes, numRefinements );
+  GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) "
+              "to use any graph partitioning method for parallel VTK mesh distribution",
+              InputError );
+  return {};
+#else
   pmet_idx_t const numElems = input.getMainMesh()->GetNumberOfCells();
   pmet_idx_t const numRanks = MpiWrapper::commSize( comm );
   int const rank = MpiWrapper::commRank( comm );
@@ -664,6 +671,7 @@ partitionByCellGraph( AllMeshes & input,
     }
   }
   return {};
+#endif
 }
 
 /**
@@ -682,6 +690,13 @@ redistributeByCellGraph( AllMeshes & input,
 {
   GEOS_MARK_FUNCTION;
 
+#ifndef GEOS_USE_PARMETIS
+  GEOS_UNUSED_VAR( input, method, comm, numRefinements );
+  GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) "
+              "to use graph partitioning for parallel VTK mesh distribution",
+              InputError );
+  return {};
+#else
   int const rank = MpiWrapper::commRank( comm );
   int const numRanks = MpiWrapper::commSize( comm );
   array1d< int64_t > newPartitions = partitionByCellGraph( input, method, comm, numRanks, 3, numRefinements );
@@ -718,6 +733,7 @@ redistributeByCellGraph( AllMeshes & input,
   }
 
   return AllMeshes( finalMesh, finalFractures );
+#endif
 }
 
 
