@@ -355,21 +355,6 @@ set( constitutive_sources
 
 set( dependencyList ${parallelDeps} functions denseLinearAlgebra )
 
-if( ENABLE_PVTPackage )
-    set( constitutive_headers
-         ${constitutive_headers}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.hpp )
-
-    set( constitutive_sources
-         ${constitutive_sources}
-         fluid/multifluid/compositional/CompositionalMultiphaseFluidPVTPackage.cpp
-          )
-
-    add_subdirectory( PVTPackage )
-
-    list( APPEND dependencyList PVTPackage )
-endif()
-
 if (ENABLE_HPCREACT)
     set( constitutive_headers
         ${constitutive_headers}
