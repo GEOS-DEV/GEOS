@@ -74,6 +74,8 @@ pfw["updateMethod"]="FLIP"
 # pfw["updateOrder"]=2
 
 pfw["useEvents"]=1
+pfw["plotGridFields"]=1
+pfw["outputType"]="vtk"
 
 pfw["particleFileFields"] = ["Velocity",
                              "MaterialType",
