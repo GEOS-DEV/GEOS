@@ -14058,6 +14058,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     arrayView1d< real64 > czDamage = czRegion.getDamage();
     arrayView2d< real64 > czReferenceArea = czRegion.getReferenceArea();
     arrayView3d< real64 > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
+    arrayView2d< real64 const > czReferencePosition = czRegion.getReferencePosition();
 
     // Allocate temporary grid fields for cohesive zone calculations
     array2d< real64 > tempGridMassLocal( numCohesiveNodes, m_numVelocityFields );
@@ -14105,12 +14106,9 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       arrayView2d< real64 const > const particleCohesiveReferencePosition = subRegion.getField< fields::mpm::particleCohesiveReferencePosition >();
       arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
       arrayView2d< real64 const > const particleReferenceShapeFunctionValues = subRegion.getField< fields::mpm::particleReferenceShapeFunctionValues >();
-      arrayView2d< real64 const > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
       arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView3d< real64 const > const particleCohesiveReferenceDeformationGradient = subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
-      arrayView2d< real64 const > const particleCohesiveReferenceSurfacePosition = subRegion.getField< fields::mpm::particleCohesiveReferenceSurfacePosition >();
       arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
-      arrayView3d< real64 const > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
 
       int const numberOfVerticesPerParticle = subRegion.numberOfVerticesPerParticle();
 
@@ -14136,35 +14134,39 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
               // Tensor equation: deformationGradientCofactor = cof(particleDeformationGradient[p]).
               LvArray::tensorOps::cofactor< 3 >( deformationGradientCofactor, particleDeformationGradient[p] );
 
-              real64 referenceSurfacePoint[3] = {};
-              // Tensor equation: referenceSurfacePoint = particleCohesiveReferenceDeformationGradient[p] *
-              //   initialSurfacePoint.
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( referenceSurfacePoint, particleCohesiveReferenceDeformationGradient[p], particleCohesiveReferenceSurfacePosition[p] );
+              // Reconstruct the displacement at each cohesive-zone node from the particle affine motion in the
+              // cohesive reference configuration. This keeps the displacement jump objective: under a rigid-body
+              // rotation every particle contributing to the same cohesive node evaluates the same nodal displacement,
+              // independent of how many layers of surface-flagged particles contribute to the projection.
+              real64 inverseCohesiveReferenceDeformationGradient[3][3] = {};
+              LvArray::tensorOps::copy< 3, 3 >( inverseCohesiveReferenceDeformationGradient,
+                                                particleCohesiveReferenceDeformationGradient[p] );
+              real64 const cohesiveReferenceDeterminant =
+                LvArray::tensorOps::invert< 3 >( inverseCohesiveReferenceDeformationGradient );
+              GEOS_ERROR_IF( isZero( cohesiveReferenceDeterminant ),
+                             "Singular particle cohesive reference deformation gradient." );
 
-              real64 deformedSurfacePoint[3] = {};
-              // Tensor equation: deformedSurfacePoint = particleDeformationGradient[p] * initialSurfacePoint.
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint, particleDeformationGradient[p], particleCohesiveReferenceSurfacePosition[p] );
+              real64 relativeDeformationGradient[3][3] = {};
+              LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( relativeDeformationGradient,
+                                                            particleDeformationGradient[p],
+                                                            inverseCohesiveReferenceDeformationGradient );
 
-              real64 surfaceDisplacement[3] = {};
-              // Tensor equation: surfaceDisplacement = particlePosition[p] - particleCohesiveReferencePosition[p] +
-              //   deformedSurfacePoint - referenceSurfacePoint.
+              real64 centerDisplacement[3] = {};
+              // Tensor equation: centerDisplacement = particlePosition[p] - particleCohesiveReferencePosition[p].
+              LvArray::tensorOps::copy< 3 >( centerDisplacement, particlePosition[p] );
+              LvArray::tensorOps::subtract< 3 >( centerDisplacement, particleCohesiveReferencePosition[p] );
 
-              LvArray::tensorOps::copy< 3 >( surfaceDisplacement, particlePosition[p] );
-              LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, particleCohesiveReferencePosition[p] );
-
-              // If the domain is periodic need to correct particle displacement
-              for(localIndex i=0; i < numDims; ++i)
+              // If the domain is periodic need to correct particle displacement.
+              for( localIndex i = 0; i < numDims; ++i )
               {
                 if( periodic[i] == 1 )
                 {
-                  surfaceDisplacement[i] = Mod(surfaceDisplacement[i], domainExtent[i]); 
+                  centerDisplacement[i] = Mod( centerDisplacement[i] + 0.5 * domainExtent[i], domainExtent[i] ) -
+                                          0.5 * domainExtent[i];
                 }
               }
 
-              LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
-              LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, referenceSurfacePoint );
-
-              // Map particle displacement to grid
+              // Map particle-projected cohesive-node displacement to grid.
               for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
               {
                 globalIndex const cachedNodeIndex = particleReferenceGlobalNodeIndex[p][g];
@@ -14190,9 +14192,37 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                   tempGridMassLocal[nodeIndex][fieldIndex] += particleMass[p] * shapeFunctionValue;
                   // tempGridVolumeLocal[nodeIndex][fieldIndex] += particleVolume[p] * shapeFunctionValue;
 
+                  real64 referenceVectorToNode[3] = {};
+                  // Tensor equation: referenceVectorToNode = czReferencePosition[nodeIndex] -
+                  // particleCohesiveReferencePosition[p].
+                  LvArray::tensorOps::copy< 3 >( referenceVectorToNode, czReferencePosition[nodeIndex] );
+                  LvArray::tensorOps::subtract< 3 >( referenceVectorToNode, particleCohesiveReferencePosition[p] );
+
+                  for( localIndex i = 0; i < numDims; ++i )
+                  {
+                    if( periodic[i] == 1 )
+                    {
+                      referenceVectorToNode[i] = Mod( referenceVectorToNode[i] + 0.5 * domainExtent[i], domainExtent[i] ) -
+                                                 0.5 * domainExtent[i];
+                    }
+                  }
+
+                  real64 currentVectorToNode[3] = {};
+                  // Tensor equation: currentVectorToNode = relativeDeformationGradient * referenceVectorToNode.
+                  LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( currentVectorToNode,
+                                                           relativeDeformationGradient,
+                                                           referenceVectorToNode );
+
+                  real64 cohesiveNodeDisplacement[3] = {};
+                  // Tensor equation: cohesiveNodeDisplacement = centerDisplacement + currentVectorToNode -
+                  // referenceVectorToNode.
+                  LvArray::tensorOps::copy< 3 >( cohesiveNodeDisplacement, centerDisplacement );
+                  LvArray::tensorOps::add< 3 >( cohesiveNodeDisplacement, currentVectorToNode );
+                  LvArray::tensorOps::subtract< 3 >( cohesiveNodeDisplacement, referenceVectorToNode );
+
                   for( localIndex i  = 0; i < numDims; ++i )
                   {
-                    tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += particleMass[p] * surfaceDisplacement[i] * shapeFunctionValue;
+                    tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += particleMass[p] * cohesiveNodeDisplacement[i] * shapeFunctionValue;
                     // tempGridCenterOfVolumeLocal[nodeIndex][fieldIndex][i] += particleVolume[p] *
                     // (particlePosition[p][i] -
                     // m_referenceCohesiveGridNodePositions[nodeIndex][i])* shapeFunctionValue;
