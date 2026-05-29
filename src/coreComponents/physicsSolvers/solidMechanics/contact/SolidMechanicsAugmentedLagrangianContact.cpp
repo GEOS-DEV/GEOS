@@ -2092,15 +2092,15 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
         // Try to get Coulomb parameters if available
-        bool const hasCoulombParams = frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) &&
-                                      frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
+        bool const hasCoulombParams = frictionLaw.hasWrapper( fields::contact::cohesion::key() ) &&
+                                      frictionLaw.hasWrapper( fields::contact::frictionCoefficient::key() );
 
-        arrayView1d< real64 const > cohesionValues;
-        arrayView1d< real64 const > frictionCoefficientValues;
+        arrayView1d< real64 const > cohesion;
+        arrayView1d< real64 const > frictionCoefficient;
         if( hasCoulombParams )
         {
-          cohesionValues = frictionLaw.getReference< array1d< real64 > >( CoulombFriction::viewKeyStruct::cohesionString() ).toViewConst();
-          frictionCoefficientValues = frictionLaw.getReference< array1d< real64 > >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ).toViewConst();
+          cohesion = frictionLaw.getWrapper< array1d< real64 > >( fields::contact::cohesion::key() ).reference().toViewConst();
+          frictionCoefficient = frictionLaw.getWrapper< array1d< real64 > >( fields::contact::frictionCoefficient::key() ).reference().toViewConst();
         }
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
@@ -2114,8 +2114,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           iterativePenalty,
                                                           totalBubbleDisplacement,
                                                           hasCoulombParams,
-                                                          cohesionValues,
-                                                          frictionCoefficientValues,
+                                                          cohesion,
+                                                          frictionCoefficient,
                                                           avgElementStressView] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
@@ -2214,14 +2214,12 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
               {
-                real64 const cohesion = cohesionValues[kfe];
-                real64 const frictionCoefficient = frictionCoefficientValues[kfe];
                 real64 const normalTraction = tLocal[0];  // Negative for compression
                 real64 const tangentialTraction = LvArray::math::sqrt( tLocal[1] * tLocal[1] + tLocal[2] * tLocal[2] );
 
                 // Coulomb criterion: |tau| <= cohesion - mu * sigma_n (sigma_n < 0 for compression)
                 // For open fracture (sigma_n > 0): no traction should be applied
-                real64 const tauLimit = cohesion - frictionCoefficient * normalTraction;
+                real64 const tauLimit = cohesion[kfe] - frictionCoefficient[kfe] * normalTraction;
 
                 bool isInvalid = false;
                 string reason;
@@ -2257,7 +2255,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                            "    t = ({:.6e}, {:.6e}, {:.6e})\n"
                                            "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
                                            kfe, reason,
-                                           cohesion, frictionCoefficient,
+                                           cohesion[kfe], frictionCoefficient[kfe],
                                            n[0], n[1], n[2],
                                            t1[0], t1[1], t1[2],
                                            t2[0], t2[1], t2[2],

@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CONTACT_COULOMBFRICTION_HPP_
 
 #include "FrictionBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -195,12 +196,6 @@ public:
   {
     /// string/key for shear stiffness
     static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
-
-    /// string/key for cohesion
-    static constexpr char const * cohesionString() { return "cohesion"; }
-
-    /// string/key for friction coefficient
-    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
 
     /// string/key for the elastic slip
     static constexpr char const * elasticSlipString() { return "elasticSlip"; }
