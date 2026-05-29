@@ -117,8 +117,6 @@ void CoulombFriction::initializePostInitialConditionsPreSubGroups()
 
 void CoulombFriction::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_cohesion.resize( parent.size() );
-  m_frictionCoefficient.resize( parent.size() );
   m_elasticSlip.resize( 0, 2 );
 
   FrictionBase::allocateConstitutiveData( parent, numPts );
