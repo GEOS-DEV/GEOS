@@ -530,7 +530,7 @@ protected:
   }
 
   static real64 constexpr time = 0.0;
-  static real64 constexpr dt = 1.0;
+  static real64 constexpr dt = 0.01;
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;

@@ -492,13 +492,32 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
-                                                               string_array const & )
+                                                               string_array const & regionNames )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+    real64 solventDensity = 1.0;
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+      if( m_isThermal )
+      {
+        reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & fluid =
+          getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+        solventDensity = fluid.solventDensity();
+      }
+      else
+      {
+        reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
+          getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+        solventDensity = fluid.solventDensity();
+      }
+    } );
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
@@ -510,6 +529,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
+                                                                               solventDensity,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -525,6 +545,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
           FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
                                                                                m_hasDiffusion,
                                                                                mobilePrimarySpeciesFlags.toViewConst(),
+                                                                               solventDensity,
                                                                                dofManager.rankOffset(),
                                                                                dofKey,
                                                                                getName(),
@@ -581,15 +602,16 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
+    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is];
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventDensity;
 
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is];
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventDensity;
       }
     } );
   }
@@ -599,15 +621,16 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
+    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer is = 0; is < numPrimarySpecies; ++is )
       {
-        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is];
+        primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is] * solventDensity;
 
         if( isZero( primarySpeciesAggregateMole_n[ei][is] ) )
-          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is];
+          primarySpeciesAggregateMole_n[ei][is] = porosity_n[ei][0] * volume[ei] * primarySpeciesAggregateConcentration_n[ei][0][is] * solventDensity;
       }
     } );
   }
@@ -627,12 +650,13 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
+    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt* kineticReactionRates[ei][0][r];
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
       }
     } );
   }
@@ -641,12 +665,13 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
     reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
       getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
+    real64 const solventDensity = fluid.solventDensity();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        kineticReactionMolarIncrements[ei][r] = dt* kineticReactionRates[ei][0][r];
+        kineticReactionMolarIncrements[ei][r] = dt * kineticReactionRates[ei][0][r] * solventDensity;
       }
     } );
   }
@@ -943,7 +968,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.get_inserted( bc.getName()) = bcCounter;
     bcCounter++;
   } );
 
@@ -1014,17 +1039,18 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
       RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd( 0.0 );
 
       // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-      fs.computeRhsContribution< FieldSpecificationAdd,
-                                 parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                           time_n + dt,
-                                                           dt,
-                                                           subRegion,
-                                                           dofNumber,
-                                                           rankOffset,
-                                                           localMatrix,
-                                                           dofArray.toView(),
-                                                           rhsContributionArrayView,
-                                                           [] GEOS_HOST_DEVICE ( localIndex const )
+      FieldSpecificationImpl::computeRhsContribution< FieldSpecificationAdd,
+                                                      parallelDevicePolicy<> >( fs,
+                                                                                targetSet.toViewConst(),
+                                                                                time_n + dt,
+                                                                                dt,
+                                                                                subRegion,
+                                                                                dofNumber,
+                                                                                rankOffset,
+                                                                                localMatrix,
+                                                                                dofArray.toView(),
+                                                                                rhsContributionArrayView,
+                                                                                [] GEOS_HOST_DEVICE ( localIndex const )
       {
         return 0.0;
       } );
@@ -1118,7 +1144,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              fields::flow::pressure::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -1160,7 +1186,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                              mesh,
                                              fields::flow::logPrimarySpeciesConcentration::key(),
-                                             [&] ( FieldSpecificationBase const &,
+                                             [&] ( FieldSpecification const &,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
@@ -1212,7 +1238,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
       fsManager.apply< ElementSubRegionBase >( time_n + dt,
                                                mesh,
                                                fields::flow::temperature::key(),
-                                               [&] ( FieldSpecificationBase const &,
+                                               [&] ( FieldSpecification const &,
                                                      string const &,
                                                      SortedArrayView< localIndex const > const & targetSet,
                                                      ElementSubRegionBase & subRegion,
@@ -1432,7 +1458,7 @@ void SinglePhaseReactiveTransport::applySystemSolution( DofManager const & dofMa
                                                                       MeshLevel & mesh,
                                                                       string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key() };
+    stdVector< string > fields{ fields::flow::pressure::key() };
 
     if( m_isThermal )
     {
@@ -1526,7 +1552,7 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       fields::flow::pressure::key(), // we have required that pressure is always present
-                                      [&] ( FieldSpecificationBase const &,
+                                      [&] ( FieldSpecification const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const &,
                                             FaceManager &,
@@ -1577,7 +1603,7 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
       fsManager.apply< FaceManager >( time_n + dt,
                                       mesh,
                                       fields::flow::pressure::key(), // we have required that pressure is always present
-                                      [&] ( FieldSpecificationBase const &,
+                                      [&] ( FieldSpecification const &,
                                             string const & setName,
                                             SortedArrayView< localIndex const > const &,
                                             FaceManager &,

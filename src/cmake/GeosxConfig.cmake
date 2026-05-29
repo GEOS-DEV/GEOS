@@ -16,7 +16,6 @@ set( PREPROCESSOR_DEFINES BOUNDS_CHECK
                           MPI
                           PARMETIS
                           PETSC
-                          PVTPackage
                           PYGEOSX
                           RAJA
                           SCOTCH

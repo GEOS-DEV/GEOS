@@ -49,7 +49,7 @@ Results and benchmark
 A good agreement between the results obtained using GEOS and the reference results that are obtained by the classical finite difference method is shown in the figure below:
 
 
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion_TemperatureDependentSinglePhaseThermalConductivity/temperatureDependentSinglePhaseThermalConductivity_plot.py
+.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/nonLinearThermalDiffusion_TemperatureDependentSinglePhaseThermalConductivity/thermalConductivityFigure.py
 
 
 ------------------------------------------------------------------

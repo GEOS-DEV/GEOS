@@ -22,6 +22,7 @@
 #include "common/TimingMacros.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "fieldSpecification/FieldSpecificationImpl.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
@@ -528,16 +529,18 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fsManager.apply< ElementSubRegionBase >( time_n+ dt,
                                              mesh,
                                              contact::traction::key(),
-                                             [&] ( FieldSpecificationBase const & fs,
+                                             [&] ( FieldSpecification const & fs,
                                                    string const &,
                                                    SortedArrayView< localIndex const > const & targetSet,
                                                    ElementSubRegionBase & subRegion,
                                                    string const & )
     {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                         time_n+dt,
-                                                                         subRegion,
-                                                                         contact::traction::key() );
+      FieldSpecificationImpl::applyFieldValue< FieldSpecificationEqual,
+                                               parallelHostPolicy >( fs,
+                                                                     targetSet,
+                                                                     time_n+dt,
+                                                                     subRegion,
+                                                                     contact::traction::key() );
     } );
   } );
 }

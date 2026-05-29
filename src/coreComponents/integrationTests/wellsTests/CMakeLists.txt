@@ -1,22 +1,20 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testReservoirSinglePhaseMSWells.cpp )
+          testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
+          testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
+          testOpenClosePerf.cpp
+          testReservoirCompositionalMultiphaseMSWells.cpp
+          testReservoirSinglePhaseMSWells.cpp
+          testReservoirThermalSinglePhaseMSWells.cpp
+          testReservoirThermalSinglePhaseMSWells_RateInj.cpp
+          testThermalInjWell.cpp
+          testThermalProdWell.cpp
+          testThermalReservoirCompositionalMultiphaseSSWells.cpp 
+          testThermalReservoirCompositionalMultiphaseMSWells.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface )
-
-if( ENABLE_PVTPackage )
-    list( APPEND gtest_geosx_tests
-          testOpenClosePerf.cpp
-          testReservoirCompositionalMultiphaseMSWells.cpp
-          testReservoirThermalSinglePhaseMSWells.cpp
-          testReservoirThermalSinglePhaseMSWells_RateInj.cpp
-          testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
-          testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
-          testThermalReservoirCompositionalMultiphaseSSWells.cpp 
-          testThermalReservoirCompositionalMultiphaseMSWells.cpp )
-endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
