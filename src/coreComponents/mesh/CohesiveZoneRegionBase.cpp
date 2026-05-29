@@ -29,6 +29,7 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
   m_czVolumeNormalization( 1 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( 0 ),
+  m_czSurfaceDisplacementUpdate( 1 ),
   m_tag( 0 ),
   m_fieldA( 0 ),
   m_fieldB( 1 ),
@@ -69,6 +70,12 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
    setApplyDefaultValue( m_fieldB ).
    setRestartFlags( RestartFlags::WRITE_AND_READ ).
    setDescription( "Index of field B");
+
+  registerWrapper( viewKeyStruct::czSurfaceDisplacementUpdateString(), &m_czSurfaceDisplacementUpdate ).
+   setInputFlag( InputFlags::FALSE ).
+   setApplyDefaultValue( m_czSurfaceDisplacementUpdate ).
+   setRestartFlags( RestartFlags::WRITE_AND_READ ).
+   setDescription( "Cohesive surface displacement update method: 0=TypeA, 1=TypeB" );
 
  registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
     setInputFlag( InputFlags::FALSE ).

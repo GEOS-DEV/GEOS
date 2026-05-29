@@ -30,7 +30,8 @@ CohesiveZoneMPMEvent::CohesiveZoneMPMEvent( const string & name,
   MPMEventBase( name, parent ),
   m_czVolumeNormalization( 1 ),
   m_computeNormalsAndPositions( 0 ),
-  m_normalsAndPositionsMethod( SolidMechanicsMPM::NormalsAndPositionsMethodOption::LogisticRegression )
+  m_normalsAndPositionsMethod( SolidMechanicsMPM::NormalsAndPositionsMethodOption::LogisticRegression ),
+  m_czSurfaceDisplacementUpdate( SolidMechanicsMPM::CohesiveSurfaceDisplacementUpdateOption::TypeB )
 {
   registerWrapper( viewKeyStruct::regionNamesString(), &m_regionNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -64,6 +65,13 @@ CohesiveZoneMPMEvent::CohesiveZoneMPMEvent( const string & name,
     setApplyDefaultValue( m_normalsAndPositionsMethod ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Method for computing particle surface normals and positions" );
+
+  registerWrapper( viewKeyStruct::czSurfaceDisplacementUpdateString(), &m_czSurfaceDisplacementUpdate ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_czSurfaceDisplacementUpdate ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Cohesive surface displacement update method. TypeA uses the stored surface-position vector; TypeB uses the CPDI particle-face vector. Options are:\n* " +
+                    EnumStrings< SolidMechanicsMPM::CohesiveSurfaceDisplacementUpdateOption >::concat( "\n* " ) );
 }
 
 CohesiveZoneMPMEvent::~CohesiveZoneMPMEvent()

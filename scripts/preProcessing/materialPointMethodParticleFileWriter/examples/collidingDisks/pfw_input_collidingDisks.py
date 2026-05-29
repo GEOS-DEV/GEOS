@@ -17,7 +17,6 @@ matdb = importlib.import_module('pfw_materials')
 # model with a different preferred direction
 
 pfw = {}
-pfw["runDebug"] = True
 stopTime = 2.0
 
 # MATERIAL PROPERTIES --------------------------------------------------------------------
@@ -103,10 +102,8 @@ pfw["objects"] = [disk1,disk2]
 
 # Batch parameters for GEOS runs.  --------------------------------------------------------
 
-pfw["mWallTime"] = "12:00:00"
-pfw["mCores"] = pfw["xpar"]*pfw["ypar"]*pfw["zpar"]
-pfw["mNodes"] = int(np.ceil(float(pfw["mCores"])/36.))
-pfw["mSubmitJobs"] = False
+pfw["mWallTime"] = "00:10:00"
+pfw["mSubmitJobs"] = True
 
 # GEOS MPM i/o parameters ---------------------------------------------------------------
 

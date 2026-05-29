@@ -7704,6 +7704,7 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
             czRegion.setCZVolumeNormalization( cohesiveZoneReference.getCZVolumeNormalization() );
             czRegion.setComputeParticleSurfaceNormalsAndPositions( cohesiveZoneReference.getComputeNormalsAndPositions() );
             czRegion.setNormalsAndPositionsMethod( static_cast< int >( cohesiveZoneReference.getNormalsAndPositionsMethod() ) );
+            czRegion.setCZSurfaceDisplacementUpdate( static_cast< int >( cohesiveZoneReference.getCZSurfaceDisplacementUpdate() ) );
             czRegion.setTag( czTag );
 
             // Hang cohesive zone constitutive model on cohesive zone region
@@ -13786,6 +13787,8 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
   {
     localIndex czTag = czRegion.getTag();
     int numCohesiveNodes = czRegion.size();
+    CohesiveSurfaceDisplacementUpdateOption const czSurfaceDisplacementUpdate =
+      static_cast< CohesiveSurfaceDisplacementUpdateOption >( czRegion.getCZSurfaceDisplacementUpdate() );
 
     // CZ fields
     SortedArrayView< globalIndex const > const czGlobalID = czRegion.getGlobalID();
@@ -13837,6 +13840,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       arrayView2d< int const > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
       arrayView2d< globalIndex const > const particleReferenceMappedNodes = subRegion.getField< fields::mpm::particleReferenceMappedNodes >();
       arrayView2d< real64 const > const particleCohesiveReferencePosition = subRegion.getField< fields::mpm::particleCohesiveReferencePosition >();
+      arrayView2d< real64 const > const particleCohesiveReferenceSurfacePosition = subRegion.getField< fields::mpm::particleCohesiveReferenceSurfacePosition >();
       arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
       arrayView2d< real64 const > const particleReferenceShapeFunctionValues = subRegion.getField< fields::mpm::particleReferenceShapeFunctionValues >();
       arrayView2d< real64 const > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
@@ -13869,36 +13873,73 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
               // Tensor equation: deformationGradientCofactor = cof(particleDeformationGradient[p]).
               LvArray::tensorOps::cofactor< 3 >( deformationGradientCofactor, particleDeformationGradient[p] );
 
-              real64 referenceSurfaceNormal[3] = {};
-              // Tensor equation: referenceSurfaceNormal = particleReferenceSurfaceNormal[p].
-              LvArray::tensorOps::copy< 3 >( referenceSurfaceNormal, particleReferenceSurfaceNormal[p] );
-              real64 initialDistanceToSurface = computeDistanceToParticleSurface( referenceSurfaceNormal,
-                                                                                  particleReferenceRVectors[p] );
-
-              real64 initialSurfacePoint[3] = {};
-              // Tensor equation: initialSurfacePoint = initialDistanceToSurface *
-              //   (particleReferenceSurfaceNormal[p]).
-              LvArray::tensorOps::copy< 3 >( initialSurfacePoint, particleReferenceSurfaceNormal[p] );
-              LvArray::tensorOps::scale< 3 >( initialSurfacePoint, initialDistanceToSurface );
-
-              real64 referenceSurfacePoint[3] = {};
-              // Tensor equation: referenceSurfacePoint = particleCohesiveReferenceDeformationGradient[p] *
-              //   initialSurfacePoint.
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( referenceSurfacePoint, particleCohesiveReferenceDeformationGradient[p], initialSurfacePoint );
-
-              real64 deformedSurfacePoint[3] = {};
-              // Tensor equation: deformedSurfacePoint = particleDeformationGradient[p] * initialSurfacePoint.
-              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint, particleDeformationGradient[p], initialSurfacePoint );
-
-              // ( particlePosition[p][i] - particleCohesiveReferencePosition[p][i] + deformedSurfacePoint[i] -
-              // referenceSurfacePoint[i] );
               real64 surfaceDisplacement[3] = {};
-              // Tensor equation: surfaceDisplacement = particlePosition[p] - particleCohesiveReferencePosition[p] +
-              //   deformedSurfacePoint - referenceSurfacePoint.
+              // Tensor equation, common translation term:
+              //   surfaceDisplacement = particlePosition[p] - particleCohesiveReferencePosition[p].
               LvArray::tensorOps::copy< 3 >( surfaceDisplacement, particlePosition[p] );
               LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, particleCohesiveReferencePosition[p] );
-              LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
-              LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, referenceSurfacePoint );
+
+              if( czSurfaceDisplacementUpdate == CohesiveSurfaceDisplacementUpdateOption::TypeA )
+              {
+                // Fig. 4a / Eq. 18 update. The cohesive reference surface-position vector is deformed by the
+                // incremental deformation from the cohesive reference state to the current state.
+                real64 inverseCohesiveReferenceDeformationGradient[3][3] = {};
+                LvArray::tensorOps::invert< 3 >( inverseCohesiveReferenceDeformationGradient,
+                                                 particleCohesiveReferenceDeformationGradient[p] );
+
+                real64 initialSurfacePoint[3] = {};
+                // Tensor equation: initialSurfacePoint = inv(F_cz_reference) * s_cz_reference.
+                LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( initialSurfacePoint,
+                                                          inverseCohesiveReferenceDeformationGradient,
+                                                          particleCohesiveReferenceSurfacePosition[p] );
+
+                real64 deformedSurfacePoint[3] = {};
+                // Tensor equation: deformedSurfacePoint = F_current * initialSurfacePoint.
+                LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint,
+                                                          particleDeformationGradient[p],
+                                                          initialSurfacePoint );
+
+                // Tensor equation: surfaceDisplacement += deformedSurfacePoint - s_cz_reference.
+                LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
+                LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, particleCohesiveReferenceSurfacePosition[p] );
+              }
+              else if( czSurfaceDisplacementUpdate == CohesiveSurfaceDisplacementUpdateOption::TypeB )
+              {
+                // Fig. 4b / Eq. 19 update. Approximate the closest particle face in the reference CPDI domain, then
+                // use the change in the deformed face vector from the cohesive reference state to the current state.
+                real64 referenceSurfaceNormal[3] = {};
+                // Tensor equation: referenceSurfaceNormal = particleReferenceSurfaceNormal[p].
+                LvArray::tensorOps::copy< 3 >( referenceSurfaceNormal, particleReferenceSurfaceNormal[p] );
+                real64 initialDistanceToSurface = computeDistanceToParticleSurface( referenceSurfaceNormal,
+                                                                                    particleReferenceRVectors[p] );
+
+                real64 initialSurfacePoint[3] = {};
+                // Tensor equation: initialSurfacePoint = initialDistanceToSurface *
+                //   (particleReferenceSurfaceNormal[p]).
+                LvArray::tensorOps::copy< 3 >( initialSurfacePoint, particleReferenceSurfaceNormal[p] );
+                LvArray::tensorOps::scale< 3 >( initialSurfacePoint, initialDistanceToSurface );
+
+                real64 referenceSurfacePoint[3] = {};
+                // Tensor equation: referenceSurfacePoint = particleCohesiveReferenceDeformationGradient[p] *
+                //   initialSurfacePoint.
+                LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( referenceSurfacePoint,
+                                                          particleCohesiveReferenceDeformationGradient[p],
+                                                          initialSurfacePoint );
+
+                real64 deformedSurfacePoint[3] = {};
+                // Tensor equation: deformedSurfacePoint = particleDeformationGradient[p] * initialSurfacePoint.
+                LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint,
+                                                          particleDeformationGradient[p],
+                                                          initialSurfacePoint );
+
+                // Tensor equation: surfaceDisplacement += deformedSurfacePoint - referenceSurfacePoint.
+                LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
+                LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, referenceSurfacePoint );
+              }
+              else
+              {
+                GEOS_ERROR( "Unrecognized cohesive surface displacement update method." );
+              }
 
               // Map particle displacement to grid
               for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
