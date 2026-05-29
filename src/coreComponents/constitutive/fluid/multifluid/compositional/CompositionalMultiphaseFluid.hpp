@@ -58,9 +58,20 @@ public:
   static_assert( NUM_PHASES == FlashModel::KernelWrapper::getNumberOfPhases(),
                  "Number of phases should match the flash" );
 
+  // Check if all phase models have a valid enthalpy model
+  static constexpr bool isThermalType()
+  {
+    return (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
+  }
+
+  // Check if all phase models do not provide an enthalpy model
+  static constexpr bool isIsoThermalType()
+  {
+    return (std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
+  }
+
   // Either all phases are thermal or all are not
-  static_assert( (std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...) ||
-                 (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...),
+  static_assert( ( isThermalType() || isIsoThermalType() ),
                  "All phase models must either use NullModel for Enthalpy, or none should." );
 
 public:
@@ -76,11 +87,6 @@ public:
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
-
-  static constexpr bool isThermalType()
-  {
-    return (!std::is_same_v< typename PHASES::Enthalpy, compositional::NullModel > && ...);
-  }
 
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
   /**
@@ -143,7 +149,7 @@ private:
   array1d< integer > m_phaseType{};
 
   // Phase models
-  std::tuple< std::unique_ptr< PHASES >... > m_phases{};
+  camp::tuple< std::unique_ptr< PHASES >... > m_phases{};
 
   // Standard EOS component input
   std::unique_ptr< compositional::ComponentProperties > m_componentProperties{};

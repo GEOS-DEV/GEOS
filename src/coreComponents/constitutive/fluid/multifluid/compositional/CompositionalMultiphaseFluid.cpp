@@ -95,7 +95,8 @@ template< typename FLASH, typename ... PHASES >
 string CompositionalMultiphaseFluid< FLASH, PHASES... >::catalogName()
 {
   // Use the first phase viscosity
-  using ViscosityType = typename std::tuple_element_t< 0, std::tuple< PHASES... > >::Viscosity;
+  using FirstPhase = typename camp::at< camp::list< PHASES... >, camp::num< 0 > >::type;
+  using ViscosityType = typename FirstPhase::Viscosity;
   return GEOS_FMT( "Compositional{}Fluid{}", FLASH::catalogName(), ViscosityType::catalogName() );
 }
 
@@ -234,7 +235,7 @@ CompositionalMultiphaseFluid< FLASH, PHASES... >::createKernelWrapper( std::inde
 {
   return KernelWrapper( *m_componentProperties,
                         *m_flash,
-                        *std::get< Is >( m_phases )...,
+                        *camp::get< Is >( m_phases )...,
                         m_phaseOrder.toViewConst(),
                         m_componentMolarWeight,
                         m_useMass,
@@ -271,12 +272,11 @@ template< typename FLASH, typename ... PHASES >
 template< std::size_t... Is >
 void CompositionalMultiphaseFluid< FLASH, PHASES... >::createPhaseModels( std::index_sequence< Is... > )
 {
-  m_phases = std::make_tuple(
-    std::make_unique< PHASES >( GEOS_FMT( "{}_PhaseModel{}", getName(), Is + 1 ),
-                                *m_componentProperties,
-                                Is,
-                                *m_parameters )...
-    );
+  ((camp::get< Is >( m_phases ) =
+      std::make_unique< PHASES >( GEOS_FMT( "{}_PhaseModel{}", getName(), Is + 1 ),
+                                  *m_componentProperties,
+                                  Is,
+                                  *m_parameters )), ...);
 }
 
 template< typename FLASH, typename ... PHASES >
