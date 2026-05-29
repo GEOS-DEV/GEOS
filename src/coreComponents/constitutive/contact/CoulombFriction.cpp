@@ -51,7 +51,7 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
   // register fields
   registerField< fields::contact::cohesion >( &m_cohesion );
   registerField< fields::contact::frictionCoefficient >( &m_frictionCoefficient );
-  
+
 }
 
 void CoulombFriction::postInputInitialization()
