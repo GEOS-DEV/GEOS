@@ -91,13 +91,13 @@ public:
 
   StdVectorWrapper( const Base & other ): Base( other ) {}
 
-  StdVectorWrapper( Base && other ): Base( other ) {}
+  StdVectorWrapper( Base && other ): Base( std::move( other ) ) {}
 
   StdVectorWrapper( const Base & other, const Allocator & alloc )
     : Base( other, alloc ) {}
 
   StdVectorWrapper( Base && other, const Allocator & alloc )
-    : Base( other, alloc ) {}
+    : Base( std::move( other ), alloc ) {}
 
   StdVectorWrapper( std::initializer_list< T > init,
                     const Allocator & alloc = Allocator())
