@@ -729,6 +729,15 @@ public:
     m_fieldNames.insert( fieldNames.begin(), fieldNames.end() );
   }
 
+  /**
+   * @brief Set the names of background-grid fields to output in addition to the regular Silo fields
+   * @param[in] gridFieldNames background-grid field names to output
+   */
+  void setGridFieldNames( string_array const & gridFieldNames )
+  {
+    m_gridFieldNames.insert( gridFieldNames.begin(), gridFieldNames.end() );
+  }
+
 private:
 
   /**
@@ -737,6 +746,20 @@ private:
    * @return true if this wrapper should be plot, false otherwise
    */
   bool isFieldPlotEnabled( dataRepository::WrapperBase const & wrapper ) const;
+
+  /**
+   * @brief Write requested background-grid fields to a separate Silo nodal-field directory.
+   * @param[in] nodeManager background-grid node manager containing requested fields
+   * @param[in] siloDirName Silo directory that will contain the requested grid fields
+   * @param[in] meshName name of the mesh to attach the fields to
+   * @param[in] cycleNum current cycle number
+   * @param[in] problemTime current problem time
+   */
+  void writeRequestedGridFields( NodeManager const & nodeManager,
+                                 string const & siloDirName,
+                                 string const & meshName,
+                                 int const cycleNum,
+                                 real64 const problemTime );
 
   /// pointer to the DBfile that this class is working on
   DBfile * m_dbFilePtr;
@@ -785,6 +808,9 @@ private:
 
   /// Names of the fields to output
   std::set< string > m_fieldNames;
+
+  /// Names of background-grid fields to output in addition to the regular field selection
+  std::set< string > m_gridFieldNames;
 
 
   bool m_ghostFlags;

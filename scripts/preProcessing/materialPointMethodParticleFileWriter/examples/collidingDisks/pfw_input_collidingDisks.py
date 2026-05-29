@@ -54,6 +54,12 @@ pfw["zmin"] = -0.5*domainLength # mm
 pfw["zmax"] = 0.5*domainLength # mm
 
 pfw["outputType"] = "silo"
+pfw["gridFieldNames"] = [
+    "gridMass",
+    "gridVelocity",
+    "gridInternalForce",
+    "gridDamageGradient",
+]
 
 # GEOSX MPM PARAMETERS -------------------------------------------------------------------
 
@@ -77,7 +83,7 @@ pfw["maxParticleVelocity"] = 10.0
 pfw["minParticleJacobian"] = 0.01
 pfw["maxParticleJacobian"] = 10.0
 
-pfw["updateMethod"] = "XPIC"
+pfw["updateMethod"] = "FMPM"
 pfw["updateOrder"] = 2
 
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------

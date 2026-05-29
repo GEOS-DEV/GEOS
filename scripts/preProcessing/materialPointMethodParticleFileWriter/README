@@ -127,3 +127,30 @@ placeholder; for now, users can pass `grains={"centers": ..., "radii": ...,
 For contact, the object returns a color-based `ContactGroup` instead of one group
 per grain.  Keep `numContactColors` and any material offsets below the MPM
 solver contact-group limit, commonly 100.
+
+***Optional Silo grid-field output from pfw_input***
+
+Silo output writes no extra background-grid fields by default.  To add selected
+MPM grid scalar/vector fields to a generated Silo input, set one of these keys in
+your pfw_input file:
+
+  pfw["outputType"] = "silo"
+  pfw["gridFieldNames"] = ["gridMass", "gridVelocity"]
+
+The following aliases are equivalent and are accepted for convenience:
+
+  pfw["siloGridFieldNames"] = "{ gridMass, gridVelocity }"
+  pfw["siloGridFields"] = "gridMass, gridVelocity"
+
+For a compact default debug set, use:
+
+  pfw["siloGridFields"] = "common"
+
+or:
+
+  pfw["siloGridFields"] = True
+
+The common preset expands to gridMass, gridVelocity, gridInternalForce, and
+gridDamageGradient.  For a larger diagnostic dump, `pfw["siloGridFields"] =
+"all"` expands to the MPM grid fields known to PFW, but this can substantially
+increase plot-file size.

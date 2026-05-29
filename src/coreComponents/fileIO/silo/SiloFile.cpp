@@ -49,6 +49,9 @@
 #include <algorithm>
 #include <cctype>
 #include <iterator>
+#include <tuple>
+#include <typeindex>
+#include <type_traits>
 #include <sys/stat.h>
 
 
@@ -279,6 +282,362 @@ bool isParticleMappingAuxiliaryField( string const & fieldName )
   return isShapeFunctionField || isMappedNodeField;
 }
 
+
+/**
+ * @brief Convert a label into a conservative Silo variable-name suffix.
+ * @param label user/solver-provided component label
+ * @return a suffix containing only alpha-numeric characters and underscores
+ */
+string makeSiloNameToken( string const & label )
+{
+  string token;
+  token.reserve( label.size() );
+  for( unsigned char const c : label )
+  {
+    if( std::isalnum( c ) || c == '_' )
+    {
+      token.push_back( static_cast< char >( c ) );
+    }
+    else
+    {
+      token.push_back( '_' );
+    }
+  }
+  return token.empty() ? string( "component" ) : token;
+}
+
+/**
+ * @brief Get a component suffix from wrapper dimension labels, with numeric fallback.
+ * @param wrapper data wrapper whose labels are queried
+ * @param dim array dimension index
+ * @param index component index in @p dim
+ * @return a Silo-safe component suffix
+ */
+string gridComponentSuffix( WrapperBase const & wrapper,
+                            integer const dim,
+                            localIndex const index )
+{
+  Span< string const > const labels = wrapper.getDimLabels( dim );
+  if( !labels.empty() && index < LvArray::integerConversion< localIndex >( labels.size() ) )
+  {
+    return makeSiloNameToken( labels[index] );
+  }
+  return std::to_string( index );
+}
+
+/**
+ * @brief Return true when labels are exactly the common Cartesian axis labels.
+ * @param labels dimension labels
+ * @return true if the labels identify X/Y/Z components
+ */
+bool labelsAreCartesianAxes( Span< string const > const labels )
+{
+  if( labels.size() != 3 )
+  {
+    return false;
+  }
+
+  string lowerLabels[3] = { labels[0], labels[1], labels[2] };
+  for( string & label : lowerLabels )
+  {
+    std::transform( label.begin(), label.end(), label.begin(),
+                    []( unsigned char c )
+                    {
+                      return static_cast< char >( std::tolower( c ) );
+                    } );
+  }
+
+  return lowerLabels[0] == "x" && lowerLabels[1] == "y" && lowerLabels[2] == "z";
+}
+
+/**
+ * @brief MPM array2d fields whose second dimension is a grid-field index, not a vector component.
+ * @param fieldName wrapper name
+ * @return true if @p fieldName is a known scalar-per-grid-field array
+ */
+bool isKnownScalarGridArray2d( string const & fieldName )
+{
+  static std::set< string > const scalarGridArray2dNames = {
+    "gridActive",
+    "gridBackgroundStress",
+    "gridCohesiveFieldFlag",
+    "gridDamage",
+    "gridFieldGradientAlignment",
+    "gridMass",
+    "gridMaterialVolume",
+    "gridMaxDamage",
+    "gridSurfaceArea",
+    "gridSurfaceFieldMass",
+    "gridSurfaceNormalWeightNormalization",
+    "gridSurfaceNormalWeights"
+  };
+  return scalarGridArray2dNames.count( fieldName ) > 0;
+}
+
+/**
+ * @brief Return true when the field name suggests a vector-valued grid quantity.
+ * @param fieldName wrapper name
+ * @return true if the field name contains a common vector-quantity token
+ */
+bool fieldNameSuggestsVector( string const & fieldName )
+{
+  static string_array const vectorTokens = {
+    "Acceleration",
+    "Displacement",
+    "Force",
+    "Gradient",
+    "Momentum",
+    "Normal",
+    "Position",
+    "Velocity",
+    "Vector"
+  };
+
+  return std::any_of( vectorTokens.begin(), vectorTokens.end(),
+                      [&]( string const & token )
+                      {
+                        return fieldName.find( token ) != string::npos;
+                      } );
+}
+
+/**
+ * @brief Decide whether an array2d grid field should be written as a single Silo vector.
+ * @param wrapper data wrapper
+ * @param numComponents second array dimension
+ * @return true if the array should be represented as a vector field
+ */
+bool writeArray2dGridFieldAsVector( WrapperBase const & wrapper,
+                                    localIndex const numComponents )
+{
+  if( numComponents != 3 || isKnownScalarGridArray2d( wrapper.getName() ) )
+  {
+    return false;
+  }
+
+  Span< string const > const labels = wrapper.getDimLabels( 1 );
+  return labelsAreCartesianAxes( labels ) || fieldNameSuggestsVector( wrapper.getName() );
+}
+
+/**
+ * @brief Write one scalar component extracted from a two-dimensional array.
+ */
+template< typename TYPE, int USD >
+void writeGridScalarComponent( SiloFile & silo,
+                               string const & meshName,
+                               string const & varName,
+                               ArrayView< TYPE const, 2, USD > const & field,
+                               localIndex const componentIndex,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot )
+{
+  array1d< TYPE > data( field.size( 0 ) );
+  for( localIndex i = 0; i < field.size( 0 ); ++i )
+  {
+    data[i] = field( i, componentIndex );
+  }
+
+  silo.writeDataField< TYPE >( meshName,
+                               varName,
+                               data.toViewConst(),
+                               DB_NODECENT,
+                               cycleNumber,
+                               problemTime,
+                               multiRoot );
+}
+
+/**
+ * @brief Write one scalar component extracted from a three-dimensional array.
+ */
+template< typename TYPE, int USD >
+void writeGridScalarComponent( SiloFile & silo,
+                               string const & meshName,
+                               string const & varName,
+                               ArrayView< TYPE const, 3, USD > const & field,
+                               localIndex const componentIndex0,
+                               localIndex const componentIndex1,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot )
+{
+  array1d< TYPE > data( field.size( 0 ) );
+  for( localIndex i = 0; i < field.size( 0 ); ++i )
+  {
+    data[i] = field( i, componentIndex0, componentIndex1 );
+  }
+
+  silo.writeDataField< TYPE >( meshName,
+                               varName,
+                               data.toViewConst(),
+                               DB_NODECENT,
+                               cycleNumber,
+                               problemTime,
+                               multiRoot );
+}
+
+/**
+ * @brief Write one vector-valued grid field extracted from a three-dimensional array.
+ */
+template< typename TYPE, int USD >
+void writeGridVectorComponent( SiloFile & silo,
+                               string const & meshName,
+                               string const & varName,
+                               ArrayView< TYPE const, 3, USD > const & field,
+                               localIndex const fieldIndex,
+                               int const cycleNumber,
+                               real64 const problemTime,
+                               string const & multiRoot )
+{
+  array2d< TYPE > data;
+  data.resize( field.size( 0 ), 3 );
+  for( localIndex i = 0; i < field.size( 0 ); ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      data( i, j ) = field( i, fieldIndex, j );
+    }
+  }
+
+  silo.writeDataField< TYPE >( meshName,
+                               varName,
+                               data.toViewConst(),
+                               DB_NODECENT,
+                               cycleNumber,
+                               problemTime,
+                               multiRoot );
+  silo.writeVectorVarDefinition( varName, multiRoot );
+}
+
+/**
+ * @brief Write a requested grid wrapper to Silo.
+ * @tparam ArrayType concrete LvArray array type in the wrapper
+ * @return true if the wrapper type and rank are supported
+ */
+template< typename ArrayType >
+bool writeRequestedGridField( SiloFile & silo,
+                              WrapperBase const & wrapperBase,
+                              NodeManager const & nodeManager,
+                              string const & meshName,
+                              int const cycleNumber,
+                              real64 const problemTime,
+                              string const & multiRoot )
+{
+  using TYPE = typename ArrayType::ValueType;
+
+  if constexpr ( std::is_same_v< TYPE, string > )
+  {
+    return false;
+  }
+  else
+  {
+    Wrapper< ArrayType > const & wrapper = Wrapper< ArrayType >::cast( wrapperBase );
+    auto const field = wrapper.reference().toViewConst();
+    field.move( hostMemorySpace );
+
+    if( field.size( 0 ) != nodeManager.size() )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "SiloOutput: Warning! requested grid field `{}` has first dimension {}, "
+                                  "but the background grid has {} nodes. The field will not be written.",
+                                  wrapperBase.getName(), field.size( 0 ), nodeManager.size() ) );
+      return true;
+    }
+
+    string const & fieldName = wrapperBase.getName();
+
+    if constexpr ( ArrayType::NDIM == 1 )
+    {
+      silo.writeDataField< TYPE >( meshName,
+                                   fieldName,
+                                   field,
+                                   DB_NODECENT,
+                                   cycleNumber,
+                                   problemTime,
+                                   multiRoot );
+      return true;
+    }
+    else if constexpr ( ArrayType::NDIM == 2 )
+    {
+      localIndex const numComponents = field.size( 1 );
+      if( writeArray2dGridFieldAsVector( wrapperBase, numComponents ) )
+      {
+        silo.writeDataField< TYPE >( meshName,
+                                     fieldName,
+                                     field,
+                                     DB_NODECENT,
+                                     cycleNumber,
+                                     problemTime,
+                                     multiRoot );
+        silo.writeVectorVarDefinition( fieldName, multiRoot );
+      }
+      else
+      {
+        for( localIndex i = 0; i < numComponents; ++i )
+        {
+          string const varName = numComponents == 1 ? fieldName :
+                                 fieldName + "_" + gridComponentSuffix( wrapperBase, 1, i );
+          writeGridScalarComponent( silo,
+                                    meshName,
+                                    varName,
+                                    field,
+                                    i,
+                                    cycleNumber,
+                                    problemTime,
+                                    multiRoot );
+        }
+      }
+      return true;
+    }
+    else if constexpr ( ArrayType::NDIM == 3 )
+    {
+      localIndex const numFields = field.size( 1 );
+      localIndex const numComponents = field.size( 2 );
+      if( numComponents == 3 )
+      {
+        for( localIndex i = 0; i < numFields; ++i )
+        {
+          string const varName = numFields == 1 ? fieldName :
+                                 fieldName + "_" + gridComponentSuffix( wrapperBase, 1, i );
+          writeGridVectorComponent( silo,
+                                    meshName,
+                                    varName,
+                                    field,
+                                    i,
+                                    cycleNumber,
+                                    problemTime,
+                                    multiRoot );
+        }
+      }
+      else
+      {
+        for( localIndex i = 0; i < numFields; ++i )
+        {
+          string const fieldComponentName = numFields == 1 ? fieldName :
+                                            fieldName + "_" + gridComponentSuffix( wrapperBase, 1, i );
+          for( localIndex j = 0; j < numComponents; ++j )
+          {
+            string const varName = numComponents == 1 ? fieldComponentName :
+                                   fieldComponentName + "_" + gridComponentSuffix( wrapperBase, 2, j );
+            writeGridScalarComponent( silo,
+                                      meshName,
+                                      varName,
+                                      field,
+                                      i,
+                                      j,
+                                      cycleNumber,
+                                      problemTime,
+                                      multiRoot );
+          }
+        }
+      }
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+}
+
 } // namespace
 
 // *********************************************************************************************************************
@@ -302,7 +661,10 @@ SiloFile::SiloFile():
   m_writeCellElementMesh( 1 ),
   m_writeFaceElementMesh( 1 ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
+  m_onlyPlotSpecifiedFieldNames( 0 ),
   m_requireFieldRegistrationCheck( true ),
+  m_fieldNames(),
+  m_gridFieldNames(),
   m_ghostFlags( true )
 {
   DBSetAllowEmptyObjects( 1 );
@@ -1264,6 +1626,69 @@ void SiloFile::writeGroupSilo( Group const & group,
 
 }
 
+
+
+void SiloFile::writeRequestedGridFields( NodeManager const & nodeManager,
+                                         string const & siloDirName,
+                                         string const & meshName,
+                                         int const cycleNum,
+                                         real64 const problemTime )
+{
+  if( m_gridFieldNames.empty() )
+  {
+    return;
+  }
+
+  string const rootDirectory = "/" + siloDirName;
+
+  {
+    string shortsubdir( siloDirName );
+    string::size_type pos = siloDirName.find_last_of( "//" );
+
+    if( pos != shortsubdir.npos )
+    {
+      shortsubdir.erase( 0, pos + 1 );
+    }
+
+    makeSubDirectory( shortsubdir, rootDirectory );
+    DBSetDir( m_dbFilePtr, shortsubdir.c_str() );
+  }
+
+  for( string const & fieldName : m_gridFieldNames )
+  {
+    if( !nodeManager.hasWrapper( fieldName ) )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "SiloOutput: Warning! requested grid field `{}` is not registered on the "
+                                  "background-grid NodeManager and will not be written.", fieldName ) );
+      continue;
+    }
+
+    WrapperBase const & wrapper = nodeManager.getWrapperBase( fieldName );
+    bool wroteField = false;
+
+    bool const dispatched = types::internal::dispatchViaTable(
+      types::ListofTypeList< types::StandardArrays >{},
+      [&]( auto tupleOfTypes )
+      {
+        using ArrayType = camp::first< decltype( tupleOfTypes ) >;
+        wroteField = writeRequestedGridField< ArrayType >( *this,
+                                                           wrapper,
+                                                           nodeManager,
+                                                           meshName,
+                                                           cycleNum,
+                                                           problemTime,
+                                                           rootDirectory );
+      },
+      std::make_tuple( std::type_index( wrapper.getTypeId() ) ) );
+
+    GEOS_LOG_RANK_0_IF( ( !dispatched || !wroteField ),
+                        GEOS_FMT( "SiloOutput: Warning! requested grid field `{}` has an unsupported type/rank "
+                                  "for grid-field Silo output and will not be written.", fieldName ) );
+  }
+
+  DBSetDir( m_dbFilePtr, ".." );
+}
+
 void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
                                        string const & siloDirName,
                                        string const & meshName,
@@ -1416,7 +1841,8 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
     ( m_writeCellElementMesh != 0 ) ||
     ( m_writeFaceElementMesh != 0 ) ||
     ( m_writeFaceMesh != 0 ) ||
-    ( m_writeEdgeMesh != 0 );
+    ( m_writeEdgeMesh != 0 ) ||
+    !m_gridFieldNames.empty();
 
   if( writePrimaryMeshBody )
   {
@@ -1684,6 +2110,12 @@ void SiloFile::writeElementMesh( ElementRegionBase const & elementRegion,
                       problemTime,
                       false,
                       localIndex_array() );
+
+      writeRequestedGridFields( nodeManager,
+                                meshName + "_GridFields",
+                                meshName,
+                                cycleNumber,
+                                problemTime );
 
       writeElementRegionSilo( elementRegion,
                               meshName + "_ElementFields",
@@ -2080,7 +2512,7 @@ void SiloFile::writeMeshLevel( MeshLevel const & meshLevel,
     m_requireFieldRegistrationCheck = false;
   }
 
-  if( m_writeCellElementMesh != 0 || m_writeFaceElementMesh != 0 )
+  if( m_writeCellElementMesh != 0 || m_writeFaceElementMesh != 0 || !m_gridFieldNames.empty() )
   {
     elementManager.forElementRegions( [&]( ElementRegionBase const & elemRegion )
     {

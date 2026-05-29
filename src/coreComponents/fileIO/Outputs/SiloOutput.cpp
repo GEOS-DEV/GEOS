@@ -39,6 +39,7 @@ SiloOutput::SiloOutput( string const & name,
   m_plotLevel(),
   m_onlyPlotSpecifiedFieldNames(),
   m_fieldNames(),
+  m_gridFieldNames(),
   m_parallelThreads( 1 )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
@@ -82,6 +83,12 @@ SiloOutput::SiloOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Names of the fields to output. If this attribute is specified, GEOSX outputs all (and only) the fields specified by the user, regardless of their plotLevel" );
 
+  registerWrapper( viewKeysStruct::gridFieldNames, &m_gridFieldNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Names of background-grid nodal fields to write in addition to the regular Silo fields. "
+                    "This is intended for MPM grid scalar/vector fields and does not change the default output when empty." );
+
   registerWrapper( viewKeysStruct::parallelThreadsString, &m_parallelThreads ).
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -94,6 +101,7 @@ SiloOutput::~SiloOutput()
 void SiloOutput::postInputInitialization()
 {
   string const fieldNamesString = viewKeysStruct::fieldNames;
+  string const gridFieldNamesString = viewKeysStruct::gridFieldNames;
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
@@ -115,6 +123,13 @@ void SiloOutput::postInputInitialization()
                         "`plotLevel` smaller or equal to {}.",
                         catalogName(), getDataContext(), std::to_string( m_fieldNames.size() ),
                         fieldNamesString, m_plotLevel ) );
+
+  GEOS_LOG_RANK_0_IF( !m_gridFieldNames.empty(),
+                      GEOS_FMT(
+                        "{} `{}`: found {} background-grid fields to write in `{}`. "
+                        "These fields will be added to the Silo output without changing the regular field selection.",
+                        catalogName(), getDataContext(), std::to_string( m_gridFieldNames.size() ),
+                        gridFieldNamesString ) );
 }
 
 
@@ -148,6 +163,7 @@ bool SiloOutput::execute( real64 const time_n,
     silo.setWriteFaceElementMesh( m_writeFaceElementMesh );
     silo.setOnlyPlotSpecifiedFieldNamesFlag( m_onlyPlotSpecifiedFieldNames );
     silo.setFieldNames( m_fieldNames );
+    silo.setGridFieldNames( m_gridFieldNames );
     silo.setPlotFileRoot( m_plotFileRoot );
     silo.initialize( numFiles );
     silo.waitForBatonWrite( rank, cycleNumber, eventCounter, false );
