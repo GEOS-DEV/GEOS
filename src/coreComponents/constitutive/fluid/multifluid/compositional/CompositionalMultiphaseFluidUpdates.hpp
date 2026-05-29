@@ -21,7 +21,6 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_COMPOSITIONALMULTIPHASEFLUIDUPDATES_HPP_
 
 #include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CompositionalMultiphaseFluidUtilities.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
@@ -41,8 +40,6 @@ namespace constitutive
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 class CompositionalMultiphaseFluidUpdates final : public MultiFluidBase::KernelWrapper
 {
-  using Traits = compositional::CompositionalMultiphaseFluidTraits< FLASH, PHASE1, PHASE2, PHASE3 >;
-  static constexpr integer NUM_PHASES = Traits::getNumberOfPhases();
 public:
   CompositionalMultiphaseFluidUpdates( compositional::ComponentProperties const & componentProperties,
                                        FLASH const & flash,
@@ -194,7 +191,8 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
   MultiFluidBase::FluidProp::SliceType const totalDensity ) const
 {
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  MultiFluidBase::PhaseComp::StackValueType< NUM_PHASES *maxNumComp > kValues( 1, 1, numPhases() - 1, numComponents() );
+  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES - 1;
+  MultiFluidBase::PhaseComp::StackValueType< maxNumPhase *maxNumComp > kValues( 1, 1, numPhases() - 1, numComponents() );
 
   LvArray::forValuesInSlice( kValues[0][0], setZero );   // Force initialisation of k-Values
 
@@ -232,6 +230,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
 {
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumDof = MultiFluidBase::MAX_NUM_COMPONENTS + 2;
+  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
   integer const numDof = numComp + 2;
@@ -284,7 +283,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                             phaseMassDensity.value[m_phaseOrder[1]],
                             phaseMassDensity.derivs[m_phaseOrder[1]],
                             m_useMass );
-  if constexpr (2 < NUM_PHASES)
+  if constexpr (2 < FLASH::KernelWrapper::getNumberOfPhases())
   {
     m_phase3.density.compute( m_componentProperties,
                               pressure,
@@ -316,7 +315,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                               phaseViscosity.value[m_phaseOrder[1]],
                               phaseViscosity.derivs[m_phaseOrder[1]],
                               m_useMass );
-  if constexpr (2 < NUM_PHASES)
+  if constexpr (2 < FLASH::KernelWrapper::getNumberOfPhases())
   {
     m_phase3.viscosity.compute( m_componentProperties,
                                 pressure,
@@ -329,38 +328,9 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                                 m_useMass );
   }
 
-  // 5. Calculate the phase enthapies
-  if constexpr (Traits::isThermalType())
-  {
-    m_phase1.enthalpy.compute( m_componentProperties,
-                               pressure,
-                               temperature,
-                               phaseComponentFraction.value[m_phaseOrder[0]].toSliceConst(),
-                               phaseEnthalpy.value[m_phaseOrder[0]],
-                               phaseEnthalpy.derivs[m_phaseOrder[0]],
-                               m_useMass );
-    m_phase2.enthalpy.compute( m_componentProperties,
-                               pressure,
-                               temperature,
-                               phaseComponentFraction.value[m_phaseOrder[1]].toSliceConst(),
-                               phaseEnthalpy.value[m_phaseOrder[1]],
-                               phaseEnthalpy.derivs[m_phaseOrder[1]],
-                               m_useMass );
-    if constexpr (2 < NUM_PHASES)
-    {
-      m_phase3.enthalpy.compute( m_componentProperties,
-                                 pressure,
-                                 temperature,
-                                 phaseComponentFraction.value[m_phaseOrder[2]].toSliceConst(),
-                                 phaseEnthalpy.value[m_phaseOrder[2]],
-                                 phaseEnthalpy.derivs[m_phaseOrder[2]],
-                                 m_useMass );
-    }
-  }
-
-  // 6. Convert derivatives from phase composition to total composition
+  // 5. Convert derivatives from phase composition to total composition
   stackArray1d< real64, maxNumDof > workSpace( numDof );
-  for( integer ip = 0; ip < NUM_PHASES; ++ip )
+  for( integer ip = 0; ip < FLASH::KernelWrapper::getNumberOfPhases(); ++ip )
   {
     convertDerivativesToTotalMoleFraction( numComp,
                                            phaseComponentFraction.derivs[ip].toSliceConst(),
@@ -374,20 +344,13 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
                                            phaseComponentFraction.derivs[ip].toSliceConst(),
                                            phaseViscosity.derivs[ip],
                                            workSpace );
-    if constexpr (Traits::isThermalType())
-    {
-      convertDerivativesToTotalMoleFraction( numComp,
-                                             phaseComponentFraction.derivs[ip].toSliceConst(),
-                                             phaseEnthalpy.derivs[ip],
-                                             workSpace );
-    }
   }
 
-  // 7. if mass variables used instead of molar, perform the conversion
+  // 6. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
   {
-    real64 phaseMolecularWeight[NUM_PHASES]{};
-    real64 dPhaseMolecularWeight[NUM_PHASES][maxNumDof]{};
+    real64 phaseMolecularWeight[maxNumPhase]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumDof]{};
 
     arrayView1d< real64 const > const & componentMolarWeight = m_componentProperties.m_componentMolarWeight;
 
@@ -427,7 +390,7 @@ CompositionalMultiphaseFluidUpdates< FLASH, PHASE1, PHASE2, PHASE3 >::compute(
     }
   }
 
-  // 8. Compute total fluid mass/molar density and derivatives
+  // 7. Compute total fluid mass/molar density and derivatives
 
   computeTotalDensity( phaseFraction,
                        phaseDensity,

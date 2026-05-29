@@ -86,7 +86,6 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp
      fluid/multifluid/CO2Brine/functions/SpanWagnerCO2Density.hpp
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
-     fluid/multifluid/compositional/functions/CompositionalMultiphaseFluidUtilities.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties_impl.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel_impl.hpp
