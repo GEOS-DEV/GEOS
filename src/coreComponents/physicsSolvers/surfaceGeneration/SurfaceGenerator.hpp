@@ -22,6 +22,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "ParallelTopologyChange.hpp"
 
 namespace geos
@@ -33,6 +34,30 @@ class EdgeManager;
 class FaceManager;
 class ElementRegionManager;
 class ElementRegionBase;
+
+/**
+ * @brief Comparator for (CellElementSubRegion const *, localIndex) pairs that
+ * provides deterministic ordering based on region/subregion indices
+ */
+struct ElemLocComparator
+{
+  bool operator()( std::pair< CellElementSubRegion const *, localIndex > const & a,
+                   std::pair< CellElementSubRegion const *, localIndex > const & b ) const
+  {
+    if( a.first != b.first )
+    {
+      localIndex const regionA = a.first->getParent().getParent().getIndexInParent();
+      localIndex const regionB = b.first->getParent().getParent().getIndexInParent();
+      if( regionA != regionB )
+        return regionA < regionB;
+      return a.first->getIndexInParent() < b.first->getIndexInParent();
+    }
+    return a.second < b.second;
+  }
+};
+
+/// Type alias for the element location map with deterministic ordering.
+using ElemLocMapType = stdMap< std::pair< CellElementSubRegion const *, localIndex >, int, ElemLocComparator >;
 
 /**
  * @class SurfaceGenerator
