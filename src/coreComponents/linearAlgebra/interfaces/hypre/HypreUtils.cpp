@@ -82,7 +82,7 @@ HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank 
     newVec = hypre_SeqVectorCreate( globalSize );
     hypre_SeqVectorInitialize_v2( newVec, HYPRE_MEMORY_HOST );
 
-    std::vector< MPI_Request > requests( numProcs, MPI_REQUEST_NULL );
+    stdVector< MPI_Request > requests( numProcs, MPI_REQUEST_NULL );
     for( int i = 0; i < numProcs; ++i )
     {
       HYPRE_Real * const data = hypre_VectorData( newVec ) + offsets[i];

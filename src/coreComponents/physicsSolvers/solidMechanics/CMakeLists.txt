@@ -84,10 +84,11 @@ geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${depen
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
-  list( APPEND kernelTemplateFileList 
+  list( APPEND kernelTemplateFileList
         kernels/SolidMechanicsKernels.cpp.template
         kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template
-        kernels/SolidMechanicsExplicitChemoMechanicsKernels.cpp.template )
+        kernels/SolidMechanicsExplicitChemoMechanicsKernels.cpp.template
+        contact/kernels/SolidMechanicsALMContactPorousKernels.cpp.template )
 
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )

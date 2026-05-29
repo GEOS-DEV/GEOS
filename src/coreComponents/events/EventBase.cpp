@@ -183,10 +183,10 @@ void EventBase::checkEvents( real64 const time,
     }
     else
     {
-      //this->setForecast( int( ( m_beginTime - time ) / dt ) );
-      real64 const ratio = (m_beginTime - time) / dt;
-      real64 const step = std::clamp(ratio, static_cast<double>(std::numeric_limits<int>::min()), static_cast<double>(std::numeric_limits<int>::max()));
-      this->setForecast( int( step ) );
+      real64 constexpr min_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::min);
+      real64 constexpr max_ratio = static_cast< real64 >(LvArray::NumericLimits< integer >::max);
+
+      this->setForecast( static_cast< integer >(std::clamp(( m_beginTime - time ) / dt, min_ratio, max_ratio )) );
     }
   }
   else if( time >= m_endTime )
