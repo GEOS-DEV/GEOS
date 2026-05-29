@@ -35,13 +35,13 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
-    setApplyDefaultValue( 1e6 ).
+    setApplyDefaultValue( -1.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setRegisteringObjects( this->getName() ).
     setDescription( "Cohesion for each cell" );
 
   registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
-    setApplyDefaultValue( 0.4 ).
+    setApplyDefaultValue( -1.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setRegisteringObjects( this->getName() ).
     setDescription( "Friction coefficient for each cell" );
@@ -91,6 +91,17 @@ void CoulombFriction::initializePostInitialConditionsPreSubGroups()
 
   for( localIndex k = 0; k < m_cohesion.size(); ++k )
   {
+    // Fill unset per-cell values from scalar defaults provided in the input.
+    if( m_cohesion[k] == -1.0 )
+    {
+      m_cohesion[k] = m_defaultCohesion;
+    }
+
+    if( m_frictionCoefficient[k] == -1.0 )
+    {
+      m_frictionCoefficient[k] = m_defaultFrictionCoefficient;
+    }
+
     if( m_cohesion[k] < 0.0 )
     {
       ++negativeCohesionCount;

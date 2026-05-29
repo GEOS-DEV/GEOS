@@ -2095,8 +2095,13 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         bool const hasCoulombParams = frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) &&
                                       frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
 
-        real64 const cohesion = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() ) : 0.0;
-        real64 const frictionCoefficient = hasCoulombParams ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) : 0.0;
+        arrayView1d< real64 const > cohesionValues;
+        arrayView1d< real64 const > frictionCoefficientValues;
+        if( hasCoulombParams )
+        {
+          cohesionValues = frictionLaw.getReference< array1d< real64 > >( CoulombFriction::viewKeyStruct::cohesionString() ).toViewConst();
+          frictionCoefficientValues = frictionLaw.getReference< array1d< real64 > >( CoulombFriction::viewKeyStruct::frictionCoefficientString() ).toViewConst();
+        }
 
         forAll< parallelHostPolicy >( subRegion.size(), [ ghostRank,
                                                           faceRotationMatrix,
@@ -2109,8 +2114,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                           iterativePenalty,
                                                           totalBubbleDisplacement,
                                                           hasCoulombParams,
-                                                          cohesion,
-                                                          frictionCoefficient,
+                                                          cohesionValues,
+                                                          frictionCoefficientValues,
                                                           avgElementStressView] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
@@ -2209,6 +2214,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
               {
+                real64 const cohesion = cohesionValues[kfe];
+                real64 const frictionCoefficient = frictionCoefficientValues[kfe];
                 real64 const normalTraction = tLocal[0];  // Negative for compression
                 real64 const tangentialTraction = LvArray::math::sqrt( tLocal[1] * tLocal[1] + tLocal[2] * tLocal[2] );
 
