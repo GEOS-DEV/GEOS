@@ -167,6 +167,11 @@ struct Limits< T, true >
 
   string getRangeStr() const
   {
+    if( !this->min.has_value() && !this->max.has_value() )
+    {
+      return string();
+    }
+
     string const lowerRange = this->min.has_value()
       ? GEOS_FMT( "{}{}", this->min->isInclusive ? "[" : "(", this->min->value )
       : string( "(-inf" );

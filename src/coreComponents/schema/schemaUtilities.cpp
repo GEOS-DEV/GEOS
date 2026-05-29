@@ -249,6 +249,12 @@ void SchemaConstruction( Group & group,
               commentString += "(no description available)";
             }
 
+            string const limitsString = wrapper.getLimitsString();
+            if( !limitsString.empty() )
+            {
+              commentString += GEOS_FMT( " Allowed range: {}", limitsString );
+            }
+
             // List of objects that registered this field
             std::set< string > const & registrars = wrapper.getRegisteringObjects();
             if( !registrars.empty() )

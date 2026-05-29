@@ -205,6 +205,13 @@ public:
   virtual string getDefaultValueString() const = 0;
 
   /**
+   * @brief Return a string representing the allowed value range.
+   * @return A string of the form "[min, max]" using standard interval notation, or
+   *         an empty string if no limits are set.
+   */
+  virtual string getLimitsString() const = 0;
+
+  /**
    * @brief Initialize the wrapper from the input xml node.
    * @param targetNode the xml node to initialize from.
    * @param nodePos the target node position, typically obtained with xmlDocument::getNodePosition().

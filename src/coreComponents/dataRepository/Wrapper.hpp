@@ -787,6 +787,28 @@ public:
     return m_limits.max;
   }
 
+  /**
+   * @copydoc WrapperBase::getLimitsString()
+   */
+  virtual string getLimitsString() const override
+  {
+    return getLimitsStringImpl();
+  }
+
+  template< typename U=T >
+  std::enable_if_t< is_limitable_v< U >, string >
+  getLimitsStringImpl() const
+  {
+    return m_limits.getRangeStr();
+  }
+
+  template< typename U=T >
+  std::enable_if_t< !is_limitable_v< U >, string >
+  getLimitsStringImpl() const
+  {
+    return string();
+  }
+
   template< typename U=T >
   std::enable_if_t< is_limitable_v< U > && !traits::is_array_type< U >, void >
   validateLimits()
