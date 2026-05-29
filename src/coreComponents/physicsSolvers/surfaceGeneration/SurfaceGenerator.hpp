@@ -392,7 +392,7 @@ private:
                            std::set< localIndex > & separationPathFaces,
                            map< localIndex, int > & edgeLocations,
                            map< localIndex, int > & faceLocations,
-                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+                           ElemLocMapType & elemLocations );
 
 
   /**
@@ -422,14 +422,14 @@ private:
                         std::set< localIndex > const & separationPathFaces,
                         map< localIndex, int > const & edgeLocations,
                         map< localIndex, int > const & faceLocations,
-                        map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
+                        ElemLocMapType const & elemLocations );
 
   void mapConsistencyCheck( localIndex const nodeID,
                             NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             ElementRegionManager const & elementManager,
-                            map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
+                            ElemLocMapType const & elemLocations );
 
   /**
    * @brief Assign fracture-plane sides to all elements, faces, and edges
@@ -469,7 +469,7 @@ private:
                            map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                            map< localIndex, int > & edgeLocations,
                            map< localIndex, int > & faceLocations,
-                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+                           ElemLocMapType & elemLocations );
 
   /**
    *
