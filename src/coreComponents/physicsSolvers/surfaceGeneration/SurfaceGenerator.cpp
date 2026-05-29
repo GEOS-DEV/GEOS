@@ -1492,7 +1492,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   for( auto k = nodeToElementMaps.cbegin(); k != nodeToElementMaps.cend(); ++k )
   {
-    elemLocations[*k] = INT_MIN;
+    elemLocations.get_inserted( *k ) = INT_MIN;
   }
 
 
