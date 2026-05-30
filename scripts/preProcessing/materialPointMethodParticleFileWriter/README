@@ -76,6 +76,12 @@ PFW_INPUT_SOURCE_DIR so particleFileWriter.py can resolve dependencies relative
 to the original input-file directory after the input file has been staged into a
 run directory.
 
+Requested vector fields are written as native Silo vector variables.  For VisIt
+Pseudocolor plots, scalar component expressions are also published under the
+vector name, for example `gridVelocity/x`, `gridVelocity/y`, and
+`gridVelocity/z`, so vector components appear in a grouped submenu instead of as
+separate top-level scalar variables.
+
 ***Post processing***
 
 Open VisIt and load the set of output_* files.

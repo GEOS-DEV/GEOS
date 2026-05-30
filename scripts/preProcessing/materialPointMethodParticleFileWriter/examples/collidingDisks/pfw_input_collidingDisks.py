@@ -83,7 +83,7 @@ pfw["minParticleJacobian"] = 0.01
 pfw["maxParticleJacobian"] = 10.0
 
 pfw["updateMethod"] = "FMPM"
-pfw["updateOrder"] = 2
+pfw["updateOrder"] = 24
 
 # END GEOSX MPM PARAMETERS ---------------------------------------------------------------
 

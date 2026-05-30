@@ -478,7 +478,7 @@ public:
    * @param meshName the name of the mesh attach this write to
    * @param fieldName name of the field to write
    * @param field field data
-   * @param siloTensorRank <B>****** UNUSED IN THE IMPLEMENTATION ****** </B>
+   * @param siloTensorRank Silo tensor rank for the multicomponent field (DB_VARTYPE_VECTOR, etc.)
    * @param centering the silo centering to use for this operation (DB_NODECENT, DB_ZONECENT)
    * @param cycleNumber the current cycle number
    * @param problemTime the current problem time
@@ -605,6 +605,16 @@ public:
    */
   void writeVectorVarDefinition( string const & fieldName,
                                  string const & subDirectory );
+
+  /**
+   * @brief Define scalar expressions for a native multicomponent variable's components.
+   * @param fieldName multicomponent field name
+   * @param subDirectory absolute Silo directory containing the multicomponent multivar
+   * @param componentNames names to use for the scalar component menu entries
+   */
+  void writeVectorComponentVarDefinitions( string const & fieldName,
+                                           string const & subDirectory,
+                                           string_array const & componentNames );
 
   /**
    * find the silo mesh type that we are attempting to reference
