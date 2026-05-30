@@ -240,30 +240,116 @@ def define_scalar_expression(name, expression):
         return None
 
 
-def component_series(names, prefix, stem, nmax):
-    out = []
+def component_label_sets(stem, nmax):
+    """Preferred grouped VisIt scalar component labels for native Silo fields."""
+    low = str(stem).lower()
+    numeric = [str(i) for i in range(nmax)]
+    labels = []
+    if any(token in low for token in ("stress", "strain", "tensor")):
+        if nmax == 9:
+            labels.append(["xx", "xy", "xz", "yx", "yy", "yz", "zx", "zy", "zz"])
+        else:
+            labels.append(["xx", "yy", "zz", "yz", "xz", "xy"][:nmax])
+    elif nmax == 3:
+        labels.append(["x", "y", "z"])
+    if numeric not in labels:
+        labels.append(numeric)
+    return labels
+
+
+def find_component_name(names, candidate):
     exact = set(names)
-    for i in range(nmax):
-        candidate = prefix + "/" + stem + "_" + str(i)
-        if candidate in exact:
-            out.append(candidate)
+    if candidate in exact:
+        return candidate
+    lowered = {n.lower(): n for n in names}
+    return lowered.get(candidate.lower())
+
+
+def natural_string_key(text):
+    return [int(part) if part.isdigit() else part for part in re.split(r"(\d+)", str(text))]
+
+
+def component_sort_key(name):
+    text = str(name)
+    leaf = text.rsplit("/", 1)[-1].lower()
+    component_order = {
+        "x": 0, "y": 1, "z": 2,
+        "xx": 0, "yy": 1, "zz": 2, "yz": 3, "xz": 4, "xy": 5,
+        "yx": 3, "zx": 6, "zy": 7,
+    }
+    if leaf in component_order:
+        return (0, component_order[leaf], natural_string_key(text))
+    match = re.search(r"_0_([0-9]+)$", text) or re.search(r"_([0-9]+)$", text)
+    if match:
+        return (1, int(match.group(1)), natural_string_key(text))
+    if leaf.isdigit():
+        return (2, int(leaf), natural_string_key(text))
+    return (9, 9999, natural_string_key(text))
+
+
+def component_series(names, prefix, stem, nmax):
+    """Return components in physical order for both grouped and legacy layouts."""
+    for labels in component_label_sets(stem, nmax):
+        candidates = [prefix + "/" + stem + "/" + label for label in labels]
+        found = [find_component_name(names, candidate) for candidate in candidates]
+        if all(found):
+            return found
+    flat = [prefix + "/" + stem + "_" + str(i) for i in range(nmax)]
+    found = [find_component_name(names, candidate) for candidate in flat]
+    if all(found):
+        return found
+
+    out = []
+    for labels in component_label_sets(stem, nmax):
+        for label in labels:
+            candidate = find_component_name(names, prefix + "/" + stem + "/" + label)
+            if candidate and candidate not in out:
+                out.append(candidate)
+    for candidate in flat:
+        found = find_component_name(names, candidate)
+        if found and found not in out:
+            out.append(found)
     return out
 
 
 def material_component_series(names, prefix, token, nmax):
-    # Match material-specific fields such as quartz_stress_0_0 ... quartz_stress_0_5.
-    out = []
-    candidates = []
+    # Match one material-specific field family such as quartz_stress/xx or quartz_stress_0_0.
+    groups = {}
+    allowed_labels = set()
+    label_order = {}
+    for labels in component_label_sets(token, nmax):
+        for i, label in enumerate(labels):
+            allowed_labels.add(label.lower())
+            label_order.setdefault(label.lower(), i)
+
+    def add_component(base_name, order, full_name):
+        groups.setdefault(base_name, []).append((order, full_name))
+
     for name in names:
         if not name.startswith(prefix + "/"):
             continue
-        leaf = name.split("/", 1)[1]
+        leaf = name[len(prefix) + 1:]
         if token.lower() not in leaf.lower():
             continue
-        if re.search(r"_0_[0-9]+$", leaf) or re.search(r"_[0-9]+$", leaf):
-            candidates.append(name)
-    candidates = sorted(candidates, key=lambda x: [int(p) if p.isdigit() else p for p in re.split(r"(\d+)", x)])
-    return candidates[:nmax]
+        if "/" in leaf:
+            base_name, grouped_label = leaf.rsplit("/", 1)
+            grouped_label = grouped_label.lower()
+            if grouped_label in allowed_labels:
+                add_component(base_name, label_order.get(grouped_label, nmax), name)
+                continue
+        match = re.search(r"_0_([0-9]+)$", leaf) or re.search(r"_([0-9]+)$", leaf)
+        if match:
+            order = int(match.group(1))
+            base_name = leaf[:match.start()]
+            add_component(base_name, order, name)
+
+    if not groups:
+        return []
+    best_base, best_components = sorted(
+        groups.items(),
+        key=lambda item: (-len(item[1]), natural_string_key(item[0])),
+    )[0]
+    return [name for _, name in sorted(best_components, key=lambda item: (item[0], natural_string_key(item[1])))[:nmax]]
 
 
 def velocity_variable(scalars, vectors, region):

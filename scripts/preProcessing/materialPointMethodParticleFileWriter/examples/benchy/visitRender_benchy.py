@@ -259,13 +259,60 @@ def find_exact_or_token(scalars, region, exact_name, tokens):
     return sorted(matches)[0] if matches else None
 
 
+def component_label_sets(basename, n_expected):
+    if n_expected is None:
+        return []
+    low = str(basename).lower()
+    numeric = [str(i) for i in range(n_expected)]
+    labels = []
+    if any(token in low for token in ("stress", "strain", "tensor")):
+        if n_expected == 9:
+            labels.append(["xx", "xy", "xz", "yx", "yy", "yz", "zx", "zy", "zz"])
+        else:
+            labels.append(["xx", "yy", "zz", "yz", "xz", "xy"][:n_expected])
+    elif n_expected == 3:
+        labels.append(["x", "y", "z"])
+    if numeric not in labels:
+        labels.append(numeric)
+    return labels
+
+
+def grouped_component_candidates(region, basename, n_expected):
+    candidates = []
+    for labels in component_label_sets(basename, n_expected):
+        candidates.append([field(region, basename + "/" + label) for label in labels])
+    return candidates
+
+
+def component_sort_key(name):
+    text = str(name)
+    leaf = text.rsplit("/", 1)[-1].lower()
+    component_order = {
+        "x": 0, "y": 1, "z": 2,
+        "xx": 0, "yy": 1, "zz": 2, "yz": 3, "xz": 4, "xy": 5,
+        "yx": 3, "zx": 6, "zy": 7,
+    }
+    if leaf in component_order:
+        return (0, component_order[leaf], natural_string_key(text))
+    match = re.search(r"_0_([0-9]+)$", text) or re.search(r"_([0-9]+)$", text)
+    if match:
+        return (1, int(match.group(1)), natural_string_key(text))
+    if leaf.isdigit():
+        return (2, int(leaf), natural_string_key(text))
+    return (9, 9999, natural_string_key(text))
+
+
 def choose_components(scalars, region, basename, n_expected=None, required_tokens=None):
     required_tokens = required_tokens or []
-    comps = []
+    scalar_set = set(scalars)
     if n_expected is not None:
+        for grouped in grouped_component_candidates(region, basename, n_expected):
+            if all(name in scalar_set for name in grouped):
+                return grouped
         exact = [field(region, basename + "_" + str(i)) for i in range(n_expected)]
-        if all(name in scalars for name in exact):
+        if all(name in scalar_set for name in exact):
             return exact
+    comps = []
     r = compact(region)
     b = compact(basename)
     token_compacts = [compact(t) for t in required_tokens]
@@ -273,7 +320,7 @@ def choose_components(scalars, region, basename, n_expected=None, required_token
         c = compact(name)
         if r in c and b in c and all(t in c for t in token_compacts):
             comps.append(name)
-    return sorted(comps, key=natural_string_key)
+    return sorted(comps, key=component_sort_key)
 
 
 def natural_string_key(text):
