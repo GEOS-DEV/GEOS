@@ -52,10 +52,13 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <limits>
 #include <algorithm>
 #include <cctype>
 #include <random>
 #include <thread>
+#include <tuple>
+#include <unordered_map>
 
 namespace geos
 {
@@ -284,6 +287,168 @@ real64 plasticStrainMagnitudeFromVoigt( arraySlice1d< real64 const > const plast
                                       plasticStrain[5] * plasticStrain[5] ) );
 }
 
+string canonicalTracerVariableName( string const & input )
+{
+  string const name = normalizeProfileInput( input );
+
+  if( name == "particleid" || name == "id" || name == "globalid" )
+  {
+    return "particleID";
+  }
+  if( name == "mass" || name == "particlemass" )
+  {
+    return "mass";
+  }
+  if( name == "volume" || name == "particlevolume" )
+  {
+    return "volume";
+  }
+  if( name == "materialtype" || name == "material" || name == "materialindex" || name == "mat" )
+  {
+    return "materialType";
+  }
+  if( name == "porosity" || name == "phi" )
+  {
+    return "porosity";
+  }
+  if( name == "density" || name == "rho" || name == "particledensity" )
+  {
+    return "density";
+  }
+  if( name == "damage" || name == "d" )
+  {
+    return "damage";
+  }
+  if( name == "temperature" || name == "temp" )
+  {
+    return "temperature";
+  }
+  if( name == "internalenergy" || name == "specificinternalenergy" || name == "ie" )
+  {
+    return "internalEnergy";
+  }
+  if( name == "kineticenergy" || name == "ke" )
+  {
+    return "kineticEnergy";
+  }
+  if( name == "velocitymagnitude" || name == "speed" || name == "vmag" )
+  {
+    return "speed";
+  }
+  if( name == "velocityx" || name == "vx" || name == "xvelocity" )
+  {
+    return "velocityX";
+  }
+  if( name == "velocityy" || name == "vy" || name == "yvelocity" )
+  {
+    return "velocityY";
+  }
+  if( name == "velocityz" || name == "vz" || name == "zvelocity" )
+  {
+    return "velocityZ";
+  }
+  if( name == "plasticstrainmagnitude" || name == "plasticstrainnorm" || name == "plasticstrain" ||
+      name == "equivalentplasticstrain" || name == "eqps" )
+  {
+    return "plasticStrainMagnitude";
+  }
+
+  if( name == "stressxx" || name == "sigmaxx" || name == "sxx" || name == "xstress" )
+  {
+    return "stressXX";
+  }
+  if( name == "stressyy" || name == "sigmayy" || name == "syy" || name == "ystress" )
+  {
+    return "stressYY";
+  }
+  if( name == "stresszz" || name == "sigmazz" || name == "szz" || name == "zstress" )
+  {
+    return "stressZZ";
+  }
+  if( name == "stressyz" || name == "sigmayz" || name == "syz" )
+  {
+    return "stressYZ";
+  }
+  if( name == "stressxz" || name == "sigmaxz" || name == "sxz" )
+  {
+    return "stressXZ";
+  }
+  if( name == "stressxy" || name == "sigmaxy" || name == "sxy" )
+  {
+    return "stressXY";
+  }
+
+  if( name == "plasticstrainxx" || name == "epxx" )
+  {
+    return "plasticStrainXX";
+  }
+  if( name == "plasticstrainyy" || name == "epyy" )
+  {
+    return "plasticStrainYY";
+  }
+  if( name == "plasticstrainzz" || name == "epzz" )
+  {
+    return "plasticStrainZZ";
+  }
+  if( name == "plasticstrainyz" || name == "epyz" )
+  {
+    return "plasticStrainYZ";
+  }
+  if( name == "plasticstrainxz" || name == "epxz" )
+  {
+    return "plasticStrainXZ";
+  }
+  if( name == "plasticstrainxy" || name == "epxy" )
+  {
+    return "plasticStrainXY";
+  }
+
+  GEOS_ERROR( "Unsupported MPM tracer variable '" << input << "'. Supported variables are particleID, mass, volume, "
+              "materialType, porosity, density, damage, temperature, internalEnergy, kineticEnergy, speed, "
+              "velocityX, velocityY, velocityZ, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, "
+              "stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+  return "";
+}
+
+string tracerOutputFileName( string const & prefix,
+                             int const tracerIndex )
+{
+  std::ostringstream name;
+  name << prefix << "_" << std::setw( 6 ) << std::setfill( '0' ) << tracerIndex << ".csv";
+  return name.str();
+}
+
+bool tracerVariablesNeedInternalEnergy( string_array const & variables )
+{
+  return std::find( variables.begin(), variables.end(), string( "internalEnergy" ) ) != variables.end();
+}
+
+void moveTracerSearchDataToHost( ParticleSubRegion & subRegion )
+{
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleIDString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleCenterString() ).move( LvArray::MemorySpace::host, true );
+}
+
+void moveTracerOutputDataToHost( ParticleSubRegion & subRegion,
+                                 bool const needInternalEnergy )
+{
+  moveTracerSearchDataToHost( subRegion );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVelocityString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleVolumeString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleDamageString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particlePorosityString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( ParticleSubRegion::viewKeyStruct::particleTemperatureString() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( fields::mpm::particleMass::key() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( fields::mpm::particleDensity::key() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( fields::mpm::particleMaterialType::key() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( fields::mpm::particlePlasticStrain::key() ).move( LvArray::MemorySpace::host, true );
+  subRegion.getWrapperBase( fields::mpm::particleStress::key() ).move( LvArray::MemorySpace::host, true );
+  if( needInternalEnergy )
+  {
+    subRegion.getWrapperBase( fields::mpm::particleInternalEnergy::key() ).move( LvArray::MemorySpace::host, true );
+  }
+}
+
 } // namespace
 
 
@@ -499,6 +664,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_nextParticleDataWriteTime( 0.0 ),
   m_nextProfileWriteTime( 0.0 ),
   m_nextReactionWriteTime( 0.0 ),
+  m_nextTracerWriteTime( 0.0 ),
   m_normalAndPositionMethod( NormalsAndPositionsMethodOption::LogisticRegression ),
   m_numberOfSubRegions( 0 ),
   m_numContactFlags( 0 ),
@@ -560,6 +726,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_temperatureTableInterpType( SolidMechanicsMPM::InterpolationOption::Linear ),
   m_thinFeatureDFGThreshold( DBL_MAX ),
   m_timeIntegrationOption( TimeIntegrationOption::ExplicitDynamic ),
+  m_tracerCycleInterval( 0 ),
+  m_tracerCoordinates(),
+  m_tracerHistory( 0 ),
+  m_tracerOutputPrefix( "tracerPoint" ),
+  m_tracerParticleIDs(),
+  m_tracerVariables(),
+  m_tracerWriteInterval( 0.0 ),
   m_totalBinderVolume( 0.0 ),
   m_treatFullyDamagedAsSingleField( 0 ),
   m_updateMethod( UpdateMethodOption::FLIP ),
@@ -1021,6 +1194,12 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Next time to write reactions" );
 
+  registerWrapper( "nextTracerWriteTime", &m_nextTracerWriteTime ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0.0 ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Next time to write MPM lagrangian tracer output when using a time-based tracer interval" );
+
   registerWrapper( "normalAndPositionMethod", &m_normalAndPositionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_normalAndPositionMethod ).
@@ -1421,6 +1600,45 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
 
+  registerWrapper( "tracerCoordinates", &m_tracerCoordinates ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Coordinates used to initialize MPM lagrangian tracers. Each row is x,y,z; each tracer follows the nearest particle selected during initialization." );
+
+  registerWrapper( "tracerCycleInterval", &m_tracerCycleInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_tracerCycleInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Cycle interval for MPM lagrangian tracer CSV output. Use either tracerCycleInterval or tracerWriteInterval. A value of 0 means no cycle-based interval." );
+
+  registerWrapper( "tracerHistory", &m_tracerHistory ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_tracerHistory ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Flag to enable MPM lagrangian tracer CSV output. One CSV file is written per tracer point." );
+
+  registerWrapper( "tracerOutputPrefix", &m_tracerOutputPrefix ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_tracerOutputPrefix ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Filename prefix for MPM lagrangian tracer CSV files." );
+
+  registerWrapper( "tracerParticleIDs", &m_tracerParticleIDs ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Particle global IDs selected for MPM lagrangian tracers." );
+
+  registerWrapper( "tracerVariables", &m_tracerVariables ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Particle variables to write to each MPM lagrangian tracer CSV file. Supported names include particleID, mass, volume, materialType, porosity, density, damage, temperature, internalEnergy, kineticEnergy, speed, velocityX, velocityY, velocityZ, plasticStrainMagnitude, stressXX, stressYY, stressZZ, stressYZ, stressXZ, stressXY, and plasticStrainXX/YY/ZZ/YZ/XZ/XY." );
+
+  registerWrapper( "tracerWriteInterval", &m_tracerWriteInterval ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_tracerWriteInterval ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Time interval for MPM lagrangian tracer CSV output. Use either tracerWriteInterval or tracerCycleInterval. A value of 0 means no time-based interval." );
+
   registerWrapper( "writeParticleData", &m_writeParticleData ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_writeParticleData ).
@@ -1791,6 +2009,38 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF( std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end() &&
                    m_computeInternalEnergyAndTemperature != 1,
                    "The internalEnergy profile variable requires computeInternalEnergyAndTemperature=1." );
+  }
+
+  if( m_tracerHistory == 1 )
+  {
+    GEOS_ERROR_IF( m_tracerCoordinates.size( 0 ) == 0,
+                   "tracerHistory is enabled, but tracerCoordinates is empty. Specify one or more x,y,z coordinates." );
+    GEOS_ERROR_IF( m_tracerCoordinates.size( 1 ) != 3,
+                   "tracerCoordinates must have exactly 3 columns: x, y, z." );
+    GEOS_ERROR_IF( m_tracerVariables.size() == 0,
+                   "tracerHistory is enabled, but tracerVariables is empty. Specify one or more particle variables to write." );
+    GEOS_ERROR_IF( m_tracerWriteInterval < 0.0,
+                   "tracerWriteInterval must be non-negative." );
+    GEOS_ERROR_IF( m_tracerCycleInterval < 0,
+                   "tracerCycleInterval must be non-negative." );
+    GEOS_ERROR_IF( m_tracerWriteInterval > 0.0 && m_tracerCycleInterval > 0,
+                   "Specify either tracerWriteInterval or tracerCycleInterval for tracer output, not both." );
+    GEOS_ERROR_IF( m_tracerOutputPrefix.empty(),
+                   "tracerOutputPrefix must not be empty when tracerHistory is enabled." );
+
+    string_array canonicalVariables;
+    for( string const & variableName : m_tracerVariables )
+    {
+      string const canonicalName = canonicalTracerVariableName( variableName );
+      if( std::find( canonicalVariables.begin(), canonicalVariables.end(), canonicalName ) == canonicalVariables.end() )
+      {
+        canonicalVariables.push_back( canonicalName );
+      }
+    }
+    m_tracerVariables = canonicalVariables;
+
+    GEOS_ERROR_IF( tracerVariablesNeedInternalEnergy( m_tracerVariables ) && m_computeInternalEnergyAndTemperature != 1,
+                   "The internalEnergy tracer variable requires computeInternalEnergyAndTemperature=1." );
   }
 
   // Sort the grid indices and move any duplicates to the end.
@@ -2631,6 +2881,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     initializeProfileFiles();
   }
 
+  if( m_tracerHistory == 1 )
+  {
+    initializeTracerFiles( particleManager );
+  }
+
   // GEOS_LOG_RANK_0( "Initialized files");
 
   // Resize grid arrays according to number of velocity fields
@@ -2964,6 +3219,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   logAndProfile( "17. Write optional outputs and compute the next stable time step", particleManager, nodeManager );
   real64 const dtReturn = writeOutputsAndComputeStableTimeStepForExplicitStep( time_n,
                                                                                dt,
+                                                                               cycleNumber,
                                                                                particleManager );
 
   /*
@@ -3680,8 +3936,10 @@ void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64
  */
 real64 SolidMechanicsMPM::writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
                                                                               real64 const dt,
+                                                                              int const cycleNumber,
                                                                               ParticleManager & particleManager )
 {
+  real64 const outputTime = time_n + dt;
   if( m_boxAverageHistory == 1 && time_n + dt >= m_nextBoxAverageWriteTime )
   {
     computeAndWriteBoxAverage( time_n, dt, particleManager );
@@ -3691,6 +3949,11 @@ real64 SolidMechanicsMPM::writeOutputsAndComputeStableTimeStepForExplicitStep( r
   {
     writeParticleData( time_n, particleManager );
     m_nextParticleDataWriteTime += m_particleDataWriteInterval;
+  }
+  if( shouldWriteTracers( outputTime, cycleNumber ) )
+  {
+    computeAndWriteTracers( cycleNumber, time_n, dt, particleManager );
+    updateNextTracerWriteTime( outputTime );
   }
   return getStableTimeStep( particleManager );
 }
@@ -18811,6 +19074,347 @@ void SolidMechanicsMPM::computeAndWriteProfiles( int const cycleNumber,
       }
       file << std::endl;
       file.close();
+    }
+  }
+}
+
+bool SolidMechanicsMPM::shouldWriteTracers( real64 const outputTime,
+                                            int const cycleNumber ) const
+{
+  if( m_tracerHistory != 1 )
+  {
+    return false;
+  }
+
+  if( m_tracerCycleInterval > 0 )
+  {
+    return cycleNumber == 0 || cycleNumber % m_tracerCycleInterval == 0;
+  }
+
+  if( m_tracerWriteInterval > 0.0 )
+  {
+    return cycleNumber == 0 || m_nextTracerWriteTime <= outputTime;
+  }
+
+  return true;
+}
+
+void SolidMechanicsMPM::updateNextTracerWriteTime( real64 const outputTime )
+{
+  if( m_tracerWriteInterval > 0.0 )
+  {
+    do
+    {
+      m_nextTracerWriteTime += m_tracerWriteInterval;
+    }
+    while( m_nextTracerWriteTime <= outputTime );
+  }
+}
+
+void SolidMechanicsMPM::initializeTracerParticleIDs( ParticleManager & particleManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  int const numTracers = m_tracerCoordinates.size( 0 );
+  GEOS_ERROR_IF( numTracers <= 0,
+                 "tracerHistory is enabled, but tracerCoordinates is empty." );
+
+  m_tracerParticleIDs.resize( numTracers );
+
+  for( int tracerIndex = 0; tracerIndex < numTracers; ++tracerIndex )
+  {
+    MpiWrapper::PairType< real64, globalIndex > localNearest{ DBL_MAX, GLOBALINDEX_MAX };
+
+    particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      moveTracerSearchDataToHost( subRegion );
+
+      arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+      arrayView2d< real64 const > const particleCenter = subRegion.getParticleCenter();
+      SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+
+      for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        real64 const dx = particleCenter[p][0] - m_tracerCoordinates[tracerIndex][0];
+        real64 const dy = particleCenter[p][1] - m_tracerCoordinates[tracerIndex][1];
+        real64 const dz = particleCenter[p][2] - m_tracerCoordinates[tracerIndex][2];
+        real64 const distanceSquared = dx * dx + dy * dy + dz * dz;
+
+        MpiWrapper::PairType< real64, globalIndex > const candidate{ distanceSquared, particleID[p] };
+        if( std::tie( candidate.first, candidate.second ) < std::tie( localNearest.first, localNearest.second ) )
+        {
+          localNearest = candidate;
+        }
+      }
+    } );
+
+    MpiWrapper::PairType< real64, globalIndex > const globalNearest =
+      MpiWrapper::min< real64, globalIndex >( localNearest, MPI_COMM_GEOS );
+
+    GEOS_ERROR_IF( globalNearest.second == GLOBALINDEX_MAX,
+                   "Unable to initialize MPM tracer " << tracerIndex << " because no active particles were found." );
+
+    m_tracerParticleIDs[tracerIndex] = globalNearest.second;
+
+    GEOS_LOG_RANK_0( "MPM tracer " << tracerIndex << " initialized at requested coordinate ("
+                                    << m_tracerCoordinates[tracerIndex][0] << ", "
+                                    << m_tracerCoordinates[tracerIndex][1] << ", "
+                                    << m_tracerCoordinates[tracerIndex][2] << ") using particleID "
+                                    << globalNearest.second << " at distance "
+                                    << LvArray::math::sqrt( globalNearest.first ) << "." );
+  }
+}
+
+void SolidMechanicsMPM::initializeTracerFiles( ParticleManager & particleManager )
+{
+  GEOS_MARK_FUNCTION;
+
+  int const numTracers = m_tracerCoordinates.size( 0 );
+  int const numVariables = static_cast< int >( m_tracerVariables.size() );
+  GEOS_ERROR_IF( numTracers <= 0,
+                 "tracerHistory is enabled, but tracerCoordinates is empty." );
+  GEOS_ERROR_IF( numVariables <= 0,
+                 "tracerVariables must contain at least one variable when tracerHistory is enabled." );
+
+  if( m_tracerParticleIDs.size() != numTracers )
+  {
+    initializeTracerParticleIDs( particleManager );
+  }
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    for( int tracerIndex = 0; tracerIndex < numTracers; ++tracerIndex )
+    {
+      std::ofstream file;
+      file.open( tracerOutputFileName( m_tracerOutputPrefix, tracerIndex ), std::ios::out );
+      if( file.fail() )
+      {
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+
+      file << "t,x,y,z";
+      for( string const & variableName : m_tracerVariables )
+      {
+        file << "," << variableName;
+      }
+      file << std::endl;
+      file.close();
+    }
+  }
+
+  MpiWrapper::barrier( MPI_COMM_GEOS );
+}
+
+void SolidMechanicsMPM::computeAndWriteTracers( int const cycleNumber,
+                                                real64 const time,
+                                                real64 const dt,
+                                                ParticleManager & particleManager )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( cycleNumber );
+
+  int const numTracers = m_tracerParticleIDs.size();
+  int const numVariables = static_cast< int >( m_tracerVariables.size() );
+  int const rowWidth = 3 + numVariables;
+  real64 const outputTime = time + dt;
+
+  GEOS_ERROR_IF( numTracers <= 0,
+                 "tracerParticleIDs is empty. initializeTracerFiles must be called before computeAndWriteTracers." );
+  GEOS_ERROR_IF( numTracers != m_tracerCoordinates.size( 0 ),
+                 "tracerParticleIDs and tracerCoordinates have different sizes." );
+  GEOS_ERROR_IF( numVariables <= 0,
+                 "tracerVariables must contain at least one variable when tracerHistory is enabled." );
+
+  std::unordered_map< globalIndex, stdVector< int > > tracerIndicesByParticleID;
+  tracerIndicesByParticleID.reserve( static_cast< std::size_t >( numTracers ) );
+  for( int tracerIndex = 0; tracerIndex < numTracers; ++tracerIndex )
+  {
+    tracerIndicesByParticleID[m_tracerParticleIDs[tracerIndex]].push_back( tracerIndex );
+  }
+
+  array1d< real64 > tracerValuesLocal( numTracers * rowWidth );
+  array1d< real64 > tracerValuesGlobal( numTracers * rowWidth );
+  array1d< int > tracerFoundLocal( numTracers );
+  array1d< int > tracerFoundGlobal( numTracers );
+
+  for( int i = 0; i < numTracers * rowWidth; ++i )
+  {
+    tracerValuesLocal[i] = 0.0;
+    tracerValuesGlobal[i] = 0.0;
+  }
+  for( int i = 0; i < numTracers; ++i )
+  {
+    tracerFoundLocal[i] = 0;
+    tracerFoundGlobal[i] = 0;
+  }
+
+  bool const needInternalEnergy = tracerVariablesNeedInternalEnergy( m_tracerVariables );
+
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    moveTracerOutputDataToHost( subRegion, needInternalEnergy );
+
+    arrayView1d< globalIndex const > const particleID = subRegion.getParticleID();
+    arrayView2d< real64 const > const particleCenter = subRegion.getParticleCenter();
+    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+    arrayView1d< real64 const > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
+    arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
+    arrayView1d< int const > const particleMaterialType = subRegion.getField< fields::mpm::particleMaterialType >();
+    arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
+    arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
+    arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
+    arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
+    arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
+    arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
+
+    arrayView1d< real64 const > particleInternalEnergy;
+    if( needInternalEnergy )
+    {
+      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
+    }
+
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    for( localIndex pp = 0; pp < activeParticleIndices.size(); ++pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      auto const iter = tracerIndicesByParticleID.find( particleID[p] );
+      if( iter == tracerIndicesByParticleID.end() )
+      {
+        continue;
+      }
+
+      real64 const pKineticEnergy = 0.5 * particleMass[p] * LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] );
+      real64 const pPlasticStrainMagnitude = plasticStrainMagnitudeFromVoigt( particlePlasticStrain[p] );
+      real64 const pSpeed = LvArray::math::sqrt( LvArray::tensorOps::l2NormSquared< 3 >( particleVelocity[p] ) );
+
+      for( int const tracerIndex : iter->second )
+      {
+        int const rowOffset = tracerIndex * rowWidth;
+        tracerFoundLocal[tracerIndex] += 1;
+        tracerValuesLocal[rowOffset + 0] += particleCenter[p][0];
+        tracerValuesLocal[rowOffset + 1] += particleCenter[p][1];
+        tracerValuesLocal[rowOffset + 2] += particleCenter[p][2];
+
+        for( int variableIndex = 0; variableIndex < numVariables; ++variableIndex )
+        {
+          string const & variableName = m_tracerVariables[variableIndex];
+          real64 value = 0.0;
+
+          int const velocityComponent = profileVelocityComponentIndex( variableName );
+          int const stressComponent = profileStressComponentIndex( variableName );
+          int const plasticStrainComponent = profilePlasticStrainComponentIndex( variableName );
+
+          if( variableName == "particleID" )
+          {
+            value = static_cast< real64 >( particleID[p] );
+          }
+          else if( variableName == "mass" )
+          {
+            value = particleMass[p];
+          }
+          else if( variableName == "volume" )
+          {
+            value = particleVolume[p];
+          }
+          else if( variableName == "materialType" )
+          {
+            value = static_cast< real64 >( particleMaterialType[p] );
+          }
+          else if( variableName == "porosity" )
+          {
+            value = particlePorosity[p];
+          }
+          else if( variableName == "density" )
+          {
+            value = particleDensity[p];
+          }
+          else if( variableName == "damage" )
+          {
+            value = particleDamage[p];
+          }
+          else if( variableName == "temperature" )
+          {
+            value = particleTemperature[p];
+          }
+          else if( variableName == "internalEnergy" )
+          {
+            value = particleInternalEnergy[p];
+          }
+          else if( variableName == "kineticEnergy" )
+          {
+            value = pKineticEnergy;
+          }
+          else if( variableName == "speed" )
+          {
+            value = pSpeed;
+          }
+          else if( velocityComponent >= 0 )
+          {
+            value = particleVelocity[p][velocityComponent];
+          }
+          else if( variableName == "plasticStrainMagnitude" )
+          {
+            value = pPlasticStrainMagnitude;
+          }
+          else if( stressComponent >= 0 )
+          {
+            value = particleStress[p][stressComponent];
+          }
+          else if( plasticStrainComponent >= 0 )
+          {
+            value = particlePlasticStrain[p][plasticStrainComponent];
+          }
+          else
+          {
+            GEOS_ERROR( "Unsupported canonical MPM tracer variable '" << variableName << "'." );
+          }
+
+          tracerValuesLocal[rowOffset + 3 + variableIndex] += value;
+        }
+      }
+    }
+  } );
+
+  MpiWrapper::allReduce( tracerValuesLocal,
+                         tracerValuesGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+  MpiWrapper::allReduce( tracerFoundLocal,
+                         tracerFoundGlobal,
+                         MpiWrapper::Reduction::Sum,
+                         MPI_COMM_GEOS );
+
+  if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
+  {
+    real64 const missingValue = std::numeric_limits< real64 >::quiet_NaN();
+    for( int tracerIndex = 0; tracerIndex < numTracers; ++tracerIndex )
+    {
+      int const rowOffset = tracerIndex * rowWidth;
+      int const numFound = tracerFoundGlobal[tracerIndex];
+
+      std::ofstream file;
+      file.open( tracerOutputFileName( m_tracerOutputPrefix, tracerIndex ), std::ios::out | std::ios::app );
+      if( file.fail() )
+      {
+        throw std::ios_base::failure( std::strerror( errno ) );
+      }
+      file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
+
+      file << std::setprecision( std::numeric_limits< long double >::digits10 ) << outputTime;
+      for( int columnIndex = 0; columnIndex < rowWidth; ++columnIndex )
+      {
+        real64 const value = numFound > 0 ? tracerValuesGlobal[rowOffset + columnIndex] / numFound : missingValue;
+        file << std::setprecision( std::numeric_limits< long double >::digits10 ) << "," << value;
+      }
+      file << std::endl;
+      file.close();
+
+      GEOS_LOG_RANK_0_IF( numFound == 0,
+                          "MPM tracer " << tracerIndex << " could not find particleID "
+                                        << m_tracerParticleIDs[tracerIndex]
+                                        << " at time " << outputTime << "; wrote NaN values." );
     }
   }
 }

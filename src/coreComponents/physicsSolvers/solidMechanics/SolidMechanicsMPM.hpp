@@ -499,6 +499,7 @@ public:
 
   real64 writeOutputsAndComputeStableTimeStepForExplicitStep( real64 const time_n,
                                                               real64 const dt,
+                                                              int const cycleNumber,
                                                               ParticleManager & particleManager );
 
   void resizeGridAndCleanParticlesForExplicitStep( real64 const dt,
@@ -1259,6 +1260,20 @@ public:
                                 ParticleManager & particleManager,
                                 NodeManager & nodeManager );
 
+  bool shouldWriteTracers( real64 const outputTime,
+                           int const cycleNumber ) const;
+
+  void updateNextTracerWriteTime( real64 const outputTime );
+
+  void initializeTracerParticleIDs( ParticleManager & particleManager );
+
+  void initializeTracerFiles( ParticleManager & particleManager );
+
+  void computeAndWriteTracers( int const cycleNumber,
+                               real64 const time,
+                               real64 const dt,
+                               ParticleManager & particleManager );
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 Mod( real64 num, real64 denom );
@@ -1362,6 +1377,7 @@ protected:
   real64 m_nextParticleDataWriteTime;
   real64 m_nextProfileWriteTime;
   real64 m_nextReactionWriteTime;
+  real64 m_nextTracerWriteTime;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   NormalsAndPositionsMethodOption m_normalAndPositionMethod;
   localIndex m_numberOfSubRegions;
@@ -1431,6 +1447,13 @@ protected:
   InterpolationOption m_temperatureTableInterpType;
   real64 m_thinFeatureDFGThreshold;
   TimeIntegrationOption m_timeIntegrationOption;
+  int m_tracerCycleInterval;
+  array2d< real64 > m_tracerCoordinates;
+  int m_tracerHistory;
+  string m_tracerOutputPrefix;
+  array1d< globalIndex > m_tracerParticleIDs;
+  string_array m_tracerVariables;
+  real64 m_tracerWriteInterval;
   real64 m_totalBinderVolume;
   int m_treatFullyDamagedAsSingleField;
   UpdateMethodOption m_updateMethod;

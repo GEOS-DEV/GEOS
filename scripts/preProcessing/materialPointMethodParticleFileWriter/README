@@ -160,3 +160,56 @@ The common preset expands to gridMass, gridVelocity, gridInternalForce, and
 gridDamageGradient.  For a larger diagnostic dump, `pfw["siloGridFields"] =
 "all"` expands to the MPM grid fields known to PFW, but this can substantially
 increase plot-file size.
+
+***Lagrangian tracer points***
+
+The MPM solver can write one CSV history file per Lagrangian tracer.  Each tracer
+is initialized from a user coordinate by selecting the nearest active particle;
+after that, the tracer follows that particle ID.  Each output row is:
+
+  t,x,y,z,<requested particle fields...>
+
+A PFW input can specify tracer coordinates directly, or use the helper module
+`pfw_tracerPoints.py` to generate grids and disks.
+
+Example: a 10x10 square grid near the left end of a foam bar, normal to x:
+
+  import pfw_tracerPoints as tracers
+
+  dx = (pfw["xmax"] - pfw["xmin"]) / pfw["nI"]
+  points = tracers.tensor_grid(
+      x=pfw["xmin"] + 0.5*dx,
+      y=tracers.linspace(-2.0e-3, 2.0e-3, 10),
+      z=tracers.linspace(-2.0e-3, 2.0e-3, 10),
+  )
+
+  tracers.set_tracers(
+      pfw,
+      points,
+      variables=["density", "velocityX", "plasticStrainMagnitude", "internalEnergy"],
+      write_interval=pfw["endTime"] / 1000.0,
+      output_prefix="leftEndTracer",
+  )
+
+Example: a disk of points on an x-normal surface to monitor velocity:
+
+  points = tracers.disk(
+      center=(pfw["xmax"] - 0.5*dx, 0.0, 0.0),
+      radius=2.0e-3,
+      normal_axis="x",
+      radial_count=4,
+      angular_count=24,
+      include_center=True,
+  )
+
+  tracers.set_tracers(
+      pfw,
+      points,
+      variables=["velocityX", "velocityY", "velocityZ", "speed"],
+      cycle_interval=10,
+      output_prefix="rightSurfaceVelocity",
+  )
+
+The generated solver attributes are `tracerHistory`, `tracerCoordinates`,
+`tracerVariables`, `tracerWriteInterval` or `tracerCycleInterval`, and
+`tracerOutputPrefix`.  Use a time interval or a cycle interval, not both.
