@@ -2,7 +2,7 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC*
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
@@ -20,15 +20,25 @@
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 
+#include "mesh/DomainPartition.hpp"
+#include <conduit.hpp>
+
 namespace geos
 {
 
-template< typename FRICTION_TYPE >
+template< typename FRICTION_TYPE, typename CONTACT_SOLVER >
 void
 FrictionDriver::runTest( FRICTION_TYPE & friction,
+                         CONTACT_SOLVER & contact,
                          const arrayView2d< real64 > & table )
 {
-  // Create kernel wrapper
+  // Create kernel wrapper and trigger solver configuration update.
+  conduit::Node dummyRoot;
+  DomainPartition dummyDomain( "FrictionDriverRunTestDomain", dummyRoot );
+  // CONTACT_SOLVER const solver( "FrictionDriverRunTestSolver", &dummyDomain );
+  // solver.updateConfiguration( dummyDomain, 0 );
+  contact.updateConfiguration( dummyDomain, 0 );
+
   typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
   integer const numRows = m_table.size( 0 );

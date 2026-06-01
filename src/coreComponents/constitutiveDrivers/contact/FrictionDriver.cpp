@@ -36,6 +36,11 @@ FrictionDriver::FrictionDriver( const string & name, Group * const parent )
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Friction model to test" );
+  
+  registerWrapper( viewKeyStruct::frictionNameString(), &m_contactName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Contact model to test" );
 
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -100,9 +105,15 @@ void FrictionDriver::postInputInitialization()
 bool FrictionDriver::execute()
 {
   FrictionBase & baseFriction = getFriction();
+  ContactSolverBase & baseContact = getContact();
+
+  //temp 
+  auto& castedContactModel = dynamic_cast< SolidMechanicsAugmentedLagrangianContact& >( baseContact );
+  assert( castedContactModel );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Friction Driver" );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Friction ............... " << m_frictionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Contact ............... " << m_contactName );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseFriction.getCatalogName() );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
@@ -121,7 +132,8 @@ bool FrictionDriver::execute()
   constitutiveUpdatePassThru( baseFriction, [&]( auto & selectedFrictionModel )
   {
     using FRICTION_TYPE = TYPEOFREF( selectedFrictionModel );
-    runTest< FRICTION_TYPE >( selectedFrictionModel, m_table );
+    using CONTACT_TYPE = TYPEOFREF( castedContactModel );
+    runTest< FRICTION_TYPE, CONTACT_TYPE >( selectedFrictionModel, castedContactModel, m_table );
   } );
 
   return false;
@@ -196,6 +208,16 @@ FrictionBase & FrictionDriver::getFriction()
 FrictionBase const & FrictionDriver::getFriction() const
 {
   return getConstitutiveManager().getGroup< FrictionBase >( m_frictionName );
+}
+
+ContactSolverBase & FrictionDriver::getContact()
+{
+  return getConstitutiveManager().getGroup< ContactSolverBase >( m_contactName );
+}
+
+ContactSolverBase const & FrictionDriver::getContact() const
+{
+  return getConstitutiveManager().getGroup< ContactSolverBase >( m_contactName );
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
