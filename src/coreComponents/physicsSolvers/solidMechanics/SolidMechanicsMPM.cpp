@@ -456,7 +456,8 @@ void moveTracerOutputDataToHost( ParticleSubRegion & subRegion,
 /**
  * @brief Generates combinations.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * @param sets Input sets.
+ * @return Cartesian product of the input sets.
  */
 array2d< int > generateCombinations( array1d< array1d< int > > sets )
 {
@@ -845,7 +846,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDefaultValue( m_computeInternalEnergyAndTemperature ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Flag to enable computing changes to internal energy and temperature" );
+    setDescription( "Deprecated compatibility flag. MPM particle thermal state is updated during the constitutive stress update." );
 
   registerWrapper( "computeNodalArea", &m_computeNodalArea ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2006,9 +2007,6 @@ void SolidMechanicsMPM::postInputInitialization()
     }
     m_profileVariables = canonicalVariables;
 
-    GEOS_ERROR_IF( std::find( m_profileVariables.begin(), m_profileVariables.end(), string( "internalEnergy" ) ) != m_profileVariables.end() &&
-                   m_computeInternalEnergyAndTemperature != 1,
-                   "The internalEnergy profile variable requires computeInternalEnergyAndTemperature=1." );
   }
 
   if( m_tracerHistory == 1 )
@@ -2039,8 +2037,6 @@ void SolidMechanicsMPM::postInputInitialization()
     }
     m_tracerVariables = canonicalVariables;
 
-    GEOS_ERROR_IF( tracerVariablesNeedInternalEnergy( m_tracerVariables ) && m_computeInternalEnergyAndTemperature != 1,
-                   "The internalEnergy tracer variable requires computeInternalEnergyAndTemperature=1." );
   }
 
   // Sort the grid indices and move any duplicates to the end.
@@ -2172,16 +2168,15 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
           subRegion.registerField< particleCopyFlag >( getName() );
         }
 
-        if( m_computeInternalEnergyAndTemperature == 1 )
-        {
-          subRegion.registerField< particleHeatCapacity >( getName() );
-          subRegion.registerField< particleInternalEnergy >( getName() );
-        }
+        // Thermal state is material-owned for MPM. These particle fields are
+        // always registered so constitutive models can publish temperature and
+        // specific internal energy for restart, profiles, tracers, and plots.
+        subRegion.registerField< particleHeatCapacity >( getName() );
+        subRegion.registerField< particleInternalEnergy >( getName() );
 
-        if( m_shockHeating == 1 || m_useArtificialViscosity == 1 || m_computeInternalEnergyAndTemperature == 1 )
-        {
-          subRegion.registerField< particleArtificialViscosity >( getName() );
-        }
+        // Artificial viscosity is still computed by the MPM solver, but the
+        // material model owns how, or whether, that work heats the material.
+        subRegion.registerField< particleArtificialViscosity >( getName() );
 
         if( m_enableSurfaceTension == 1 )
         {
@@ -3912,23 +3907,17 @@ void SolidMechanicsMPM::updateParticleKinematicsForExplicitStep( real64 const dt
 void SolidMechanicsMPM::updateConstitutiveAndThermalStateForExplicitStep( real64 const dt,
                                                                          ParticleManager & particleManager )
 {
+  // Artificial viscosity is computed by the solver.  Thermal work integration is
+  // performed during updateStress(), either by the constitutive model itself or
+  // by the generic MPM fallback for models without material-owned thermal state.
+
   if( m_useArtificialViscosity == 1 )
   {
     computeArtificialViscosity( particleManager );
   }
-  if( m_computeInternalEnergyAndTemperature == 1 )
-  {
-    computeInternalEnergyAndTemperature( dt,
-                                         particleManager );
-  }
   updateConstitutiveModelDependencies( particleManager );
   updateStress( dt, particleManager );
   updateSolverDependencies( particleManager );
-  if( m_computeInternalEnergyAndTemperature == 1 )
-  {
-    computeInternalEnergyAndTemperature( dt,
-                                         particleManager );
-  }
 }
 
 /**
@@ -6622,7 +6611,8 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
 /**
  * @brief Initializes particle fields.
  *
- * Executable statements are unchanged; comments document intent where practical.
+ * MPM thermal state is always initialized; constitutive models may own the
+ * subsequent thermal update if they expose array-valued thermal state.
  */
 void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleManager )
 {
@@ -6631,9 +6621,6 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
   int const directionalOverlapCorrection = m_directionalOverlapCorrection;
   int const subdivideParticles = m_subdivideParticles;
   int const cpdiDomainScaling = m_cpdiDomainScaling;
-  int const computeInternalEnergyAndTemperature = m_computeInternalEnergyAndTemperature;
-  int const shockHeating = m_shockHeating;
-  int const useArtificialViscosity = m_useArtificialViscosity;
   int const enableSurfaceTension = m_enableSurfaceTension;
 
   RAJA::ReduceMin< parallelDeviceReduce, real64 > minMassLocal( LvArray::NumericLimits< real64 >::max );
@@ -6648,7 +6635,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
     arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
     arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
-    arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
+    arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
     arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const constitutiveDensity = constitutiveModel.getDensity();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
@@ -6711,46 +6698,58 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       particleCopyFlag = subRegion.getField< fields::mpm::particleCopyFlag >();
     }
 
-    arrayView1d< real64 > particleHeatCapacity;
-    arrayView1d< real64 > particleReferenceTemperature;
+    arrayView1d< real64 > const particleHeatCapacity =
+      subRegion.getField< fields::mpm::particleHeatCapacity >();
+    arrayView1d< real64 > const particleReferenceTemperature =
+      subRegion.getField< fields::mpm::particleReferenceTemperature >();
+    arrayView1d< real64 const > constitutiveTemperature;
+    bool useConstitutiveTemperature = false;
+    if( constitutiveModel.hasWrapper( "temperature" ) &&
+        constitutiveModel.getWrapperBase( "temperature" ).numArrayDims() == 1 )
+    {
+      constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
+      useConstitutiveTemperature = true;
+    }
+
+    arrayView1d< real64 const > constitutiveInitialInternalEnergy;
+    bool useConstitutiveInitialInternalEnergy = false;
+    if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "specificInternalEnergy" ).numArrayDims() == 1 )
+    {
+      constitutiveInitialInternalEnergy =
+        constitutiveModel.getReference< array1d< real64 > >( "specificInternalEnergy" );
+      useConstitutiveInitialInternalEnergy = true;
+    }
+    else if( constitutiveModel.hasWrapper( "internalEnergy" ) &&
+             constitutiveModel.getWrapperBase( "internalEnergy" ).numArrayDims() == 1 )
+    {
+      constitutiveInitialInternalEnergy =
+        constitutiveModel.getReference< array1d< real64 > >( "internalEnergy" );
+      useConstitutiveInitialInternalEnergy = true;
+    }
+
     arrayView1d< real64 const > constitutiveTangentSpecificHeat;
     bool useConstitutiveTangentSpecificHeat = false;
     real64 defaultParticleHeatCapacity = DBL_MAX;
-    if( computeInternalEnergyAndTemperature == 1 )
+    if( constitutiveModel.hasWrapper( "tangentSpecificHeat" ) &&
+        constitutiveModel.getWrapperBase( "tangentSpecificHeat" ).numArrayDims() == 1 )
     {
-      particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
-      particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
-
-      // particleHeatCapacity is used as a specific heat capacity in
-      // computeInternalEnergyAndTemperature(): dT = de / c_v, where de is a
-      // specific internal-energy increment.  Prefer a per-particle tangent
-      // value from the constitutive model and fall back to a scalar default.
-      if( constitutiveModel.hasWrapper( "tangentSpecificHeat" ) )
-      {
-        constitutiveTangentSpecificHeat = constitutiveModel.getReference< array1d< real64 > >( "tangentSpecificHeat" );
-        useConstitutiveTangentSpecificHeat = true;
-      }
-      else if( constitutiveModel.hasWrapper( "defaultSpecificHeat" ) )
-      {
-        defaultParticleHeatCapacity = constitutiveModel.getReference< real64 >( "defaultSpecificHeat" );
-      }
-      else if( constitutiveModel.hasWrapper( "defaultHeatCapacity" ) )
-      {
-        defaultParticleHeatCapacity = constitutiveModel.getReference< real64 >( "defaultHeatCapacity" );
-      }
+      constitutiveTangentSpecificHeat = constitutiveModel.getReference< array1d< real64 > >( "tangentSpecificHeat" );
+      useConstitutiveTangentSpecificHeat = true;
+    }
+    else if( constitutiveModel.hasWrapper( "defaultSpecificHeat" ) )
+    {
+      defaultParticleHeatCapacity = constitutiveModel.getReference< real64 >( "defaultSpecificHeat" );
+    }
+    else if( constitutiveModel.hasWrapper( "defaultHeatCapacity" ) )
+    {
+      defaultParticleHeatCapacity = constitutiveModel.getReference< real64 >( "defaultHeatCapacity" );
     }
 
-    arrayView1d< real64 > particleInternalEnergy;
-    if( computeInternalEnergyAndTemperature == 1 )
-    {
-      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
-    }
-
-    arrayView1d< real64 > particleArtificialViscosity;
-    if( shockHeating == 1 || useArtificialViscosity == 1 || computeInternalEnergyAndTemperature == 1 )
-    {
-      particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
-    }
+    arrayView1d< real64 > const particleInternalEnergy =
+      subRegion.getField< fields::mpm::particleInternalEnergy >();
+    arrayView1d< real64 > const particleArtificialViscosity =
+      subRegion.getField< fields::mpm::particleArtificialViscosity >();
 
     arrayView1d< real64 > particleSurfaceCurvature;
     if( enableSurfaceTension == 1 )
@@ -6783,29 +6782,23 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       // Initiale particle fields
       particleKineticEnergy[p] = 0.0;
 
-      if( computeInternalEnergyAndTemperature == 1 )
+      if( useConstitutiveTemperature )
       {
-        particleReferenceTemperature[p] = particleTemperature[p];
-        if( useConstitutiveTangentSpecificHeat )
-        {
-          particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, constitutiveTangentSpecificHeat[p] );
-        }
-        else
-        {
-          particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, defaultParticleHeatCapacity );
-        }
+        particleTemperature[p] = constitutiveTemperature[p];
+      }
+      particleReferenceTemperature[p] = particleTemperature[p];
+      if( useConstitutiveTangentSpecificHeat )
+      {
+        particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, constitutiveTangentSpecificHeat[p] );
+      }
+      else
+      {
+        particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, defaultParticleHeatCapacity );
       }
 
-      // Should already be initialized by default value from DECLARE_FIELD, these might be redundant
-      if( computeInternalEnergyAndTemperature == 1 )
-      {
-        particleInternalEnergy[p] = 0.0;
-      }
-
-      if( shockHeating == 1 || useArtificialViscosity == 1 || computeInternalEnergyAndTemperature == 1 )
-      {
-        particleArtificialViscosity[p] = 0.0;
-      }
+      particleInternalEnergy[p] =
+        useConstitutiveInitialInternalEnergy ? constitutiveInitialInternalEnergy[p] : 0.0;
+      particleArtificialViscosity[p] = 0.0;
 
       if( computeSPHJacobian > 1 )
       {
@@ -22043,6 +22036,10 @@ void SolidMechanicsMPM::computeArtificialViscosity( ParticleManager & particleMa
 void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
                                                              ParticleManager & particleManager )
 {
+  //
+  // ** This function does half the energy integration and is expected to be called twice,
+  // before and after the stress update. **
+  //
   GEOS_MARK_FUNCTION;
 
   int numDims = m_numDims;
@@ -22050,15 +22047,6 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
 
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    // Get constitutive model reference
-    // string const & solidMaterialName = subRegion.template getReference< string >(
-    // viewKeyStruct::solidMaterialNamesString() );
-    // ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( subRegion, solidMaterialName );
-    // if( constitutiveModel.hasWrapper( "strengthScale" ) )
-    // {
-    // arrayView1d< real64 > const constitutiveStrengthScale = constitutiveModel.getReference< array1d< real64 > >(
-    // "strengthScale" );
-
     arrayView1d< real64 const > const particleArtificialViscosity = subRegion.getField< fields::mpm::particleArtificialViscosity >();
     arrayView1d< real64 const > const particleDensity = subRegion.getField< fields::mpm::particleDensity >();
     arrayView1d< real64 const > const particleHeatCapacity = subRegion.getField< fields::mpm::particleHeatCapacity >();
@@ -22108,20 +22096,6 @@ void SolidMechanicsMPM::computeInternalEnergyAndTemperature( const real64 dt,
       real64 const heatCapacity = LvArray::math::max( 1.0e-30, particleHeatCapacity[p] );
       particleTemperature[p] += energyIncrement / heatCapacity;
       particleInternalEnergy[p] += energyIncrement;
-
-      //      // 1st half-step internal energy update
-      //      for( int i = 0 ; i < m_ndim ; ++i )
-      //      {
-      //        for( int j = 0 ; j < m_ndim ; ++j )
-      //        {
-      //          p_internalEnergy[pp] += 0.5 * dt * p_stress[pp]( i, j ) * p_L[pp]( i, j ) / p_rho[pp]; //  General
-      // case for increment in
-      // internal energy
-      //        }
-      //        p_internalEnergy[pp] -= m_shock_heating * 0.5 * dt * p_q[pp] * p_L[pp]( i, i ) / p_rho[pp]; //
-      // Artificial viscosity
-      // contribution
-      //      }
 
       // Prevent non-physical negative internal energy from integration error.
       particleInternalEnergy[p] = ( particleInternalEnergy[p] < 0 ) ? 0 : particleInternalEnergy[p];
@@ -22732,7 +22706,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if( constitutiveModel.hasWrapper( "temperature" ) )
+    if( constitutiveModel.hasWrapper( "temperature" ) &&
+        constitutiveModel.getWrapperBase( "temperature" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
       arrayView1d< real64 const > const particleTemperature = subRegion.getParticleTemperature();
@@ -22743,7 +22718,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if( constitutiveModel.hasWrapper( "temperatureRate" ) )
+    if( constitutiveModel.hasWrapper( "temperatureRate" ) &&
+        constitutiveModel.getWrapperBase( "temperatureRate" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 > const constitutiveTemperatureRate = constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
       arrayView1d< real64 const > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
@@ -22754,7 +22730,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if( m_computeInternalEnergyAndTemperature == 1 && constitutiveModel.hasWrapper( "specificInternalEnergy" ) )
+    if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "specificInternalEnergy" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 const > const particleInternalEnergy =
         subRegion.getField< fields::mpm::particleInternalEnergy >();
@@ -22767,7 +22744,8 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       } );
     }
 
-    if( m_computeInternalEnergyAndTemperature == 1 && constitutiveModel.hasWrapper( "internalEnergy" ) )
+    if( constitutiveModel.hasWrapper( "internalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "internalEnergy" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 const > const particleInternalEnergy =
         subRegion.getField< fields::mpm::particleInternalEnergy >();
@@ -22777,6 +22755,20 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveInternalEnergy[p] = particleInternalEnergy[p];
+      } );
+    }
+
+    if( constitutiveModel.hasWrapper( "artificialViscosity" ) &&
+        constitutiveModel.getWrapperBase( "artificialViscosity" ).numArrayDims() == 1 )
+    {
+      arrayView1d< real64 const > const particleArtificialViscosity =
+        subRegion.getField< fields::mpm::particleArtificialViscosity >();
+      arrayView1d< real64 > const constitutiveArtificialViscosity =
+        constitutiveModel.getReference< array1d< real64 > >( "artificialViscosity" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveArtificialViscosity[p] = particleArtificialViscosity[p];
       } );
     }
 
@@ -22875,12 +22867,23 @@ void SolidMechanicsMPM::updateStress( real64 dt,
       hyperelasticUpdate = 1;
     }
 
-    // Call constitutive model
+    array2d< real64 > particleStressOld( subRegion.size(), 6 );
+    arrayView2d< real64 > const particleStressOldView = particleStressOld.toView();
+    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    {
+      localIndex const p = activeParticleIndices[pp];
+      LvArray::tensorOps::copy< 6 >( particleStressOldView[p], particleStress[p] );
+    } );
+
+    // Models that expose array-valued internal energy own their thermal update.
+    // The fallback below preserves the older solver-side stress-power update for
+    // ordinary material wrappers.
     ConstitutivePassThruMPM< ContinuumBase >::execute( constitutiveModel, [&] ( auto & castedConstitutiveModel )
     {
       using SolidType = TYPEOFREF( castedConstitutiveModel );
       typename SolidType::KernelWrapper constitutiveModelWrapper = castedConstitutiveModel.createKernelUpdates();
-      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( subRegion.activeParticleIndices(),
+      solidMechanicsMPMKernels::ParticleStateUpdateKernel::launch< parallelDevicePolicy<> >( activeParticleIndices,
                                                                                              constitutiveModelWrapper,
                                                                                              dt,
                                                                                              hyperelasticUpdate,
@@ -22889,6 +22892,56 @@ void SolidMechanicsMPM::updateStress( real64 dt,
                                                                                              particleVelocityGradient,
                                                                                              particleStress );
     } );
+
+    bool const constitutiveOwnsThermalState =
+      ( constitutiveModel.hasWrapper( "specificInternalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "specificInternalEnergy" ).numArrayDims() == 1 ) ||
+      ( constitutiveModel.hasWrapper( "internalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "internalEnergy" ).numArrayDims() == 1 );
+
+    if( !constitutiveOwnsThermalState )
+    {
+      int const numDims = m_numDims;
+      int const shockHeating = m_shockHeating;
+      arrayView1d< real64 const > const particleArtificialViscosity =
+        subRegion.getField< fields::mpm::particleArtificialViscosity >();
+      arrayView1d< real64 const > const particleDensity =
+        subRegion.getField< fields::mpm::particleDensity >();
+      arrayView1d< real64 const > const particleHeatCapacity =
+        subRegion.getField< fields::mpm::particleHeatCapacity >();
+      arrayView1d< real64 > const particleInternalEnergy =
+        subRegion.getField< fields::mpm::particleInternalEnergy >();
+      arrayView1d< real64 > const particleTemperature =
+        subRegion.getParticleTemperature();
+
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        localIndex const voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
+        real64 energyIncrement = 0.0;
+        for( int i = 0; i < numDims; ++i )
+        {
+          for( int j = 0; j < numDims; ++j )
+          {
+            real64 const stressAverage =
+              0.5 * ( particleStressOldView[p][voigtMap[i][j]] +
+                      particleStress[p][voigtMap[i][j]] );
+            energyIncrement += dt * stressAverage * particleVelocityGradient[p][i][j] /
+                               LvArray::math::max( 1.0e-30, particleDensity[p] );
+          }
+          energyIncrement -= shockHeating * dt * particleArtificialViscosity[p] *
+                             particleVelocityGradient[p][i][i] /
+                             LvArray::math::max( 1.0e-30, particleDensity[p] );
+        }
+
+        particleInternalEnergy[p] += energyIncrement;
+        if( particleHeatCapacity[p] < 0.5 * DBL_MAX )
+        {
+          particleTemperature[p] += energyIncrement /
+                                    LvArray::math::max( 1.0e-30, particleHeatCapacity[p] );
+        }
+      } );
+    }
   } );
 }
 
@@ -22960,7 +23013,8 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
-    if( constitutiveModel.hasWrapper( "temperature" ) )
+    if( constitutiveModel.hasWrapper( "temperature" ) &&
+        constitutiveModel.getWrapperBase( "temperature" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 const > const constitutiveTemperature = constitutiveModel.getReference< array1d< real64 > >( "temperature" );
       arrayView1d< real64 > const particleTemperature = subRegion.getParticleTemperature();
@@ -22971,7 +23025,8 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
-    if( constitutiveModel.hasWrapper( "temperatureRate" ) )
+    if( constitutiveModel.hasWrapper( "temperatureRate" ) &&
+        constitutiveModel.getWrapperBase( "temperatureRate" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 const > const constitutiveTemperatureRate = constitutiveModel.getReference< array1d< real64 > >( "temperatureRate" );
       arrayView1d< real64 > const particleTemperatureRate = subRegion.getParticleTemperatureRate();
@@ -22983,7 +23038,9 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       } );
     }
 
-    if( m_computeInternalEnergyAndTemperature == 1 && constitutiveModel.hasWrapper( "tangentSpecificHeat" ) )
+    bool copiedHeatCapacity = false;
+    if( constitutiveModel.hasWrapper( "tangentSpecificHeat" ) &&
+        constitutiveModel.getWrapperBase( "tangentSpecificHeat" ).numArrayDims() == 1 )
     {
       arrayView1d< real64 > const particleHeatCapacity =
         subRegion.getField< fields::mpm::particleHeatCapacity >();
@@ -22995,8 +23052,10 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         localIndex const p = activeParticleIndices[pp];
         particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, constitutiveTangentSpecificHeat[p] );
       } );
+      copiedHeatCapacity = true;
     }
-    else if( m_computeInternalEnergyAndTemperature == 1 && constitutiveModel.hasWrapper( "defaultSpecificHeat" ) )
+
+    if( !copiedHeatCapacity && constitutiveModel.hasWrapper( "defaultSpecificHeat" ) )
     {
       real64 const defaultSpecificHeat = constitutiveModel.getReference< real64 >( "defaultSpecificHeat" );
       arrayView1d< real64 > const particleHeatCapacity =
@@ -23007,8 +23066,10 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         localIndex const p = activeParticleIndices[pp];
         particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, defaultSpecificHeat );
       } );
+      copiedHeatCapacity = true;
     }
-    else if( m_computeInternalEnergyAndTemperature == 1 && constitutiveModel.hasWrapper( "defaultHeatCapacity" ) )
+
+    if( !copiedHeatCapacity && constitutiveModel.hasWrapper( "defaultHeatCapacity" ) )
     {
       real64 const defaultHeatCapacity = constitutiveModel.getReference< real64 >( "defaultHeatCapacity" );
       arrayView1d< real64 > const particleHeatCapacity =
@@ -23018,6 +23079,33 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
       {
         localIndex const p = activeParticleIndices[pp];
         particleHeatCapacity[p] = LvArray::math::max( 1.0e-30, defaultHeatCapacity );
+      } );
+    }
+
+    if( constitutiveModel.hasWrapper( "specificInternalEnergy" ) &&
+        constitutiveModel.getWrapperBase( "specificInternalEnergy" ).numArrayDims() == 1 )
+    {
+      arrayView1d< real64 const > const constitutiveSpecificInternalEnergy =
+        constitutiveModel.getReference< array1d< real64 > >( "specificInternalEnergy" );
+      arrayView1d< real64 > const particleInternalEnergy =
+        subRegion.getField< fields::mpm::particleInternalEnergy >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleInternalEnergy[p] = constitutiveSpecificInternalEnergy[p];
+      } );
+    }
+    else if( constitutiveModel.hasWrapper( "internalEnergy" ) &&
+             constitutiveModel.getWrapperBase( "internalEnergy" ).numArrayDims() == 1 )
+    {
+      arrayView1d< real64 const > const constitutiveInternalEnergy =
+        constitutiveModel.getReference< array1d< real64 > >( "internalEnergy" );
+      arrayView1d< real64 > const particleInternalEnergy =
+        subRegion.getField< fields::mpm::particleInternalEnergy >();
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        particleInternalEnergy[p] = constitutiveInternalEnergy[p];
       } );
     }
 
@@ -23060,8 +23148,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 {
   GEOS_MARK_FUNCTION;
 
-  int const computeInternalEnergyAndTemperature = m_computeInternalEnergyAndTemperature;
-
   RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > boxPlasticStrain( 6, 0.0 );
   RAJA::MultiReduceSum< RAJA::seq_multi_reduce, real64 > boxStress( 6, 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxMass( 0.0 );
@@ -23091,11 +23177,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView2d< real64 const > const particleStress = subRegion.getField< fields::mpm::particleStress >();
-    arrayView1d< real64 const > particleInternalEnergy;
-    if( computeInternalEnergyAndTemperature == 1 )
-    {
-      particleInternalEnergy = subRegion.getField< fields::mpm::particleInternalEnergy >();
-    }
+    arrayView1d< real64 const > const particleInternalEnergy =
+      subRegion.getField< fields::mpm::particleInternalEnergy >();
 
     // Accumulate values
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
@@ -23125,11 +23208,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxParticleReferenceVolume += particleReferenceVolume[p];
           boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];  // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
 
-          if( computeInternalEnergyAndTemperature == 1 )
-          {
-            // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
-            boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
-          }
+          // BUGFIX: check this normalization (do we want per unit volume/mass or just total?)
+          boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
 
           boxTemperature += particleTemperature[p] * particleMass[p];
 
