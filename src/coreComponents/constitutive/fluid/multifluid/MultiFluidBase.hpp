@@ -775,7 +775,7 @@ MultiFluidBase::KernelWrapper::
   for( integer ic = 0; ic < numComps; ++ic )
   {
     // component weight can not be zero, checked in MultiFluidBase::postInputInitialization
-    compMoleFrac[ic] = composition[ic] * m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
+    compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
     totalMolality += compMoleFrac[ic];
   }
 
