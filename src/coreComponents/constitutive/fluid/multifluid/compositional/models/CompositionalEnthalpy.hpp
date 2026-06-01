@@ -22,6 +22,7 @@
 
 #include "FunctionBase.hpp"
 #include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/PhaseType.hpp"
 
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -44,7 +45,8 @@ class CompositionalEnthalpyUpdate final : public FunctionBaseUpdate
 {
   using Deriv = multifluid::DerivativeOffset;
 public:
-  CompositionalEnthalpyUpdate( EquationOfStateType const equationOfState,
+  CompositionalEnthalpyUpdate( PhaseType const phaseType,
+                               EquationOfStateType const equationOfState,
                                arrayView1d< real64 const > const & referenceEnthalpy,
                                arrayView2d< real64 const > const & coefficients );
 
@@ -81,6 +83,7 @@ public:
   }
 
 private:
+  PhaseType const m_phaseType;
   EquationOfStateType const m_equationOfState;
   arrayView1d< real64 const > const m_referenceEnthalpy;
   arrayView2d< real64 const > const m_coefficients;
@@ -114,9 +117,9 @@ public:
   static std::unique_ptr< ModelParameters > createParameters( std::unique_ptr< ModelParameters > parameters );
 
 private:
+  PhaseType m_phaseType;
   EquationOfStateType m_equationOfState;
   array1d< real64 > m_referenceEnthalpy;
-  array2d< real64 > m_coefficients;
   HeatCapacityCoefficients const * const m_heatCapacityCoefficients{nullptr};
 };
 
@@ -137,7 +140,7 @@ void CompositionalEnthalpyUpdate::compute(
   integer const numComps = componentProperties.m_componentMolarWeight.size();
 
   // 1. Calculate the ideal gas enthalpy
-  real64& hIdealGas = enthalpy;
+  real64 & hIdealGas = enthalpy;
   auto const & dhIdealGas = dEnthalpy;
   hIdealGas = 0.0;
   dhIdealGas[Deriv::dT] = 0.0;

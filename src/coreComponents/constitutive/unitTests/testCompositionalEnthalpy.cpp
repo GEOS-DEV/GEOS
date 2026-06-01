@@ -43,19 +43,20 @@ struct FluidData {};
 template<>
 struct FluidData< 4 >
 {
-  static std::unique_ptr< TestFluid< 4 > > createFluid()
+  static constexpr integer numComps = 4;
+  static constexpr integer numCoeffs = 5;
+
+  static std::unique_ptr< TestFluid< numComps > > createFluid()
   {
-    return TestFluid< 4 >::create( {Fluid::CO2, Fluid::H2, Fluid::CH4, Fluid::C2H6} );
+    return TestFluid< numComps >::create( {Fluid::CO2, Fluid::H2, Fluid::CH4, Fluid::C2H6} );
   }
 
   static void populateCoefficients( HeatCapacityCoefficients * coefficients )
   {
-    coefficients->m_referenceTemperature.resize( 4 );
-    coefficients->m_referenceTemperature.zero();
-    coefficients->m_referenceEnthalpy.resize( 1, 4 );
+    coefficients->m_referenceEnthalpy.resize( 1, numComps );
     coefficients->m_referenceEnthalpy.zero();
-    coefficients->m_coefficients.resize( 1, 4, 5 );
-    std::array< real64, 5*4 > coefficientsData{
+    coefficients->m_coefficients.resize( numComps, numCoeffs );
+    std::array< real64, numComps * numCoeffs > coefficientsData{
       0.0, 0.0, 0.0, 0.0, 0.0,
       2.883, 0.003681, -7.720e-06, 6.920e-09, -2.130e-12,
       4.568, -0.008975, 3.631e-05, -3.407e-08, 1.091e-11,
@@ -63,11 +64,11 @@ struct FluidData< 4 >
     };
 //      4.178, -0.004427, 5.660e-05, -6.651e-08, 2.487e-11
 //5.409, 0.1781, -0.00006938, 0.000000008713
-    for( int ic = 0; ic < 4; ++ic )
+    for( int ic = 0; ic < numComps; ++ic )
     {
       for( int j = 0; j < 5; ++j )
       {
-        coefficients->m_coefficients( 0, ic, j ) = coefficientsData[ic*5 + j];
+        coefficients->m_coefficients( ic, j ) = coefficientsData[ic*numCoeffs + j];
       }
     }
   }

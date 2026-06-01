@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_PARAMETERS_HEATCAPACITYCOEFFICIENTS_HPP_
 
 #include "ModelParameters.hpp"
+#include "PhaseType.hpp"
 #include "common/DataTypes.hpp"
 
 namespace geos
@@ -47,14 +48,18 @@ public:
     static constexpr char const * componentHeatCapacityCoefficientsString() { return "componentHeatCapacityCoefficients"; }
   };
 
-  array1d< real64 > m_referenceTemperature;
+  real64 m_referenceTemperature{298.15};
   array2d< real64 > m_referenceEnthalpy;
-  array3d< real64 > m_coefficients;
+  array2d< real64 > m_coefficients;
+  array1d< PhaseType > m_phaseTypes;
 
 protected:
   void registerParametersImpl( MultiFluidBase * fluid ) override;
 
   void postInputInitializationImpl( MultiFluidBase const * fluid, ComponentProperties const & componentProperties ) override;
+
+private:
+  static bool isPolynomialPositive( arraySlice1d< real64 const > const a, real64 const T0, real64 const T1, real64 & T, real64 & hT );
 };
 
 } // end namespace compositional

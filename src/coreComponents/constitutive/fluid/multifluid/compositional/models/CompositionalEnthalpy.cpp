@@ -28,10 +28,12 @@ namespace constitutive
 namespace compositional
 {
 
-CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( EquationOfStateType const equationOfState,
+CompositionalEnthalpyUpdate::CompositionalEnthalpyUpdate( PhaseType const phaseType,
+                                                          EquationOfStateType const equationOfState,
                                                           arrayView1d< real64 const > const & referenceEnthalpy,
                                                           arrayView2d< real64 const > const & coefficients )
-  : m_equationOfState( equationOfState ),
+  : m_phaseType( phaseType ),
+  m_equationOfState( equationOfState ),
   m_referenceEnthalpy( referenceEnthalpy ),
   m_coefficients( coefficients )
 {}
@@ -47,23 +49,19 @@ CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
   string const eosName = equationOfState->m_equationsOfStateNames[phaseIndex];
   m_equationOfState = EnumStrings< EquationOfStateType >::fromString( eosName );
 
-  const auto & heatCapacityCoefficients = m_heatCapacityCoefficients->m_coefficients;
-  integer const numComps = heatCapacityCoefficients.size( 1 );
-  integer const numCoeffs = heatCapacityCoefficients.size( 2 );
+  integer const numComps = componentProperties.getNumberOfComponents();
+
   m_referenceEnthalpy.resize( numComps );
-  m_coefficients.resize( numComps, numCoeffs );
-  constexpr real64 R = constants::gasConstant;
+  m_phaseType = m_heatCapacityCoefficients->m_phaseTypes[phaseIndex];
+
+  real64 const refTemperature = m_heatCapacityCoefficients->m_referenceTemperature;
   for( integer ic = 0; ic < numComps; ic++ )
   {
-    for( integer j = 0; j < numCoeffs; j++ )
-    {
-      m_coefficients( ic, j ) = R * heatCapacityCoefficients( phaseIndex, ic, j );
-    }
     // Calculate the enthalpy at the reference temperature
     real64 refEnthalpy = 0.0;
     real64 refHeatCapacity = 0.0;
-    KernelWrapper::evaluatePolynomial( m_heatCapacityCoefficients->m_referenceTemperature[ic],
-                                       m_coefficients[ic],
+    KernelWrapper::evaluatePolynomial( refTemperature,
+                                       m_heatCapacityCoefficients->m_coefficients[ic],
                                        refEnthalpy,
                                        refHeatCapacity );
     m_referenceEnthalpy[ic] = m_heatCapacityCoefficients->m_referenceEnthalpy( phaseIndex, ic ) - refEnthalpy;
@@ -73,9 +71,10 @@ CompositionalEnthalpy::CompositionalEnthalpy( string const & name,
 CompositionalEnthalpy::KernelWrapper
 CompositionalEnthalpy::createKernelWrapper() const
 {
-  return KernelWrapper( m_equationOfState,
+  return KernelWrapper( m_phaseType,
+                        m_equationOfState,
                         m_referenceEnthalpy.toViewConst(),
-                        m_coefficients.toViewConst());
+                        m_heatCapacityCoefficients->m_coefficients.toViewConst());
 }
 
 std::unique_ptr< ModelParameters >
