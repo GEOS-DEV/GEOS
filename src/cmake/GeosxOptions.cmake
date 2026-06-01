@@ -169,10 +169,16 @@ blt_append_custom_compiler_flag( FLAGS_VAR GEOS_NINJA_FLAGS
 # clang-13 and gcc complains about unused-but-set variable.
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wunused-but-set-variable" CXX_UNUSED_BUT_SET_VAR)
+check_cxx_compiler_flag("-Wno-c2y-extensions" GEOS_CXX_HAS_WNO_C2Y_EXTENSIONS)
 if (ENABLE_GBENCHMARK)
-    blt_add_target_compile_flags(TO benchmark
-                                FLAGS $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
-                                )
+    foreach( _benchmark_target benchmark benchmark_main )
+        blt_add_target_compile_flags(TO ${_benchmark_target}
+                                    SCOPE PRIVATE
+                                    FLAGS
+                                      $<$<AND:$<BOOL:${CXX_UNUSED_BUT_SET_VAR}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-unused-but-set-variable>
+                                      $<$<AND:$<BOOL:${GEOS_CXX_HAS_WNO_C2Y_EXTENSIONS}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-c2y-extensions>
+                                    )
+    endforeach()
 endif()
 
 if( GEOS_ENABLE_FPE )
